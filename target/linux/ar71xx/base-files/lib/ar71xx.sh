@@ -800,6 +800,9 @@ ar71xx_board_detect() {
 	*TL-WR741ND)
 		name="tl-wr741nd"
 		;;
+	*"MERCURY MW153R")
+		name="mw153r"
+		;;
 	*"TL-WR741ND v4")
 		name="tl-wr741nd-v4"
 		;;

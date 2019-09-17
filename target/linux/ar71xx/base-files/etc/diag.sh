@@ -284,6 +284,9 @@ get_status_led() {
 	tl-wr941nd-v5)
 		status_led="tp-link:green:system"
 		;;
+	mw153r)
+		status_led="mw153r:green:system"
+		;;
 	archer-c5 | \
 	archer-c7 | \
 	tl-wdr4900-v2 | \

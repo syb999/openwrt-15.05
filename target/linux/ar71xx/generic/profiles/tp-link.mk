@@ -299,6 +299,17 @@ endef
 $(eval $(call Profile,TLWR741))
 
 
+define Profile/MW153R
+	NAME:=MERCURY MW153R
+	PACKAGES:=
+endef
+
+define Profile/MW153R/Description
+	Package set optimized for the MERCURY MW153R.
+endef
+$(eval $(call Profile,MW153R))
+
+
 define Profile/TLWR743
 	NAME:=TP-LINK TL-WR743N/ND
 	PACKAGES:=
