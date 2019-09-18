@@ -1,5 +1,6 @@
 #
-# Copyright (C) 2013-2015 OpenWrt.org
+# Copyright (C) 2013-2016 OpenWrt.org
+# Copyright (C) 2016 LEDE project
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,17 +9,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=firewall
-PKG_VERSION:=2015-07-27
-PKG_RELEASE:=$(PKG_SOURCE_VERSION)
+PKG_VERSION:=2017-05-27
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://nbd.name/firewall3.git
+PKG_SOURCE_URL=http://git.openwrt.org/project/firewall3.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=980b7859bbd1db1e5e46422fccccbce38f9809ab
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-a4d98aea.tar.gz
+PKG_SOURCE_VERSION:=a4d98aea373e04f3fdc3c492c1688ba52ce490a9
+PKG_MIRROR_HASH:=55402b1e6bb471f6aed599c61c1c63b58212f5789f094d78247646fc0a7cf435
+PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=ISC
 
+PKG_CONFIG_DEPENDS := CONFIG_IPV6
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
