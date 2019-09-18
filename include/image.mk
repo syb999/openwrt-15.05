@@ -319,6 +319,41 @@ define Build/pad-offset
 	mv $@.new $@
 endef
 
+define Build/append-ubi
+	sh $(TOPDIR)/scripts/ubinize-image.sh \
+		$(if $(UBOOTENV_IN_UBI),--uboot-env) \
+		$(if $(KERNEL_IN_UBI),--kernel $(word 1,$^)) \
+		$(word 2,$^) \
+		$@.tmp \
+		-p $(BLOCKSIZE) -m $(PAGESIZE) -E 5 \
+		$(if $(SUBPAGESIZE),-s $(SUBPAGESIZE))
+	cat $@.tmp >> $@
+	rm $@.tmp
+endef
+
+define Build/pad-to
+	dd if=$@ of=$@.new bs=$(1) conv=sync
+	mv $@.new $@
+endef
+
+json_quote=$(subst ','\'',$(subst ",\",$(1)))
+#")')
+metadata_devices=$(if $(1),$(subst "$(space)","$(comma)",$(strip $(foreach v,$(1),"$(call json_quote,$(v))"))))
+metadata_json = \
+	'{ $(if $(IMAGE_METADATA),$(IMAGE_METADATA)$(comma)) \
+		"supported_devices":[$(call metadata_devices,$(1))], \
+		"version": { \
+			"dist": "$(call json_quote,$(VERSION_DIST))", \
+			"version": "$(call json_quote,$(VERSION_NUMBER))", \
+			"revision": "$(call json_quote,$(REVISION))", \
+			"board": "$(call json_quote,$(BOARD))" \
+		} \
+	}'
+
+define Build/append-metadata
+	$(if $(SUPPORTED_DEVICES),echo $(call metadata_json,$(SUPPORTED_DEVICES)) | fwtool -I - $@)
+endef
+
 define Build/check-size
 	@[ $$(($(subst k,* 1024,$(subst m, * 1024k,$(1))))) -gt "$$(stat -c%s $@)" ] || { \
 		echo "WARNING: Image file $@ is too big" >&2; \
