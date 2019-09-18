@@ -354,6 +354,9 @@ ar71xx_board_detect() {
 	*Antminer-S3)
 		name="antminer-s3"
 		;;
+	*"CSAC reference board")
+		name="csac"
+		;;
 	*AP113)
 		name="ap113"
 		;;
