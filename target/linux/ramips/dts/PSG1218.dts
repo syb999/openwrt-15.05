@@ -3,23 +3,11 @@
 /include/ "mt7620a.dtsi"
 
 / {
-	compatible = "XIAOMI MIWIFI MINI", "ralink,mt7620a-soc";
-	model = "Xiaomi MiWiFi Mini";
-
-	chosen {
-		bootargs = "console=ttyS0,115200";
-	};
+	compatible = "PSG1218", "ralink,mt7620a-soc";
+	model = "Phicomm PSG1218";
 
 	palmbus@10000000 {
 		gpio0: gpio@600 {
-			status = "okay";
-		};
-
-		gpio1: gpio@638 {
-			status = "okay";
-		};
-
-		gpio2: gpio@660 {
 			status = "okay";
 		};
 
@@ -51,40 +39,16 @@
 
 				partition@50000 {
 					label = "firmware";
-					reg = <0x50000 0xf80000>;
-				};
-
-				partition@fd0000 {
-					label = "crash";
-					reg = <0xfd0000 0x10000>;
-				};
-
-				partition@fe0000 {
-					label = "reserved";
-					reg = <0xfe0000 0x10000>;
-					read-only;
-				};
-
-				partition@ff0000 {
-					label = "Bdata";
-					reg = <0xff0000 0x10000>;
+					reg = <0x50000 0x7b0000>;
 				};
 			};
 		};
 	};
 
-	ehci@101c0000 {
-		status = "okay";
-	};
-
-	ohci@101c1000 {
-		status = "okay";
-	};
-
 	ethernet@10100000 {
 		pinctrl-names = "default";
 		pinctrl-0 = <&ephy_pins>;
-		mtd-mac-address = <&factory 0x4>;
+		mtd-mac-address = <&factory 0x28>;
 		ralink,port-map = "llllw";
 	};
 
@@ -122,19 +86,19 @@
 	gpio-leds {
 		compatible = "gpio-leds";
 
+		red {
+			label = "psg1218:red:status";
+			gpios = <&gpio0 8 0>;
+		};
+
 		blue {
-			label = "xiaomi:blue:status";
-			gpios = <&gpio1 0 1>;
+			label = "psg1218:blue:status";
+			gpios = <&gpio0 10 1>;
 		};
 
 		yellow {
-			label = "xiaomi:yellow:status";
-			gpios = <&gpio1 2 1>;
-		};
-
-		red {
-			label = "xiaomi:red:status";
-			gpios = <&gpio1 5 1>;
+			label = "psg1218:yellow:status";
+			gpios = <&gpio0 11 1>;
 		};
 	};
 
@@ -143,9 +107,10 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 		poll-interval = <20>;
+
 		reset {
 			label = "reset";
-			gpios = <&gpio1 6 0>;
+			gpios = <&gpio0 1 1>;
 			linux,code = <0x198>;
 		};
 	};
