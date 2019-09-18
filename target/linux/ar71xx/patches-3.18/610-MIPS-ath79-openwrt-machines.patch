@@ -10,7 +10,7 @@
 +	ATH79_MACH_ALL0258N,		/* Allnet ALL0258N */
 +	ATH79_MACH_ALL0305,		/* Allnet ALL0305 */
 +	ATH79_MACH_ALL0315N,		/* Allnet ALL0315N */
-+ ATH79_MACH_CSAC,			/* CSAC-III board */
++	ATH79_MACH_CSAC,		/* CSAC-III board */
 +	ATH79_MACH_AP113,		/* Atheros AP113 reference board */
  	ATH79_MACH_AP121,		/* Atheros AP121 reference board */
  	ATH79_MACH_AP121_MINI,		/* Atheros AP121-MINI reference board */
