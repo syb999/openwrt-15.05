@@ -1,0 +1,12 @@
+--- a/tx.c	2018-11-13 12:10:37.616000000 +0800
++++ b/tx.c	2018-11-14 07:02:12.908000000 +0800
+@@ -239,7 +239,8 @@
+ 
+ 	info->control.flags |= IEEE80211_TX_CTRL_PS_RESPONSE;
+ 	if (last)
+-		info->flags |= IEEE80211_TX_STATUS_EOSP;
++		info->flags |= IEEE80211_TX_STATUS_EOSP |
++			       IEEE80211_TX_CTL_REQ_TX_STATUS;
+ 
+ 	mt76_skb_set_moredata(skb, !last);
+ 	mt76_tx_queue_skb(dev, hwq, skb, wcid, sta);

@@ -1,0 +1,13 @@
+diff --git a/mac80211.c b/mac80211.c
+index 3acf0e1..eae4be7 100644
+--- a/mac80211.c
++++ b/mac80211.c
+@@ -116,7 +116,7 @@ static int mt76_led_init(struct mt76_dev *dev)
+ 		dev->led_al = of_property_read_bool(np, "led-active-low");
+ 	}
+ 
+-	return devm_led_classdev_register(dev->dev, &dev->led_cdev);
++	return led_classdev_register(dev->dev, &dev->led_cdev);
+ }
+ 
+ static int
