@@ -144,6 +144,15 @@ define Device/weio
 endef
 TARGET_DEVICES += weio
 
+define Device/CSAC
+  BOARDNAME = CSAC
+  IMAGE_SIZE = 16000k
+  CONSOLE = ttyATH0,115200
+  MTDPARTS := spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,14528k(rootfs),1472k(kernel),64k(art)ro,16000k@0x50000(firmware)
+endef
+TARGET_DEVICES += CSAC
+
+
 define Device/wndr3700
   BOARDNAME = WNDR3700
   NETGEAR_KERNEL_MAGIC = 0x33373030
