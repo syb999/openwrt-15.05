@@ -415,7 +415,7 @@ ramips_board_detect() {
 	*"ZTE Q7")
 		name="zte-q7"
 		;;
-	*"Lenovo Y1")
+	*"Newifi Y1")
 		name="y1"
 		;;
 	*"Lenovo Y1S")

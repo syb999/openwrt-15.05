@@ -256,11 +256,18 @@ case $board in
 	xiaomi-miwifi-mini)
 		ucidef_set_led_default "power" "power" "xiaomi:red:status" "1"
 		;;
-	y1 |\
+	y1)
+		set_usb_led "y1:blue:usb"
+		ucidef_set_led_netdev "wifi" "WIFI" "y1:blue:wifi" "wlan1"
+		ucidef_set_led_netdev "wifi5g" "WIFI5G" "y1:blue:wifi5g" "wlan0"
+		ucidef_set_led_netdev "lan" "LAN" "y1:blue:lan" "eth0.1" "tx rx"
+		ucidef_set_led_netdev "wan" "WAN" "y1:blue:internet" "eth0.2" "tx rx"
+		;;
 	y1s)
-		ucidef_set_led_default "power" "power" "lenovo:blue:power" "1"
-		set_usb_led "lenovo:blue:usb"
-		set_wifi_led "lenovo:blue:wifi"
+		set_usb_led "$board:blue:usb"
+		ucidef_set_led_netdev "wifi" "WIFI" "$board:yellow:wifi" "wlan1"
+		ucidef_set_led_netdev "wifi5g" "WIFI5G" "$board:blue:wifi" "wlan0"
+		ucidef_set_led_netdev "wan" "WAN" "$board:blue:internet" "eth0.2" "tx rx"
 		;;
 	zbt-wg2626)
 		ucidef_set_led_default "power" "power" "zbt-wg2626:green:power" "1"

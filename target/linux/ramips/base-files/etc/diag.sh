@@ -246,7 +246,9 @@ get_status_led() {
 	na930)
 		status_led="na930:blue:power"
 		;;
-	y1 | \
+	y1)
+		status_led="y1:blue:power"
+		;;
 	y1s)
 		status_led="lenovo:blue:power"
 		;;
