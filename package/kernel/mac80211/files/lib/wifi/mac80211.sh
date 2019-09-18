@@ -82,6 +82,8 @@ detect_mac80211() {
 		htmode=""
 		ht_capab=""
 
+		ssnm=_$(cat /sys/class/ieee80211/${dev}/macaddress | sed 's/.[0-9A-Fa-f]:.[0-9A-Fa-f]:.[0-9A-Fa-f]:\(.[0-9A-Fa-f]\):\(.[0-9A-Fa-f]\):\(.[0-9A-Fa-f]\)/\1\2\3/g' | tr :[a-z] :[A-Z])
+
 		iw phy "$dev" info | grep -q 'Capabilities:' && htmode=HT20
 		iw phy "$dev" info | grep -q '2412 MHz' || { mode_band="a"; channel="36"; }
 
@@ -102,9 +104,16 @@ detect_mac80211() {
 		fi
 		if [ -n "$path" ]; then
 			path="${path##/sys/devices/}"
+			case "$path" in
+				platform*/pci*) path="${path##platform/}";;
+			esac
 			dev_id="	option path	'$path'"
 		else
 			dev_id="	option macaddr	$(cat /sys/class/ieee80211/${dev}/macaddress)"
+		fi
+
+		if [ x$mode_band == x"a" ]; then
+			ssid_5ghz="_5GHz"
 		fi
 
 		cat <<EOF
@@ -112,17 +121,22 @@ config wifi-device  radio$devidx
 	option type     mac80211
 	option channel  ${channel}
 	option hwmode	11${mode_band}
+	option txpower 20
+	option country CN
+	option legacy_rates 0
 $dev_id
 $ht_capab
 	# REMOVE THIS LINE TO ENABLE WIFI:
-	option disabled 1
+	option disabled 0
 
 config wifi-iface
 	option device   radio$devidx
 	option network  lan
 	option mode     ap
-	option ssid     OpenWrt
+	option ssid     OpenWrt${ssid_5ghz}${ssnm}
 	option encryption none
+	option disassoc_low_ack 0
+	option isolate 1
 
 EOF
 	devidx=$(($devidx + 1))
