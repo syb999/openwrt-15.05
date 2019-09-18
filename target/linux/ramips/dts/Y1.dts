@@ -30,6 +30,7 @@
 		usb {
 			label = "lenovo:blue:usb";
 			gpios = <&gpio2 12 1>;
+			linux,default-trigger = "usbport";
 		};
 		lan {
 			label = "lenovo:blue:lan";
