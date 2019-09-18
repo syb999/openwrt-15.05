@@ -1,6 +1,6 @@
 --- a/arch/mips/ath79/machtypes.h
 +++ b/arch/mips/ath79/machtypes.h
-@@ -16,22 +16,202 @@
+@@ -16,22 +16,203 @@
  
  enum ath79_mach_type {
  	ATH79_MACH_GENERIC = 0,
@@ -10,6 +10,7 @@
 +	ATH79_MACH_ALL0258N,		/* Allnet ALL0258N */
 +	ATH79_MACH_ALL0305,		/* Allnet ALL0305 */
 +	ATH79_MACH_ALL0315N,		/* Allnet ALL0315N */
++ ATH79_MACH_CSAC,			/* CSAC-III board */
 +	ATH79_MACH_AP113,		/* Atheros AP113 reference board */
  	ATH79_MACH_AP121,		/* Atheros AP121 reference board */
  	ATH79_MACH_AP121_MINI,		/* Atheros AP121-MINI reference board */
@@ -205,10 +206,21 @@
  #endif /* _ATH79_MACHTYPE_H */
 --- a/arch/mips/ath79/Kconfig
 +++ b/arch/mips/ath79/Kconfig
-@@ -2,6 +2,79 @@ if ATH79
+@@ -2,6 +2,90 @@ if ATH79
  
  menu "Atheros AR71XX/AR724X/AR913X machine selection"
  
++config ATH79_MACH_CSAC
++	bool "CSAC board support"
++	select SOC_QCA956X
++	select ATH79_DEV_ETH
++	select ATH79_DEV_GPIO_BUTTONS
++	select ATH79_DEV_LEDS_GPIO
++	select ATH79_DEV_M25P80
++	select ATH79_DEV_USB
++	select ATH79_DEV_WMAC
++	select ATH79_DEV_AP9X_PCI if PCI
++
 +config ATH79_MACH_ALFA_AP120C
 +	bool "ALFA Network AP120C board support"
 +	select SOC_AR71XX
@@ -1518,7 +1530,7 @@
  endif
 --- a/arch/mips/ath79/Makefile
 +++ b/arch/mips/ath79/Makefile
-@@ -38,9 +38,130 @@ obj-$(CONFIG_ATH79_ROUTERBOOT)		+= route
+@@ -38,9 +38,131 @@ obj-$(CONFIG_ATH79_ROUTERBOOT)		+= route
  #
  # Machines
  #
@@ -1527,6 +1539,7 @@
 +obj-$(CONFIG_ATH79_MACH_ALFA_NX)	+= mach-alfa-nx.o
 +obj-$(CONFIG_ATH79_MACH_ALL0258N)	+= mach-all0258n.o
 +obj-$(CONFIG_ATH79_MACH_ALL0315N)	+= mach-all0315n.o
++obj-$(CONFIG_ATH79_MACH_CSAC)		+= mach-csac.o
 +obj-$(CONFIG_ATH79_MACH_AP113)		+= mach-ap113.o
  obj-$(CONFIG_ATH79_MACH_AP121)		+= mach-ap121.o
 +obj-$(CONFIG_ATH79_MACH_AP132)		+= mach-ap132.o
