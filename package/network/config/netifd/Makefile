@@ -1,17 +1,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netifd
-PKG_VERSION:=2015-12-16
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
+PKG_VERSION:=2019-05-28
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=http://git.openwrt.org/project/netifd.git
+PKG_SOURCE_URL=http://git.openwrt.org/project/netifd.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=245527193e90906451be35c2b8e972b8712ea6ab
+PKG_SOURCE_VERSION:=beb810dbccee098add0347d551eb5362e404fbdc
+PKG_MIRROR_HASH:=f7c0057e7a7c4741d19027e7b67087e8ce8cb835ff5b34c594a24bf167c7873e
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MAINTAINER:=Felix Fietkau <nbd@openwrt.org>
-# PKG_MIRROR_MD5SUM:=
-# CMAKE_INSTALL:=1
+PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=
@@ -30,7 +29,10 @@ endef
 
 TARGET_CFLAGS += \
 	-I$(STAGING_DIR)/usr/include/libnl-tiny \
-	-I$(STAGING_DIR)/usr/include
+	-I$(STAGING_DIR)/usr/include \
+	-flto
+
+TARGET_LDFLAGS += -flto -fuse-linker-plugin
 
 CMAKE_OPTIONS += \
 	-DLIBNL_LIBS=-lnl-tiny \
