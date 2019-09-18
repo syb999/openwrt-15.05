@@ -1,0 +1,26 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+SERVICE_WRITE_PID=1
+SERVICE_DAEMONIZE=1
+
+start() {
+	logger -t shellinaboxd 'Starting shellinabox service'
+	service_start /usr/sbin/shellinaboxd -u root -c /etc/shellinabox --css=/etc/shellinabox/white-on-black.css
+	return 0
+}
+
+stop() {
+	if [ -n "`pidof shellinaboxd`" ]; then
+		logger -t shellinabox 'Shutting down shellinabox service'
+		service_stop /usr/sbin/shellinaboxd
+	fi
+	return 0
+}
+
+restart() {
+	logger -t shellinaboxd 'Restarting shellinabox service'
+	stop
+	sleep 2
+	start
+}
