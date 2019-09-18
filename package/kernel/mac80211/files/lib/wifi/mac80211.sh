@@ -113,7 +113,7 @@ detect_mac80211() {
 		fi
 
 		if [ x$mode_band == x"a" ]; then
-			ssid_5ghz="_5GHz"
+			ssid_wlan="_wlan"
 		fi
 
 		cat <<EOF
@@ -133,10 +133,10 @@ config wifi-iface
 	option device   radio$devidx
 	option network  lan
 	option mode     ap
-	option ssid     OpenWrt${ssid_5ghz}${ssnm}
+	option ssid     OpenWrt${ssid_wlan}${ssnm}
 	option encryption none
 	option disassoc_low_ack 0
-	option isolate 1
+	option isolate 0
 
 EOF
 	devidx=$(($devidx + 1))
