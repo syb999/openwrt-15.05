@@ -1,0 +1,22 @@
+--- a/drivers/mtd/devices/m25p80.c	2016-10-22 15:30:19.000000000 +0800
++++ b/drivers/mtd/devices/m25p80.c	2016-12-07 19:40:30.000000000 +0800
+@@ -321,6 +321,10 @@
+ static int m25p_remove(struct spi_device *spi)
+ {
+ 	struct m25p	*flash = spi_get_drvdata(spi);
++	flash->command[0] = 0x66;
++	spi_write(flash->spi, flash->command, 1);
++	flash->command[0] = 0x99;
++	spi_write(flash->spi, flash->command, 1);
+ 
+ 	/* Clean up MTD stuff. */
+ 	return mtd_device_unregister(&flash->spi_nor.mtd);
+@@ -385,6 +394,7 @@
+ 	.id_table	= m25p_ids,
+ 	.probe	= m25p_probe,
+ 	.remove	= m25p_remove,
++	.shutdown = m25p_remove,
+ 
+ 	/* REVISIT: many of these chips have deep power-down modes, which
+ 	 * should clearly be entered on suspend() to minimize power use.
+
