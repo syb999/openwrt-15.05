@@ -127,6 +127,7 @@ platform_check_image() {
 	xiaomi-miwifi-mini |\
 	y1 |\
 	y1s |\
+	daishuyun |\
 	zbt-wa05 |\
 	zbt-wg2626 |\
 	zte-q7 |\

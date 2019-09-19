@@ -5,14 +5,14 @@
 # See /LICENSE for more information.
 #
 
-define Profile/YOUKU-YK1
- NAME:=Youku Yk1
+define Profile/DAISHUYUN
+ NAME:=Daishuyun
  PACKAGES:=\
 	kmod-usb-core kmod-usb-dwc2 kmod-usb2 kmod-usb-ohci \
 	kmod-mt76 kmod-sdhci-mt7620
 endef
 
-define Profile/YOUKU-YK1/Description
- Support for YOUKU YK1 routers
+define Profile/DAISHUYUN/Description
+ Support for DAISHUYUN routers
 endef
-$(eval $(call Profile,YOUKU-YK1))
+$(eval $(call Profile,DAISHUYUN))

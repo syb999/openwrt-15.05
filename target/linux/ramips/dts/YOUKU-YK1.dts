@@ -3,8 +3,8 @@
 /include/ "mt7620a.dtsi"
 
 / {
-	compatible = "YOUKU-YK1", "ralink,mt7620a-soc";
-	model = "YOUKU YK1";
+	compatible = "YOUKU YK1", "ralink,mt7620a-soc";
+	model = "Youku Yk1";
 
 	palmbus@10000000 {
 

@@ -421,6 +421,9 @@ ramips_board_detect() {
 	*"Lenovo Y1S")
 		name="y1s"
 		;;
+	*"Daishuyun")
+		name="daishuyun"
+		;;
 	*"Mediatek MT7621 evaluation board")
 		name="mt7621"
 		;;
@@ -436,7 +439,7 @@ ramips_board_detect() {
 			name="linkits7688"
 		fi
 		;;
-	*"YOUKU-YK1")
+	*"Youku Yk1")
 		name="youku-yk1"
 		;;
 	*)

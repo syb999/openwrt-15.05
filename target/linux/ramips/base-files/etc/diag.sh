@@ -252,6 +252,9 @@ get_status_led() {
 	y1s)
 		status_led="lenovo:blue:power"
 		;;
+	daishuyun)
+		status_led="daishuyun:green:wifi"
+		;;
 	zbt-wg2626)
 		status_led="zbt-wg2626:green:status"
 		;;

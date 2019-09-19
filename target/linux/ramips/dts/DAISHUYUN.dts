@@ -4,7 +4,7 @@
 
 / {
 	compatible = "DAISHUYUN", "ralink,mt7620a-soc";
-	model = "daishuyun";
+	model = "Daishuyun";
 
 	chosen {
 		bootargs = "console=ttyS0,115200";
@@ -114,8 +114,8 @@
 
 	gpio-leds {
 		compatible = "gpio-leds";
-		led {
-			label = "dsy1:green:wifi";
+		wifi {
+			label = "daishuyun:green:wifi";
 			gpios = <&gpio3 0 1>;
 		};
 	};
