@@ -436,6 +436,9 @@ ramips_board_detect() {
 			name="linkits7688"
 		fi
 		;;
+	*"YOUKU-YK1")
+		name="youku-yk1"
+		;;
 	*)
 		name="generic"
 		;;
