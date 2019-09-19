@@ -282,7 +282,7 @@ case $board in
 		;;
 	youku-yk1)
 		ucidef_set_led_default "power" "power" "youku-yk1:blue:power" "1"
-		ucidef_set_led_netdev "youku-yk1:blue:air"
+		ucidef_set_led_netdev "wifi" "WIFI" "youku-yk1:blue:air" "wlan0"
 		set_usb_led "youku-yk1:blue:usb"
 		ucidef_set_led_netdev "wan" "WAN" "youku-yk1:blue:wan" "eth0.2" "tx rx"
 		;;
