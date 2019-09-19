@@ -442,6 +442,9 @@ ramips_board_detect() {
 	*"Youku Yk1")
 		name="youku-yk1"
 		;;
+	*"HiWiFi HC5962")
+		name="hc5962"
+		;;
 	*)
 		name="generic"
 		;;

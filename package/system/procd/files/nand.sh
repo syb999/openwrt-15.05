@@ -198,6 +198,7 @@ nand_do_upgrade_success() {
 	sync
 	[ -f "$conf_tar" ] && nand_restore_config "$conf_tar"
 	echo "sysupgrade successful"
+	umount -a
 	reboot -f
 }
 
@@ -213,6 +214,7 @@ nand_upgrade_ubinized() {
 
 	if [ ! "$mtdnum" ]; then
 		echo "cannot find mtd device $CI_UBIPART"
+		umount -a
 		reboot -f
 	fi
 
@@ -237,9 +239,18 @@ nand_upgrade_ubifs() {
 	nand_do_upgrade_success
 }
 
+nand_board_name() {
+	if type 'platform_nand_board_name' >/dev/null 2>/dev/null; then
+		platform_nand_board_name
+		return
+	fi
+
+	cat /tmp/sysinfo/board_name
+}
+
 nand_upgrade_tar() {
 	local tar_file="$1"
-	local board_name="$(cat /tmp/sysinfo/board_name)"
+	local board_name="$(nand_board_name)"
 	local kernel_mtd="$(find_mtd_index $CI_KERNPART)"
 
 	local kernel_length=`(tar xf $tar_file sysupgrade-$board_name/kernel -O | wc -c) 2> /dev/null`
@@ -274,6 +285,10 @@ nand_upgrade_tar() {
 # Recognize type of passed file and start the upgrade process
 nand_do_upgrade_stage2() {
 	local file_type=$(identify $1)
+
+	if type 'platform_nand_pre_upgrade' >/dev/null 2>/dev/null; then
+		platform_nand_pre_upgrade "$1"
+	fi
 
 	[ ! "$(find_mtd_index "$CI_UBIPART")" ] && CI_UBIPART="rootfs"
 
@@ -322,7 +337,6 @@ nand_upgrade_stage1() {
 		exit 0
 	}
 }
-append sysupgrade_pre_upgrade nand_upgrade_stage1
 
 # Check if passed file is a valid one for NAND sysupgrade. Currently it accepts
 # 3 types of files:
@@ -347,9 +361,6 @@ nand_do_platform_check() {
 		echo "Invalid sysupgrade file."
 		return 1
 	}
-
-	echo -n $2 > /tmp/sysupgrade-nand-path
-	cp /sbin/upgraded /tmp/
 
 	return 0
 }
