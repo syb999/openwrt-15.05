@@ -1,0 +1,16 @@
+#!/bin/sh
+lock_file="/tmp/_reset_lock"
+[ "${ACTION}" = "released" ] || exit 0
+logger "$BUTTON pressed for $SEEN seconds"
+
+if [ ! -f "$lock_file" ]; then
+	if [ $SEEN -ge 4 ]; then
+		echo "FACTORY RESET" > /dev/console
+		touch "$lock_file"
+		echo timer > sys/class/leds/eth_led0/trigger
+		echo timer > sys/class/leds/eth_led1/trigger
+		echo gpio > sys/class/leds/eth_led0/owner
+		echo gpio > sys/class/leds/eth_led1/owner
+		jffs2reset -y && reboot &
+	fi
+fi

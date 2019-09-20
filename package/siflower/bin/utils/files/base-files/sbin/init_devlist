@@ -1,0 +1,41 @@
+#!/usr/bin/lua
+
+local uci = require "luci.model.uci"
+local _uci_real  = uci.cursor()
+
+function set_tab(dev, config)
+    local alldev = dev
+
+    for i=1,#alldev do
+        _uci_real:set(config, alldev[i].mac , "device")
+        _uci_real:tset(config, alldev[i].mac , alldev[i])
+    end
+    _uci_real:save(config)
+    _uci_real:commit(config)
+end
+
+local wlchange = {}
+local change = {}
+_uci_real:foreach("wldevlist", "device",
+        function(s)
+            if(s.mac and s.online and s.associate_time and s.ip) then
+                wlchange[#wlchange+1] = {}
+                wlchange[#wlchange]["mac"] = s.mac
+                wlchange[#wlchange]["associate_time"] = -1
+                wlchange[#wlchange]["online"] = '0'
+                wlchange[#wlchange]["push_flag"] = '0'
+            end
+        end
+        )
+_uci_real:foreach("devlist", "device",
+        function(s)
+            if(s.mac and s.online and s.associate_time and s.ip) then
+                change[#change+1] = {}
+                change[#change]["mac"] = s.mac
+                change[#change]["associate_time"] = -1
+                change[#change]["online"] = '0'
+            end
+        end
+        )
+set_tab(wlchange, "wldevlist")
+set_tab(change, "devlist")

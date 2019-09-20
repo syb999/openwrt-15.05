@@ -1,0 +1,150 @@
+Index: compat-wireless-2016-01-10/net/mac80211/rc80211_minstrel.c
+===================================================================
+--- compat-wireless-2016-01-10.orig/net/mac80211/rc80211_minstrel.c	2019-02-15 11:56:56.504171885 +0800
++++ compat-wireless-2016-01-10/net/mac80211/rc80211_minstrel.c	2019-02-15 11:56:57.436171912 +0800
+@@ -176,8 +176,10 @@
+ 						       mrs->cur_prob,
+ 						       EWMA_LEVEL);
+ 		}
++#ifdef CPTCFG_MAC80211_DEBUGFS
+ 		mrs->att_hist += mrs->attempts;
+ 		mrs->succ_hist += mrs->success;
++#endif
+ 	} else {
+ 		mrs->sample_skipped++;
+ 	}
+Index: compat-wireless-2016-01-10/net/mac80211/rc80211_minstrel.h
+===================================================================
+--- compat-wireless-2016-01-10.orig/net/mac80211/rc80211_minstrel.h	2016-01-15 20:00:10.000000000 +0800
++++ compat-wireless-2016-01-10/net/mac80211/rc80211_minstrel.h	2019-02-15 11:56:57.436171912 +0800
+@@ -57,9 +57,12 @@
+ 	/* current / last sampling period attempts/success counters */
+ 	u16 attempts, last_attempts;
+ 	u16 success, last_success;
+-
++#ifdef CPTCFG_MAC80211_DEBUGFS
+ 	/* total attempts/success counters */
+ 	u64 att_hist, succ_hist;
++#else
++	u8 att_hist;
++#endif
+ 
+ 	/* statistis of packet delivery probability
+ 	 *  cur_prob  - current prob within last update intervall
+Index: compat-wireless-2016-01-10/net/mac80211/rc80211_minstrel_ht.c
+===================================================================
+--- compat-wireless-2016-01-10.orig/net/mac80211/rc80211_minstrel_ht.c	2019-02-15 11:56:57.356171910 +0800
++++ compat-wireless-2016-01-10/net/mac80211/rc80211_minstrel_ht.c	2019-02-15 11:56:57.436171912 +0800
+@@ -157,25 +157,33 @@
+  */
+ const struct mcs_group minstrel_mcs_groups[] = {
+ 	MCS_GROUP(1, 0, BW_20),
++#if MINSTREL_MAX_STREAMS >= 2
+ 	MCS_GROUP(2, 0, BW_20),
++#endif
+ #if MINSTREL_MAX_STREAMS >= 3
+ 	MCS_GROUP(3, 0, BW_20),
+ #endif
+ 
+ 	MCS_GROUP(1, 1, BW_20),
++#if MINSTREL_MAX_STREAMS >= 2
+ 	MCS_GROUP(2, 1, BW_20),
++#endif
+ #if MINSTREL_MAX_STREAMS >= 3
+ 	MCS_GROUP(3, 1, BW_20),
+ #endif
+ 
+ 	MCS_GROUP(1, 0, BW_40),
++#if MINSTREL_MAX_STREAMS >= 2
+ 	MCS_GROUP(2, 0, BW_40),
++#endif
+ #if MINSTREL_MAX_STREAMS >= 3
+ 	MCS_GROUP(3, 0, BW_40),
+ #endif
+ 
+ 	MCS_GROUP(1, 1, BW_40),
++#if MINSTREL_MAX_STREAMS >= 2
+ 	MCS_GROUP(2, 1, BW_40),
++#endif
+ #if MINSTREL_MAX_STREAMS >= 3
+ 	MCS_GROUP(3, 1, BW_40),
+ #endif
+@@ -184,37 +192,49 @@
+ 
+ #ifdef CPTCFG_MAC80211_RC_MINSTREL_VHT
+ 	VHT_GROUP(1, 0, BW_20),
++#if MINSTREL_MAX_STREAMS >= 2
+ 	VHT_GROUP(2, 0, BW_20),
++#endif
+ #if MINSTREL_MAX_STREAMS >= 3
+ 	VHT_GROUP(3, 0, BW_20),
+ #endif
+ 
+ 	VHT_GROUP(1, 1, BW_20),
++#if MINSTREL_MAX_STREAMS >= 2
+ 	VHT_GROUP(2, 1, BW_20),
++#endif
+ #if MINSTREL_MAX_STREAMS >= 3
+ 	VHT_GROUP(3, 1, BW_20),
+ #endif
+ 
+ 	VHT_GROUP(1, 0, BW_40),
++#if MINSTREL_MAX_STREAMS >= 2
+ 	VHT_GROUP(2, 0, BW_40),
++#endif
+ #if MINSTREL_MAX_STREAMS >= 3
+ 	VHT_GROUP(3, 0, BW_40),
+ #endif
+ 
+ 	VHT_GROUP(1, 1, BW_40),
++#if MINSTREL_MAX_STREAMS >= 2
+ 	VHT_GROUP(2, 1, BW_40),
++#endif
+ #if MINSTREL_MAX_STREAMS >= 3
+ 	VHT_GROUP(3, 1, BW_40),
+ #endif
+ 
+ 	VHT_GROUP(1, 0, BW_80),
++#if MINSTREL_MAX_STREAMS >= 2
+ 	VHT_GROUP(2, 0, BW_80),
++#endif
+ #if MINSTREL_MAX_STREAMS >= 3
+ 	VHT_GROUP(3, 0, BW_80),
+ #endif
+ 
+ 	VHT_GROUP(1, 1, BW_80),
++#if MINSTREL_MAX_STREAMS >= 2
+ 	VHT_GROUP(2, 1, BW_80),
++#endif
+ #if MINSTREL_MAX_STREAMS >= 3
+ 	VHT_GROUP(3, 1, BW_80),
+ #endif
+Index: compat-wireless-2016-01-10/net/mac80211/rc80211_minstrel_ht.h
+===================================================================
+--- compat-wireless-2016-01-10.orig/net/mac80211/rc80211_minstrel_ht.h	2019-02-15 11:56:57.328171909 +0800
++++ compat-wireless-2016-01-10/net/mac80211/rc80211_minstrel_ht.h	2019-02-15 11:56:57.436171912 +0800
+@@ -13,7 +13,11 @@
+  * The number of streams can be changed to 2 to reduce code
+  * size and memory footprint.
+  */
++#ifdef CPTCFG_MAC80211_LITE_MEMORY
++#define MINSTREL_MAX_STREAMS		1
++#else
+ #define MINSTREL_MAX_STREAMS		3
++#endif
+ #define MINSTREL_HT_STREAM_GROUPS	4 /* BW(=2) * SGI(=2) */
+ #ifdef CPTCFG_MAC80211_RC_MINSTREL_VHT
+ #define MINSTREL_VHT_STREAM_GROUPS	6 /* BW(=3) * SGI(=2) */
+Index: compat-wireless-2016-01-10/.local-symbols
+===================================================================
+--- compat-wireless-2016-01-10.orig/.local-symbols	2019-02-15 11:56:57.404171911 +0800
++++ compat-wireless-2016-01-10/.local-symbols	2019-02-15 12:00:21.320177923 +0800
+@@ -73,6 +73,8 @@
+ MAC80211_STA_HASH_MAX_SIZE=
+ MAC80211_PRIV_IOCTL=
+ MAC80211_SIFLOWER_MONITOR_ENABLE=
++MAC80211_LITE_MEMORY=
++MAC80211_LITE_FLASH=
+ BT=
+ BT_BREDR=
+ BT_HS=

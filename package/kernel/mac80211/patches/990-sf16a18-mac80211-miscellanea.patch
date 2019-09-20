@@ -1,0 +1,188 @@
+Index: compat-wireless-2016-01-10/include/linux/ieee80211.h
+===================================================================
+--- compat-wireless-2016-01-10.orig/include/linux/ieee80211.h	2016-01-15 20:00:10.000000000 +0800
++++ compat-wireless-2016-01-10/include/linux/ieee80211.h	2017-03-28 15:54:20.097107538 +0800
+@@ -1545,6 +1545,7 @@
+ #define IEEE80211_VHT_CAP_VHT_LINK_ADAPTATION_VHT_MRQ_MFB	0x0c000000
+ #define IEEE80211_VHT_CAP_RX_ANTENNA_PATTERN			0x10000000
+ #define IEEE80211_VHT_CAP_TX_ANTENNA_PATTERN			0x20000000
++#define IEEE80211_VHT_CAP_NOT_SUP_WIDTH_80              0x80000000
+ 
+ /* Authentication algorithms */
+ #define WLAN_AUTH_OPEN 0
+Index: compat-wireless-2016-01-10/net/mac80211/mlme.c
+===================================================================
+--- compat-wireless-2016-01-10.orig/net/mac80211/mlme.c	2016-01-15 20:00:10.000000000 +0800
++++ compat-wireless-2016-01-10/net/mac80211/mlme.c	2017-03-28 15:59:37.017116881 +0800
+@@ -1471,11 +1471,23 @@
+ 		}
+ 		if (sdata->vif.type != NL80211_IFTYPE_STATION)
+ 			continue;
++
++#ifdef CPTCFG_WLAN_VENDOR_RWNX
++        if (!ieee80211_powersave_allowed(sdata)) {
++            count = 0;
++            break;
++        }
++#endif
++
+ 		found = sdata;
+ 		count++;
+ 	}
+ 
++#ifdef CPTCFG_WLAN_VENDOR_RWNX
++    if (count) {
++#else
+ 	if (count == 1 && ieee80211_powersave_allowed(found)) {
++#endif
+ 		u8 dtimper = found->u.mgd.dtim_period;
+ 		s32 beaconint_us;
+ 
+Index: compat-wireless-2016-01-10/net/mac80211/rc80211_minstrel_ht.c
+===================================================================
+--- compat-wireless-2016-01-10.orig/net/mac80211/rc80211_minstrel_ht.c	2016-01-15 20:00:10.000000000 +0800
++++ compat-wireless-2016-01-10/net/mac80211/rc80211_minstrel_ht.c	2017-03-28 16:06:37.929129291 +0800
+@@ -137,7 +137,11 @@
+ 	}
+ 
+ #ifdef CPTCFG_MAC80211_RC_MINSTREL_VHT
++#ifdef CPTCFG_WLAN_VENDOR_RWNX
++static bool minstrel_vht_only = false;
++#else
+ static bool minstrel_vht_only = true;
++#endif
+ module_param(minstrel_vht_only, bool, 0644);
+ MODULE_PARM_DESC(minstrel_vht_only,
+ 		 "Use only VHT rates when VHT is supported by sta.");
+@@ -531,7 +535,11 @@
+ 
+ 	/* Initialize global rate indexes */
+ 	for(j = 0; j < MAX_THR_RATES; j++){
++#ifdef CPTCFG_WLAN_VENDOR_RWNX
++        tmp_mcs_tp_rate[j] = mi->min_ridx;
++#else
+ 		tmp_mcs_tp_rate[j] = 0;
++#endif
+ 		tmp_cck_tp_rate[j] = 0;
+ 	}
+ 
+@@ -546,7 +554,11 @@
+ 
+ 		/* (re)Initialize group rate indexes */
+ 		for(j = 0; j < MAX_THR_RATES; j++)
++#ifdef CPTCFG_WLAN_VENDOR_RWNX
++            tmp_group_tp_rate[j] = group * MCS_GROUP_RATES + ffs(mg->supported) - 1;
++#else
+ 			tmp_group_tp_rate[j] = group;
++#endif
+ 
+ 		for (i = 0; i < MCS_GROUP_RATES; i++) {
+ 			if (!(mg->supported & BIT(i)))
+@@ -1193,8 +1205,17 @@
+ 				continue;
+ #endif
+ 			mi->groups[i].supported = mcs->rx_mask[nss - 1];
++#ifdef CPTCFG_WLAN_VENDOR_RWNX
++            if (mi->groups[i].supported) {
++                if (!n_supported++) {
++                    mi->min_ridx = i * MCS_GROUP_RATES +
++                                ffs(mi->groups[i].supported) - 1;
++                }
++            }
++#else
+ 			if (mi->groups[i].supported)
+ 				n_supported++;
++#endif
+ 			continue;
+ 		}
+ 
+@@ -1222,8 +1243,17 @@
+ 		mi->groups[i].supported = minstrel_get_valid_vht_rates(bw, nss,
+ 				vht_cap->vht_mcs.tx_mcs_map);
+ 
+-		if (mi->groups[i].supported)
+-			n_supported++;
++#ifdef CPTCFG_WLAN_VENDOR_RWNX
++        if (mi->groups[i].supported) {
++            if (!n_supported++) {
++                mi->min_ridx = i * MCS_GROUP_RATES +
++                            ffs(mi->groups[i].supported) - 1;
++            }
++        }
++#else
++        if (mi->groups[i].supported)
++            n_supported++;
++#endif
+ 	}
+ 
+ 	if (!n_supported)
+Index: compat-wireless-2016-01-10/net/mac80211/rc80211_minstrel_ht.h
+===================================================================
+--- compat-wireless-2016-01-10.orig/net/mac80211/rc80211_minstrel_ht.h	2016-01-15 20:00:10.000000000 +0800
++++ compat-wireless-2016-01-10/net/mac80211/rc80211_minstrel_ht.h	2017-03-28 16:07:38.101131065 +0800
+@@ -73,6 +73,9 @@
+ 	/* ampdu length (EWMA) */
+ 	unsigned int avg_ampdu_len;
+ 
++#ifdef CPTCFG_WLAN_VENDOR_RWNX
++    u16 min_ridx;
++#endif
+ 	/* overall sorted rate set */
+ 	u16 max_tp_rate[MAX_THR_RATES];
+ 	u16 max_prob_rate;
+Index: compat-wireless-2016-01-10/net/mac80211/tx.c
+===================================================================
+--- compat-wireless-2016-01-10.orig/net/mac80211/tx.c	2016-01-15 20:00:10.000000000 +0800
++++ compat-wireless-2016-01-10/net/mac80211/tx.c	2017-03-28 17:10:58.045243098 +0800
+@@ -428,13 +428,20 @@
+ 	if (ieee80211_is_probe_req(hdr->frame_control))
+ 		return TX_CONTINUE;
+ 
++#ifndef CPTCFG_WLAN_VENDOR_RWNX
+ 	if (ieee80211_hw_check(&tx->local->hw, QUEUE_CONTROL))
+ 		info->hw_queue = tx->sdata->vif.cab_queue;
++#endif
+ 
+ 	/* no stations in PS mode */
+ 	if (!atomic_read(&ps->num_sta_ps))
+ 		return TX_CONTINUE;
+ 
++#ifdef CPTCFG_WLAN_VENDOR_RWNX
++    if (ieee80211_hw_check(&tx->local->hw, QUEUE_CONTROL))
++        info->hw_queue = tx->sdata->vif.cab_queue;
++#endif
++
+ 	info->flags |= IEEE80211_TX_CTL_SEND_AFTER_DTIM;
+ 
+ 	/* device releases frame after DTIM beacon */
+Index: compat-wireless-2016-01-10/net/mac80211/util.c
+===================================================================
+--- compat-wireless-2016-01-10.orig/net/mac80211/util.c	2016-01-15 20:00:10.000000000 +0800
++++ compat-wireless-2016-01-10/net/mac80211/util.c	2017-03-28 17:12:06.325245111 +0800
+@@ -2785,7 +2785,11 @@
+ 		/* freq_P40 */
+ 		c->center_freq1 = c->center_freq1 - 20 + 40 * tmp;
+ 		c->width = NL80211_CHAN_WIDTH_40;
++#ifdef CPTCFG_WLAN_VENDOR_RWNX
++        ret = 0;
++#else
+ 		ret = IEEE80211_STA_DISABLE_VHT;
++#endif
+ 		break;
+ 	case NL80211_CHAN_WIDTH_80P80:
+ 		c->center_freq2 = 0;
+Index: compat-wireless-2016-01-10/net/wireless/chan.c
+===================================================================
+--- compat-wireless-2016-01-10.orig/net/wireless/chan.c	2016-01-15 20:00:10.000000000 +0800
++++ compat-wireless-2016-01-10/net/wireless/chan.c	2017-03-28 17:25:25.573268676 +0800
+@@ -649,6 +649,10 @@
+ 	case NL80211_CHAN_WIDTH_80:
+ 		if (!vht_cap->vht_supported)
+ 			return false;
++#ifdef CPTCFG_WLAN_VENDOR_RWNX
++        if (vht_cap->cap & IEEE80211_VHT_CAP_NOT_SUP_WIDTH_80)
++            return false;
++#endif
+ 		prohibited_flags |= IEEE80211_CHAN_NO_80MHZ;
+ 		width = 80;
+ 		break;

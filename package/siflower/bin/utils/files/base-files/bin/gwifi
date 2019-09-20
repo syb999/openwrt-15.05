@@ -1,0 +1,172 @@
+#!/bin/sh
+
+CRONUSER=admin
+CRONFILE=/etc/crontabs/$CRONUSER
+
+get_if(){
+	local i=0
+	local ifname
+
+	while true
+	do
+		ifname=$(uci -q  get wireless.@wifi-iface[$i].ifname)
+
+		[ "x$ifname" = "x" ] && return
+		if [ "x$ifname" = "x$1-guest" ];then
+			echo $i
+			return
+		fi
+		i=$((i+1))
+	done
+}
+
+gwifi_speed_start(){
+	local section=$1
+	local index=$2
+	local ifbi=$(($index + 1))
+	local disable=$(uci -q get wireless.@wifi-iface[$section].disabled)
+	local upsd=$(uci -q get wireless.@wifi-iface[$section].limitupload)
+	local downsd=$(uci -q get wireless.@wifi-iface[$section].limitdownload)
+
+	[ "x$disable" = "x1" ] && return
+	if [ "x$upsd" != "x0" ];then
+		upsd=$(($upsd / 2 + 1))
+		ifconfig ifb$ifbi up
+		tc qdisc add dev wlan$index-guest ingress
+		tc filter add dev wlan$index-guest parent ffff: protocol all prio 10 u32 match u32 0 0 action mirred egress redirect dev ifb$ifbi
+		tc qdisc add dev ifb$ifbi root handle 1: tbf rate ${upsd}kbps latency 50ms burst 2048
+#		tc class add dev ifb1 parent 1: classid 1:1 htb rate ${upsd}kbps ceil ${upsd}kbps
+#		tc filter add dev ifb1 parent 1: prio 1 protocol all u32 match ip dst 0.0.0.0/0 flowid 1:1
+#		tc qdisc add dev ifb1 parent 1:1 handle 101: sfq perturb 10
+	fi
+
+	if [ "x$downsd" != "x0" ];then
+		tc qdisc add dev wlan$index-guest root handle 1: tbf rate ${downsd}kbps latency 50ms burst 2048
+#		tc class add dev wlan0-guest parent 1: classid 1:1 htb rate ${downsd}kbps ceil ${downsd}kbps
+#		tc filter add dev wlan0-guest parent 1: prio 1 protocol all u32 match ip dst 0.0.0.0/0 flowid 1:1
+#		tc qdisc add dev wlan0-guest parent 1:1 handle 101: sfq perturb 10
+	fi
+}
+
+WTIME=60
+
+gwifi_start(){
+	local section=$1
+	local index=$2
+	local time=$(uci -q get wireless.@wifi-iface[$section].limittime)
+	local iface_dis=1
+
+	if [ "x$time" = "xtrue" ];then
+		local timetype=$(uci -q  get wireless.@wifi-iface[$section].limittimetype)
+		if [ "x$timetype" = "x1" ];then
+			local time=$(uci -q get wireless.@wifi-iface[$section].periodicaltime)
+			local now_week=$(date +%u)
+			[ "x$now_week" = "x7" ] && now_week=0
+			local now=$(date +%s)
+			for ptime in $time
+			do
+				eval $(echo $ptime | awk -F ',' '{print "starttime=\"" $1 "\";stoptime=\"" $2 "\"" ";week=" $3}')
+				[ "x$week" = "x7" ] && week=0
+				echo "0 $starttime * * $week gwifi restart $index" >> $CRONFILE
+				if [ "x$stoptime" = "x0" ];then
+					echo "59 23 * * $week gwifi stop $index" >> $CRONFILE
+				else
+					echo "0 $stoptime * * $week gwifi stop $index" >> $CRONFILE
+				fi
+
+				if [ "x$now_week" = "x$week" ]; then
+					sec1=$(date -d $starttime:00:00 +%s)
+					if [ "x$stoptime" = "x0" ];then
+						sec2=$(date -d 23:59:59 +%s)
+					else
+						sec2=$(date -d $stoptime:00:00 +%s)
+					fi
+					if [ $now -ge $((sec1-$WTIME)) -a $now -lt $((sec2-$WTIME)) ];then
+						iface_dis=0
+					fi
+				fi
+			done
+			uci set wireless.@wifi-iface[$section].disabled=$iface_dis
+			uci commit
+		elif [ "x$timetype" = "x0" ];then
+			local rtime=$(uci -q get wireless.@wifi-iface[$section].remainingtime)
+			local sec=$(($(date +%s) + ${rtime}*60*60))
+			local oncetime=$(date -d "@$sec" +"%M %H %d %m")
+			echo "$oncetime * gwifi stop_once $index" >> $CRONFILE
+		fi
+	fi
+}
+
+gwifi_speed_restart(){
+	local section=$1
+	local index=$2
+
+	gwifi_speed_stop $index
+	gwifi_speed_start $section $index
+}
+
+gwifi_start_all(){
+	sed -i "/gwifi/d" $CRONFILE
+	gwifi_start $n0 0
+	gwifi_start $n1 1
+	echo "$CRONUSER" >/etc/crontabs/cron.update
+	ubus call network reload
+	wifi reload_legacy
+}
+
+gwifi_speed_stop(){
+	local index=$1
+	local ifbi=$(($index + 1))
+	tc qdisc del dev ifb$ifbi root
+	tc qdisc del dev wlan${index}-guest ingress
+	tc qdisc del dev wlan${index}-guest root
+	ifconfig ifb$ifbi down
+}
+
+gwifi_restart(){
+	uci set wireless.@wifi-iface[${1}].disabled="0"
+	uci commit
+
+	ubus call network reload
+	wifi reload_legacy
+}
+
+gwifi_stop(){
+	uci set wireless.@wifi-iface[${1}].disabled="1"
+	uci commit
+
+	gwifi_speed_stop $2
+
+	ubus call network reload
+	wifi reload_legacy
+}
+
+gwifi_stop_once(){
+	gwifi_stop $1 $2
+	sed -i "/gwifi restart $2/d" $CRONFILE
+	sed -i "/gwifi stop $2/d" $CRONFILE
+	sed -i "/gwifi stop_once $2/d" $CRONFILE
+	echo "$CRONUSER" >/etc/crontabs/cron.update
+}
+
+n0=$(get_if wlan0)
+n1=$(get_if wlan1)
+[ "x$n0" = "x" -a "x$n1" = "x" ] && echo "no guest interface" && exit
+
+case $1 in
+	start)
+		gwifi_start_all
+		;;
+	stop)
+		gwifi_stop $(get_if wlan$2) $2
+		;;
+	restart)
+		gwifi_restart $(get_if wlan$2) $2
+		;;
+	stop_once)
+		gwifi_stop_once $(get_if wlan$2) $2
+		;;
+	speed_rst)
+		gwifi_speed_restart $(get_if wlan$2) $2
+		;;
+esac

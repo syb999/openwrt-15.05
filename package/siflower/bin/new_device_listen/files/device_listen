@@ -1,0 +1,28 @@
+#!/bin/sh /etc/rc.common
+START=99
+
+USE_PROCD=1
+
+PROG=/usr/sbin/new_device_listen
+
+start_service () {
+	echo "start new_device_listen" >>/tmp/syncservice.log
+	procd_open_instance
+	procd_set_param command "$PROG"
+
+	procd_set_param respawn
+
+	procd_close_instance
+}
+
+stop_service()
+{
+	echo "stop new_device_listen" >> /tmp/syncservice.log
+		kill `ps | grep new_device_listen | awk '{print $1}'`
+}
+
+shutdown()
+{
+	echo "shutdown new_device_listen" >> /tmp/syncservice.log
+		kill `ps | grep new_device_listen | awk '{print $1}'`
+}

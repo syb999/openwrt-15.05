@@ -1,0 +1,21 @@
+#!/bin/sh
+
+[ "${ACTION}" = "released" ] || exit 0
+
+. /lib/functions.sh
+. /etc/rc.button/blink
+
+logger "$BUTTON pressed for $SEEN seconds"
+
+blink 4 0.5
+if [ "$SEEN" -lt 1 ]
+then
+	echo "REBOOT" > /dev/console
+	sync
+	reboot
+else
+	echo "FACTORY RESET" > /dev/console
+	jffs2reset -y && reboot &
+fi
+
+return 0

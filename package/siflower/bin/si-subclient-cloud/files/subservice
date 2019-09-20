@@ -1,0 +1,73 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2011 OpenWrt.org
+
+START=62
+
+USE_PROCD=1
+PROG=/usr/bin/subcloud
+
+
+append_arg() {
+     local cfg="$1"
+     local var="$2"
+     local opt="$3"
+     local def="$4"
+     local val
+
+     config_get val "$cfg" "$var"
+     [ -n "$val" -o -n "$def" ] && procd_append_param command "$opt" "${val:-$def}"
+}
+
+
+start_service () {
+
+    echo "start subservice" >>/tmp/subservice.log
+        procd_open_instance
+        procd_set_param command "$PROG"
+        routerid=$(uci_get "siserver.cloudrouter.routerid")
+        subid=$(uci_get "siserver.cloudrouter.subid")
+        bind=$(uci_get "siserver.cloudrouter.bind")
+		ip=$(uci_get "sicloud.addr.ip")
+		port=$(uci_get "sicloud.addr.port")
+		ver=$(uci_get "sicloud.addr.version")
+
+        echo "routerid:$routerid" >> /tmp/subservice.log
+        echo "subid:$subid" >> /tmp/subservice.log
+        echo "bind:$bind" >> /tmp/subservice.log
+		echo "ip:$ip" >> /tmp/subservice.log
+		echo "port:$port" >> /tmp/subservice.log
+		echo "version:$ver" >> /tmp/subservice.log
+
+        procd_append_param command "-i" "$routerid"
+        procd_append_param command "-s" "$subid"
+        procd_append_param command "-b" "$bind"
+        procd_append_param command "-f" "$ip"
+        procd_append_param command "-p" "$port"
+        procd_append_param command "-v" "$ver"
+
+        if [ "$bind" -eq "0" ];then
+            echo "router is not bind" >> /tmp/subservice.log
+        else
+            echo "router is bind" >> /tmp/subservice.log
+            procd_set_param respawn
+        fi
+
+        procd_close_instance
+}
+
+service_running() {
+    echo "subservice running" >>/tmp/subservice.log
+}
+
+
+stop_service()
+{
+    echo "stop subservice" >> /tmp/subservice.log
+        kill `ps | grep subcloud | awk '{print $1}'`
+}
+
+shutdown()
+{
+    echo "shutdown subservice" >> /tmp/subservice.log
+        kill `ps | grep subcloud | awk '{print $1}'`
+}

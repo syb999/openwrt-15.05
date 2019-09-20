@@ -1,0 +1,26 @@
+#!/bin/sh
+
+if [ -n "$1" ]
+then
+	redirect_ip="$1"
+else
+	echo "alter_lan input params error" > /dev/ttyS0
+	exit
+fi
+if [ "$2" = "delay" ]
+then
+	sleep 10
+elif [ "$2" != "no_delay" ]
+then
+	echo "alter_lan input params error" > /dev/ttyS0
+	exit
+fi
+lanip=`uci get network.lan.ipaddr`
+if [ "$redirect_ip" != "$lanip" ]
+then
+	uci set network.lan.ipaddr=$redirect_ip
+	uci commit network
+	echo $redirect_ip siwifi.cn > /etc/hosts
+	ubus call network reload
+	exit 0
+fi

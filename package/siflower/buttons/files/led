@@ -1,0 +1,2 @@
+config wifi_button 'BTN0'
+	option wifi_enable '0'

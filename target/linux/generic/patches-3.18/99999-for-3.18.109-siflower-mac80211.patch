@@ -1,0 +1,12 @@
+--- a/include/linux/cred.h	2018-05-16 16:05:19.000000000 +0800
++++ b/include/linux/cred.h	2019-09-21 00:09:08.388552977 +0800
+@@ -354,10 +354,7 @@
+ #ifdef CONFIG_USER_NS
+ #define current_user_ns()	(current_cred_xxx(user_ns))
+ #else
+-static inline struct user_namespace *current_user_ns(void)
+-{
+-	return &init_user_ns;
+-}
++#define current_user_ns()	(&init_user_ns)
+ #endif

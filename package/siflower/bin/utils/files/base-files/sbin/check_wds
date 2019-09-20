@@ -1,0 +1,35 @@
+#!/bin/sh
+
+wds_err() {
+	echo "check wds enable failed! > /dev/ttyS0"
+	/etc/init.d/network restart
+	exit 0
+}
+
+# This is call from a network restart.
+# First wait the restart ends.
+sleep 20
+
+# Check interface(s).
+for i in $(seq 0 100)
+do
+	ifname=`uci get wireless.@wifi-iface[$i].ifname`
+	if [ x"$ifname" = x ];then
+		break;
+	fi
+
+	disabled=`uci get wireless.@wifi-iface[$i].disabled`
+	if [ "$disabled" = "1" ];then
+		break;
+	fi
+
+	iface=`ifconfig | grep $ifname -w`
+	if [ x"$iface" = x ];then
+		echo "check $ifname failed!" > /dev/ttyS0
+		wds_err
+	fi
+done
+
+echo "check wds enable done!" > /dev/ttyS0
+exit 0
+

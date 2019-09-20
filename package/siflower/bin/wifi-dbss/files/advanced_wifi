@@ -1,0 +1,40 @@
+#!/bin/sh /etc/rc.common
+# Copyright (c) 2011-2012 OpenWrt.org
+
+START=90
+
+USE_PROCD=1
+PROG=/usr/sbin/wifi-dbss
+
+wifi_dbss_started=0
+
+check_dbss() {
+	local cfg="$1"
+
+	[ "$wifi_dbss_started" = "0" ] || return 0
+
+	config_get dbss_enable "$cfg" cond_hidden
+	[ "$dbss_enable" ] && [ "$dbss_enable" != "0" ] || return 0
+
+	procd_open_instance
+	procd_set_param command "$PROG"
+	procd_append_param command "-d" "5"
+	procd_set_param respawn
+	procd_close_instance
+	wifi_dbss_started=1
+}
+
+start_service() {
+	wifi_dbss_started=0
+	config_load wireless
+	config_foreach check_dbss wifi-iface
+
+#	if [ "$wifi_dbss_started" = "1" ]; then
+#		/sbin/wifi restart
+#	fi
+
+}
+
+stop_service() {
+	echo "---wifi-dbss down" > /dev/ttyS0
+}

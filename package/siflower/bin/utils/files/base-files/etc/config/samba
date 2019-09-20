@@ -1,0 +1,11 @@
+config samba
+    option 'name'                   'siwifi'
+    option 'workgroup'              'WORKGROUP'
+    option 'description'            'OpenWrt'
+    option 'homes'                  '1'
+
+
+config sambashare
+    option name 'USB'
+    option path '/mnt/sda1/'
+    option read_only 'no'

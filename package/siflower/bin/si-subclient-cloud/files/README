@@ -1,0 +1,7 @@
+4f06f81d.0 is "let's encrypt" certificate, we use a certificate signed by this organization. and this name format of 4f06f81d.0 is openssl requested. 4f06f81d is hash of certificate's owner, you can get this by below command.
+
+openssl x509 -hash -in $cert
+
+the dir where openssl search certificate is /etc/ssl/certs/ by default.
+
+must choose openssl-util package

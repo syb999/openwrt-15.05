@@ -1,0 +1,10 @@
+#!/bin/ash
+
+cpufreq=$1
+
+if [ ! -d /debugfs/ ]; then
+	mkdir /debugfs/
+	mount -t debugfs debugfs /debugfs/
+fi
+
+echo "$cpufreq" > /debugfs/cpu-freq

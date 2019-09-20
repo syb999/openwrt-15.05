@@ -1,0 +1,21 @@
+Index: compat-wireless-2016-01-10/net/mac80211/rc80211_minstrel_ht.c
+===================================================================
+--- compat-wireless-2016-01-10.orig/net/mac80211/rc80211_minstrel_ht.c	2016-01-15 20:00:10.000000000 +0800
++++ compat-wireless-2016-01-10/net/mac80211/rc80211_minstrel_ht.c	2017-05-03 18:44:19.420718890 +0800
+@@ -1151,9 +1151,15 @@
+ 		stbc = (sta_cap & IEEE80211_HT_CAP_RX_STBC) >>
+ 			IEEE80211_HT_CAP_RX_STBC_SHIFT;
+ 		mi->tx_flags |= stbc << IEEE80211_TX_CTL_STBC_SHIFT;
++	}
+ 
+-		if (sta_cap & IEEE80211_HT_CAP_LDPC_CODING)
++	if (sta_cap & IEEE80211_HT_CAP_LDPC_CODING) {
++		if (use_vht) {
++			if (vht_cap->cap & IEEE80211_VHT_CAP_RXLDPC)
++				mi->tx_flags |= IEEE80211_TX_CTL_LDPC;
++		} else {
+ 			mi->tx_flags |= IEEE80211_TX_CTL_LDPC;
++		}
+ 	}
+ 
+ 	for (i = 0; i < ARRAY_SIZE(mi->groups); i++) {

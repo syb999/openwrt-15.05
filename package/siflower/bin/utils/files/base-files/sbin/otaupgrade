@@ -1,0 +1,201 @@
+#!/usr/bin/lua
+
+local json = require("luci.json")
+local util =require 'luci.util'
+local sysutil = require "luci.siwifi.sf_sysutil"
+local nixio = require "nixio"
+local fs = require "nixio.fs"
+local uci = require "luci.model.uci"
+local _uci_real  = cursor or _uci_real or uci.cursor()
+
+local image_tmp   = "/tmp/firmware.img"
+local ap_image_tmp = "/tmp/ap_firmware.img"
+local ap_info_for_calc = "/tmp/ap_download.info"
+local status = 0
+local ap_status = 0
+
+local function write_info(status, msg)
+	local info = {}
+	info["status"] = status
+	info["msg"] = msg
+
+	nixio.syslog("crit", "ota upgrade "..msg)
+	local json_info = json.encode(info)
+	local f = nixio.open("/tmp/upgrade_status", "w", 600)
+	f:writeall(json_info)
+	f:close()
+end
+
+
+local ap_ota_info={}
+local ap_download_info={}
+local ap_download_info_all={}
+local ap_data, ap_code, ap_msg = fs.readfile("/tmp/ap_ota_info")
+if (ap_data ~= nil) then
+	write_info(2, "ap ota upgrade is downloading now")
+	local ap_remote_info = json.decode(ap_data)
+	for i = 1, #ap_remote_info do
+		ap_ota_info[#ap_ota_info+1]={}
+		ap_download_info_all[#ap_download_info_all+1]={}
+		ap_download_info_all[#ap_download_info_all].url  = ap_remote_info[i]["url"]
+		ap_download_info_all[#ap_download_info_all].checksum  = ap_remote_info[i]["checksum"]
+		ap_download_info_all[#ap_download_info_all].ota_version  = ap_remote_info[i]["otaversion"]
+		ap_download_info_all[#ap_download_info_all].size  = ap_remote_info[i]["size"]
+		ap_ota_info[#ap_ota_info].ota_version = ap_remote_info[i]["otaversion"]
+		ap_ota_info[#ap_ota_info].ori_version = ap_remote_info[i]["oriversion"]
+	end
+
+	-- remove duplicate download version
+	for i = 1, #ap_download_info_all do
+		local same = 0
+		for j =1, #ap_download_info do
+			if ap_download_info[j].ota_version == ap_download_info_all[i].ota_version then
+				same = 1
+			end
+		end
+		if same == 0 then
+			ap_download_info[#ap_download_info +1] = {}
+			ap_download_info[#ap_download_info] = ap_download_info_all[i]
+		end
+	end
+	-- write download info for calc download process
+	local json_info = json.encode(ap_download_info)
+	local f = nixio.open(ap_info_for_calc, "w", 600)
+	f:writeall(json_info)
+	f:close()
+
+	for i = 1, #ap_download_info  do
+		local ap_path = ap_image_tmp..tostring(i)
+		util.exec(" curl -k -m 120 -o %q  %s" %{ap_path,ap_download_info[i].url})
+		local ap_checksum_info = util.exec("md5sum %s" %ap_path)
+		local ap_checksum = string.match(ap_checksum_info,"([^%s]+).*")
+		ap_download_info[i].local_checksum  = ap_checksum
+		ap_download_info[i].path = ap_path
+	end
+end
+
+local data, code, msg = fs.readfile("/tmp/ota_info")
+local ota_checksum = ""
+local checksum = ""
+if (data ~= nil) then
+	write_info(1, "ota upgrade is downloading now")
+	local remote_info = json.decode(data)
+	local url  = remote_info["url"]
+	ota_checksum = remote_info["checksum"]
+
+	util.exec(" curl -k -m 120 -o %q  %s" %{image_tmp,url})
+	local checksum_info = util.exec("md5sum %s" %image_tmp)
+	checksum = string.match(checksum_info,"([^%s]+).*")
+end
+
+function ap_version_check(version_table, version)
+	for i = 1, #version_table do
+		if version_table[i] == version then
+			return true
+		end
+	end
+	return false
+end
+
+--[[
+ap ota info include ori version and ota version
+
+ap download info include ota version checksum local_checksum path url
+
+from ap ota info find related img info in download info
+]]
+
+if #ap_ota_info ~= 0 then
+
+	write_info(3, "ap ota upgrade is start now")
+	local mac_update_list={}
+	for i = 1, #ap_download_info do
+		local ap_version = {}
+		local download_img = ap_download_info[i]
+		for j = 1, #ap_ota_info  do
+			if download_img.ota_version == ap_ota_info[j].ota_version then
+				ap_version[#ap_version + 1] = ap_ota_info[j].ori_version
+			end
+		end
+		nixio.syslog("crit", "local checksum:"..download_img.local_checksum.."remote checksum: "..download_img.checksum)
+		if (download_img.local_checksum == download_img.checksum) then
+			local download_mac_list = " "
+			-- if device version == ori version, means need to update to new version
+			_uci_real:foreach("capwap_devices","device", function(s)
+				if s.status == "1" and  s.updating ~= "1" and  s.updating ~= "2" and ap_version_check(ap_version, s.firmware_version)  then
+					download_mac_list=download_mac_list.." "..s.mac
+					mac_update_list[#mac_update_list+1] = s.mac
+				end
+			end)
+			if download_mac_list ~= " " then
+				write_info(5,download_mac_list)
+				nixio.syslog("crit", "version:"..download_img.ota_version.."downlist:"..download_mac_list)
+				luci.sys.call("killall siupserver")
+				luci.sys.call("siupserver %s &"%{download_img.path})
+				-- 0 means no version
+				 ret = luci.sys.call("wtp_update %s %s %s"%{download_img.ota_version , download_img.checksum, download_mac_list})
+				nixio.syslog("crit", "send cmd here:wtp_update %s %s %s"%{download_img.ota_version , download_img.checksum, download_mac_list})
+				if ret ~= 0 then
+					write_info(6,"ap ota upgrade send ap download cmd error")
+				end
+			end
+		else
+			write_info(11, download_img.ota_version)
+			util.exec("rm %s"%{download_img.path})
+		end
+	end
+	write_info(7,"ap ota upgrade is flashing operation now")
+	local done = 1
+	local count = 1
+
+	if #mac_update_list == 0 then
+		write_info(4,"ap is no need upgrade")
+	else
+		repeat
+			done = 1
+			luci.util.exec("sleep 10")
+			count = count + 1;
+			-- _uci_real would not update value
+			local uci = require "luci.model.uci".cursor()
+			for i=1,#mac_update_list do
+				updating = uci:get("capwap_devices", mac_update_list[i],"updating")
+				nixio.syslog("crit", "ap:"..mac_update_list[i].." update is "..updating)
+				if updating == "0" or updating == "1" or updating == "2" then
+					done = 0
+				end
+				if updating == "3" or updating == "5" then
+					write_info(8,mac_update_list[i])
+				end
+			end
+			if count == 20 and done == 0 then
+				write_info(9,"ap ota upgrade is timeout")
+				done = 1
+			end
+		until (done == 1)
+		nixio.syslog("crit", "ap updating is done")
+		write_info(10,"ap ota upgrade is done")
+
+		luci.sys.call("killall siupserver")
+		util.exec("rm %s*"%{ap_image_tmp})
+	end
+	util.exec("rm /tmp/ap_ota_info")
+	util.exec("rm /tmp/ap_download.info")
+end
+
+if (data ~= nil) then
+	nixio.syslog("crit", "ota checksum is %s, img checksum is %s"%{ota_checksum, checksum})
+	if (ota_checksum == checksum) then
+		write_info(12,"ota upgrade is flashing operation now")
+		nixio.syslog("crit", "kill process and update device here")
+		local cmd_obj = {}
+		cmd_obj.action = sysutil.SYSTEM_EVENT_UPGRADE_DONE
+		local cmd_str = json.encode(cmd_obj)
+		local cmd = "RSCH -data "..cmd_str
+		local ret = {}
+		sysutil.sendCommandToLocalServer(cmd,ret)
+		sysutil.fork_exec("sleep 3; killall dropbear uhttpd;  /sbin/sysupgrade %q " %{ image_tmp })
+	else
+		write_info(13, "ota image downloaded is incorrect")
+		util.exec("rm /tmp/upgrade_shortest_time /tmp/firmware.img")
+	end
+end

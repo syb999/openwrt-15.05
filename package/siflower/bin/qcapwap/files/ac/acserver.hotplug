@@ -1,0 +1,6 @@
+#!/bin/sh
+
+if [ "$ACTION" = ifup ] && [ "$INTERFACE" = "lan" ]; then
+	/etc/init.d/ac_server reload
+	logger -t capwap ac_server reload
+fi

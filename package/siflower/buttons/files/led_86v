@@ -1,0 +1,13 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008 OpenWrt.org
+
+START=97
+
+. /etc/rc.button/blink
+
+start() {
+	echo 1 > /tmp/wifi_onoff_status
+	blink 4 0.5
+	./etc/anomaly_server &
+}
+

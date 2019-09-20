@@ -1,0 +1,43 @@
+#!/bin/sh
+
+. $(which pctl)
+
+speed_init_dev(){
+	local speed_en mac i speed_en limitup limitdown
+
+	for cfg in devlist wldevlist
+	do
+		i=0
+		mac=$(uci get ${cfg}.@device[$i].mac 2>/dev/null)
+		while [ "x$mac" != "x" ]
+		do
+			speed_en=$(uci get ${cfg}.@device[$i].speedlimit 2>/dev/null)
+			if [ "x$speed_en" = "x1" ];then
+				mac=${mac//_/:}
+				limitup=$(uci get ${cfg}.@device[$i].limitup 2>/dev/null)
+				limitdown=$(uci get ${cfg}.@device[$i].limitdown 2>/dev/null)
+				do_speed add $mac $limitup $limitdown
+			fi
+			i=$((++i))
+			mac=$(uci get ${cfg}.@device[$i].mac 2>/dev/null)
+		done
+	done
+}
+
+[ ifup = "$ACTION" ] && {
+	if [ "x$INTERFACE" = "xguest" -o "x$INTERFACE" = "xlan" ]; then
+		speed=$(uci get basic_setting.speed.enable)
+		if [ "x$speed" = "x1" ]; then
+			tc qdisc del dev ifb3 root 2>/dev/null
+			tc qdisc del dev ifb0 root 2>/dev/null
+			speed_boot
+			speed_init_dev
+		fi
+	fi
+	if [ "x$INTERFACE" = "xlease" ]; then
+		local downsd=$(uci -q get basic_setting.lease_wifi.speed)
+		if [ "x$downsd" != "x" -o "x$downsd" != "x0" ]; then
+			tc qdisc add dev br-lease root handle 1: tbf rate ${downsd}kbps latency 50ms burst 2048
+		fi
+	fi
+}

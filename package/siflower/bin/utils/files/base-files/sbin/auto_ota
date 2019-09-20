@@ -1,0 +1,117 @@
+#!/bin/sh
+. /lib/functions.sh
+. /usr/share/libubox/jshn.sh
+
+cookie_path=/tmp/auto_cookie
+UCIG="uci -q get"
+CFG=capwap_devices
+UPGRADE_CFG=upgrade_cfg
+UPGRADE_CFG_L=/etc/config/$UPGRADE_CFG
+
+auto_ota_logger(){
+	logger "auto ota: $@"
+}
+
+
+get_stok() {
+	auth=$(cat /etc/shadow | sed -n '1p' | awk -F ':' '{print $2}')
+	if [ "x$auth" = "x" ];then
+		curl -D $1 "http://127.0.0.1/cgi-bin/luci/api/sfsystem/get_stok_local" -d '{"version":"V10","luci_name":"admin"}'
+	else
+		curl -D $1 -H "Authorization: $auth" "http://127.0.0.1/cgi-bin/luci/api/sfsystem/get_stok_local" -d '{"version":"V10","luci_name":"admin"}'
+	fi
+	result=`awk -F: ' /path/ {split($2,myarry,"=")} END {print myarry[4]}' $1`
+	if [ -n $result ]; then
+		echo "$result"
+		return 1
+	else
+		return 0
+	fi
+}
+
+start_ota() {
+	url="http://127.0.0.1/cgi-bin/luci/;stok="$1"/api/sfsystem/ota_check2"
+	check_result=`curl -b $2 -H "Content-type:application/json" -X POST $url -d '{"version":"V10","luci_name":"admin"}'`
+	auto_ota_logger $check_result
+	json_load "$check_result"
+	json_get_vars romversion otaversion code type force checksum size url
+	if [ "x$code" != "x0" ]; then
+		auto_ota_logger "get error code=$code"
+		return 1
+	fi
+	local_version=$(echo $romversion | awk -F ' ' '{print $3}')
+	if [ "x$local_version" != "x$otaversion" -a "x$force" == "x1" ]; then
+		echo "{\"size\": $size,\"url\": \"$url\",\"checksum\": \"$checksum\"}" > /tmp/ota_info
+		/sbin/otaupgrade
+		return 1
+	else
+		auto_ota_logger "same version or code=$code"
+		return 1
+	fi
+}
+
+start_ac_ota() {
+	url="http://127.0.0.1/cgi-bin/luci/;stok="$1"/api/sfsystem/ac_ap_ota_check"
+	check_result=`curl -b $2 -H "Content-type:application/json" -X POST $url -d '{"version":"V15","luci_name":"admin"}'`
+	auto_ota_logger $check_result
+	json_load "$check_result"
+	json_get_vars code
+	json_get_vars ap_len
+	local upgrade=0
+
+	auto_ota_logger "ap_len is $ap_len"
+
+	if [ "x$code" != "x0" ]; then
+		auto_ota_logger "get error code=$code"
+	fi
+	json_select ac
+	json_get_vars romversion otaversion type force checksum size url
+	local_version=$(echo $romversion | awk -F ' ' '{print $3}')
+	if [ "x$local_version" != "x$otaversion" -a "x$force" == "x1" ]; then
+		echo "{\"size\": $size,\"url\": \"$url\",\"checksum\": \"$checksum\"}" > /tmp/ota_info
+		upgrade=1
+	else
+		auto_ota_logger "same version or code=$code or not force"
+	fi
+	json_select ..
+	if [ -n "$ap_len" -a "$ap_len" != "0" ]  ; then
+		json_select ap
+		echo "[" > /tmp/ap_ota_info
+		cycle=0
+		while [ "$cycle" != "$ap_len" ]; do
+			cycle=$((cycle+1))
+			[ "$cycle" != "$1" ] && echo "," >> /tmp/ap_ota_info
+			json_select "$cycle"
+			json_get_vars romversion otaversion type force checksum size url
+			echo "{\"size\": $size,\"url\": \"$url\",\"checksum\": \"$checksum\",\"oriversion\": \"$romversion\",\"otaversion\":\"$otaversion\"}" >> /tmp/ap_ota_info
+			if [ "x$force" == "x1" ]; then
+				echo "{\"size\": $size,\"url\": \"$url\",\"checksum\": \"$checksum\",\"oriversion\": \"$romversion\",\"otaversion\":\"$otaversion\"}," >> /tmp/ap_ota_info
+				upgrade=1
+			else
+				auto_ota_logger "ap ota not force"
+			fi
+			json_select ..
+		done
+		echo "]" >> /tmp/ap_ota_info
+	else
+		auto_ota_logger "no ap ota need upgrade"
+	fi
+	[ "x$upgrade" = "x1" ] && {
+		auto_ota_logger "start ota_upgrade here"
+		/sbin/otaupgrade
+	}
+}
+
+
+cookie=`get_stok $cookie_path | tr -d "\r"`
+if [ -z $cookie ]; then
+	auto_ota_logger "get stok fail :$cookie"
+	return 0
+fi
+
+dev=`uci get basic_setting.ac.enable`
+if [ "x$dev" != "x1" ]; then
+	start_ota $cookie $cookie_path
+else
+	start_ac_ota $cookie $cookie_path
+fi

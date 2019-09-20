@@ -1,0 +1,204 @@
+#!/bin/sh
+
+CRONUSER=admin
+CRONFILE=/etc/crontabs/$CRONUSER
+ACL=aclscript
+
+acl_add(){
+	mac=$1
+	lan=$2
+	internet=$3
+
+	if [ "x$lan" = "x0" ];then
+		ipset add inputvar $mac
+	fi
+	if [ "x$internet" = "x0" ];then
+		ipset add forwardvar $mac
+	fi
+}
+
+acl_urllist_add(){
+	mac=$1
+	ipset add urllist_mac $mac
+	logger -t acl_urllist "add urllist mac $mac"
+}
+
+acl_urllist_del(){
+	mac=$1
+	ipset del urllist_mac $mac
+	logger -t acl_urllist "del urllist mac $mac"
+}
+
+acl_del(){
+	ipset del inputvar $1
+	ipset del forwardvar $1
+}
+
+acl_change_lan(){
+	if [ "x$2" = "x0" ];then
+		ipset add inputvar $1
+	else
+		ipset del inputvar $1
+	fi
+}
+
+acl_change_internet(){
+	if [ "x$2" = "x0" ];then
+		ipset add forwardvar $1
+	else
+		ipset del forwardvar $1
+	fi
+}
+
+acl_lease_add(){
+	local mac=$1
+	local fmac=${mac//:/_}
+	local ltime=$(uci -q get wldevlist.${fmac}.lease_time)
+	if [ "x$ltime" = "x" -o "x$ltime" = "x0" ]; then
+		dec-tool lease del $mac
+		ipset add lforward $mac
+	fi
+}
+
+acl_lease_time(){
+	local mac=$1
+	local sec=$2
+	local now=$(date +%s)
+	local stoptime=$(($now + $sec))
+	local fmac=${mac//:/_}
+
+	dec-tool lease del $mac
+	ipset del lforward $1
+	#leaseblock for blocking captive web detect
+	ipset del leaseblock $mac
+	uci set wldevlist.${fmac}.lease_time=$2
+	uci set wldevlist.${fmac}.lease_start=$now
+	uci commit
+	sed -i "/$ACL l_del $mac/d" $CRONFILE
+	echo "$(date -d "@$stoptime" +"%M %H %d %m") * $ACL l_del $mac" >> $CRONFILE
+	echo "$CRONUSER" >/etc/crontabs/cron.update
+}
+
+acl_lease_del(){
+	local mac=$1
+	local fmac=${mac//:/_}
+	online=$(uci get -q wldevlist.${fmac}.online)
+	if [ "${online}" = "1" ]; then
+		ipset add lforward $mac
+	fi
+	uci set wldevlist.${fmac}.lease_time="0"
+	uci set wldevlist.${fmac}.lease_start="0"
+	uci commit
+	sed -i "/$ACL l_del $mac/d" $CRONFILE
+	echo "$CRONUSER" >/etc/crontabs/cron.update
+}
+
+acl_lease_clean(){
+	local mac=$1
+	local fmac=${mac//:/_}
+	local ltime=$(uci -q get wldevlist.${fmac}.lease_time)
+
+	ipset del lforward $mac
+	if [ "x$ltime" != "x0" -a "x$ltime" != "x" ]; then
+		uci set wldevlist.${fmac}.lease_time="0"
+		uci set wldevlist.${fmac}.lease_start="0"
+		uci commit
+		sed -i "/$ACL l_del $mac/d" $CRONFILE
+		echo "$CRONUSER" >/etc/crontabs/cron.update
+	fi
+}
+
+acl_lease_fornow(){
+	local mac=$1
+	local fmac=${mac//:/_}
+
+	dec-tool lease add $mac
+	sleep 1
+	#leaseblock for blocking captive web detect
+	ipset add leaseblock $mac
+
+	ipset del lforward $mac
+	sleep 90
+
+	dec-tool lease del $mac
+	local ltime=$(uci -q get wldevlist.${fmac}.lease_time)
+	if [ "x$ltime" = "x0" -o "x$ltime" = "x" ]; then
+		# if there is the same script, not do anything
+		if [ "x$(ps | grep l_fornow | grep $mac | grep -v grep | wc -l)" = "x1" ];then
+			ipset add lforward $mac
+			#leaseblock for blocking captive web detect
+			ipset del leaseblock $mac
+		fi
+	fi
+}
+
+acl_lease_update_ip(){
+	local dn=$(uci -q get sicloud.addr.ip)
+	local old_ip=$(uci -q get sicloud.leaseserver.ip)
+	local ip=$(nslookup $dn | grep Address | sed -n '$p' | awk -F ': ' '{print $2}')
+
+	if [ "x$old_ip" != "x$ip" ]; then
+		uci set sicloud.leaseserver.ip=$ip
+		uci commit sicloud
+		ipset del serverip $old_ip
+		ipset add serverip $ip
+		local port=$(uci -q get sicloud.leaseserver.port)
+		local httpsport=$(uci -q get sicloud.leaseserver.httpsport)
+		local num=$(iptables -nvL prerouting_lease_rule -t nat --line-numbers | grep $old_ip | grep $port | awk -F ' ' '{print $1}')
+		if [ "x$num" != "x" ];then
+			iptables -t nat -D prerouting_lease_rule $num
+			iptables -t nat -A prerouting_lease_rule -p tcp --dport 80 -m set --match-set lforward src -m set ! --match-set serverip dst -j DNAT --to-destination $ip:$port
+		else
+			echo "not found http rule"
+		fi
+		local httpsnum=$(iptables -nvL prerouting_lease_rule -t nat --line-numbers | grep $old_ip | grep $httpsport | awk -F ' ' '{print $1}')
+		if [ "x$httpsnum" != "x" ];then
+			iptables -t nat -D prerouting_lease_rule $httpsnum
+			iptables -t nat -A prerouting_lease_rule -p tcp --dport 443 -m set --match-set lforward src -m set ! --match-set serverip dst -j DNAT --to-destination $ip:$httpsport
+		else
+			echo "not found https rule"
+		fi
+	fi
+}
+
+case $1 in
+	add)
+		acl_add $2 $3 $4 #mac lan internet
+		;;
+	del)
+		acl_del $2		#mac
+		;;
+	c_lan)
+		acl_change_lan $2 $3 #mac lan
+		;;
+	c_net)
+		acl_change_internet $2 $3 #mac internet
+		;;
+	u_add)
+		acl_urllist_add $2 #mac
+		;;
+	u_del)
+		acl_urllist_del $2 #mac
+		;;
+	l_add)
+		acl_lease_add $2 #mac
+		;;
+	l_time)
+		acl_lease_time $2 $3 #mac time
+		;;
+	l_del)
+		acl_lease_del $2 #mac
+		;;
+	l_clean)
+		acl_lease_clean $2 #mac
+		;;
+	l_fornow)
+		acl_lease_fornow $2 #mac
+		;;
+	l_update_ip)
+		acl_lease_update_ip
+		;;
+	*)
+		echo "error cmd"
+		;;
+esac

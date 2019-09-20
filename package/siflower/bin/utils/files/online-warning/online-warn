@@ -1,0 +1,110 @@
+#!/bin/sh
+
+WARN_GPIO=/sys/devices/pinctrl/gpio/gpio8/value
+GPIO=/sys/devices/pinctrl/gpio/gpio8/direction
+
+start(){
+	local enable=$(uci get basic_setting.onlinewarn.enable 2>/dev/null)
+	local mac=$1
+	if [ "x$enable" = "x1" ]; then
+		if [ "x$mac" != "x" ]; then
+			mac=${mac//:/_}
+			uci set wldevlist.${mac}.warn="1"
+		fi
+		if [ "x$(ps | grep [s]iwarning)" = "x" ]; then
+			siwarning &
+		fi
+	fi
+}
+
+start_all(){
+	local i=0
+	local open=0
+
+	while true
+	do
+		warn=$(uci get wldevlist.@device[$i].warn 2>/dev/null)
+		if [ "x$warn" != "x" ];then
+			if [ "x$warn" = "x1" ];then
+				open=1
+				break
+			fi
+		else
+			break
+		fi
+		i=$((i+1))
+	done
+
+	if [ "x$open" = "x1" ];then
+		start
+	fi
+}
+
+stop_all(){
+	local warn
+	local i=0
+	killall siwarning
+	echo 0 > $WARN_GPIO
+	while true
+	do
+		warn=$(uci get wldevlist.@device[$i].warn 2>/dev/null)
+		if [ "x$warn" != "x" ];then
+			if [ "x$warn" = "x1" ];then
+				uci set wldevlist.@device[$i].warn="0"
+			fi
+		else
+			break
+		fi
+		i=$((i+1))
+	done
+}
+
+stop(){
+	local i=0
+	local open=0
+	while true
+	do
+		warn=$(uci get wldevlist.@device[$i].warn 2>/dev/null)
+		if [ "x$warn" != "x" ];then
+			if [ "x$warn" = "x1" ];then
+				open=1
+				break
+			fi
+		else
+			break
+		fi
+		i=$((i+1))
+	done
+	if [ "x$open" = "x0" ]; then
+		killall siwarning
+		echo 0 > $WARN_GPIO
+	fi
+}
+
+boot(){
+	echo 8 > /sys/class/gpio/export
+	echo out > $GPIO
+	[ $? != 0 ] && echo "create gpio 8 directory fail!"
+}
+
+case $1 in
+	boot)
+		boot
+		;;
+	start)
+		shift
+		start $*
+		;;
+	start_all)
+		start_all
+		;;
+	stop)
+		stop
+		;;
+	stop_all)
+		stop_all
+		;;
+	*)
+		echo "param error"
+		;;
+esac

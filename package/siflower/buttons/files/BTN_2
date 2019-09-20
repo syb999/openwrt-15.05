@@ -1,0 +1,6 @@
+#!/bin/sh
+
+echo "FAT/FIT mode changed! now need to reboot!" >> /dev/console
+reboot
+
+return 0

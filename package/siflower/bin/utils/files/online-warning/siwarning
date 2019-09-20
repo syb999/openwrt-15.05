@@ -1,0 +1,11 @@
+#!/bin/sh
+
+WARN_GPIO=/sys/devices/pinctrl/gpio/gpio8/value
+
+while true
+do
+	echo 1 > $WARN_GPIO
+	sleep 1
+	echo 0 > $WARN_GPIO
+	sleep 1
+done

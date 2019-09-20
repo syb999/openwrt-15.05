@@ -1,0 +1,40 @@
+Index: compat-wireless-2016-01-10/net/mac80211/agg-tx.c
+===================================================================
+--- compat-wireless-2016-01-10.orig/net/mac80211/agg-tx.c	2019-01-22 19:38:59.486098492 +0800
++++ compat-wireless-2016-01-10/net/mac80211/agg-tx.c	2019-01-22 19:42:06.062106322 +0800
+@@ -63,7 +63,7 @@
+ static void ieee80211_send_addba_request(struct ieee80211_sub_if_data *sdata,
+ 					 const u8 *da, u16 tid,
+ 					 u8 dialog_token, u16 start_seq_num,
+-					 u16 agg_size, u16 timeout)
++					 u16 agg_size, u16 timeout, bool amsdu_supported)
+ {
+ 	struct ieee80211_local *local = sdata->local;
+ 	struct sk_buff *skb;
+@@ -98,7 +98,7 @@
+ 	mgmt->u.action.u.addba_req.action_code = WLAN_ACTION_ADDBA_REQ;
+
+ 	mgmt->u.action.u.addba_req.dialog_token = dialog_token;
+-	capab = (u16)(1 << 0);		/* bit 0 A-MSDU support */
++    capab = (u16)(amsdu_supported << 0);    /*  bit 0 AMSDU supported */
+ 	capab |= (u16)(1 << 1);		/* bit 1 aggregation policy */
+ 	capab |= (u16)(tid << 2); 	/* bit 5:2 TID number */
+ 	capab |= (u16)(agg_size << 6);	/* bit 15:6 max size of aggergation */
+@@ -367,6 +367,7 @@
+ 	 * to the driver but are put onto tid_tx->pending instead,
+ 	 * with locking to ensure proper access.
+ 	 */
++    tid_tx->amsdu = false;
+ 	clear_bit(HT_AGG_STATE_OPERATIONAL, &tid_tx->state);
+
+ 	/*
+@@ -512,7 +513,8 @@
+ 	ieee80211_send_addba_request(sdata, sta->sta.addr, tid,
+ 				     tid_tx->dialog_token, params.ssn,
+ 				     IEEE80211_MAX_AMPDU_BUF,
+-				     tid_tx->timeout);
++				     tid_tx->timeout,
++                     params.amsdu);
+ }
+
+ /*

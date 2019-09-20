@@ -1,0 +1,50 @@
+nevermore.wang@siflower.com.cn
+
+To use this package, try the following steps:
+
+**********************LED**************************
+1. Define your own trigger in led.c and action.h
+2. Add the led handler in plat_led.c
+3. Check the board name in /tmp/sysinfo/model vs plat.h.
+4. Confirm the leds are available in /sys/class/leds/.
+5. Use it by /bin/led-button -l $(action_number) { -l $(action_number) ... -l $(action_number) }
+
+dts:
+
+&leds {
+	status = "okay";
+	test-led {
+		label = "test-led";
+		gpios = <&gpio 36 1>;
+		linux,default-trigger = "timer";
+	};
+};
+
+kernel config:
+
+CONFIG_LEDS_GPIO
+
+********************BUTTON*************************
+1. Check the supported action defined in action.h
+2. Add the gpio-button handler defined in plat_btn.c
+3. Check the board name in /tmp/sysinfo/model vs plat.h.
+4. Confirm your gpio-input device, default is /dev/input/event0.
+5. Use it by /bin/led-button -b $(input-device-path)
+
+dts:
+
+&gpio_keys {
+	status = "okay";
+	test-btn {
+		label = "test-btn";
+		gpios = <&gpio 25 1>;
+		linux,code = <0x100>;
+		debounce-interval = <20>;
+	};
+};
+
+kernel config:
+
+CONFIG_INPUT_EVDEV
+CONFIG_KEYBOARD_GPIO
+

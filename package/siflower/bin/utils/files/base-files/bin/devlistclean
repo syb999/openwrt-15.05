@@ -1,0 +1,25 @@
+#!/bin/sh
+
+CFG=/etc/config/wldevlist
+FSIZE=200000
+RMNUM=100
+
+[ $(ps | grep $0 |grep -v grep |   wc -l) -gt 2 ] && exit
+if [ $(wc -c $CFG | awk '{print $1}') -gt $FSIZE ]; then
+	i=0
+	deli=0
+	online=$(uci get -q wldevlist.@device[$i].online)
+	while [ "x$online" != "x" ]
+	do
+		if [ "x$online" = "x0" ]; then
+			uci delete -q wldevlist.@device[$i]
+			deli=$((deli+1))
+			[ $deli -gt 100 ] && uci commit wldevlist && exit
+			online=$(uci get -q wldevlist.@device[$i].online)
+		   	continue
+		fi
+		i=$((i+1))
+		online=$(uci get -q wldevlist.@device[$i].online)
+	done
+	uci commit wldevlist
+fi

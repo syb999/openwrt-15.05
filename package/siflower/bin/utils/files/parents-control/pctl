@@ -1,0 +1,376 @@
+#!/bin/sh
+
+CRONUSER=admin
+CRONFILE=/etc/crontabs/$CRONUSER
+ACL=aclscript
+TIMELIST=timelist
+WTIME=60
+
+get_cfg(){
+	local mac=$1
+	mac=${mac//:/_}
+	if [ "x$(uci get devlist.$mac 2>/dev/null)" = "x" ]; then
+		echo "wldevlist.$mac"
+	else
+		echo "devlist.$mac"
+	fi
+}
+
+add_one_time(){
+	local mac=$1
+	local starttime=$2
+	local stoptime=$3
+	local week=$4
+	[ "x$week" = "x8" ] && week='*'
+	local sec1=$(date -d $starttime +%s)
+	local sec2=$(date -d $stoptime +%s)
+	local now=$(date +%s)
+	local nweek=$(date +%u)
+	[ "x$nweek" = "x7" ] && nweek=0
+	if [ $now -ge $((sec1-$WTIME)) -o $now -lt $((sec2-$WTIME)) ] && ([ "x$week" = "x*" ] || [ "x$week" != "x${week/$nweek/}" ]); then
+		$ACL c_net $mac 0
+	fi
+	eval $(echo $starttime | awk -F ':' '{print "starth=" $1 ";startm=" $2}')
+	eval $(echo $stoptime | awk -F ':' '{print "stoph=" $1 ";stopm=" $2}')
+	echo "$startm $starth * * $week $ACL c_net $mac 0" >> $CRONFILE
+	echo "$stopm $stoph * * $week $ACL c_net $mac 1" >> $CRONFILE
+}
+
+add_time(){
+	local mac=$1
+	local week starttime stoptime
+	shift
+	while [ "x$1" = "xtime" ]
+	do
+		starttime=$2
+		stoptime=$3
+		week=$4
+		add_one_time $mac $starttime $stoptime $week
+		shift 4
+	done
+}
+
+# $1 mac
+del_time(){
+	sed -i "/$ACL c_net $1/d" $CRONFILE
+	$ACL c_net $1 1
+}
+
+# $1 mac
+update_time(){
+	del_time $1
+	add_time $*
+	[ "x$(ps | grep [c]rond)" = "x" ] && /etc/init.d/cron start
+}
+
+update_acl_status(){
+	local i j internet nweek week mac nmac enable starttime stoptime now
+
+	nweek=$(date +%u)
+	[ "x$nweek" = "x7" ] && nweek=0
+	for cfg in devlist wldevlist
+	do
+		i=0
+		while [ "x$(uci -q get ${cfg}.@device[$i].mac)" != "x" ]
+		do
+			j=0
+			internet=$(uci -q get ${cfg}.@device[$i].internet)
+			if [ "x$internet" = "x2" ];then
+				mac=$(uci -q get ${cfg}.@device[$i].mac)
+				nmac=${mac//_/:}
+				enable=$(uci get ${TIMELIST}.@$mac[$j].enable)
+				$ACL c_net $nmac 1
+				while [ "x$enable" != "x" ]
+				do
+					week=$(uci get ${TIMELIST}.@$mac[$j].week)
+					if [ "x$enable" = "x1" -a "x$week" != "x" ];then
+						starttime=$(uci get ${TIMELIST}.@$mac[$j].starttime)
+						stoptime=$(uci get ${TIMELIST}.@$mac[$j].endtime)
+						sec1=$(date -d $starttime +%s)
+						sec2=$(date -d $stoptime +%s)
+						now=$(date +%s)
+						if [ $now -ge $((sec1-$WTIME)) -o $now -lt $((sec2-$WTIME)) ] && ([ "x$week" = "x*" ] || [ "x$week" != "x${week/$nweek/}" ]); then
+							$ACL c_net $nmac 0
+							break
+						fi
+					fi
+					j=$((j+1))
+					enable=$(uci -q get ${TIMELIST}.@$mac[$j].enable)
+				done
+			fi
+			i=$((++i))
+		done
+	done
+}
+
+speed_boot(){
+	ifconfig ifb0 up
+
+	tc qdisc add dev br-lan root handle 1: htb default 0 direct_qlen 512
+	tc qdisc add dev br-lan ingress
+	tc filter add dev br-lan parent ffff: protocol all prio 10 u32 match u32 0 0 action mirred egress redirect dev ifb0
+	tc qdisc add dev ifb0 root handle 1: htb default 0 direct_qlen 512
+
+	ifconfig ifb3 up
+
+	tc qdisc add dev br-guest root handle 2: htb default 0 direct_qlen 512
+	tc qdisc add dev br-guest ingress
+	tc filter add dev br-guest parent ffff: protocol all prio 10 u32 match u32 0 0 action mirred egress redirect dev ifb3
+	tc qdisc add dev ifb3 root handle 2: htb default 0 direct_qlen 512
+}
+
+# $1 mac $2 id $3 upspeed $4 downspeed
+add_speedlimit(){
+	local mac=$1
+	local id=$2
+	local upspeed=$3
+	local downspeed=$4
+	tc class add dev br-lan parent 1: classid 1:$id htb rate ${downspeed}kbps ceil ${downspeed}kbps
+	tc filter add dev br-lan parent 1: prio $id protocol all u32 match ether dst $mac flowid 1:$id
+	tc qdisc add dev br-lan parent 1:$id handle 10$id: sfq perturb 10
+	tc class add dev ifb0 parent 1: classid 1:$id htb rate ${upspeed}kbps ceil ${upspeed}kbps
+	tc filter add dev ifb0 parent 1: prio $id protocol all u32 match ether src $mac flowid 1:$id
+	tc qdisc add dev ifb0 parent 1:$id handle 10$id: sfq perturb 10
+}
+
+add_guest_speedlimit(){
+	local mac=$1
+	local id=$2
+	local upspeed=$3
+	local downspeed=$4
+	tc class add dev br-guest parent 2: classid 2:$id htb rate ${downspeed}kbps ceil ${downspeed}kbps
+	tc filter add dev br-guest parent 2: prio $id protocol all u32 match ether dst $mac flowid 2:$id
+	tc qdisc add dev br-guest parent 2:$id handle 20$id: sfq perturb 10
+	tc class add dev ifb3 parent 2: classid 2:$id htb rate ${upspeed}kbps ceil ${upspeed}kbps
+	tc filter add dev ifb3 parent 2: prio $id protocol all u32 match ether src $mac flowid 2:$id
+	tc qdisc add dev ifb3 parent 2:$id handle 20$id: sfq perturb 10
+}
+
+del_speedlimit(){
+	local mac=$1
+	local id=$2
+	tc filter del dev br-lan parent 1: prio $id protocol all u32 match ether dst $mac flowid 1:$id
+	tc class del dev br-lan parent 1: classid 1:$id
+	tc filter del dev ifb0 parent 1: prio $id protocol all u32 match ether src $mac flowid 1:$id
+	tc class del dev ifb0 parent 1: classid 1:$id
+}
+
+check_speedlimit_close(){
+	local speed_en mac i
+	local close=1
+
+	for cfg in devlist wldevlist
+	do
+		i=0
+		mac=$(uci get ${cfg}.@device[$i].mac 2>/dev/null)
+		while [ "x$mac" != "x" ]
+		do
+			speed_en=$(uci get ${cfg}.@device[$i].speedlimit 2>/dev/null)
+			if [ "x$speed_en" = "x1" ];then
+				close=0
+				break
+			fi
+			i=$((++i))
+			mac=$(uci get ${cfg}.@device[$i].mac 2>/dev/null)
+		done
+	done
+	if [ "x$close" = "x1" ]; then
+		uci set basic_setting.speed.enable="0"
+		uci commit
+		tc qdisc del dev ifb3 root 2>/dev/null
+		tc qdisc del dev ifb0 root 2>/dev/null
+		tc qdisc del dev br-lan root 2>/dev/null
+		tc qdisc del dev br-guest root 2>/dev/null
+		tc qdisc del dev br-lan ingress 2>/dev/null
+		tc qdisc del dev br-guest ingress 2>/dev/null
+		ifconfig ifb3 down
+		ifconfig ifb0 down
+	fi
+}
+
+del_guest_speedlimit(){
+	local mac=$1
+	local id=$2
+	tc filter del dev br-guest parent 2: prio $id protocol all u32 match ether dst $mac flowid 2:$id
+	tc class del dev br-guest parent 2: classid 2:$id
+	tc filter del dev ifb3 parent 2: prio $id protocol all u32 match ether src $mac flowid 2:$id
+	tc class del dev ifb3 parent 2: classid 2:$id
+}
+
+update_speedlimit(){
+	local mac=$1
+	local id=$2
+	local upspeed=$3
+	local downspeed=$4
+	tc class replace dev br-lan parent 1: classid 1:$id htb rate ${downspeed}kbps ceil ${downspeed}kbps
+	tc class replace dev ifb0 parent 1: classid 1:$id htb rate ${upspeed}kbps ceil ${upspeed}kbps
+}
+
+update_guest_speedlimit(){
+	local mac=$1
+	local id=$2
+	local upspeed=$3
+	local downspeed=$4
+	tc class replace dev br-guest parent 2: classid 2:$id htb rate ${downspeed}kbps ceil ${downspeed}kbps
+	tc class replace dev ifb3 parent 2: classid 2:$id htb rate ${upspeed}kbps ceil ${upspeed}kbps
+}
+
+do_time(){
+	local action=$1
+	shift
+
+	case $action in
+		add)
+			add_time $*
+			echo "$CRONUSER" >/etc/crontabs/cron.update
+			;;
+		del)
+			del_time $*
+			echo "$CRONUSER" >/etc/crontabs/cron.update
+			;;
+		update)
+			update_time $*
+			echo "$CRONUSER" >/etc/crontabs/cron.update
+			;;
+		acl)
+			update_acl_status
+			;;
+	esac
+
+}
+
+do_onoff(){
+	local enable  stoptime week count
+	enable=$1
+	stoptime=$2
+	week=$3
+	count=$4
+	if [ "x$enable" = "x0" ]; then
+		sed -i "/power/d" $CRONFILE
+		echo 0 > /proc/poweron
+	else
+		[ "x$week" = "x8" ] && week='*'
+
+		eval $(echo $stoptime | awk -F ':' '{print "stoph=" $1 ";stopm=" $2}')
+		#1 min before power off , we set on trigger
+		if [ "x$stopm" = "x0" ]; then
+			if [ "x$stoph" = "x0" ]; then
+				stophe= 23
+			else
+				stophe=`expr $stoph - 1`
+			fi
+			startme="59"
+		else
+			stophe=$starth
+			stopme=`expr $startm - 1`
+		fi
+
+		echo "$stopme $stophe * * $week echo $count > /proc/poweron" >> $CRONFILE
+		echo "$stopm $stoph * * $week" poweroff>> $CRONFILE
+	fi
+
+	echo "$CRONUSER" >/etc/crontabs/cron.update
+	[ "x$(ps | grep [c]rond)" = "x" ] && /etc/init.d/cron start
+}
+
+do_speed(){
+	local action=$1
+	local mac=$2
+	local upspeed=$3
+	local downspeed=$4
+
+	if [ "x$upspeed" = "x0" ]; then
+		upspeed=0.001
+	elif [ "x$upspeed" = "x-1" ];then
+		upspeed=1000000
+	fi
+	if [ "x$downspeed" = "x0" ]; then
+		downspeed=0.001
+	elif [ "x$downspeed" = "x-1" ];then
+		downspeed=1000000
+	fi
+
+	local cfg=$(get_cfg $mac)
+	local id=$(uci get ${cfg}.tcid 2>/dev/null)
+	if [ "x$id" = "x" ]; then
+		id=$(uci get qos_cfg.qdisc.maxid)
+		uci set qos_cfg.qdisc.maxid=$((++id))
+		uci set ${cfg}.tcid=$id
+		uci commit qos_cfg
+	fi
+	case $action in
+		add)
+			speed=$(uci get basic_setting.speed.enable)
+			if [ "x$speed" = "x0" ]; then
+				speed_boot
+				uci set basic_setting.speed.enable="1"
+				uci commit
+			fi
+			add_speedlimit $mac $id $upspeed $downspeed
+			add_guest_speedlimit $mac $id $upspeed $downspeed
+			;;
+		del)
+			del_speedlimit $mac $id
+			del_guest_speedlimit $mac $id
+			check_speedlimit_close
+			;;
+		update)
+			update_speedlimit $mac $id $upspeed $downspeed
+			update_guest_speedlimit $mac $id $upspeed $downspeed
+			;;
+	esac
+}
+
+add_visitor_time(){
+	local mac=$1
+	local sec=$(($2*60*60))
+	local now=$(date +%s)
+	local stoptime=$(($now + $sec))
+	$ACL c_net $mac 1
+	echo "$(date -d "@$stoptime" +"%M %H %d %m") * pctl visitor on_time $mac" >> $CRONFILE
+}
+
+# $1 mac
+del_visitor_time(){
+	sed -i "/visitor on_time $1/d" $CRONFILE
+	$ACL c_net $1 0
+}
+
+#$1 cmd $2 mac $3 hour
+do_visitor(){
+	local cmd=$1
+	case $cmd in
+		add)
+			add_visitor_time $2 $3
+			;;
+		del|on_time)
+			del_visitor_time $2
+			;;
+	esac
+	echo "$CRONUSER" >/etc/crontabs/cron.update
+	[ "x$(ps | grep [c]rond)" = "x" ] && /etc/init.d/cron start
+}
+
+#mac format AA:BB:CC:DD:EE:FF
+#param:
+#time $action(add/del/update/acl) $mac time $starttime $stoptime $week time $starttime $stoptime $week......
+#speed $action(add/del/update) $mac $upspeed $downspeed
+
+cmd_tpye=$1
+if [ "x$cmd_tpye" != "x" ]; then
+	shift
+	case $cmd_tpye in
+		time)
+			do_time $@
+			;;
+		speed)
+			do_speed $@
+			;;
+		onoff)
+			do_onoff $@
+			;;
+		visitor)
+			do_visitor $@
+			;;
+	esac
+fi

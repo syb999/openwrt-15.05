@@ -1,0 +1,12 @@
+config ssst 'cloudrouter'
+	option routerid ''
+	option subid ''
+	option bind '0'
+	option pending	'0'
+
+config func 'func'
+	option storage	0
+
+config ssst 'p2p'
+	option id 'PHSRC://139.196.176.186:3478;PHSRC_HTTPS://139.196.176.186:8000;'
+	option key 'SHA1:jtwnmxbt;xQhX3y6DAM1Xxc5r00CN1rhQTJQ='

@@ -1,0 +1,20 @@
+#!/bin/sh
+
+[ "${ACTION}" = "released" ] || exit 0
+
+wifi_enable=`uci get led.BTN0.wifi_enable`
+if [ "$wifi_enable" == "1" ];then
+
+#add wifi on/off operation here
+status=`cat /tmp/wifi_onoff_status`
+if [ $status -eq 1 ];then
+echo 0 > /tmp/wifi_onoff_status
+/sbin/wifi down
+else
+echo 1 > /tmp/wifi_onoff_status
+/sbin/wifi up
+fi
+
+fi
+
+return 0

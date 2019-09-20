@@ -1,0 +1,226 @@
+#!/bin/sh
+
+. /usr/share/libubox/jshn.sh
+
+TS=/proc/ts
+QOS=/proc/sf_qos
+
+dnsmasq_pctl(){
+	local devs=$(uci show $1 | grep '.mac=' | awk -F '=' '{print $2}' | sed -e 's/_/:/g')
+	local tpye_en game video social param
+	local uci_mac
+	local cfg=$1
+	local dev
+
+	for i in $(eval echo $devs)
+	do
+		uci_mac=${i//:/_}
+		dev=$(uci get ${cfg}.${uci_mac}.dev 2>/dev/null)
+		if [ "x$dev" = "x${dev/lease/}" ]; then
+			type_en=$(uci get ${cfg}.${uci_mac}.restrictenable 2>/dev/null)
+			if [ "x$type_en" = "x1" ];then
+				game=$(uci get ${cfg}.${uci_mac}.game)
+				video=$(uci get ${cfg}.${uci_mac}.video)
+				social=$(uci get ${cfg}.${uci_mac}.social)
+				param=0
+				param=$((param + 8))
+				[ "x$game" = "x1" ] && param=$((param + 1))
+				[ "x$video" = "x1" ] && param=$((param + 2))
+				[ "x$social" = "x1" ] && param=$((param + 4))
+				dec-tool pctl set $i $param
+			fi
+		fi
+	done
+}
+
+dnsmasq_pctl_init(){
+	sleep 1
+	dnsmasq_pctl devlist
+	dnsmasq_pctl wldevlist
+}
+
+ts_cmd(){
+	mac=$(echo $2 | grep -E ^\([0-9a-fA-F]{2}:\){5}[0-9a-fA-F]{2}\$)
+
+	if [ "x$mac" = "x" ]; then
+		echo "error mac address"
+		exit
+	fi
+
+	if [ "x$3" != "x" ];then
+		if [ $3 -lt 0 -o $3 -ge 1024 ]; then
+		   	echo "priority not right or bigger than 1024"
+			exit
+		fi
+	fi
+	printf "$1 $mac $3" > $TS
+}
+
+ts_cmd2(){
+	printf "$1" > $TS
+}
+
+ts_cmd3(){
+	local mac=$(echo $2 | grep -E ^\([0-9a-fA-F]{2}:\){5}[0-9a-fA-F]{2}\$)
+
+	if [ "x$mac" = "x" ]; then
+		echo "error mac address"
+		exit
+	fi
+
+	local param=$3
+	if [ "x$1" = "x13" ]; then
+		param=0
+		if [ "x$3" = "x1" ];then
+			param=$((param + 8))
+			[ "x$4" = "x1" ] && param=$((param + 1))
+			[ "x$5" = "x1" ] && param=$((param + 2))
+			[ "x$6" = "x1" ] && param=$((param + 4))
+			dec-tool pctl set $mac $param
+			ipset -! add urllist_mac $mac
+		else
+			ipset -! del urllist_mac $mac
+		fi
+	fi
+
+	printf "$1 $mac $param" > $TS
+}
+
+update_flow_by_everyday(){
+	local mac i j flow_limit totle flow_cfg
+
+	for cfg in devlist wldevlist
+	do
+		i=0
+		mac=$(uci get ${cfg}.@device[$i].mac 2>/dev/null)
+		while [ "x$mac" != "x" ]
+		do
+			flow_limit=$(uci get ${cfg}.@device[$i].usageenable 2>/dev/null)
+			if [ "x$flow_limit" = "x1" ];then
+				mac=${mac//_/:}
+				flow_cfg=$(uci get ${cfg}.@device[$i].setlist 2>/dev/null)
+				#totle=$(uci get ${cfg}.@device[$i].change 2>/dev/null)
+				local nweek=$(date +%u)
+				[ "x$nweek" = "x7" ] && nweek=0
+				local setlist=$(uci get ${cfg}.@device[$i].setlist 2>/dev/null)
+				if [ "x$setlist" != "x" ];then
+					json_load "{\"list\":$setlist}"
+					json_select list
+					j=1
+					json_select $j
+					while [ "x$?" = "x0" ]
+					do
+						json_get_var var_type "type"
+						json_get_var var_count "count"
+						json_get_var var_week "week"
+						if [ "x$var_type" = "x2" ] && ([ "x$var_week" = "x*" ] || [ "x$var_week" != "x${var_week/$nweek/}" ]); then
+							ts_cmd3 11 $mac $var_count
+						fi
+						json_select ..
+						j=$((j+1))
+						json_select $j
+					done
+				fi
+
+			fi
+			i=$((++i))
+			mac=$(uci get ${cfg}.@device[$i].mac 2>/dev/null)
+		done
+	done
+}
+
+set_qos_cmd(){
+	local qos_en game video social
+	local mac=$(echo $1 | grep -E ^\([0-9a-fA-F]{2}:\){5}[0-9a-fA-F]{2}\$)
+
+	[ $# -lt 5 ] && echo "too few params" && exit
+
+	if [ "x$mac" = "x" ]; then
+		echo "error mac address"
+		exit
+	fi
+
+	if [ $2 -eq 1 -o $2 -eq 0 -o $2 -eq -1 ];then
+		qos_en=$2
+	else
+		echo "qos_en param error"
+		exit
+	fi
+	if [ $3 -gt -2 ];then
+		game=$3
+	else
+		echo "qos game param error"
+		exit
+	fi
+	if [ $4 -gt -2 ];then
+		video=$4
+	else
+		echo "qos video param error"
+		exit
+	fi
+	if [ $5 -gt -2 ];then
+		social=$5
+	else
+		echo "qos social param error"
+		exit
+	fi
+
+	printf "0 $mac $qos_en $game $video $social" > $QOS
+}
+
+case $1 in
+	add)
+		[ "x$3" = "x" ] && pri=0 || pri=$3
+		ts_cmd 0 $2 $pri
+		;;
+	del)
+		ts_cmd 1 $2
+		;;
+	rst)
+		ts_cmd 2 $2
+		;;
+	pri)
+		[ "x$3" = "x" ] && echo "priority can not be null" && exit
+		ts_cmd 6 $2 $3
+		;;
+	speed_en)
+		ts_cmd2 7
+		;;
+	speed_dis)
+		ts_cmd2 8
+		;;
+	set_pri_en)
+		ts_cmd2 9
+		;;
+	set_pri_dis)
+		ts_cmd3 10
+		;;
+	flow_en)
+		[ "x$3" = "x" ] && echo "param error" && exit
+		ts_cmd3 11 $2 $3
+		;;
+	flow_dis)
+		ts_cmd3 12 $2
+		;;
+	type_flow) #$3 enable/disable $4 game $5 video $6 social
+		[ $# -lt 6 ] && echo "param error" && exit
+		shift
+		ts_cmd3 13 $@
+		;;
+	type_flow_show)
+		ts_cmd2 14
+		;;
+	update_flow)
+		update_flow_by_everyday
+		;;
+	set_qos)
+		shift
+		set_qos_cmd $@
+		;;
+	dns_pctl)
+		dnsmasq_pctl_init
+		;;
+	*)
+		echo "error cmd"
+		;;
+esac

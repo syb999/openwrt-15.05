@@ -1,0 +1,3 @@
+config push 'setting'
+	option enable '1'
+	option mode '0'

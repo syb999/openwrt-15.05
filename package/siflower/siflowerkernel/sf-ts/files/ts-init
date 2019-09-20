@@ -1,0 +1,60 @@
+#!/bin/sh
+
+START=13
+
+ts_init(){
+	local devs=$(uci show $1 | grep '.mac=' | awk -F '=' '{print $2}' | sed -e 's/_/:/g')
+	local tpye_en game video social
+	local flow_en flow
+	local uci_mac
+	local cfg=$1
+	local dev
+
+	for i in $(eval echo $devs)
+	do
+		uci_mac=${i//:/_}
+		dev=$(uci get ${cfg}.${uci_mac}.dev 2>/dev/null)
+		if [ "x$dev" = "x${dev/lease/}" ]; then
+			tscript add $i
+			type_en=$(uci get ${cfg}.${uci_mac}.restrictenable 2>/dev/null)
+			if [ "x$type_en" = "x1" ];then
+				game=$(uci get ${cfg}.${uci_mac}.game)
+				video=$(uci get ${cfg}.${uci_mac}.video)
+				social=$(uci get ${cfg}.${uci_mac}.social)
+				tscript type_flow $i 1 $game $video $social
+			fi
+			flow_en=$(uci get ${cfg}.${uci_mac}.usageenable 2>/dev/null)
+			if [ "x$flow_en" = "x1" ];then
+				flow=$(uci get ${cfg}.${uci_mac}.flow 2>/dev/null)
+				if [ "x$flow" = "x" ]; then
+					flow=$(uci get ${cfg}.${uci_mac}.change)
+				fi
+				tscript flow_en $i $((flow/1000/1000))
+			fi
+		fi
+	done
+}
+
+if [ -f "/etc/config/sf-ts-cfg.bin.tar.gz" ]; then
+	tscfg -i
+else
+	#trigger a script to update latter to wait network avaiable
+	/usr/bin/first-check-ts-file.sh&
+	#for compatible with old version
+	if [ -f "/etc/config/sf-ts-cfg.bin" ]; then
+		rm -rf /etc/config/sf-ts-cfg.bin
+	fi
+fi
+
+test=`grep auto-check-ts-version.sh /etc/crontabs/admin`
+if [ -z "$test" ] ; then
+	a=`head -20 /dev/urandom | cksum | cut -f1 -d" "`
+	b=$(( $a % 5 ))
+	c=$(( $a % 59 ))
+	echo $b $c
+	echo "$c $b * * * /usr/bin/auto-check-ts-version.sh" >> /etc/crontabs/admin
+	echo  "admin" > /etc/crontabs/cron.update
+fi
+
+ts_init devlist
+ts_init wldevlist

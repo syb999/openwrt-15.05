@@ -1,0 +1,7 @@
+config tsconfig tsrecord
+	option province '1'
+	option updateAt ''
+	option lastAction ''
+	option dataVersion '1'
+	option checksum ''
+	option count '0'

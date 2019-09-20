@@ -1,0 +1,50 @@
+Index: compat-wireless-2016-01-10/net/mac80211/rc80211_minstrel_ht.c
+===================================================================
+--- compat-wireless-2016-01-10.orig/net/mac80211/rc80211_minstrel_ht.c	2017-05-22 15:34:27.784782063 +0800
++++ compat-wireless-2016-01-10/net/mac80211/rc80211_minstrel_ht.c	2017-05-22 15:34:27.772782063 +0800
+@@ -691,9 +691,10 @@
+ 	struct sta_info *sta = container_of(pubsta, struct sta_info, sta);
+ 	u16 tid;
+ 
++#ifndef CPTCFG_WLAN_VENDOR_RWNX
+ 	if (skb_get_queue_mapping(skb) == IEEE80211_AC_VO)
+ 		return;
+-
++#endif
+ 	if (unlikely(!ieee80211_is_data_qos(hdr->frame_control)))
+ 		return;
+ 
+@@ -1209,6 +1210,7 @@
+ 		mi->tx_flags |= stbc << IEEE80211_TX_CTL_STBC_SHIFT;
+ 	}
+ 
++#ifdef CPTCFG_WLAN_VENDOR_RWNX
+ 	if (sta_cap & IEEE80211_HT_CAP_LDPC_CODING) {
+ 		if (use_vht) {
+ 			if (vht_cap->cap & IEEE80211_VHT_CAP_RXLDPC)
+@@ -1217,6 +1219,10 @@
+ 			mi->tx_flags |= IEEE80211_TX_CTL_LDPC;
+ 		}
+ 	}
++#else
++	if (sta_cap & IEEE80211_HT_CAP_LDPC_CODING)
++		mi->tx_flags |= IEEE80211_TX_CTL_LDPC;
++#endif
+ 
+ 	for (i = 0; i < ARRAY_SIZE(mi->groups); i++) {
+ 		u32 gflags = minstrel_mcs_groups[i].flags;
+Index: compat-wireless-2016-01-10/net/mac80211/Kconfig
+===================================================================
+--- compat-wireless-2016-01-10.orig/net/mac80211/Kconfig	2017-05-22 15:27:02.108768923 +0800
++++ compat-wireless-2016-01-10/net/mac80211/Kconfig	2017-05-22 15:32:10.836778025 +0800
+@@ -312,6 +312,10 @@
+ 	bool "Enable mac80211's private ioctl function, this is add by siflower"
+     depends on MAC80211
+ 
++config WLAN_VENDOR_RWNX
++	bool "Enable rwnx macro in mac80211, this is add by siflower"
++    depends on MAC80211
++
+ config MAC80211_STA_HASH_MAX_SIZE
+ 	int "Station hash table maximum size" if MAC80211_DEBUG_MENU
+ 	default 0

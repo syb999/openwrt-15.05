@@ -1,0 +1,2 @@
+config setting 'qdisc'
+	option maxid '1'

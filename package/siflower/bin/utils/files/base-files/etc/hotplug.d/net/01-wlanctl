@@ -1,0 +1,6 @@
+#!/bin/sh
+
+if [ "$ACTION" = add ]; then
+	[ "x$DEVICENAME" = "xwlan0-guest" ] && gwifi speed_rst 0
+	[ "x$DEVICENAME" = "xwlan1-guest" ] && gwifi speed_rst 1
+fi

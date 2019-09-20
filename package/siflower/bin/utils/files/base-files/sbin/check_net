@@ -1,0 +1,166 @@
+#!/bin/sh
+
+#error	description
+#100	Internet ok
+#110	link off
+#120	no ip
+#130	no gateway
+#131	gateway is invalid
+#140	no dns
+#141	dns is invalid
+
+LINK=/sys/kernel/debug/npu_debug
+WAN=$(uci get network.wan.ifname)
+DNSFILE=/tmp/resolv.conf.auto
+TESTWEB=www.baidu.com
+TESTADDR=114.114.114.114
+dns_err=1
+
+out_result(){
+	echo $1
+	exit
+}
+
+json_out(){
+	echo {\"result\":$1}
+}
+
+check_dns(){
+	local dnsaddr=$1
+	local dns_ok
+
+	nslookup $TESTWEB $dnsaddr > /tmp/dns  & { sleep 4; eval 'kill -9 $!' &> /dev/null;}
+
+	dns_ok=$(cat /tmp/dns | grep "^Name:")
+
+	if [ "x$dns_ok" != "x" ];then
+		dns_err=0
+	fi
+}
+
+check_net_for_dns(){
+	local dns=$(cat  $DNSFILE | grep nameserver | awk -F ' ' '{print $2}')
+	if [ "x$dns" != "x" ];then
+		eval $(echo $dns | awk -F ' ' '{print "dns1=" $1 ";dns2=" $2}')
+		check_dns $dns1
+		[ "x$dns_err" = "x0" ] && return
+		[ "x$dns2" != "x" ] && check_dns $dns2
+		if [ "x$dns_err" = "x1" ];then
+			out_result 141
+		fi
+	else
+		out_result 140
+	fi
+}
+
+check_gw(){
+	gw_ok=$(ping -c 2 $TESTADDR | grep ttl)
+	[ "x$gw_ok" = "x" ] && out_result 131
+}
+
+check_net_for_gw(){
+	local gw=$(route -n | awk -F ' ' '{print $1}' | grep '0.0.0.0')
+	if [ "x$gw" != "x" ];then
+		check_gw
+		check_net_for_dns
+	else
+		out_result 130
+	fi
+}
+
+check_net_for_ip(){
+	local ip=$(ifconfig $WAN | grep 'inet addr')
+	if [ "x$ip" != "x" ];then
+		check_net_for_gw
+	else
+		out_result 120
+	fi
+}
+
+check_net_for_link(){
+	if [ "x$WAN" = "xeth0.2" ];then
+		linkon=$(cat $LINK | grep 'phy4' | awk -F ' ' '{print $3}')
+	else
+		linkon=$(cat /sys/class/net/eth1/carrier)
+	fi
+	if [ "x$linkon" = "x1" ];then
+		check_net_for_ip
+	else
+		out_result 110
+	fi
+}
+
+check_net(){
+	check_net_for_link
+	out_result 100
+}
+
+portlinks(){
+	case $1 in
+		wan)
+			num=4
+			;;
+		lan1)
+			num=3
+			;;
+		lan2)
+			num=2
+			;;
+		lan3)
+			num=1
+			;;
+		lan4)
+			num=0
+			;;
+	esac
+
+	if [ "x$num" = "x4" ]; then
+		if [ "x$WAN" = "xeth0.2" ];then
+			ret=$(cat $LINK | grep "phy$num" | awk -F ' ' '{print $3}')
+		else
+			ret=$(cat /sys/class/net/eth1/carrier)
+		fi
+	else
+		ret=$(cat $LINK | grep "phy$num" | awk -F ' ' '{print $3}')
+	fi
+	json_out $ret
+}
+
+test_ping(){
+	result=$(ping -c 2 www.baidu.com 2>/dev/null)
+
+	ttl=$(echo $result | grep ttl)
+
+	if [ "x$ttl" = "x" ];then
+		ret=0
+	else
+		ret=1
+	fi
+	json_out $ret
+}
+
+user_help(){
+	cat <<EOF
+usage:
+	check_net subcommand [param] ...
+subcommand:
+	check				check Internet status
+	port				get port link on/off, param wan,lan1~lan4
+	ping				ping test
+EOF
+}
+
+case $1 in
+	check)
+		check_net
+		;;
+	port)
+		portlinks $2
+		;;
+	ping)
+		test_ping
+		;;
+	*)
+		user_help
+		;;
+esac

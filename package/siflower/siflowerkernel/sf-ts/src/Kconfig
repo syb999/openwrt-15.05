@@ -1,0 +1,12 @@
+config SIFLOWER_TS
+	tristate "Siflower traffic statistics"
+
+if SIFLOWER_TS
+menu SIFLOWER_FUNCTION
+	config SF_QOS
+	bool siflower qos
+
+	config SF_PKT_SEND_BY_KERNEL
+	bool send packet by kernel client
+endmenu
+endif

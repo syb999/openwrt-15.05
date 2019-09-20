@@ -1,0 +1,5 @@
+config band 'wifi2_4G'
+    option device 'sfa18'
+
+config band 'wifi5G'
+    option device 'sfa185g'

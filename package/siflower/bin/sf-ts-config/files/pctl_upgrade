@@ -1,0 +1,32 @@
+#!/usr/bin/lua
+
+local json = require("luci.json")
+local util =require 'luci.util'
+local sysutil = require "luci.siwifi.sf_sysutil"
+local nixio = require "nixio"
+local fs = require "nixio.fs"
+local uci =require "luci.model.uci".cursor()
+local sysconfig = require "luci.siwifi.sf_sysconfig"
+
+local result={}
+local remote_info = {}
+local xcloud_info_json = ""
+local cloud_code_url = ""
+local serveraddr = sysutil.get_server_addr()
+--local serveraddr = ""
+local ap_image_tmp = "/tmp/updatelist.bin.gz"
+
+if(sysutil.getCloudType() == '0')then
+	cloud_code_url = "https://"..serveraddr.."/cloud/downloadMonitoredIPFile"
+else
+	cloud_code_url = "https://192.168.1.12:8090/v1".."/cloud/downloadMonitoredIPFile"
+end
+local token = sysutil.token()
+local sn = uci:get("siwifi", "hardware", "sn")
+local province = uci:get("tsconfig", "tsrecord", "province")
+local updateAt = uci:get("tsconfig", "tsrecord", "updateAt") or ''
+local dataVersion = uci:get("tsconfig", "tsrecord", "dataVersion")
+local count = uci:get("tsconfig", "tsrecord", "count")
+luci.util.exec("curl -k -H \"Authorization: %s\" -m 120 -o %q  %s?sn=%s\\&province=%s\\&updateAt=%s\\&dataVersion=%s\\&count=%s" %{token,ap_image_tmp,cloud_code_url,sn,province,updateAt,dataVersion,count})
+nixio.syslog("crit","curl -k -H \"Authorization: %s\" -m 120 -o %q  %s?sn=%s\\&province=%s\\&updateAt=%s\\&dataVersion=%s\\&count=%s" %{token,ap_image_tmp,cloud_code_url,sn,province,updateAt,dataVersion,count})
+luci.util.exec("gzip -f -d %s" %{ap_image_tmp})

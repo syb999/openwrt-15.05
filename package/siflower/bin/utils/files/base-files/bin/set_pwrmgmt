@@ -1,0 +1,12 @@
+#!/bin/ash
+
+output=$1
+vol=$2
+
+if [ ! -f /proc/power-management ]; then
+	echo "power management not supported!"
+	exit
+fi
+
+output1=${output%?}
+echo "${output%?} ${output:${#output1}} $vol" > /proc/power-management

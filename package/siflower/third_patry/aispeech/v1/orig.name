@@ -1,0 +1,8 @@
+AEC_ch3-2-ch2_1ref.bin -> AEC_ch3-2-ch2_1ref_common_20180806_v0.9.4.bin
+AEC_ch4-2-ch2_1ref.bin -> AEC_ch4-2-ch2_1ref_common_20180731_v0.9.4.bin
+asr.bin                -> UDA_asr_chan2-2-mic2_30mm_v1.1.0.6_20180828.bin
+libauth_linux.so       -> libauth_linux.so
+libdds.so              -> libdds.so
+libduilite_normal.so   -> libduilite_normal.so
+vad.bin                -> vad_aihome_v0.7.bin
+wakeup.bin             -> wakeup_aifar_comm_20180104.bin

@@ -1,0 +1,48 @@
+#!/bin/sh
+# @Create on 2013-12-01
+
+do_rule()
+{
+	if [ "$1" = "I" ]; then
+		iptables -w -C FORWARD -s $2 -j UPLOAD || iptables -w -I FORWARD 1 -s $2 -j UPLOAD
+		iptables -w -C FORWARD -d $2 -j DOWNLOAD || iptables -w -I FORWARD 1 -d $2 -j DOWNLOAD
+	fi
+	if [ "$1" = "D" ]; then
+		iptables -w -D FORWARD -s $2 -j UPLOAD
+		iptables -w -D FORWARD -d $2 -j DOWNLOAD
+	fi
+}
+
+start()
+{
+#	echo "Collecting data..."
+#	echo ""
+	iptables -N UPLOAD
+	iptables -N DOWNLOAD
+	cat /proc/net/arp | grep : | grep ^192 | grep -v 00:00:00:00:00:00| awk '{print $1}'> /tmp/mac-ip
+	while read line;do do_rule I $line ;done < /tmp/mac-ip
+}
+
+run()
+{
+	echo "Download speed:"
+	iptables -nvx -L FORWARD | grep DOWNLOAD | awk '{print $9, $2" Byte ", $1" packets "}' | sort -n -r > /tmp/file1
+	echo "Upload speed:"
+	iptables -nvx -L FORWARD | grep UPLOAD | awk '{print $8, $2" Byte ", $1" packets "}' | sort -n -r > /tmp/file2
+
+	awk 'NR==FNR{a[FNR]=$0;}NR>FNR{print a[FNR]" "$0;}' /tmp/file1 /tmp/file2 >/tmp/file3
+	cat /tmp/file3 | awk '{print $1":", $2, $4, $7, $9 }' > /tmp/dev_speed
+}
+
+stop()
+{
+	while read line;do do_rule D $line;done < /tmp/mac-ip
+	iptables -X UPLOAD
+	iptables -X DOWNLOAD
+}
+
+[ "$1" = "start" ] && start
+[ "$1" = "run" ] && run
+[ "$1" = "stop" ] && stop
+[ "$1" = "I" ] && do_rule $@
+[ "$1" = "D" ] && do_rule $@

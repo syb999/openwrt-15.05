@@ -1,0 +1,77 @@
+#!/bin/sh
+
+START=14
+
+
+SERVERIP=$(uci -q get sicloud.leaseserver.ip)
+
+ipset create forwardvar hash:mac
+ipset create leaseblock hash:mac
+ipset create inputvar hash:mac
+ipset create urllist_mac hash:mac
+ipset create lforward hash:mac
+ipset create serverip hash:ip
+
+acl_init(){
+	local i=0
+	while true
+	do
+		mac=$(uci -q get ${1}.@device[$i].mac)
+		if [ "x$mac" != "x" ];then
+			macaddr=$(echo $mac | sed -e 's/_/:/g')
+			lan=$(uci -q get ${1}.@device[$i].lan)
+			internet=$(uci -q get ${1}.@device[$i].internet)
+			[ "x$lan" = "x" ] && lan=$(uci -q get sidefault.acl.lan)
+			[ "x$internet" = "x" ] && internet=$(uci -q get sidefault.acl.internet)
+			aclscript add $macaddr $lan $internet
+		else
+			break
+		fi
+		i=$((i+1))
+	done
+}
+
+lease_wifi_dev_init(){
+	local wifi=$1
+	local i=0
+	local mac macaddr dev ltime
+	local now=$(date +%s)
+	local stoptime sec start
+
+	while true
+	do
+		mac=$(uci -q get ${wifi}.@device[$i].mac)
+		if [ "x$mac" != "x" ];then
+			dev=$(uci -q get ${wifi}.@device[$i].dev)
+			ltime=$(uci -q get ${wifi}.@device[$i].lease_time)
+			if [ "x${dev%lease}" != "x$dev" ]; then
+				macaddr=${mac//_/:}
+				if [ "x$ltime" = "x" -o "x$ltime" = "x0" ]; then
+					aclscript l_add $macaddr
+				else
+					lstart=$(uci -q get ${wifi}.@device[$i].lease_start)
+					sec=$ltime
+					stoptime=$(($lstart + $sec))
+					if [ $stoptime -le $now ]; then
+						aclscript l_del $macaddr
+					fi
+				fi
+			fi
+		else
+			break
+		fi
+		i=$((i+1))
+	done
+}
+
+lease_wifi_init(){
+	for i in $SERVERIP
+	do
+		ipset add serverip $i
+	done
+}
+
+lease_wifi_init
+lease_wifi_dev_init wldevlist
+acl_init devlist
+acl_init wldevlist

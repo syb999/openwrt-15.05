@@ -1,0 +1,11 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2013-2014 OpenWrt.org
+
+START=96
+
+start() {
+	local cpufreq
+	echo 800000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed
+	cpufreq=`cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq`
+	echo "setting cpufreq to 800000KHZ, and actually gets ${cpufreq}KHZ" > /dev/ttyS0
+}

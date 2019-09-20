@@ -1,0 +1,32 @@
+#!/bin/sh
+
+blink() {
+	cnt=$1
+	while [ $cnt -gt 0 ]
+	do
+		old=`cat /proc/uptime | awk '{ print $1 }'`
+		old=$(echo `awk 'BEGIN{printf "%.2f\n", "'"$old"'"+"'"$2"'"}'`)
+		echo 0 > /sys/class/leds/led1/brightness
+		now=`cat /proc/uptime | awk '{ print $1 }'`
+		delta=$(echo `awk 'BEGIN{if("'"$now"'">"'"$old"'") print 1;else print 0}'`)
+		while [ $delta -eq 0 ]
+		do
+			now=$(echo `cat /proc/uptime | awk '{ print $1 }'`)
+			delta=$(echo `awk 'BEGIN{if("'"$now"'">"'"$old"'") print 1;else print 0}'`)
+		done
+
+		old=`cat /proc/uptime | awk '{ print $1 }'`
+		old=$(echo `awk 'BEGIN{printf "%.2f\n", "'"$old"'"+"'"$2"'"}'`)
+		echo 1 > /sys/class/leds/led1/brightness
+		now=`cat /proc/uptime | awk '{ print $1 }'`
+		delta=$(echo `awk 'BEGIN{if("'"$now"'">"'"$old"'") print 1;else print 0}'`)
+		while [ $delta -eq 0 ]
+		do
+			now=$(echo `cat /proc/uptime | awk '{ print $1 }'`)
+			delta=$(echo `awk 'BEGIN{if("'"$now"'">"'"$old"'") print 1;else print 0}'`)
+		done
+
+		let cnt=cnt-1
+	done
+
+}

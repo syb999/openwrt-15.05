@@ -1,0 +1,10 @@
+#!/bin/sh
+
+usbdir=$(ls /sys/bus/usb/devices/ 2>/dev/null)
+if [ "x$usbdir" = "x" ]; then
+	uci set siserver.func.storage=0
+else
+	uci set siserver.func.storage=1
+fi
+
+uci commit

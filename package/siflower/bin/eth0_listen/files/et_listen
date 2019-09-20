@@ -1,0 +1,28 @@
+#!/bin/sh /etc/rc.common
+START=98
+
+USE_PROCD=1
+
+PROG=/usr/sbin/eth0_listen
+
+start_service () {
+	echo "start eth0_listen" >>/tmp/syncservice.log
+	procd_open_instance
+	procd_set_param command "$PROG"
+
+	procd_set_param respawn
+
+	procd_close_instance
+}
+
+stop_service()
+{
+	echo "stop eth0_listen" >> /tmp/syncservice.log
+		kill `ps | grep new_device_listen | awk '{print $1}'`
+}
+
+shutdown()
+{
+	echo "shutdown eth0_listen" >> /tmp/syncservice.log
+		kill `ps | grep new_device_listen | awk '{print $1}'`
+}

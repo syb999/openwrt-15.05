@@ -1,0 +1,10 @@
+#!/bin/sh
+
+FILE=/tmp/sf_log.txt
+
+num=$(wc -l $FILE | awk -F ' ' '{print $1}')
+
+if [ $num -ge 300 ];then
+	delnum=$(($num - 100))
+	sed -i "1,${delnum}d" $FILE
+fi

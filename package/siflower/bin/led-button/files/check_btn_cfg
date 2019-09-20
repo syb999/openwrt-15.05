@@ -1,0 +1,28 @@
+#! /bin/sh
+. /lib/functions.sh
+
+event_btn=$1
+event_action=$2
+retval=1
+
+
+check_btn_event() {
+	local cfg="$1"
+
+	config_get btn_code "$cfg" btn_code
+	if [ "X${btn_code}" = "X0x${event_btn}" ];then
+		config_get btn_action "$cfg" btn_action
+		if [ "X${btn_action}" = "X${event_action}" ];then
+			config_get btn_cmd "$cfg" btn_cmd
+			[ -z ${btn_cmd}] && return 1
+			${btn_cmd}
+			retval=0
+			return 0
+		fi
+	fi
+}
+
+config_load btn_ctrl_cfg
+config_foreach check_btn_event btn_config
+return ${retval}
+

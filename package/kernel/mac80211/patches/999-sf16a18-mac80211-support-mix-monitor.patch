@@ -1,0 +1,123 @@
+Index: compat-wireless-2016-01-10/net/mac80211/cfg.c
+===================================================================
+--- compat-wireless-2016-01-10.orig/net/mac80211/cfg.c	2018-11-26 11:46:23.569228544 +0800
++++ compat-wireless-2016-01-10/net/mac80211/cfg.c	2018-11-26 11:34:45.000000000 +0800
+@@ -537,9 +537,14 @@
+ 				lockdep_is_held(&local->iflist_mtx));
+ 		if (sdata) {
+ 			ieee80211_vif_release_channel(sdata);
++#ifdef CPTCFG_MAC80211_SIFLOWER_MONITOR_ENABLE
++			ret = ieee80211_vif_use_channel(sdata, chandef,
++					IEEE80211_CHANCTX_SHARED);
++#else
+ 			ret = ieee80211_vif_use_channel(sdata, chandef,
+ 					IEEE80211_CHANCTX_EXCLUSIVE);
+-		}
++#endif
++        }
+ 	} else if (local->open_count == local->monitors) {
+ 		local->_oper_chandef = *chandef;
+ 		ieee80211_hw_config(local, 0);
+Index: compat-wireless-2016-01-10/net/mac80211/iface.c
+===================================================================
+--- compat-wireless-2016-01-10.orig/net/mac80211/iface.c	2018-11-26 11:46:24.225228564 +0800
++++ compat-wireless-2016-01-10/net/mac80211/iface.c	2018-11-26 11:39:38.000000000 +0800
+@@ -412,7 +412,9 @@
+ 	snprintf(sdata->name, IFNAMSIZ, "%s-monitor",
+ 		 wiphy_name(local->hw.wiphy));
+ 	sdata->wdev.iftype = NL80211_IFTYPE_MONITOR;
+-
++#ifdef CPTCFG_MAC80211_SIFLOWER_MONITOR_ENABLE
++	memcpy(sdata->vif.addr, local->hw.wiphy->perm_addr, ETH_ALEN);
++#endif
+ 	sdata->encrypt_headroom = IEEE80211_ENCRYPT_HEADROOM;
+ 
+ 	ieee80211_set_default_queues(sdata);
+@@ -435,8 +437,13 @@
+ 	mutex_unlock(&local->iflist_mtx);
+ 
+ 	mutex_lock(&local->mtx);
++#ifdef CPTCFG_MAC80211_SIFLOWER_MONITOR_ENABLE
++	ret = ieee80211_vif_use_channel(sdata, &local->monitor_chandef,
++					IEEE80211_CHANCTX_SHARED);
++#else
+ 	ret = ieee80211_vif_use_channel(sdata, &local->monitor_chandef,
+ 					IEEE80211_CHANCTX_EXCLUSIVE);
++#endif
+ 	mutex_unlock(&local->mtx);
+ 	if (ret) {
+ 		mutex_lock(&local->iflist_mtx);
+@@ -447,6 +454,9 @@
+ 		kfree(sdata);
+ 		return ret;
+ 	}
++#ifdef IEEE80211_CHANCTX_EXCLUSIVE
++	set_bit(SDATA_STATE_RUNNING, &sdata->state);
++#endif
+ 
+ 	return 0;
+ }
+@@ -598,7 +608,11 @@
+ 			res = drv_add_interface(local, sdata);
+ 			if (res)
+ 				goto err_stop;
++#ifdef CPTCFG_MAC80211_SIFLOWER_MONITOR_ENABLE
++		} else if (local->monitors == 0) {
++#else
+ 		} else if (local->monitors == 0 && local->open_count == 0) {
++#endif
+ 			res = ieee80211_add_virtual_monitor(local);
+ 			if (res)
+ 				goto err_stop;
+@@ -621,7 +635,9 @@
+ 		break;
+ 	default:
+ 		if (coming_up) {
++#ifndef CPTCFG_MAC80211_SIFLOWER_MONITOR_ENABLE
+ 			ieee80211_del_virtual_monitor(local);
++#endif
+ 
+ 			res = drv_add_interface(local, sdata);
+ 			if (res)
+@@ -1038,8 +1054,10 @@
+ 	ieee80211_configure_filter(local);
+ 	ieee80211_hw_config(local, hw_reconf_flags);
+ 
++#ifndef CPTCFG_MAC80211_SIFLOWER_MONITOR_ENABLE
+ 	if (local->monitors == local->open_count)
+ 		ieee80211_add_virtual_monitor(local);
++#endif
+ }
+ 
+ static int ieee80211_stop(struct net_device *dev)
+Index: compat-wireless-2016-01-10/net/mac80211/util.c
+===================================================================
+--- compat-wireless-2016-01-10.orig/net/mac80211/util.c	2018-11-26 11:46:24.257228565 +0800
++++ compat-wireless-2016-01-10/net/mac80211/util.c	2018-11-26 11:40:55.000000000 +0800
+@@ -2088,7 +2088,11 @@
+ 		mutex_unlock(&local->mtx);
+ 	}
+ 
++#ifdef CPTCFG_MAC80211_SIFLOWER_MONITOR_ENABLE
++	if (local->monitors > 0)
++#else
+ 	if (local->monitors == local->open_count && local->monitors > 0)
++#endif
+ 		ieee80211_add_virtual_monitor(local);
+ 
+ 	/*
+Index: compat-wireless-2016-01-10/net/wireless/chan.c
+===================================================================
+--- compat-wireless-2016-01-10.orig/net/wireless/chan.c	2018-11-26 11:46:24.201228563 +0800
++++ compat-wireless-2016-01-10/net/wireless/chan.c	2018-11-26 11:35:40.000000000 +0800
+@@ -861,8 +861,10 @@
+ {
+ 	if (!rdev->ops->set_monitor_channel)
+ 		return -EOPNOTSUPP;
++#ifndef CPTCFG_CFG80211_SIFLOWER_MONITOR_ENABLE
+ 	if (!cfg80211_has_monitors_only(rdev))
+ 		return -EBUSY;
++#endif
+ 
+ 	return rdev_set_monitor_channel(rdev, chandef);
+ }

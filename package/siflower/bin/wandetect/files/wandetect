@@ -1,0 +1,13 @@
+#!/bin/sh
+
+res=$(pppoedetect -i $1)
+if [ "x$res" = "xpppoe" ];then
+	echo "pppoe"
+else
+	res=$(udhcpc -i $1 -s -B -t 2 -T 2 -n -q -S | grep "fail")
+	if [ -z "$res" ];then
+		echo "dhcp"
+	else
+		echo "none"
+	fi
+fi
