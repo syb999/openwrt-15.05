@@ -131,6 +131,7 @@ platform_check_image() {
 	zbt-wa05 |\
 	zbt-wg2626 |\
 	zte-q7 |\
+	hc5962 |\
 	youku-yk1)
 		[ "$magic" != "27051956" ] && {
 			echo "Invalid image type."
@@ -186,6 +187,9 @@ platform_do_upgrade() {
 	local board=$(ramips_board_name)
 
 	case "$board" in
+	hc5962)
+		nand_do_upgrade "$ARGV"
+		;;
 	*)
 		default_do_upgrade "$ARGV"
 		;;
