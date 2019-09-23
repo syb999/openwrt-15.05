@@ -273,9 +273,6 @@ case $board in
 		ucidef_set_led_netdev "wifi5g" "WIFI5G" "$board:blue:wifi" "wlan0"
 		ucidef_set_led_netdev "wan" "WAN" "$board:blue:internet" "eth0.2" "tx rx"
 		;;
-	newifi-d1)
-		ucidef_set_led_default "power" "power" "newifi-d1:green:status" "1"
-		;;
 	daishuyun)
 		ucidef_set_led_default "wifi" "WIFI" "daishuyun:green:wifi" "wlan1"
 		;;

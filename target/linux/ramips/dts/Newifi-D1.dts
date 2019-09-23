@@ -113,11 +113,6 @@
 			gpios = <&gpio0 14 1>;
 		};
 
-		status-green {
-			label = "newifi-d1:green:status";
-			gpios = <&gpio0 13 1>;
-		};
-
 		statys-blue {
 			label = "newifi-d1:blue:status";
 			gpios = <&gpio0 16 1>;

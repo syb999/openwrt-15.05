@@ -253,7 +253,7 @@ get_status_led() {
 		status_led="lenovo:blue:power"
 		;;
 	newifi-d1)
-		status_led="newifi-d1:green:status"
+		status_led="newifi-d1:red:status"
 		;;
 	daishuyun)
 		status_led="daishuyun:green:wifi"
