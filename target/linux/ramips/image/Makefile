@@ -960,6 +960,10 @@ endif
 # MT7621 Profiles
 #
 
+ifeq ($(SUBTARGET),mt7621)
+  TARGET_DEVICES += mt7621 wsr-600 wsr-1166 dir-860l-b1 firewrt pbr-m1 re6500 zbt-wg2626 newifi-d1
+endif
+
 define Device/mt7621
   DTS := MT7621
   IMAGE_SIZE := $(ralink_default_fw_size_4M)
@@ -1016,23 +1020,15 @@ define Device/newifi-d1
   IMAGE_SIZE := $(ralink_default_fw_size_32M)
 endef
 
-ifeq ($(SUBTARGET),mt7621)
-define Image/Build/Profile/Default
-	$(call Image/Build/Profile/MT7621,$(1))
-	$(call Image/Build/Profile/WSR-600,$(1))
-	$(call Image/Build/Profile/RE6500,$(1))
-	$(call Image/Build/Profile/WSR-1166,$(1))
-	$(call Image/Build/Profile/DIR-860L-B1,$(1))
-	$(call Image/Build/Profile/FIREWRT,$(1))
-	$(call Image/Build/Profile/PBR-M1,$(1))
-	$(call Image/Build/Profile/ZBT-WG2626,$(1))
-	$(call Image/Build/Profile/Newifi-D1,$(1))
-endef
-endif
+
 
 #
 # MT7621-nand Profiles
 #
+
+ifeq ($(SUBTARGET),mt7621-nand)
+  TARGET_DEVICES += hc5962
+endif
 
 define Device/hc5962
   DTS := HC5962
@@ -1044,12 +1040,6 @@ define Device/hc5962
   FILESYSTEMS := squashfs
   IMAGE/sysupgrade.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(ralink_default_fw_size_32M)
 endef
-
-ifeq ($(SUBTARGET),mt7621-nand)
-define Image/Build/Profile/Default
-	$(call Image/Build/Profile/HC5962,$(1))
-endef
-endif
 
 #
 # MT7628 Profiles
