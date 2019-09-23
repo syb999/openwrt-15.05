@@ -1011,6 +1011,11 @@ define Device/zbt-wg2626
   IMAGE_SIZE := $(ralink_default_fw_size_16M)
 endef
 
+define Device/newifi-d1
+  DTS := Newifi-D1
+  IMAGE_SIZE := $(ralink_default_fw_size_32M)
+endef
+
 ifeq ($(SUBTARGET),mt7621)
 define Image/Build/Profile/Default
 	$(call Image/Build/Profile/MT7621,$(1))
@@ -1021,6 +1026,7 @@ define Image/Build/Profile/Default
 	$(call Image/Build/Profile/FIREWRT,$(1))
 	$(call Image/Build/Profile/PBR-M1,$(1))
 	$(call Image/Build/Profile/ZBT-WG2626,$(1))
+	$(call Image/Build/Profile/Newifi-D1,$(1))
 endef
 endif
 

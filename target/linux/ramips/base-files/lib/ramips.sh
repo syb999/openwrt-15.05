@@ -445,6 +445,9 @@ ramips_board_detect() {
 	*"HiWiFi HC5962")
 		name="hc5962"
 		;;
+	*"Newifi-D1")
+		name="newifi-d1"
+		;;
 	*)
 		name="generic"
 		;;

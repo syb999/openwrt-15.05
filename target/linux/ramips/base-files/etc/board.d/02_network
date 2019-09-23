@@ -251,6 +251,13 @@ ramips_setup_interfaces()
 		ucidef_add_switch_vlan "switch0" "2" "0 6t"
 		;;
 
+	newifi-d1)
+		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
+		ucidef_add_switch "switch0" "1" "1"
+		ucidef_add_switch_vlan "switch0" "1" "2 1 6t"
+		ucidef_add_switch_vlan "switch0" "2" "4 6t"
+		;;
+
 	daishuyun)
 		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
 		ucidef_add_switch "switch0" "1" "1"
@@ -349,6 +356,11 @@ ramips_setup_macs()
 	daishuyun)
 		lan_mac=$(mtd_get_mac_binary factory 4)
 		wan_mac=$(macaddr_add "$lan_mac" 1)
+		;;
+
+	newifi-d1)
+		lan_mac=$(cat /sys/class/net/eth0/address)
+		wan_mac=$(macaddr_add "$lan_mac" 2)
 		;;
 
 	hc5962)

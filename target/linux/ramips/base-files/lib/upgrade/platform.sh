@@ -132,6 +132,7 @@ platform_check_image() {
 	zbt-wg2626 |\
 	zte-q7 |\
 	hc5962 |\
+	newifi-d1 |\
 	youku-yk1)
 		[ "$magic" != "27051956" ] && {
 			echo "Invalid image type."
