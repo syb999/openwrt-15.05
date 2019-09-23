@@ -5,7 +5,7 @@
 SUBTARGET:=mt7621
 BOARDNAME:=MT7621 based boards
 ARCH_PACKAGES:=ramips_1004kc
-FEATURES+=usb
+FEATURES+=usb squashfs nand ubifs
 CPU_TYPE:=1004kc
 CPU_SUBTYPE:=dsp
 CFLAGS:=-Os -pipe -mmt -mips32r2 -mtune=1004kc

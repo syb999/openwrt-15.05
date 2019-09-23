@@ -27,7 +27,6 @@ DEVICE_VARS += DTS
 loadaddr-y := 0x80000000
 loadaddr-$(CONFIG_TARGET_ramips_rt288x) := 0x88000000
 loadaddr-$(CONFIG_TARGET_ramips_mt7621) := 0x80001000
-loadaddr-$(CONFIG_TARGET_ramips_mt7621_nand) := 0x80001000
 
 KERNEL_LOADADDR := $(loadaddr-y)
 
@@ -960,10 +959,6 @@ endif
 # MT7621 Profiles
 #
 
-ifeq ($(SUBTARGET),mt7621)
-  TARGET_DEVICES += mt7621 wsr-600 wsr-1166 dir-860l-b1 firewrt pbr-m1 re6500 zbt-wg2626
-endif
-
 define Device/mt7621
   DTS := MT7621
   IMAGE_SIZE := $(ralink_default_fw_size_4M)
@@ -1012,14 +1007,6 @@ define Device/zbt-wg2626
   IMAGE_SIZE := $(ralink_default_fw_size_16M)
 endef
 
-#
-# MT7621-nand Profiles
-#
-
-ifeq ($(SUBTARGET),mt7621-nand)
-  TARGET_DEVICES += hc5962
-endif
-
 define Device/hc5962
   DTS := HC5962
   IMAGE_SIZE := $(ralink_default_fw_size_32M)
@@ -1030,6 +1017,12 @@ define Device/hc5962
   FILESYSTEMS := squashfs
   IMAGE/sysupgrade.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(ralink_default_fw_size_32M)
 endef
+
+
+ifeq ($(SUBTARGET),mt7621)
+  TARGET_DEVICES += mt7621 wsr-600 wsr-1166 dir-860l-b1 firewrt pbr-m1 re6500 zbt-wg2626 hc5962
+endif
+
 
 #
 # MT7628 Profiles
@@ -1086,7 +1079,7 @@ define Image/Build
 endef
 endif
 
-ifeq ($(SUBTARGET),$(filter $(SUBTARGET),mt7621 mt7621-nand))
+ifeq ($(SUBTARGET),mt7621)
 define Image/Prepare
 #define Build/Compile
 	rm -rf $(KDIR)/relocate
