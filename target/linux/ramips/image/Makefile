@@ -980,17 +980,20 @@ endef
 
 define Device/dir-860l-b1
   DTS := DIR-860L-B1
+  BLOCKSIZE := 64k
   IMAGES += factory.bin
   KERNEL := kernel-bin | patch-dtb | relocate-kernel | lzma | uImage lzma
+  IMAGE_SIZE := $(ralink_default_fw_size_16M)
   IMAGE/sysupgrade.bin := \
 	append-kernel | pad-offset 65536 64 | append-rootfs | \
 	seama -m "dev=/dev/mtdblock/2" -m "type=firmware" | \
-	pad-rootfs | check-size $$$$(IMAGE_SIZE)
+	pad-rootfs | append-metadata | check-size $$$$(IMAGE_SIZE)
   IMAGE/factory.bin := \
-	append-kernel | pad-offset 65536 64 | append-rootfs | pad-rootfs -x 64 | \
+	append-kernel | pad-offset 65536 64 | \
+	append-rootfs | pad-rootfs -x 64 | \
 	seama -m "dev=/dev/mtdblock/2" -m "type=firmware" | \
-	check-size $$$$(IMAGE_SIZE) | \
-	seama-seal -m "signature=wrgac13_dlink.2013gui_dir860lb"
+	seama-seal -m "signature=wrgac13_dlink.2013gui_dir860lb" | \
+	check-size $$$$(IMAGE_SIZE)
 endef
 
 define Device/firewrt
