@@ -17,9 +17,6 @@
 
 	sdhci@10130000 {
 		status = "okay";
-
-		pinctrl-names = "default";
-		pinctrl-0 = <&sdhci_pins>;
 	};
 
 	palmbus@1E000000 {
@@ -76,7 +73,7 @@
 				reg = <0x0000 0 0 0 0>;
 				device_type = "pci";
 				mediatek,mtd-eeprom = <&factory 0x8000>;
-				ieee80211-freq-limit = <5000000 6000000>;
+				mediatek,5ghz = <0>;
 			};
 		};
 
@@ -85,7 +82,7 @@
 				reg = <0x0000 0 0 0 0>;
 				device_type = "pci";
 				mediatek,mtd-eeprom = <&factory 0x0000>;
-				ieee80211-freq-limit = <2400000 2500000>;
+				mediatek,2ghz = <0>;
 			};
 		};
 	};
@@ -110,7 +107,7 @@
 	pinctrl {
 		state_default: pinctrl0 {
 			gpio {
-				ralink,group = "wdt", "rgmii2", "jtag", "i2c", "uart2", "uart3", "sdhci";
+				ralink,group = "wdt";
 				ralink,function = "gpio";
 			};
 		};
