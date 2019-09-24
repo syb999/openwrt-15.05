@@ -121,6 +121,8 @@ acl_lease_fornow(){
 	sleep 90
 
 	dec-tool lease del $mac
+	local ip=$(uci -q get wldevlist.${fmac}.ip)
+	conntrack -D -s $ip 2>/dev/null
 	local ltime=$(uci -q get wldevlist.${fmac}.lease_time)
 	if [ "x$ltime" = "x0" -o "x$ltime" = "x" ]; then
 		# if there is the same script, not do anything

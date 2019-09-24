@@ -1,0 +1,76 @@
+<%+header%>
+<fieldset>
+	<legend><%:factory reset%></legend>
+    <ul><li class="border-line"></li></ul>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>
+			<span class="detail"><%:operate successfully%></span>
+			<input class="subBtn" value="<%:confirm%>" type="button" onclick="closeTip()">
+        </div>
+    </div>
+    <div id="isSureTip">
+        <div id="lanTip" class="hsTip">
+            <i class="altIcon"></i>
+			<span class="detail"><%:factory reset confirm%></span>
+			<input class="subBtn" value="<%:confirm%>" type="button" onclick="resetTip(1)">
+			<input class="subBtn" value="<%:cancel%>" type="button" onclick="resetTip(2)">
+        </div>
+    </div>
+    <div style="margin: 0 auto auto 6.67em;">
+		<button onclick="resetClick()" class="btn lbtn"><%:factory reset%></button><br><br><br>
+		<p class="reset-text"><%:factory reset button%></p>
+    </div>
+    <div id="waiting" style="display: none">
+        <div class="LoadConCover">
+            <div class="coverLoadCon">
+                <div class="coverLoad">
+                    <i class="coverLoadClose" onclick="coverClose()"></i>
+                    <i class="coverLoading" ></i>
+					<p class="coverLoadNote"><%:It's recovering. Please wait...%></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</fieldset>
+<%+footer%>
+<script>
+    function resetClick() {
+        document.getElementById('isSureTip').style.visibility = 'visible';
+    }
+    //reset sure;
+    function resetTip(i){
+        document.getElementById('isSureTip').style.visibility = 'hidden';
+        if (i==1){
+            reset();
+        }
+    }
+    // router interfaces
+    function reset() {
+        document.getElementById("waiting").style.display='';
+        XHR.get('<%=luci.dispatcher.build_url("admin", "systemnew","reset")%>', null,
+            function(x, result){
+                console.log(result);
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                    document.getElementById('waiting').style.display = "none";
+                }else if (result!=null&&result.code==0){
+                    setTimeout(function () {
+                        setInterval(function () {
+                            pageRedirect(document.location.protocol+"//siwifi.cn");
+                        },3000)
+                    },10000)
+                } else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                    document.getElementById('waiting').style.display = "none";
+                }
+
+            });
+    }
+</script>

@@ -1,0 +1,321 @@
+<%+header%>
+<fieldset class="router">
+    <legend>静态路由设置</legend>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>>
+            <span class="detail">无效的输入！请参考正确格式：<br>XXX.XXX.XXX.XXX，X为0~9的数字。</span>
+            <input class="subBtn" value="确 定" type="button" onclick="closeTip()">
+        </div>
+    </div>
+    <i class="helpBtn" helpstr="dynamicIpHelp" onclick="clickHelp(0)"></i>
+    <li class="border-line"></li>
+    <div style="float: right">
+        <ul id="routeStcUl" class="gridToolBar">
+            <li gridtype="add" class="add" onclick="addStaticRouteTr()"><i></i><span>添加</span></li>
+            <li id="delAllUn" gridtype="delAll" style="display: none" class="delAllUn"><i></i><span>删除全部</span></li>
+            <li id="delAll" gridtype="delAll" class="delAll" onclick="deleteAllStaticRoutes()"><i></i><span>删除全部</span></li>
+            <li id="delSelUn" gridtype="delSel" class="delSelUn"><i></i><span>删除所选</span></li>
+            <li id="delSel" gridtype="delSel" style="display: none" class="delSel" onclick="deleteSelectedStaticRoutes()"><i></i><span>删除所选</span></li>
+        </ul>
+    </div>
+    <table id="static-router">
+    </table>
+    <fieldset >
+        <li class="border-line"></li>
+        <legend>系统路由表</legend>
+        <li class="border-line bottom"></li>
+        <ul id="routeSysUl" class="gridToolBar">
+            <li gridtype="refresh" class="refresh" onclick="refreshSystemRoutes()"><i></i><span>刷新</span></li>
+        </ul>
+        <table id="system-routes"></table>
+    </fieldset>
+    <div id="Help" ><p class="helpTop">
+        <span class="helpDes">帮助</span>
+        <i class="helpClose" onclick="clickHelp(1)"></i></p>
+        <div id="helpDetail"><ul id="routeTableHelp" class="help">
+        <li class="title">路由功能可设置静态路由条目，当数据包与静态路由匹配成功时，将按照指定的路径进行转发。</li>
+        <li class="title">目的网络地址</li>
+        <li class="content">数据包需要到达的地址。</li>
+        <li class="title">子网掩码</li>
+        <li class="content">目的地址的子网掩码。</li>
+        <li class="title">下一跳地址</li>
+        <li class="content">数据包到达目的地址前，可以直接转发的下一个路由器地址。</li>
+    </ul></div></div>
+</fieldset>
+<%+footer%>
+<script>
+    // global vars
+    var static_routers;
+    var errTipDoc;
+    var Drag =  document.getElementById("Help");
+
+    // page load functions
+    getStaticRouter();
+    refreshSystemRoutes();
+    dragFunc(Drag);
+
+    // router get interfaces
+    function getStaticRouter() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "advancednew","get_static_routing")%>', null,
+            function(x, result) {
+                if(result!=null&&result.code == 0) {
+                    console.log(result);
+                    document.getElementById("delSelUn").style.display='';
+                    document.getElementById("delSel").style.display='none';
+                    if ($.isEmptyObject(result.routers)){
+                        document.getElementById("delAllUn").style.display='';
+                        document.getElementById("delAll").style.display='none';
+                    } else {
+                        document.getElementById("delAllUn").style.display='none';
+                        document.getElementById("delAll").style.display='';
+                    }
+                    var routers = result.routers;
+                    static_routers = result.routers;
+                    var html = '<tr><th><input type="checkbox" id="cb-all" onchange="cbAll()"></th><th>目的网络地址</th><th>子网掩码</th><th>下一跳地址</th><th>编辑</th></tr>';
+                    if (routers == '') {
+                        html += 'routers is null';
+                    } else {
+                        for(var i in routers){
+                            html += '<tr><td><input type="checkbox" id="cb-'+i+'" onchange="checkTd('+i+')"></td><td id="targetaddr-'+i+'">'+routers[i].targetaddr+'</td><td id="netmask-'+i+'">'+routers[i].netmask+'</td><td id="nextaddr-'+i+'">'+
+                                routers[i].nextaddr+'</td><td style="cursor: pointer;" onclick="editStaticRouter('+i+')"><i class="edit"></i></td></tr>';
+                        }
+                    }
+                    html +='<tr id="static-routes-add" style="display: none"></tr>';
+                    document.getElementById('static-router').innerHTML = html;
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '获取数据失败，请重试'
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    function refreshSystemRoutes() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "advancednew","get_routing_table")%>', null,
+            function(x, result) {
+
+                if(result!=null&&result.code == 0) {
+                    console.log(result);
+                    var routers = result.routers;
+                    var html = '<tr><th>目的网络地址</th><th>子网掩码</th><th>下一跳地址</th><th>接口</th></tr>';
+                    html += '<tr>';
+                    if (routers == null) {
+                        html += 'routers is null';
+                    } else {
+                        for(var i in routers){
+                            html += '<td>'+routers[i].targetaddr+'</td><td>'+routers[i].netmask+'</td><td>'+
+                                routers[i].nextaddr+'</td><td>'+routers[i].ifacetype+'</td>';
+                            html += '</tr><tr>';
+                        }
+                    }
+                    html +="</tr>";
+                    document.getElementById('system-routes').innerHTML = html;
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '刷新数据失败！'
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // router set interfaces
+    function saveStaticRoute() {
+        var targetaddr = document.getElementById('add-targetaddr').value;
+        var netmask = document.getElementById('add-netmask').value;
+        var nextaddr = document.getElementById('add-nextaddr').value;
+        if (!isValidIP(targetaddr)) {
+            document.getElementById("Error").style.visibility = 'visible';
+            errTipDoc = document.getElementById('add-targetaddr');
+            return;
+        }else if (!isValidIP(netmask)) {
+            document.getElementById("Error").style.visibility = 'visible';
+            errTipDoc = document.getElementById('add-netmask');
+            return;
+        }else if (!isValidIP(nextaddr)) {
+            document.getElementById("Error").style.visibility = 'visible';
+            errTipDoc = document.getElementById('add-netmask');
+            return;
+        }
+        var route = {'targetaddr':targetaddr, 'netmask':netmask, 'nextaddr':nextaddr};
+        console.log(static_routers);
+        var routers_array = [];
+        for (i in static_routers) {
+            routers_array.push(static_routers[i])
+        }
+        routers_array.push(route);
+        var params = {'routers':routers_array};
+        console.log(params);
+        XHR.post('<%=luci.dispatcher.build_url("admin", "advancednew","set_static_routing")%>', params,
+            function(x, result) {
+                if(result!=null&&result.code == 0) {
+                    console.log(result);
+                    this.getStaticRouter();
+                    this.refreshSystemRoutes();
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '保存失败'
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    function deleteSelectedStaticRoutes() {
+        var cb_id;
+        var cb;
+        var static_routers_deleted = [];
+        for (var i in static_routers) {
+            cb_id = 'cb-'+i;
+            cb = document.getElementById(cb_id);
+            if (cb.checked != true) {
+                static_routers_deleted.push(static_routers[i]);
+            }
+        }
+        var params = {'routers':static_routers_deleted};
+        console.log(params);
+        XHR.post('<%=luci.dispatcher.build_url("admin", "advancednew","set_static_routing")%>', params,
+            function(x, result) {
+                if(result!=null&&result.code == 0) {
+                    console.log(result);
+                    this.getStaticRouter();
+                    this.refreshSystemRoutes();
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '删除成功'
+                    err.style.visibility = 'visible';
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '删除失败'
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    function deleteAllStaticRoutes() {
+        var params = {'routers':[]};
+        XHR.post('<%=luci.dispatcher.build_url("admin", "advancednew","set_static_routing")%>', params,
+            function(x, result) {
+                if(result!=null&&result.code == 0) {
+                    console.log(result);
+                    this.getStaticRouter();
+                    this.refreshSystemRoutes();
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '删除成功'
+                    err.style.visibility = 'visible';
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '删除失败'
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // other button functions
+    function addStaticRouteTr() {
+        getStaticRouter();
+        setTimeout(function(){
+            var html = '<td></td><td><input id="add-targetaddr" onkeyup="nStrLimit(this)" maxlength="15"></td><td><input id="add-netmask" onkeyup="nStrLimit(this)" maxlength="15"></td><td>'+
+                '<input id="add-nextaddr" onkeyup="nStrLimit(this)" maxlength="15"></td><td><button class="mac-cancel" onclick="getStaticRouter()"></button><br><button class="mac-save"  onclick="saveStaticRoute()"></button></td>';
+            document.getElementById('static-routes-add').innerHTML = html;
+            document.getElementById('static-routes-add').style.display = '';
+        },500);
+    }
+
+    function editStaticRouter(i) {
+        getStaticRouter();
+        setTimeout(function(){
+            console.log(i);
+            var editHtml = '<td><input type="checkbox" id="cb-'+i+'" onchange="checkTd('+i+')"></td><td><input id="add-targetaddr"  onkeyup="nStrLimit(this)" maxlength="15" value="'+static_routers[i].targetaddr+'"></td><td><input id="add-netmask" onkeyup="nStrLimit(this)" maxlength="15" value="'+static_routers[i].netmask+'"></td><td>'+
+                '<input id="add-nextaddr"  onkeyup="nStrLimit(this)" maxlength="15"value="'+static_routers[i].nextaddr+'"></td><td><button class="mac-cancel" onclick="getStaticRouter()"></button><br><button  class="mac-save" onclick="modifyStaticRouter('+i+')"></button></td>';
+            var table = document.getElementById("static-router");
+            i +=1;
+            table.rows[i].innerHTML=editHtml;
+        },500);
+    }
+    
+    function modifyStaticRouter(i) {
+        var targetaddr = document.getElementById('add-targetaddr').value;
+        var netmask = document.getElementById('add-netmask').value;
+        var nextaddr = document.getElementById('add-nextaddr').value;
+        if (!isValidIP(targetaddr)) {
+            document.getElementById("Error").style.visibility = 'visible';
+            errTipDoc = document.getElementById('add-targetaddr');
+            return;
+        }else if (!isValidIP(netmask)) {
+            document.getElementById("Error").style.visibility = 'visible';
+            errTipDoc = document.getElementById('add-netmask');
+            return;
+        }else if (!isValidIP(nextaddr)) {
+            document.getElementById("Error").style.visibility = 'visible';
+            errTipDoc = document.getElementById('add-netmask');
+            return;
+        }
+        static_routers[i].targetaddr = targetaddr;
+        static_routers[i].netmask = netmask;
+        static_routers[i].nextaddr = nextaddr;
+        var params = {'routers':static_routers};
+        console.log(params);
+        XHR.post('<%=luci.dispatcher.build_url("admin", "advancednew","set_static_routing")%>', params,
+            function(x, result) {
+                if(result!=null&&result.code == 0) {
+                    console.log(result);
+                    this.getStaticRouter();
+                    this.refreshSystemRoutes();
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '修改成功'
+                    err.style.visibility = 'visible';
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '修改失败'
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // page functions
+    function cbAll() {
+        var cb_all = document.getElementById('cb-all');
+        if (cb_all.checked == true) {
+            for (var i in static_routers) {
+                var cb_id = 'cb-'+i;
+                var cb = document.getElementById(cb_id);
+                cb.checked = true;
+                document.getElementById("delSel").style.display="";
+                document.getElementById("delSelUn").style.display="none";
+            }
+        } else {
+            for (var i in static_routers) {
+                var cb_id = 'cb-'+i;
+                var cb = document.getElementById(cb_id);
+                cb.checked = false;
+                document.getElementById("delSel").style.display="none";
+                document.getElementById("delSelUn").style.display="";
+            }
+        }
+    }
+
+    function checkTd(i) {
+        for (i in static_routers){
+            var chekedItem = document.getElementById("cb-"+i);
+            if (chekedItem!=null&&chekedItem!="") {
+                if (chekedItem.checked == true){
+                    document.getElementById("delSel").style.display="";
+                    document.getElementById("delSelUn").style.display="none";
+                    return;
+                }else {
+                    document.getElementById("delSel").style.display="none";
+                    document.getElementById("delSelUn").style.display="";
+                }
+            }
+        }
+
+    }
+</script>

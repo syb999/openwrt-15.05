@@ -1,0 +1,1325 @@
+<%+header%>
+<%-
+local uci = require "luci.model.uci"
+local _uci_real  = cursor or _uci_real or uci.cursor()
+local wirelessnew = require "luci.controller.admin.wirelessnew"
+local wds_enable = wirelessnew.wds_is_enabled()
+-%>
+<fieldset class="owner">
+	<legend><%:host network%></legend>
+    <i class="helpBtn" helpstr="dynamicIpHelp" onclick="clickHelp(0)"></i>
+    <div class="bWlSwitchCon dhcp">
+        <div id="switchCon" class="switchCon" onclick="switchChange()">
+            <i class="switchBg"></i>
+            <i id="switchOn" class="switchBall" style=""></i>
+            <i id="switchOff" class="switchBallOff" style="display: none;"></i>
+        </div>
+		<span id="switchSpan" class="bWlSwitchOff" ><%:disabled%></span>
+    </div>
+    <ul><li class="border-line"></li></ul>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>
+			<span class="detail"><%:Please enter password%></span>
+			<input class="subBtn" value="<%:confirm%>" type="button" onclick="closeTip()">
+        </div>
+    </div>
+	<div id="waiting" style="display: none;">
+        <div class="LoadConCover">
+            <div class="coverLoadCon">
+                <div class="coverLoad">
+                    <i class="coverLoadClose" onclick="coverClose()"></i>
+                    <i class="coverLoading"></i>
+                    <p class="coverLoadNote"><%:Setting up，please wait a moment...%></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <ul>
+        <li class="ownerRadioSel" id="ownerRadioSelect" style="display: none">
+        <input type="radio" name="ownerType" value="2.4G" onchange="wirelessSel('ownerType')">2.4G
+        <input class="Radio5" type="radio" name="ownerType" value="5G" onchange="wirelessSel('ownerType')">5G
+        </li>
+    </ul>
+    <table id="space1" class="tb-no-border">
+        <tr><td></td></tr>
+        <tr><td></td></tr>
+        <tr><td></td></tr>
+        <tr><td></td></tr>
+        <tr><td></td></tr>
+        <tr><td></td></tr>
+        <tr><td></td></tr>
+        <tr><td></td></tr>
+        <tr><td></td></tr>
+    </table>
+    <table class="tb-no-border" id="table-24G" style="display: none">
+		<tr><td class="wan-td-left"><%:SSID%></td><td class="wan-td-right"> <input class="ssid" type="text" maxlength="32" onkeyup="noSpaceWord(this)"><input class="broadcast" type="checkbox"><%:Turn on wireless radio%></td></tr>
+		<tr><td class="wan-td-left"><%:wireless password%></td><td class="wan-td-right"> <input id="key" class="key" type="text" onkeyup="nStrLimit(this)" maxlength="63"><input id="open" class="open" type="checkbox" onchange="isEncoded(['open','key'])"><%:No encryption%></td></tr>
+		<% local country_enable = _uci_real:get("basic_setting", "country_code", "enable") == "1" and true or false;  if country_enable then %>
+		<tr><td class="wan-td-left"><%:country and region%></td><td class="wan-td-right"> <select class="country" onchange="setChannelOption(this,'table-24G','2.4G')">
+                    <option value="US"><%:United States%></option>
+                    <option value="CA"><%:Canada%></option>
+                    <option value="EU"><%:Europe%></option>
+                    <option value="CH"><%:Switzerland%></option>
+                    <option value="RU"><%:Russia%></option>
+                    <option value="JP"><%:Japan%></option>
+                    <option value="IN"><%:India%></option>
+                    <option value="SG"><%:Singapore%></option>
+                    <option value="CN"><%:China%></option>
+                    <option value="IL"><%:Israel%></option>
+                    <option value="KP"><%:North Korea%></option>
+                    <option value="KR"><%:South Korea%></option>
+                    <option value="TR"><%:Turkey%></option>
+                    <option value="AU"><%:Australia%></option>
+                    <option value="ZA"><%:South Africa%></option>
+                    <option value="BR"><%:Brazil%></option>
+                    <option value="TW"><%:Taiwan%></option>
+                    <option value="NZ"><%:New Zealand%></option>
+        </select></td></tr>
+		<% end %>
+		<tr><td class="wan-td-left"><%:channel%></td><td class="wan-td-right"> <select class="channel">
+			<option value="auto"><%:auto%></option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+        </select></td></tr>
+		<tr><td class="wan-td-left"><%:model%></td><td class="wan-td-right"> <select class="mode" onchange="modeSwitchDual('table-24G')">
+            <option value="11n">11n only</option>
+            <option value="11g">11g only</option>
+            <option value="11b">11b only</option>
+        </select></td></tr>
+		<tr><td class="wan-td-left"><%:Spectrum bandwidth%></td><td class="wan-td-right"> <select class="bandwidth">
+			<option value="auto"><%:auto%></option>
+            <option value="HT20" class="ht20">20MHZ</option>
+            <option value="HT40" class="ht40">40MHZ</option>
+        </select></td></tr>
+		<tr><td class="wan-td-left"><%:Signal strength%></td><td class="wan-td-right"> <select class="signal">
+					<option><%:low%></option>
+					<option><%:middle%></option>
+					<option><%:high%></option>
+        </select></td></tr>
+        <tr><td class="wan-td-left">
+				<input class="apartheid" type="checkbox"> </td><td class="wan-td-right"><%:Open AP isolation%>
+        </td></tr>
+        <tr><td></td><td class="wan-td-right">
+                <button onclick="showConfirmTip('2.4G')"><%:save%></button>
+                <i id="24-saveTip" class="hsSubLoading saving" style="display: none"></i>
+                <i id="24-saveTipSucess" class="hsSubLoading save-suc" style="display: none"></i>
+        </td></tr>
+    </table>
+    <table class="tb-no-border" id="table-5G" style="display: none">
+		<tr><td class="wan-td-left"><%:SSID%></td><td class="wan-td-right"> <input class="ssid-5" type="text" onkeyup="noSpaceWord(this)" maxlength="32"><input class="broadcast-5" type="checkbox"><%:Turn on wireless radio%></td></tr>
+		<tr><td class="wan-td-left"><%:wireless password%></td><td class="wan-td-right"> <input id="key-5" class="key-5" type="text" onkeyup="nStrLimit(this)" maxlength="63"><input id="open-5" class="open-5" type="checkbox" onchange="isEncoded(['open-5','key-5'])"><%:No encryption%></td></tr>
+        <% if country_enable then %>
+		<tr><td class="wan-td-left"><%:country and region%></td><td class="wan-td-right"> <select class="country-5" onchange="setChannelOption(this,'table-5G','5G')">
+                    <option value="US"><%:United States%></option>
+                    <option value="CA"><%:Canada%></option>
+                    <option value="EU"><%:Europe%></option>
+                    <option value="CH"><%:Switzerland%></option>
+                    <option value="RU"><%:Russia%></option>
+                    <option value="JP"><%:Japan%></option>
+                    <option value="IN"><%:India%></option>
+                    <option value="SG"><%:Singapore%></option>
+                    <option value="CN"><%:China%></option>
+                    <option value="IL"><%:Israel%></option>
+                    <option value="KP"><%:North Korea%></option>
+                    <option value="KR"><%:South Korea%></option>
+                    <option value="TR"><%:Turkey%></option>
+                    <option value="AU"><%:Australia%></option>
+                    <option value="ZA"><%:South Africa%></option>
+                    <option value="BR"><%:Brazil%></option>
+                    <option value="TW"><%:Taiwan%></option>
+                    <option value="NZ"><%:New Zealand%></option>
+        </select></td></tr>
+        <% end %>
+<tr><td class="wan-td-left"><%:channel%></td><td class="wan-td-right"> <select class="channel-5" onchange="channel165Dual(this,'table-5G')">
+            <!--<option value="auto">自动</option>-->
+            <option value="36">36</option>
+            <option value="40">40</option>
+            <option value="44">44</option>
+            <option value="48">48</option>
+            <option value="52">52</option>
+            <option value="56">56</option>
+            <option value="60">60</option>
+            <option value="64">64</option>
+            <option value="149">149</option>
+            <option value="153">153</option>
+            <option value="157">157</option>
+            <option value="161">161</option>
+            <option value="165">165</option>
+        </select></td></tr>
+		<tr><td class="wan-td-left"><%:model%></td><td class="wan-td-right"> <select class="mode-5" onchange="modeSwitchDual('table-5G')">
+            <option value="11a">11a only</option>
+            <option value="11n">11n only</option>
+            <option value="11ac">11ac</option>
+        </select></td></tr>
+		<tr><td class="wan-td-left"><%:Spectrum bandwidth%></td><td class="wan-td-right"> <select class="bandwidth-5">
+            <!--<option value="auto" id="auto-5">自动</option>-->
+            <option value="HT20" class="ht20-5">20MHZ</option>
+            <option value="HT40" class="ht40-5">40MHZ</option>
+            <option value="VHT20" class="vht20">20MHZ</option>
+            <option value="VHT40" class="vht40">40MHZ</option>
+            <option value="VHT80" class="vht80">80MHZ</option>
+        </select></td></tr>
+		<tr><td class="wan-td-left"><%:Signal strength%></td><td class="wan-td-right"> <select class="signal-5">
+					<option><%:low%></option>
+					<option><%:middle%></option>
+					<option><%:high%></option>
+        </select></td></tr>
+        <tr><td class="wan-td-left">
+				<input class="apartheid-5" type="checkbox"> </td><td class="wan-td-right"><%:Open AP isolation%>
+        </td></tr>
+        <tr><td></td><td class="wan-td-right">
+                <button onclick="showConfirmTip('5G')"><%:save%></button>
+                <i id="5-saveTip" class="hsSubLoading saving" style="display: none"></i>
+                <i id="5-saveTipSucess" class="hsSubLoading save-suc" style="display: none"></i>
+        </td></tr>
+    </table>
+    <table class="tb-no-border" id="dual-table" style="display:none;">
+		<tr><td class="wan-td-left" colspan="2"><%:SSID%></td><td class="wan-td-right" colspan="2"> <input class="ssid-5" type="text" maxlength="32" onkeyup="noSpaceWord(this)"><input class="broadcast-5" type="checkbox"><%:Turn on wireless radio%></td></tr>
+		<tr><td class="wan-td-left" colspan="2"><%:wireless password%></td><td class="wan-td-right" colspan="2"> <input id="keyDual" class="keyDual" type="text" onkeyup="nStrLimit(this)" maxlength="63"><input id="openDual" class="openDual" type="checkbox" onchange="isEncoded(['openDual','keyDual'])"><%:No encryption%></td></tr>
+        <th colspan="2">2.4G</th><th colspan="2">5G</th>
+		<tr><td class="wan-td-left"><%:channel%></td><td class="wan-td-right"> <select class="channel">
+			<option value="auto"><%:auto%></option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+        </select></td>
+        <td class="wan-td-left"><%:channel%></td><td class="wan-td-right"> <select class="channel-5" onchange="channel165Dual(this,'dual-table')">
+            <!--<option value="auto">自动</option>-->
+            <option value="36">36</option>
+            <option value="40">40</option>
+            <option value="44">44</option>
+            <option value="48">48</option>
+            <option value="52">52</option>
+            <option value="56">56</option>
+            <option value="60">60</option>
+            <option value="64">64</option>
+            <option value="149">149</option>
+            <option value="153">153</option>
+            <option value="157">157</option>
+            <option value="161">161</option>
+            <option value="165">165</option>
+        </select></td>
+        </tr>
+		<tr><td class="wan-td-left"><%:model%></td><td class="wan-td-right"> <select class="mode" onchange="modeSwitchDual('dual-table')">
+            <option value="11n">11n only</option>
+            <option value="11g">11g only</option>
+            <option value="11b">11b only</option>
+        </select></td>
+		<td class="wan-td-left"><%:model%></td><td class="wan-td-right"> <select class="mode-5" onchange="modeSwitchDual('dual-table')">
+            <option value="11a">11a only</option>
+            <option value="11n">11n only</option>
+            <option value="11ac">11ac</option>
+        </select></td></tr>
+		<tr><td class="wan-td-left"><%:Spectrum bandwidth%></td><td class="wan-td-right"> <select class="bandwidth">
+			<option value="auto"><%:auto%></option>
+            <option value="HT20" class="ht20">20MHZ</option>
+            <option value="HT40" class="ht40">40MHZ</option>
+        </select></td>
+		<td class="wan-td-left"><%:Spectrum bandwidth%></td><td class="wan-td-right"> <select class="bandwidth-5">
+            <!--<option value="auto" id="auto-5">自动</option>-->
+            <option value="HT20" class="ht20-5">20MHZ</option>
+            <option value="HT40" class="ht40-5">40MHZ</option>
+            <option value="VHT20" class="vht20">20MHZ</option>
+            <option value="VHT40" class="vht40">40MHZ</option>
+            <option value="VHT80" class="vht80">80MHZ</option>
+        </select></td></tr>
+		<tr><td class="wan-td-left"><%:Signal strength%></td><td class="wan-td-right"> <select class="signal">
+					<option><%:low%></option>
+					<option><%:middle%></option>
+					<option><%:high%></option>
+        </select></td>
+		<td class="wan-td-left"><%:Signal strength%></td><td class="wan-td-right"> <select class="signal-5">
+					<option><%:low%></option>
+					<option><%:middle%></option>
+					<option><%:high%></option>
+        </select></td></tr>
+        <tr><td class="wan-td-left">
+				<input class="apartheid" type="checkbox"> </td><td class="wan-td-right"><%:Open AP isolation%>
+        </td>
+        <td class="wan-td-left">
+				<input class="apartheid-5" type="checkbox"> </td><td class="wan-td-right"><%:Open AP isolation%>
+        </td></tr>
+        <tr><td colspan="2"></td><td class="wan-td-right" colspan="2">
+                <button onclick="showConfirmTip('dual')"><%:save%></button>
+                <i id="saveTip" class="hsSubLoading saving" style="display: none"></i>
+                <i id="saveTipSucess" class="hsSubLoading save-suc" style="display: none"></i>
+        </td></tr>
+    </table>
+	<legend><%:frequence intergration%></legend>
+    <div class="bWlSwitchCon dhcp">
+        <div id="switchDualCon" class="switchCon" onclick="switchDualChange()">
+            <i class="switchBg"></i>
+            <i id="switchDualOn" class="switchBall" style="display: none"></i>
+            <i id="switchDualOff" class="switchBallOff" style=""></i>
+        </div>
+		<span id="switchDualSpan" class="bWlSwitchOff" ><%:enabled%></span>
+    </div>
+    <ul><li class="border-line"></li></ul>
+    <div id="Help" class="Help">
+		<p class="helpTop"><span class="helpDes"><%:help%></span>
+            <i class="helpClose" onclick="clickHelp(1)"></i>
+        </p><div class="helpDetail"><ul id="wlanNetworkHelp" class="help">
+				<li class="title"><%:SSID%></li>
+				<li class="content"><%:The wireless wi-fi name of the router%></li>
+				<li class="title"><%:wireless password%></li>
+				<li class="content"><%:wireless password help%></li>
+				<li class="title"><%:channel%></li>
+				<li class="content"><%:channel help%></li>
+				<li class="title"><%:model%></li>
+				<li class="content"><%:Wireless mode in which the router works%></li>
+				<li class="title"><%:Spectrum bandwidth%></li>
+				<li class="content"><%:The bandwidth of the wireless data transmitted%></li>
+				<li class="title"><%:Signal strength%></li>
+				<li class="content"><%:Signal strength help%></li>
+				<li class="title"><%:Open AP isolation%></li>
+				<li class="content"><%:Open AP isolation help%></li>
+    </ul></div></div>
+    <div id="isSureTip">
+        <div id="lanTip" class="hsTip">
+            <i class="altIcon"></i>
+            <span class="detail"><%:confirm to alter wifi%></span>
+            <input id="confirm" class="subBtn" value="<%:confirm%>" type="button" onclick="saveOwnerNetwork('2.4G')">
+            <input class="subBtn" value="<%:cancel%>" type="button" onclick="closeConfirmTip()">
+        </div>
+    </div>
+</fieldset>
+<%+footer%>
+<script>
+    // global vars
+    var ifaces;
+    var wifistatus_24g;
+    var wifistatus_5g;
+    var errTipDoc = document.getElementById("ssid");
+    var Drag =  document.getElementById("Help");
+    var changeEnable = false;
+    var modeSwitchEnable = false;
+    var flagDual = 0;
+    supportQuerySelector();
+
+    // page load functions
+    getDual();
+    getWifiIface();
+    dragFunc(Drag);
+
+    // router get interfaces
+    function getWifiIface() {
+        var radioSel = document.getElementsByName('ownerType');
+        XHR.get('<%=luci.dispatcher.build_url("admin", "wirelessnew","get_wifi_iface")%>', null,
+            function(x, result) {
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if(result!=null&&result.code == 0) {
+                    radioSel[0].checked = true;
+                    switchDualChecked(flagDual);
+                    dualDisplay(flagDual);
+                    if (flagDual) {
+                        getDualIface(result);
+                    }
+                    console.log(result);
+                    ifaces = result.ifaces;
+                    var e;
+                    for (var i=0; i<result.ifaces.length; i++) {
+                        if (result.ifaces[i].band == '2.4G') {
+                            var table = document.getElementById('table-24G');
+                            if (e = table.querySelector('.ssid'))
+                                e.value = result.ifaces[i].ssid;
+                            if (e = table.querySelector('.broadcast'))
+                                e.checked = result.ifaces[i].broadcast;
+
+                            if (e = table.querySelector('.open'))
+                                e.checked = result.ifaces[i].open;
+                            if (e = table.querySelector('.key')){
+                                if (result.ifaces[i].open) {
+                                    e.disabled = 'disabled';
+                                }else if (result.ifaces[i].key != undefined) {
+                                    e.value = result.ifaces[i].key;
+                                }
+                            }
+                            var channelIndex = result.ifaces[i].channel;
+                            var channel = table.querySelector('.channel');
+                            console.log("channel is ",channel);
+                            <% if country_enable then %>
+                            var countryValue = result.ifaces[i].country;
+                            var country = table.querySelector('.country');
+                            for (var j=0; j<country.options.length; j++) {
+                                if (country[j].value == countryValue) {
+                                    country.selectedIndex = j;
+                                    //channel165Dual(country,'table-5G');
+                                    break;
+                                }
+                            }
+                            setChannelOption(country,'table-24G','2.4G')
+                            <% end %>
+                            if (channelIndex == 'auto') {
+                                channel.selectedIndex = 0;
+                            } else {
+                                channel.selectedIndex = channelIndex;
+                            }
+
+                            if (result.ifaces[i].hwmode != '11g') {
+                                table.querySelector('.bandwidth').disabled = 'disabled';
+                            }
+                            var mode_24g = table.querySelector('.mode');
+                            if (result.ifaces[i].hwmode != undefined) {
+                                if (result.ifaces[i].hwmode == '11b') {
+                                    mode_24g.selectedIndex = 2;
+                                } else if (result.ifaces[i].hwmode == '11g' && result.ifaces[i].htmode != undefined) {
+                                    mode_24g.selectedIndex = 0;
+                                } else {
+                                    table.querySelector('.bandwidth').disabled = 'disabled';
+                                    mode_24g.selectedIndex = 1;
+                                }
+                            }
+                            var bandwidth_24g = table.querySelector('.bandwidth');
+                            if (result.ifaces[i].htmode != undefined) {
+                                for (var j=0; j<bandwidth_24g.options.length; j++) {
+                                    if (bandwidth_24g[j].value == result.ifaces[i].htmode) {
+                                        bandwidth_24g.selectedIndex = j;
+                                        break;
+                                    }
+                                }
+                            }
+                            var signal = table.querySelector('.signal');
+                            if (result.ifaces[i].signal != undefined) {
+                                signal.selectedIndex = result.ifaces[i].signal;
+                            } else {
+                                signal.selectedIndex = 2;
+                            }
+                            if (e = table.querySelector('.apartheid'))
+                                e.checked = result.ifaces[i].apartheid;
+                            wifistatus_24g = result.ifaces[i].enable;
+                            switchChecked(wifistatus_24g);
+                            <% if wds_enable == 1 then %>
+                                mode_24g.disabled = 'disabled';
+                                bandwidth_24g.disabled = 'disabled';
+                                channel.disabled = 'disabled';
+                            <% end %>
+                        } else if (result.ifaces[i].band == '5G') {
+                            var table = document.getElementById('table-5G');
+                            if (e = table.querySelector('.ssid-5'))
+                                e.value = result.ifaces[i].ssid;
+                            if (e = table.querySelector('.broadcast-5'))
+                                e.checked = result.ifaces[i].broadcast;
+                            if (e = table.querySelector('.key-5')){
+                                if (result.ifaces[i].open) {
+                                    e.disabled = 'disabled';
+                                }else if (result.ifaces[i].key != undefined) {
+                                    e.value = result.ifaces[i].key;
+                                }
+                            }
+                            if (e = table.querySelector('.open-5'))
+                                e.checked = result.ifaces[i].open;
+                            var channelValue = result.ifaces[i].channel;
+                            var channel = table.querySelector('.channel-5');
+                            <% if country_enable then %>
+                            var countryValue = result.ifaces[i].country;
+                            var country = table.querySelector('.country-5');
+                            for (var j=0; j<country.options.length; j++) {
+                                if (country[j].value == countryValue) {
+                                    country.selectedIndex = j;
+                                    //channel165Dual(country,'table-5G');
+                                    break;
+                                }
+                            }
+                            setChannelOption(country,'table-5G','5G')
+                            <% end %>
+                            if (channelValue == 'auto') {
+                                channel.selectedIndex = 0;
+                            } else {
+                                for (var j=0; j<channel.options.length; j++) {
+                                    if (channel[j].value == channelValue) {
+                                        channel.selectedIndex = j;
+                                        channel165Dual(channel,'table-5G');
+                                        break;
+                                    }
+                                }
+                            }
+                            var mode_5g = table.querySelector('.mode-5');
+                            if (result.ifaces[i].hwmode != undefined) {
+                                for (var j=0; j<mode_5g.options.length; j++) {
+                                    if (mode_5g[j].value == result.ifaces[i].hwmode) {
+                                        mode_5g.selectedIndex = j;
+                                        break;
+                                    }
+                                }
+                            }
+                            var bandwidth_5g = table.querySelector('.bandwidth-5');
+                            if (result.ifaces[i].htmode != undefined) {
+                                for (var j=0; j<bandwidth_5g.options.length; j++) {
+                                    if (bandwidth_5g[j].value == result.ifaces[i].htmode) {
+                                        bandwidth_5g.selectedIndex = j;
+                                        break;
+                                    }
+                                }
+                            }
+                            var signal = table.querySelector('.signal-5');
+                            if (result.ifaces[i].signal != undefined) {
+                                signal.selectedIndex = result.ifaces[i].signal;
+                            } else {
+                                signal.selectedIndex = 2;
+                            }
+                            if (e = table.querySelector('.apartheid-5'))
+                                e.checked = result.ifaces[i].apartheid;
+                            wifistatus_5g = result.ifaces[i].enable;
+                            <% if wds_enable == 2 then %>
+                                mode_5g.disabled = 'disabled';
+                                bandwidth_5g.disabled = 'disabled';
+                                channel.disabled = 'disabled';
+                            <% end %>
+                        }
+                    }
+                    changeEnable = true;
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // router set interfaces
+    function saveOwnerNetwork(wantype) {
+        closeConfirmTip();
+        var ifaces_save = [];
+        if (wantype == '2.4G') {
+            var table = document.getElementById('table-24G');
+            for (var i=0; i<ifaces.length; i++) {
+                if (ifaces[i].band == '2.4G') {
+                    ifaces[i].ssid = table.querySelector('.ssid').value;
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    if (ifaces[i].ssid == ''){
+						text.innerText = '<%:Please input the SSID%>';
+                        err.style.visibility = 'visible';
+                        errTipDoc = table.querySelector('.ssid');
+                        return;
+                    }else if (strlen(ifaces[i].ssid)>32){
+						text.innerText = '<%:the length of the SSID is too long！%>';
+                        err.style.visibility = 'visible';
+                        errTipDoc = table.querySelector('.ssid');
+                        return;
+                    }else {
+                        if (getChanLen(ifaces[i].ssid)>10){
+							text.innerText = '<%:No more than 10 Chinese characters in wireless name!%>';
+                            err.style.visibility = 'visible';
+                            errTipDoc = table.querySelector('.ssid');
+                            return;
+                        }
+                    }
+                    ifaces[i].broadcast = table.querySelector('.broadcast').checked;
+                    ifaces[i].key = table.querySelector('.key').value;
+                    ifaces[i].open = table.querySelector('.open').checked;
+                    if (ifaces[i].open == false) {
+                        if (strlen(ifaces[i].key)<8) {
+							text.innerText = '<%:Password length not less than 8 bits!%>';
+                            err.style.visibility = 'visible';
+                            errTipDoc = table.querySelector('.key');
+                            return;
+                        }else if (strlen(ifaces[i].key)>64) {
+							text.innerText = '<%:Password long long, please input again！%>';
+                            err.style.visibility = 'visible';
+                            errTipDoc = table.querySelector('.key');
+                            return;
+                        }
+                        if (ifaces[i].key != check(ifaces[i].key)) {
+                            text.innerText = '<%:password contain invalid character%>';
+                            err.style.visibility = 'visible';
+                            errTipDoc = table.querySelector('.key');
+                            return;
+                        }
+                    }
+                    ifaces[i].apartheid = table.querySelector('.apartheid').checked;
+                    <% if country_enable then %>
+                    var countrySelect = table.querySelector('.country');
+                    ifaces[i].country = countrySelect[countrySelect.selectedIndex].value;
+                    <% end %>
+                    var channelSelect = table.querySelector('.channel');
+                    var channelSelectIndex = channelSelect.selectedIndex;
+                    ifaces[i].channel = channelSelect[channelSelectIndex].value;
+                    var modeSelect = table.querySelector('.mode');
+                    var modeSelectIndex = modeSelect.selectedIndex;
+                    ifaces[i].hwmode = modeSelect[modeSelectIndex].value;
+                    if (modeSelect[modeSelectIndex].value == '11n') {
+                        var bandwidthSelect = table.querySelector('.bandwidth');
+                        var bandwidthSelectIndex = bandwidthSelect.selectedIndex;
+                        ifaces[i].htmode = bandwidthSelect[bandwidthSelectIndex].value;
+                    } else {
+                        ifaces[i].htmode = '';
+                    }
+                    if (checkStatus()) {
+                        var enable = true;
+                    } else {
+                        var enable = false;
+                    }
+                    ifaces[i].enable = enable;
+                    var signalSelect = table.querySelector('.signal');
+                    var signal = signalSelect.selectedIndex;
+                    ifaces[i].signal = signal;
+                    ifaces_save.push(ifaces[i]);
+                }
+            }
+        } else if (wantype == '5G') {
+            var table = document.getElementById('table-5G');
+            for (var i=0; i<ifaces.length; i++) {
+                if (ifaces[i].band == '5G') {
+                    ifaces[i].ssid = table.querySelector('.ssid-5').value;
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    if (ifaces[i].ssid == ''){
+						text.innerText = '<%:Please input the SSID%>';
+                        err.style.visibility = 'visible';
+                        errTipDoc = table.querySelector('.ssid-5');
+                        return;
+                    }else if (strlen(ifaces[i].ssid)>32){
+						text.innerText = '<%:the length of the SSID is too long！%>';
+                        err.style.visibility = 'visible';
+                        errTipDoc = table.querySelector('.ssid-5');
+                        return;
+                    }else {
+                        if (getChanLen(ifaces[i].ssid)>10){
+							text.innerText = '<%:No more than 10 Chinese characters in wireless name!%>';
+                            err.style.visibility = 'visible';
+                            errTipDoc = table.querySelector('.ssid-5');
+                            return;
+                        }
+                    }
+                    ifaces[i].broadcast = table.querySelector('.broadcast-5').checked;
+                    ifaces[i].key = table.querySelector('.key-5').value;
+                    ifaces[i].open = table.querySelector('.open-5').checked;
+                    if (ifaces[i].open == false) {
+                        if (strlen(ifaces[i].key)<8) {
+							text.innerText = '<%:Password length not less than 8 bits!%>';
+                            err.style.visibility = 'visible';
+                            errTipDoc = table.querySelector('.key-5');
+                            return;
+                        }else if (strlen(ifaces[i].key)>64) {
+							text.innerText = '<%:Password long long, please input again！%>';
+                            err.style.visibility = 'visible';
+                            errTipDoc = table.querySelector('.key-5');
+                            return;
+                        }
+                        if (ifaces[i].key != check(ifaces[i].key)) {
+                            text.innerText = '<%:password contain invalid character%>';
+                            err.style.visibility = 'visible';
+                            errTipDoc = table.querySelector('.key-5');
+                            return;
+                        }
+                    }
+                    ifaces[i].apartheid = table.querySelector('.apartheid-5').checked;
+                    <% if country_enable then %>
+                    var countrySelect = table.querySelector('.country-5');
+                    ifaces[i].country = countrySelect[countrySelect.selectedIndex].value;
+                    <% end %>
+                    var channelSelect = table.querySelector('.channel-5');
+                    var channelSelectIndex = channelSelect.selectedIndex;
+                    ifaces[i].channel = channelSelect[channelSelectIndex].value;
+                    var modeSelect = table.querySelector('.mode-5');
+                    var modeSelectIndex = modeSelect.selectedIndex;
+                    ifaces[i].hwmode = modeSelect[modeSelectIndex].value;
+                    var bandwidthSelect = table.querySelector('.bandwidth-5');
+                    var bandwidthSelectIndex = bandwidthSelect.selectedIndex;
+                    ifaces[i].htmode = bandwidthSelect[bandwidthSelectIndex].value;
+                    if (checkStatus()) {
+                        var enable = true;
+                    } else {
+                        var enable = false;
+                    }
+                    ifaces[i].enable = enable;
+                    var signalSelect = table.querySelector('.signal-5');
+                    var signal = signalSelect.selectedIndex;
+                    ifaces[i].signal = signal;
+                    var signal = signalSelect.selectedIndex;
+                    ifaces[i].signal = signal;
+                    ifaces_save.push(ifaces[i]);
+                }
+            }
+        } else if (wantype == 'dual') {
+            var table = document.getElementById('dual-table');
+            for (var i=0; i<ifaces.length; i++) {
+                if (ifaces[i].band == '5G') {
+                    ifaces[i].ssid = table.querySelector('.ssid-5').value;
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    if (ifaces[i].ssid == ''){
+						text.innerText = '<%:Please input the SSID%>';
+                        err.style.visibility = 'visible';
+                        errTipDoc = table.querySelector('.ssid-5');
+                        return;
+                    }else if (strlen(ifaces[i].ssid)>32){
+						text.innerText = '<%:the length of the SSID is too long！%>';
+                        err.style.visibility = 'visible';
+                        errTipDoc = table.querySelector('.ssid-5');
+                        return;
+                    }else {
+                        if (getChanLen(ifaces[i].ssid)>10){
+							text.innerText = '<%:No more than 10 Chinese characters in wireless name!%>';
+                            err.style.visibility = 'visible';
+                            errTipDoc = table.querySelector('.ssid-5');
+                            return;
+                        }
+                    }
+                    ifaces[i].broadcast = table.querySelector('.broadcast-5').checked;
+                    ifaces[i].key = table.querySelector('.keyDual').value;
+                    ifaces[i].open = table.querySelector('.openDual').checked;
+                    if (ifaces[i].open == false) {
+                        if (strlen(ifaces[i].key)<8) {
+							text.innerText = '<%:Password length not less than 8 bits!%>';
+                            err.style.visibility = 'visible';
+                            errTipDoc = table.querySelector('.key-5');
+                            return;
+                        }else if (strlen(ifaces[i].key)>64) {
+							text.innerText = '<%:Password long long, please input again！%>';
+                            err.style.visibility = 'visible';
+                            errTipDoc = table.querySelector('.key-5');
+                            return;
+                        }
+                        if (ifaces[i].key != check(ifaces[i].key)) {
+                            text.innerText = '<%:password contain invalid character%>';
+                            err.style.visibility = 'visible';
+                            errTipDoc = table.querySelector('.key-5');
+                            return;
+                        }
+                    }
+                    ifaces[i].apartheid = table.querySelector('.apartheid-5').checked;
+                    var channelSelect = table.querySelector('.channel-5');
+                    var channelSelectIndex = channelSelect.selectedIndex;
+                    ifaces[i].channel = channelSelect[channelSelectIndex].value;
+                    var modeSelect = table.querySelector('.mode-5');
+                    var modeSelectIndex = modeSelect.selectedIndex;
+                    ifaces[i].hwmode = modeSelect[modeSelectIndex].value;
+                    var bandwidthSelect = table.querySelector('.bandwidth-5');
+                    var bandwidthSelectIndex = bandwidthSelect.selectedIndex;
+                    ifaces[i].htmode = bandwidthSelect[bandwidthSelectIndex].value;
+                    if (checkStatus()) {
+                        var enable = true;
+                    } else {
+                        var enable = false;
+                    }
+                    ifaces[i].enable = enable;
+                    var signalSelect = table.querySelector('.signal-5');
+                    var signal = signalSelect.selectedIndex;
+                    ifaces[i].signal = signal;
+                    var signal = signalSelect.selectedIndex;
+                    ifaces[i].signal = signal;
+                    ifaces_save.push(ifaces[i]);
+                }else if (ifaces[i].band == '2.4G') {
+                    ifaces[i].apartheid = table.querySelector('.apartheid').checked;
+                    var channelSelect = table.querySelector('.channel');
+                    var channelSelectIndex = channelSelect.selectedIndex;
+                    ifaces[i].channel = channelSelect[channelSelectIndex].value;
+                    var modeSelect = table.querySelector('.mode');
+                    var modeSelectIndex = modeSelect.selectedIndex;
+                    ifaces[i].hwmode = modeSelect[modeSelectIndex].value;
+                    if (modeSelect[modeSelectIndex].value == '11n') {
+                        var bandwidthSelect = table.querySelector('.bandwidth');
+                        var bandwidthSelectIndex = bandwidthSelect.selectedIndex;
+                        ifaces[i].htmode = bandwidthSelect[bandwidthSelectIndex].value;
+                    } else {
+                        ifaces[i].htmode = '';
+                    }
+                    if (checkStatus()) {
+                        var enable = true;
+                    } else {
+                        var enable = false;
+                    }
+                    ifaces[i].enable = enable;
+                    var signalSelect = table.querySelector('.signal');
+                    var signal = signalSelect.selectedIndex;
+                    ifaces[i].signal = signal;
+                    ifaces_save.push(ifaces[i]);
+                }
+            }
+        }
+        document.getElementById("24-saveTip").style.display='';
+        document.getElementById("24-saveTipSucess").style.display='none';
+        document.getElementById("5-saveTip").style.display='';
+        document.getElementById("5-saveTipSucess").style.display='none';
+        document.getElementById("saveTip").style.display='';
+        document.getElementById("saveTipSucess").style.display='none';
+        var params = {'ifaces':ifaces_save};
+        console.log(params);
+        XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","set_wifi_iface")%>', params,
+            function(x, result){
+                document.getElementById("24-saveTip").style.display='none';
+                document.getElementById("5-saveTip").style.display='none';
+                document.getElementById("saveTip").style.display='none';
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if (result!=null&&result.code == 0) {
+                    console.log(result);
+                    document.getElementById("24-saveTipSucess").style.display='';
+                    document.getElementById("5-saveTipSucess").style.display='';
+                    document.getElementById("saveTipSucess").style.display='';
+                    setTimeout(function () {
+                        document.getElementById("24-saveTipSucess").style.display='none';
+                        document.getElementById("5-saveTipSucess").style.display='none';
+                        document.getElementById("saveTipSucess").style.display='none';
+                    },"2000");
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // page functions
+    function display(name) {
+        modeSwitchEnable = true;
+        if (name == '2.4G') {
+            setStatus(wifistatus_24g);
+            document.getElementById('table-5G').style.display = 'none';
+            document.getElementById('table-24G').style.display = '';
+            modeSwitchDual('table-24G');
+        } else {
+            setStatus(wifistatus_5g);
+            document.getElementById('table-24G').style.display = 'none';
+            document.getElementById('table-5G').style.display = '';
+            modeSwitchDual('table-5G');
+        }
+        modeSwitchEnable = false;
+    }
+
+    function wirelessSel(name) {
+        var wirelessSel = getRadioValue(name);
+        display(wirelessSel);
+    }
+    function setStatus(flag) {
+        if (flag) {
+			document.getElementById("switchSpan").innerText = "<%:disabled%>";
+        } else {
+			document.getElementById("switchSpan").innerText = "<%:enabled%>";
+        }
+        switchChange();
+    }
+
+    function switchDisable(divId){
+        document.getElementById(divId).onclick = function(){
+            ;
+        }
+    }
+    function switchEnable(divId){
+        setTimeout(function(){
+            document.getElementById(divId).onclick = function(){
+                switchChange();
+            };
+        },1000)
+    }
+    function switchChange() {
+        var status = document.getElementById("switchSpan").innerHTML;
+        var dualStatus = document.getElementById("switchDualSpan").innerHTML;
+        var flag = true;
+        var dualFlag = false;
+        switchDisable('switchCon');
+		if (dualStatus=="<%:enabled%>") {
+            dualFlag= true;
+        }
+		if (status=="<%:enabled%>") {
+            flag = false;
+        }
+        switchChecked(flag);
+        if (changeEnable) {
+            if (checkStatus()) {
+                var enable = true;
+            } else {
+                var enable = false;
+            }
+            var params;
+            var radioSel = getRadioValue('ownerType');
+            for (var i=0; i<ifaces.length; i++) {
+                if (ifaces[i].band == radioSel || dualFlag) {
+                    ifaces[i].enable = enable;
+                }
+            }
+            params = {'ifaces':ifaces};
+            console.log("params",params);
+            if (modeSwitchEnable) {
+                switchEnable('switchCon');
+                return;
+            }
+            XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","set_wifi_iface")%>', params,
+                function (x, result) {
+                    console.log(result);
+                    if (result==null) {
+                        var err = document.getElementById('Error');
+                        var text = err.getElementsByTagName('span')[0];
+                        err.style.visibility = 'visible';
+                        text.innerText = '<%:router connection failure%>';
+                    }else if (result!=null||result.code==0){
+                        for (var j in ifaces){
+                            if (ifaces[j].band == "2.4G")
+                                wifistatus_24g = ifaces[j].enable;
+                            else
+                                wifistatus_5g = ifaces[j].enable;
+                        }
+                    }else {
+                        var err = document.getElementById('Error');
+                        var text = err.getElementsByTagName('span')[0];
+                        text.innerText = result.msg;
+                        err.style.visibility = 'visible';
+                    }
+                });
+        }
+        switchEnable('switchCon');
+    }
+    function switchChecked(flag) {
+        if (flag) {
+            document.getElementById("switchSpan").innerText = '<%:enabled%>';
+            document.getElementById("switchSpan").className = "bWlSwitchOff spanSwitchOn";
+            document.getElementById("switchOn").style.display = "";
+            document.getElementById("switchOff").style.display = "none"
+        } else {
+            document.getElementById("switchSpan").innerText = '<%:disabled%>';
+            document.getElementById("switchSpan").className = "bWlSwitchOff";
+            document.getElementById("switchOn").style.display = "none";
+            document.getElementById("switchOff").style.display = "";
+        }
+    }
+
+    function checkStatus() {
+        var status = document.getElementById("switchSpan").innerText;
+        if (status == '<%:enabled%>') {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    function switchEnableDual(divId){
+        setTimeout(function(){
+            document.getElementById(divId).onclick = function(){
+                switchDualChange();
+            };
+        },1000)
+    }
+    function switchDualChange() {
+        document.getElementById("waiting").style.display = '';
+        var status = document.getElementById("switchDualSpan").innerHTML;
+        var flag = true;
+        switchDisable('switchDualCon');
+		if (status=="<%:enabled%>") {
+            flag = false;
+        }
+        switchDualChecked(flag);
+        dualDisplay(flag);
+        if (changeEnable) {
+            if (checkDualStatus()) {
+                var enable = 1;
+            } else {
+                var enable = 0;
+            }
+            var params;
+        params = {'enable':enable};
+            console.log("params",params);
+            if (modeSwitchEnable) {
+                switchEnableDual('switchDualCon');
+                return;
+            }
+            XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","set_freq_intergration")%>', params,
+                function (x, result) {
+                    console.log(result);
+                    if (result==null) {
+                        var err = document.getElementById('Error');
+                        var text = err.getElementsByTagName('span')[0];
+                        err.style.visibility = 'visible';
+						text.innerText = '<%:router connection failure%>';
+                    }else if (result!=null||result.code==0){
+                        setTimeout(function (){
+                            setInterval(function (){
+                                location.reload();
+        						document.getElementById("waiting").style.display = 'none';
+                            },3000)
+                        },5000)
+                    }else {
+                        var err = document.getElementById('Error');
+                        var text = err.getElementsByTagName('span')[0];
+                        text.innerText = result.msg;
+                        err.style.visibility = 'visible';
+                    }
+                });
+        }
+        switchEnableDual('switchDualCon');
+    }
+    function switchDualChecked(flag) {
+        if (flag) {
+            document.getElementById("switchDualSpan").innerText = '<%:enabled%>';
+            document.getElementById("switchDualSpan").className = "bWlSwitchOff spanSwitchOn";
+            document.getElementById("switchDualOn").style.display = "";
+            document.getElementById("switchDualOff").style.display = "none"
+        } else {
+            document.getElementById("switchDualSpan").innerText = '<%:disabled%>';
+            document.getElementById("switchDualSpan").className = "bWlSwitchOff";
+            document.getElementById("switchDualOn").style.display = "none";
+            document.getElementById("switchDualOff").style.display = "";
+        }
+    }
+    function checkDualStatus() {
+        var status = document.getElementById("switchDualSpan").innerText;
+        if (status == '<%:enabled%>') {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+    function dualDisplay(flag) {
+        if (flag) {
+            document.getElementById("ownerRadioSelect").style.display = "none";
+            document.getElementById("table-24G").style.display = "none";
+            document.getElementById("table-5G").style.display = "none";
+            document.getElementById("dual-table").style.display = "";
+
+            document.getElementById("switchDualSpan").innerText = '<%:enabled%>';
+            document.getElementById("switchDualOn").style.display = "";
+            document.getElementById("switchDualOff").style.display = "none";
+        } else {
+            document.getElementById("ownerRadioSelect").style.display = "";
+            document.getElementById("dual-table").style.display = "none";
+            wirelessSel('ownerType');
+
+            document.getElementById("switchDualSpan").innerText = '<%:disabled%>';
+            document.getElementById("switchDualOn").style.display = "none";
+            document.getElementById("switchDualOff").style.display = "";
+        }
+        document.getElementById("space1").style.display = "none";
+    }
+    function channel165Dual(e,tableId) {
+        if (e[e.selectedIndex].value=="165"){
+            var table = document.getElementById(tableId);
+            var bandwidthSelect = table.querySelector('.bandwidth-5');
+            var mode5 = table.querySelector('.mode-5');
+            var modeValue = mode5[mode5.selectedIndex].value;
+            if (e[e.selectedIndex].value=="165"){
+                if (modeValue == '11n') {
+                    <% if wds_enable ~= 2 then %>
+                        table.querySelector('.bandwidth-5').disabled = '';
+                    <% end %>
+                    bandwidthSelect.length = 0;
+                    bandwidthSelect.options[0] = new Option('20MHZ','HT20');
+                } else if (modeValue == '11ac') {
+                    <% if wds_enable ~= 2 then %>
+                        table.querySelector('.bandwidth-5').disabled = '';
+                    <% end %>
+                    bandwidthSelect.length = 0;
+                    bandwidthSelect.options[0] = new Option('20MHZ','VHT20');
+                } else {
+                    table.querySelector('.bandwidth-5').disabled = 'disabled';
+                }
+            }
+        }else {
+            modeSwitchDual(tableId);
+        }
+    }
+    //while alter mode,limit bandwidth
+    function modeSwitchDual(tableId) {
+        var mode;
+        var table = document.getElementById(tableId);
+        if (table.querySelector('.mode')) {
+            mode = table.querySelector('.mode');
+            var modeIndex = mode.selectedIndex;
+            var modeValue = mode[modeIndex].value;
+            if (modeValue != '11n') {
+                table.querySelector('.bandwidth').disabled = 'disabled';
+            } else {
+                <% if wds_enable ~= 1 then %>
+                    table.querySelector('.bandwidth').disabled = '';
+                <% end %>
+            }
+        }
+        if (table.querySelector('.channel-5')) {
+            var channel = table.querySelector('.channel-5');
+            if (channel[channel.selectedIndex].value=="165"){
+                channel165Dual(channel,tableId);
+            } else {
+                mode = table.querySelector('.mode-5');
+                var modeIndex = mode.selectedIndex;
+                var modeValue = mode[modeIndex].value;
+                var bandwidth5Select = table.querySelector('.bandwidth-5');
+                if (modeValue == '11n') {
+                    <% if wds_enable ~= 2 then %>
+                        bandwidth5Select.disabled = '';
+                    <% end %>
+                    var bandwidth5SelectValue = bandwidth5Select[bandwidth5Select.selectedIndex].value;
+                    bandwidth5Select.length = 0;
+                    bandwidth5Select.options[0] = new Option('20MHZ','HT20');
+                    bandwidth5Select.options[1] = new Option('40MHZ','HT40');
+                    if (bandwidth5SelectValue == 'HT40'){
+                        bandwidth5Select.selectedIndex = 1;
+                    }
+                } else if (modeValue == '11ac') {
+                    <% if wds_enable ~= 2 then %>
+                        bandwidth5Select.disabled = '';
+                    <% end %>
+                    var bandwidth5SelectValue = bandwidth5Select[bandwidth5Select.selectedIndex].value;
+                    bandwidth5Select.length = 0;
+                    bandwidth5Select.options[0] = new Option('20MHZ','VHT20');
+                    bandwidth5Select.options[1] = new Option('40MHZ','VHT40');
+                    bandwidth5Select.options[2] = new Option('80MHZ','VHT80');
+                    if (bandwidth5SelectValue == 'VHT40'){
+                        bandwidth5Select.selectedIndex = 1;
+                    }
+                    if (bandwidth5SelectValue == 'VHT80'){
+                        bandwidth5Select.selectedIndex = 2;
+                    }
+                } else {
+                    bandwidth5Select.disabled = 'disabled';
+                }
+            }
+        }
+    }
+
+    function getDual() {
+        XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","get_freq_intergration")%>', null,
+            function (x, result) {
+                console.log(result);
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+                    text.innerText = '<%:router connection failure%>';
+                }else if (result!=null||result.code==0){
+                    flagDual= result.enable;
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+    function getDualIface(result) {
+        if (result==null) {
+            var err = document.getElementById('Error');
+            var text = err.getElementsByTagName('span')[0];
+            err.style.visibility = 'visible';
+            text.innerText = '<%:router connection failure111111%>';
+        }else if(result!=null&&result.code == 0) {
+            var e;
+            for (var i=0; i<result.ifaces.length; i++) {
+                if (result.ifaces[i].band == '2.4G') {
+                    var table = document.getElementById('dual-table');
+                    var channelIndex = result.ifaces[i].channel;
+                    var channel = table.querySelector('.channel');
+                    if (channelIndex == 'auto') {
+                        channel.selectedIndex = 0;
+                    } else {
+                        channel.selectedIndex = channelIndex;
+                    }
+                    if (result.ifaces[i].hwmode != '11g') {
+                        table.querySelector('.bandwidth').disabled = 'disabled';
+                    }
+                    var mode_24g = table.querySelector('.mode');
+                    if (result.ifaces[i].hwmode != undefined) {
+                        if (result.ifaces[i].hwmode == '11b') {
+                            mode_24g.selectedIndex = 2;
+                        } else if (result.ifaces[i].hwmode == '11g' && result.ifaces[i].htmode != undefined) {
+                            mode_24g.selectedIndex = 0;
+                        } else {
+                            table.querySelector('.bandwidth').disabled = 'disabled';
+                            mode_24g.selectedIndex = 1;
+                        }
+                    }
+                    var bandwidth_24g = table.querySelector('.bandwidth');
+                    if (result.ifaces[i].htmode != undefined) {
+                        for (var j=0; j<bandwidth_24g.options.length; j++) {
+                            if (bandwidth_24g[j].value == result.ifaces[i].htmode) {
+                                bandwidth_24g.selectedIndex = j;
+                                break;
+                            }
+                        }
+                    }
+                    var signal = table.querySelector('.signal');
+                    if (result.ifaces[i].signal != undefined) {
+                        signal.selectedIndex = result.ifaces[i].signal;
+                    } else {
+                        signal.selectedIndex = 2;
+                    }
+                    if (e = table.querySelector('.apartheid'))
+                        e.checked = result.ifaces[i].apartheid;
+                    wifistatus_24g = result.ifaces[i].enable;
+                    switchChecked(wifistatus_24g);
+                    <% if wds_enable == 1 then %>
+                        mode_24g.disabled = 'disabled';
+                        bandwidth_24g.disabled = 'disabled';
+                        channel.disabled = 'disabled';
+                    <% end %>
+                } else if (result.ifaces[i].band == '5G') {
+                    var table = document.getElementById('dual-table');
+                    if (e = table.querySelector('.ssid-5'))
+                        e.value = result.ifaces[i].ssid;
+                    if (e = table.querySelector('.broadcast-5'))
+                        e.checked = result.ifaces[i].broadcast;
+                    if (e = table.querySelector('.keyDual')){
+                        if (result.ifaces[i].open) {
+                            e.disabled = 'disabled';
+                        }else if (result.ifaces[i].key != undefined) {
+                            e.value = result.ifaces[i].key;
+                        }
+                    }
+                    if (e = table.querySelector('.openDual'))
+                        e.checked = result.ifaces[i].open;
+                    var channelValue = result.ifaces[i].channel;
+                    var channel = table.querySelector('.channel-5');
+                    if (channelValue == 'auto') {
+                        channel.selectedIndex = 0;
+                    } else {
+                        for (var j=0; j<channel.options.length; j++) {
+                            if (channel[j].value == channelValue) {
+                                channel.selectedIndex = j;
+                                channel165Dual(channel,'table-5G');
+                                break;
+                            }
+                        }
+                    }
+                    var mode_5g = table.querySelector('.mode-5');
+                    if (result.ifaces[i].hwmode != undefined) {
+                        for (var j=0; j<mode_5g.options.length; j++) {
+                            if (mode_5g[j].value == result.ifaces[i].hwmode) {
+                                mode_5g.selectedIndex = j;
+                                break;
+                            }
+                        }
+                    }
+                    var bandwidth_5g = table.querySelector('.bandwidth-5');
+                    if (result.ifaces[i].htmode != undefined) {
+                        for (var j=0; j<bandwidth_5g.options.length; j++) {
+                            if (bandwidth_5g[j].value == result.ifaces[i].htmode) {
+                                bandwidth_5g.selectedIndex = j;
+                                break;
+                            }
+                        }
+                    }
+                    var signal = table.querySelector('.signal-5');
+                    if (result.ifaces[i].signal != undefined) {
+                        signal.selectedIndex = result.ifaces[i].signal;
+                    } else {
+                        signal.selectedIndex = 2;
+                    }
+                    if (e = table.querySelector('.apartheid-5'))
+                        e.checked = result.ifaces[i].apartheid;
+                    wifistatus_5g = result.ifaces[i].enable;
+                    <% if wds_enable == 2 then %>
+                        mode_5g.disabled = 'disabled';
+                        bandwidth_5g.disabled = 'disabled';
+                        channel.disabled = 'disabled';
+                    <% end %>
+                }
+            }
+            changeEnable = true;
+            modeSwitchDual('dual-table');
+        }else {
+            var err = document.getElementById('Error');
+            var text = err.getElementsByTagName('span')[0];
+            text.innerText = result.msg;
+            err.style.visibility = 'visible';
+        }
+    }
+
+    function showConfirmTip(band){
+        document.getElementById('isSureTip').style.visibility = 'visible';
+        var confirmButton = document.getElementById('confirm');
+        confirmButton.onclick = function(){
+            saveOwnerNetwork(band);
+        };
+    }
+
+    function closeConfirmTip(){
+        document.getElementById('isSureTip').style.visibility = 'hidden';
+    }
+
+<% if country_enable then %>
+    //band is use to diff 2.4G or 5G
+    function setChannelOption(countrySelect,tableId,band){
+        var table = document.getElementById(tableId);
+        var country = countrySelect[countrySelect.selectedIndex].value;
+        if (band == '2.4G') {
+            var channel = table.querySelector('.channel');
+            var channelList = get_channel24G_list(country);
+        }else if (band == '5G') {
+            var channel = table.querySelector('.channel-5');
+            var channelList = get_channel5G_list(country);
+        }
+        channel.length = 0;
+        //channel.options[0] = new Option('<%:auto%>','auto');
+        for (var i=0; i<channelList.length; i++) {
+            channel.options[i] = new Option(channelList[i],channelList[i]);
+        }
+        //TODO japan 2.4G channel can be 14 ,if mode is 11b only
+    }
+
+    function get_channel5G_list(country){
+        var channe5G_list = {}
+        channe5G_list["US"] = [36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144, 149, 153, 157, 161, 165]
+        channe5G_list["CA"] = [36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 132, 136, 140, 144, 149, 153, 157, 161, 165]
+        channe5G_list["EU"] = [32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 96, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144, 149, 153, 157, 161, 165, 169, 173]
+        channe5G_list["CH"] = [36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 149, 153, 157, 161, 165]
+        channe5G_list["RU"] = [32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 132, 136, 140, 144, 149, 153, 157, 161, 165]
+        channe5G_list["JP"] = [36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140]
+        channe5G_list["IN"] = [32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 96, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144, 149, 153, 157, 161, 165, 169, 173]
+        channe5G_list["SG"] = [32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 96, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144, 149, 153, 157, 161, 165, 169]
+        channe5G_list["CN"] = [36, 40, 44, 48, 52, 56, 60, 64, 149, 153, 157, 161, 165]
+        channe5G_list["IL"] = [36, 40, 44, 48, 52, 56, 60, 64]
+        channe5G_list["KP"] = [36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 149, 153, 157, 161, 165]
+        channe5G_list["KR"] = [36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 149, 153, 157, 161, 165]
+        channe5G_list["TR"] = [36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140]
+        channe5G_list["AU"] = [36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 132, 136, 140, 144, 149, 153, 157, 161, 165]
+        channe5G_list["ZA"] = [36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140]
+        channe5G_list["BR"] = [36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144, 149, 153, 157, 161, 165]
+        channe5G_list["TW"] = [36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 149, 153, 157, 161, 165]
+        channe5G_list["NZ"] = [36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 149, 153, 157, 161, 165]
+        return channe5G_list[country]
+    }
+
+    function get_channel24G_list(country){
+        var channe24G_list = {}
+        channe24G_list["US"] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+        channe24G_list["CA"] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+        channe24G_list["EU"] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        channe24G_list["CH"] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        channe24G_list["RU"] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        channe24G_list["JP"] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+        channe24G_list["IN"] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        channe24G_list["SG"] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        channe24G_list["CN"] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        channe24G_list["IL"] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        channe24G_list["KP"] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        channe24G_list["KR"] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        channe24G_list["TR"] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        channe24G_list["AU"] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        channe24G_list["ZA"] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        channe24G_list["BR"] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        channe24G_list["TW"] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        channe24G_list["NZ"] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        return channe24G_list[country]
+    }
+<% end %>
+</script>

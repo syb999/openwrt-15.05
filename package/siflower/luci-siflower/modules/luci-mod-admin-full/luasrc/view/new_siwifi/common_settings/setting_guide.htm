@@ -1,0 +1,766 @@
+<%#
+Copyright 2008 Steven Barth <steven@midlink.org>
+Copyright 2008-2012 Jo-Philipp Wich <jow@openwrt.org>
+Licensed to the public under the Apache License 2.0.
+-%>
+<%-
+local uci = require "luci.model.uci"
+local _uci_real  = cursor or _uci_real or uci.cursor()
+local systemnew = require "luci.controller.admin.systemnew"
+local wirelessnew = require "luci.controller.admin.wirelessnew"
+-%>
+<!DOCTYPE html>
+<html class="GuideHTml" lang="<%=luci.i18n.context.lang%>">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=520px,initial-scale=0.7">
+    <link rel="stylesheet" href="<%=media%>/routerStyle.css">
+    <link rel="stylesheet" href="<%=media%>/cascade.css">
+    <script src="<%=resource%>/xhr.js"></script>
+    <!--[if lt IE 9]>
+        <script src="<%=media%>/js/html5shiv.min.js"></script>
+        <script src="<%=media%>/js/respond.js"></script>
+        <script src="<%=media%>/js/json2.js"></script>
+    <![endif]-->
+    <script src="<%=media%>/js/jquery.min.js"></script>
+    <script src="<%=media%>/js/siwifi.js"></script>
+</head>
+<body class="guide" >
+    <div id="loading" class="main loading"><div style="" class="loading"><span><div class="loading-img"></div>Loading...</span></div></div>
+<div class="GUHeader">
+    <div class="wizardContent">
+        <div class="wizardLogo"></div>
+    </div>
+</div>
+<div id="Error">
+    <div id="hsErr" class="hsTip">
+        <i class="altIcon"></i>
+        <span class="detail"><%:Setting failed!%></span>
+        <input class="subBtn" value="<%:confirm%>" type="button" onclick="closeTip()">
+    </div>
+</div>
+<div class="wizardContent">
+    <div id="wizardCon" class="wizardCon">
+        <div id="waiting" style="display: none;margin-left: -55px;">
+            <div class="LoadConCover">
+                <div class="coverLoadCon">
+                    <div class="coverLoad">
+                        <i class="coverLoading" ></i>
+						<p class="coverLoadNote"><%:Setting up，please wait a moment...%></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <ul id="setting-1">
+            <li class="wizardTop wizardTopWan">
+			<span class="NTLeft"><%:network setting%></span>
+			<span class="NTRight"><%:Please select your access method%></span>
+			<input id="detect" class="wzdDetect subBtn" value="<%:automatic detection%>" type="button" onclick="getWan()">
+			<a onclick="toHome()"><i></i><span><%:skip the guide%></span></a>
+            </li>
+            <li class="wizardBom">
+                <!--<p id="loadTip" class="wizardPwdTip">路由器自动检测到您的上网方式</p>
+                <p class="wizardTip">IP将自动从运营商处获取，请继续下一步</p>-->
+                <table class="tb-no-border" style="margin: 25px auto;">
+                    <tr>
+                        <td>
+							<input type="radio" name="wan-connect-type" value = "pppoe" onchange="getRadioChange('wan-connect-type');hidTip();hidWifiTip(0);"><%:broadband dial-up%>
+							<input type="radio" name="wan-connect-type" value = "static" onchange="getRadioChange('wan-connect-type');hidTip();hidWifiTip(1)"><%:static IP address%>
+							<input type="radio" name="wan-connect-type" value = "dhcp" onchange="getRadioChange('wan-connect-type');hidTip();hidWifiTip(0)"><%:automatically get IP address%>
+                            <!--<input id="detect" class="wzdDetect subBtn" value="自动检测" type="button" onclick="getWan()">-->
+                        </td>
+                    </tr>
+                    <tr id="pppoe">
+                        <td>
+                            <table>
+								<tr><td class="c_left"><%:broadband account%></td><td class="c_right"><input id="pppoe-username"  onkeyup="noSpaceWord(this)" maxlength="64"></td></tr>
+								<tr><td class="c_left"><%:broadband password%></td><td class="c_right"><input id="pppoe-password" onkeyup="nStrLimit(this)" maxlength="64"></td></tr>
+                                <tr><td class="c_left"></td><td class="c_right"><a id="pppoe-transplant" onclick="changeDiv([1,4]);" style="text-decoration: underline;color: blue;cursor: pointer;"><%:Obtained from the old router%></a></td></tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr id="static" style="display: none">
+                        <td>
+                            <table>
+								<tr><td class="c_left"><%:IP address%></td><td class="c_right"><input id="static-ipaddr" onchange="isValidInput()"onkeyup="nStrLimit(this)" value="0.0.0.0"></td></tr>
+								<tr><td class="c_left"><%:subnet mask%></td><td class="c_right"><input id="static-netmask" onchange="isValidInput()"onkeyup="nStrLimit(this)" value="0.0.0.0"></td></tr>
+								<tr><td class="c_left"><%:gateway%></td><td class="c_right"><input id="static-gateway" onchange="isValidInput()"onkeyup="nStrLimit(this)" value="0.0.0.0"></td></tr>
+								<tr><td class="c_left"><%:preferred DNS server%></td><td class="c_right"><input id="static-dns" onchange="isValidInput()"onkeyup="nStrLimit(this)" value="0.0.0.0"></td></tr>
+								<tr><td class="c_left"><%:alternate DNS server%></td><td class="c_right"><input id="static-dnsbak" onchange="isValidInput()"onkeyup="nStrLimit(this)"></td></tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr id="dhcp" style="display: none">
+						<td colspan="2"><%:automatically get IP address intro%></td>
+                    </tr>
+                </table>
+                <div class="WifiErrTip" id="WifiErrTip" style="display:none;">
+                    <ul>
+                        <li id="basicIpNote" class="note">
+						<i class="arrowL"></i><div class="noteCon"><p><%:IP address format error%></p></div>
+                        </li>
+                        <li id="basicMaskNote" class="note">
+						<i class="arrowL"></i><div class="noteCon"><p><%:Subnet mask is not valid%></p></div>
+                        </li>
+                        <li id="basicGatewayNote" class="note">
+						<i class="arrowL"></i><div class="noteCon"><p><%:Gateway error%></p></div>
+                        </li>
+                        <li id="basicPrimDnsNote" class="note">
+						<i class="arrowL"></i><div class="noteCon"><p><%:Please input the correct preferred DNS server%></p></div>
+                        </li>
+                        <li id="basicSeDnsNote" class="note">
+						<i class="arrowL"></i><div class="noteCon"><p><%:Please input the correct alternate DNS server%></p></div>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+            <li class="lgBtns">
+			<button onclick="changeDiv([1,2])"><%:next%></button>
+            </li>
+        </ul>
+		<% local disable_switch = _uci_real:get("basic_setting", "no_wifi", "enable") == "1" and true or false;  if not disable_switch  then %>
+        <ul id="setting-2" style="display: none">
+            <li class="wizardTop wizardTopWireless">
+			<span class="Set-2 NTLeft"><%:wireless settings%></span>
+			<a onclick="toHome()"><i></i><span><%:skip the guide%></span></a>
+            </li>
+            <li class="wizardBom">
+                <table class="tb-no-border" style="margin-top: 50px">
+                    <tr><td>
+                        <ul class="inputUl wizardIptPos">
+                            <li class="inputLi">
+							<label for=""><%:SSID%></label>
+                            <input id="name" maxlength="32" type="text" onchange="wifiSetCheck()" style="width: 140px;">
+                                <i class="tip"></i>
+                            </li>
+                            <li id="wzdAntNote" class="note" style="display: inline-block; visibility: hidden;">
+                                <i class="arrowL"></i>
+                                <div class="noteCon">
+                                    <p class="pwdError vlM"><%:Please input the SSID%></p>
+                                </div>
+                            </li>
+                        </ul>
+                    </td></tr>
+                    <tr><td>
+                        <ul class="inputUl wizardIptPos overflowH">
+                            <li class="inputLi">
+							<label for=""><%:wireless password%></label>
+                                <input id="wzdWirelessPwd" class="imeModeN" maxlength="63"  onkeyup="nStrLimit(this)" onchange="wifiSetCheck()" type="text" style="width: 140px;">
+                                <i class="tip"></i>
+                            </li>
+                            <li id="wzdPwdNote" class="note" style="display: inline-block; visibility: hidden;">
+                                <i class="arrowL"></i>
+                                <div class="noteCon" style="white-space: normal;height: auto;">
+									<p class="pwdError"><%:Password length error%></p>
+                                </div>
+                            </li>
+                        </ul></td></tr>
+                </table>
+				<span class="wizardWirelessTip"><%:wireless password intro%></span><br>
+            </li>
+            <li class="black"></li>
+            <li class="lgBtns">
+			<button onclick="changeDiv([2,1])"><%:previous%></button><button onclick="changeDiv([2,3])"><%:next%></button>
+            </li>
+        </ul>
+
+        <ul id="setting-3" style="display: none">
+		<% else %>
+        <ul id="setting-2" style="display: none">
+		<% end %>
+
+            <li class="wizardTop wizardTopEnd">
+			<a onclick="toHome()"><i></i><span><%:skip the guide%></span></a>
+            </li>
+            <li class="wizardBomEnd">
+                <i class="wirelessNoChg" style="display: inline-block;"></i>
+                <br><br>
+                <span><%:Welcome to sirouter%></span>
+                <br><br>
+            </li>
+            <li class="lgBtnsWzd">
+
+            <table class="tb-no-border guideProto" style="margin:auto;width:70% !important;margin-bottom:20px">
+                <tr>
+                    <td><input id="userProto" type="checkbox" checked onchange="agree(this);" /><label for="userProto"></label></td>
+                    <td class="wan-td-right" style="white-space:unset;"><span><%:I have read and agreed%><a href="<%:/proto.htm%>" target="_blank"><%:user license agreement%></a><%:and%><a href="<%:/private.htm%>" target="_blank"><%:statement about siflower smart routers and privacy%></a></span></td>
+                </tr>
+                <tr>
+                    <td><input id="userProject" type="checkbox" /><label for="userProject"></label></td>
+                    <td class="wan-td-right"><span><%:join%><a href="<%:/project.htm%>" target="_blank"><%:user experience improvement program%></a></span></td>
+                </tr>
+            </table>
+            <% local disable_switch = _uci_real:get("basic_setting", "no_wifi", "enable") == "1" and true or false;  if not disable_switch  then %>
+            <button  onclick="changeDiv([3,2])"><%:previous%></button >
+            <% else %>
+            <button  onclick="changeDiv([2,1])"><%:previous%></button >
+            <% end %>
+
+            <button id="confirmBtn" onclick="confirmConfig()"><%:confirm%></button>
+            </li>
+        </ul>
+        <ul id="setting-4" style="display: none">
+            <li class="wizardTop">
+                <span class="NTLeft Set-2"><%:Obtained from the old router%></span>
+                <a onclick="toHome()"><i></i><span><%:skip the guide%></span></a>
+            </li>
+            <li class="wizardBom">
+                <p style="margin: 10px;"><%:pppoe transplant intro%></p>
+                <br>
+                <br>
+                <p><img src="<%=media%>/images/pppoe.png" alt="old router" style="width: 89%;"/></p>
+            </li>
+            <br>
+            <li class="lgBtns">
+			<button onclick="changeDiv([4,1])"><%:previous%></button><button onclick="pppoeTransplant()"><%:start obtain%></button>
+            </li>
+        </ul>
+    </div>
+</div>
+<div id="Cover" style="display: block; visibility: hidden;"></div>
+<div id="pwdNullTip" class="confirmCon" style="visibility: hidden">
+    <div class="confirm">
+        <br>
+        <i class="confirmLogo"></i>
+        <br>
+		<p class="confirmQuestion"><%:Please encrypt your wireless network%></p>
+		<input class="confirmInput" value="<%:to encrypt%>" type="button" onclick="repwd()">
+		<p class="confirmFuncCon" onclick="nopwd([2,3])"><span class="confrimInputCancel" onclick="noEncryption()"><%:Do not encrypt%></span></p>
+    </div>
+</div>
+<div id="isSureTip">
+    <div id="sureTip" class="hsTip">
+        <i class="altIcon"></i>
+		<span class="detail"><%:Make sure the account or password is empty%></span>
+		<input class="subBtn" value="<%:confirm%>" type="button" onclick="closeSureTip(1)">
+		<input class="subBtn" value="<%:cancel%>" type="button" onclick="closeSureTip(2)">
+    </div>
+</div>
+</body>
+</html>
+<script>
+    // global vars
+    var selected = 0;
+    var wan_settings;
+    var ifaces;
+    var staticSave = false;
+    var linkStatus;
+    var lan;
+    var location_href = '<%=controller%>/admin/common';
+    var errTipDoc;
+    setStyle();
+    function setStyle(){
+        var result = <%=systemnew.get_style()%>;
+        var style= result.style;
+        console.log("style", style);
+        var isIE678 = !-[1,];
+        if(isIE678 ){
+            console.log("I am IE 6 or 7 or 8.");
+        }
+        var font = style["font"];
+        addCSS(font, "color");
+        var background = style["background"];
+        addCSS(background, "background");
+        var border = style["border"];
+        addCSS(border, "border-color");
+        var borderRight= style["border_right"];
+        addCSS(borderRight, "border-right-color");
+        document.getElementById("loading").style.display = "none";
+    }
+    // page load functions
+    getWdsInfo();
+
+    function getWdsInfo() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "wirelessnew","get_wds_info")%>', null,
+            function(x, result) {
+                console.log(result);
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if (result.code == 0) {
+                    if (result.info[0].enable != 1 && result.info[1].enable != 1) {
+                        getWan();
+                    } else {
+                        location_href = '<%=controller%>/admin/networknew';
+                    }
+                }
+            });
+    }
+
+    // router get interfaces
+    function getWan() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "networknew","get_wan")%>', null,
+            function(x, result) {
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if(result.code == 0) {
+                    console.log(result);
+                    var wanConnectType = document.getElementsByName('wan-connect-type');
+                    var wantype = result.wantype;
+                    var e;
+                    if (wantype == 1) {
+                        wanConnectType[2].checked = true;
+                        getRadioChange('wan-connect-type');
+                        hidTip();
+                        if (result.DHCP.linkstatus != undefined) {
+                            if (result.DHCP.linkstatus == 0) {
+                                linkStatus = false;
+                            }else {
+                                linkStatus = true;
+                            }
+                        }
+                    } else if (wantype == 2) {
+                        wanConnectType[1].checked = true;
+                        if (result.staticip.ipaddr != undefined) {
+                            document.getElementById('static-ipaddr').value = result.staticip.ipaddr;
+                        }
+                        if (result.staticip.netmask != undefined) {
+                            document.getElementById('static-netmask').value = result.staticip.netmask;
+                        }
+                        if (result.staticip.gateway != undefined) {
+                            document.getElementById('static-gateway').value = result.staticip.gateway;
+                        }
+                        if (result.staticip.dns != undefined) {
+                            document.getElementById('static-dns').value = result.staticip.dns;
+                        }
+                        if (result.staticip.dnsbak != undefined) {
+                            document.getElementById('static-dnsbak').value = result.staticip.dnsbak;
+                        }
+                        getRadioChange('wan-connect-type');
+                        hidTip();
+                        if (result.staticip.linkstatus != undefined) {
+                            if (result.staticip.linkstatus==0){
+                                linkStatus = false;
+                            }else {
+                                linkStatus = true;
+                            }
+                        }
+                    } else if (wantype == 4) {
+                        wanConnectType[0].checked = true;
+                        if (result.PPPoE.account != undefined) {
+                            document.getElementById('pppoe-username').value = result.PPPoE.account;
+                        }
+                        if (result.PPPoE.password != undefined) {
+                            document.getElementById('pppoe-password').value = result.PPPoE.password;
+                        }
+                        getRadioChange('wan-connect-type');
+                        hidTip();
+                        if (result.PPPoE.linkstatus != undefined) {
+                            if (result.PPPoE.linkstatus == 0) {
+                                linkStatus = false;
+                            } else {
+                                linkStatus = true;
+                            }
+                        }
+                    }
+                    if(!linkStatus){
+                        var err = document.getElementById('Error');
+                        var text = err.getElementsByTagName('span')[0];
+						text.innerText = '<%:WAN connection is not connected%>';
+                        document.getElementById('Cover').style.visibility = 'visible';
+                        err.style.visibility = 'visible';
+                        return;
+                    }
+                }
+            });
+    }
+
+    function changeDiv(arr) {
+        var fromId = 'setting-' + arr[0];
+        var toId = 'setting-' + arr[1];
+        if (arr[0]==1&&arr[1]==2) {
+            var wanTypeRadio = document.getElementsByName("wan-connect-type");
+            var wantype_value;
+            for (var i=0 ; i<wanTypeRadio.length; i++){
+                if (wanTypeRadio[i].checked){
+                    wantype_value = wanTypeRadio[i].value;
+                }
+            }
+            if (wantype_value == 'pppoe') {
+                var wantype = 4;
+                var username = document.getElementById('pppoe-username').value;
+                var password = document.getElementById('pppoe-password').value;
+                wan_settings = {'wantype':wantype, 'account':username, 'password':password, 'dns':'', 'connect':1 };
+                if(username==""||password==""||username==null||password==null){
+                    document.getElementById('isSureTip').style.visibility = 'visible';
+                    document.getElementById('Cover').style.visibility = 'visible';
+                    return;
+                }
+            } else if (wantype_value == 'static') {
+                staticSave = true;
+                if (!isValidInput())
+                    return;
+                var wantype = 2;
+                var ipaddr = document.getElementById('static-ipaddr').value;
+                var netmask = document.getElementById('static-netmask').value;
+                var gateway = document.getElementById('static-gateway').value;
+                var dns = document.getElementById('static-dns').value;
+                var dnsbak = document.getElementById('static-dnsbak').value;
+                var err = document.getElementById('Error');
+                var text = err.getElementsByTagName('span')[0];
+                wan_settings = {'wantype':wantype, 'ipaddr':ipaddr, 'netmask':netmask, 'gateway':gateway, 'dns':dns, 'dnsbak':dnsbak};
+            } else if (wantype_value == 'dhcp') {
+                var wantype = 1;
+                wan_settings = {'wantype':wantype, 'dns':''};
+            }
+            console.log(wan_settings);
+            XHR.get('<%=luci.dispatcher.build_url("admin", "wirelessnew","get_wifi_iface")%>', null,
+                function(x, result) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    if (result==null) {
+                        err.style.visibility = 'visible';
+						text.innerText = '<%:router connection failure%>';
+                    }else if (result.code == 0) {
+                        console.log(result);
+                        console.log(result.ifaces);
+                        ifaces = result.ifaces;
+                        for (i in ifaces) {
+                            if (ifaces[i].band == '2.4G') {
+                                document.getElementById('name').value = ifaces[i].ssid;
+                            }
+                        }
+                    }else{
+                        text.innerText = result.msg;
+                        err.style.visibility = 'visible';
+                    }
+                });
+        }
+        if (arr[0]==2&&arr[1]==3) {
+            var name = document.getElementById('name').value;
+            var password = document.getElementById('wzdWirelessPwd').value;
+            if (!wifiSetCheck()){
+                return;
+            }
+            var err = document.getElementById('Error');
+            var text = err.getElementsByTagName('span')[0];
+            if (password != check(password)) {
+                text.innerText = '<%:password contain invalid character%>';
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('name');
+                return;
+            }
+            if (name == ''){
+				text.innerText = '<%:Please input the SSID%>';
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('name');
+                return;
+            }else if (strlen(name)>32){
+				text.innerText = '<%:the length of the SSID is too long！%>';
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('name');
+                return;
+            }else {
+                if (getChanLen(name)>10){
+					text.innerText = '<%:No more than 10 Chinese characters in wireless name!%>';
+                    err.style.visibility = 'visible';
+                    errTipDoc = document.getElementById('name');
+                    return;
+                }
+            }
+            var freq = <%wirelessnew.get_freq_intergration()%>.enable;
+            for (i in ifaces) {
+                if (ifaces[i].band == '2.4G' || freq != 0) {
+                    ifaces[i].ssid = name;
+                } else {
+                    var tail = name.substring( name.length-5).toLowerCase();
+                    if (tail == '-2.4g'){
+                        ifaces[i].ssid = name.substring( 0, name.length-5) + '-5G';
+                    }else if(tail == '_2.4g'){
+                        ifaces[i].ssid = name.substring( 0, name.length-5) + '_5G';
+                    }else{
+                        ifaces[i].ssid = name + '-5G';
+                    }
+                }
+                ifaces[i].key = password;
+                ifaces[i].open = false;
+            }
+            console.log(ifaces);
+            subWifiSet(fromId,toId);
+            getMonitor();
+        }else {
+            document.getElementById(fromId).style.display = "none";
+            document.getElementById(toId).style.display = "";
+        }
+    }
+
+    // router set interfaces
+    function confirmConfig() {
+        var params1 = wan_settings;
+        document.getElementById('waiting').style.display = '';
+        var enable = document.getElementById('userProject').checked?1:0;
+        var params_enable = {"enable":enable};
+        console.log(params_enable);
+        XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","set_monitor")%>', params_enable,
+            function(x, result){
+                console.log(result);
+            });
+        XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_wan")%>', params1,
+            function(x, result){
+                console.log(result);
+                var err = document.getElementById('Error');
+                var text = err.getElementsByTagName('span')[0];
+                if (result==null) {
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if (result.code==0){
+				text.innerText = '<%:successfully set%>';
+                    err.style.visibility = 'visible';
+                } else{
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+                XHR.get('<%=luci.dispatcher.build_url("admin", "networknew","disable_guide")%>', null,
+                    function(x, result){
+                        console.log(result);
+                        <% if not disable_switch  then %>
+                            var params2 = {'ifaces':ifaces};
+                            XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","set_wifi_iface")%>', params2,
+                                function(x, result){
+                                    console.log(result);
+                                    location.href=location_href;
+                                });
+                        <% else %>
+                                location.href=location_href;
+                        <% end %>
+                    });
+            });
+    }
+
+
+
+//解决反复回到设置向导的问题
+    function toHome() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "networknew","disable_guide")%>', null,
+            function(x, result){
+                console.log(result);
+                location.href=location_href;
+            });
+    }
+
+
+    function subWifiSet() {
+        var name = document.getElementById("name").value;
+        var password = document.getElementById("wzdWirelessPwd").value;
+        if (name!=null&&name!=""){
+            if (password==null||password==""){
+                document.getElementById("pwdNullTip").style.visibility="visible";
+                document.getElementById("Cover").style.visibility="visible"
+            }else {
+
+		<% local disable_switch = _uci_real:get("basic_setting", "no_wifi", "enable") == "1" and true or false;  if not disable_switch  then %>
+                document.getElementById("setting-2").style.display = "none";
+                document.getElementById("setting-3").style.display = "";
+
+				<% else %>
+                document.getElementById("setting-2").style.display = "";
+				<% end %>
+            }
+        }/*else {
+            document.getElementById("loadTip").style.visibility="visible";
+        }*/
+    }
+
+    function hidTip() {
+        var basicIpNote = document.getElementById("basicIpNote");
+        var basicMaskNote = document.getElementById("basicMaskNote");
+        var basicGatewayNote = document.getElementById("basicGatewayNote");
+        var basicPrimDnsNote = document.getElementById("basicPrimDnsNote");
+        var basicSeDnsNote = document.getElementById("basicSeDnsNote");
+        basicIpNote.style.visibility = 'hidden';
+        basicMaskNote.style.visibility = 'hidden';
+        basicGatewayNote.style.visibility = 'hidden';
+        basicPrimDnsNote.style.visibility = 'hidden';
+        basicSeDnsNote.style.visibility = 'hidden';
+    }
+    function hidWifiTip(WifiErrTipOpen) {
+        if (WifiErrTipOpen == 1){
+            document.getElementById('WifiErrTip').style.display = '';
+        } else{
+            document.getElementById('WifiErrTip').style.display = 'none';
+        }
+    }
+
+    // check functions
+    function repwd() {
+        document.getElementById("pwdNullTip").style.visibility="hidden";
+        document.getElementById("Cover").style.visibility="hidden";
+    }
+
+    function nopwd(arr) {
+        var fromId = 'setting-' + arr[0];
+        var toId = 'setting-' + arr[1];
+        document.getElementById("pwdNullTip").style.visibility="hidden";
+        document.getElementById("Cover").style.visibility="hidden";
+        document.getElementById(fromId).style.display = "none";
+        document.getElementById(toId).style.display = "";
+    }
+
+    function isValidInput() {
+        var staticIp = document.getElementById("static-ipaddr").value;
+        var staticNetMask = document.getElementById("static-netmask").value;
+        var staticGateway = document.getElementById("static-gateway").value;
+        var staticDNS = document.getElementById("static-dns").value;
+        var staticDNSBak = document.getElementById("static-dnsbak").value;
+
+        var basicIpNote = document.getElementById("basicIpNote");
+        var basicMaskNote = document.getElementById("basicMaskNote");
+        var basicGatewayNote = document.getElementById("basicGatewayNote");
+        var basicPrimDnsNote = document.getElementById("basicPrimDnsNote");
+        var basicSeDnsNote = document.getElementById("basicSeDnsNote");
+        hidTip();
+        if ((staticIp != ''&&!isValidIP(staticIp))||(staticSave&&staticIp == '')){
+            basicIpNote.style.visibility = 'visible';
+            document.getElementById("static-ipaddr").focus();
+            staticSave = false;
+            return false;
+        }else if((staticNetMask != ''&& !lannetMaskLimit(staticNetMask))||(staticSave&&staticNetMask == '')){
+            basicMaskNote.style.visibility = 'visible';
+            document.getElementById("static-netmask").focus();
+            staticSave = false;
+            return false;
+        }else if((staticGateway != ''&&!isValidIP(staticGateway))||(staticSave&&staticGateway == '')){
+            basicGatewayNote.style.visibility = 'visible';
+            document.getElementById("static-gateway").focus();
+            staticSave = false;
+            return false;
+        }else if((staticDNS != ''&&!isValidIP(staticDNS))||(staticSave&&staticDNS == '')){
+            basicPrimDnsNote.style.visibility = 'visible';
+            document.getElementById("static-dns").focus();
+            staticSave = false;
+            return false;
+        }else if(staticDNSBak !=''&&!isValidIP(staticDNSBak)){
+            basicSeDnsNote.style.visibility = 'visible';
+            document.getElementById("static-dnsbak").focus();
+            staticSave = false;
+            return false;
+        }
+        staticSave = false;
+        return true;
+    }
+    function closeSureTip(i) {
+        document.getElementById('isSureTip').style.visibility = 'hidden';
+        document.getElementById('Cover').style.visibility = 'hidden';
+        var fromId = 'setting-1';
+        var toId = 'setting-2';
+        if (i==1){
+            XHR.get('<%=luci.dispatcher.build_url("admin", "wirelessnew","get_wifi_iface")%>', null,
+                function(x, result) {
+                    if (result==null) {
+                        var err = document.getElementById('Error');
+                        var text = err.getElementsByTagName('span')[0];
+                        err.style.visibility = 'visible';
+						text.innerText = '<%:router connection failure%>';
+                    }else if (result.code == 0) {
+                        console.log(result);
+                        console.log(result.ifaces);
+                        ifaces = result.ifaces;
+                        for (i in ifaces) {
+                            if (ifaces[i].band == '2.4G') {
+                                document.getElementById('name').value = ifaces[i].ssid;
+                            }
+                        }
+                    }
+                });
+            document.getElementById(fromId).style.display = "none";
+            document.getElementById(toId).style.display = "";
+        }else {
+            var focusId = document.getElementById('pppoe-username');
+            focusId.focus();
+            focusId.select();
+        }
+    }
+    function closeTip() {
+        document.getElementById("Error").style.visibility = 'hidden';
+        document.getElementById("Cover").style.visibility = 'hidden';
+        if(errTipDoc != undefined){
+            errTipDoc.focus();
+            errTipDoc.select();
+            errTipDoc = null;
+        }
+    }
+    function wifiSetCheck() {
+        var ssid = document.getElementById('name').value;
+        var pwd = document.getElementById('wzdWirelessPwd').value;
+        if (ssid==null||ssid==""){
+            document.getElementById('wzdAntNote').style.visibility = 'visible';
+            return false;
+        }else {
+            document.getElementById('wzdAntNote').style.visibility = 'hidden';
+        }
+
+        if (pwd!=null&&pwd!=""){
+            if (strlen(pwd)<8||strlen(pwd)>63){
+                document.getElementById('wzdPwdNote').style.visibility = 'visible';
+                return false;
+            }else {
+                document.getElementById('wzdPwdNote').style.visibility = 'hidden';
+            }
+        }else {
+            document.getElementById('wzdPwdNote').style.visibility = 'hidden';
+        }
+        return true;
+    }
+    function noEncryption() {
+        for (i in ifaces) {
+            ifaces[i].open = true ;
+        }
+    }
+    function pppoeTransplant() {
+        document.getElementById('waiting').style.display = '';
+        XHR.get('<%=luci.dispatcher.build_url("admin", "networknew","sync_pppoe_info")%>', null,
+            function(x, result) {
+                console.log(result);
+                var err = document.getElementById('Error');
+                var text = err.getElementsByTagName('span')[0];
+                document.getElementById('waiting').style.display = 'none';
+                if (result==null) {
+                    err.style.visibility = 'visible';
+                    text.innerText = '<%:router connection failure%>';
+                }else if (result.code == 0) {
+                    if (!result.username || !result.password || result.username == '' || result.password == ''){
+                        text.innerText = '<%:failed to get network configuration from old router%>';
+                        err.style.visibility = 'visible';
+                        return;
+                    }
+                    document.getElementById('pppoe-username').value = result.username;
+                    document.getElementById('pppoe-password').value = result.password;;
+                    changeDiv([4,1]);
+                }else{
+                    err.style.visibility = 'visible';
+                    text.innerText = result.msg;
+                }
+            });
+    }
+    function agree(e) {
+        if (e.checked) {
+            document.getElementById('confirmBtn').disabled = '';
+        } else {
+            document.getElementById('confirmBtn').disabled = 'disabled';
+        }
+    }
+
+    function getMonitor() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "wirelessnew","get_monitor")%>', null,
+            function(x, result) {
+                console.log(result);
+                var err = document.getElementById('Error');
+                var text = err.getElementsByTagName('span')[0];
+                if (result==null) {
+                    err.style.visibility = 'visible';
+                    text.innerText = '<%:router connection failure%>';
+                }else if (result.code == 0) {
+                    document.getElementById('userProject').checked = !!parseInt(result.enable);
+                }else{
+                    err.style.visibility = 'visible';
+                    text.innerText = result.msg;
+                }
+            });
+    }
+
+</script>

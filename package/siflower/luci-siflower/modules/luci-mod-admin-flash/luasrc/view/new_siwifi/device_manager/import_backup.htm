@@ -1,0 +1,84 @@
+<%+header%>
+<fieldset>
+    <legend>备份</legend>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>>
+            <span class="detail">载入成功！</span>
+            <input class="subBtn" value="确 定" type="button" onclick="closeTip()">
+        </div>
+    </div>
+    <li class="border-line"></li>
+    <div class="div-box">
+        <p>点击此按钮可以备份路由器的当前配置</p>
+        <button onclick="location.href='<%=controller%>/admin/systemnew/export_config'">导出配置</button>
+    </div>
+    <fieldset>
+        <li class="border-line"></li>
+        <legend>载入配置</legend>
+        <li class="border-line"></li>
+        <div class="file-box">
+            <p>请选择配置文件，然后点击载入配置按钮</p>
+            <form id="uploadForm">
+                <input type="text" id="textld" class="txt" />
+                <input type="button" class="btn" value="浏 览" />
+                <input type="file" name="file" class="file" id="fileld" onchange="document.getElementById('textld').value=this.files[0].name"/>
+                <input type="button" class="btn" value="载入配置" onclick="importConfig()" />
+                <div class="pointDiv" id="pointDiv" style="display: none; float: left">
+                    <div id="bar" class="chlidValue"></div>
+                </div>
+            </form>
+        </div>
+        <div class="notice-box div-box ">
+            <p>注意：</p>
+            <p>1.载入配置文件后，路由器现有的配置将丢失，如果载入配置有误，可能会导致路由器无法被管理，若出现无法管理的情况请长按路由器的Reset按钮恢复出厂设置。</p>
+            <p>2.请确保路由器在整个载入配置文件过程中处于通电状态，载入过程断电会有损坏路由器的风险。</p>
+            <p>3.载入过程持续约20秒，当载入结束后，路由器将会自动重启。</p>
+        </div>
+        <div id="waiting" style="display: none">
+            <div class="LoadConCover">
+                <div class="coverLoadCon">
+                    <div class="coverLoad">
+                        <i class="coverLoadClose" onclick="coverClose()"></i>
+                        <i class="coverLoading" ></i>
+                        <p id="waitPg" class="waitPg"></p>
+                        <p class="coverLoadNote">正在配置，请稍等...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </fieldset>
+</fieldset>
+<%+footer%>
+<script>
+    // router interfaces
+    function importConfig() {
+        document.getElementById('pointDiv').style.display=''
+        var file = document.getElementById('fileld').files[0];
+        var fd = new FormData();
+        fd.append("archive",file);
+        console.log(fd);
+        XHR.upload('<%=luci.dispatcher.build_url("admin", "systemnew","import_config")%>', fd, function (x, result) {
+            console.log(result);
+            setTimeout(function () {
+                setInterval(function () {
+                    XHR.get('<%=luci.dispatcher.build_url("admin", "logout","action_logout")%>', null,
+                        function(x, result) {
+                            if (x.response!=""&&x.response!=null) {
+                                window.location.reload();
+                            }
+                        });
+                },3000)
+            },10000)
+        }, function (x) {
+            console.log(x);
+            var pg=document.getElementById('bar');
+            pg.style.width = x;
+            if (x == "100%"){
+                document.getElementById("waiting").style.display='';
+                document.getElementById('pointDiv').style.display='none'
+            }
+
+        });
+    }
+</script>

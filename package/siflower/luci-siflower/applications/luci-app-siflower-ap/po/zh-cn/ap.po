@@ -1,0 +1,119 @@
+msgid ""
+msgstr ""
+
+msgid "AP SET"
+msgstr "AP设置"
+
+msgid "LoadConfig intro"
+msgstr "请选择配置文件，然后点击载入配置按钮"
+
+msgid "auto refresh"
+msgstr "自动刷新"
+
+msgid "import config"
+msgstr "导入配置"
+
+msgid "export config"
+msgstr "导出配置"
+
+msgid "Security options"
+msgstr "安全选项："
+
+msgid "encryption(WPA2-PSK)"
+msgstr "加密（WPA2-PSK）"
+
+msgid "LED"
+msgstr "LED："
+
+msgid "return group"
+msgstr "回到分组"
+
+msgid "change group"
+msgstr "修改分组"
+
+msgid "group detail list"
+msgstr "分组详细列表"
+
+msgid "file read or write fail"
+msgstr "文件读写错误！"
+
+msgid "not enough storage"
+msgstr "内存不足！"
+
+msgid "unknown error"
+msgstr "未知错误！"
+
+msgid "try again"
+msgstr "再次尝试！"
+
+msgid "device busy"
+msgstr "设备正忙！"
+
+msgid "device ont found"
+msgstr "设备离线或不存在！"
+
+msgid "device online, can not be remove"
+msgstr "设备在线无法删除！"
+
+msgid "The character length cannot be more than 32 bits!"
+msgstr "字符长度不能多于32位！"
+
+msgid "The SSID character length cannot be more than 32 bits!"
+msgstr "SSID字符长度不能多于32位！"
+
+msgid "The password length is no less than 8 bits!"
+msgstr "密码长度不少于8位！"
+
+msgid "Please input 2.4g network SSID!"
+msgstr "请输入2.4G网络SSID！"
+
+msgid "Please input 5g network SSID!"
+msgstr "请输入5G网络SSID！"
+
+msgid "Please input AP name!"
+msgstr "请输入AP名称！"
+
+msgid "this group name is already exist"
+msgstr "该分组名已存在！"
+
+msgid "group name contain invalid character"
+msgstr "分组名称包含非法字符"
+
+msgid "The AP name cannot be more than 45 characters!"
+msgstr "AP名称不超过45个字符！"
+
+msgid "The ap_alive_time limit is 20-80 seconds!"
+msgstr "AP保活时间限制在20-80秒内！"
+
+msgid "AP number"
+msgstr "序号为"
+
+msgid "is abnormal,cannot join bulk edit!"
+msgstr "的AP状态异常，不可加入批量编辑！"
+
+msgid "bulk edit"
+msgstr "批量编辑"
+
+msgid "delete"
+msgstr "删除"
+
+msgid "hardware version"
+msgstr "硬件版本"
+
+msgid "AC upgrading"
+msgstr "AC 升级"
+
+msgid "AP upgrading"
+msgstr "AP 升级"
+
+msgid "ap local upgrade done"
+msgstr "AP升级完成"
+
+msgid "no device found"
+msgstr "未发现任何设备！"
+
+msgid "in setting"
+msgstr "设置中"
+
+msgid "ap version not newest"
+msgstr "AP版本不是最新，请升级AP。"

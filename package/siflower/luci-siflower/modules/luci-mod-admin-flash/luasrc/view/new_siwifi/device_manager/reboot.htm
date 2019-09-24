@@ -1,0 +1,55 @@
+<%+header%>
+<fieldset>
+    <legend>重启路由器</legend>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>>
+            <span class="detail">操作成功</span>
+            <input class="subBtn" value="确 定" type="button" onclick="closeTip()">
+        </div>
+    </div>
+    <li class="border-line"></li>
+    <div style="margin: 1rem auto 3rem 5rem">
+        <button style="width: auto; padding: 0.2rem 0.7rem" onclick="reboot()">重启路由器</button>
+    </div>
+    <div id="waiting" style="display: none">
+        <div class="LoadConCover">
+            <div class="coverLoadCon">
+                <div class="coverLoad">
+                    <i class="coverLoadClose" onclick="coverClose()"></i>
+                    <i class="coverLoading" ></i>
+                    <p class="coverLoadNote">正在重启，请稍等...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</fieldset>
+<%+footer%>
+<script>
+    // router interfaces
+    function reboot() {
+        document.getElementById("waiting").style.display='';
+        XHR.get('<%=luci.dispatcher.build_url("admin", "systemnew","restart")%>', null,
+            function(x, result){
+                console.log(result);
+                if (result!=null&&result.code == 0) {
+                    setTimeout(function () {
+                        setInterval(function () {
+                            XHR.get('<%=luci.dispatcher.build_url("admin", "logout","action_logout")%>', null,
+                                function(x, result) {
+                                if (x.response!=""&&x.response!=null) {
+                                    window.location.reload();
+                                }
+                                });
+                        },3000)
+                    },10000)
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '请求重启失败，请重试'
+                    err.style.visibility = 'visible';
+                    document.getElementById('waiting').style.display = "none";
+                }
+            });
+    }
+</script>

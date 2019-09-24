@@ -1,0 +1,632 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+msgid "Main"
+msgstr ""
+
+msgid "Secure"
+msgstr ""
+
+msgid "token expire"
+msgstr ""
+
+msgid "safty exit"
+msgstr ""
+
+msgid "ping intro"
+msgstr ""
+
+msgid "time intro"
+msgstr ""
+
+msgid "time intro 2"
+msgstr ""
+
+msgid "browse"
+msgstr ""
+
+msgid "view system log"
+msgstr ""
+
+msgid "display password"
+msgstr ""
+
+msgid "led intro"
+msgstr ""
+
+msgid "Seconds (30-300)"
+msgstr ""
+
+msgid "Seconds (10-300)"
+msgstr ""
+
+msgid "Seconds (60-300)"
+msgstr ""
+
+msgid "mac filter title"
+msgstr ""
+
+msgid "filter intro"
+msgstr ""
+
+msgid "unbounding"
+msgstr ""
+
+msgid "client intro"
+msgstr ""
+
+msgid "beacon intro"
+msgstr ""
+
+msgid "tx intro"
+msgstr ""
+
+msgid "signal intro"
+msgstr ""
+
+msgid "channel intro"
+msgstr ""
+
+msgid "wireless mode intro"
+msgstr ""
+
+msgid "Employee network introduce"
+msgstr ""
+
+msgid "Visitor network introduce"
+msgstr ""
+
+msgid "Isolate introduce"
+msgstr ""
+
+msgid "network Isolate introduce"
+msgstr ""
+
+msgid "WiFi stop broadcasting when disable"
+msgstr ""
+
+msgid "set"
+msgstr ""
+
+msgid "confirm"
+msgstr ""
+
+msgid "broadcast"
+msgstr ""
+
+msgid "set successfully"
+msgstr ""
+
+msgid "device info"
+msgstr ""
+
+msgid "device model"
+msgstr ""
+
+msgid "current system time"
+msgstr ""
+
+msgid "system runtime"
+msgstr ""
+
+msgid "wireless param"
+msgstr ""
+
+msgid "wireless mode"
+msgstr ""
+
+msgid "band bandwidth"
+msgstr ""
+
+msgid "wireless service"
+msgstr ""
+
+msgid "network name encoding"
+msgstr ""
+
+msgid "network type"
+msgstr ""
+
+msgid "employee network"
+msgstr ""
+
+msgid "visitor network"
+msgstr ""
+
+msgid "encryption"
+msgstr ""
+
+msgid "not encrypt"
+msgstr ""
+
+msgid "set password"
+msgstr ""
+
+msgid "wireless internal isolation"
+msgstr ""
+
+msgid "enable"
+msgstr ""
+
+msgid "disable"
+msgstr ""
+
+msgid "auto"
+msgstr ""
+
+msgid "Enable/disable this network"
+msgstr ""
+
+msgid "wireless client"
+msgstr ""
+
+msgid "index"
+msgstr ""
+
+msgid "Access Wireless SSID"
+msgstr ""
+
+msgid "Access time"
+msgstr ""
+
+msgid "changing"
+msgstr ""
+
+msgid "Please enter wireless name"
+msgstr ""
+
+msgid "wireless name length error"
+msgstr ""
+
+msgid "wireless name characters error"
+msgstr ""
+
+msgid "wireless password error"
+msgstr ""
+
+msgid "Connection failed, please try again"
+msgstr ""
+
+msgid "Setting failed"
+msgstr ""
+
+msgid "add successfully"
+msgstr ""
+
+msgid "wireless MAC address filter"
+msgstr ""
+
+msgid "Enable wireless MAC address filter"
+msgstr ""
+
+msgid "mac address filter function"
+msgstr ""
+
+msgid "wireless MAC address filter rule settings"
+msgstr ""
+
+msgid "effective range"
+msgstr ""
+
+msgid "remarks"
+msgstr ""
+
+msgid "VLAN setting"
+msgstr ""
+
+msgid "wireless network and VLAN binding"
+msgstr ""
+
+msgid "VLAN binding intro"
+msgstr ""
+
+msgid "VLAN binding intro note"
+msgstr ""
+
+msgid "add"
+msgstr ""
+
+msgid "delete"
+msgstr ""
+
+msgid "The MAC address list is empty"
+msgstr ""
+
+msgid "MAC address format is not legal"
+msgstr ""
+
+msgid "Please select the filter effective range"
+msgstr ""
+
+msgid "add failure"
+msgstr ""
+
+msgid "successfully delete"
+msgstr ""
+
+msgid "Delete failed"
+msgstr ""
+
+msgid "filter rule cannot be empty"
+msgstr ""
+
+msgid "MAC address filter conflict"
+msgstr ""
+
+msgid "illegal ssid"
+msgstr ""
+
+msgid "Connection to router failed"
+msgstr ""
+
+msgid "successfully set"
+msgstr ""
+
+msgid "VLAN ID cannot be empty"
+msgstr ""
+
+msgid "Invalid vlanID"
+msgstr ""
+
+msgid "fail to modify"
+msgstr ""
+
+msgid "get data failed"
+msgstr ""
+
+msgid "cancel"
+msgstr ""
+
+msgid "device management"
+msgstr ""
+
+msgid "subnet mask"
+msgstr ""
+
+msgid "default gateway"
+msgstr ""
+
+msgid "LED switch"
+msgstr ""
+
+msgid "enable WiFi control"
+msgstr ""
+
+msgid "WEB service port"
+msgstr ""
+
+msgid "WEB session timeout"
+msgstr ""
+
+msgid "account management"
+msgstr ""
+
+msgid "original password"
+msgstr ""
+
+msgid "set password"
+msgstr ""
+
+msgid "confirm password"
+msgstr ""
+
+msgid "system log"
+msgstr ""
+
+msgid "view"
+msgstr ""
+
+msgid "download system log"
+msgstr ""
+
+msgid "download"
+msgstr ""
+
+msgid "Language set"
+msgstr ""
+
+msgid "language"
+msgstr ""
+
+msgid "time setting"
+msgstr ""
+
+msgid "time zone"
+msgstr ""
+
+msgid "date"
+msgstr ""
+
+msgid "time"
+msgstr ""
+
+msgid "prefered NTP server"
+msgstr ""
+
+msgid "alternate NTP server"
+msgstr ""
+
+msgid "configuration management"
+msgstr ""
+
+msgid "export configuration"
+msgstr ""
+
+msgid "export"
+msgstr ""
+
+msgid "import configuration"
+msgstr ""
+
+msgid "import"
+msgstr ""
+
+msgid "factory reset"
+msgstr ""
+
+msgid "reboot"
+msgstr ""
+
+msgid "restart"
+msgstr ""
+
+msgid "software upgrade"
+msgstr ""
+
+msgid "current hardware version"
+msgstr ""
+
+msgid "current software version"
+msgstr ""
+
+msgid "hardware version"
+msgstr ""
+
+msgid "software version"
+msgstr ""
+
+msgid "Upgrading，please wait..."
+msgstr ""
+
+msgid "Ping watchdog"
+msgstr ""
+
+msgid "destination IP address"
+msgstr ""
+
+msgid "contract period"
+msgstr ""
+
+msgid "start delay"
+msgstr ""
+
+msgid "maxinum number of lost packets"
+msgstr ""
+
+msgid "IP address is invalid"
+msgstr ""
+
+msgid "Subnet mask is not valid"
+msgstr ""
+
+msgid "Gateway error"
+msgstr ""
+
+msgid "port range 1-65535"
+msgstr ""
+
+msgid "The port number range error"
+msgstr ""
+
+msgid "Port number cannot be empty"
+msgstr ""
+
+msgid "WEB session timeout error"
+msgstr ""
+
+msgid "redirecting, please wait"
+msgstr ""
+
+msgid "The original password cannot be empty"
+msgstr ""
+
+msgid "New password length error"
+msgstr ""
+
+msgid "Two password input inconsistent!"
+msgstr ""
+
+msgid "old password is incorrect"
+msgstr ""
+
+msgid "log contents"
+msgstr ""
+
+msgid "Recovering, please wait..."
+msgstr ""
+
+msgid "Factory reset failed"
+msgstr ""
+
+msgid "Reset is underway, please wait..."
+msgstr ""
+
+msgid "The preferred NTP server cannot be empty"
+msgstr ""
+
+msgid "Not legal domain name or IP"
+msgstr ""
+
+msgid "Please select load profile first"
+msgstr ""
+
+msgid "File type illegal! Please reselect"
+msgstr ""
+
+msgid "Please wait while configuration is underway..."
+msgstr ""
+
+msgid "Configured successfully"
+msgstr ""
+
+msgid "Please select upgrade image first"
+msgstr ""
+
+msgid "Image files are illegal"
+msgstr ""
+
+msgid "Upgrade error"
+msgstr ""
+
+msgid "Is being upgraded, please wait a moment..."
+msgstr ""
+
+msgid "The IP address is invalid. Please input again"
+msgstr ""
+
+msgid "The contract period is limited to 10-300 seconds"
+msgstr ""
+
+msgid "The startup delay is limited to 60-300 seconds"
+msgstr ""
+
+msgid "The number of bags allowed is limited to 1-65535"
+msgstr ""
+
+msgid "Are you sure to restore factory Settings"
+msgstr ""
+
+msgid "Are you sure to restart the panel"
+msgstr ""
+
+msgid "Are you sure to confirm import configuration"
+msgstr ""
+
+msgid "setting the IP address confirm"
+msgstr ""
+
+msgid "wireless internal network isolation"
+msgstr ""
+
+msgid "wireless channel"
+msgstr ""
+
+msgid "signal strength"
+msgstr ""
+
+msgid "low"
+msgstr ""
+
+msgid "middle"
+msgstr ""
+
+msgid "high"
+msgstr ""
+
+msgid "Beacon time slot"
+msgstr ""
+
+msgid "Milliseconds 40-1000"
+msgstr ""
+
+msgid "Client limitations"
+msgstr ""
+
+msgid "Prohibit signal strength below"
+msgstr ""
+
+msgid "DBm wireless client access range error"
+msgstr ""
+
+msgid "The kick signal strength is lower than"
+msgstr ""
+
+msgid "Wireless client of dBm"
+msgstr ""
+
+msgid "Isolation between wireless networks"
+msgstr ""
+
+msgid "Wireless network name cannot be empty"
+msgstr ""
+
+msgid "Cannot set duplicate wireless network name"
+msgstr ""
+
+msgid "Set 2.4g wireless network to no more than 4"
+msgstr ""
+
+msgid "Set up 5G wireless network to no more than 4"
+msgstr ""
+
+msgid "The transmission power range is 0-20dbm"
+msgstr ""
+
+msgid "Beacon time slots range from 40 to 1000 milliseconds"
+msgstr ""
+
+msgid "The client limit is 1-40"
+msgstr ""
+
+msgid "The signal strength must not be empty"
+msgstr ""
+
+msgid "The wireless client access range error"
+msgstr ""
+
+msgid "The kick signal strength cannot be empty"
+msgstr ""
+
+msgid "Wireless client ban signal strength range error"
+msgstr ""
+
+msgid "wireless client ban signal strength range should be enable"
+msgstr ""
+
+msgid "input password invalid"
+msgstr ""
+
+msgid "wifi number reach limit"
+msgstr ""
+
+msgid "gateway and LAN not in the same segment"
+msgstr ""
+
+msgid "upload image type error"
+msgstr ""
+
+msgid "unknown command"
+msgstr ""
+
+msgid "input param  error"
+msgstr ""
+
+msgid "input mac address invalid"
+msgstr ""
+
+msgid "Intelligent DHCP"
+msgster ""
+
+msgid "enable DHCP control"
+msgster ""
+
+msgid "Connection mode"
+msgster ""
+
+msgid "Dynamic ip"
+msgster ""
+
+msgid "Static ip"
+msgster ""
+
+msgid "default DNS"
+msgster ""
+
+msgid "standby DNS"
+msgster ""
+
+msgid "defaultDNS error"
+msgster ""
+
+msgid "standbyDNS error"
+msgster ""

@@ -1,0 +1,1358 @@
+<%+header%>
+<div>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>
+			<span class="detail"><%:add successfully%></span>
+			<input class="subBtn" value="<%:confirm%>" type="button" onclick="closeTip()">
+        </div>
+    </div>
+    <fieldset>
+		<legend><%:wireless service%></legend>
+        <input type="radio" name="wireless-server-5g" onchange="switchRaido(['wireless-service-table-5g','wireless-service-table'],['wireless-server-5g',0])" checked="checked"><span class="input-radio"> 2.4G</span>
+        <input type="radio" name="wireless-server-5g" onchange="switchRaido(['wireless-service-table','wireless-service-table-5g'],['wireless-server-5g',1])"><span class="input-radio"> 5G</span>
+
+        <!--<button id="wireless-tb-24g" onclick="switchTable(['wireless-service-table-5g','wireless-service-table'],['wireless-tb-24g','wireless-tb-5g'])" style="background: #C9C9C9">2.4G</button>
+        <button id="wireless-tb-5g" onclick="switchTable(['wireless-service-table','wireless-service-table-5g'],['wireless-tb-5g','wireless-tb-24g'])">5G</button>-->
+        <table id="wireless-service-table">
+        </table>
+        <table id="wireless-service-table-5g" style="display: none">
+        </table>
+    </fieldset>
+    <div id="wireless-service-setting" class="hsVignetteCon" style="display: none;">
+        <div class="hsVignette hsVigWDS">
+            <p class="hsVigTtop"><i class="hsVigClose" onclick="closeSettingDiv()"></i></p>
+            <p class="hsVigWDSPWD"><span class="wireless-service-setting-font"><%:wireless service%></span></p>
+            <fieldset>
+                <legend></legend>
+                <table class="no-border">
+					<tr><td class="inline-text-L"><%:SSID%></td><td class="inline-text-R"><input id="setting-name" onkeyup="noSpaceWord(this)" maxlength="32" style="float: left;"><input type="checkbox" id="setting-broadcast" style="float: left;margin-top: 12px"><label style="float: left;margin-top: 12px"><%:broadcast%></label>
+                        <i class="btnHelp" onclick="getHelp('opBraFeg')" style="margin-left: 5px;"></i>
+                        <li class="btnHelp">
+                            <div id="opBraFeg" class="btnFeg" style="visibility: hidden;width: 140px;">
+                                <i class="" style="top: 12px"></i>
+								<p class="helpWord" ><%:WiFi stop broadcasting when disable%></p>
+                            </div>
+                        </li></td></tr>
+						<tr><td class="inline-text-L"><%:network name encoding%></td><td class="inline-text-R">
+                        <!--<input type="radio" name="setting-encode" value="GB2312">GB2312-->
+                        <input type="radio" name="setting-encode" value="UTF-8" checked>UTF-8
+                    </td></tr>
+<tr><td id="setting-is_guest" class="inline-text-L"><%:network type%></td><td class="inline-text-R"><select id="setting-net-type" style="float: left;" onchange="isolateDefault(this);">
+								<option value="1"><%:employee network%></option>
+								<option value="2"><%:visitor network%></option>
+                    </select>
+                        <i class="btnHelp" onclick="getHelp('wirTpFeg')" ></i>
+                        <li class="btnHelp">
+                            <div id="wirTpFeg" class="btnFeg" style="visibility: hidden;">
+                                <i class="" ></i>
+								<p class="helpWord"><%:Employee network introduce%><br><%:Visitor network introduce%></p>
+                            </div>
+                        </li>
+                    </td></tr>
+					<tr><td class="inline-text-L"><%:encryption%></td><td class="inline-text-R"><select id="setting-encrypt" onchange="changeEnc(this)">
+								<option value="none" valc="<%:not encrypt%>"><%:not encrypt%></option>
+                        <option value="psk2+ccmp" valc="psk2+ccmp">psk2+ccmp</option>
+                    </select></td></tr>
+					<tr><td class="inline-text-L"><%:set password%></td><td class="inline-text-R"><input id="password" onkeyup="nStrLimit(this)" maxlength="63"></td></tr>
+					<tr><td class="inline-text-L"><%:wireless internal isolation%></td><td class="inline-text-R"><input type="checkbox" id="setting-isolate"style="float: left;margin-top: 1px;"><label style="float: left;margin-top: 2px;"><%:enable%></label>
+                        <i class="btnHelp" onclick="getHelp('wirDisFeg')" style="margin-left: 20px;margin-top: 0px;"></i>
+                        <li class="btnHelp">
+                            <div id="wirDisFeg" class="btnFeg" style="visibility: hidden;">
+                                <i style="top:3px"></i>
+								<p class="helpWord"><%:Isolate introduce%></p>
+                            </div>
+                        </li>
+                    </td></tr>
+<tr><td class="inline-text-L"><%:Enable/disable this network%></td><td class="inline-text-R"><input type="checkbox" id="setting-enable"><%:enable%></td></tr>
+<tr><td class="no-border" colspan="2"><button id="wirelessSetBtn" onclick="setWirelessNet()"><%:confirm%></button></td></tr>
+                </table>
+            </fieldset>
+        </div>
+    </div>
+    <fieldset>
+		<legend><%:Advanced Settings%></legend>
+        <input type="radio" name="high-5g" onchange="switchRaido(['advance-5g','advance'],['high-5g',0])" checked="checked"> <span class="input-radio"> 2.4G</span>
+        <input type="radio" name="high-5g" onchange="switchRaido(['advance','advance-5g'],['high-5g',1])"><span class="input-radio">5G</span>
+        <!--<button id="high-set-24g" onclick="switchTable(['advance-5g','advance'],['high-set-24g','high-set-5g'])" style="background: #C9C9C9">2.4G</button>
+        <button id="high-set-5g" onclick="switchTable(['advance','advance-5g'],['high-set-5g','high-set-24g'])">5G</button>-->
+        <table id="advance" class="no-border">
+			<tr><td class="inline-text-L"><%:wireless mode%></td><td class="inline-text-R"><select id="mode" onchange="modeSwitch('2.4G')" style="float: left">
+                <option value="11n">11n only</option>
+                <option value="11g">11g only</option>
+                <option value="11b">11b only</option>
+            </select>
+                <i class="btnHelp" onclick="getHelp('wirModeFeg2')"></i>
+                <li class="btnHelp">
+                    <div id="wirModeFeg2" class="btnFeg" style="visibility: hidden;padding: 5px;">
+                        <i class="" ></i>
+						<p class="helpWord" ><%:wireless mode intro%></p>
+                    </div>
+                </li>
+            </td></tr>
+			<tr><td class="inline-text-L"><%:band bandwidth%></td><td class="inline-text-R"><select id="bandwidth" style="float: left">
+						<option value="auto"><%:auto%></option>
+                <option value="HT20" id="ht20">20MHZ</option>
+                <option value="HT40" id="ht40">40MHZ</option>
+            </select>
+                <i class="btnHelp" onclick="getHelp('wirHzFeg2')"></i>
+                <li class="btnHelp">
+                    <div id="wirHzFeg2" class="btnFeg" style="visibility: hidden;padding: 5px">
+                        <i class="" ></i>
+						<p class="helpWord" ><%:channel intro%></p>
+                    </div>
+                </li>
+            </td></tr>
+			<tr><td class="inline-text-L"><%:wireless channel%></td><td class="inline-text-R"><select id="channel" style="float: left">
+						<option value="auto"><%:auto%></option>
+                <option>1</option>
+                <option>2</option>
+                <option>3</option>
+                <option>4</option>
+                <option>5</option>
+                <option>6</option>
+                <option>7</option>
+                <option>8</option>
+                <option>9</option>
+                <option>10</option>
+                <option>11</option>
+                <option>12</option>
+                <option>13</option>
+            </select>
+                <i class="btnHelp" onclick="getHelp('wirWayFeg2')"></i>
+                <li class="btnHelp">
+                    <div id="wirWayFeg2" class="btnFeg" style="visibility: hidden;">
+                        <i class="" ></i>
+						<p class="helpWord"><%:signal intro%></p>
+                    </div>
+                </li>
+            </td></tr>
+			<tr><td class="inline-text-L"><%:signal strength%></td><td class="inline-text-R">
+                    <select id="signal-strength" style="float: left">
+                        <option><%:low%></option>
+                        <option><%:middle%></option>
+                        <option><%:high%></option>
+                    </select>
+                <i class="btnHelp" onclick="getHelp('apHzFeg2')" style="margin-left: 10px"></i>
+                <li class="btnHelp">
+                    <div id="apHzFeg2" class="btnFeg" style="visibility: hidden;padding: 5px;width: 150px">
+                        <i class=""></i>
+						<p class="helpWord" ><%:tx intro%></p>
+                    </div>
+                </li>
+            </td></tr>
+			<tr><td class="inline-text-L"><%:Isolation between wireless networks%></td><td class="inline-text-R"><input type="checkbox" id="isolate"style="float: left;margin-top: 1px;"><label style="float: left;margin-top: 2px;"><%:enable%></label>
+                <i class="btnHelp" onclick="getHelp('hwirDisFeg2')" style="margin-left: 20px;margin-top: 0px;"></i>
+                <li class="btnHelp">
+                    <div id="hwirDisFeg2" class="btnFeg" style="visibility: hidden;">
+                        <i style="top:3px"></i>
+						<p class="helpWord"><%:network Isolate introduce%></p>
+                    </div>
+                </li>
+            </td></tr>
+			<tr><td class="inline-text-L"><%:Beacon time slot%></td><td class="inline-text-R"><input id="beacon_int" maxlength="4" onkeyup="numLimit(this)" value="100" style="float: left"><label style="float: left;margin-top: 12px"><%:Milliseconds 40-1000%></label>
+                <i class="btnHelp" onclick="getHelp('beaconFeg2')" style="margin-left: 10px"></i>
+                <li class="btnHelp">
+                    <div id="beaconFeg2" class="btnFeg" style="visibility: hidden;width: 150px">
+                        <i class=""></i>
+						<p class="helpWord"><%:beacon intro%></p>
+                    </div>
+                </li>
+            </td></tr>
+			<tr><td class="inline-text-L"><%:Client limitations%></td><td class="inline-text-R"><input id="maxassoc" maxlength="2" onkeyup="numLimit(this)" value="40"style="float: left"><label style="float: left;margin-top: 12px">(1-40)</label>
+                <i class="btnHelp" onclick="getHelp('clientFeg2')" style="margin-left: 10px"></i>
+                <li class="btnHelp">
+                    <div id="clientFeg2" class="btnFeg" style="visibility: hidden;width: 150px">
+                        <i class=""></i>
+						<p class="helpWord"><%:client intro%></p>
+                    </div>
+                </li>
+            </td></tr>
+			<tr><td class="inline-text-L"><input type="checkbox" id="enable_prevent" onchange="changeStatus(this,'sta_min_dbm')"><%:enable%></td><td class="inline-text-R"><%:Prohibit signal strength below%><input id="sta_min_dbm" onkeyup="minusNumlimt(this)" maxlength="3" disabled value="-70" onmousedown="changeColor(this)" style="width: 3rem;" class="sta_min_dbm-font"><%:DBm wireless client access range error%></td></tr>
+			<tr><td class="inline-text-L"><input type="checkbox" id="enable_kick" onchange="changeStatus(this,'weak_sta_signal')"><%:enable%></td><td class="inline-text-R"><%:The kick signal strength is lower than%><input id="weak_sta_signal" onkeyup="minusNumlimt(this)" maxlength="3" disabled value="-75"  onmousedown="changeColor(this)" style="width: 3rem;"><%:Wireless client of dBm%></td></tr>
+			<tr><td colspan="2" class="no-border"><button onclick="setWirelessAdvance('2.4G')"><%:confirm%></button></td></tr>
+        </table>
+        <table id="advance-5g" style="display: none" class="no-border">
+			<tr><td class="inline-text-L"><%:wireless mode%></td><td class="inline-text-R"><select id="mode-5" onchange="modeSwitch('5G')" style="float: left">
+
+                <option value="11a">11a only</option>
+                <option value="11n">11n only</option>
+                <option value="11ac">11ac</option>
+            </select>
+                <i class="btnHelp" onclick="getHelp('wirModeFeg5')"></i>
+                <li class="btnHelp">
+                    <div id="wirModeFeg5" class="btnFeg" style="visibility: hidden;padding: 5px">
+                        <i class="" ></i>
+						<p class="helpWord" ><%:wireless mode intro%></p>
+                    </div>
+                </li>
+            </td></tr>
+			<tr><td class="inline-text-L"><%:band bandwidth%></td><td class="inline-text-R"><select id="bandwidth-5" style="float: left" onchange="channel165(document.getElementById('channel-5'))">
+						<option value="auto" id="auto-5"><%:auto%></option>
+                <option value="HT20" id="ht20-5">20MHZ</option>
+                <option value="HT40" id="ht40-5">40MHZ</option>
+                <option value="VHT20" id="vht20">20MHZ</option>
+                <option value="VHT40" id="vht40">40MHZ</option>
+                <option value="VHT80" id="vht80">80MHZ</option>
+            </select>
+                <i class="btnHelp" onclick="getHelp('wirHzFeg5')"></i>
+                <li class="btnHelp">
+                    <div id="wirHzFeg5" class="btnFeg" style="visibility: hidden;padding: 5px">
+                        <i class=""></i>
+						<p class="helpWord" ><%:channel intro%></p>
+                    </div>
+                </li>
+            </td></tr>
+<tr><td class="inline-text-L"><%:wireless channel%></td><td class="inline-text-R"><select id="channel-5" style="float: left" >
+                <option value="auto"><%:auto%></option>
+                <option value="36">36</option>
+                <option value="40">40</option>
+                <option value="44">44</option>
+                <option value="48">48</option>
+                <option value="52">52</option>
+                <option value="56">56</option>
+                <option value="60">60</option>
+                <option value="64">64</option>
+                <option value="149">149</option>
+                <option value="153">153</option>
+                <option value="157">157</option>
+                <option value="161">161</option>
+                <option value="165" id="channel165">165</option>
+            </select>
+                <i class="btnHelp" onclick="getHelp('wirWayFeg5')"></i>
+                <li class="btnHelp">
+                    <div id="wirWayFeg5" class="btnFeg" style="visibility: hidden;">
+                        <i class="" ></i>
+                        <p class="helpWord"><%:signal intro%></p>
+                    </div>
+                </li>
+            </td></tr>
+			<tr><td class="inline-text-L"><%:signal strength%></td><td class="inline-text-R">
+                    <select id="signal-strength-5" style="float: left">
+                        <option><%:low%></option>
+                        <option><%:middle%></option>
+                        <option><%:high%></option>
+                    </select>
+                <i class="btnHelp" onclick="getHelp('apHzFeg5')" style="margin-left: 10px"></i>
+                <li class="btnHelp">
+                    <div id="apHzFeg5" class="btnFeg" style="visibility: hidden;padding: 5px;width: 150px">
+                        <i class=""></i>
+						<p class="helpWord" ><%:tx intro%></p>
+                    </div>
+                </li>
+            </td></tr>
+			<tr><td class="inline-text-L"><%:Isolation between wireless networks%></td><td class="inline-text-R"><input type="checkbox" id="isolate-5"style="float: left;margin-top: 1px;"><label style="float: left;margin-top: 2px;"><%:enable%></label>
+                <i class="btnHelp" onclick="getHelp('hwirDisFeg5')" style="margin-left: 20px;margin-top: 0px;"></i>
+                <li class="btnHelp">
+                    <div id="hwirDisFeg5" class="btnFeg" style="visibility: hidden;">
+                        <i style="top:3px"></i>
+						<p class="helpWord"><%:network Isolate introduce%></p>
+                    </div>
+                </li>
+            </td></tr>
+			<tr><td class="inline-text-L"><%:Beacon time slot%></td><td class="inline-text-R"><input id="beacon_int-5" maxlength="4" onkeyup="numLimit(this)" value="100" style="float: left"><label style="float: left;margin-top: 12px"><%:Milliseconds 40-1000%></label>
+                <i class="btnHelp" onclick="getHelp('beaconFeg5')" style="margin-left: 10px"></i>
+                <li class="btnHelp">
+                    <div id="beaconFeg5" class="btnFeg" style="visibility: hidden;width: 150px">
+                        <i class=""></i>
+						<p class="helpWord"><%:beacon intro%></p>
+                    </div>
+                </li>
+            </td></tr>
+			<tr><td class="inline-text-L"><%:Client limitations%></td><td class="inline-text-R"><input id="maxassoc-5" maxlength="2" onkeyup="numLimit(this)" value="40" style="float: left"><label style="float: left;margin-top: 12px">(1-40)</label>
+                <i class="btnHelp" onclick="getHelp('clientFeg5')" style="margin-left: 10px"></i>
+                <li class="btnHelp">
+                    <div id="clientFeg5" class="btnFeg" style="visibility: hidden;width: 150px">
+                        <i class=""></i>
+						<p class="helpWord"><%:client intro%></p>
+                    </div>
+                </li>
+            </td></tr>
+			<tr><td class="inline-text-L"><input type="checkbox" id="enable_prevent-5"onchange="changeStatus(this,'sta_min_dbm-5')"><%:enable%></td><td class="inline-text-R"> <%:Prohibit signal strength below%><input id="sta_min_dbm-5" onkeyup="minusNumlimt(this)" disabled maxlength="3" value="-70" onmousedown="changeColor(this)" style="width: 3rem;"><%:DBm wireless client access range error%></td></tr>
+			<tr><td class="inline-text-L"><input type="checkbox" id="enable_kick-5"onchange="changeStatus(this,'weak_sta_signal-5')"><%:enable%></td><td class="inline-text-R"><%:The kick signal strength is lower than%><input id="weak_sta_signal-5" onkeyup="minusNumlimt(this)" disabled maxlength="3" value="-75" onmousedown="changeColor(this)" style="width: 3rem;"><%:Wireless client of dBm%></td></tr>
+			<tr><td colspan="2" class="no-border"><button onclick="setWirelessAdvance('5G')"><%:confirm%></button></td></tr>
+        </table>
+    </fieldset>
+</div>
+<%+footer%>
+<script>
+    var services;
+    var service_24g;
+    var service_5g;
+    var advance_24g;
+    var advance_5g;
+    var selected_band = '2.4G';
+    var selected_index;
+    var action;
+    var focusId;
+    var errTipDoc;
+    getWirelessNet();
+    getWirelessAdvance();
+    document.getElementsByName('wireless-server-5g')[0].checked = 'checked';
+    document.getElementsByName('high-5g')[0].checked = 'checked';
+    function getWirelessNet() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "wirelessp","get_wireless_net")%>', null,
+            function(x, result){
+                console.log("service",result);
+                services = result;
+                service_24g = result.band2;
+                service_5g = result.band5;
+				var html = '<tr><td colspan="10"><button onclick="addWirelessNet()"><%:add%></button><button id="del-24bt" onclick="delWirelessNet()" disabled="disabled"><%:delete%></button></td></tr>'+
+				'<tr><th></th><th><%:index%></th><th><%:SSID%></th><th><%:network name encoding%></th><th><%:network type%></th><th><%:encryption%></th>'+
+				'<th><%:Password%></th><th><%:wireless internal isolation%></th><th><%:Status%></th><th><%:set%></th></tr>';
+				var html_5g = '<tr><td colspan="10"><button onclick="addWirelessNet5()"><%:add%></button><button id="del-5bt" onclick="delWirelessNet5()" disabled="disabled"><%:delete%></button></td></tr>'+
+				'<tr><th></th><th><%:index%></th><th><%:SSID%></th><th><%:network name encoding%></th><th><%:network type%></th><th><%:encryption%></th>'+
+				'<th><%:Password%></th><th><%:wireless internal isolation%></th><th><%:Status%></th><th><%:set%></th></tr>';
+                for (var i=0; i<service_24g.length; i++) {
+                    if (parseInt(service_24g[i].isolate) == 0 || service_24g[i].isolate == undefined) {
+					service_24g[i].isolate_t = '<%:disable%>';
+                    } else {
+					service_24g[i].isolate_t = '<%:enable%>';
+                    }
+                    if (parseInt(service_24g[i].enable) == 0) {
+					service_24g[i].enable_t = '<%:disable%>';
+                    } else {
+						service_24g[i].enable_t = '<%:enable%>';
+                    }
+                    if (service_24g[i].group == "1") {
+						service_24g[i].group_t = '<%:employee network%>';
+                    } else {
+						service_24g[i].group_t = '<%:visitor network%>';
+                    }
+                    service_24g[i].name = service_24g[i].name==undefined?'':service_24g[i].name;
+                    service_24g[i].encode = service_24g[i].encode==undefined?'':service_24g[i].encode;
+	service_24g[i].encrypt = service_24g[i].encrypt==undefined?'':service_24g[i].encrypt=="none"?"<%:not encrypt%>":service_24g[i].encrypt;
+                    service_24g[i].password = service_24g[i].password==undefined?'':service_24g[i].password;
+                }
+                for (var i=0; i<service_24g.length; i++) {
+                    var band = "2.4G";
+                    if (i == 0){
+                        html += '<tr><td></td><td>'+(i+1)+'</td><td>'+service_24g[i].name+'</td><td>'+service_24g[i].encode+'</td><td>'+
+                            service_24g[i].group_t+'</td><td>'+service_24g[i].encrypt+'</td><td>'+service_24g[i].password+'</td><td>'+
+							service_24g[i].isolate_t+'</td><td>'+service_24g[i].enable_t+'</td><td><button onclick="wirelessServiceSetting('+i+')"><%:set%></button></td></tr>';
+                    } else {
+                        html += '<tr><td><input id="sr2-' + i + '" type="checkbox" onchange="selectedWirelessService(this,\'' + band + '\')" value="' + (i + 1) + '"></td><td>' + (i + 1) + '</td><td>' + service_24g[i].name + '</td><td>' + service_24g[i].encode + '</td><td>' +
+                            service_24g[i].group_t + '</td><td>' + service_24g[i].encrypt + '</td><td>' + service_24g[i].password + '</td><td>' +
+							service_24g[i].isolate_t + '</td><td>' + service_24g[i].enable_t + '</td><td><button onclick="wirelessServiceSetting(' + i + ')"><%:set%></button></td></tr>';
+                    }
+                }
+                for (var i=0; i<service_5g.length; i++) {
+                    if (parseInt(service_5g[i].isolate) == 0 || service_5g[i].isolate == undefined) {
+						service_5g[i].isolate_t = '<%:disable%>';
+                    } else {
+						service_5g[i].isolate_t = '<%:enable%>';
+                    }
+                    if (parseInt(service_5g[i].enable) == 0) {
+						service_5g[i].enable_t = '<%:disable%>';
+                    } else {
+						service_5g[i].enable_t = '<%:enable%>';
+                    }
+                    if (service_5g[i].group == "1") {
+						service_5g[i].group_t = '<%:employee network%>';
+                    } else {
+						service_5g[i].group_t = '<%:visitor network%>';
+                    }
+                    service_5g[i].name = service_5g[i].name==undefined?'':service_5g[i].name;
+                    service_5g[i].encode = service_5g[i].encode==undefined?'':service_5g[i].encode;
+                    service_5g[i].encrypt = service_5g[i].encrypt==undefined?'':service_5g[i].encrypt=="none"?"<%:not encrypt%>":service_5g[i].encrypt;
+                    service_5g[i].password = service_5g[i].password==undefined?'':service_5g[i].password;
+                }
+                for (var i=0; i<service_5g.length; i++) {
+                    var band = "5G";
+                    if (i==0){
+                        html_5g += '<tr><td></td><td>'+(i+1)+'</td><td>'+service_5g[i].name+'</td><td>'+service_5g[i].encode+'</td><td>'+
+                            service_5g[i].group_t+'</td><td>'+service_5g[i].encrypt+'</td><td>'+service_5g[i].password+'</td><td>'+
+							service_5g[i].isolate_t+'</td><td>'+service_5g[i].enable_t+'</td><td><button onclick="wirelessServiceSetting5('+i+')"><%:set%></button></td></tr>';
+                    } else {
+                        html_5g += '<tr><td><input id="sr5-' + i + '" type="checkbox" onchange="selectedWirelessService(this,\'' + band + '\')"  value="' + (i + 1) + '"></td><td>' + (i + 1) + '</td><td>' + service_5g[i].name + '</td><td>' + service_5g[i].encode + '</td><td>' +
+                            service_5g[i].group_t + '</td><td>' + service_5g[i].encrypt + '</td><td>' + service_5g[i].password + '</td><td>' +
+							service_5g[i].isolate_t + '</td><td>' + service_5g[i].enable_t + '</td><td><button onclick="wirelessServiceSetting5(' + i + ')"><%:set%></button></td></tr>';
+                    }
+                }
+                var wirelessServiceTable=document.getElementById('wireless-service-table');
+                if(wirelessServiceTable){
+                    setTableInnerHTML(wirelessServiceTable,html);
+                }
+                var wirelessServiceTable_5g=document.getElementById('wireless-service-table-5g');
+                if(wirelessServiceTable_5g){
+                    setTableInnerHTML(wirelessServiceTable_5g,html_5g);
+                }
+
+            });
+    }
+    function getWirelessAdvance() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "wirelessp","get_wireless_advance")%>', null,
+            function(x, result){
+                console.log(result);
+                advance_24g = result.band2;
+                advance_5g = result.band5;
+                if (advance_24g.hwmode != undefined) {
+                    var mode_24g = document.getElementById('mode');
+                    for (var i=0; i<mode_24g.options.length; i++) {
+                        if (mode_24g[i].value == advance_24g.hwmode) {
+                            mode_24g.selectedIndex = i;
+                            break;
+                        }
+                    }
+                    modeSwitch('2.4G');
+                }
+                if (advance_24g.htmode != undefined) {
+                    var bandwidth_24g = document.getElementById('bandwidth');
+                    for (var i=0; i<bandwidth_24g.options.length; i++) {
+                        if (bandwidth_24g[i].value == advance_24g.htmode) {
+                            bandwidth_24g.selectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+                if (advance_24g.channel != undefined) {
+                    var channel_24g = document.getElementById('channel');
+                    for (var i=0; i<channel_24g.options.length; i++) {
+                        if (channel_24g[i].value == advance_24g.channel) {
+                            channel_24g.selectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+                if (advance_24g.signal_strength!= undefined) {
+                    document.getElementById('signal-strength').selectedIndex = advance_24g.signal_strength;
+                }else {
+                    document.getElementById('signal-strength').selectedIndex = 2;
+                }
+
+                if (advance_24g.isolate != undefined) {
+                    if (advance_24g.isolate=='1') {
+                        document.getElementById('isolate').checked = true;
+                    }else {
+                        document.getElementById('isolate').checked = false;
+                    }
+                }
+                if (advance_24g.beacon_int != undefined) {
+                    document.getElementById('beacon_int').value = advance_24g.beacon_int;
+                }
+                if (advance_24g.maxassoc != undefined) {
+                    document.getElementById('maxassoc').value = advance_24g.maxassoc;
+                }
+                if (advance_24g.enable_prevent != undefined) {
+                    if (advance_24g.enable_prevent=='1') {
+                        document.getElementById('enable_prevent').checked = true;
+                        document.getElementById('sta_min_dbm').disabled = false;
+                    }else {
+                        document.getElementById('enable_prevent').checked = false;
+                        document.getElementById('sta_min_dbm').disabled = true;
+                    }
+                }
+                if (advance_24g.sta_min_dbm != undefined) {
+                    document.getElementById('sta_min_dbm').value = advance_24g.sta_min_dbm;
+                }else {
+                }
+                if (advance_24g.enable_kick != undefined) {
+                    if (advance_24g.enable_kick=='1') {
+                        document.getElementById('enable_kick').checked = true;
+                        document.getElementById('weak_sta_signal').disabled = false;
+                    }else {
+                        document.getElementById('enable_kick').checked = false;
+                        document.getElementById('weak_sta_signal').disabled = true;
+                    }
+                }
+                if (advance_24g.weak_sta_signal != undefined) {
+                    document.getElementById('weak_sta_signal').value = advance_24g.weak_sta_signal;
+                }else {
+                }
+
+                if (advance_5g.hwmode != undefined) {
+                    var mode_5g = document.getElementById('mode-5');
+                    for (var i=0; i<mode_5g.options.length; i++) {
+                        if (mode_5g[i].value == advance_5g.hwmode) {
+                            mode_5g.selectedIndex = i;
+                            break;
+                        }
+                    }
+                    modeSwitch('5G');
+                }
+                if (advance_5g.htmode != undefined) {
+                    var bandwidth_5g = document.getElementById('bandwidth-5');
+                    for (var i=0; i<bandwidth_5g.options.length; i++) {
+                        if (bandwidth_5g[i].value == advance_5g.htmode) {
+                            bandwidth_5g.selectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+                if (advance_5g.channel != undefined) {
+                    var channel_5g = document.getElementById('channel-5');
+                    for (var i=0; i<channel_5g.options.length; i++) {
+                        if (channel_5g[i].value == advance_5g.channel) {
+                            channel_5g.selectedIndex = i;
+                            channel165(channel_5g);
+                            break;
+                        }
+                    }
+                }
+
+                if (advance_5g.signal_strength!= undefined) {
+                    document.getElementById('signal-strength-5').selectedIndex = advance_5g.signal_strength;
+                }else {
+                    document.getElementById('signal-strength-5').selectedIndex = 2;
+                }
+
+                if (advance_5g.isolate != undefined) {
+                    if (advance_5g.isolate=='1') {
+                        document.getElementById('isolate-5').checked = true;
+                    }else {
+                        document.getElementById('isolate-5').checked = false;
+                    }
+                }
+                if (advance_5g.beacon_int != undefined) {
+                    document.getElementById('beacon_int-5').value = advance_5g.beacon_int;
+                }
+                if (advance_5g.maxassoc != undefined) {
+                    document.getElementById('maxassoc-5').value = advance_5g.maxassoc;
+                }
+                if (advance_5g.enable_prevent != undefined) {
+                    if (advance_5g.enable_prevent=='1') {
+                        document.getElementById('enable_prevent-5').checked = true;
+                        document.getElementById('sta_min_dbm-5').disabled = false;
+                    }else {
+                        document.getElementById('enable_prevent-5').checked = false;
+                        document.getElementById('sta_min_dbm-5').disabled = true;
+                    }
+                }
+                if (advance_5g.sta_min_dbm != undefined) {
+                    document.getElementById('sta_min_dbm-5').value = advance_5g.sta_min_dbm;
+                }else {
+                }
+                if (advance_5g.enable_kick != undefined) {
+                    if (advance_5g.enable_kick=='1') {
+                        document.getElementById('enable_kick-5').checked = true;
+                        document.getElementById('weak_sta_signal-5').disabled = false;
+                    }else {
+                        document.getElementById('enable_kick-5').checked = false;
+                        document.getElementById('weak_sta_signal-5').disabled = true;
+                    }
+                }
+                if (advance_5g.weak_sta_signal != undefined) {
+                    document.getElementById('weak_sta_signal-5').value = advance_5g.weak_sta_signal;
+                }else {
+                }
+            });
+    }
+    function setWirelessNet() {
+        console.log("action",action);
+        if (action == 'add') {
+            //var wlanIndex = service_24g.length+service_5g.length;
+            var wlanIndex = getWlanNo(service_24g,service_5g);
+            var ifname = 'wlan'+wlanIndex;
+            var name = document.getElementById('setting-name').value;
+            var radios = document.getElementsByName('setting-encode');
+            for (var i=0; i<radios.length; i++) {
+                if (radios[i].checked) {
+                    var encode = radios[i].value;
+                }
+            }
+            var encryptSelect = document.getElementById('setting-encrypt');
+            var encryptSelectIndex = encryptSelect.selectedIndex;
+            var encrypt = encryptSelect[encryptSelectIndex].value;
+            var password = document.getElementById('password').value;
+            var netTypeSelect = document.getElementById('setting-net-type');
+            var netTypeSelectIndex = netTypeSelect.selectedIndex;
+            var netType = netTypeSelect[netTypeSelectIndex].value;
+            if (document.getElementById('setting-isolate').checked) {
+                var isolate = '1';
+            } else {
+                var isolate = '0';
+            }
+            if (document.getElementById('setting-enable').checked) {
+                var enable = '1';
+            } else {
+                var enable = '0';
+            }
+            var broadcast = document.getElementById('setting-broadcast').checked;
+            var err = document.getElementById('Error');
+            var text = err.getElementsByTagName('span')[0];
+            if (name==''||name==undefined) {
+				text.innerText = '<%:Wireless network name cannot be empty%>';
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('setting-name');
+                return;
+            } else if (strlen(name)>32){
+				text.innerText = '<%:wireless name length error%>';
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('setting-name');
+                return;
+            }else {
+                if (getChanLen(name)>10){
+					text.innerText = '<%:wireless name characters error%>';
+                    err.style.visibility = 'visible';
+                    errTipDoc = document.getElementById('setting-name');
+                    return;
+                }
+            }
+            for (var n in service_24g){
+                if (service_24g[n].name==name) {
+					text.innerText = '<%:Cannot set duplicate wireless network name%>';
+                    err.style.visibility = 'visible';
+                    errTipDoc = document.getElementById('setting-name');
+                    return;
+                }
+            }
+            for (var n in service_5g){
+                if (service_5g[n].name == name){
+					text.innerText = '<%:Cannot set duplicate wireless network name%>';
+                    err.style.visibility = 'visible';
+                    errTipDoc = document.getElementById('setting-name');
+                    return;
+                }
+            }
+            if (selected_band == '2.4G'){
+                if (service_24g.length>=4){
+					text.innerText = '<%:Set 2.4g wireless network to no more than 4%>';
+                    err.style.visibility = 'visible';
+                    return;
+                }
+            } else {
+                if (service_5g.length>=4){
+					text.innerText = '<%:Set up 5G wireless network to no more than 4%>';
+                    err.style.visibility = 'visible';
+                    return;
+                }
+            }
+            if (encrypt!="none"){
+                if (password.length<8){
+					text.innerText = '<%:wireless password error%>';
+                    err.style.visibility = 'visible';
+                    errTipDoc = document.getElementById('password');
+                    return;
+                }
+                if (password != check(password)){
+                    text.innerText = '<%:input password invalid%>';
+                    err.style.visibility = 'visible';
+                    errTipDoc = document.getElementById('password');
+                    return;
+                }
+            }
+            /*encode = encode == undefined?'':encode;
+            encrypt = encrypt == undefined?'':encrypt;
+            isolate = isolate == undefined?'':isolate;
+            enable = enable == undefined?'':enable;
+            broadcast = broadcast == undefined?'':broadcast;*/
+            if (selected_band == '2.4G') {
+                var params = {'band2':{'ifname':ifname, 'name':name, 'encode':encode, 'encrypt':encrypt, 'group':netType, 'isolate':isolate, 'enable':enable, 'broadcast':broadcast, 'password':password}};
+            } else {
+                var params = {'band5':{'ifname':ifname, 'name':name, 'encode':encode, 'encrypt':encrypt, 'group':netType, 'isolate':isolate, 'enable':enable, 'broadcast':broadcast, 'password':password}};
+            }
+            console.log("pr",params);
+            document.getElementById('wirelessSetBtn').disabled = true;
+            XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessp","add_wireless_net")%>', params,
+                function(x, result){
+                    document.getElementById('wirelessSetBtn').disabled = false;
+                    console.log(result);
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    if (result==null){
+					text.innerText = '<%:Connection failed, please try again%>';
+                        err.style.visibility = 'visible';
+                    } else if (result != null && result.code == 0) {
+					text.innerText = '<%:add successfully%>';
+                        err.style.visibility = 'visible';
+                        document.getElementById('wireless-service-setting').style.display = 'none';
+                        getWirelessNet();
+                    }else {
+                        text.innerText = result.msg;
+                        err.style.visibility = 'visible';
+                    }
+                });
+        } else {
+            if (selected_band == '2.4G') {
+                services.band2[selected_index].name = document.getElementById('setting-name').value;
+                var radios = document.getElementsByName('setting-encode');
+                for (var i=0; i<radios.length; i++) {
+                    if (radios[i].checked) {
+                        services.band2[selected_index].encode = radios[i].value;
+                    }
+                }
+                var encryptSelect = document.getElementById('setting-encrypt');
+                var encryptSelectIndex = encryptSelect.selectedIndex;
+                services.band2[selected_index].encrypt = encryptSelect[encryptSelectIndex].value;
+                var password = document.getElementById('password').value;
+                services.band2[selected_index].password = password;
+                var netTypeSelect = document.getElementById('setting-net-type');
+                var netTypeSelectIndex = netTypeSelect.selectedIndex;
+                services.band2[selected_index].group = netTypeSelect[netTypeSelectIndex].value;
+                if (document.getElementById('setting-isolate').checked) {
+                    services.band2[selected_index].isolate = '1';
+                } else {
+                    services.band2[selected_index].isolate = '0';
+                }
+                if (document.getElementById('setting-enable').checked) {
+                    services.band2[selected_index].enable = '1';
+                } else {
+                    services.band2[selected_index].enable = '0';
+                }
+                services.band2[selected_index].broadcast = document.getElementById('setting-broadcast').checked;
+                var err = document.getElementById('Error');
+                var text = err.getElementsByTagName('span')[0];
+                if (services.band2[selected_index].name == ''){
+					text.innerText = '<%:Please input the SSID%>';
+                    err.style.visibility = 'visible';
+                    errTipDoc = document.getElementById('setting-name');
+                    getWirelessNet();
+                    return;
+                }else if (strlen(services.band2[selected_index].name)>32){
+					text.innerText = '<%:wireless name length error%>';
+                    err.style.visibility = 'visible';
+                    errTipDoc = document.getElementById('setting-name');
+                    getWirelessNet();
+                    return;
+                }else {
+                    if (getChanLen(services.band2[selected_index].name)>10){
+						text.innerText = '<%:wireless name characters error!%>';
+                        err.style.visibility = 'visible';
+                        errTipDoc = document.getElementById('setting-name');
+                        getWirelessNet();
+                        return;
+                    }
+                }
+                if (encryptSelect[encryptSelectIndex].value!="none"){
+                    if (password.length<8){
+						text.innerText = '<%:wireless password error%>';
+                        err.style.visibility = 'visible';
+                        errTipDoc = document.getElementById('password');
+                        getWirelessNet();
+                        return;
+                    }
+                    if (password != check(password)){
+                        text.innerText = '<%:input password invalid%>';
+                        err.style.visibility = 'visible';
+                        errTipDoc = document.getElementById('password');
+                        getWirelessNet();
+                        return;
+                    }
+                }
+                var params = {'band2':services.band2[selected_index]};
+            } else {
+                services.band5[selected_index].name = document.getElementById('setting-name').value;
+                var radios = document.getElementsByName('setting-encode');
+                for (var i=0; i<radios.length; i++) {
+                    if (radios[i].checked) {
+                        services.band5[selected_index].encode = radios[i].value;
+                    }
+                }
+                var encryptSelect = document.getElementById('setting-encrypt');
+                var encryptSelectIndex = encryptSelect.selectedIndex;
+                services.band5[selected_index].encrypt = encryptSelect[encryptSelectIndex].value;
+                var password = document.getElementById('password').value;
+                services.band5[selected_index].password = password;
+                var netTypeSelect = document.getElementById('setting-net-type');
+                var netTypeSelectIndex = netTypeSelect.selectedIndex;
+                services.band5[selected_index].group = netTypeSelect[netTypeSelectIndex].value;
+                if (document.getElementById('setting-isolate').checked) {
+                    services.band5[selected_index].isolate = '1';
+                } else {
+                    services.band5[selected_index].isolate = '0';
+                }
+                if (document.getElementById('setting-enable').checked) {
+                    services.band5[selected_index].enable = '1';
+                } else {
+                    services.band5[selected_index].enable = '0';
+                }
+                services.band5[selected_index].broadcast = document.getElementById('setting-broadcast').checked;
+                var err = document.getElementById('Error');
+                var text = err.getElementsByTagName('span')[0];
+                if (services.band5[selected_index].name == ''){
+					text.innerText = '<%:Please input the SSID%>';
+                    err.style.visibility = 'visible';
+                    errTipDoc = document.getElementById('setting-name');
+                    getWirelessNet();
+                    return;
+                }else if (strlen(services.band5[selected_index].name)>32){
+					text.innerText = '<%:wireless name length error%>';
+                    err.style.visibility = 'visible';
+                    errTipDoc = document.getElementById('setting-name');
+                    getWirelessNet();
+                    return;
+                }else {
+                    if (getChanLen(services.band5[selected_index].name)>10){
+						text.innerText = '<%:wireless name characters error!%>';
+                        err.style.visibility = 'visible';
+                        errTipDoc = document.getElementById('setting-name');
+                        getWirelessNet();
+                        return;
+                    }
+                }
+                if (encryptSelect[encryptSelectIndex].value!="none"){
+                    if (password.length<8){
+						text.innerText = '<%:wireless password error%>';
+                        err.style.visibility = 'visible';
+                        errTipDoc = document.getElementById('password');
+                        getWirelessNet();
+                        return;
+                    }
+                    if (password != check(password)){
+                        text.innerText = '<%:input password invalid%>';
+                        err.style.visibility = 'visible';
+                        errTipDoc = document.getElementById('password');
+                        getWirelessNet();
+                        return;
+                    }
+                }
+                var params = {'band5':services.band5[selected_index]};
+            }
+            console.log(params);
+            document.getElementById('wirelessSetBtn').disabled = true;
+            XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessp","set_wireless_net")%>', params,
+                function(x, result){
+                    document.getElementById('wirelessSetBtn').disabled = false;
+                    console.log(result);
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    getWirelessNet();
+                    if (result==null){
+					text.innerText = '<%:Connection failed, please try again%>';
+                        err.style.visibility = 'visible';
+                    } else if (result!=null&&result.code == 0) {
+					text.innerText = '<%:set successfully%>';
+                        err.style.visibility = 'visible';
+                        document.getElementById('wireless-service-setting').style.display = 'none';
+                    }else {
+                        text.innerText = result.msg;
+                        err.style.visibility = 'visible';
+                    }
+                });
+        }
+    }
+    function addWirelessNet() {
+        document.getElementById('opBraFeg').style.visibility='hidden';
+        document.getElementById('wirTpFeg').style.visibility='hidden';
+        document.getElementById('wirDisFeg').style.visibility='hidden';
+        selected_band = '2.4G';
+        action = 'add';
+        document.getElementById('setting-name').value = '';
+        document.getElementById('setting-broadcast').checked = true;
+        var radios = document.getElementsByName('setting-encode');
+        radios[0].checked = true;
+        document.getElementById('setting-encrypt').selectedIndex = 0;
+        document.getElementById('setting-net-type').selectedIndex = 0;
+        document.getElementById('setting-isolate').checked = false;
+        document.getElementById('setting-enable').checked = true;
+        document.getElementById('password').disabled = true;
+        document.getElementById('password').value = '';
+        document.getElementById('wireless-service-setting').style.display = '';
+        document.getElementById('setting-name').focus();
+
+    }
+    function addWirelessNet5() {
+        document.getElementById('opBraFeg').style.visibility='hidden';
+        document.getElementById('wirTpFeg').style.visibility='hidden';
+        document.getElementById('wirDisFeg').style.visibility='hidden';
+        selected_band = '5G';
+        action = 'add';
+        document.getElementById('setting-name').value = '';
+        document.getElementById('setting-broadcast').checked = true;
+        var radios = document.getElementsByName('setting-encode');
+        radios[0].checked = true;
+        document.getElementById('setting-encrypt').selectedIndex = 0;
+        document.getElementById('setting-net-type').selectedIndex = 0;
+        document.getElementById('setting-isolate').checked = false;
+        document.getElementById('setting-enable').checked = true;
+        document.getElementById('password').disabled = true;
+        document.getElementById('password').value = '';
+        document.getElementById('wireless-service-setting').style.display = '';
+        document.getElementById('setting-name').focus();
+    }
+    function delWirelessNet() {
+        if (selected_band == '2.4G') {
+            var params = {'band2':{'ifname':service_24g[selected_index].ifname}}
+        } else {
+            var params = {'band5':{'ifname':service_5g[selected_index].ifname}}
+        }
+        console.log(params);
+        XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessp","del_wireless_net")%>', params,
+            function(x, result){
+                console.log(result);
+                var err = document.getElementById('Error');
+                var text = err.getElementsByTagName('span')[0];
+                if (result==null){
+				text.innerText = '<%:Connection failed, please try again%>';
+                    err.style.visibility = 'visible';
+                } else if (result!=null&&result.code == 0) {
+				text.innerText = '<%:successfully delete%>';
+                    err.style.visibility = 'visible';
+                    getWirelessNet();
+                }else {
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+    function selectedWirelessService(x,band) {
+        selected_index = parseInt(x.value)-1;
+        var index = parseInt(selected_index)+2;
+        selected_band = band;
+        console.log(selected_band);
+        for (var s in service_24g){
+            if (s>0&&s!=selected_index){
+                document.getElementById('sr2-'+s).checked = false;
+            }
+        }
+        for (var s in service_5g){
+            if (s>0&&s!=selected_index) {
+                document.getElementById('sr5-'+s).checked = false;
+            }
+        }
+        if (band == "2.4G"){
+            for (var i=2; i<=service_24g.length+1; i++){
+                if (i == index) {
+                    if (!document.getElementById('sr2-'+selected_index).checked){
+                        document.getElementById('wireless-service-table').rows[i].style.backgroundColor = '#fff';
+                        document.getElementById('del-24bt').disabled = true;
+                    } else {
+                        document.getElementById('wireless-service-table').rows[i].style.backgroundColor = '#353535';
+                        document.getElementById('del-24bt').disabled = false;
+                    }
+                }else {
+                    document.getElementById('wireless-service-table').rows[i].style.backgroundColor = '#fff';
+                }
+            }
+        }else {
+            for (var i=2; i<=service_5g.length+1; i++){
+                if (i == index) {
+                    if (!document.getElementById('sr5-'+selected_index).checked){
+                        document.getElementById('wireless-service-table-5g').rows[i].style.backgroundColor = '#fff';
+                        document.getElementById('del-5bt').disabled = true;
+                    } else {
+                        document.getElementById('wireless-service-table-5g').rows[i].style.backgroundColor = '#353535';
+                        document.getElementById('del-5bt').disabled = false;
+                    }
+                }else {
+                    document.getElementById('wireless-service-table-5g').rows[i].style.backgroundColor = '#fff';
+                }
+            }
+        }
+    }
+    function delWirelessNet5() {
+        if (selected_band == '2.4G') {
+            var params = {'band2':{'ifname':service_24g[selected_index].ifname}}
+        } else {
+            var params = {'band5':{'ifname':service_5g[selected_index].ifname}}
+        }
+        console.log(params);
+        XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessp","del_wireless_net")%>', params,
+            function(x, result){
+                console.log(result);
+                var err = document.getElementById('Error');
+                var text = err.getElementsByTagName('span')[0];
+                if (result==null){
+				text.innerText = '<%:Connection failed, please try again%>';
+                    err.style.visibility = 'visible';
+                } else if (result!=null&&result.code == 0) {
+				text.innerText = '<%:successfully delete%>';
+                    err.style.visibility = 'visible';
+                    getWirelessNet();
+                }else {
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+    function wirelessServiceSetting(i) {
+        document.getElementById('opBraFeg').style.visibility='hidden';
+        document.getElementById('wirTpFeg').style.visibility='hidden';
+        document.getElementById('wirDisFeg').style.visibility='hidden';
+        action = "edit";
+        console.log(i);
+        document.getElementById('wireless-service-setting').style.display = '';
+        selected_band = '2.4G';
+        selected_index = i;
+        document.getElementById('setting-name').value = service_24g[i].name;
+        document.getElementById('setting-broadcast').checked = service_24g[i].broadcast;
+        if (service_24g[i].broadcast != undefined) {
+            if (service_24g[i].broadcast) {
+                document.getElementById('setting-broadcast').checked = true;
+            } else {
+                document.getElementById('setting-broadcast').checked = false;
+            }
+        }
+        var radios = document.getElementsByName('setting-encode');
+        for (var j=0; j<radios.length; j++) {
+            if (radios[j].value == service_24g[i].encode) {
+                radios[j].checked = true;
+                break;
+            }
+        }
+        var netTypeSelect = document.getElementById('setting-net-type');
+        for (var j=0; j<netTypeSelect.options.length; j++) {
+            if (netTypeSelect[j].value == service_24g[i].group) {
+                netTypeSelect.selectedIndex = j;
+            }
+        }
+        var encryptSelect = document.getElementById('setting-encrypt');
+        for (var j=0; j<encryptSelect.options.length; j++) {
+            if (encryptSelect[j].value == service_24g[i].encrypt||encryptSelect[j].getAttribute("valc") == service_24g[i].encrypt) {
+                encryptSelect.selectedIndex = j;
+            }
+        }
+		if (service_24g[i].encrypt == "<%:not encrypt%>"){
+            document.getElementById('password').disabled = true;
+        }else {
+            document.getElementById('password').disabled = false;
+        }
+        if (service_24g[i].password!=undefined)
+            document.getElementById('password').value = service_24g[i].password;
+        if (service_24g[i].isolate != undefined) {
+            if (parseInt(service_24g[i].isolate)==1) {
+                document.getElementById('setting-isolate').checked = true;
+            } else {
+                document.getElementById('setting-isolate').checked = false;
+            }
+        }
+        if (service_24g[i].enable != undefined) {
+            if (service_24g[i].enable) {
+                document.getElementById('setting-enable').checked = true;
+            } else {
+                document.getElementById('setting-enable').checked = false;
+            }
+        }
+    }
+    function wirelessServiceSetting5(i) {
+        document.getElementById('opBraFeg').style.visibility='hidden';
+        document.getElementById('wirTpFeg').style.visibility='hidden';
+        document.getElementById('wirDisFeg').style.visibility='hidden';
+        action = "edit";
+        console.log('5G'+i);
+        document.getElementById('wireless-service-setting').style.display = '';
+        selected_band = '5G';
+        selected_index = i;
+        document.getElementById('setting-name').value = service_5g[i].name;
+        document.getElementById('setting-broadcast').checked = service_5g[i].broadcast;
+        if (service_5g[i].broadcast != undefined) {
+            if (service_5g[i].broadcast) {
+                document.getElementById('setting-broadcast').checked = true;
+            } else {
+                document.getElementById('setting-broadcast').checked = false;
+            }
+        }
+        var radios = document.getElementsByName('setting-encode');
+        for (var j=0; j<radios.length; j++) {
+            if (radios[j].value == service_5g[i].encode) {
+                radios[j].checked = true;
+                break;
+            }
+        }
+        var netTypeSelect = document.getElementById('setting-net-type');
+        for (var j=0; j<netTypeSelect.options.length; j++) {
+            if (netTypeSelect[j].value == service_5g[i].group) {
+                netTypeSelect.selectedIndex = j;
+            }
+        }
+        var encryptSelect = document.getElementById('setting-encrypt');
+        for (var j=0; j<encryptSelect.options.length; j++) {
+            if (encryptSelect[j].value == service_5g[i].encrypt||encryptSelect[j].getAttribute("valc") == service_5g[i].encrypt) {
+                encryptSelect.selectedIndex = j;
+            }
+        }
+		if (service_5g[i].encrypt == "<%:not encrypt%>"){
+            document.getElementById('password').disabled = true;
+        }else {
+            document.getElementById('password').disabled = false;
+        }
+        if (service_5g[i].password!=undefined)
+            document.getElementById('password').value = service_5g[i].password;
+        if (service_5g[i].isolate != undefined) {
+            if (parseInt(service_5g[i].isolate)==1) {
+                document.getElementById('setting-isolate').checked = true;
+            } else {
+                document.getElementById('setting-isolate').checked = false;
+            }
+        }
+        if (service_5g[i].enable != undefined) {
+            if (service_5g[i].enable) {
+                document.getElementById('setting-enable').checked = true;
+            } else {
+                document.getElementById('setting-enable').checked = false;
+            }
+        }
+    }
+    function setWirelessAdvance(band) {
+        if (band == '2.4G') {
+            var modeSelect = document.getElementById('mode');
+            var modeSelectIndex = modeSelect.selectedIndex;
+            advance_24g.hwmode = modeSelect[modeSelectIndex].value;
+            var bandwidthSelect = document.getElementById('bandwidth');
+            var bandwidthSelectIndex = bandwidthSelect.selectedIndex;
+            advance_24g.htmode = bandwidthSelect[bandwidthSelectIndex].value;
+            var channelSelect = document.getElementById('channel');
+            advance_24g.channel = channelSelect.value;
+            advance_24g.signal_strength = document.getElementById('signal-strength').selectedIndex;
+            advance_24g.isolate = document.getElementById('isolate').checked?'1':'0';
+            advance_24g.beacon_int = document.getElementById('beacon_int').value;
+            advance_24g.maxassoc = document.getElementById('maxassoc').value;
+            advance_24g.enable_prevent = document.getElementById('enable_prevent').checked?'1':'0';
+            advance_24g.sta_min_dbm = document.getElementById('sta_min_dbm').value;
+            advance_24g.enable_kick = document.getElementById('enable_kick').checked?'1':'0';
+            advance_24g.weak_sta_signal = document.getElementById('weak_sta_signal').value;
+            var err = document.getElementById('Error');
+            var text = err.getElementsByTagName('span')[0];
+            if (advance_24g.beacon_int<40||advance_24g.beacon_int>1000||advance_24g.beacon_int.search(/\D/g) != -1){
+				text.innerText = '<%:Beacon time slots range from 40 to 1000 milliseconds%>';
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('beacon_int');
+                return;
+            }
+            if (advance_24g.maxassoc<1||advance_24g.maxassoc>40||advance_24g.maxassoc.search(/\D/g) != -1){
+				text.innerText = '<%:The client limit is 1-40%>';
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('maxassoc');
+                return;
+            }
+
+            if(advance_24g.enable_prevent=="1"){
+                if (advance_24g.sta_min_dbm==null||advance_24g.sta_min_dbm==""){
+					text.innerText = '<%:The signal strength must not be empty%>';
+                    err.style.visibility = 'visible';
+                    errTipDoc = document.getElementById('sta_min_dbm');
+                    return;
+                }else if (advance_24g.sta_min_dbm>(-30)||advance_24g.sta_min_dbm<(-90)) {
+					text.innerText = '<%:The wireless client access range error%>';
+                    err.style.visibility = 'visible';
+                    errTipDoc = document.getElementById('sta_min_dbm');
+                    return;
+                }
+            }
+            if (advance_24g.enable_kick=="1"){
+                if (advance_24g.weak_sta_signal==null||advance_24g.weak_sta_signal==""){
+					text.innerText = '<%:The kick signal strength cannot be empty%>';
+                    err.style.visibility = 'visible';
+                    errTipDoc = document.getElementById('weak_sta_signal');
+                    return;
+                }else if (advance_24g.weak_sta_signal>(-30)||advance_24g.weak_sta_signal<(-90)) {
+					text.innerText = '<%:The wireless client access range error%>';
+                    err.style.visibility = 'visible';
+                    errTipDoc = document.getElementById('weak_sta_signal');
+                    return;
+                }
+            }
+            if (advance_24g.enable_kick=="1"&&advance_24g.enable_prevent=="1"){
+                var diffValue = advance_24g.sta_min_dbm-advance_24g.weak_sta_signal;
+                if (diffValue < 5 ){
+					text.innerText = '<%:Wireless client ban signal strength range error%>';
+                    err.style.visibility = 'visible';
+                    return;
+                }
+            }else if(advance_24g.enable_kick=="1"&&advance_24g.enable_prevent!="1"){
+                text.innerText = '<%:wireless client ban signal strength range should be enable%>';
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('weak_sta_signal');
+                return;
+            }
+            var params = {'band2':advance_24g,'band5':advance_5g};
+        } else {
+            var modeSelect = document.getElementById('mode-5');
+            var modeSelectIndex = modeSelect.selectedIndex;
+            advance_5g.hwmode = modeSelect[modeSelectIndex].value;
+            var bandwidthSelect = document.getElementById('bandwidth-5');
+            var bandwidthSelectIndex = bandwidthSelect.selectedIndex;
+            advance_5g.htmode = bandwidthSelect[bandwidthSelectIndex].value;
+            var channelSelect = document.getElementById('channel-5');
+            advance_5g.channel = channelSelect.value;
+            advance_5g.signal_strength = document.getElementById('signal-strength-5').selectedIndex;
+            advance_5g.isolate = document.getElementById('isolate-5').checked?'1':'0';
+            advance_5g.beacon_int = document.getElementById('beacon_int-5').value;
+            advance_5g.maxassoc = document.getElementById('maxassoc-5').value;
+            advance_5g.enable_prevent = document.getElementById('enable_prevent-5').checked?'1':'0';
+            advance_5g.sta_min_dbm = document.getElementById('sta_min_dbm-5').value;
+            advance_5g.enable_kick = document.getElementById('enable_kick-5').checked?'1':'0';
+            advance_5g.weak_sta_signal = document.getElementById('weak_sta_signal-5').value;
+            var err = document.getElementById('Error');
+            var text = err.getElementsByTagName('span')[0];
+            if (advance_5g.beacon_int<40||advance_5g.beacon_int>1000||advance_5g.beacon_int.search(/\D/g) != -1){
+				text.innerText = '<%:Beacon time slots range from 40 to 1000 milliseconds%>';
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('beacon_int-5');
+                return;
+            }
+            if (advance_5g.maxassoc<1||advance_5g.maxassoc>40||advance_5g.maxassoc.search(/\D/g) != -1){
+				text.innerText = '<%:The client limit is 1-40%>';
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('maxassoc-5');
+                return;
+            }
+            if(advance_5g.enable_prevent=="1"){
+                if (advance_5g.sta_min_dbm==null||advance_5g.sta_min_dbm==""){
+					text.innerText = '<%:The signal strength must not be empty%>';
+                    err.style.visibility = 'visible';
+                    errTipDoc = document.getElementById('sta_min_dbm-5');
+                    return;
+                }else if (advance_5g.sta_min_dbm>(-30)||advance_5g.sta_min_dbm<(-90)) {
+					text.innerText = '<%:The wireless client access range error%>';
+                    err.style.visibility = 'visible';
+                    errTipDoc = document.getElementById('sta_min_dbm-5');
+                    return;
+                }
+            }
+            if (advance_5g.enable_kick=="1"){
+                if (advance_5g.weak_sta_signal==null||advance_5g.weak_sta_signal==""){
+					text.innerText = '<%:The kick signal strength cannot be empty%>';
+                    err.style.visibility = 'visible';
+                    errTipDoc = document.getElementById('weak_sta_signal-5');
+                    return;
+                }else if (advance_5g.weak_sta_signal>(-30)||advance_5g.weak_sta_signal<(-90)) {
+					text.innerText = '<%:Wireless client ban signal strength range error%>';
+                    err.style.visibility = 'visible';
+                    errTipDoc = document.getElementById('weak_sta_signal-5');
+                    return;
+                }
+            }
+            if (advance_5g.enable_kick=="1"&&advance_5g.enable_prevent=="1"){
+                var diffValue = advance_5g.sta_min_dbm-advance_5g.weak_sta_signal;
+                if (diffValue < 5){
+					text.innerText = '<%:Wireless client ban signal strength range error%>';
+                    err.style.visibility = 'visible';
+                    errTipDoc = document.getElementById('weak_sta_signal-5');
+                    return;
+                }
+            }else if(advance_5g.enable_kick=="1"&&advance_5g.enable_prevent!="1"){
+                text.innerText = '<%:Kick device should be enabled with Ban device is on%>?';
+                err.style.visibility = 'visible';
+                return;
+            }
+            var params = {'band2':advance_24g,'band5':advance_5g};
+        }
+        console.log(params);
+        XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessp","set_wireless_advance")%>', params,
+            function(x, result){
+                console.log(result);
+                var err = document.getElementById('Error');
+                var text = err.getElementsByTagName('span')[0];
+                if (result==null){
+				text.innerText = '<%:Connection failed, please try again%>';
+                    err.style.visibility = 'visible';
+                } else if (result!=null&&result.code == 0) {
+                    text.innerText = '<%:set successfully%>';
+                    err.style.visibility = 'visible';
+                    errTipDoc = null;
+                    getWirelessAdvance();
+                }else {
+                    text.innerText = result.msg;
+                    errTipDoc = null;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+    function modeSwitch(wantype) {
+        var mode;
+        if (wantype == '2.4G') {
+            mode = document.getElementById('mode');
+            var modeIndex = mode.selectedIndex;
+            var modeValue = mode[modeIndex].value;
+            var bandwidthSelect = document.getElementById('bandwidth');
+            var bandwidthValue = bandwidthSelect[bandwidthSelect.selectedIndex].value;
+            if (bandwidthValue != 'HT20' && bandwidthValue != 'HT40') {
+                bandwidthValue.selectedIndex = 0;
+            }
+            if (modeValue != '11n') {
+                document.getElementById('bandwidth').disabled = 'disabled';
+            } else {
+                document.getElementById('bandwidth').disabled = '';
+            }
+        } else if (wantype == '5G') {
+            var channel = document.getElementById('channel-5');
+            mode = document.getElementById('mode-5');
+            var modeIndex = mode.selectedIndex;
+            var modeValue = mode[modeIndex].value;
+            var bandwidthSelect = document.getElementById('bandwidth-5');
+            var bandwidthValue = bandwidthSelect[bandwidthSelect.selectedIndex].value;
+            if (modeValue == '11n') {
+                bandwidthSelect.selectedIndex = 0;
+                document.getElementById('bandwidth-5').disabled = '';
+                document.getElementById('auto-5').style.display = '';
+                document.getElementById('ht20-5').style.display = '';
+                document.getElementById('ht40-5').style.display = '';
+                document.getElementById('vht20').style.display = 'none';
+                document.getElementById('vht40').style.display = 'none';
+                document.getElementById('vht80').style.display = 'none';
+            } else if (modeValue == '11ac') {
+                bandwidthSelect.selectedIndex = 3;
+                document.getElementById('bandwidth-5').disabled = '';
+                document.getElementById('auto-5').style.display = 'none';
+                document.getElementById('ht20-5').style.display = 'none';
+                document.getElementById('ht40-5').style.display = 'none';
+                document.getElementById('vht20').style.display = '';
+                document.getElementById('vht40').style.display = '';
+                document.getElementById('vht80').style.display = '';
+            } else {
+                document.getElementById('channel165').style.display = '';
+                bandwidthSelect.selectedIndex = 0;
+                document.getElementById('bandwidth-5').disabled = 'disabled';
+            }
+            channel165(channel);
+        }
+    }
+    function switchTable(arr,bt) {
+        document.getElementById(arr[0]).style.display = 'none';
+        document.getElementById(arr[1]).style.display = '';
+        document.getElementById(bt[0]).style.backgroundColor = "#c9c9c9";
+        document.getElementById(bt[1]).style.backgroundColor = "#a0d468"
+    }
+    function closeSettingDiv() {
+        document.getElementById('wireless-service-setting').style.display = 'none';
+    }
+
+    function changeStatus(e,id) {
+        if (e.checked){
+            document.getElementById(id).disabled = '';
+            if(id == "sta_min_dbm"||id == "sta_min_dbm-5"){
+                document.getElementById(id).value = '-70';
+            }else {
+                document.getElementById(id).value = '-75';
+            }
+        }else {
+            document.getElementById(id).disabled = 'disabled';
+            if(id == "sta_min_dbm"||id == "sta_min_dbm-5"){
+                document.getElementById(id).value = '-70';
+            }else {
+                document.getElementById(id).value = '-75';
+            }
+        }
+    }
+    function changeEnc(e) {
+        if (e.value=="none"){
+            document.getElementById('password').disabled = true;
+            document.getElementById('password').value = '';
+        }else {
+            document.getElementById('password').disabled = false;
+        }
+    }
+
+    function changeColor(e) {
+        e.className = "sta_min_dbm-font";
+    }
+
+    function channel165(e) {
+        var bandwidthSelect = document.getElementById('bandwidth-5');
+        var bandwidthValue = bandwidthSelect[bandwidthSelect.selectedIndex].value;
+        var mode5 = document.getElementById('mode-5');
+        var modeValue = mode5[mode5.selectedIndex].value;
+        if (modeValue == '11a') {
+            document.getElementById('channel165').style.display = '';
+        } else if (modeValue == '11ac' && bandwidthValue == 'VHT20') {
+            document.getElementById('channel165').style.display = '';
+        } else if (modeValue == '11n' && bandwidthValue == 'HT20') {
+            document.getElementById('channel165').style.display = '';
+        } else {
+            document.getElementById('channel165').style.display = 'none';
+            if (e[e.selectedIndex].value == '165') {
+                e.selectedIndex = 0;
+            }
+        }
+    }
+
+    function isolateDefault(e) {
+        if (e[e.selectedIndex].text == '<%:visitor network%>'){
+            document.getElementById('setting-isolate').checked = true;
+        } else {
+            document.getElementById('setting-isolate').checked = false;
+        }
+    }
+
+</script>

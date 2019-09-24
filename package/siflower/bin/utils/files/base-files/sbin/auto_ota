@@ -42,7 +42,7 @@ start_ota() {
 	local_version=$(echo $romversion | awk -F ' ' '{print $3}')
 	if [ "x$local_version" != "x$otaversion" -a "x$force" == "x1" ]; then
 		echo "{\"size\": $size,\"url\": \"$url\",\"checksum\": \"$checksum\"}" > /tmp/ota_info
-		/sbin/otaupgrade
+		/usr/bin/otaupgrade
 		return 1
 	else
 		auto_ota_logger "same version or code=$code"
@@ -98,20 +98,22 @@ start_ac_ota() {
 	fi
 	[ "x$upgrade" = "x1" ] && {
 		auto_ota_logger "start ota_upgrade here"
-		/sbin/otaupgrade
+		/usr/bin/otaupgrade
 	}
 }
 
+auto_ota_switch=`uci get basic_setting.auto_ota.enable`
+if [ "x$auto_ota_switch" != "x0" ]; then
+    cookie=`get_stok $cookie_path | tr -d "\r"`
+    if [ -z $cookie ]; then
+        auto_ota_logger "get stok fail :$cookie"
+        return 0
+    fi
 
-cookie=`get_stok $cookie_path | tr -d "\r"`
-if [ -z $cookie ]; then
-	auto_ota_logger "get stok fail :$cookie"
-	return 0
-fi
-
-dev=`uci get basic_setting.ac.enable`
-if [ "x$dev" != "x1" ]; then
-	start_ota $cookie $cookie_path
-else
-	start_ac_ota $cookie $cookie_path
+    dev=`uci get basic_setting.ac.enable`
+    if [ "x$dev" != "x1" ]; then
+        start_ota $cookie $cookie_path
+    else
+        start_ac_ota $cookie $cookie_path
+    fi
 fi

@@ -1,0 +1,122 @@
+<%+header%>
+<fieldset class="ddns">
+    <legend>花生壳动态域名</legend>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>>
+            <span class="detail">操作成功</span>
+            <input class="subBtn" value="确 定" type="button" onclick="closeTip()">
+        </div>
+    </div>
+
+    <i class="helpBtn" helpstr="dynamicIpHelp" onclick="clickHelp(0)"></i>
+    <li class="border-line"></li>
+    <table class="tb-no-border">
+        <tr><td class="mac-td-left">服务提供者:</td><td class="mac-td-right"><span id="provider"></span></td></tr>
+        <tr><td class="mac-td-left">用户名:</td><td class="mac-td-right"><input type="text" id="account" maxlength="32"></td></tr>
+        <tr><td class="mac-td-left">密码：</td><td class="mac-td-right"><input type="text" id="password"onkeyup="nStrLimit(this)" maxlength="63"></td></tr>
+        <tr><td></td><td class="mac-td-right"> <input type="checkbox" id="autoconnect">自动登录</td></tr>
+        <tr><td class="mac-td-left">服务类型：</td><td class="mac-td-right"><span id="servicetype"></span></td></tr>
+        <tr><td class="mac-td-left">域名信息：</td><td class="mac-td-right"><input id="domain"onkeyup="nStrLimit(this)" maxlength="100"></td></tr>
+        <tr><td></td><td class="mac-td-right"><button onclick="setDdns(0)">退出</button><button onclick="setDdns(1)">登录</button></td></tr>
+    </table>
+    <div id="Help">
+        <p class="helpTop">
+            <span class="helpDes">帮助</span>
+            <i class="helpClose" onclick="clickHelp(1)"></i></p>
+        <div id="helpDetail">
+            <ul id="DdnsHelp" class="help">
+                <li class="title">通过DDNS服务，可以将固定的域名和接入Internet的公网IP进行绑定，使得外网主机和路由器进行通信时，可直接使用域名进行访问。</li>
+                <li class="title">服务提供商</li>
+                <li class="content">本路由器的DDNS服务提供商为花生壳（www.oray.com）。</li>
+                <li class="title">用户名/密码</li>
+                <li class="content">在DDNS服务器地址上注册的用户名/密码。</li>
+                <li class="title">连接状态</li>
+                <li class="content">与DDNS服务器的连接状态。</li>
+                <li class="title">服务类型</li>
+                <li class="content">当前DDNS的服务类型。</li>
+                <li class="title">域名信息</li>
+                <li class="content">从DDNS服务器获得的域名服务列表。</li>
+                <li class="warnning">注意：在登录之前，您首先需要到DDNS服务提供商处申请一个DDNS的账号。</li>
+            </ul>
+        </div>
+    </div>
+</fieldset>
+<%+footer%>
+<script>
+    // global vars
+    var Drag =  document.getElementById("Help");
+
+    var errTipDoc;
+    // page load functions
+    getDdns();
+    dragFunc(Drag);
+    // router get interfaces
+    function getDdns() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "advancednew","get_ddns")%>', null,
+            function(x, result) {
+                console.log(result);
+                if (result.provider != undefined) {
+                    document.getElementById('provider').innerText = result.provider;
+                }
+                if (result.account != undefined) {
+                    document.getElementById('account').value = result.account;
+                }
+                if (result.password != undefined) {
+                    document.getElementById('password').value = result.password;
+                }
+                if (result.autoconnect != undefined) {
+                    document.getElementById('autoconnect').checked = result.autoconnect;
+                }
+                if (result.servicetype != undefined) {
+                    document.getElementById('servicetype').value = result.servicetype;
+                }
+                if (result.domain != undefined) {
+                    document.getElementById('domain').value = result.domain;
+                }
+            });
+    }
+
+    // router set interfaces
+    function setDdns(action) {
+        if (action == 0) {
+            var params = {'action':action};
+        } else {
+            var provider = document.getElementById('provider').value;
+            var account = document.getElementById('account').value;
+            var password = document.getElementById('password').value;
+            var domain = document.getElementById('domain').value;
+            var err = document.getElementById('Error');
+            var text = err.getElementsByTagName('span')[0];
+            if (strlen(account)<2){
+                text.innerText = '账号长度不少于2！'
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('account');
+                return;
+            }
+            if (strlen(password)<8){
+                text.innerText = '密码长度不少于8！'
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('password');
+                return;
+            }
+            var params = {'action':action, 'provider':provider, 'account':account, 'password':password, 'domain':domain};
+        }
+        console.log(params);
+        XHR.post('<%=luci.dispatcher.build_url("admin", "advancednew","set_ddns")%>', params,
+            function(x, result) {
+                console.log(result);
+                if (result!=null&&result.code == 0) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '操作成功'
+                    err.style.visibility = 'visible';
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '操作失败'
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+</script>

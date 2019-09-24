@@ -1,0 +1,300 @@
+<%-
+local uci = require "luci.model.uci"
+local _uci_real  = cursor or _uci_real or uci.cursor()
+-%>
+<%+header%>
+<fieldset class="dhcp">
+	<legend><%:DHCP server%></legend>
+    <i class="helpBtn" helpstr="dynamicIpHelp" onclick="clickHelp(0)"></i>
+	<% local disable_switch = _uci_real:get("basic_setting", "no_wifi", "enable") == "1" and true or false;  if disable_switch  then %>
+	<div  class="bWlSwitchCon dhcp" style="display: none">
+	<% else %>
+	<div  class="bWlSwitchCon dhcp">
+	<% end %>
+
+        <div id="switchCon" class="switchCon" onclick="switchChange()">
+            <i class="switchBg"></i>
+            <i id="switchOn" class="switchBall" style=""></i>
+            <i id="switchOff" class="switchBallOff" style="display: none;"></i>
+        </div>
+		<span id="switchSpan" class="bWlSwitchOff"><%:disabled%></span>
+    </div>
+    <ul><li class="border-line"></li></ul>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>
+			<span class="detail"><%:Invalid input! Please refer to the correct format:%><br><%:XXX.XXX.XXX.XXX,X is the number of 0~9%></span>
+			<input class="subBtn" value="<%:confirm%>" type="button" onclick="closeTip()">
+        </div>
+    </div>
+   <!-- <div class="checkboxSwitch">
+        <input id="switchInput" type="checkbox">
+        <label for="switchInput"></label>
+    </div>-->
+    <table  class="tb-no-border">
+		<tr><td class="wan-td-left"><%:address pool start address%></td><td class="wan-td-right"><input id="ipbegin" type="text" onkeyup="nStrLimit(this)" maxlength="15"></td></tr>
+		<tr><td class="wan-td-left"><%:address pool end address%></td><td class="wan-td-right"><input id="ipend" type="text" onkeyup="nStrLimit(this)" maxlength="15"></td></tr>
+		<tr><td class="wan-td-left"><%:address of the lease%></td><td class="wan-td-right"><input id="lease" type="text" onkeyup="numLimit(this)" maxlength=><%:hour intro%></td></tr>
+		<tr><td class="wan-td-left"><%:gateway%></td><td class="wan-td-right"><input id="gateway" type="text" onkeyup="nStrLimit(this)" maxlength="15"></td></tr>
+		<tr><td class="wan-td-left"><%:preferred DNS server%></td><td class="wan-td-right"><input id="dns" type="text" onkeyup="nStrLimit(this)" maxlength="15"></td></tr>
+		<tr><td class="wan-td-left"><%:alternate DNS server%></td><td class="wan-td-right"><input id="dnsbak" type="text" onkeyup="nStrLimit(this)" maxlength="15"></td></tr>
+        <tr><td></td><td class="wan-td-right">
+				<button onclick="setDhcp()"><%:save%></button>
+            <i id="saveTip" class="hsSubLoading saving" style="display: none"></i>
+            <i id="saveTipSucess" class="hsSubLoading save-suc" style="display: none"></i>
+        </td></tr>
+    </table>
+    <ul><li class="border-line"></li></ul>
+    <legend><%:DHCP device%></legend>
+    <ul><li class="border-line bottom"></li></ul>
+    <ul id="dhcpLsUl" class="gridToolBar" style="text-align:right;">
+        <li gridtype="refresh" class="refresh" onclick="refreshDhcpDevices()"><i></i><span><%:refresh%></span></li>
+    </ul>
+    <table id="dhcp-devices">
+    </table>
+    <div id="Help" class="Help"><p class="helpTop">
+		<span class="helpDes"><%:help%></span>
+        <i class="helpClose" onclick="clickHelp(1)"></i></p>
+        <div class="helpDetail"><ul id="dhcpServerHelp" class="help">
+				<li class="title"><%:DHCP server help%></li>
+				<li class="title"><%:Address pool start/end address%></li>
+				<li class="content"><%:Address pool start/end address intro%></li>
+				<li class="title"><%:address of the lease%></li>
+				<li class="content"><%:address of the lease intro%></li>
+				<li class="title"><%:gateway%></li>
+				<li class="content"><%:gateway intro%></li>
+				<li class="title"><%:DNS server%></li>
+				<li class="content"><%:DNS server intro%></li>
+    </ul></div></div>
+</fieldset>
+<%+footer%>
+<script>
+    // global vars
+    var result_bak;
+    var errTipDoc;
+    var Drag =  document.getElementById("Help");
+    var checkEnable = false;
+
+    // page load functions
+    getDhcp();
+    refreshDhcpDevices();
+    dragFunc(Drag);
+
+    // router get interfaces
+    function getDhcp() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "networknew","get_dhcp")%>', null,
+            function(x, result) {
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if(result!=null&&result.code == 0) {
+                    console.log(result);
+                    result_bak = result;
+					var e;
+					switchChecked(result.enable);
+					if (e = document.getElementById('ipbegin'))
+                        e.value = result.ipbegin;
+                    if (e = document.getElementById('ipend'))
+                        e.value = result.ipend;
+                    if (e = document.getElementById('lease'))
+                        e.value = parseInt(result.lease);
+                    if (result.gateway != undefined) {
+                        if (e = document.getElementById('gateway'))
+                            e.value = result.gateway;
+                    }
+                    if (result.dns != undefined) {
+                        if (e = document.getElementById('dns'))
+                            e.value = result.dns;
+                    }
+                    if (result.dnsbak != undefined) {
+                        if (e = document.getElementById('dnsbak'))
+                            e.value = result.dnsbak;
+                    }
+                    checkEnable = true;
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    function refreshDhcpDevices() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "networknew","get_dhcp_devices")%>', null,
+            function(x, result) {
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if(result!=null&&result.code == 0) {
+                    console.log(result);
+                    var devices = result.devices;
+					var html = '<tr><th><%:host%></th><th><%:MAC address%></th><th><%:IP address%></th><th><%:effective time%></th></tr>';
+                    html += '<tr>';
+                    if (devices == null) {
+                        html += 'devices is null';
+                    } else {
+                        for(var i in devices){
+                            html += '<td>'+devices[i].name+'</td><td>'+devices[i].mac+'</td><td>'+devices[i].ipaddr+'</td><td>'+devices[i].term+'</td>';
+                            html += '</tr><tr>';
+                        }
+                    }
+                    html +="</tr>";
+                    setTableInnerHTML(document.getElementById('dhcp-devices'),html);
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // router set interfaces
+    function setDhcp() {
+        var enable = false;
+        var status = document.getElementById("switchSpan").innerHTML;
+		if (status=="<%:enabled%>"){
+            enable = true;
+        }
+        var ipbegin_full = document.getElementById('ipbegin').value;
+        var err = document.getElementById('Error');
+        var text = err.getElementsByTagName('span')[0];
+        var ipbegin = ipbegin_full;
+        var ipend_full = document.getElementById('ipend').value;
+		text.innerText = ' <%:Illegal address pool%>';
+        if (!isValidIP(ipbegin_full) || ipbegin_full == ipend_full) {
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById("ipbegin");
+            return;
+        }
+//        var ipbeginArray = ipbegin_full.split(".");
+//        var ipbegin = parseInt(ipbeginArray[3]);
+        if (!this.isValidIP(ipend_full)) {
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById("ipend");
+            return;
+        }
+//        var ipendArray = ipend_full.split(".");
+//        var ipend = parseInt(ipendArray[3]);
+        var ipend = ipend_full;
+        var lease = document.getElementById('lease').value+'h';
+        var gateway = document.getElementById('gateway').value;
+        var dns = document.getElementById('dns').value;
+        var dnsbak = document.getElementById('dnsbak').value;
+        if (gateway != "" && !isValidIP(gateway)){
+			text.innerText = ' <%:Unreasonable gateway%>';
+            document.getElementById("Error").style.visibility = 'visible';
+            errTipDoc = document.getElementById('gateway');
+            return;
+        }else if (dns != "" && !isValidIP(dns)){
+			text.innerText = '<%:Wrong preferred DNS address%>';
+            document.getElementById("Error").style.visibility = 'visible';
+            errTipDoc = document.getElementById('dns');
+            return;
+        }else if (dnsbak != "" && !isValidIP(dnsbak)){
+			text.innerText = '<%:Wrong DNS address%>';
+            document.getElementById("Error").style.visibility = 'visible';
+            errTipDoc = document.getElementById('dnsbak');
+            return;
+        }
+        var leaseNum = document.getElementById('lease').value;
+        if(leaseNum>24||leaseNum<1){
+            var err = document.getElementById('Error');
+            var text = err.getElementsByTagName('span')[0];
+			text.innerText = '<%:The address lease term is 1-24%>';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('lease');
+            return;
+
+        }
+        if (gateway == '') {
+            var params = {'enable':enable, 'ipbegin':ipbegin, 'ipend':ipend, 'lease':lease, 'dns':dns, 'dnsbak':dnsbak};
+        } else {
+            var params = {'enable':enable, 'ipbegin':ipbegin, 'ipend':ipend, 'lease':lease, 'gateway':gateway, 'dns':dns, 'dnsbak':dnsbak};
+        }
+        console.log(params);
+        document.getElementById("saveTip").style.display='';
+        document.getElementById("saveTipSucess").style.display='none';
+        XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_dhcp")%>', params,
+            function(x, result){
+                document.getElementById("saveTip").style.display='none';
+                console.log(result);
+                var err = document.getElementById('Error');
+                var text = err.getElementsByTagName('span')[0];
+                if (result==null) {
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if (result!=null&&result.code == 0) {
+                    document.getElementById("saveTipSucess").style.display='';
+                    setTimeout(function () {
+                        document.getElementById("saveTipSucess").style.display='none';
+                    },"2000");
+                }else {
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    function switchDisable(divId){
+        document.getElementById(divId).onclick = function(){
+            ;
+        }
+    }
+    function switchEnable(divId){
+        setTimeout(function(){
+            document.getElementById(divId).onclick = function(){
+                switchChange();
+            };
+        },1000)
+    }
+    // page functions
+    function switchChange() {
+        var status = document.getElementById("switchSpan").innerHTML;
+        var flag = true;
+        switchDisable('switchCon');
+		if (status=="<%:enabled%>"){
+            flag = false;
+        }
+        if (checkEnable) {
+            var enable_params = {};
+            for (i in result_bak) {
+                enable_params[i] = result_bak[i];
+            }
+            enable_params.enable = flag;
+            if (enable_params.dns == undefined) {
+                enable_params.dns = '';
+            }
+//            var ipbeginArray = enable_params.ipbegin.split(".");
+//            enable_params.ipbegin = parseInt(ipbeginArray[3]);
+//            var ipendArray = enable_params.ipend.split(".");
+//            enable_params.ipend = parseInt(ipendArray[3]);
+            var params = enable_params;
+            XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_dhcp")%>', params,
+                function(x, result){
+                    console.log(result);
+                });
+        }
+        switchChecked(flag);
+        switchEnable('switchCon');
+    }
+	function switchChecked(flag) {
+		if (flag) {
+			document.getElementById("switchSpan").innerText = '<%:enabled%>';
+			document.getElementById("switchSpan").className = "bWlSwitchOff spanSwitchOn";
+			document.getElementById("switchOn").style.display = "";
+			document.getElementById("switchOff").style.display = "none"
+		} else {
+			document.getElementById("switchSpan").innerText = '<%:disabled%>';
+			document.getElementById("switchSpan").className = "bWlSwitchOff";
+			document.getElementById("switchOn").style.display = "none";
+			document.getElementById("switchOff").style.display = "";
+		}
+	}
+
+</script>

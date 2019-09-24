@@ -1,0 +1,104 @@
+<%+header%>
+<fieldset>
+    <legend>软件升级</legend>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>>
+            <span class="detail">获取数据失败，请重试！</span>
+            <input class="subBtn" value="确 定" type="button" onclick="closeTip()">
+        </div>
+    </div>
+    <li class="border-line"></li>
+    <div class="file-box">
+        <p>请选择升级软件，然后点击升级按钮进行升级：</p>
+        <form id="uploadForm">
+            <input type="text" id="textfield" class="txt" />
+            <input type="button" class="btn" value="浏 览" />
+            <input type="file" name="file" class="file" id="fileField" onchange="document.getElementById('textfield').value=this.files[0].name"/>
+            <input type="checkbox" id="save-config"><input type="button" class="btn lbtn" disabled="disabled" value="是否保留配置" />
+            <input type="button" class="btn" value="软件升级" onclick="upgrade()" />
+        </form>
+        <p class="upDesTiTop">当前硬件版本：<span id="hardware-version">TL-WR842N 9.0 00000000</span></p>
+        <p class="upDesTi">当前软件版本：<span id="software-version">1.3.2 Build 170307 Rel.38976n </span></p>
+        <input type="button" class="btn lbtn" value="OTA在线升级" />
+        <div class="pointDiv" id="pointDiv" style="display: none;">
+            <div id="bar" class="chlidValue"></div>
+        </div>
+    </div>
+    <div id="waiting" style="display: none">
+        <div class="LoadConCover">
+            <div class="coverLoadCon">
+                <div class="coverLoad">
+                    <i class="coverLoadClose" onclick="coverClose()"></i>
+                    <i class="coverLoading" ></i>
+                    <p class="coverLoadNote">正在升级，请稍等...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</fieldset>
+<%+footer%>
+<script>
+    // page load functions
+    getVersion();
+
+    // router interfaces
+    function getVersion() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "systemnew","get_version")%>', null,
+            function(x, result) {
+                if(result!=null&&result.code == 0) {
+                    console.log(result);
+                    var e;
+                    if (e = document.getElementById('hardware-version'))
+                        e.innerText = result.hardware;
+                    if (e = document.getElementById('software-version'))
+                        e.innerText = result.software;
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '获取信息失败，请重试'
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    function upgrade() {
+        document.getElementById('pointDiv').style.display=''
+        var file = document.getElementById("fileField").files[0];
+        var fd = new FormData();
+        fd.append("image",file);
+        var saveConfig = document.getElementById('save-config').checked;
+        if (saveConfig) {
+            fd.append("keep",'');
+        } else {
+            fd.append("keep",'-n');
+        }
+        console.log("fd:"+fd);
+        XHR.upload('<%=luci.dispatcher.build_url("admin", "systemnew","upgrade")%>', fd, function (x, result) {
+            console.log("result:"+result);
+            setTimeout(function () {
+                setInterval(function () {
+                    if (saveConfig){
+                        XHR.get('<%=luci.dispatcher.build_url("admin", "logout","action_logout")%>', null,
+                            function(x, result) {
+                                if (x.response!=""&&x.response!=null) {
+                                    window.location.reload();
+                                }
+                            });
+                    } else {
+                        pageRedirect("http://192.168.4.1");
+                    }
+                },3000)
+            },10000)
+        }, function (x) {
+            console.log("x:"+x);
+            var pg=document.getElementById('bar');
+            pg.style.width = x;
+            if (x == "100%"){
+                document.getElementById("waiting").style.display='';
+                document.getElementById('pointDiv').style.display='none'
+            }
+
+        });
+    }
+</script>

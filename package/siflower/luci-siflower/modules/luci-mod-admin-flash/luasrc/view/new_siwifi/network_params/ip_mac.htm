@@ -1,0 +1,348 @@
+<%+header%>
+<fieldset>
+    <legend>IP与MAC映射表</legend>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>>
+            <span class="detail">保存失败！</span>
+            <input class="subBtn" value="确 定" type="button" onclick="closeTip()">
+        </div>
+    </div>
+    <li class="border-line"></li>
+    <div style="float: right">
+        <ul id="ipMacMapLsUl" class="gridToolBar">
+            <li gridtype="refresh" class="refresh"><i onclick="refreshIpMacMap()"></i><span>刷新</span></li>
+        </ul>
+    </div>
+    <table id="ip-mac-map">
+    </table>
+</fieldset>
+<fieldset>
+    <li class="border-line"></li>
+    <legend>IP与MAC绑定设置</legend>
+    <i class="helpBtn" helpstr="dynamicIpHelp" onclick="clickHelp(0);clickHelpAdd(0)"></i>
+    <li class="border-line bottom"></li>
+    <div style="float: right">
+        <ul id="ipMacBindLsUl" class="gridToolBar">
+            <li gridtype="add" class="add" onclick="addIpMacBindTr()"><i></i><span>添加</span></li>
+            <li id="delAllUn" gridtype="delAll" style="display: none" class="delAllUn"><i></i><span>删除全部</span></li>
+            <li id="delAll" gridtype="delAll" class="delAll" onclick="deleteAllIpMacBind()"><i></i><span>删除全部</span></li>
+            <li id="delSelUn" gridtype="delSel" class="delSelUn"><i></i><span>删除所选</span></li>
+            <li id="delSel" gridtype="delSel" style="display: none" class="delSel" onclick="deleteSelectedIpMacBind()"><i></i><span>删除所选</span></li>
+        </ul>
+    </div>
+    <table id="ip-mac-bind">
+    </table>
+    <div id="Help">
+        <p class="helpTop"><span class="helpDes">帮助</span>
+            <i class="helpClose" onclick="clickHelp(1);clickHelpAdd(1)"></i></p>
+        <div id="helpDetail"><ul id="IPMACBindHelp" class="help">
+        <li class="title">添加IP与MAC绑定条目可以为指定MAC地址的主机设置固定的IP地址，同时条目中的IP地址和MAC地址将进行ARP绑定，使得该主机可以免遭ARP攻击。</li>
+        <li class="title">举例说明</li>
+        <li class="content">若想为张三的主机（MAC地址为00-E0-4C-00-07-BE）设置固定的IP地址（192.168.4.80），同时保护张三的主机免遭ARP攻击。则可按照以下信息设置IP与MAC绑定条目：</li>
+        <li class="table">
+            <table>
+                <tbody><tr><td>主机</td><td>MAC地址</td><td>IP地址</td></tr>
+                <tr><td>张三</td><td>00-E0-4C-00-07-BE</td><td>192.168.4.80</td></tr>
+                </tbody>
+            </table>
+        </li>
+    </ul></div></div>
+</fieldset>
+<%+footer%>
+<script>
+    // global vars
+    var devices;
+    var binded_devices;
+    var Drag =  document.getElementById("Help");
+
+    // page load functions
+    getIpMacBind();
+    refreshIpMacMap();
+    dragFunc(Drag);
+
+    // router get interfaces
+    function getIpMacBind() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "networknew","get_ip_mac_bind_table")%>', null,
+            function(x, result) {
+                if(result!=null&&result.code == 0) {
+                    console.log(result);
+                    var devices = result.devices;
+                    document.getElementById("delSelUn").style.display='';
+                    document.getElementById("delSel").style.display='none';
+                    if ($.isEmptyObject(devices)) {
+                        document.getElementById("delAllUn").style.display='';
+                        document.getElementById("delAll").style.display='none';
+
+                    } else {
+                        document.getElementById("delAllUn").style.display='none';
+                        document.getElementById("delAll").style.display='';
+                    }
+                    binded_devices = result.devices;
+                    var html = '<tr><th><input id="th-box" type="checkbox" onchange="checkAll()"></th><th>主机</th><th>MAC地址</th><th>IP地址</th><th>编辑</th></tr>';
+                    if (devices == '') {
+                        html += 'devices is null';
+                    } else {
+                        for(var i in devices){
+                            if (devices[i].name == '' || devices[i].name == '*' || devices[i].name == undefined) {
+                                html += '<tr><td><input id="cb-'+i+'" type="checkbox" name="cb-'+i+'" onchange="checkTd('+i+')"></td><td>匿名主机</td><td>'+devices[i].mac+'</td><td>'+
+                                    devices[i].ipaddr+'</td><td style="cursor: pointer;" onclick="editIpMacBindOfDevice('+i+')"><i class="edit"></i></td></tr>';
+                            } else {
+                                html += '<tr><td><input id="cb-'+i+'" type="checkbox" name="cb-'+i+'" onchange="checkTd('+i+')"></td><td>'+devices[i].name+'</td><td>'+devices[i].mac+'</td><td>'+
+                                    devices[i].ipaddr+'</td><td style="cursor: pointer;" onclick="editIpMacBindOfDevice('+i+')"><i class="edit"></i></td></tr>';
+                            }
+                        }
+                    }
+                    html +='<tr id="ip-mac-bind-add"></tr>';
+                    document.getElementById('ip-mac-bind').innerHTML = html;
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '获取绑定信息失败！'
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    function refreshIpMacMap() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "networknew","get_ip_mac_online_table")%>', null,
+            function(x, result) {
+                if(result!=null&&result.code == 0) {
+                    console.log(result);
+                    devices = result.devices;
+                    var html = '<tr><th>主机</th><th>MAC地址</th><th>IP地址</th><th>状态</th><th>添加到绑定设置</th></tr>';
+                    html += '<tr>';
+                    if (devices == '') {
+                        html += 'devices is null';
+                    } else {
+                        for(var i in devices){
+                            if (devices[i].band == true) {
+                                if (devices[i].name == '' || devices[i].name == '*' || devices[i].name == undefined) {
+                                    html += '<td>匿名主机</td><td>'+devices[i].mac+'</td><td>'+devices[i].ipaddr+
+                                        '</td><td>已绑定</td><td><button class="tb-disable tb-binded" disabled="disabled">+</button></td>';
+                                } else {
+                                    html += '<td>'+devices[i].name+'</td><td>'+devices[i].mac+'</td><td>'+devices[i].ipaddr+
+                                        '</td><td>已绑定</td><td><button class="tb-disable tb-binded" disabled="disabled">+</button></td>';
+                                }
+                            } else {
+                                if (devices[i].name == '' || devices[i].name == '*' || devices[i].name == undefined) {
+                                    html += '<td>匿名主机</td><td>'+devices[i].mac+'</td><td>'+devices[i].ipaddr+
+                                        '</td><td>未绑定</td><td><button class="tb-nobind" value="'+i+'"onclick="addIpMacBind('+i+')">+</button></td>';
+                                } else {
+                                    html += '<td>'+devices[i].name+'</td><td>'+devices[i].mac+'</td><td>'+devices[i].ipaddr+
+                                        '</td><td>未绑定</td><td><button class="tb-nobind" value="'+i+'"onclick="addIpMacBind('+i+')">+</button></td>';
+                                }
+                            }
+                            html += '</tr><tr>';
+                        }
+                    }
+                    html +="</tr>";
+                    document.getElementById('ip-mac-map').innerHTML = html;
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '刷新失败！'
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // router set interfaces
+    function addIpMacBind(i) {
+        console.log(i);
+        var device = devices[i];
+        var params = {'action':0, 'devices':{"0":device}};
+        XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_ip_mac_bind_table")%>', params,
+            function(x, result) {
+                if(result!=null&&result.code == 0) {
+                    console.log(result);
+                    if (result.code == 0) {
+                        this.refreshIpMacMap();
+                        this.getIpMacBind();
+                    }
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '添加绑定失败！'
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    function deleteSelectedIpMacBind() {
+        var selected_cb;
+        var cb_id;
+        var selectedToDelete = {};
+        for (var i in binded_devices) {
+            cb_id = 'cb-'+i;
+            selected_cb = document.getElementById(cb_id)
+            if (selected_cb.checked == true) {
+                selectedToDelete[i] = binded_devices[i];
+            }
+        }
+        var params = {'action':1, 'devices':selectedToDelete};
+        XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_ip_mac_bind_table")%>', params,
+            function(x, result) {
+                if(result.code == 0) {
+                    console.log(result);
+                    if (result!=null&&result.code == 0) {
+                        this.refreshIpMacMap();
+                        this.getIpMacBind();
+                        var err = document.getElementById('Error');
+                        var text = err.getElementsByTagName('span')[0];
+                        text.innerText = '删除成功！'
+                        err.style.visibility = 'visible';
+                    }else {
+                        var err = document.getElementById('Error');
+                        var text = err.getElementsByTagName('span')[0];
+                        text.innerText = '删除失败！'
+                        err.style.visibility = 'visible';
+                    }
+                }
+            });
+    }
+
+    function deleteAllIpMacBind() {
+        var params = {'action':2};
+        XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_ip_mac_bind_table")%>', params,
+            function(x, result) {
+                if(result.code == 0) {
+                    console.log(result);
+                    if (result!=null&&result.code == 0) {
+                        this.refreshIpMacMap();
+                        this.getIpMacBind();
+                        var err = document.getElementById('Error');
+                        var text = err.getElementsByTagName('span')[0];
+                        text.innerText = '删除成功！'
+                        err.style.visibility = 'visible';
+                    }else {
+                        var err = document.getElementById('Error');
+                        var text = err.getElementsByTagName('span')[0];
+                        text.innerText = '删除失败！'
+                        err.style.visibility = 'visible';
+                    }
+                }
+            });
+    }
+
+    function saveIpMacBind() {
+        var name = document.getElementById('add-name').value;
+        var mac = document.getElementById('add-mac').value;
+        var ipaddr = document.getElementById('add-ipaddr').value;
+        var device;
+        if (name==null||name==""){
+            device = {'mac':mac, 'ipaddr':ipaddr};
+        } else {
+            device = {'hostname':name, 'mac':mac, 'ipaddr':ipaddr};
+        }
+        var params = {'action':0, 'devices':{"0":device}};
+        console.log(params);
+        XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_ip_mac_bind_table")%>', params,
+            function(x, result) {
+                if(result!=null&&result.code == 0) {
+                    console.log(result);
+                    getIpMacBind();
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '保存失败！'
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // other button functions
+    function addIpMacBindTr() {
+        getIpMacBind();
+        setTimeout(function () {
+            var html = '<td></td><td><input id="add-name" maxlength="32"></td><td><input id="add-mac" onkeyup="nStrLimit(this)" maxlength="17"></td><td>'+
+                '<input id="add-ipaddr" onkeyup="nStrLimit(this)" maxlength="15"></td><td><button class="mac-cancel" onclick="getIpMacBind()"></button><br><button class="mac-save" onclick="saveIpMacBind()"></button></td>';
+            document.getElementById('ip-mac-bind-add').innerHTML = html;
+        },500);
+    }
+
+    function editIpMacBindOfDevice(i) {
+        getIpMacBind();
+        setTimeout(function () {
+            var device = binded_devices[i];
+            i += 1;
+            var html = '<tr class="ip-mac-edit"><td><input id="cb-' + i + '" type="checkbox" onchange="checkTd(' + i + ')"></td><td><input id="edit-name" maxlength="32" value=' + device.name + '></td><td><input id="edit-mac" onkeyup="nStrLimit(this)" maxlength="17" value=' + device.mac + '></td><td>' +
+                '<input id="edit-ipaddr"  onkeyup="nStrLimit(this)" maxlength="15" value=' + device.ipaddr + '></td><td><button class="mac-cancel" onclick="getIpMacBind()"></button><br><button class="mac-save" onclick="modifyIpMacBind()"></button></td></tr>';
+            var table = document.getElementById("ip-mac-bind");
+            table.rows[i].innerHTML = html;
+        },500);
+    }
+
+    function modifyIpMacBind() {
+        var name = document.getElementById('edit-name').value;
+        var mac = document.getElementById('edit-mac').value;
+        var ipaddr = document.getElementById('edit-ipaddr').value;
+        var device = {'name':name, 'mac':mac, 'ipaddr':ipaddr};
+        var params = {'action':0, 'devices':{"0":device}};
+        console.log(params);
+        XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_ip_mac_bind_table")%>', params,
+            function(x, result) {
+                if(result!=null&&result.code == 0) {
+                    console.log(result);
+                    getIpMacBind();
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '修改失败！'
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // page functions
+    function checkAll() {
+        var allIpMac = document.getElementById("th-box");
+        if (allIpMac.checked == true) {
+            var selected_cb;
+            var cb_id;
+            for (var i in binded_devices) {
+                cb_id = 'cb-'+i;
+                selected_cb = document.getElementById(cb_id);
+                selected_cb.checked = true;
+                document.getElementById("delSel").style.display="";
+                document.getElementById("delSelUn").style.display="none";
+            }
+        }else {
+            var selected_cb;
+            var cb_id;
+            for (var i in binded_devices) {
+                cb_id = 'cb-'+i;
+                selected_cb = document.getElementById(cb_id);
+                selected_cb.checked = false;
+                document.getElementById("delSel").style.display="none";
+                document.getElementById("delSelUn").style.display="";
+            }
+        }
+    }
+
+    function checkTd(i) {
+        for (i in binded_devices) {
+            var cb_id = 'cb-' + i;
+            var chekedItem = document.getElementById(cb_id)
+            if (chekedItem != null && chekedItem != "") {
+                if (chekedItem.checked == true) {
+                    document.getElementById("delSel").style.display = "";
+                    document.getElementById("delSelUn").style.display = "none";
+                    return;
+                } else {
+                    document.getElementById("delSel").style.display = "none";
+                    document.getElementById("delSelUn").style.display = "";
+                }
+
+            }
+        }
+    }
+
+    function clickHelpAdd(i) {
+        if (i==0){
+            document.getElementById("Help").style.position="absolute";
+            var tbHeight = 230 + document.getElementById('ip-mac-map').clientHeight;
+            document.getElementById("Help").style.top=tbHeight + 'px'
+        }
+    }
+</script>

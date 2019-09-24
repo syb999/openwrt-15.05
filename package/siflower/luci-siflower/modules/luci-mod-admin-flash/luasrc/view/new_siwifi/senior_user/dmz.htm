@@ -1,0 +1,116 @@
+<%+header%>
+<fieldset class="dmz">
+    <legend>DMZ主机</legend>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>>
+            <span class="detail">无效的输入！请参考正确格式：<br>XXX.XXX.XXX.XXX，X为0~9的数字。</span>
+            <input class="subBtn" value="确 定" type="button" onclick="closeTip()">
+        </div>
+    </div>
+    <i class="helpBtn" helpstr="dynamicIpHelp" onclick="clickHelp(0)"></i>
+    <div class="bWlSwitchCon dhcp">
+        <div id="switchCon" class="switchCon" onclick="switchChange()">
+            <i class="switchBg"></i>
+            <i id="switchOn" class="switchBall" style=""></i>
+            <i id="switchOff" class="switchBallOff" style="display: none;"></i>
+        </div>
+        <span id="switchSpan" class="bWlSwitchOff" style="color: rgb(108, 144, 68);">已开启</span>
+    </div>
+    <li class="border-line"></li>
+    <table class="tb-no-border">
+        <tr>
+            <td class="wan-td-left">DMZ主机地址：</td><td class="wan-td-right"><input id="ipaddr" type="text" onkeyup="nStrLimit(this)" maxlength="15"></td>
+        </tr>
+        <tr>
+            <td></td><td class="wan-td-left">
+            <button onclick="saveDmz()">保存</button>
+            <i id="saveTip" class="hsSubLoading saving" style="display: none"></i>
+            <i id="saveTipSucess" class="hsSubLoading save-suc" style="display: none"></i>
+        </td>
+        </tr>
+    </table>
+    <div id="Help"><p class="helpTop">
+        <span class="helpDes">帮助</span>
+        <i class="helpClose" onclick="clickHelp(1)"></i></p>
+        <div id="helpDetail"><ul id="DMZHelp" class="help">
+        <li class="title">通过DMZ主机功能，广域网中的设备可直接访问局域网中的DMZ主机。</li>
+        <li class="title">举例说明：</li>
+        <li class="content">如果要让局域网中IP地址为192.168.4.100的主机能够被广域网中的设备直接访问，则可以开启DMZ主机功能，在“DMZ主机IP地址”处填入192.168.4.100保存即可。</li>
+    </ul></div></div>
+</fieldset>
+<%+footer%>
+<script>
+    // global vars
+    var Drag =  document.getElementById("Help");
+    var checkEnable = false;
+
+    // page load functions
+    getDmzHost();
+    dragFunc(Drag);
+
+    // router get interfaces
+    function getDmzHost() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "advancednew","get_dmz_host")%>', null,
+            function(x, result) {
+                console.log(result);
+                var e;
+                switchChecked(result.enable);
+                if (result.ipaddr != undefined) {
+                    if (e = document.getElementById('ipaddr'))
+                        e.value = result.ipaddr;
+                }
+                checkEnable = true;
+            });
+    }
+
+    // router set interfaces
+    function saveDmz() {
+        var enable = false;
+        var status = document.getElementById("switchSpan").innerHTML;
+        if (status=="已开启"){
+            enable=true;
+        }
+        var ipaddr = document.getElementById('ipaddr').value;
+        if (ipaddr!=''&&!isValidIP(ipaddr)){
+            var err = document.getElementById('Error');
+            var text = err.getElementsByTagName('span')[0];
+            text.innerText = '无效的输入！请参考正确格式：<br>XXX.XXX.XXX.XXX，X为0~9的数字。'
+            err.style.visibility = 'visible';
+            document.getElementById('ipaddr').focus();
+            return;
+        }
+        var params = {'params':{'enable':enable, 'ipaddr':ipaddr}};
+        document.getElementById("saveTip").style.display='';
+        document.getElementById("saveTipSucess").style.display='none';
+        XHR.post('<%=luci.dispatcher.build_url("admin", "advancednew","set_dmz_host")%>', params,
+            function(x, result){
+                console.log(result);
+                document.getElementById("saveTip").style.display='none';
+                if (result!=null&&result.code == 0) {
+                    document.getElementById("saveTipSucess").style.display='';
+                    setTimeout(function () {
+                        document.getElementById("saveTipSucess").style.display='none';
+                    },"2000");
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '保存失败'
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // page functions
+    function switchChange() {
+        var status = document.getElementById("switchSpan").innerHTML;
+        var flag = true;
+        if (status=="已开启"){
+            flag = false;
+        }
+        switchChecked(flag);
+        if (checkEnable) {
+            saveDmz();
+        }
+    }
+</script>

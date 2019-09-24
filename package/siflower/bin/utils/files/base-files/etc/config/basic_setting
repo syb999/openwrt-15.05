@@ -21,3 +21,12 @@ config setting 'mode'
 
 config setting 'speed'
         option enable '0'
+
+config setting 'kerHealth'
+        option enable 0
+
+config setting 'auto_ota'
+        option enable 1
+
+config setting 'dev_mode'
+        option mode 'ap'

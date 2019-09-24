@@ -1,0 +1,186 @@
+<%+header%>
+<fieldset>
+    <legend>诊断工具</legend>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>>
+            <span class="detail">操作成功</span>
+            <input class="subBtn" value="确 定" type="button" onclick="closeTip()">
+        </div>
+    </div>
+    <li class="border-line"></li>
+    <div style="margin: 2rem auto auto 5rem">
+        在本页面可以使用Ping或Tracert，诊断路由器的连接状态。
+        <table>
+            <tr><td class="wan-td-right">参数设置</td></tr>
+            <tr><td class="wan-td-right">选择操作：</td><td class="wan-td-right">
+                <input type="radio" name="operation" value="ping" onchange="changeDiagnosticTool()">Ping
+                <input type="radio" name="operation" value="tracert" onchange="changeDiagnosticTool()">Tracert
+            </td></tr>
+            <tr><td class="wan-td-right">IP地址/域名：</td><td class="wan-td-right"><input type="text" id="ipaddr" onkeyup="nStrLimit(this)"maxlength="15"></td></tr>
+            <tr><td class="wan-td-right">Ping包数目：</td><td class="wan-td-right"><input type="text" id="pingamount" onkeyup="numLimit(this)" maxlength="2">(1-50)</td></tr>
+            <tr><td class="wan-td-right">Ping包大小：</td><td class="wan-td-right"><input type="text" id="size" onkeyup="numLimit(this)" maxlength="4">(4-1472字节)</td></tr>
+            <tr><td class="wan-td-right">Ping超时：</td><td class="wan-td-right"><input type="text" id="timeout" onkeyup="numLimit(this)" maxlength="2">(1-100秒)</td></tr>
+            <tr><td class="wan-td-right">Tracert跳数：</td><td class="wan-td-right"><input type="text" id="tracertamount" onkeyup="numLimit(this)" maxlength="2">(1-30)</td></tr>
+        </table>
+        <table>
+            <tr><td class="wan-td-right">诊断结果</td></tr>
+            <tr><td style="height: 10rem">
+                <textarea id="diagnostic-result" style="width: 100%; height: 100%">
+                </textarea>
+            </td></tr>
+        </table>
+        <button onclick="startDiagnosticTool()">开始</button>
+    </div>
+</fieldset>
+<%+footer%>
+<script>
+
+    var errTipDoc;
+    // router interfaces
+    function startDiagnosticTool() {
+        var radios = document.getElementsByName('operation');
+        for (var i=0; i<radios.length; i++) {
+            if (radios[i].checked) {
+                var params;
+                if (radios[i].value == 'ping') {
+                    var action = 'ping';
+                    var ipaddr = document.getElementById('ipaddr').value;
+                    var pingamount = document.getElementById('pingamount').value;
+                    var size = document.getElementById('size').value;
+                    var timeout = document.getElementById('timeout').value;
+                    var lines = pingamount;
+                    var extraline = 6;
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    if (ipaddr==null||ipaddr=='') {
+                        errTipDoc = document.getElementById('ipaddr');
+                        text.innerText = 'IP地址或域名不能为空，请重新输入！'
+                        err.style.visibility = 'visible';
+                        return
+                    }
+                    if(pingamount>50||pingamount<1){
+                        errTipDoc = document.getElementById('pingamount');
+                        text.innerText = 'ping包数目限制在1-50，请合理输入。'
+                        err.style.visibility = 'visible';
+                        return
+                    }
+                    if (size>1472||size<4){
+                        errTipDoc = document.getElementById('size');
+                        text.innerText = 'ping包大小限制在4-1472，请合理输入。'
+                        err.style.visibility = 'visible';
+                        return
+                    }
+                    if (timeout>100||timeout<1){
+                        errTipDoc = document.getElementById('timeout');
+                        text.innerText = 'ping超时限制在1-100秒，请合理输入。'
+                        err.style.visibility = 'visible';
+                        return
+                    }
+                    params = {'action':action, 'ipaddr':ipaddr, 'pingamount':pingamount, 'size':size, 'timeout':timeout}
+                    console.log("params",params);
+                } else {
+                    var action = 'tracert';
+                    var ipaddr = document.getElementById('ipaddr').value;
+                    var tracertamount = document.getElementById('tracertamount').value;
+                    var lines = tracertamount;
+                    var extraline = 2;
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    if (ipaddr==null||ipaddr=='') {
+                        errTipDoc = document.getElementById('ipaddr');
+                        text.innerText = 'IP地址或域名不能为空，请重新输入！'
+                        err.style.visibility = 'visible';
+                        return
+                    }
+                    if (tracertamount>30||tracertamount<1){
+                        errTipDoc = document.getElementById('tracertamount');
+                        text.innerText = 'Tracert跳数限制在1-30，请合理输入。'
+                        err.style.visibility = 'visible';
+                        return
+                    }
+                    params = {'action':action, 'ipaddr':ipaddr, 'tracertamount':tracertamount}
+                    console.log("params",params);
+                }
+                XHR.post('<%=luci.dispatcher.build_url("admin", "systemnew","start_diagnostic_tool")%>', params,
+                    function(x, result){
+                        console.log(result);
+                        if (result!=null&&result.code == 0) {
+                            /*var html = '<tr><th>序号</th><th>诊断结果</th></tr>';
+                            for (var i=0; i<result.info.length; i++) {
+                                html += '<tr><td>'+(i+1)+'</td><td>'+result.info[i]+'</td></tr>';
+                            }
+                            document.getElementById('diagnostic-result').innerHTML = html;*/
+                            timer = setInterval(function () {
+                                XHR.get('<%=luci.dispatcher.build_url("admin", "systemnew","get_diagnostic_result")%>', null,
+                                    function(x, result){
+                                        console.log(result);
+                                        if (result.code == 0) {
+                                            var infoArray = result.info[0].split('\n');
+
+                                            timeout--;
+                                            if (infoArray[0] != 'Destination Host Unreachable!') {
+                                                document.getElementById('diagnostic-result').value = result.info[0];
+                                            }
+                                            if (infoArray.length >= (parseInt(extraline) + parseInt(lines))) {
+                                                clearInterval(timer);
+                                                flag = false;
+                                            } else if (timeout < 1) {
+                                                if (infoArray[0] == 'Destination Host Unreachable!') {
+                                                    document.getElementById('diagnostic-result').value = result.info[0];
+                                                    clearInterval(timer);
+                                                    flag = false;
+                                                }
+                                                if (infoArray[1] == '') {
+                                                    document.getElementById('diagnostic-result').value = 'ping: sendto: Network is unreachable';
+                                                    clearInterval(timer);
+                                                    flag = false;
+                                                }
+                                            }
+                                        }
+                                    });
+                            }, 1000);
+                            /*setInterval(function () {
+                                XHR.get('<%=luci.dispatcher.build_url("admin", "systemnew","get_diagnostic_result")%>', null,
+                                    function(x, result){
+                                        console.log(result);
+                                        if (result.code == 0) {
+                                            var html = '';
+                                            for (var i=0; i<result.info.length; i++) {
+                                                html += result.info[i]+'\n';
+                                            }
+                                            document.getElementById('diagnostic-result').value = html;
+                                        }
+                                    });
+                            }, 1000);*/
+                        }else {
+                            var err = document.getElementById('Error');
+                            var text = err.getElementsByTagName('span')[0];
+                            text.innerText = '调试失败，请重试'
+                            err.style.visibility = 'visible';
+                        }
+                    });
+            }
+        }
+    }
+
+    // page functions
+    function changeDiagnosticTool() {
+        var radios = document.getElementsByName('operation');
+        for (var i=0; i<radios.length; i++) {
+            if (radios[i].checked) {
+                if (radios[i].value == 'ping') {
+                    document.getElementById('pingamount').disabled = '';
+                    document.getElementById('size').disabled = '';
+                    document.getElementById('timeout').disabled = '';
+                    document.getElementById('tracertamount').disabled = 'disabled';
+                } else {
+                    document.getElementById('pingamount').disabled = 'disabled';
+                    document.getElementById('size').disabled = 'disabled';
+                    document.getElementById('timeout').disabled = 'disabled';
+                    document.getElementById('tracertamount').disabled = '';
+                }
+            }
+        }
+    }
+</script>

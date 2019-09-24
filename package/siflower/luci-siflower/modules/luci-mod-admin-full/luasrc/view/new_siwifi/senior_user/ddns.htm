@@ -1,0 +1,166 @@
+<%+header%>
+<fieldset class="ddns">
+	<legend><%:peanut shell dynamic domain name%></legend>
+    <i class="helpBtn" helpstr="dynamicIpHelp" onclick="clickHelp(0)"></i>
+    <ul><li class="border-line"></li></ul>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>
+			<span class="detail"><%:save setting successfully%></span>
+			<input class="subBtn" value="<%:confirm%>" type="button" onclick="closeTip()">
+        </div>
+    </div>
+
+    <table class="tb-no-border">
+		<tr><td class="mac-td-left"><%:service provider%></td><td class="mac-td-right"><span id="provider"></span></td></tr>
+		<tr><td class="mac-td-left"><%:username%></td><td class="mac-td-right"><input type="text" id="account" maxlength="32" onkeyup="noSpaceWord(this)"></td></tr>
+		<tr><td class="mac-td-left"><%:password%></td><td class="mac-td-right"><input type="text" id="password"onkeyup="nStrLimit(this)" maxlength="63"></td></tr>
+		<tr><td></td><td class="mac-td-right"> <input type="checkbox" id="autoconnect"><%:auto login%></td></tr>
+        <!--<tr><td class="mac-td-left">服务类型：</td><td class="mac-td-right"><span id="servicetype"></span></td></tr>-->
+		<tr><td class="mac-td-left"><%:domian name information%></td><td class="mac-td-right"><input id="domain"onkeyup="nStrLimit(this)" maxlength="100"></td></tr>
+        <tr><td></td>
+            <td class="mac-td-right">
+				<button id="login" onclick="setDdns(1)"><%:login%></button>
+				<button id="logout" onclick="setDdns(0)" disabled="disabled"><%:exit%></button>
+            </td>
+        </tr>
+    </table>
+    <div id="Help" class="Help">
+        <p class="helpTop">
+		<span class="helpDes"><%:help%></span>
+            <i class="helpClose" onclick="clickHelp(1)"></i></p>
+        <div class="helpDetail">
+            <ul id="DdnsHelp" class="help">
+				<li class="title"><%:DDNS help%></li>
+				<li class="title"><%:Service provider%></li>
+				<li class="content"><%:The DDNS service provider of this router%></li>
+				<li class="title"><%:User name/password%></li>
+				<li class="content"><%:User name/password registered on the DDNS server address.%></li>
+				<li class="title"><%:Connection status%></li>
+				<li class="content"><%:Connection status with the DDNS server%></li>
+				<li class="title"><%:Service type%></li>
+				<li class="content"><%:Current service type of DDNS%></li>
+				<li class="title"><%:Domain information%></li>
+				<li class="content"><%:List of domain name services obtained from the DDNS server%></li>
+				<li class="warnning"><%:DDNS help note%></li>
+            </ul>
+        </div>
+    </div>
+</fieldset>
+<%+footer%>
+<script>
+    // global vars
+    var Drag =  document.getElementById("Help");
+
+    var errTipDoc;
+    // page load functions
+    getDdns();
+    dragFunc(Drag);
+    // router get interfaces
+    function getDdns() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "advancednew","get_ddns")%>', null,
+            function(x, result) {
+                console.log(result);
+                if (result.provider != undefined) {
+                    document.getElementById('provider').innerText = result.provider;
+                }
+                if (result.account != undefined) {
+                    document.getElementById('account').value = result.account;
+                }
+                if (result.password != undefined) {
+                    document.getElementById('password').value = result.password;
+                }
+                if (result.autoconnect != undefined) {
+                    if (result.autoconnect == 1) {
+                        document.getElementById('autoconnect').checked = true;
+                    } else {
+                        document.getElementById('autoconnect').checked = false;
+                    }
+                }
+                if (result.login != undefined) {
+                    if (result.login == 1) {
+                        document.getElementById('login').disabled = 'disabled';
+                        document.getElementById('logout').disabled = '';
+                    } else {
+                        document.getElementById('login').disabled = '';
+                        document.getElementById('logout').disabled = 'disabled';
+                    }
+                }
+                /*if (result.servicetype != undefined) {
+                    document.getElementById('servicetype').value = result.servicetype;
+                }*/
+                if (result.domain != undefined) {
+                    document.getElementById('domain').value = result.domain;
+                }
+            });
+    }
+
+    // router set interfaces
+    function setDdns(action) {
+        if (action == 0) {
+            var params = {'action':action};
+        } else {
+            var provider = document.getElementById('provider').innerText;
+            var account = document.getElementById('account').value;
+            var password = document.getElementById('password').value;
+            var domain = document.getElementById('domain').value;
+            if (document.getElementById('autoconnect').checked) {
+                var autoconnect = '1';
+            } else {
+                var autoconnect = '0';
+            }
+            var err = document.getElementById('Error');
+            var text = err.getElementsByTagName('span')[0];
+            if (strlen(account)<2){
+				text.innerText = '<%:The length of the account is not less than 2!%>';
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('account');
+                return;
+            }
+            if (strlen(password)<8){
+				text.innerText = '<%:Password length not less than 8!%>';
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('password');
+                return;
+            }
+            var params = {'action':action, 'provider':provider, 'account':account, 'password':password,
+                'autoconnect':autoconnect, 'domain':domain};
+        }
+        console.log(params);
+        XHR.post('<%=luci.dispatcher.build_url("admin", "advancednew","set_ddns")%>', params,
+            function(x, result) {
+                console.log(result);
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if (result!=null&&result.code == 0) {
+                    if (action == 1) {
+                        document.getElementById('login').disabled = 'disabled';
+                        document.getElementById('logout').disabled = '';
+                    } else {
+                        document.getElementById('login').disabled = '';
+                        document.getElementById('logout').disabled = 'disabled';
+                    }
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+					text.innerText = '<%:save setting successfully%>';
+                    err.style.visibility = 'visible';
+                    if (action==1){
+                        document.getElementById('logout').disabled = false;
+                        document.getElementById('login').disabled = 'disabled';
+                    } else {
+                        document.getElementById('logout').disabled = 'disabled';
+                        document.getElementById('login').disabled = false;
+                    }
+
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+</script>

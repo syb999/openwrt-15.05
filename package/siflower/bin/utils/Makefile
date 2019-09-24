@@ -340,8 +340,8 @@ otaupgrade
 endef
 
 define Package/otaupgrade/install
-	$(INSTALL_DIR) $(1)/sbin
-	$(CP) ./files/base-files/sbin/otaupgrade $(1)/sbin/
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(CP) ./files/base-files/usr/bin/otaupgrade $(1)/usr/bin/
 endef
 
 define Package/speed

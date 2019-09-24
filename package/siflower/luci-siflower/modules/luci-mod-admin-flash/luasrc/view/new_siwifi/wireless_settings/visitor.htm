@@ -1,0 +1,800 @@
+<%+header%>
+<fieldset class="visitor">
+    <legend>访客网络</legend>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>>
+            <span class="detail">请输入密码！</span>
+            <input class="subBtn" value="确 定" type="button" onclick="closeTip()">
+        </div>
+    </div>
+    <i class="helpBtn" helpstr="dynamicIpHelp" onclick="clickHelp(0)"></i>
+    <div class="bWlSwitchCon dhcp">
+        <div id="switchCon" class="switchCon" onclick="switchChange()">
+            <i class="switchBg"></i>
+            <i id="switchOn" class="switchBall" style=""></i>
+            <i id="switchOff" class="switchBallOff" style="display: none;"></i>
+        </div>
+        <span id="switchSpan" class="bWlSwitchOff">已开启</span>
+    </div>
+    <li class="border-line"></li>
+    <li class="ownerRadioSel">
+        <input type="radio" name="ownerType" value="2.4G" onchange="visitorSel('ownerType')">2.4G
+        <input class="Radio5" type="radio" name="ownerType" value="5G" onchange="visitorSel('ownerType')">5G
+    </li>
+    <div id="settings-24g">
+        <table class="tb-no-border">
+            <tr>
+                <td class="wan-td-left">无线名称：</td>
+                <td class="wan-td-right"><input id="ssid" type="text" maxlength="32"></td>
+            </tr>
+            <tr>
+                <td class="wan-td-left">无线密码：</td>
+                <td class="wan-td-right"><input id="key" type="text" onkeyup="nStrLimit(this)" maxlength="63"><input id="open" type="checkbox"
+                                                                            onchange="isEncoded(['open','key'])">不加密
+                </td>
+            </tr>
+            <tr>
+                <td class="wan-td-left">是否允许访客访问内网资源：</td>
+                <td class="wan-td-right">
+                    <select id="localaccess">
+                        <option value="false">否</option>
+                        <option value="true">是</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td class="wan-td-left">访客网络最大上传速度：</td>
+                <td class="wan-td-right"><input id="limitupload" type="text" onkeyup="numLimit(this)" maxlength="10">KB/s(0表示不限制)</td>
+            </tr>
+            <tr>
+                <td class="wan-td-left">访客网络最大下载速度：</td>
+                <td class="wan-td-right"><input id="limitdownload" type="text" onkeyup="numLimit(this)" maxlength="10">KB/s(0表示不限制)</td>
+            </tr>
+            <tr>
+                <td class="wan-td-left">是否设置访客网络开放时间：</td>
+                <td class="wan-td-right">
+                    <select id="limittime" onchange="visitorTimeSet('2.4G')">
+                        <option value="false">否</option>
+                        <option value="true">是</option>
+                    </select>
+                </td>
+            </tr>
+            <tr style="display: none">
+                <td style="text-align: right"><input type="radio" name="opentime" value="specified" onchange="displayPeriodTime('2.4G')"></td>
+                <td style="text-align: left">开放<input id="remainingtime" type="text" class="time" onkeyup="numLimit(this)" maxlength="8">小时之后自动关闭访客网络</td>
+            </tr>
+            <tr style="display: none">
+                <td style="text-align: right"><input id="radio-period" type="radio" name="opentime" value="period" onchange="displayPeriodTime('2.4G')">
+                </td>
+                <td style="text-align: left">设置周期的开放时间</td>
+            </tr>
+        </table>
+        <div id="period-time">
+            <div id="guestNetTimeGrid" style="overflow: hidden; display: block;">
+                <ul id="timeHour" class="hourList">
+                </ul>
+                <ul id="timeWeek" class="weekList">
+                </ul>
+                <table id="weekTb" class="tableWeek">
+                </table>
+            </div>
+            <p id="guestNetTimeTip" class="guestNetTimeTip" style="display: block;">
+                <span>开放时间：</span><i></i>
+            </p>
+        </div>
+        <div class="blockFuncA">
+            <input id="save" value="保存" class="btnA subBtn" type="button" onclick="setCustomerWifiIface('2.4G')">
+            <i id="24-saveTip" class="hsSubLoading saving" style="display: none"></i>
+            <i id="24-saveTipSucess" class="hsSubLoading save-suc" style="display: none"></i>
+        </div>
+    </div>
+    <div id="settings-5g" style="display: none">
+        <table class="tb-no-border">
+            <tr>
+                <td class="wan-td-left">无线名称：</td>
+                <td class="wan-td-right"><input id="ssid-5" type="text" maxlength="32"></td>
+            </tr>
+            <tr>
+                <td class="wan-td-left">无线密码：</td>
+                <td class="wan-td-right"><input id="key-5" type="text" onkeyup="nStrLimit(this)" maxlength="63"><input id="open-5" type="checkbox"
+                                                                              onchange="isEncoded(['open-5','key-5'])">不加密
+                </td>
+            </tr>
+            <tr>
+                <td class="wan-td-left">是否允许访客访问内网资源：</td>
+                <td class="wan-td-right">
+                    <select id="localaccess-5">
+                        <option value="false">否</option>
+                        <option value="true">是</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td class="wan-td-left">访客网络最大上传速度：</td>
+                <td class="wan-td-right"><input id="limitupload-5" type="text" onkeyup="numLimit(this)" maxlength="10">KB/s(0表示不限制)</td>
+            </tr>
+            <tr>
+                <td class="wan-td-left">访客网络最大下载速度：</td>
+                <td class="wan-td-right"><input id="limitdownload-5" type="text" onkeyup="numLimit(this)" maxlength="10">KB/s(0表示不限制)</td>
+            </tr>
+            <tr>
+                <td class="wan-td-left">是否设置访客网络开放时间：</td>
+                <td class="wan-td-right">
+                    <select id="limittime-5" onchange="visitorTimeSet('5G')">
+                        <option value="false">否</option>
+                        <option value="true">是</option>
+                    </select>
+                </td>
+            </tr>
+            <tr style="display: none">
+                <td style="text-align: right"><input type="radio" name="opentime-5" value="specified" onchange="displayPeriodTime('5G')"></td>
+                <td style="text-align: left">开放<input id="remainingtime-5" class="time" type="text" onkeyup="numLimit(this)" maxlength="8">小时之后自动关闭访客网络</td>
+            </tr>
+            <tr style="display: none">
+                <td style="text-align: right"><input id="radio-period-5" type="radio" name="opentime-5" value="period"
+                                                     onchange="displayPeriodTime('5G')"></td>
+                <td style="text-align: left">设置周期的开放时间</td>
+            </tr>
+        </table>
+        <div id="period-time-5">
+            <div id="guestNetTimeGrid-5" style="overflow: hidden; display: block;">
+                <ul id="timeHour-5" class="hourList">
+                </ul>
+                <ul id="timeWeek-5" class="weekList">
+                </ul>
+                <table id="weekTb-5" class="tableWeek">
+                </table>
+            </div>
+            <p id="guestNetTimeTip-5" class="guestNetTimeTip" style="display: block;">
+                <span>开放时间：</span><i></i>
+            </p>
+        </div>
+        <div class="blockFuncA">
+            <input id="save-5" value="保存" class="btnA subBtn" type="button" onclick="setCustomerWifiIface('5G')">
+            <i id="5-saveTip" class="hsSubLoading saving" style="display: none"></i>
+            <i id="5-saveTipSucess" class="hsSubLoading save-suc" style="display: none"></i>
+        </div>
+    </div>
+    <div id="Help">
+        <p class="helpTop"><span class="helpDes">帮助</span>
+            <i class="helpClose" onclick="clickHelp(1)"></i>
+        </p>
+        <div id="helpDetail">
+            <ul id="wlanGuestNetWorkHelp" class="help">
+                <li class="title">访客网络提供一个专门的无线网络供访客使用，可以实现对访客和内网的安全隔离，从而有效保障内网数据安全。</li>
+                <li class="title">无线名称、无线密码</li>
+                <li class="content">供访客使用的无线（Wi-Fi）名称和无线密码，无线密码为8-63个字符，最好是数字、字母、符号的组合。</li>
+                <li class="title">是否允许访客访问内网资源</li>
+                <li class="content">设置访客对内网的访问权限。建议保持默认值“否”，此时访客只能通过路由器访问外网。</li>
+                <li class="title">访客网络最大上传/下载速度</li>
+                <li class="content">设置整个访客网络的最大上网速度。</li>
+                <li class="title">是否设置访客网络开放时间</li>
+                <li class="content">设置访客网络的开放时间。</li>
+            </ul>
+        </div>
+    </div>
+</fieldset>
+<%+footer%>
+<script>
+    // global vars
+    var ifaces;
+    var changeEnable = false;
+    var flag = false;
+    var errTipDoc = document.getElementById("ssid");
+    var Drag =  document.getElementById("Help");
+
+    // page load functions
+    getCustomerWifiIface();
+    createTimeTable();
+    dragFunc(Drag);
+
+    // router get interfaces
+    function getCustomerWifiIface() {
+        var radioSel = document.getElementsByName('ownerType');
+        XHR.get('<%=luci.dispatcher.build_url("admin", "wirelessnew","get_customer_wifi_iface")%>', null,
+            function (x, result) {
+                if (result!=null&&result.code == 0) {
+                    radioSel[0].checked=true;
+                    console.log(result);
+                    ifaces = result.ifaces;
+                    for (var i = 0; i < ifaces.length; i++) {
+                        if (ifaces[i].band == '2.4G') {
+                            if (ifaces[i].enable != undefined) {
+                                switchChecked(ifaces[i].enable);
+                            }
+                            if (ifaces[i].ssid != undefined) {
+                                document.getElementById('ssid').value = ifaces[i].ssid;
+                            }
+                            if (ifaces[i].key != undefined) {
+                                document.getElementById('key').value = ifaces[i].key;
+                            }
+                            if (ifaces[i].open != undefined) {
+                                document.getElementById('open').checked = ifaces[i].open;
+                            }
+                            if (ifaces[i].localaccess != undefined) {
+                                var localaccessSelect = document.getElementById('localaccess');
+                                if (ifaces[i].localaccess) {
+                                    localaccessSelect.selectedIndex = 1;
+                                } else {
+                                    localaccessSelect.selectedIndex = 0;
+                                }
+                            }
+                            if (ifaces[i].limitupload != undefined) {
+                                document.getElementById('limitupload').value = ifaces[i].limitupload;
+                            }
+                            if (ifaces[i].limitdownload != undefined) {
+                                document.getElementById('limitdownload').value = ifaces[i].limitdownload;
+                            }
+                            if (ifaces[i].limittime != undefined) {
+                                var limittimeSelect = document.getElementById('limittime');
+                                for (var j = 0; j < limittimeSelect.options.length; j++) {
+                                    if (limittimeSelect[j].value == ifaces[i].limittime) {
+                                        limittimeSelect.selectedIndex = j;
+                                        visitorTimeSet("2.4G");
+                                        break;
+                                    }
+                                }
+                            }
+                            if (ifaces[i].limittimetype != undefined) {
+                                var radios = document.getElementsByName('opentime');
+                                radios[ifaces[i].limittimetype].checked = true;
+                            }
+                            if (ifaces[i].remainingtime != undefined) {
+                                document.getElementById('remainingtime').value = ifaces[i].remainingtime;
+                            }
+                            if (ifaces[i].limittimetype == 1) {
+                                document.getElementById('period-time').style.display = '';
+                                var timeInfoArray;
+                                var start;
+                                var end;
+                                var date;
+                                var table = document.getElementById('weekTb');
+                                var i_html = '<i class="tableICellSel" sel="1">';
+                                if (ifaces[i].periodicaltime != undefined) {
+                                    for (var j = 0; j < ifaces[i].periodicaltime.length; j++) {
+                                        timeInfoArray = ifaces[i].periodicaltime[j].split(',');
+                                        start = parseInt(timeInfoArray[0]);
+                                        end = parseInt(timeInfoArray[1]);
+                                        date = parseInt(timeInfoArray[2]);
+                                        if (start == 0 && end == 0) {
+                                            end = 24;
+                                        }
+                                        for (var k = start; k < end; k++) {
+                                            table.rows[date-1].cells[k].innerHTML = i_html;
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            if (ifaces[i].ssid != undefined) {
+                                document.getElementById('ssid-5').value = ifaces[i].ssid;
+                            }
+                            if (ifaces[i].key != undefined) {
+                                document.getElementById('key-5').value = ifaces[i].key;
+                            }
+                            if (ifaces[i].open != undefined) {
+                                document.getElementById('open-5').checked = ifaces[i].open;
+                            }
+                            if (ifaces[i].localaccess != undefined) {
+                                var localaccessSelect = document.getElementById('localaccess-5');
+                                if (ifaces[i].localaccess) {
+                                    localaccessSelect.selectedIndex = 1;
+                                } else {
+                                    localaccessSelect.selectedIndex = 0;
+                                }
+                            }
+                            if (ifaces[i].limitupload != undefined) {
+                                document.getElementById('limitupload-5').value = ifaces[i].limitupload;
+                            }
+                            if (ifaces[i].limitdownload != undefined) {
+                                document.getElementById('limitdownload-5').value = ifaces[i].limitdownload;
+                            }
+                            if (ifaces[i].limittime != undefined) {
+                                var limittimeSelect = document.getElementById('limittime-5');
+                                for (var j = 0; j < limittimeSelect.options.length; j++) {
+                                    if (limittimeSelect[j].value == ifaces[i].limittime.toString()) {
+                                        limittimeSelect.selectedIndex = j;
+                                        visitorTimeSet("5G");
+                                        break;
+                                    }
+                                }
+                            }
+                            if (ifaces[i].limittimetype != undefined) {
+                                var radios = document.getElementsByName('opentime-5');
+                                radios[ifaces[i].limittimetype].checked = true;
+                            }
+                            if (ifaces[i].remainingtime != undefined) {
+                                document.getElementById('remainingtime-5').value = ifaces[i].remainingtime;
+                            }
+                            if (ifaces[i].limittimetype == 1) {
+                                document.getElementById('period-time-5').style.display = '';
+                                var timeInfoArray;
+                                var start;
+                                var end;
+                                var date;
+                                var table = document.getElementById('weekTb-5');
+                                var i_html = '<i class="tableICellSel" sel="1">';
+                                if (ifaces[i].periodicaltime != undefined) {
+                                    for (var j = 0; j < ifaces[i].periodicaltime.length; j++) {
+                                        timeInfoArray = ifaces[i].periodicaltime[j].split(',');
+                                        start = parseInt(timeInfoArray[0]);
+                                        end = parseInt(timeInfoArray[1]);
+                                        date = parseInt(timeInfoArray[2]);
+                                        if (start == 0 && end == 0) {
+                                            end = 24;
+                                        }
+                                        for (var k = start; k < end; k++) {
+                                            table.rows[date-1].cells[k].innerHTML = i_html;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    changeEnable = true;
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '获取信息失败！';
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // router set interfaces
+    function setCustomerWifiIface(band) {
+        if (band == '2.4G') {
+            for (var i = 0; i < ifaces.length; i++) {
+                if (ifaces[i].band == '2.4G') {
+                    ifaces[i].ssid = document.getElementById('ssid').value;
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    if (ifaces[i].ssid == ''){
+                        text.innerText = '请输入无线名称！';
+                        err.style.visibility = 'visible';
+                        errTipDoc = document.getElementById('ssid');
+                        return;
+                    }else if (strlen(ifaces[i].ssid)>32){
+                        text.innerText = '无线名称长度过长！';
+                        err.style.visibility = 'visible';
+                        errTipDoc = document.getElementById('ssid');
+                        return;
+                    }
+                    ifaces[i].key = document.getElementById('key').value;
+                    ifaces[i].open = document.getElementById('open').checked;
+                    if (ifaces[i].open == false && ifaces[i].key.length<8) {
+                        if (strlen(ifaces[i].key)<8) {
+                            text.innerText = '密码长度不少于8位！';
+                        }else if (strlen(ifaces[i].key)>64) {
+                            text.innerText = '密码长度过长，请重新输入！';
+                        }
+                        err.style.visibility = 'visible';
+                        errTipDoc = document.getElementById('key');
+                        return;
+                    }
+                    var localaccessSelect = document.getElementById('localaccess');
+                    if (localaccessSelect[localaccessSelect.selectedIndex].value == 'true') {
+                        ifaces[i].localaccess = true;
+                    } else {
+                        ifaces[i].localaccess = false;
+                    }
+                    ifaces[i].limitupload = document.getElementById('limitupload').value;
+                    ifaces[i].limitdownload = document.getElementById('limitdownload').value;
+                    var limittimeSelect = document.getElementById('limittime');
+                    ifaces[i].limittime = limittimeSelect[limittimeSelect.selectedIndex].value;
+                    ifaces[i].remainingtime = document.getElementById('remainingtime').value;
+                    var radios = document.getElementsByName('opentime');
+                    for (var j = 0; j < radios.length; j++) {
+                        if (radios[j].checked == true) {
+                            ifaces[i].limittimetype = j;
+                            if (j == 0) {
+                                break;
+                            } else {
+                                var table = document.getElementById('weekTb');
+                                var periodicaltime = [];
+                                var cell;
+                                var start = -1;
+                                var end;
+                                var timeInfo;
+                                for (m = 0; m < 7; m++) {
+                                    for (n = 0; n < 24; n++) {
+                                        cell = table.rows[m].cells[n];
+                                        if (start == -1 && cell.getElementsByTagName("i")[0].getAttribute("sel") == '1') {
+                                            start = n;
+                                        } else if (start != -1 && cell.getElementsByTagName("i")[0].getAttribute("sel") == '0') {
+                                            end = n;
+                                            timeInfo = start + ',' + end + ',' + (m+1);
+                                            periodicaltime.push(timeInfo);
+                                            start = -1;
+                                        }
+                                    }
+                                    if (start != -1) {
+                                        end = 0;
+                                        timeInfo = start + ',' + end + ',' + (m+1);
+                                        periodicaltime.push(timeInfo);
+                                        start = -1;
+                                    }
+                                }
+                                if (periodicaltime.length == 0){
+                                    var err = document.getElementById('Error');
+                                    var text = err.getElementsByTagName('span')[0];
+                                    text.innerText = '请选择周期开放的时间！';
+                                    err.style.visibility = 'visible';
+                                    return;
+                                }
+                                ifaces[i].periodicaltime = periodicaltime;
+                            }
+                        }
+                    }
+                    var params = {'ifaces': ifaces};
+                    console.log(params);
+                }
+            }
+        } else {
+            for (var i = 0; i < ifaces.length; i++) {
+                if (ifaces[i].band == '5G') {
+                    ifaces[i].ssid = document.getElementById('ssid-5').value;
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    if (ifaces[i].ssid == ''){
+                        text.innerText = '请输入无线名称！';
+                        err.style.visibility = 'visible';
+                        errTipDoc = document.getElementById('ssid');
+                        return;
+                    }else if (strlen(ifaces[i].ssid)>32){
+                        text.innerText = '无线名称长度过长！';
+                        err.style.visibility = 'visible';
+                        errTipDoc = document.getElementById('ssid');
+                        return;
+                    }
+                    ifaces[i].key = document.getElementById('key-5').value;
+                    ifaces[i].open = document.getElementById('open-5').checked;
+                    if (ifaces[i].open == false && ifaces[i].key.length<8) {
+                        if (strlen(ifaces[i].key)<8) {
+                            text.innerText = '密码长度不少于8位！';
+                        }else if (strlen(ifaces[i].key)>64) {
+                            text.innerText = '密码长度过长，请重新输入！';
+                        }
+                        err.style.visibility = 'visible';
+                        errTipDoc = document.getElementById('key');
+                        return;
+                    }
+                    var localaccessSelect = document.getElementById('localaccess-5');
+                    if (localaccessSelect[localaccessSelect.selectedIndex].value == 'true') {
+                        ifaces[i].localaccess = true;
+                    } else {
+                        ifaces[i].localaccess = false;
+                    }
+                    ifaces[i].limitupload = document.getElementById('limitupload-5').value;
+                    ifaces[i].limitdownload = document.getElementById('limitdownload-5').value;
+                    var limittimeSelect = document.getElementById('limittime-5');
+                    ifaces[i].limittime = limittimeSelect[limittimeSelect.selectedIndex].value;
+                    ifaces[i].remainingtime = document.getElementById('remainingtime-5').value;
+                    var radios = document.getElementsByName('opentime-5');
+                    for (var j = 0; j < radios.length; j++) {
+                        if (radios[j].checked == true) {
+                            ifaces[i].limittimetype = j;
+                            if (j == 0) {
+                                break;
+                            } else {
+                                var table = document.getElementById('weekTb-5');
+                                var periodicaltime = [];
+                                var cell;
+                                var start = -1;
+                                var end;
+                                var timeInfo;
+                                for (m = 0; m < 7; m++) {
+                                    for (n = 0; n < 24; n++) {
+                                        cell = table.rows[m].cells[n];
+                                        if (start == -1 && cell.getElementsByTagName("i")[0].getAttribute("sel") == '1') {
+                                            start = n;
+                                        } else if (start != -1 && cell.getElementsByTagName("i")[0].getAttribute("sel") == '0') {
+                                            end = n;
+                                            timeInfo = start + ',' + end + ',' + (m+1);
+                                            periodicaltime.push(timeInfo);
+                                            start = -1;
+                                        }
+                                    }
+                                    if (start != -1) {
+                                        end = 0;
+                                        timeInfo = start + ',' + end + ',' + (m+1);
+                                        periodicaltime.push(timeInfo);
+                                        start = -1;
+                                    }
+                                }
+                                if (periodicaltime.length == 0){
+                                    var err = document.getElementById('Error');
+                                    var text = err.getElementsByTagName('span')[0];
+                                    text.innerText = '请选择周期开放的时间！';
+                                    err.style.visibility = 'visible';
+                                    return;
+                                }
+                                ifaces[i].periodicaltime = periodicaltime;
+                            }
+                        }
+                    }
+                    var params = {'ifaces': ifaces};
+                    console.log(params);
+                }
+            }
+        }
+        document.getElementById("24-saveTip").style.display='';
+        document.getElementById("24-saveTipSucess").style.display='none';
+        document.getElementById("5-saveTip").style.display='';
+        document.getElementById("5-saveTipSucess").style.display='none';
+        XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","set_customer_wifi_iface")%>', params,
+            function (x, result) {
+                console.log(result);
+                document.getElementById("24-saveTip").style.display='none';
+                document.getElementById("5-saveTip").style.display='none';
+                if (result!=null&&result.code == 0) {
+                    document.getElementById("24-saveTipSucess").style.display='';
+                    document.getElementById("5-saveTipSucess").style.display='';
+                    setTimeout(function () {
+                        document.getElementById("24-saveTipSucess").style.display='none';
+                        document.getElementById("5-saveTipSucess").style.display='none';
+                    },"2000");
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '设置失败！'
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // page functions
+    function changeSelected(changeArray) {
+        document.getElementById(changeArray[0]).style.background = "#bebebe";
+        document.getElementById(changeArray[0]).setAttribute('sel', 0);
+        document.getElementById(changeArray[1]).style.background = "#a0d468";
+        document.getElementById(changeArray[1]).setAttribute('sel', 1);
+    }
+
+    function checkEnable(band) {
+        for (var i = 0; i < ifaces.length; i++) {
+            if (ifaces[i].band == band) {
+                switchChecked(ifaces[i].enable);
+                break;
+            }
+        }
+    }
+
+    function switchChange() {
+        var status = document.getElementById("switchSpan").innerHTML;
+        var flag = true;
+        if (status == "已开启") {
+            flag = false;
+        }
+        switchChecked(flag);
+        if (changeEnable) {
+            if (checkStatus()) {
+                var enable = true;
+            } else {
+                var enable = false;
+            }
+            var params;
+            var radioSel = getRadioValue('ownerType');
+            for (var i=0; i<ifaces.length; i++) {
+                if (ifaces[i].band == radioSel) {
+                    ifaces[i].enable = enable;
+                    params = {'ifaces':ifaces};
+                }
+            }
+            console.log(params);
+            XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","set_customer_wifi_iface")%>', params,
+                function (x, result) {
+                    console.log(result);
+                });
+        }
+    }
+
+    function displayPeriodTime(band) {
+        if (band == '2.4G') {
+            var radios = document.getElementsByName('opentime');
+            for (var i = 0; i < radios.length; i++) {
+                if (radios[i].value == 'period') {
+                    if (radios[i].checked) {
+                        document.getElementById('period-time').style.display = '';
+                    } else {
+                        document.getElementById('period-time').style.display = 'none';
+                    }
+                }
+            }
+        } else {
+            var radios = document.getElementsByName('opentime-5');
+            for (var i = 0; i < radios.length; i++) {
+                if (radios[i].value == 'period') {
+                    if (radios[i].checked) {
+                        document.getElementById('period-time-5').style.display = '';
+                    } else {
+                        document.getElementById('period-time-5').style.display = 'none';
+                    }
+                }
+            }
+        }
+    }
+
+    function visitorTimeSet(x) {
+        var e = document.getElementById("limittime");
+        var tb = document.getElementById("settings-24g").getElementsByTagName('table')[0];
+        if (x == "5G"){
+            e = document.getElementById("limittime-5");
+            tb = document.getElementById("settings-5g").getElementsByTagName('table')[0];
+        }
+        var sel = e.options[e.selectedIndex].value;
+        if (sel == "true"){
+            tb.rows[6].style.display = '';
+            tb.rows[7].style.display = '';
+        }else {
+            tb.rows[6].style.display = 'none';
+            tb.rows[7].style.display = 'none';
+        }
+    }
+
+    // time table functions
+    function createTimeTable() {
+        var hour_html = '';
+        for (var i = 0; i < 24; i++) {
+            hour_html += '<li style="width: 25px;" onclick="chooseCol(' + i + ',this)" sel="0"><span>' + i + '</span></li>'
+        }
+        hour_html += '<li style="color: rgb(110, 191, 217);">小时</li>';
+        var timeHour = document.getElementById('timeHour');
+        var timeHour_5g = document.getElementById('timeHour-5');
+        timeHour.innerHTML = hour_html;
+        timeHour_5g.innerHTML = hour_html;
+        var week_html = '';
+        for (var i = 0; i < 7; i++) {
+            var weekDay = "星期一"
+            if (i == 0) {
+                weekDay = "星期一"
+            } else if (i == 1) {
+                weekDay = "星期二"
+            } else if (i == 2) {
+                weekDay = "星期三"
+            } else if (i == 3) {
+                weekDay = "星期四"
+            } else if (i == 4) {
+                weekDay = "星期五"
+            } else if (i == 5) {
+                weekDay = "星期六"
+            } else if (i == 6) {
+                weekDay = "星期天"
+            }
+            week_html += '<li style="height: 25px; line-height: 25px;" onclick="chooseRow(' + i + ',this)" sel="0">' + weekDay + '</li>'
+        }
+        var timeWeek = document.getElementById('timeWeek');
+        var timeWeek_5g = document.getElementById('timeWeek-5');
+        timeWeek.innerHTML = week_html;
+        timeWeek_5g.innerHTML = week_html;
+        var html = '';
+        for (var i = 0; i < 7; i++) {
+            html += '<tr>';
+            for (var j = 0; j < 24; j++) {
+                html += '<td class="weekTd" onclick="clickChoose(this)" onmousedown="mouseDownTb()" onmousemove="mouseMoveTb(this)" onmouseup="mouseUpTb()"><i class="tableICell" sel="0"></i></td>'
+            }
+            html += '</tr>'
+        }
+        var weekTb = document.getElementById('weekTb');
+        var weekTb_5g = document.getElementById('weekTb-5');
+        weekTb.innerHTML = html;
+        weekTb_5g.innerHTML = html;
+        document.getElementById('period-time').style.display = 'none';
+        document.getElementById('period-time-5').style.display = 'none';
+    }
+
+    function chooseCol(i, e) {
+        var table = document.getElementById('weekTb');//获取表格对象
+        var visitorSel = getRadioValue('ownerType');
+        if (visitorSel=="5G"){
+            table = document.getElementById('weekTb-5');
+        }
+        var isSel = false;
+        if (e.getAttribute("sel") == "1")
+            isSel =true;
+        for (var j = 0; j < 7; j++) {
+            var cell = table.rows[j].cells[i];
+            var celli = cell.getElementsByTagName("i")[0];
+            if (celli.getAttribute("sel") == "1")
+                isSel =true;
+        }
+        if (!isSel) {
+            e.setAttribute("sel", 1);
+            for (var j = 0; j < 7; j++) {
+                var cell = table.rows[j].cells[i];//第j行第i列单元格对象
+                var val = cell.innerHTML;//获取值
+                var tb_i = cell.getElementsByTagName("i")[0];
+                var i_html = '<i class="tableICellSel" sel="1">'
+                cell.innerHTML = i_html;
+            }
+        } else {
+            e.setAttribute("sel", 0);
+            for (var j = 0; j < 7; j++) {
+                var cell = table.rows[j].cells[i];//第j行第i列单元格对象
+                var val = cell.innerHTML;//获取值
+                var tb_i = cell.getElementsByTagName("i")[0];
+                var i_html = '<i class="tableICell" sel="0">';
+                cell.innerHTML = i_html;
+            }
+        }
+    }
+
+    function chooseRow(i, e) {
+        var table = document.getElementById('weekTb');//获取表格对象
+        var visitorSel = getRadioValue('ownerType');
+        if (visitorSel=="5G"){
+            table = document.getElementById('weekTb-5');
+        }
+        var isSel = false;
+        if (e.getAttribute("sel") == "1")
+            isSel =true;
+        for (var j = 0; j < 24; j++) {
+            var cell = table.rows[i].cells[j];
+            var celli = cell.getElementsByTagName("i")[0];
+            if (celli.getAttribute("sel") == "1")
+                isSel =true;
+        }
+        if (!isSel) {
+            e.setAttribute("sel", 1);
+            for (var j = 0; j < 24; j++) {
+                var cell = table.rows[i].cells[j];//第i行第j列单元格对象
+                var val = cell.innerHTML;//获取值
+                var i_html = '<i class="tableICellSel" sel="1">';
+                cell.innerHTML = i_html;
+            }
+        } else {
+            e.setAttribute("sel", 0);
+            for (var j = 0; j < 24; j++) {
+                var cell = table.rows[i].cells[j];//第i行第j列单元格对象
+                var val = cell.innerHTML;//获取值
+                var i_html = '<i class="tableICell" sel="0">';
+                cell.innerHTML = i_html;
+            }
+        }
+    }
+
+    function clickChoose(e) {
+        var tb_i = e.getElementsByTagName("i")[0];
+        if (tb_i.getAttribute("sel") == "0") {
+            var i_html = '<i class="tableICellSel" sel="1">';
+            e.innerHTML = i_html;
+        } else {
+            var i_html = '<i class="tableICell" sel="0">';
+            e.innerHTML = i_html;
+        }
+    }
+
+    function mouseMoveTb(e) {
+        if (flag) {
+            var tb_i = e.getElementsByTagName("i")[0];
+            if (tb_i.getAttribute("sel") == "0") {
+                var i_html = '<i class="tableICellSel" sel="1">';
+                e.innerHTML = i_html;
+            } else {
+                var i_html = '<i class="tableICell" sel="0">';
+                e.innerHTML = i_html;
+            }
+        }
+    }
+
+    function mouseDownTb() {
+        flag = true;
+    }
+
+    function mouseUpTb() {
+        flag = false;
+    }
+    function visitorSel(name) {
+        var visitorSel = getRadioValue(name);
+        if (visitorSel == "2.4G"){
+            hideParts(['settings-5g']);
+            showParts(['settings-24g']);
+            checkEnable('2.4G');
+        } else {
+            hideParts(['settings-24g']);
+            showParts(['settings-5g']);
+            checkEnable('5G');
+        }
+    }
+</script>

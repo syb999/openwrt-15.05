@@ -1,0 +1,119 @@
+msgid ""
+msgstr ""
+
+msgid "AP SET"
+msgstr "AP SET"
+
+msgid "LoadConfig intro"
+msgstr "Select the configuration file and click the LoadConfig button"
+
+msgid "auto refresh"
+msgstr "Auto Refresh"
+
+msgid "import config"
+msgstr "Import"
+
+msgid "export config"
+msgstr "Export"
+
+msgid "Security options"
+msgstr "Security Options:"
+
+msgid "encryption(WPA2-PSK)"
+msgstr "Encryption（WPA2-PSK）"
+
+msgid "LED"
+msgstr "LED:"
+
+msgid "return group"
+msgstr "Return"
+
+msgid "change group"
+msgstr "Edit"
+
+msgid "group detail list"
+msgstr "Group Info"
+
+msgid "file read or write fail"
+msgstr "File Operate Failed!"
+
+msgid "not enough storage"
+msgstr "Storage Not Enough!"
+
+msgid "unknown error"
+msgstr "Unknown Error!"
+
+msgid "try again"
+msgstr "Try Again!"
+
+msgid "device busy"
+msgstr "Devices Busy!"
+
+msgid "device ont found"
+msgstr "Device Not Found!"
+
+msgid "device online, can not be remove"
+msgstr "Device online, can not be removed!"
+
+msgid "The character length cannot be more than 32 bits!"
+msgstr "The character length cannot be more than 32 bits!"
+
+msgid "The SSID character length cannot be more than 32 bits!"
+msgstr "The SSID character length cannot be more than 32 bits!"
+
+msgid "The password length is no less than 8 bits!"
+msgstr "The password length is no less than 8 bits!"
+
+msgid "Please input 2.4g network SSID!"
+msgstr "Please input 2.4g network SSID!"
+
+msgid "Please input 5g network SSID!"
+msgstr "Please input 5g network SSID!"
+
+msgid "Please input AP name!"
+msgstr "Please input AP name!"
+
+msgid "this group name is already exist"
+msgstr "This group name is already exist!"
+
+msgid "group name contain invalid character"
+msgstr "Group name contain invalid character"
+
+msgid "The AP name cannot be more than 45 characters!"
+msgstr "The AP name cannot be more than 45 characters!"
+
+msgid "The ap_alive_time limit is 20-80 seconds!"
+msgstr "The ap_alive_time limit is 20-80 seconds!"
+
+msgid "AP number"
+msgstr "AP number"
+
+msgid "is abnormal,cannot join bulk edit!"
+msgstr "is abnormal,cannot join bulk edit!"
+
+msgid "bulk edit"
+msgstr "Bulk Edit"
+
+msgid "delete"
+msgstr "Delete"
+
+msgid "hardware version"
+msgstr "Hardware Version"
+
+msgid "AC upgrading"
+msgstr "AC upgrading"
+
+msgid "AP upgrading"
+msgstr "AP upgrading"
+
+msgid "ap local upgrade done"
+msgstr "AP upgrade done"
+
+msgid "no device found"
+msgstr "No device found!"
+
+msgid "in setting"
+msgstr "setting"
+
+msgid "ap version not newest"
+msgstr "AP version is not newest ,please update AP."

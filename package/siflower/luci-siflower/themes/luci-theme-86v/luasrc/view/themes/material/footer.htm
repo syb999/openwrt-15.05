@@ -1,0 +1,122 @@
+<%#
+    Material is a clean HTML5 theme for LuCI. It is based on luci-theme-bootstrap and MUI
+
+    luci-theme-material
+        Copyright 2015 Lutty Yang <lutty@wcan.in>
+
+    Have a bug? Please create an issue here on GitHub!
+        https://github.com/LuttyYang/luci-theme-material/issues
+
+    luci-theme-bootstrap:
+    Copyright 2008 Steven Barth <steven@midlink.org>
+    Copyright 2008 Jo-Philipp Wich <jow@openwrt.org>
+    Copyright 2012 David Menting <david@nut-bolt.nl>
+
+    MUI:
+    https://github.com/muicss/mui
+
+    Licensed to the public under the Apache License 2.0
+-%>
+
+<%
+local nixio = require "nixio"
+local fs  = require "nixio.fs"
+local disp = require "luci.dispatcher"
+local request  = disp.context.path
+local category = request[1]
+local tree = disp.node()
+local categories = disp.node_childs(tree)
+local sysp = require "luci.controller.admin.systemp"
+
+function getSoftware()
+	local cpuinfo = fs.readfile("/etc/openwrt_release")
+	local model = cpuinfo:match("DISTRIB_CODENAME='([^']+)")
+	model = string.gsub(model, "%c", "")
+	return model
+end
+
+function get_software_version()
+    local boardinfo = luci.util.ubus("system", "board")
+    local strlist = luci.util.split(boardinfo.release.description, ' ')
+    return   strlist[3] or ""  --软件版本
+end
+%>
+                </div>
+                <footer class="mobile-hide">
+					<p style="text-align:center;"><a><%:hardware version%></a> <a><%= getSoftware()%></a>
+					<a><%:software version%></a> <a><%= get_software_version()%></a></p>
+                    <% if #categories > 1 then %>
+                    <ul class="breadcrumb pull-right" id="modemenu">
+                        <% for i, r in ipairs(categories) do %>
+                        <li<% if request[1] == r then %> class="active"<%end%>><a href="<%=controller%>/<%=r%>/"><%=striptags(translate(tree.nodes[r].title))%></a> <span class="divider">|</span></li>
+                        <% end %>
+                    </ul>
+                    <% end %>
+                </footer>
+            </div>
+
+    <script src="<%=media%>/js/jquery.min.js"></script>
+    <script src="<%=media%>/js/siwifi.js"></script>
+    <script>
+        var luciLocation = <%= luci.http.write_json(luci.dispatcher.context.path) %>;
+        setStyleColor();
+
+function setStyleColor(style){
+    var result = <%=sysp.get_style_color()%>;
+    var style= result.style;
+    console.log("style", style);
+    var className;
+    var isIE678 =!-[1,];
+    if(isIE678 ){
+        console.log("I am IE 6 or 7 or 8.");
+    }
+    var font=style["font"];
+    for(className in font){
+        if(!isIE678 || className.search('disabled')<0){
+            if(document.styleSheets[1].insertRule){
+                var index=document.styleSheets[1].cssRules.length;
+                document.styleSheets[1].insertRule(className+'{color: '+font[className]+'}',index);
+            }else{
+                    document.styleSheets[1].addRule(className,'color'+font[className]);
+            }
+        }
+    }
+    var background=style['background']
+    for(className in background){
+        if(!isIE678 || className.search('disabled')<0){
+            if(document.styleSheets[1].insertRule){
+                var index=document.styleSheets[1].cssRules.length;
+                document.styleSheets[1].insertRule(className+'{background: '+background[className]+'}',index);
+            }else{
+                    document.styleSheets[1].addRule(className,'background'+background[className]);
+            }
+        }
+    }
+    var border=style['border']
+    for(className in border){
+       // if(!isIE678 || className.search('disabled')<0){
+            if(document.styleSheets[1].insertRule){
+                var index=document.styleSheets[1].cssRules.length;
+                document.styleSheets[1].insertRule(className+'{ border-color:'+border[className]+'}',index);
+            }else{
+                    document.styleSheets[1].addRule(className,'border-color:'+border[className]);
+            }
+        //}
+    }
+    var borderRight= style["border_right"];
+    for(className in borderRight){
+       // if(!isIE678 || className.search('disabled')<0){
+            if(document.styleSheets[1].insertRule){
+                var index=document.styleSheets[1].cssRules.length;
+                document.styleSheets[1].insertRule(className+'{ border-right-color:'+borderRight[className]+'}',index);
+            }else{
+                    document.styleSheets[1].addRule(className,'border-right-color:'+borderRight[className]);
+            }
+        //}
+    }
+    document.querySelector(".loading").style.display="none";
+}
+    </script>
+    <script src="<%=media%>/js/script.js"></script>
+</body>
+</html>

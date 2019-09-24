@@ -1,0 +1,882 @@
+<%#
+Copyright 2008 Steven Barth <steven@midlink.org>
+Copyright 2008-2012 Jo-Philipp Wich <jow@openwrt.org>
+Licensed to the public under the Apache License 2.0.
+-%>
+
+<!DOCTYPE html>
+<html lang="<%=luci.i18n.context.lang%>">
+<head>
+    <link rel="stylesheet" href="<%=media%>/routerStyle.css">
+    <link rel="stylesheet" href="<%=media%>/cascade.css">
+    <script src="<%=resource%>/xhr.js"></script>
+    <script src="<%=media%>/js/siwifi.js"></script>
+</head>
+<body  style="background-color: rgb(242, 242, 242); font-size: 12px; display: flex">
+<div id="Con" style="display: block;">
+    <div id="head">
+        <div id="headL"></div>
+        <div id="headR"></div>
+        <div id="headCnt">
+            <div id="headLCnt">
+                <i class="Logo"></i>
+            </div>
+            <div id="headRCnt">
+                <ul id="headFunc" class="headFunc">
+                    <li id="com-setBtn" style="margin-left: 0px; background-color: rgba(0, 0, 0,0.25);"><label>常用设置</label></li>
+                    <li style="background-color: transparent;" onclick="higSet()"><label>高级设置</label></li>
+                    <li onclick="setGuide()" style="background-color: transparent;"><label>设置向导</label></li>
+                    <li style="background-color: transparent;" onclick="logout()"><label>安全退出</label></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div id="basicContent">
+        <div id="basicSCon">
+            <div id="bConfL" class="bConfL bConfLBC"></div>
+            <div id="bConfR" class="bConfR bConfRBC"></div>
+            <div id="bConCnt">
+                <div id="Error">
+                    <div id="hsErr" class="hsTip">
+                        <i class="altIcon"></i>>
+                        <span class="detail">设置成功！</span>
+                        <input class="subBtn" value="确 定" type="button" onclick="closeTip()">
+                    </div>
+                </div>
+                <div id="device-onlineL" class="bConfLCnt bConfLBC">
+                    <div id="linkEptMbtn" class="commonBtn" onclick="changeDiv(1)">
+                        <!--<h2>连接设备管理</h2>-->
+                        <p class="logo">
+                            <i class="bmEquipMngLg"></i>
+                        </p>
+                        <p class="bmStatus">已连设备：<label id="equipMngNumL">0</label>台</p>
+                        <p class="MnueCon">连接设备管理</p>
+                    </div>
+                    <div id="netWorkMbtn" class="commonBtn" onclick="changeDiv(2)">
+                        <!--<h2>上网设置</h2>-->
+                        <p class="logo">
+                            <i class="bmNetworkLg"></i>
+                        </p>
+                        <p class="bmStatus">上网方式：
+                            <label id="pppoe-mode" style="display: none">宽带拨号上号</label>
+                            <label id="static-mode" style="display: none">固定IP地址</label>
+                            <label id="dhcp-mode" style="display: none">自动获得IP地址</label>
+                        </p>
+                        <p class="MnueCon">上网设置</p>
+                    </div>
+                    <div id="wirelessMbtn" class="commonBtn" onclick="changeDiv(3)">
+                        <!--<h2>无线设置</h2>-->
+                        <p class="logo">
+                            <i class="bmWirelssSetLg"></i>
+                        </p>
+                        <div id="wirelessSSID" class="bmStatus"><pre>无线名称：<span id="wireless-name"></span></pre></div>
+                        <p class="MnueCon">无线设置</p>
+                    </div>
+                </div>
+                <i id="MenuPoint" class="arrowLeft"></i>
+                <div id="device-onlineR" class="bConfRCnt bConfRBC">
+                    <ul id="bEptMenu" class="bEptMenu">
+                        <li id="device-online" onclick="deviceBtn(1)" class="bEptMenuLi" style="border-bottom: 3px solid rgb(216, 0, 11);">
+                            <span class="des">已连设备</span><i class="bEptMenuNum"></i><span class="numSpn" id="connected-count">0</span>
+                        </li>
+                        <li id="device-baned" onclick="deviceBtn(2)" class="bEptMenuLi">
+                            <span class="des">已禁设备</span><i class="bEptMenuNum"></i><span class="numSpn" id="disabled-count">0</span></li>
+                    </ul>
+                    <li class="border-line"></li>
+                    <table id="linkedDevice" class="deviceTable">
+                    </table>
+                    <table id="banDevice" class="deviceTable" style="display: none">
+                    </table>
+                </div>
+                <div id="net-settingR" class="bConfRCnt bConfRBC" style="display: none">
+                    <div class="bcRCon">
+
+                        <ul id="NSetMenu" class="bEptMenu">
+                            <li id="net-pppoe" onclick="netBtn(1);hidTip()" class="bEptMenuLi" style="border-bottom: 3px solid rgb(216, 0, 11);">
+                                <span class="des">宽带拨号上网</span>
+                            </li>
+                            <li id="net-static" onclick="netBtn(2);hidTip()" class="bEptMenuLi">
+                                <span class="des">固定IP地址</span></li>
+                            <li id="net-dhcp" onclick="netBtn(3);hidTip()" class="bEptMenuLi">
+                                <span class="des">自动获得IP地址</span></li>
+                            <button onclick="getInfo()">自动检测</button>
+                        </ul>
+                        <li class="border-line"></li>
+                        <table>
+                            <tr>
+                                <td class="net-td-btn">
+                                    <div id="netSetState" class="handleRelCon" style="visibility: visible;">
+                                        <i id="linked" class="state"></i>
+                                        <i id="linking" class="state" style="display: none"></i>
+                                        <i id="break" class="state" style="display: none"></i>
+                                        <span id="netStatus" class="state">已连接</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr id="pppoe">
+                                <td >
+                                    <table>
+                                        <tr><td class="c_input_left">宽带账号</td><td class="c_right"><input id="pppoe-account" maxlength="32"></td></tr>
+                                        <tr><td class="c_input_left">宽带密码</td><td class="c_right"><input id="pppoe-password" onkeyup="nStrLimit(this)" maxlength="63"></td></tr>
+                                        <tr><td class="c_input_left">IP地址</td><td class="c_right"><label id="pppoe-operatoraddress"></label></td></tr>
+                                        <tr><td class="c_input_left">DNS服务器</td><td class="c_right"><label id="pppoe-dns"></label></td></tr>
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr id="static" style="display: none">
+                                <td >
+                                    <table>
+                                        <tr><td class="c_input_left">IP地址</td><td class="c_right"><input id="static-ipaddr" onchange="isValidInput()" onkeyup="nStrLimit(this)" maxlength="15"></td></tr>
+                                        <tr><td class="c_input_left">子网掩码</td><td class="c_right"><input id="static-netmask" onchange="isValidInput()" onkeyup="nStrLimit(this)" maxlength="15"></td></tr>
+                                        <tr><td class="c_input_left">网关</td><td class="c_right"><input id="static-gateway" onchange="isValidInput()" onkeyup="nStrLimit(this)" maxlength="15"></td></tr>
+                                        <tr><td class="c_input_left">首选DNS服务器</td><td class="c_right"><input id="static-dns" onchange="isValidInput()" onkeyup="nStrLimit(this)" maxlength="15"></td></tr>
+                                        <tr><td class="c_input_left">备用DNS服务器</td><td class="c_right"><input id="static-dnsbak" onchange="isValidInput()" onkeyup="nStrLimit(this)" maxlength="15"></td></tr>
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr id="dhcp" style="display: none">
+                                <td >
+                                    <table>
+                                        <tr><td class="c_label_left">IP地址</td><td class="c_right"><label  id="dhcp-ipaddr"></label></td></tr>
+                                        <tr><td class="c_label_left">子网掩码</td><td class="c_right"><label  id="dhcp-netmask"></label></td></tr>
+                                        <tr><td class="c_label_left">网关</td><td class="c_right"><label  id="dhcp-gateway"></label></td></tr>
+                                        <tr><td class="c_label_left">首选DNS服务器</td><td class="c_right"><label  id="dhcp-dns"></label></td></tr>
+                                        <tr><td class="c_label_left">备用DNS服务器</td><td class="c_right"><label  id="dhcp-dnsbak"></label></td></tr>
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr><td >
+                                <button onclick="saveWanConfig()">保存</button>
+                                <i id="NSetSaveTip" class="hsSubLoading" style="display: none"></i>
+                            </td></tr>
+                        </table>
+                        <div class="WifiErrTip">
+                            <li id="basicIpNote" class="note" >
+                                <i class="arrowL"></i><div class="noteCon"><p>IP地址格式错误，请重新输入</p></div>
+                            </li>
+                            <li id="basicMaskNote" class="note">
+                                <i class="arrowL"></i><div class="noteCon"><p>子网掩码格式错误，请重新输入</p></div>
+                            </li>
+                            <li id="basicGatewayNote" class="note">
+                                <i class="arrowL"></i><div class="noteCon"><p>网关错误，请重新输入</p></div>
+                            </li>
+                            <li id="basicPrimDnsNote" class="note">
+                                <i class="arrowL"></i><div class="noteCon"><p>请输入正确的首选DNS服务器</p></div>
+                            </li>
+                            <li id="basicSeDnsNote" class="note">
+                                <i class="arrowL"></i><div class="noteCon"><p>请输入正确的备用DNS服务器</p></div>
+                            </li>
+                        </div>
+                    </div>
+                </div>
+                <div id="wirelessSetR" class="bConfRCnt bConfRBC" style="display: none">
+                    <div class="bWlSwitchCon">
+                        <span id="bWlStateDes" class="bWlStateDes">主人网络</span><i class="hLine"></i>
+                        <div id="switchCon" class="switchCon" onclick="switchChange()">
+                            <i class="switchBg"></i>
+                            <i id="switchOn" class="switchBall"></i>
+                            <i id="switchOff" class="switchBallOff" style="display: none"></i>
+                        </div>
+                        <span id="switchSpan" class="bWlSwitchOff" style="color: #afafaf;">ON</span>
+                    </div>
+                    <li class="border-line"></li>
+                    <div class="bcRCon">
+                        <ul class="bcInputUl">
+                            <li class="bcInputLi">
+                                <label for="">无线名称</label><input id="ssid" maxlength="32" value="" type="text" onchange="isNullSSID()">
+                            </li>
+                            <li id="wlanSsidNote" class="note">
+                                <i class="arrowL"></i><div class="noteCon"><p class="vlM">请输入无线名称</p></div>
+                            </li>
+                            <li id="ssidBlankNote" class="note">
+                                <i class="arrowL"></i><div class="noteCon"><p>无线名称不能全为空格，请重新输入</p></div>
+                            </li>
+                        </ul>
+                        <ul class="bcInputUl">
+                            <li class="bcInputLi">
+                                <label for="">无线密码</label><input id="bWlPwd" class="imeModeN" maxlength="63" value="" type="text" onkeyup="nStrLimit(this)" onchange="isShortPwd()">
+                            </li>
+                            <li id="wlanPwdNote" class="note">
+                                <i class="arrowL"></i><div class="noteCon"><p>密码长度不能少于8位</p></div>
+                            </li>
+                            <li id="pwdDepNote" class="note">
+                                <i class="arrowL"></i><div class="noteCon">
+                                <p class="pwdDepC">密码强度：<label id="pwdDep">弱</label></p>
+                                <div class="pwdDepL"><label id="chgPwdDep"></label></div>
+                            </div>
+                            </li>
+                        </ul>
+                        <ul>
+                            <li class="WirelessSave">
+                                <button onclick="saveWirelessConfig()">保存</button>
+                                <i id="wirelessSaveTip" class="hsSubLoading" style="display: none"></i>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="bConFun">
+            <ul id="basicMenuUl" class="basicMenuUl">
+        </ul>
+            <div id="foot"><ul class="footCon">
+                <li id="softVersion">软件版本：<span id="software-version"></span></li>
+                <li id="netAddrTel"><a href="http://siflower.com.cn" target="_blank">Siflower官方网站</a><label>技术支持热线：+021 5131-7015</label></li>
+            </ul>
+            </div>
+        </div>
+    </div>
+
+</div>
+<script src="<%=media%>/js/commonScript.js"></script>
+</body>
+</html>
+<script>
+    // global vars
+    var selected = 0;
+    var timer;
+    var checkEnable = false;
+    var staticSave = false;
+    var closeUploadIndex;
+    var closeDownloadIndex;
+    var wanConnectTypeIndex = 0;
+
+    // page load functions
+    getInfo();
+    getDevices(1);
+
+    //get wan netStatus 10000ms/1
+    setInterval(function(){
+        XHR.get('<%=luci.dispatcher.build_url("admin", "networknew","get_wan")%>', null,
+            function(x, result) {
+                console.log("getNetStatus");
+                if (result != null && result.code == 0) {
+                    console.log(result);
+                    var wantype = result.wantype;
+                    if (wantype == 1) {
+                        if (result.DHCP.linkstatus != undefined) {
+                            var flag;
+                            if (result.DHCP.linkstatus == 0) {
+                                flag = 2;
+                            } else if (result.DHCP.ipaddr != undefined) {
+                                flag = 1;
+                            } else {
+                                flag = 0;
+                            }
+                            setLinkStatus(flag);
+                        }
+                    }else if (wantype == 2) {
+                        if (result.staticip.linkstatus != undefined) {
+                            setLinkStatus(result.staticip.linkstatus);
+                        }
+                    } else {
+                        if (result.PPPoE.linkstatus != undefined) {
+                            setLinkStatus(result.PPPoE.linkstatus);
+                        }
+                    }
+                }
+            });
+    },10000);
+
+    // router get interfaces
+    function getInfo() {
+        document.getElementById('break').style.display = 'none';
+        document.getElementById('linked').style.display = 'none';
+        document.getElementById('linking').style.display = '';
+        document.getElementById('netStatus').innerText = '正在连接...';
+        document.getElementById('netStatus').style.color = 'rgb(287, 192, 108)';
+        XHR.get('<%=luci.dispatcher.build_url("admin", "networknew","get_wan")%>', null,
+            function(x, result) {
+                if(result.code == 0) {
+                    console.log(result);
+                    var wantype = result.wantype;
+                    var e;
+                    if (wantype == 1) {
+                        netBtn(3);
+                        hidTip();
+                        document.getElementById('dhcp-mode').style.display = '';
+                        if (result.DHCP.linkstatus != undefined) {
+                            var flag;
+                            if (result.DHCP.linkstatus == 0) {
+                                flag = 2;
+                            } else if (result.DHCP.ipaddr != undefined) {
+                                flag = 1;
+                            } else {
+                                flag = 0;
+                            }
+                            setLinkStatus(flag);
+                        }
+                        if (result.DHCP.ipaddr != undefined) {
+                            document.getElementById('dhcp-ipaddr').innerText = result.DHCP.ipaddr;
+                        }
+                        if (result.DHCP.netmask != undefined) {
+                            document.getElementById('dhcp-netmask').innerText = result.DHCP.netmask;
+                        }
+                        if (result.DHCP.gateway != undefined) {
+                            document.getElementById('dhcp-gateway').innerText = result.DHCP.gateway;
+                        }
+                        if (result.DHCP.dns != undefined) {
+                            document.getElementById('dhcp-dns').innerText = result.DHCP.dns;
+                        }
+                        if (result.DHCP.dnsbak != undefined) {
+                            document.getElementById('dhcp-dnsbak').innerText = result.DHCP.dnsbak;
+                        }
+                    } else if (wantype == 2) {
+                        netBtn(2);
+                        hidTip();
+                        document.getElementById('static-mode').style.display = '';
+                        if (result.staticip.linkstatus != undefined) {
+                            setLinkStatus(result.staticip.linkstatus);
+                        }
+                        if (result.staticip.ipaddr != undefined) {
+                            document.getElementById('static-ipaddr').value = result.staticip.ipaddr;
+                        }
+                        if (result.staticip.netmask != undefined) {
+                            document.getElementById('static-netmask').value = result.staticip.netmask;
+                        }
+                        if (result.staticip.gateway != undefined) {
+                            document.getElementById('static-gateway').value = result.staticip.gateway;
+                        }
+                        if (result.staticip.dns != undefined) {
+                            document.getElementById('static-dns').value = result.staticip.dns;
+                        }
+                        if (result.staticip.dnsbak != undefined) {
+                            document.getElementById('static-dnsbak').value = result.staticip.dnsbak;
+                        }
+                    } else if (wantype == 4) {
+                        netBtn(1);
+                        hidTip();
+                        document.getElementById('pppoe-mode').style.display = '';
+                        if (result.PPPoE.linkstatus != undefined) {
+                            setLinkStatus(result.PPPoE.linkstatus);
+                        }
+                        if (result.PPPoE.account != undefined) {
+                            document.getElementById('pppoe-account').value = result.PPPoE.account;
+                        }
+                        if (result.PPPoE.password != undefined) {
+                            document.getElementById('pppoe-password').value = result.PPPoE.password;
+                        }
+                        if (result.PPPoE.operatoraddress != undefined) {
+                            document.getElementById('pppoe-operatoraddress').value = result.PPPoE.operatoraddress;
+                        }
+                        if (result.PPPoE.dns != undefined) {
+                            document.getElementById('pppoe-dns').value = result.PPPoE.dns;
+                        }
+                    }
+                }
+            });
+        XHR.get('<%=luci.dispatcher.build_url("admin", "wirelessnew","get_wifi_iface")%>', null,
+            function(x, result) {
+                if (result.code == 0) {
+                    console.log(result);
+                    console.log(result.ifaces);
+                    ifaces = result.ifaces;
+                    for (i in ifaces) {
+                        if (ifaces[i].band == '2.4G') {
+                            document.getElementById('ssid').value = ifaces[i].ssid;
+                            document.getElementById('wireless-name').innerText = ifaces[i].ssid;
+                            if (ifaces[i].key != undefined) {
+                                document.getElementById('bWlPwd').value = ifaces[i].key;
+                            }
+                            setStatus(ifaces[i].enable);
+                        }
+                    }
+                }
+            });
+        XHR.get('<%=luci.dispatcher.build_url("admin", "systemnew","get_version")%>', null,
+            function(x, result) {
+                if (result.code == 0) {
+                    console.log(result);
+                    var e;
+                    if (e = document.getElementById('software-version'))
+                        e.innerText = result.software;
+                }
+            });
+    }
+
+    function formTable() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "advancednew","get_devices")%>', null,
+            function(x, result) {
+                if(result.code == 0) {
+                    //console.log(result);
+                    devices = result.devices;
+                    var html = '<tr><th class="tb-l">当前连接设备</th><th class="tb-c">当前网速</th><th class="tb-c">限制下载速度</th><th class="tb-c">限制上传速度</th><th class="tb-r">禁用</th></tr>';
+                    var disabled_html = '<tr><th class="tb-l">当前已禁设备</th><th class="tb-r">解禁</th></tr>';
+                    var connected_count = 0;
+                    var disabled_count = 0;
+                    var upload_edit;
+                    var download_edit;
+                    for(var i in devices){
+                        upload_edit = '<i class="bEptLSImg"></i>';
+                        download_edit = '<i class="bEptLSImg"></i>';
+                        if (devices[i].uploadspeed>1024) {
+                            devices[i].uploadspeed = Math.ceil(devices[i].uploadspeed/1024) + 'KB/s';
+                        } else {
+                            devices[i].uploadspeed = devices[i].uploadspeed + 'B/s';
+                        }
+                        if (devices[i].downloadspeed>1024) {
+                            devices[i].downloadspeed = Math.ceil(devices[i].downloadspeed/1024) + 'KB/s';
+                        } else {
+                            devices[i].downloadspeed = devices[i].downloadspeed + 'B/s';
+                        }
+                        if (devices[i].uploadlimit != -1) upload_edit = devices[i].uploadlimit+'KB/s';
+                        if (devices[i].downloadlimit != -1) download_edit = devices[i].downloadlimit+'KB/s';
+
+                        if (devices[i].internet) {
+                            if (devices[i].hostname == '') {
+                                html += '<tr><td class="tb-l">'+devices[i].hostname+'</td><td class="tb-c">'+'↑'+devices[i].uploadspeed+'<br><br>↓'+devices[i].downloadspeed+'</td>'+
+                                    '<td id="ld-'+i+'" style="cursor: pointer;" onclick="limitDownloadspeed('+i+')" class="tb-c">'+download_edit+'</td>'+
+                                    '<td id="lu-'+i+'" style="cursor: pointer;" onclick="limitUploadspeed('+i+')" class="tb-c">'+upload_edit+'</td>'+
+                                    '<td class="tb-r"><i class="bEptLSImgHandleC banEnable" onclick="disabledDevice('+i+')"></td></tr>';
+                            } else {
+                                html += '<tr><td class="tb-l">匿名主机</td><td class="tb-c">'+'↑'+devices[i].uploadspeed+'<br><br>↓'+devices[i].downloadspeed+'</td>'+
+                                    '<td id="ld-'+i+'" style="cursor: pointer;" onclick="limitDownloadspeed('+i+')" class="tb-c">'+download_edit+'</td>'+
+                                    '<td id="lu-'+i+'" style="cursor: pointer;" onclick="limitUploadspeed('+i+')" class="tb-c">'+upload_edit+'</td>'+
+                                    '<td class="tb-r"><i class="bEptLSImgHandleC banEnable" onclick="disabledDevice('+i+')"></td></tr>';
+                            }
+                            connected_count++;
+                        } else {
+                            disabled_html += '<tr><td class="tb-l">'+devices[i].hostname+devices[i].mac+'</td>'+
+                                '<td class="tb-r"><i class="bEptLSImgHandleC banRelease" onclick="enableDevice('+i+')"></i></td></tr>';
+                            disabled_count++;
+                        }
+                    }
+                    document.getElementById('connected-count').innerText = connected_count;
+                    document.getElementById('disabled-count').innerText = disabled_count;
+                    document.getElementById('equipMngNumL').innerText = connected_count;
+                    document.getElementById('linkedDevice').innerHTML = html;
+                    document.getElementById('banDevice').innerHTML = disabled_html;
+                }
+            })
+    }
+
+    // router set interfaces
+    function disabledDevice(i) {
+        var mac = devices[i].mac;
+        var internet = 0;
+        var params = {'mac':mac, 'internet':internet};
+        console.log(params);
+        XHR.post('<%=luci.dispatcher.build_url("admin", "advancednew","set_device")%>', params,
+            function(x, result){
+                console.log(result);
+            });
+    }
+
+    function enableDevice(i) {
+        var mac = devices[i].mac;
+        var internet = 1;
+        var params = {'mac':mac, 'internet':internet};
+        console.log(params);
+        XHR.post('<%=luci.dispatcher.build_url("admin", "advancednew","set_device")%>', params,
+            function(x, result){
+                console.log(result);
+            });
+    }
+
+    function saveWanConfig() {
+        document.getElementById('NSetSaveTip').style.display = '';
+        var wanConnectTypeSelectedIndex = wanConnectTypeIndex;
+        if (wanConnectTypeSelectedIndex == 0) {
+            var wantype = 4;
+            var account = document.getElementById('pppoe-account').value;
+            var password = document.getElementById('pppoe-password').value;
+            if (strlen(account)<2){
+                var err = document.getElementById('Error');
+                var text = err.getElementsByTagName('span')[0];
+                text.innerText = '账号长度不少于2！'
+                err.style.visibility = 'visible';
+                return;
+            }
+            if (strlen(password)<8){
+                var err = document.getElementById('Error');
+                var text = err.getElementsByTagName('span')[0];
+                text.innerText = '密码长度不少于8！'
+                err.style.visibility = 'visible';
+                return;
+            }
+            var params = {'wantype':wantype, 'account':account, 'password':password};
+        } else if (wanConnectTypeSelectedIndex == 1) {
+            staticSave = true;
+            if (!isValidInput()){
+                document.getElementById('NSetSaveTip').style.display = 'none';
+                return;
+            }
+            var wantype = 2;
+            var ipaddr = document.getElementById('static-ipaddr').value;
+            var netmask = document.getElementById('static-netmask').value;
+            var gateway = document.getElementById('static-gateway').value;
+            var dns = document.getElementById('static-dns').value;
+            var dnsbak = document.getElementById('static-dnsbak').value;
+            var params = {'wantype':wantype, 'ipaddr':ipaddr, 'netmask':netmask,
+                'gateway':gateway, 'dns':dns, 'dnsbak':dnsbak};
+        } else {
+            var wantype = 1;
+            var params = {'wantype':wantype,'dns':''};
+        }
+        console.log(params);
+        XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_wan")%>', params,
+            function(x, result){
+                console.log(result);
+                if (result.code == 0) {
+                    getInfo();
+                    document.getElementById('NSetSaveTip').style.display = 'none';
+                    document.getElementById("Error").style.visibility = 'visible';
+                }
+            });
+    }
+
+    function saveWirelessConfig() {
+        document.getElementById("wlanPwdNote").style.visibility="hidden";
+        document.getElementById("wlanSsidNote").style.visibility="hidden";
+        if (isNullSSID()||isShortPwd())
+            return;
+        document.getElementById("wirelessSaveTip").style.display='';
+        var ssid = document.getElementById('ssid').value;
+        var key = document.getElementById('bWlPwd').value;
+        for (i in ifaces) {
+            if (ifaces[i].band == '5G') {
+                ifaces[i].ssid = ssid+'-5G';
+            } else {
+                ifaces[i].ssid = ssid;
+            }
+            ifaces[i].key = key;
+        }
+        var params = {'ifaces':ifaces};
+        console.log(params);
+        XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","set_wifi_iface")%>', params,
+            function(x, result){
+                console.log(result);
+                if (result.code == 0) {
+                    document.getElementById("wirelessSaveTip").style.display='none';
+                }
+            });
+    }
+
+    // other button functions
+    function higSet() {
+        location.href='<%=controller%>'
+    }
+    function setGuide() {
+        location.href='<%=controller%>/admin/guide'
+    }
+    function logout() {
+        location.href='<%=controller%>/admin/logout'
+    }
+
+    // speed related functions
+    function limitUploadspeed(i) {
+        this.getDevices(0);
+        if (closeUploadIndex != undefined) {
+            var luCloseHtml
+            var lu_close = document.getElementById('lu-'+closeUploadIndex);
+            if (devices[closeUploadIndex].uploadlimit == -1) {
+                luCloseHtml = '<i class="bEptLSImg"></i>';
+            } else {
+                luCloseHtml = devices[closeUploadIndex].uploadlimit + 'KB/s';
+            }
+            lu_close.innerHTML = luCloseHtml;
+        }
+        if (closeDownloadIndex != undefined) {
+            var ldCloseHtml = '<i class="bEptLSImg"></i>';
+            var ld_close = document.getElementById('ld-'+closeDownloadIndex);
+            if (devices[closeDownloadIndex].downloadlimit == -1) {
+                ldCloseHtml = '<i class="bEptLSImg"></i>';
+            } else {
+                ldCloseHtml = devices[closeDownloadIndex].downloadlimit + 'KB/s';
+            }
+            ld_close.innerHTML = ldCloseHtml;
+        }
+        var lu = document.getElementById('lu-'+i);
+        var luHtml = '<input id="lu-value" onkeydown="confirmLimitUploadspeed('+i+')" onkeypress="confirmLimitUploadspeed('+i+')" onkeyup="numLimit(this)" maxlength="6">KB/s';
+        lu.innerHTML = luHtml;
+        document.getElementById('lu-value').focus();
+        closeUploadIndex = i;
+    }
+    function limitDownloadspeed(i) {
+        this.getDevices(0);
+        if (closeUploadIndex != undefined) {
+            var luCloseHtml
+            var lu_close = document.getElementById('lu-'+closeUploadIndex);
+            if (devices[closeUploadIndex].uploadlimit == -1) {
+                luCloseHtml = '<i class="bEptLSImg"></i>';
+            } else {
+                luCloseHtml = devices[closeUploadIndex].uploadlimit + 'KB/s';
+            }
+            lu_close.innerHTML = luCloseHtml;
+        }
+        if (closeDownloadIndex != undefined) {
+            var ldCloseHtml = '<i class="bEptLSImg"></i>';
+            var ld_close = document.getElementById('ld-'+closeDownloadIndex);
+            if (devices[closeDownloadIndex].downloadlimit == -1) {
+                ldCloseHtml = '<i class="bEptLSImg"></i>';
+            } else {
+                ldCloseHtml = devices[closeDownloadIndex].downloadlimit + 'KB/s';
+            }
+            ld_close.innerHTML = ldCloseHtml;
+        }
+        var ld = document.getElementById('ld-'+i);
+        var ldHtml = '<input id="ld-value" onkeydown="confirmLimitDownloadspeed('+i+')" onkeypress="confirmLimitDownloadspeed('+i+')" onkeyup="numLimit(this)" maxlength="6">KB/s';
+        ld.innerHTML = ldHtml;
+        document.getElementById('ld-value').focus();
+        closeDownloadIndex = i;
+    }
+    function confirmLimitUploadspeed(i) {
+        var lu = document.getElementById('lu-'+i);
+        if (window.event.keyCode == 13) {
+            var uploadlimit = document.getElementById('lu-value').value;
+            if (uploadlimit == '' || uploadlimit == 0) {
+                uploadlimit = -1;
+            }
+            var downloadlimit = devices[i].downloadlimit;
+            var mac = devices[i].mac;
+            var params = {'mac':mac, 'uploadlimit':uploadlimit, 'downloadlimit':downloadlimit};
+            console.log(params);
+            XHR.post('<%=luci.dispatcher.build_url("admin", "advancednew","set_device")%>', params,
+                function(x, result){
+                    console.log(result);
+                    if (result.code == 0) {
+                        this.getDevices(1);
+                    }
+                });
+        } else if (window.event.keyCode == 27) {
+            this.getDevices(1);
+        }
+    }
+    function confirmLimitDownloadspeed(i) {
+        var lu = document.getElementById('ld-'+i);
+        console.log(window.event.keyCode);
+        if (window.event.keyCode == 13) {
+            var uploadlimit = devices[i].uploadlimit;
+            var downloadlimit = document.getElementById('ld-value').value;
+            if (downloadlimit == '' || downloadlimit == 0) {
+                downloadlimit = -1;
+            }
+            var mac = devices[i].mac;
+            var params = {'mac':mac, 'uploadlimit':uploadlimit, 'downloadlimit':downloadlimit};
+            console.log(params);
+            XHR.post('<%=luci.dispatcher.build_url("admin", "advancednew","set_device")%>', params,
+                function(x, result){
+                    console.log(result);
+                    if (result.code == 0) {
+                        this.getDevices(1);
+                    }
+                });
+        } else if (window.event.keyCode == 27) {
+            this.getDevices(1);
+        }
+    }
+
+    // page functions
+    function changeDiv(x) {
+        document.getElementById('MenuPoint').style.top = 250*(x-1)+150 + 'px';
+        if (x==2){
+            document.getElementById("device-onlineR").style.display="none";
+            document.getElementById("net-settingR").style.display="";
+            document.getElementById("wirelessSetR").style.display="none"
+        }if(x==3){
+            document.getElementById("device-onlineR").style.display="none";
+            document.getElementById("net-settingR").style.display="none";
+            document.getElementById("wirelessSetR").style.display=""
+        }else if (x==1) {
+            document.getElementById("device-onlineR").style.display="";
+            document.getElementById("net-settingR").style.display="none";
+            document.getElementById("wirelessSetR").style.display="none"
+        }
+    }
+
+    function switchChange() {
+        var status = document.getElementById("switchSpan").innerHTML;
+        if (status=="ON") {
+            document.getElementById("switchSpan").innerText="OFF";
+            document.getElementById("switchSpan").style.color = "#afafaf";
+            document.getElementById("switchOn").style.display="none";
+            document.getElementById("switchOff").style.display=""
+        }else {
+            document.getElementById("switchSpan").innerText="ON";
+            document.getElementById("switchSpan").style.color = "#df0007";
+            document.getElementById("switchOn").style.display="";
+            document.getElementById("switchOff").style.display="none"
+        }
+        if (checkEnable) {
+            var enable = checkStatus();
+            for (var i=0; i<ifaces.length; i++) {
+                if (ifaces[i].band == '2.4G') {
+                    ifaces[i].enable = enable;
+                }
+            }
+            var params = {'ifaces':ifaces};
+            console.log(params);
+            XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","set_wifi_iface")%>', params,
+                function(x, result){
+                    console.log(result);
+                });
+        } else {
+            checkEnable = true;
+        }
+    }
+
+    function checkStatus() {
+        var status = document.getElementById("switchSpan").innerText;
+        if (status == 'ON') {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    function setStatus(flag) {
+        if (flag) {
+            document.getElementById("switchSpan").innerText = "OFF";
+        } else {
+            document.getElementById("switchSpan").innerText = "ON";
+        }
+        this.switchChange();
+    }
+
+    function deviceBtn(x) {
+        if (x==1){
+            document.getElementById("device-online").style.borderBottom = '3px solid #d8000b';
+            document.getElementById("device-baned").style.borderBottom = '0px solid #d8000b';
+            document.getElementById("linkedDevice").style.display="";
+            document.getElementById("banDevice").style.display="none";
+        } else if (x==2) {
+            document.getElementById("device-online").style.borderBottom = '0px solid #d8000b';
+            document.getElementById("device-baned").style.borderBottom = '3px solid #d8000b';
+            document.getElementById("linkedDevice").style.display="none";
+            document.getElementById("banDevice").style.display="";
+        }
+
+    }
+
+    function getDevices(flag) {
+        console.log(flag);
+        if (flag) {
+            timer = setInterval(function () {
+                this.formTable();
+            }, 1000);
+        } else {
+            clearInterval(timer);
+        }
+    }
+
+    function hidTip() {
+        var basicIpNote = document.getElementById("basicIpNote");
+        var basicMaskNote = document.getElementById("basicMaskNote");
+        var basicGatewayNote = document.getElementById("basicGatewayNote");
+        var basicPrimDnsNote = document.getElementById("basicPrimDnsNote");
+        var basicSeDnsNote = document.getElementById("basicSeDnsNote");
+        basicIpNote.style.visibility = 'hidden';
+        basicMaskNote.style.visibility = 'hidden';
+        basicGatewayNote.style.visibility = 'hidden';
+        basicPrimDnsNote.style.visibility = 'hidden';
+        basicSeDnsNote.style.visibility = 'hidden';
+    }
+
+    // check functions
+    function isNullSSID() {
+        var ssid = document.getElementById("ssid").value;
+        if (ssid==null||ssid==""){
+            document.getElementById("wlanSsidNote").style.visibility="visible";
+            return true;
+        }else {
+            document.getElementById("wlanSsidNote").style.visibility="hidden";
+            return false;
+        }
+    }
+
+    function isShortPwd() {
+        var bWlPwd = document.getElementById("bWlPwd").value;
+        if (bWlPwd==null||bWlPwd==""||bWlPwd.length<8){
+            document.getElementById("wlanPwdNote").style.visibility="visible";
+            return true;
+        }else {
+            document.getElementById("wlanPwdNote").style.visibility="hidden";
+            return false;
+        }
+    }
+
+    function isValidInput() {
+        hidTip();
+        var staticIp = document.getElementById("static-ipaddr").value;
+        var staticNetMask = document.getElementById("static-netmask").value;
+        var staticGateway = document.getElementById("static-gateway").value;
+        var staticDNS = document.getElementById("static-dns").value;
+        var staticDNSBak = document.getElementById("static-dnsbak").value;
+        var basicIpNote = document.getElementById("basicIpNote");
+        var basicMaskNote = document.getElementById("basicMaskNote");
+        var basicGatewayNote = document.getElementById("basicGatewayNote");
+        var basicPrimDnsNote = document.getElementById("basicPrimDnsNote");
+        var basicSeDnsNote = document.getElementById("basicSeDnsNote");
+        if ((staticIp != ''&&!isValidIP(staticIp))||(staticSave&&staticIp == '')){
+            basicIpNote.style.visibility = 'visible';
+            document.getElementById("static-ipaddr").focus();
+            staticSave = false;
+            return false;
+        }else if((staticNetMask != ''&& !isValidNetmask(staticNetMask))||(staticSave&&staticNetMask == '')){
+            basicMaskNote.style.visibility = 'visible';
+            document.getElementById("static-netmask").focus();
+            staticSave = false;
+            return false;
+        }else if((staticGateway != ''&&!isValidIP(staticGateway))||(staticSave&&staticGateway == '')){
+            basicGatewayNote.style.visibility = 'visible';
+            document.getElementById("static-gateway").focus();
+            staticSave = false;
+            return false;
+        }else if((staticDNS != ''&&!isValidIP(staticDNS))||(staticSave&&staticDNS == '')){
+            basicPrimDnsNote.style.visibility = 'visible';
+            document.getElementById("static-dns").focus();
+            staticSave = false;
+            return false;
+        }else if(staticDNSBak !=''&&!isValidIP(staticDNSBak)){
+            basicSeDnsNote.style.visibility = 'visible';
+            document.getElementById("static-dnsbak").focus();
+            staticSave = false;
+            return false;
+        }
+        staticSave = false;
+        return true;
+    }
+    function netBtn(x) {
+        wanConnectTypeIndex = x-1;
+        document.getElementById('pppoe').style.display = "none";
+        document.getElementById('static').style.display = "none";
+        document.getElementById('dhcp').style.display = "none";
+        document.getElementById("net-pppoe").style.borderBottom = '0px solid #d8000b';
+        document.getElementById("net-static").style.borderBottom = '0px solid #d8000b';
+        document.getElementById("net-dhcp").style.borderBottom = '0px solid #d8000b';
+        if (x==1){
+            document.getElementById('pppoe').style.display = "";
+            document.getElementById("net-pppoe").style.borderBottom = '3px solid #d8000b';
+        }else if (x==2){
+            document.getElementById('static').style.display = "";
+            document.getElementById("net-static").style.borderBottom = '3px solid #d8000b';
+        }else {
+            document.getElementById('dhcp').style.display = "";
+            document.getElementById("net-dhcp").style.borderBottom = '3px solid #d8000b';
+        }
+    }
+    function closeTip() {
+        document.getElementById("Error").style.visibility = 'hidden';
+    }
+    function setLinkStatus(flag) {
+        if (flag == 1) {
+            document.getElementById('break').style.display = 'none';
+            document.getElementById('linking').style.display = 'none';
+            document.getElementById('linked').style.display = '';
+            document.getElementById('netStatus').innerText = '已连接';
+            document.getElementById('netStatus').style.color = '#8c000a';
+        } else if (flag == 0) {
+            document.getElementById('linked').style.display = 'none';
+            document.getElementById('linking').style.display = 'none';
+            document.getElementById('break').style.display = '';
+            document.getElementById('netStatus').innerText = '已断开';
+            document.getElementById('netStatus').style.color = 'rgb(218, 31, 24)';
+        } else {
+            document.getElementById('linked').style.display = 'none';
+            document.getElementById('linking').style.display = 'none';
+            document.getElementById('break').style.display = '';
+            document.getElementById('netStatus').innerText = '已断开(未接线)';
+            document.getElementById('netStatus').style.color = 'rgb(218, 31, 24)';
+        }
+    }
+</script>

@@ -1,0 +1,877 @@
+<%+header%>
+<%-
+local uci = require "luci.model.uci"
+local _uci_real  = cursor or _uci_real or uci.cursor()
+-%>
+<div>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>
+            <span class="detail"><%:add successfully%></span>
+            <input class="subBtn" value="<%:confirm%>" type="button" onclick="closeTip()">
+        </div>
+    </div>
+    <fieldset>
+        <legend><%:wireless MAC address filter%></legend>
+        <div class="sp-postion">
+            <div class="podition-line po-abs" style="width:840px;">
+                <span class="sp-postion-enable"> <%:Enable wireless MAC address filter%></span>
+                    <input type="checkbox" id="mac-filter-enable" onchange="changeMacEn()"><span class="sp-postion-enable"><%:enable%></span>
+                <li class="textConA textCon" style="position: relative;">
+				<span id="ssidSel" class="select">
+					<input id="ssid-option-vals" class="value hsValueA" value="" onchange="ssidChange()"
+                           oninput="ssidChange()" disabled></input>
+                    <div class="sel-corner" onclick="showSelOption()">
+                        <i class="arrow"></i>
+                    </div>
+				</span>
+                    <ul class="selOptsUl" id="selOptsSSidSel" style="overflow: hidden; visibility: hidden; top: -1px;">
+                    </ul>
+                </li>
+                <!--<input id="ssid-selected" onchange="ssidSelectedChange()">
+                <select id="ssid-list" onchange="ssidListChange()">-->
+            </select><span class="sp-postion-enable"><%:mac address filter function%></span>
+            </div>
+        </div>
+        <input type="radio" name="mac-bt-radio"
+               onchange="switchRaido(['wireless-mac-filter-table-5g','wireless-mac-filter-table'],['mac-bt-radio',0]);changeBand('2.4G')"
+               checked="checked" style="float: left;margin-top: 12px"> <label
+                   style="float: left;margin-top: 13px"><span class="input-radio">2.4G</span></label>
+        <input type="radio" name="mac-bt-radio"
+               onchange="switchRaido(['wireless-mac-filter-table','wireless-mac-filter-table-5g'],['mac-bt-radio',1]);changeBand('5G')"
+               style="float: left;margin-top: 12px"> <label style="float: left;margin-top: 13px"><span class="input-radio">5G</span></label>
+        <!--<button id="mac-bt-24g" onclick="switchTable(['wireless-mac-filter-table-5g','wireless-mac-filter-table'],['mac-bt-24g','mac-bt-5g'])" style="background: #C9C9C9">2.4G</button>
+        <button id="mac-bt-5g" onclick="switchTable(['wireless-mac-filter-table','wireless-mac-filter-table-5g'],['mac-bt-5g','mac-bt-24g'])">5G</button>-->
+        <i class="btnHelp" onclick="getHelp('wirTpFeg')" style="margin-left:20px;margin-top: 12px;margin-bottom: 5px;"></i>
+        <li class="btnHelp">
+            <div id="wirTpFeg" class="btnFeg" style="visibility: hidden;">
+                <i class=""></i>
+                <p class="helpWord"><%:filter intro%></p>
+            </div>
+        </li>
+
+        <table id="wireless-mac-filter-table">
+        </table>
+        <table id="wireless-mac-filter-table-5g" style="display: none">
+        </table>
+        </br>
+        <button style="float: right" id="saveEabMacBtn" onclick="saveEnableSsids()"><%:Save%></button>
+        </br>
+    </fieldset>
+    <div id="wireless-mac-setting" class="hsVignetteCon" style="display: none;">
+        <div class="hsVignette hsVigWDS">
+            <p class="hsVigTtop"><i class="hsVigClose" onclick="closeSettingDiv()"></i></p>
+            <p class="hsVigWDSPWD"><span class="wireless-service-setting-font"><%:mac filter title%></span></p>
+            <fieldset>
+                <legend></legend>
+                <table class="no-border">
+                    <tr>
+                        <td class="inline-text-L"><%:MAC-Address%></td>
+                        <td class="inline-text-R"><input id="setting-mac" onkeyup="nStrLimit(this)" maxlength="17"></td>
+                    </tr>
+                    <tr>
+                        <td class="inline-text-L"><%:effective range%></td>
+                        <td class="inline-text-R"><select id="setting-net_name"></select></td>
+                    </tr>
+                    <tr>
+                        <td class="inline-text-L"><%:remarks%></td>
+                        <td class="inline-text-R"><input id="setting-comment"></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="no-border">
+                            <button id="setMacBtn" onclick="setMacFilter()"><%:confirm%></button>
+                        </td>
+                    </tr>
+                </table>
+            </fieldset>
+        </div>
+    </div>
+    <% local vlan_enable = _uci_real:get("system", "vlan", "enable") == "1" and true or false;  if vlan_enable then %>
+    <fieldset>
+        <legend><%:VLAN setting%></legend>
+        <input type="radio" name="wna-set-radio"
+               onchange="switchRaido(['vlan-settings-table-5g','vlan-settings-table'],['wna-set-radio',0])"
+               checked="checked"> <span class="input-radio">2.4G</span>
+        <input type="radio" name="wna-set-radio"
+        onchange="switchRaido(['vlan-settings-table','vlan-settings-table-5g'],['wna-set-radio',1])"> <span class="input-radio">5G</span>
+        <!--<button id="wna-set-24g" onclick="switchTable(['vlan-settings-table-5g','vlan-settings-table'],['wna-set-24g','wna-set-5g'])" style="background: #C9C9C9">2.4G</button>
+        <button id="wna-set-5g"onclick="switchTable(['vlan-settings-table','vlan-settings-table-5g'],['wna-set-5g','wna-set-24g'])">5G</button>-->
+        <table id="vlan-settings-table">
+        </table>
+        <table id="vlan-settings-table-5g" style="display: none">
+        </table>
+        </br>
+    </fieldset>
+    <div id="vlan-setting" class="hsVignetteCon" style="display: none;">
+        <div class="hsVignette hsVigWDS">
+            <p class="hsVigTtop"><i class="hsVigClose" onclick="closeSettingDiv()"></i></p>
+            <p class="hsVigWDSPWD"><%:VLAN setting%></p>
+            <fieldset>
+                <legend></legend>
+                <table class="no-border">
+                    <tr>
+                        <td class="inline-text-L"><%:SSID%></td>
+                        <td class="inline-text-R"><span id="vlan-setting-net_name"></span></td>
+                    </tr>
+                    <tr>
+                        <td class="inline-text-L"><%:wireless network and VLAN binding%></td>
+                        <td class="inline-text-R"><input type="checkbox" id="vlan-setting-enable"
+                                                         onchange="changeVanId()" style="float: left;margin-top: 1px;"><label
+                                style="float: left;margin-top: 2px;"><%:enable%></label>
+                            <i class="btnHelp" onclick="getHelp('wirDisFeg')"
+                               style="margin-left: 20px;margin-top: 0px"></i>
+                            <li class="btnHelp">
+                                <div id="wirDisFeg" class="btnFeg" style="visibility: hidden;width: 350px;">
+                                    <i style="top:3px"></i>
+                                    <p class="helpWord"><%:VLAN binding intro%><br><%:VLAN binding intro note%></p>
+                                </div>
+                            </li>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="inline-text-L">VLAN ID：</td>
+                        <td class="inline-text-R"><input id="vlan-setting-vlanid" onkeyup="numLimit(this)" maxlength="4"
+                                                         disabled></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="no-border">
+                            <button id="setVlanBtn" onclick="setVlanConfig()"><%:confirm%></button>
+                        </td>
+                    </tr>
+                </table>
+            </fieldset>
+        </div>
+    </div>
+    <% end %>
+</div>
+<%+footer%>
+<script>
+    var mac_24g;
+    var mac_5g;
+    var vlan;
+    var ssids = [];
+    var action;
+    var selected_band = '2.4G';
+    var selected_index = -1;
+    var hidflag = 0;
+    var delBand;
+    var isDelBefore = false;
+    var errTipDoc;
+    getMacFilter();
+    <% if vlan_enable then %>
+    getVlanConfig();
+    document.getElementsByName('wna-set-radio')[0].checked = true;
+    <% end %>
+    document.getElementsByName('mac-bt-radio')[0].checked = true;
+
+    function getMacFilter() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "securep","get_mac_filter")%>', null,
+            function (x, result) {
+                console.log(result);
+                mac_24g = result.info.wifi_24g;
+                mac_5g = result.info.wifi_5g;
+                var other_ssids = result.ssid;
+                var en_ssid = result.en_ssid;
+                /*for (var i=0; i<en_ssid.length; i++) {
+                    for (var j=0; j<ssids_all.length; j++) {
+                        if (ssids_all[j] == en_ssid[i]) {
+                            ssids_all.splice(j, 1);
+                            break;
+                        }
+                    }
+                }*/
+                ssids = other_ssids;
+                var ssids_all = other_ssids;
+                for (var i = 0; i < en_ssid.length; i++) {
+                    ssids_all.push(en_ssid[i]);
+                }
+                var ssids_show = '';
+                for (var i = 0; i < en_ssid.length; i++) {
+                    ssids_show += en_ssid[i] + ',';
+                }
+                document.getElementById('ssid-option-vals').value = ssids_show;
+                if (parseInt(result.enable) == 1) {
+                    document.getElementById('mac-filter-enable').checked = true;
+                    document.getElementById('ssid-option-vals').disabled = false;
+                } else {
+                    document.getElementById('mac-filter-enable').checked = false;
+                    document.getElementById('ssid-option-vals').disabled = true;
+                }
+                var html = '<tr><td colspan="6"><button onclick="addMacFilter()"><%:add%></button><button id="del-mac" onclick="delMacFilter(2)" disabled><%:delete%></button></td></tr>' +
+                    '<tr><th></th><th><%:index%></th><th><%:MAC-Address%></th><th><%:effective range%></th><th><%:remarks%></th><th><%:set%></th></tr>';
+                var html_5g = '<tr><td colspan="6"><button onclick="addMacFilter5()"><%:add%></button><button id="del-mac-5g" onclick="delMacFilter(5)" disabled><%:delete%></button></td></tr>' +
+                    '<tr><th></th><th><%:index%></th><th><%:MAC-Address%></th><th><%:effective range%></th><th><%:remarks%></th><th><%:set%></th></tr>';
+                if (mac_24g.length) {
+                    for (var i = 0; i < mac_24g.length; i++) {
+                        if (mac_24g[i].comment != undefined) {
+                            mac_24g[i].comment_t = mac_24g[i].comment;
+                        } else {
+                            mac_24g[i].comment_t = '';
+                        }
+                        var band = "2.4G";
+                        html += '<tr><td><input type="checkbox" id="mac2-' + i + '" value="' + (i + 1) + '" onchange="selectedMacFilter(this,\'' + band + '\')"></td><td>' + (i + 1) + '</td><td>' + mac_24g[i].mac + '</td><td>' + mac_24g[i].net_name +
+                            '</td><td>' + mac_24g[i].comment_t + '</td><td><button onclick="MacFilterSetting(' + i + ')"><%:set%></button></td></tr>';
+                    }
+                } else {
+                    html += '<tr><td colspan="6"><%:The MAC address list is empty%></td></tr>';
+                }
+                if (mac_5g.length) {
+                    for (var i = 0; i < mac_5g.length; i++) {
+                        if (mac_5g[i].comment != undefined) {
+                            mac_5g[i].comment_t = mac_5g[i].comment;
+                        } else {
+                            mac_5g[i].comment_t = '';
+                        }
+                        var band = "5G";
+                        html_5g += '<tr><td><input type="checkbox" id="mac5-' + i + '" value="' + (i + 1) + '" onchange="selectedMacFilter(this,\'' + band + '\')"></td><td>' + (i + 1) + '</td><td>' + mac_5g[i].mac + '</td><td>' + mac_5g[i].net_name +
+                            '</td><td>' + mac_5g[i].comment_t + '</td><td><button onclick="MacFilterSetting(' + i + ')"><%:set%></button></td></tr>';
+                    }
+                } else {
+                    html_5g += '<tr><td colspan="6"><%:The MAC address list is empty%></td></tr>';
+                }
+
+                var net_name_sel=document.getElementById('setting-net_name');
+                var html_ssid = '<option value="" style="display: none"></option>';
+                for (var i = 0; i < ssids_all.length; i++) {
+                     net_name_sel.options[i]=new Option(ssids_all[i],ssids_all[i]);
+                }
+                var ssid_html = '';
+                var ul_ssid=document.getElementById('selOptsSSidSel');
+                while(ul_ssid.childNodes.length > 0){
+                    ul_ssid.removeChild(ul_ssid.childNodes[0]);
+                }
+                for(var i = 0; i < ssids.length; i++){
+                    var li = document.createElement("li");
+                    li.title = ssids[i];
+                    li.className = "option";
+                    li.onclick = function(li) {chooseSSidOpt(this);};
+                    li.innerText = ssids[i];
+                    ul_ssid.appendChild(li);
+                }
+                var mac_table=document.getElementById('wireless-mac-filter-table');
+                if(mac_table){
+                    setTableInnerHTML(mac_table,html);
+                }
+                var mac_table_5g=document.getElementById('wireless-mac-filter-table-5g');
+                if(mac_table_5g){
+                    setTableInnerHTML(mac_table_5g,html_5g);
+                }
+                chooseSSidOpt();
+            });
+    }
+
+    function addMacFilter() {
+        document.getElementById('wireless-mac-setting').style.display = '';
+        document.getElementById('setting-mac').value = '';
+        document.getElementById('setting-net_name').selectedIndex = 1;
+        document.getElementById('setting-comment').value = '';
+        document.getElementById('setting-mac').focus();
+        selected_band = '2.4G';
+        action = 'add';
+    }
+
+    function addMacFilter5() {
+        document.getElementById('wireless-mac-setting').style.display = '';
+        document.getElementById('setting-mac').value = '';
+        document.getElementById('setting-net_name').selectedIndex = 1;
+        document.getElementById('setting-comment').value = '';
+        document.getElementById('setting-mac').focus();
+        selected_band = '5G';
+        action = 'add';
+    }
+
+    function setMacFilter() {
+        var mac = document.getElementById('setting-mac').value;
+        var net_nameSelect = document.getElementById('setting-net_name');
+        var net_name = net_nameSelect[net_nameSelect.selectedIndex].value;
+        var comment = document.getElementById('setting-comment').value;
+        var err = document.getElementById('Error');
+        var text = err.getElementsByTagName('span')[0];
+        var mac_verify = this.isValidMac(mac);
+        console.log(mac_verify);
+        if (!mac_verify) {
+            text.innerText = '<%:MAC address format is not legal%>';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('setting-mac');
+            return;
+        }
+        if (net_name == null || net_name == "") {
+            text.innerText = '<%:Please select the filter effective range%>';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('setting-net_name');
+            return;
+        }
+        var isconflict = false;
+        for (var i in mac_24g) {
+            if (net_name == mac_24g[i].net_name && mac == mac_24g[i].mac) {
+                if (isDelBefore) {
+                    if (selected_band == "2.4G") {
+                        if (mac != mac_24g[selected_index].mac || net_name != mac_24g[selected_index].net_name) {
+                            isconflict = true;
+                        }
+                    } else {
+                        isconflict = true;
+                    }
+                } else {
+                    isconflict = true;
+                }
+
+            }
+
+        }
+        for (var i in mac_5g) {
+            if (net_name == mac_5g[i].net_name && mac == mac_5g[i].mac) {
+                if (isDelBefore) {
+                    if (selected_band == "5G") {
+                        if (mac != mac_5g[selected_index].mac || net_name != mac_5g[selected_index].net_name) {
+                            isconflict = true;
+                        }
+                    } else {
+                        isconflict = true;
+                    }
+                } else {
+                    isconflict = true;
+
+                }
+            }
+        }
+        if (isconflict) {
+            text.innerText = '<%:MAC address filter conflict%>';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('setting-mac');
+            return;
+        }
+        var params = {'cmd': action, 'mac': mac, 'net_name': net_name, 'comment': comment};
+        document.getElementById('setMacBtn').disabled = true;
+        if (isDelBefore) {
+            var actionD = 'del';
+            console.log(selected_index);
+            if (selected_index == -1) return false;
+            if (delBand == 2) {
+                var paramsD = {
+                    'cmd': actionD,
+                    'mac': mac_24g[selected_index].mac,
+                    'net_name': mac_24g[selected_index].net_name
+                };
+            } else if (delBand == 5) {
+                var paramsD = {
+                    'cmd': actionD,
+                    'mac': mac_5g[selected_index].mac,
+                    'net_name': mac_5g[selected_index].net_name
+                };
+            }
+            console.log(paramsD);
+            XHR.post('<%=luci.dispatcher.build_url("admin", "securep","set_mac_filter")%>', paramsD,
+                function (x, result) {
+                    if (result == null) {
+                        document.getElementById('setMacBtn').disabled = false;
+                        text.innerText = '<%:Connection failure, please try agian%>';
+                        err.style.visibility = 'visible';
+                        return false;
+                    } else if (result.code == 0) {
+                        console.log("edit", params);
+                        XHR.post('<%=luci.dispatcher.build_url("admin", "securep","set_mac_filter")%>', params,
+                            function (x, result) {
+                                document.getElementById('setMacBtn').disabled = false;
+                                console.log("edit", result);
+                                if (result == null) {
+                                    text.innerText = '<%:Connection failure, please try again%>';
+                                    err.style.visibility = 'visible';
+                                } else if (result != null && result.code == 0) {
+                                    getMacFilter();
+                                    text.innerText = '<%:set successfully%>';
+                                    err.style.visibility = 'visible';
+                                    document.getElementById('wireless-mac-setting').style.display = 'none';
+                                    isDelBefore = false;
+                                } else {
+                                    text.innerText = result.msg;
+                                    err.style.visibility = 'visible';
+                                }
+                            });
+                    } else {
+                        text.innerText = result.msg;
+                        err.style.visibility = 'visible';
+                    }
+                });
+            return;
+        }
+        console.log("add", params);
+        XHR.post('<%=luci.dispatcher.build_url("admin", "securep","set_mac_filter")%>', params,
+            function (x, result) {
+                console.log("add", result);
+                document.getElementById('setMacBtn').disabled = false;
+                if (result == null) {
+                    text.innerText = '<%:Connection failed, please try again%>';
+                    err.style.visibility = 'visible';
+                } else if (result != null && result.code == 0) {
+                    getMacFilter();
+                    text.innerText = '<%:add successfully%>';
+                    err.style.visibility = 'visible';
+                    document.getElementById('wireless-mac-setting').style.display = 'none';
+                    isDelBefore = false;
+                } else {
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    function delBeforeSet(band) {
+
+    }
+
+    function delMacFilter(band) {
+        action = 'del';
+        console.log(selected_index);
+        if (selected_index == -1) return;
+        if (band == 2) {
+            var params = {
+                'cmd': action,
+                'mac': mac_24g[selected_index].mac,
+                'net_name': mac_24g[selected_index].net_name
+            };
+        } else {
+            var params = {
+                'cmd': action,
+                'mac': mac_5g[selected_index].mac,
+                'net_name': mac_5g[selected_index].net_name
+            };
+        }
+        console.log(params);
+        XHR.post('<%=luci.dispatcher.build_url("admin", "securep","set_mac_filter")%>', params,
+            function (x, result) {
+                console.log(result);
+                var err = document.getElementById('Error');
+                var text = err.getElementsByTagName('span')[0];
+                if (result == null) {
+                    text.innerText = '<%:Connection failed, please try again%>';
+                    err.style.visibility = 'visible';
+                } else if (result.code == 0) {
+                    getMacFilter();
+                    text.innerText = '<%:successfully delete%>';
+                    err.style.visibility = 'visible';
+                    document.getElementById('del-mac-5g').disabled = true;
+                    document.getElementById('del-mac').disabled = false;
+                } else {
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                    if (result.code == 1720) {
+                        errTipDoc = document.getElementById('setting-mac');
+                    }
+                }
+            });
+    }
+
+    function selectedMacFilter(x, band) {
+        selected_index = parseInt(x.value) - 1;
+        var index = parseInt(selected_index) + 2;
+        console.log(selected_band);
+        for (var s in mac_24g) {
+            if (s != selected_index) {
+                document.getElementById('mac2-' + s).checked = false;
+            }
+        }
+        for (var s in mac_5g) {
+            if (s != selected_index) {
+                document.getElementById('mac5-' + s).checked = false;
+            }
+        }
+        if (band == "2.4G") {
+            for (var i = 2; i <= mac_24g.length + 1; i++) {
+                if (i == index) {
+                    if (!document.getElementById('mac2-' + selected_index).checked) {
+                        document.getElementById('wireless-mac-filter-table').rows[i].style.backgroundColor = '#fff';
+                        document.getElementById('del-mac').disabled = true;
+                    } else {
+                        document.getElementById('wireless-mac-filter-table').rows[i].style.backgroundColor = '#353535';
+                        document.getElementById('del-mac').disabled = false;
+                    }
+                } else {
+                    document.getElementById('wireless-mac-filter-table').rows[i].style.backgroundColor = '#fff';
+                }
+            }
+        } else {
+            for (var i = 2; i <= mac_5g.length + 1; i++) {
+                if (i == index) {
+                    if (!document.getElementById('mac5-' + selected_index).checked) {
+                        document.getElementById('wireless-mac-filter-table-5g').rows[i].style.backgroundColor = '#fff';
+                        document.getElementById('del-mac-5g').disabled = true;
+                    } else {
+                        document.getElementById('wireless-mac-filter-table-5g').rows[i].style.backgroundColor = '#353535';
+                        document.getElementById('del-mac-5g').disabled = false;
+                    }
+                } else {
+                    document.getElementById('wireless-mac-filter-table-5g').rows[i].style.backgroundColor = '#fff';
+                }
+            }
+        }
+    }
+
+    function saveEnableSsids() {
+        var en_ssid_array = document.getElementById('ssid-option-vals').value;
+        var en_ssid_tosolve = en_ssid_array.split(',');
+        var en_ssid = [];
+        for (var i = 0; i < en_ssid_tosolve.length; i++) {
+            if (en_ssid_tosolve[i] != '') {
+                en_ssid.push(en_ssid_tosolve[i]);
+            }
+        }
+        var enable;
+        if (document.getElementById('mac-filter-enable').checked) {
+            enable = '1';
+        } else {
+            enable = '0';
+        }
+        var err = document.getElementById('Error');
+        var text = err.getElementsByTagName('span')[0];
+        if (enable == '1' && en_ssid.length == 0) {
+            text.innerText = '<%:filter rule cannot be empty%>';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('ssid-option-vals');
+            return;
+        }
+        if (enable == "1") {
+            for (var r in en_ssid) {
+                for (var g in ssids) {
+                    if (en_ssid[r] == ssids[g]) {
+                        break;
+                    }
+                    if (g == (ssids.length - 1)) {
+                        text.innerText = '<%:illegal ssid%>' + en_ssid[r] + ',<%:illegal ssid%>';
+                        err.style.visibility = 'visible';
+                        errTipDoc = document.getElementById('ssid-option-vals');
+                        return;
+                    }
+                }
+            }
+        }
+        var params = {'enable': enable, 'en_ssid': en_ssid};
+        console.log(params);
+        document.getElementById('saveEabMacBtn').disabled = true;
+        XHR.post('<%=luci.dispatcher.build_url("admin", "securep","set_mac_filter")%>', params,
+            function (x, result) {
+                document.getElementById('saveEabMacBtn').disabled = false;
+                console.log(result);
+                if (result == null) {
+                    text.innerText = '<%:Connection failed, please try again%>';
+                    err.style.visibility = 'visible';
+                } else if (result.code == 0) {
+                    text.innerText = '<%:set successfully%>';
+                    err.style.visibility = 'visible';
+                    document.getElementById('wireless-mac-setting').style.display = 'none';
+                } else {
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                    if (result.code == 1720) {
+                        errTipDoc = document.getElementById('setting-mac');
+                    }
+                }
+            });
+    }
+
+    function getVlanConfig() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "securep","get_vlan_config")%>', null,
+            function (x, result) {
+                console.log(result);
+                vlan = result.info;
+                var html = '<tr><th><%:index%></th><th><%:SSID%></th><th><%:network type%></th><th>VLAN ID</th><th><%:set%></th></tr>';
+                var html_5g = '<tr><th><%:index%></th><th><%:SSID%></th><th><%:network type%></th><th>VLAN ID</th><th><%:set%></th></tr>';
+                var index_24g = 0;
+                var index_5g = 0;
+                for (var i = 0; i < vlan.length; i++) {
+                    if (vlan[i].net_type == '2') {
+                        vlan[i].type = '<%:visitor network%>';
+                    } else if (vlan[i].net_type == '1') {
+                        vlan[i].type = '<%:employee network%>';
+                    } else {
+                        vlan[i].type = '';
+                    }
+                    if (vlan[i].vlanid == undefined || vlan[i].vlanid == 0) {
+                        vlan[i].vlan_id_t = '<%:unbounding%>';
+                    } else {
+                        vlan[i].vlan_id_t = vlan[i].vlanid;
+                    }
+                }
+                for (var i = 0; i < vlan.length; i++) {
+                    if (vlan[i].band == '2.4G') {
+                        index_24g++;
+                        html += '<tr><td>' + index_24g + '</td><td>' + vlan[i].net_name + '</td><td>' + vlan[i].type + '</td><td>' + vlan[i].vlan_id_t +
+                            '</td><td><button onclick="VLANSetting(' + i + ')"><%:set%></button></td></tr>';
+                    } else {
+                        index_5g++;
+                        html_5g += '<tr><td>' + index_5g + '</td><td>' + vlan[i].net_name + '</td><td>' + vlan[i].type + '</td><td>' + vlan[i].vlan_id_t +
+                            '</td><td><button onclick="VLANSetting(' + i + ')"><%:set%></button></td></tr>';
+                    }
+                }
+                if (index_24g == 0) {
+                    html += '<tr><td colspan="5">VLAN列表为空</td></tr>'
+                }
+                if (index_5g == 0) {
+                    html_5g += '<tr><td colspan="5">VLAN列表为空</td></tr>'
+                }
+                var settings_table=document.getElementById('vlan-settings-table');
+                if(settings_table){
+                    setTableInnerHTML(settings_table,html);
+                }
+                var settrings_table_5g=document.getElementById('vlan-settings-table-5g');
+                if(settrings_table_5g){
+                    setTableInnerHTML(settrings_table_5g,html_5g);
+                }
+            });
+    }
+
+    function ssidSelectedChange() {
+        var ssidSelected = document.getElementById('ssid-selected');
+        var ssidSelectedValue = ssidSelected.value;
+        var ssidSelectedArray = ssidSelectedValue.split(",");
+        var ssids_removed;
+        for (var i = 0; i < ssidSelectedArray.length; i++) {
+            ssids_removed = customArrayRemove(ssids, ssidSelectedArray[i]);
+            console.log(ssids_removed);
+        }
+        var html_ssid = '<option value="" style="display: none"></option>';
+        for (var i = 0; i < ssids_removed.length; i++) {
+            html_ssid += '<option value="' + ssids_removed[i] + '">' + ssids_removed[i] + '</option>';
+        }
+        document.getElementById('ssid-list').innerHTML = html_ssid;
+    }
+
+    function customArrayRemove(array, indexValue) {
+        var array_removed = [];
+        for (var i = 0; i < array.length; i++) {
+            if (array[i] != indexValue) {
+                array_removed.push(array[i]);
+            }
+        }
+        return array_removed;
+    }
+
+    function ssidListChange() {
+        var ssidList = document.getElementById('ssid-list');
+        var ssidListIndex = ssidList.selectedIndex;
+        if (ssidListIndex == 0) {
+            return;
+        } else {
+            var ssidSelected = document.getElementById('ssid-selected');
+            var ssidSelectedValue = ssidSelected.value;
+            if (ssidSelectedValue == '') {
+                var ssidSelectedValueSolved = ssidList[ssidListIndex].value;
+            } else {
+                var ssidSelectedValueSolved = ssidSelectedValue + ',' + ssidList[ssidListIndex].value;
+            }
+            ssidSelected.value = ssidSelectedValueSolved;
+        }
+    }
+
+    function switchTable(arr, bt) {
+        selected_index = -1;
+        document.getElementById(arr[0]).style.display = 'none';
+        document.getElementById(arr[1]).style.display = '';
+        document.getElementById(bt[0]).style.backgroundColor = "#c9c9c9";
+        document.getElementById(bt[1]).style.backgroundColor = "#a0d468"
+    }
+
+    function MacFilterSetting(i) {
+        console.log(i);
+        action = 'add';
+        document.getElementById('wireless-mac-setting').style.display = '';
+        selected_index = i;
+        isDelBefore = true;
+        if (selected_band == '2.4G') {
+            delBand = 2;
+            document.getElementById('setting-mac').value = mac_24g[i].mac;
+            var net_nameSelect = document.getElementById('setting-net_name');
+            for (var j = 0; j < net_nameSelect.options.length; j++) {
+                if (net_nameSelect[j].value == mac_24g[i].net_name) {
+                    net_nameSelect.selectedIndex = j;
+                }
+            }
+            document.getElementById('setting-comment').value = mac_24g[i].comment == undefined ? '' : mac_24g[i].comment;
+        } else {
+            delBand = 5;
+            document.getElementById('setting-mac').value = mac_5g[i].mac;
+            var net_nameSelect = document.getElementById('setting-net_name');
+            for (var j = 0; j < net_nameSelect.options.length; j++) {
+                if (net_nameSelect[j].value == mac_5g[i].net_name) {
+                    net_nameSelect.selectedIndex = j;
+                }
+            }
+            document.getElementById('setting-comment').value = mac_5g[i].comment == undefined ? '' : mac_5g[i].comment;
+        }
+    }
+
+    function VLANSetting(i) {
+        document.getElementById('wirDisFeg').style.visibility = 'hidden';
+        document.getElementById('vlan-setting').style.display = '';
+        console.log(i);
+        document.getElementById('vlan-setting-net_name').innerText = vlan[i].net_name;
+        if (vlan[i].enable == "true" || vlan[i].enable == true) {
+            document.getElementById('vlan-setting-vlanid').disabled = false;
+            document.getElementById('vlan-setting-enable').checked = true;
+        } else {
+            document.getElementById('vlan-setting-vlanid').disabled = true;
+            document.getElementById('vlan-setting-enable').checked = false;
+        }
+        if (vlan[i].vlanid != undefined) {
+            document.getElementById('vlan-setting-vlanid').value = vlan[i].vlanid;
+        } else {
+            document.getElementById('vlan-setting-vlanid').value = '';
+        }
+    }
+
+    function setVlanConfig() {
+        var net_name = document.getElementById('vlan-setting-net_name').innerText;
+        if (document.getElementById('vlan-setting-enable').checked) {
+            var enable = 'true';
+        } else {
+            var enable = 'false';
+        }
+        var vlanid = document.getElementById('vlan-setting-vlanid').value;
+        var err = document.getElementById('Error');
+        var text = err.getElementsByTagName('span')[0];
+        if (enable == "true") {
+            if (vlanid == null || vlanid == "") {
+                text.innerText = '<%:VLAN ID cannot be empty%>';
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('vlan-setting-vlanid');
+                return;
+            } else if (vlanid > 4094 || vlanid < 3) {
+                text.innerText = '<%:Invalid vlanID%>';
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('vlan-setting-vlanid');
+                return;
+            }
+
+        }
+        var params = {'net_name': net_name, 'enable': enable, 'vlanid': vlanid};
+        console.log(params);
+        document.getElementById('setVlanBtn').disabled = true;
+        XHR.post('<%=luci.dispatcher.build_url("admin", "securep","set_vlan_config")%>', params,
+            function (x, result) {
+                document.getElementById('setVlanBtn').disabled = false;
+                console.log(result);
+                if (result == null) {
+                    text.innerText = '<%:connect failed,please retry%>';
+                    err.style.visibility = 'visible';
+                } else if (result != null && result.code == 0) {
+                    text.innerText = '<%:set successfully%>';
+                    err.style.visibility = 'visible';
+                    document.getElementById('vlan-setting').style.display = 'none';
+                    getVlanConfig();
+                } else {
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    function showSelOption() {
+        var disable = document.getElementById('ssid-option-vals').disabled;
+        console.log("dis", disable);
+        if (!disable) {
+            if (document.getElementById('selOptsSSidSel').children.length == 0)
+                return;
+            document.getElementById('selOptsSSidSel').style.visibility = 'visible';
+            hidflag++;
+        }
+    }
+
+    function chooseSSidOpt(e) {
+        var ssid_html = '';
+        document.getElementById('selOptsSSidSel').style.visibility = 'hidden';
+        var input_ssid = document.getElementById('ssid-option-vals');
+        var input_text = input_ssid.value;
+        var sel_start = input_text.length;
+        var sel_len = 0;
+        if (e != undefined) {
+            input_text += e.title + ',';
+        }
+        var ssidTextArray = input_text.split(",");
+        if (ssidTextArray.length > 1) {
+            sel_len = ssidTextArray[ssidTextArray.length - 2].length + 1;
+        }
+        var ssids_removed = ssids;
+        for (var i = 0; i < ssidTextArray.length; i++) {
+            ssids_removed = customArrayRemove(ssids_removed, ssidTextArray[i]);
+        }
+        console.log(ssids_removed);
+        var ul_ssid=document.getElementById('selOptsSSidSel');
+        while(ul_ssid.childNodes.length > 0){
+            ul_ssid.removeChild(ul_ssid.childNodes[0]);
+        }
+        for(var i = 0; i < ssids_removed.length; i++){
+            var li = document.createElement("li");
+            li.title = ssids_removed[i];
+            li.className = "option";
+            li.onclick = function(li) {chooseSSidOpt(this);};
+            li.innerText = ssids_removed[i];
+            ul_ssid.appendChild(li);
+        }
+        input_ssid.value = input_text;
+        if (sel_len != 0) {
+            sel_start = input_text.length - sel_len;
+        }
+        var sel_end = input_text.length;
+        setSelectionRange(input_ssid, sel_start, sel_end)
+    }
+
+    function ssidChange() {
+        chooseSSidOpt();
+    }
+
+    function setSelectionRange(input, selectionStart, selectionEnd) {
+        if (input.setSelectionRange) {
+            input.focus();
+            input.setSelectionRange(selectionStart, selectionEnd);
+        }
+        else if (input.createTextRange) {
+            var range = input.createTextRange();
+            range.collapse(true);
+            range.moveEnd('character', selectionEnd);
+            range.moveStart('character', selectionStart);
+            range.select();
+        }
+    }
+
+    function closeSettingDiv() {
+        document.getElementById('wireless-mac-setting').style.display = 'none';
+        <% if vlan_enable then %>
+        document.getElementById('vlan-setting').style.display = 'none';
+        <% end %>
+        isDelBefore = false;
+    }
+
+    document.onclick = function (e) {
+        var myDiv = document.getElementById("selOptsSSidSel");
+            if (hidflag > 1) {
+                myDiv.style.visibility = 'hidden';
+                hidflag = 0;
+            } else if (hidflag == 1) {
+                hidflag++;
+            }
+    }
+
+    function changeMacEn() {
+        if (document.getElementById('mac-filter-enable').checked) {
+            document.getElementById('ssid-option-vals').disabled = false;
+        } else {
+            document.getElementById('ssid-option-vals').disabled = true;
+            document.getElementById('ssid-option-vals').value = '';
+        }
+        chooseSSidOpt();
+    }
+
+    function changeVanId() {
+        if (document.getElementById('vlan-setting-enable').checked) {
+            document.getElementById('vlan-setting-vlanid').disabled = false;
+        } else {
+            document.getElementById('vlan-setting-vlanid').disabled = true;
+            document.getElementById('vlan-setting-vlanid').value = '';
+        }
+
+    }
+
+    function changeBand(x) {
+        selected_band = x;
+    }
+</script>

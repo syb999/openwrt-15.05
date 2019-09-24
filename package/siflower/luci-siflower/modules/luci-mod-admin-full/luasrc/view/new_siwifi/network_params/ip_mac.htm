@@ -1,0 +1,489 @@
+<%+header%>
+<fieldset>
+	<legend><%:IP and MAC mapping table%></legend>
+    <ul><li class="border-line"></li></ul>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>
+			<span class="detail"><%:Save failed%></span>
+			<input class="subBtn" value="<%:confirm%>" type="button" onclick="closeTip()">
+        </div>
+    </div>
+    <div style="float: right">
+        <ul id="ipMacMapLsUl" class="gridToolBar">
+			<li gridtype="refresh" class="refresh"><i onclick="refreshIpMacMap()"></i><span><%:refresh%></span></li>
+        </ul>
+    </div>
+    <table id="ip-mac-map">
+    </table>
+</fieldset>
+<fieldset>
+    <ul><li class="border-line"></li></ul>
+	<legend><%:IP and MAC bound%></legend>
+    <i class="helpBtn" helpstr="dynamicIpHelp" onclick="clickHelp(0);clickHelpAdd(0)"></i>
+    <ul><li class="border-line bottom"></li></ul>
+    <div style="float: right">
+        <ul id="ipMacBindLsUl" class="gridToolBar">
+			<li gridtype="add" class="add" onclick="addIpMacBindTr()"><i></i><span><%:add%></span></li>
+			<li id="delAllUn" gridtype="delAll" style="display: none" class="delAllUn"><i></i><span><%:delete all%></span></li>
+			<li id="delAll" gridtype="delAll" class="delAll" onclick="deleteAllIpMacBind()"><i></i><span><%:delete all%></span></li>
+			<li id="delSelUn" gridtype="delSel" class="delSelUn"><i></i><span><%:delete the selected%></span></li>
+			<li id="delSel" gridtype="delSel" style="display: none" class="delSel" onclick="deleteSelectedIpMacBind()"><i></i><span><%:delete the selected%></span></li>
+        </ul>
+    </div>
+    <table id="ip-mac-bind">
+    </table>
+    <div id="Help" class="Help">
+		<p class="helpTop"><span class="helpDes"><%:help%></span>
+            <i class="helpClose" onclick="clickHelp(1);clickHelpAdd(1)"></i></p>
+        <div class="helpDetail"><ul id="IPMACBindHelp" class="help">
+				<li class="title"><%:IP and MAC binding help%></li>
+				<li class="title"><%:For example%></li>
+				<li class="content"><%:For example intro%></li>
+        <li class="table">
+            <table>
+				<tbody><tr><td><%:host%></td><td><%:MAC address%></td><td><%:IP address%></td></tr>
+				<tr><td><%:Zhangsan%></td><td>00-E0-4C-00-07-BE</td><td>192.168.4.80</td></tr>
+                </tbody>
+            </table>
+        </li>
+    </ul></div></div>
+</fieldset>
+<%+footer%>
+<script>
+    // global vars
+    var devices;
+    var errTipDoc;
+    var binded_devices;
+    var Drag =  document.getElementById("Help");
+
+    // page load functions
+    getIpMacBind();
+//    refreshIpMacMap();
+    dragFunc(Drag);
+
+    // router get interfaces
+    function getIpMacBind() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "networknew","get_ip_mac_bind_table")%>', null,
+            function(x, result) {
+                console.log(result);
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if(result!=null&&result.code == 0) {
+                    var devices = result.devices;
+                    console.log("Dece",devices);
+                    document.getElementById("delSelUn").style.display='';
+                    document.getElementById("delSel").style.display='none';
+                    if ($.isEmptyObject(devices)) {
+                        document.getElementById("delAllUn").style.display='';
+                        document.getElementById("delAll").style.display='none';
+                    } else {
+                        document.getElementById("delAllUn").style.display='none';
+                        document.getElementById("delAll").style.display='';
+                    }
+                    binded_devices = result.devices;
+					var html = '<tr><th><input id="th-box" type="checkbox" onchange="checkAll()"></th><th><%:host%></th><th><%:MAC address%></th><th><%:IP address%></th><th><%:edit%></th></tr>';
+                    if (devices == '') {
+                        html += 'devices is null';
+                    } else {
+                        for(var i in devices){
+                            if (devices[i].name == '' || devices[i].name == '*' || devices[i].name == undefined) {
+								html += '<tr><td><input id="cb-'+i+'" type="checkbox" name="cb-'+i+'" onchange="checkTd('+i+')"></td><td><%:Anonymous host%></td><td>'+devices[i].mac+'</td><td>'+
+                                    devices[i].ipaddr+'</td><td style="cursor: pointer;" onclick="editIpMacBindOfDevice('+i+')"><i class="edit"></i></td></tr>';
+                            } else {
+                                html += '<tr><td><input id="cb-'+i+'" type="checkbox" name="cb-'+i+'" onchange="checkTd('+i+')"></td><td>'+devices[i].name+'</td><td>'+devices[i].mac+'</td><td>'+
+                                    devices[i].ipaddr+'</td><td style="cursor: pointer;" onclick="editIpMacBindOfDevice('+i+')"><i class="edit"></i></td></tr>';
+                            }
+                        }
+                    }
+                    html +='<tr id="ip-mac-bind-add"></tr>';
+                    setTableInnerHTML(document.getElementById('ip-mac-bind'), html);
+                    refreshIpMacMap();
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    function refreshIpMacMap() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "networknew","get_ip_mac_online_table")%>', null,
+            function(x, result) {
+                console.log("refresh",result);
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if(result!=null&&result.code == 0) {
+                    console.log(result);
+                    console.log(binded_devices);
+                    devices = result.devices;
+                    for (var i=0; i<binded_devices.length; i++) {
+                        if (arrayInclude(binded_devices[i], devices)) {
+                            continue;
+                        } else {
+                            binded_devices[i].band = true;
+                            devices.push(binded_devices[i]);
+                        }
+                    }
+					var html = '<tr><th><%:host%></th><th><%:MAC address%></th><th><%:IP address%></th><th><%:status%></th><th><%:Add to bound Settings%></th></tr>';
+                    html += '<tr>';
+                    if (devices == '') {
+                        html += 'devices is null';
+                    } else {
+                        for(var i in devices){
+                            if (devices[i].band == true) {
+                                if (devices[i].name == '' || devices[i].name == '*' || devices[i].name == undefined) {
+									html += '<td><%:Anonymous host%></td><td>'+devices[i].mac+'</td><td>'+devices[i].ipaddr+
+										'</td><td><%:Is binding%></td><td><button class="tb-disable tb-binded" disabled="disabled">+</button></td>';
+                                } else {
+                                    html += '<td>'+devices[i].name+'</td><td>'+devices[i].mac+'</td><td>'+devices[i].ipaddr+
+										'</td><td><%:Is binding%></td><td><button class="tb-disable tb-binded" disabled="disabled">+</button></td>';
+                                }
+                            } else {
+                                if (devices[i].name == '' || devices[i].name == '*' || devices[i].name == undefined) {
+									html += '<td><%:Anonymous host%></td><td>'+devices[i].mac+'</td><td>'+devices[i].ipaddr+
+										'</td><td><%:unbound%></td><td><button class="tb-nobind" value="'+i+'"onclick="addIpMacBind('+i+')">+</button></td>';
+                                } else {
+                                    html += '<td>'+devices[i].name+'</td><td>'+devices[i].mac+'</td><td>'+devices[i].ipaddr+
+										'</td><td><%:unbound%></td><td><button class="tb-nobind" value="'+i+'"onclick="addIpMacBind('+i+')">+</button></td>';
+                                }
+                            }
+                            html += '</tr><tr>';
+                        }
+                    }
+                    html +="</tr>";
+                    setTableInnerHTML(document.getElementById('ip-mac-map'), html);
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // router set interfaces
+    function addIpMacBind(i) {
+        console.log(i);
+        var device = devices[i];
+        var params = {'action':0, 'devices':{"0":device}};
+        XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_ip_mac_bind_table")%>', params,
+            function(x, result) {
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if(result!=null&&result.code == 0) {
+                    console.log(result);
+                    if (result.code == 0) {
+                        this.refreshIpMacMap();
+                        this.getIpMacBind();
+                    }
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    function deleteSelectedIpMacBind() {
+        var selected_cb;
+        var cb_id;
+        var selectedToDelete = {};
+        for (var i in binded_devices) {
+            cb_id = 'cb-'+i;
+            selected_cb = document.getElementById(cb_id)
+            if (selected_cb.checked == true) {
+                selectedToDelete[i] = binded_devices[i];
+            }
+        }
+        var params = {'action':1, 'devices':selectedToDelete};
+        XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_ip_mac_bind_table")%>', params,
+            function(x, result) {
+                console.log(result);
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if(result.code == 0) {
+                    this.refreshIpMacMap();
+                    this.getIpMacBind();
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+					text.innerText = '<%:delete successfully%>';
+                    err.style.visibility = 'visible';
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    function deleteAllIpMacBind() {
+        var params = {'action':2};
+        XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_ip_mac_bind_table")%>', params,
+            function(x, result) {
+                console.log(result);
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if(result.code == 0) {
+                    this.refreshIpMacMap();
+                    this.getIpMacBind();
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+					text.innerText = '<%:Deletion successfully！%>';
+                    err.style.visibility = 'visible';
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    function saveIpMacBind() {
+        var name = document.getElementById('add-name').value;
+        var mac = document.getElementById('add-mac').value;
+        var ipaddr = document.getElementById('add-ipaddr').value;
+        var err = document.getElementById('Error');
+        var text = err.getElementsByTagName('span')[0];
+        /*if (name!=""&&!hostNameLimit(name)){
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('add-name');
+			text.innerText = '<%:host name error%>';
+            return;
+        }*/
+        var mac_verify = this.isValidMac(mac);
+        if (!mac_verify){
+			text.innerText = '<%:MAC address format incorrect%>';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('add-mac');
+            return;
+        }
+        if (mac.toUpperCase()=="FF:FF:FF:FF:FF:FF"){
+			text.innerText = '<%:MAC address cannot be broadcast address here!%>';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('add-mac');
+            return;
+        }
+        if (mac.substring(0,2)%2==1){
+			text.innerText = '<%:MAC address cannot be multicast address here!%>';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('add-mac');
+            return;
+        }
+        if (!isValidIP(ipaddr)) {
+			text.innerText = '<%:IP address format error%>';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('add-ipaddr');
+            return;
+        }
+        for (var i in devices){
+            if (ipaddr==devices[i].ipaddr){
+				text.innerText = '<%:The IP address has been occupied%>';
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('add-ipaddr');
+                return;
+            }
+            if (mac == devices[i].mac) {
+				text.innerText = '<%:The MAC address has been occupied%>';
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('add-mac\'');
+                return;
+            }
+        }
+        var device;
+        if (name==null||name==""){
+            device = {'mac':mac, 'ipaddr':ipaddr};
+        } else {
+            device = {'name':name, 'mac':mac, 'ipaddr':ipaddr};
+        }
+        var params = {'action':0, 'devices':{"0":device}};
+        console.log(params);
+        XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_ip_mac_bind_table")%>', params,
+            function(x, result) {
+                console.log(result);
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if(result!=null&&result.code == 0) {
+                    getIpMacBind();
+                    refreshIpMacMap();
+                } else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // other button functions
+    function addIpMacBindTr() {
+        getIpMacBind();
+        setTimeout(function () {
+            var html = '<td></td><td><input id="add-name" maxlength="32" onkeyup="noSpaceWord(this)"></td><td><input id="add-mac" onkeyup="nStrLimit(this)" maxlength="17"></td><td>'+
+                '<input id="add-ipaddr" onkeyup="nStrLimit(this)" maxlength="15"></td><td><button class="mac-cancel" onclick="getIpMacBind()"><%:cancel%></button><br><button class="mac-save" onclick="saveIpMacBind()"><%:save%></button></td>';
+            setTrInnerHTML(document.getElementById('ip-mac-bind-add'), html);
+        },600);
+    }
+
+    function editIpMacBindOfDevice(i) {
+        getIpMacBind();
+        setTimeout(function () {
+            var device = binded_devices[i];
+            i += 1;
+            var html = '<tr class="ip-mac-edit"><td><input id="cb-' + i + '" type="checkbox" onchange="checkTd(' + i + ')"></td><td><input id="edit-name" maxlength="32" onkeyup="noSpaceWord(this)" value=' + device.name + '></td><td><input id="edit-mac" onkeyup="nStrLimit(this)" maxlength="17" value=' + device.mac + '></td><td>' +
+                '<input id="edit-ipaddr"  onkeyup="nStrLimit(this)" maxlength="15" value=' + device.ipaddr + '></td><td><button class="mac-cancel" onclick="getIpMacBind()"><%:cancel%></button><br><button class="mac-save" onclick="modifyIpMacBind('+ i +')"><%:save%></button></td></tr>';
+            var table = document.getElementById("ip-mac-bind");
+            setTrInnerHTML(table.rows[i], html);
+        },600);
+    }
+
+    function modifyIpMacBind(x) {
+        var name = document.getElementById('edit-name').value;
+        var mac = document.getElementById('edit-mac').value;
+        var ipaddr = document.getElementById('edit-ipaddr').value;
+        var err = document.getElementById('Error');
+        var text = err.getElementsByTagName('span')[0];
+       /* if (name!=""&&!hostNameLimit(name)){
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('edit-name');
+			text.innerText = '<%:Your host name error%>';
+            return;
+        }*/
+        var mac_verify = this.isValidMac(mac);
+        if (!mac_verify){
+			text.innerText = '<%:MAC address format incorrect%>';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('edit-mac');
+            return;
+        }
+        if (mac.toUpperCase()=="FF:FF:FF:FF:FF:FF"){
+			text.innerText = '<%:MAC address cannot be broadcast address here!%>';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('edit-mac');
+            return;
+        }
+        if (mac.substring(0,2)%2==1){
+			text.innerText = '<%:MAC address cannot be multicast address here!%>';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('edit-mac');
+            return;
+        }
+        if (!isValidIP(ipaddr)) {
+			text.innerText = '<%:IP address format error%>';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('edit-ipaddr');
+            return;
+        }
+        for (var i in binded_devices){
+            if ((x-1)!=i&&ipaddr==binded_devices[i].ipaddr){
+				text.innerText = '<%:The IP address has been occupied%>';
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('edit-ipaddr');
+                return;
+            }
+        }
+        var device = {'name':name, 'mac':mac, 'ipaddr':ipaddr};
+        var params = {'action':0, 'devices':{"0":device}};
+        console.log(params);
+        XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_ip_mac_bind_table")%>', params,
+            function(x, result) {
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if(result!=null&&result.code == 0) {
+                    console.log(result);
+                    getIpMacBind();
+                    refreshIpMacMap();
+                } else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // page functions
+    function arrayInclude(e, array) {
+        for (var i=0; i<array.length; i++) {
+            if (e.mac == array[i].mac && e.ipaddr == array[i].ipaddr) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function checkAll() {
+        var allIpMac = document.getElementById("th-box");
+        if (allIpMac.checked == true) {
+            var selected_cb;
+            var cb_id;
+            for (var i in binded_devices) {
+                cb_id = 'cb-'+i;
+                selected_cb = document.getElementById(cb_id);
+                selected_cb.checked = true;
+                document.getElementById("delSel").style.display="";
+                document.getElementById("delSelUn").style.display="none";
+            }
+        }else {
+            var selected_cb;
+            var cb_id;
+            for (var i in binded_devices) {
+                cb_id = 'cb-'+i;
+                selected_cb = document.getElementById(cb_id);
+                selected_cb.checked = false;
+                document.getElementById("delSel").style.display="none";
+                document.getElementById("delSelUn").style.display="";
+            }
+        }
+    }
+
+    function checkTd(i) {
+        for (i in binded_devices) {
+            var cb_id = 'cb-' + i;
+            var chekedItem = document.getElementById(cb_id)
+            if (chekedItem != null && chekedItem != "") {
+                if (chekedItem.checked == true) {
+                    document.getElementById("delSel").style.display = "";
+                    document.getElementById("delSelUn").style.display = "none";
+                    return;
+                } else {
+                    document.getElementById("delSel").style.display = "none";
+                    document.getElementById("delSelUn").style.display = "";
+                }
+
+            }
+        }
+    }
+
+    function clickHelpAdd(i) {
+        if (i==0){
+            document.getElementById("Help").style.position="absolute";
+            var tbHeight = 230 + document.getElementById('ip-mac-map').clientHeight;
+        }
+    }
+</script>

@@ -1,0 +1,223 @@
+<%+header%>
+<fieldset>
+	<legend><%:system log%></legend>
+    <ul><li class="border-line"></li></ul>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>
+			<span class="detail"><%:Failed to get data, please try again%></span>
+			<input class="subBtn" value="<%:confirm%>" type="button" onclick="closeTip()">
+        </div>
+    </div>
+    <div id="delAllTip">
+        <div id="delTip" class="hsTip">
+            <i class="altIcon"></i>
+			<span class="detail"><%:Sure to clear all logs?%></span>
+			<input class="subBtn" value="<%:confirm%>" type="button" onclick="closeDelTip(1)">
+			<input class="subBtn" value="<%:cancel%>" type="button" onclick="closeDelTip(2)">
+        </div>
+    </div>
+    <div style="float: right;">
+        <ul id="logUl" class="gridToolBar">
+			<li gridtype="refresh" class="refresh" onclick="refreshSyslog()"><i></i><span><%:refresh%></span></li>
+			<li gridtype="saveAll" class="add" onclick="location.href='<%=controller%>/admin/systemnew/download_log'"><i></i><span><%:download%></span></li>
+			<li gridtype="delAll" class="delAll" onclick="clearSyslog()"><i></i><span><%:clear%></span></li>
+        </ul>
+    </div>
+    <table id="syslog">
+    </table>
+    <div id="logTblpagIngList" class="pageListPo" style="overflow: hidden; display: none;">
+        <span class="pageArrow pageArrowLa" id="logTblpagIngListlistArrowL" onclick="goToEnd()"></span>
+        <span class="pageArrow pageArrowR" id="logListlistArrowL" onclick="toNextPage()"></span>
+        <div class="pageListContent">
+            <div class="pageListDiv" id="logTblpagIngListlistDiv" style="margin-left: 0px;">
+            </div>
+        </div>
+        <span class="pageArrow pageArrowL" id="logListlistArrowR" onclick="toBackPage()"></span>
+        <span class="pageArrow pageArrowFi" id="logTblpagIngListlistArrowR" onclick="backToStart()"></span>
+    </div>
+</fieldset>
+<%+footer%>
+<script>
+    // global vars
+    var logNum = 0;
+    var currentPage = 0;
+    var toEnd = false;
+    var toStart = false;
+
+    // page load functions
+    refreshSyslog();
+
+    // router get interfaces
+    function refreshSyslog() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "systemnew","get_log")%>', null,
+            function(x, result) {
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if(result!=null&&result.code == 0) {
+                    console.log(result);
+                    var logs = result.logs;
+					var html = '<tr><th><%:index%></th><th><%:log type%></th><th><%:content%></th></tr>';
+                    html += '<tr>';
+                    if (logs == null) {
+                        html += 'logs is null';
+                    } else {
+                        logNum = logs.length;
+                        for(var i in logs){
+                            if(i<14){
+                                html += '<td>'+logs[i].index+'</td><td>'+logs[i].type+'</td><td class="log-td-right">'+logs[i].content+'</td>';
+                                html += '</tr><tr>';
+                            }else {
+                                html += '<td>'+logs[i].index+'</td><td>'+logs[i].type+'</td><td class="log-td-right">'+logs[i].content+'</td>';
+                                html += '</tr><tr style="display: none">';
+                            }
+
+                        }
+                    }
+                    html +="</tr>";
+                    var syslogTable = document.getElementById('syslog');
+                    setTableInnerHTML(syslogTable, html);
+
+                    currentPage = 1;
+                    toPageByPNum(currentPage);
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    function clearSyslog() {
+        document.getElementById('delAllTip').style.visibility = 'visible';
+        /*XHR.get('<%=luci.dispatcher.build_url("admin", "systemnew","clean_log")%>', null,
+            function(x, result){
+                console.log(result);
+            });
+        refreshSyslog();*/
+    }
+
+    // del all tip
+    function closeDelTip(x) {
+        document.getElementById('delAllTip').style.visibility = 'hidden';
+        if (x==1){
+            XHR.get('<%=luci.dispatcher.build_url("admin", "systemnew","clean_log")%>', null,
+                function(x, result){
+                    console.log(result);
+                    refreshSyslog();
+                    if (result==null) {
+                        var err = document.getElementById('Error');
+                        var text = err.getElementsByTagName('span')[0];
+                        err.style.visibility = 'visible';
+						text.innerText = '<%:router connection failure%>';
+                    }else if (result.code!=0){
+                        var err = document.getElementById('Error');
+                        var text = err.getElementsByTagName('span')[0];
+                        text.innerText = result.msg;
+                        err.style.visibility = 'visible';
+                    }
+                });
+
+            document.getElementById('logTblpagIngList').style.display = 'none';
+        }
+    }
+    // page functions
+    function backToStart() {
+        var pages = parseInt(logNum/15) +1;
+        currentPage = 1;
+        toStart = true;
+        toPageByPNum(currentPage);
+    }
+
+    function goToEnd() {
+        var pages = parseInt(logNum/15) +1;
+        toEnd = true;
+       toPageByPNum(pages);
+        currentPage = pages;
+    }
+
+    function toBackPage() {
+        if (currentPage-1>0) {
+            toPageByPNum(currentPage-1);
+            currentPage -=1;
+        }
+    }
+
+    function toNextPage() {
+        var pages = parseInt(logNum/15) +1;
+        if (pages >= currentPage +1) {
+            toPageByPNum(currentPage+1);
+            currentPage +=1;
+        }
+    }
+
+    function topage(e) {
+        var index = parseInt(e.innerText);
+        toPageByPNum(index);
+        currentPage = index;
+    }
+
+    function toPageByPNum(index) {
+        console.log("logNum:",logNum);
+        var pages = parseInt(logNum/15) +1;
+        console.log("pages:",pages);
+        if (pages>=2)
+            document.getElementById("logTblpagIngList").style.display='';
+        var page_html = '';
+        for (var i = 1 ;i <= pages;i++){
+            if (i < index){
+                page_html += '<span class="ListSpan"  style="cursor: pointer;" onclick="topage(this)">'+i+'</span>';
+            } else if (index==i) {
+                page_html += '<span class="listSpanS"  style="cursor: default;" onclick="topage(this)">'+i+'</span>';
+            }else {
+                page_html += '<span class="ListSpan" onclick="topage(this)">'+i+'</span>';
+            }
+        }
+        var pageNumDiv = document.getElementById('logTblpagIngListlistDiv');
+        pageNumDiv.innerHTML = page_html;
+        pageIndexView(index);
+        pageView(index);
+    }
+
+    function pageView(page) {
+        var startNum = 15*(page -1);
+        var endNum = 15*page;
+        if(endNum>logNum)
+            endNum = logNum;
+        var tb = document.getElementById('syslog');
+        for (var i = 1; i < logNum ;i ++){
+            if (i>=startNum && i<= endNum){
+                tb.rows[i].style.display = '';
+            } else {
+                tb.rows[i].style.display = 'none';
+            }
+        }
+    }
+
+    function pageIndexView(index) {
+        var pages = parseInt(logNum/15) +1;
+        var pageNumDiv = document.getElementById('logTblpagIngListlistDiv');
+        if (pages<=5)
+            return;
+        if (((pages-currentPage)<=2&&currentPage < index)||toEnd||(pages-index<=2)){
+            toEnd = false;
+            var left = (pages-5)*(-19)+'px';
+            pageNumDiv.style.marginLeft = left;
+        }else if((currentPage<=2&&currentPage > index)||toStart||index<=2){
+            toStart = false;
+            pageNumDiv.style.marginLeft = "0px";
+        } else {
+            if (index%3 != 0&&currentPage < index){
+                var left = parseInt(index/3)*(-57)+'px';
+                pageNumDiv.style.marginLeft = left;
+            }else if (index%3 != 0 &&currentPage > index){
+                var left = parseInt(index/3-1)*(-57)+'px';
+                pageNumDiv.style.marginLeft = left;
+            }
+        }
+    }
+</script>

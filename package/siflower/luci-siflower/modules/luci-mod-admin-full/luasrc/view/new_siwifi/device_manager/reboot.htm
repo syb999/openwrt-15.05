@@ -1,0 +1,81 @@
+<%+header%>
+<fieldset>
+	<legend><%:reboot%></legend>
+    <ul><li class="border-line"></li></ul>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>
+			<span class="detail"><%:operate successfully%></span>
+			<input class="subBtn" value="<%:confirm%>" type="button" onclick="closeTip()">
+        </div>
+    </div>
+    <div id="isSureTip">
+        <div id="lanTip" class="hsTip">
+            <i class="altIcon"></i>
+			<span class="detail"><%:Are you sure you want to reboot the router?%></span>
+			<input class="subBtn" value="<%:confirm%>" type="button" onclick="rebootTip(1)">
+			<input class="subBtn" value="<%:cancel%>" type="button" onclick="rebootTip(2)">
+        </div>
+    </div>
+    <div style="margin: 1.33em auto 4em 6.67em">
+		<button style="width: auto; padding: 0.267em 0.93em" onclick="rebootClick()"><%:reboot%></button>
+    </div>
+    <div id="waiting" style="display: none">
+        <div class="LoadConCover">
+            <div class="coverLoadCon">
+                <div class="coverLoad">
+                    <i class="coverLoadClose" onclick="coverClose()"></i>
+                    <i class="coverLoading" ></i>
+					<p class="coverLoadNote"><%:Reset is underway, please wait...%></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</fieldset>
+
+<%+footer%>
+<script>
+    function rebootClick() {
+        document.getElementById('isSureTip').style.visibility = 'visible';
+    }
+    //reset sure;
+    function rebootTip(i){
+        document.getElementById('isSureTip').style.visibility = 'hidden';
+        if (i==1){
+            reboot();
+        }
+    }
+
+    // router interfaces
+    function reboot() {
+        document.getElementById("waiting").style.display='';
+        XHR.get('<%=luci.dispatcher.build_url("admin", "systemnew","restart")%>', null,
+            function(x, result){
+                console.log(result);
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                    document.getElementById('waiting').style.display = "none";
+                }else if (result!=null&&result.code == 0) {
+                    setTimeout(function () {
+                        setInterval(function () {
+                            XHR.get('<%=luci.dispatcher.build_url("admin", "logout","action_logout")%>', null,
+                                function(x, result) {
+                                if (x.response!=""&&x.response!=null) {
+                                    window.location.reload();
+                                }
+                                });
+                        },3000)
+                    },10000)
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                    document.getElementById('waiting').style.display = "none";
+                }
+            });
+    }
+</script>

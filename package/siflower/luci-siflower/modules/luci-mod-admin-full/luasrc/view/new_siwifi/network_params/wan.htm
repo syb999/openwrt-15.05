@@ -1,0 +1,1176 @@
+<%+header%>
+<fieldset class="wan">
+	<legend><%:WAN setting%></legend>
+	<div id="netSetState" class="handleRelCon" style="visibility: visible;">
+		<i id="linked" class="state" style="display: none"></i>
+		<i id="linking" class="state" style="display: none"></i>
+		<i id="break" class="state" style="display: none"></i>
+		<span id="netStatus" class="state"></span>
+	</div>
+	<i class="helpBtn" helpstr="dynamicIpHelp" onclick="clickHelp(0)"></i>
+	<ul><li class="border-line"></li></ul>
+    <div id="Error">
+		<div id="hsErr" class="hsTip">
+			<i class="altIcon"></i>
+			<span class="detail"><%:Invalid input! Please refer to the correct format:%><br><%:XXX.XXX.XXX.XXX,X is the number of 0~9%></span>
+			<input class="subBtn" value="<%:confirm%>" type="button" onclick="closeTip()">
+        </div>
+    </div>
+	<table class="tb-no-border">
+		<tr><td class="td-tittle" colspan="2"><%:wan connection type%>
+			<select id="wan-connect-type" onchange="changeOption(),changeBtn()">
+				<option value="dhcp"><%:automatically get IP address%></option>
+				<option value="static"><%:static IP address%></option>
+				<option value="pppoe"><%:broadband dial-up%></option>
+			</select>
+			<button onclick="getWan()" style="width:auto;"><%:automatic detection%></button>
+		</td></tr>
+		<tr id="pppoe" style="display: none"><td>
+			<table class="tb-no-border">
+				<tr><td colspan="2">
+						<table class="tb-no-border">
+							<tr><td class="wan-td-left"><%:broadband account%></td><td class="wan-td-right"><input id="pppoe-account" type="text" maxlength="64" onkeyup="noSpaceWord(this)"></td></tr>
+							<tr><td class="wan-td-left"><%:broadband password%></td><td class="wan-td-right"><input id="pppoe-password" type="text" onkeyup="nStrLimit(this)" maxlength="64"></td></tr>
+							<tr><td class="wan-td-left"><%:WAN port speed setting%></td><td class="wan-td-right">
+									<select  id="pppoe-wanspeed-type">
+										<option value="auto"><%:auto negotiation%></option>
+										<option value="10mfull"><%:10M full duplex%></option>
+										<option value="10mhalf"><%:10M half duplex%></option>
+									</select>
+							</td></tr>
+							<tr><td class="wan-td-left">
+								</td><td class="wan-td-right">
+									<button id="pppoeDiscon" disabled onclick="ppoeDisconnect()"><%:break%></button>
+									<button id="pppoeConn" onclick="ppoeConnect()"><%:connect%></button>
+							</td></tr>
+						</table>
+				</td></tr>
+				<tr><td colspan="2">
+					<fieldset class="notChild">
+						<ul><li class="border-line"></li></ul>
+						<legend><%:Connection mode%></legend>
+						<ul><li class="border-line bottom"></li></ul>
+						<table class="tb-no-border">
+							<tr><td colspan="2">
+								<select  id="pppoe-connectmode" onchange="connectmodeChange()">
+									<option value="0"><%:Connect on demand%></option>
+									<option value="1"><%:Automatic connection%></option>
+									<option value="2"><%:Manual connection by user%></option>
+								</select>
+							</td></tr>
+							<tr id="disconnectinterval-tr"><td><%:Automatic wire break waiting time%><input  id="pppoe-disconnectinterval" value="0" type="text" onkeyup="numLimit(this)" maxlength="4"><%:minute0 means no automatic break%></td></tr>
+						</table>
+						<button onclick="setPppoeConnectionMode()"><%:save%></button>
+					</fieldset>
+				</td></tr>
+				<tr><td colspan="2">
+					<fieldset class="notChild">
+						<ul><li class="border-line"></li></ul>
+						<legend><%:Broadband dial-up advanced setup%></legend>
+						<i class="helpBtn" helpstr="dynamicIpHelp" onclick="clickHelphc(0)" style="margin: 10px auto auto 48px;"></i>
+						<ul><li class="border-line bottom"></li></ul>
+						<table class="tb-no-border">
+							<tr><td class="wan-td-left"><%:Packet MTUbyte%></td><td class="wan-td-right"><input id="pppoe-packageMTU" type="text" onkeyup="numLimit(this)" maxlength="4" value="1480"><%:default is 1480, please do not modify if not necessary%></td></tr>
+							<tr><td class="wan-td-left"><%:service name%></td><td class="wan-td-right"><input id="pppoe-servicename" type="text" maxlength="32" onkeyup="nStrLimit(this)"></td></tr>
+							<tr><td class="wan-td-left"><%:server name%></td><td class="wan-td-right"><input id="pppoe-servername" type="text" maxlength="32" onkeyup="nStrLimit(this)"></td></tr>
+							<tr><td class="wan-td-left"><input id="pppoe-useoperatoraddress" type="checkbox" onchange="openUserOper()"></td><td class="wan-td-right"><%:Use the IP address specified by the operator%></td></tr>
+							<tr><td class="wan-td-left"><%:IP address designated by the operator%></td><td class="wan-td-right"><input id="pppoe-operatoraddress" disabled type="text" onkeyup="nStrLimit(this)" maxlength="15"></td></tr>
+							<tr><td class="wan-td-left"><input id="pppoe-manualdns" type="checkbox" onchange="openManualDns('pppoe')"></td><td class="wan-td-right"><%:Manually set the DNS server%></td></tr>
+							<tr><td class="wan-td-left"><%:preferred DNS server%></td><td class="wan-td-right"><input id="pppoe-manual-dns" disabled type="text" onkeyup="nStrLimit(this)" maxlength="15"></td></tr>
+							<tr><td class="wan-td-left"><%:alternate DNS server%></td><td class="wan-td-right"><input id="pppoe-manual-dnsbak" disabled type="text" onkeyup="nStrLimit(this)" maxlength="15"><%:optional%></td></tr>
+							<tr><td></td><td class="wan-td-right">
+									<button onclick="savePppoeAdvanced()"><%:save%></button>
+								<i id="pppoe-saveTip" class="hsSubLoading saving" style="display: none"></i>
+								<i id="pppoe-saveTipSucess" class="hsSubLoading save-suc" style="display: none"></i>
+							</td></tr>
+						</table>
+					</fieldset>
+				</td></tr>
+			</table>
+		</td></tr>
+		<tr id="static" style="display: none"><td>
+			<table class="tb-no-border">
+				<tr><td class="wan-td-left"><%:IP address%></td><td class="wan-td-right"><input id="static-ipaddr" type="text" onkeyup="nStrLimit(this)" maxlength="15" value="0.0.0.0"></td></tr>
+				<tr><td class="wan-td-left"><%:subnet mask%></td><td class="wan-td-right"><input id="static-netmask" type="text" onkeyup="nStrLimit(this)" maxlength="15" value="0.0.0.0"></td></tr>
+				<tr><td class="wan-td-left"><%:gateway%></td><td class="wan-td-right"><input  id="static-gateway" type="text" onkeyup="nStrLimit(this)" maxlength="15" value="0.0.0.0"></td></tr>
+				<tr><td class="wan-td-left"><%:preferred DNS server%></td><td class="wan-td-right"><input  id="static-dns" type="text" onkeyup="nStrLimit(this)" maxlength="15" value="0.0.0.0"></td></tr>
+				<tr><td class="wan-td-left"><%:alternate DNS server%></td><td class="wan-td-right"><input  id="static-dnsbak" type="text" onkeyup="nStrLimit(this)" maxlength="15"><%:optional%></td></tr>
+				<tr><td class="wan-td-left"><%:Packet MTUbyte%></td><td class="wan-td-right"><input  id="static-packageMTU" type="text" value="1500"  onkeyup="numLimit(this)" maxlength="4"style="width: 50px"><%:default is 1500, please do not modify if not necessary%></td></tr>
+				<tr><td class="wan-td-left"><%:WAN port speed setting%></td><td class="wan-td-right">
+					<select id="static-wanspeed-type">
+						<option value="auto"><%:auto negotiation%></option>
+						<option value="10mfull"><%:10M full duplex%></option>
+						<option value="10mhalf"><%:10M half duplex%></option>
+					</select>
+				</td></tr>
+				<tr><td></td><td class="wan-td-right">
+						<button onclick="saveStatic()"><%:save%></button>
+					<i id="static-saveTip" class="hsSubLoading saving" style="display: none"></i>
+					<i id="static-saveTipSucess" class="hsSubLoading save-suc" style="display: none"></i>
+				</td></tr>
+			</table>
+		</td></tr>
+		<tr id="dhcp" style="display: none"><td>
+			<table class="tb-no-border">
+				<tr><td class="wan-td-left"><%:IP address%></td><td class="wan-td-right"><span id="dhcp-ipaddr"></span></td></tr>
+				<tr><td class="wan-td-left"><%:subnet mask%></td><td class="wan-td-right"><span id="dhcp-netmask"></span></td></tr>
+				<tr><td class="wan-td-left"><%:gateway%></td><td class="wan-td-right"><span id="dhcp-gateway"></span></td></tr>
+				<tr><td class="wan-td-left"><%:DNS server%></td><td class="wan-td-right"><span id="dhcp-dns"></span></td></tr>
+				<tr><td></td><td class="wan-td-right">
+						<button id="update" disabled onclick="updateDhcp()"><%:update%></button>
+						<button id="release" onclick="releaseDhcp()"><%:release%></button>
+				</td></tr>
+				<tr><td class="wan-td-left"><%:Packet MTUbyte%></td><td class="wan-td-right"><input id="dhcp-packageMTU" type="text" onkeyup="numLimit(this)" maxlength="4" value="1500"><%:default is 1500, please do not modify if not necessary%></td></tr>
+				<tr><td class="wan-td-left"><input id="dhcp-manualdns" type="checkbox" onchange="openManualDns('dhcp')"></td><td class="wan-td-right"><%:Manually set the DNS server%></td></tr>
+				<tr><td class="wan-td-left"><%:preferred DNS server%></td><td class="wan-td-right"><input id="dhcp-manual-dns" type="text" disabled onkeyup="nStrLimit(this)" maxlength="15"></td></tr>
+				<tr><td class="wan-td-left"><%:alternate DNS server%></td><td class="wan-td-right"><input id="dhcp-manual-dnsbak" type="text" disabled onkeyup="nStrLimit(this)" maxlength="15"><%:optional%></td></tr>
+				<tr><td class="wan-td-left"><%:host name%></td><td class="wan-td-right"><input id="dhcp-hostname" type="text" maxlength="32"></td></tr>
+				<tr><td class="wan-td-left"><input id="dhcp-unicast" type="checkbox"></td><td class="wan-td-right"><%:Get IP by unicast generally not selected%></td></tr>
+				<tr><td class="wan-td-left"><%:WAN port speed setting%></td><td class="wan-td-right">
+					<select id="dhcp-wanspeed-type">
+						<option value="auto"><%:auto negotiation%></option>
+						<option value="10mfull"><%:10M full duplex%></option>
+						<option value="10mhalf"><%:10M half duplex%></option>
+					</select>
+				</td></tr>
+				<tr><td></td><td class="wan-td-right">
+						<button onclick="saveDhcp()"><%:save%></button>
+					<i id="dhcp-saveTip" class="hsSubLoading saving" style="display: none"></i>
+					<i id="dhcp-saveTipSucess" class="hsSubLoading save-suc" style="display: none"></i>
+				</td></tr>
+			</table>
+		</td></tr>
+	</table>
+	<div id="Help" class="Help"><p class="helpTop">
+		<span class="helpDes"><%:help%></span>
+		<i class="helpClose" onclick="clickHelp(1)"></i></p>
+		<div class="helpDetail"><ul id="dynamicIpHelp" class="help">
+				<li class="title"><%:wan connection type%></li>
+				<li class="content"><%:WAN connection type intro%></li>
+				<li class="title"><%:automatically get IP address%></li>
+				<li class="content"><%:using temporary IP%></li>
+				<li class="title"><%:IP address, subnet mask, gateway%></li>
+				<li class="content"><%:Operator dynamic allocation of network parameters%></li>
+				<li class="title"><%:Packet MTU%></li>
+				<li class="content"><%:Packet maximum transmission unit%></li>
+				<li class="title"><%:Manually set the DNS server%></li>
+				<li class="content"><%:Manually set the DNS server in dhcp%></li>
+				<li class="title"><%:Get IP by unicast%></li>
+				<li class="content"><%:Get IP by unicast intro%></li>
+				<li class="title"><%:WAN port speed setting%></li>
+				<li class="content"><%:WAN port speed setting intro%></li>
+	</ul></div>
+	</div>
+	<div id="Helphc" class="Helphc" style="top: 682px;" >
+		<p class="helpTop"><span class="helpDes"><%:help%></span><i class="helpClose" onclick="clickHelphc(1)"></i></p>
+		<div class="helpDetailhc"><ul id="PPPoEAdvHelp" class="help">
+				<li class="title"><%:Packet MTU%></li>
+				<li class="content"><%:Packet maximum transmission unit for pppoe%></li>
+				<li class="title"><%:Service name/server name%></li>
+				<li class="content"><%:Service name/server name intro%></li>
+				<li class="title"><%:Use operators to specify IP addresses%></li>
+				<li class="content"><%:specifies IP address intro%></li>
+				<li class="title"><%:Manually set the DNS server%></li>
+				<li class="content"><%:Manually set the DNS server in pppoe%></li>
+	</ul></div></div>
+    <div id="waiting" style="display: none">
+        <div class="LoadConCover">
+            <div class="coverLoadCon">
+                <div class="coverLoad">
+                    <i class="coverLoadClose" onclick="coverClose()"></i>
+                    <i class="coverLoading" ></i>
+					<p class="coverLoadNote"><%:Please wait for the detect%></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</fieldset>
+<%+footer%>
+<script>
+	// global vars
+    var selected = 0;
+    var errTipDoc = document.getElementById("static-ipaddr");
+    var Drag =  document.getElementById("Help");
+    var Drag2 =  document.getElementById("Helphc");
+    var getWan_count = 0;
+    var saveDhcpFlag = false;
+    var wanTimer;
+    var lan;
+    var wan_in_setting = 0;
+    // page load functions
+    document.getElementById('update').disabled = 'disabled';
+    getWan();
+    dragFunc(Drag);
+    dragFunc(Drag2);
+    var wanType_global;
+    //get wan netStatus 5000ms/1
+    setInterval(function(){
+        XHR.get('<%=luci.dispatcher.build_url("admin", "networknew","get_wan")%>', null,
+            function(x, result) {
+               if (result != null && result.code == 0) {
+                    var wantype = result.wantype;
+                   wanType_global = result.wantype;
+                    if (wantype == 1) {
+                        if (result.DHCP.linkstatus != undefined) {
+                            var flag;
+                            if (result.DHCP.linkstatus == 0) {
+                                flag = 2;
+                            } else if (result.DHCP.ipaddr != undefined) {
+                                flag = 1;
+                            } else {
+                                flag = 0;
+                            }
+                            setLinkStatus(flag, wantype);
+                        }
+                    } else if (wantype == 2) {
+                        if (result.staticip.linkstatus != undefined) {
+                            var flag;
+                            if (result.staticip.linkstatus == 1) {
+                                if (result.staticip.ipaddr == undefined || result.staticip.ipaddr == '') {
+                                    flag = 0;
+								} else {
+                                    flag = 1;
+								}
+							} else {
+                                flag = 2;
+							}
+                            setLinkStatus(flag, wantype);
+                        }
+                    } else {
+                        if (result.PPPoE.linkstatus != undefined && result.PPPoE.connect != undefined) {
+                            if (result.PPPoE.linkstatus == 1 && result.PPPoE.connect == 1) {
+                                document.getElementById('break').style.display = 'none';
+                                document.getElementById('linking').style.display = 'none';
+                                document.getElementById('linked').style.display = '';
+								document.getElementById('netStatus').innerText = '<%:connected%>';
+                                document.getElementById('pppoeConn').disabled = 'disabled';
+                                document.getElementById('pppoeDiscon').disabled = '';
+							} else if (result.PPPoE.linkstatus == 1 && result.PPPoE.connect == 0) {
+                                document.getElementById('linked').style.display = 'none';
+                                document.getElementById('linking').style.display = 'none';
+                                document.getElementById('break').style.display = '';
+								document.getElementById('netStatus').innerText = '<%:disconnected%>';
+							} else if (result.PPPoE.linkstatus == 0) {
+                                document.getElementById('linked').style.display = 'none';
+                                document.getElementById('linking').style.display = 'none';
+                                document.getElementById('break').style.display = '';
+								document.getElementById('netStatus').innerText = '<%:disconnected unplugged port of WAN%>';
+							}
+                        }
+                    }
+                }
+            });
+	},5000);
+
+    // router get interfaces
+    function getWan() {
+        document.getElementById("waiting").style.display='';
+        clearInterval(wanTimer);
+        wanTimer = setInterval(function () {
+            XHR.get('<%=luci.dispatcher.build_url("admin", "networknew","get_wan")%>', null,
+                function(x, result) {
+                    console.log("getWan",result);
+                    if (result==null) {
+                        var err = document.getElementById('Error');
+                        var text = err.getElementsByTagName('span')[0];
+                        err.style.visibility = 'visible';
+						text.innerText = '<%:router connection failure%>';
+                        clearInterval(wanTimer);
+                        document.getElementById("waiting").style.display='none';
+                    }else if (result!=null && result.code == 0) {
+                        wanType_global = result.wantype;
+                        clearInterval(wanTimer);
+                        document.getElementById("waiting").style.display='none';
+                        var wantype = result.wantype;
+                        var wantypeIndex;
+                        var e;
+                        if (wantype == 1) {
+                            wantypeIndex = 0;
+                            displayOption(wantypeIndex);
+                            if (result.DHCP.linkstatus != undefined) {
+                                var flag;
+                                if (result.DHCP.linkstatus == 0) {
+                                    flag = 2;
+                                } else if (result.DHCP.ipaddr != undefined) {
+                                    flag = 1;
+                                } else {
+                                    flag = 0;
+                                }
+                                setLinkStatus(flag,wantype);
+                            }
+                            if (result.DHCP.ipaddr != undefined) {
+                                document.getElementById('dhcp-ipaddr').innerText = result.DHCP.ipaddr;
+                                document.getElementById('update').disabled = 'disabled';
+                                document.getElementById('release').disabled = '';
+                            } else {
+                                document.getElementById('dhcp-ipaddr').innerText = '';
+                                document.getElementById('release').disabled = 'disabled';
+                                document.getElementById('update').disabled = '';
+                            }
+                            if (result.DHCP.netmask != undefined) {
+                                document.getElementById('dhcp-netmask').innerText = result.DHCP.netmask;
+                            }else {
+                                document.getElementById('dhcp-netmask').innerText = '';
+                            }
+                            if (result.DHCP.gateway != undefined) {
+                                document.getElementById('dhcp-gateway').innerText = result.DHCP.gateway;
+                            } else {
+                                document.getElementById('dhcp-gateway').innerText = '';
+                            }
+                            var tdns = result.DHCP.dns;
+                            var tdnsBak = result.DHCP.dnsbak;
+                            if (tdns!=undefined&&tdnsBak!=undefined){
+                                document.getElementById('dhcp-dns').innerText = tdns + ", " + tdnsBak;
+							}else if (tdns!=undefined) {
+                                document.getElementById('dhcp-dns').innerText = tdns;
+                            }else if (tdnsBak!=undefined){
+                                document.getElementById('dhcp-dns').innerText = tdnsBak;
+							} else {
+                                document.getElementById('dhcp-dns').innerText = '';
+							}
+                            if (e = document.getElementById('dhcp-manualdns')) {
+                                e.checked = result.DHCP.manualdns;
+                                if (result.DHCP.manualdns == true) {
+                                    document.getElementById('dhcp-manual-dns').disabled = false;
+                                    document.getElementById('dhcp-manual-dnsbak').disabled = false;
+                                } else {
+                                    document.getElementById('dhcp-manual-dns').disabled = 'disabled';
+                                    document.getElementById('dhcp-manual-dnsbak').disabled = 'disabled';
+                                }
+                            }
+                            if (result.DHCP.dns != undefined) {
+                                document.getElementById('dhcp-manual-dns').value = result.DHCP.dns;
+                            }
+                            if (result.DHCP.dnsbak != undefined) {
+                                document.getElementById('dhcp-manual-dnsbak').value = result.DHCP.dnsbak;
+                            }
+                            if (result.DHCP.hostname != undefined) {
+                                document.getElementById('dhcp-hostname').value = result.DHCP.hostname;
+                            }else {
+                                document.getElementById('dhcp-hostname').value = '';
+                            }
+                            if (e = document.getElementById('dhcp-unicast')) {
+                                if (result.DHCP.unicast == true) {
+                                    e.checked = true;
+                                }
+                            }
+                            var dhcpWanspeedType = document.getElementById('dhcp-wanspeed-type');
+                            if (result.DHCP.wanspeed == 'auto') {
+                                dhcpWanspeedType.selectedIndex = 0;
+                            } else {
+                                for (var i=0; i<dhcpWanspeedType.options.length; i++) {
+                                    if (dhcpWanspeedType[i].value == result.DHCP.wanspeed) {
+                                        dhcpWanspeedType.selectedIndex = i;
+                                    }
+                                }
+                            }
+                            if (result.DHCP.packageMTU != undefined) {
+                                document.getElementById('dhcp-packageMTU').value = result.DHCP.packageMTU;
+                            }
+                        } else if (wantype == 2) {
+                            wantypeIndex = 1;
+                            displayOption(wantypeIndex);
+                            if (result.staticip.linkstatus != undefined) {
+                                var flag;
+                                if (result.staticip.linkstatus == 1) {
+                                    if (result.staticip.ipaddr == undefined || result.staticip.ipaddr == '') {
+                                        flag = 0;
+                                    } else {
+                                        flag = 1;
+                                    }
+                                } else {
+                                    flag = 2;
+                                }
+                                setLinkStatus(flag, wantype);
+                            }
+                            if (result.staticip.ipaddr != undefined) {
+                                document.getElementById('static-ipaddr').value = result.staticip.ipaddr;
+                            }
+                            if (result.staticip.netmask != undefined) {
+                                document.getElementById('static-netmask').value = result.staticip.netmask;
+                            }
+                            if (result.staticip.gateway != undefined) {
+                                document.getElementById('static-gateway').value = result.staticip.gateway;
+                            }
+                            if (result.staticip.dns != undefined) {
+                                document.getElementById('static-dns').value = result.staticip.dns;
+                            }
+                            if (result.staticip.dnsbak != undefined) {
+                                document.getElementById('static-dnsbak').value = result.staticip.dnsbak;
+                            }
+                            if (result.staticip.packageMTU != undefined) {
+                                document.getElementById('static-packageMTU').value = result.staticip.packageMTU;
+                            }
+                            var staticWanspeedType = document.getElementById('static-wanspeed-type');
+                            if (result.staticip.wanspeed == 'auto') {
+                                staticWanspeedType.selectedIndex = 0;
+                            } else {
+                                for (var i=0; i<staticWanspeedType.options.length; i++) {
+                                    if (staticWanspeedType[i].value == result.staticip.wanspeed) {
+                                        staticWanspeedType.selectedIndex = i;
+                                    }
+                                }
+                            }
+                        } else {
+                            wantypeIndex = 2;
+                            displayOption(wantypeIndex);
+                            if (result.PPPoE.linkstatus != undefined && result.PPPoE.connect != undefined) {
+                                if (result.PPPoE.linkstatus == 1 && result.PPPoE.connect == 1) {
+                                    document.getElementById('break').style.display = 'none';
+                                    document.getElementById('linking').style.display = 'none';
+                                    document.getElementById('linked').style.display = '';
+									document.getElementById('netStatus').innerText = '<%:connected%>';
+                                    document.getElementById('pppoeConn').disabled = 'disabled';
+                                    document.getElementById('pppoeDiscon').disabled = '';
+                                } else if (result.PPPoE.linkstatus == 1 && result.PPPoE.connect == 0) {
+                                    document.getElementById('linked').style.display = 'none';
+                                    document.getElementById('linking').style.display = 'none';
+                                    document.getElementById('break').style.display = '';
+									document.getElementById('netStatus').innerText = '<%:disconnected%>';
+                                    document.getElementById('pppoeConn').disabled = '';
+                                    document.getElementById('pppoeDiscon').disabled = 'disabled';
+                                } else if (result.PPPoE.linkstatus == 0) {
+                                    document.getElementById('linked').style.display = 'none';
+                                    document.getElementById('linking').style.display = 'none';
+                                    document.getElementById('break').style.display = '';
+									document.getElementById('netStatus').innerText = '<%:disconnected unplugged port of WAN%>';
+                                    document.getElementById('pppoeConn').disabled = '';
+                                    document.getElementById('pppoeDiscon').disabled = 'disabled';
+                                }
+                            }
+                            if (result.PPPoE.account != undefined) {
+                                document.getElementById('pppoe-account').value = result.PPPoE.account;
+                            }else {
+                                document.getElementById('pppoe-account').value = '';
+                            }
+                            if (result.PPPoE.password != undefined) {
+                                document.getElementById('pppoe-password').value = result.PPPoE.password;
+                            }else {
+                                document.getElementById('pppoe-password').value = '';
+                            }
+
+                            /*if (e = document.getElementById('pppoe-mode')) {
+                                var pppoeModeIndex = result.PPPoE.mode;
+                                e.selectedIndex = pppoeModeIndex;
+                            }*/
+                            var pppoeWanspeedType = document.getElementById('pppoe-wanspeed-type');
+                            if (result.PPPoE.wanspeed == 'auto') {
+                                pppoeWanspeedType.selectedIndex = 0;
+                            } else {
+                                for (var i=0; i<pppoeWanspeedType.options.length; i++) {
+                                    if (pppoeWanspeedType[i].value == result.PPPoE.wanspeed) {
+                                        pppoeWanspeedType.selectedIndex = i;
+                                    }
+                                }
+                            }
+                            if (e = document.getElementById('pppoe-connectmode')) {
+                                var pppoeConnectmodeIndex = result.PPPoE.connectmode;
+                                e.selectedIndex = pppoeConnectmodeIndex;
+                            }
+                            if (result.PPPoE.disconnectinterval != undefined) {
+                                document.getElementById('pppoe-disconnectinterval').value = result.PPPoE.disconnectinterval;
+                            }else {
+                                document.getElementById('pppoe-disconnectinterval').value = '';
+                            }
+                            if (result.PPPoE.packageMTU != undefined) {
+                                document.getElementById('pppoe-packageMTU').value = result.PPPoE.packageMTU;
+                            }else {
+                                document.getElementById('pppoe-packageMTU').value = '';
+                            }
+                            if (result.PPPoE.servicename != undefined) {
+                                document.getElementById('pppoe-servicename').value = result.PPPoE.servicename;
+                            }else {
+                                document.getElementById('pppoe-servicename').value = '';
+                            }
+                            if (result.PPPoE.servername != undefined) {
+                                document.getElementById('pppoe-servername').value = result.PPPoE.servername;
+                            }else {
+                                document.getElementById('pppoe-servername').value = '';
+                            }
+                            /*if (result.PPPoE.useoperatoraddress != undefined) {
+                                document.getElementById('pppoe-useoperatoraddress').value = result.PPPoE.useoperatoraddress;
+                            }else {
+                                document.getElementById('pppoe-useoperatoraddress').value = '';
+                            }*/
+                            if (e = document.getElementById('pppoe-useoperatoraddress')) {
+                                e.checked = result.PPPoE.useoperatoraddress;
+                                if (result.PPPoE.useoperatoraddress) {
+                                    document.getElementById('pppoe-operatoraddress').disabled = false;
+                                } else {
+                                    document.getElementById('pppoe-operatoraddress').disabled = 'disabled';
+                                }
+                            }
+                            if (result.PPPoE.operatoraddress != undefined) {
+                                document.getElementById('pppoe-operatoraddress').value = result.PPPoE.operatoraddress;
+                            }else {
+                                document.getElementById('pppoe-operatoraddress').value = '';
+                            }
+                            if (e = document.getElementById('pppoe-manualdns')){
+                                e.checked = result.PPPoE.manualdns;
+                                if (result.PPPoE.manualdns) {
+                                    document.getElementById('pppoe-manual-dns').disabled = false;
+                                    document.getElementById('pppoe-manual-dnsbak').disabled = false;
+                                } else {
+                                    document.getElementById('pppoe-manual-dns').disabled = 'disabled';
+                                    document.getElementById('pppoe-manual-dnsbak').disabled = 'disabled';
+                                }
+                            }
+                            if (result.PPPoE.dns != undefined) {
+                                document.getElementById('pppoe-manual-dns').value = result.PPPoE.dns;
+                            }else {
+                                document.getElementById('pppoe-manual-dns').value = '';
+                            }
+                            if (result.PPPoE.dnsbak != undefined) {
+                                document.getElementById('pppoe-manual-dnsbak').value = result.PPPoE.dnsbak;
+                            }else {
+                                document.getElementById('pppoe-manual-dnsbak').value = '';
+                            }
+                            connectmodeChange();
+                        }
+                    }
+                    getWan_count ++;
+                    console.log("getWan_count",getWan_count);
+                    if (getWan_count > 10) {
+                        clearInterval(wanTimer);
+                        document.getElementById("waiting").style.display='none';
+                        var err = document.getElementById('Error');
+                        var text = err.getElementsByTagName('span')[0];
+						text.innerText = '<%:Failed to get data!%>';
+                        err.style.visibility = 'visible';
+                    }
+                });
+        }, 1000);
+    }
+
+    // router set interfaces
+    function saveDhcp() {
+        document.getElementById("dhcp-saveTipSucess").style.display='none';
+        var wantype = 1;
+        var manualdns = document.getElementById('dhcp-manualdns').checked;
+        var dns = document.getElementById('dhcp-manual-dns').value;
+        var dnsbak = document.getElementById('dhcp-manual-dnsbak').value;
+        var hostname = document.getElementById('dhcp-hostname').value;
+        var unicast = document.getElementById('dhcp-unicast').checked;
+        var dhcpWanspeedType = document.getElementById('dhcp-wanspeed-type');
+        var index = dhcpWanspeedType.selectedIndex;
+        var wanspeed = dhcpWanspeedType[index].value;
+        var packageMTU = document.getElementById('dhcp-packageMTU').value;
+        var err = document.getElementById('Error');
+        var text = err.getElementsByTagName('span')[0];
+        if (packageMTU == '') {
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('dhcp-packageMTU');
+            text.innerText = '<%:MTU can not be empty%>';
+            return;
+        }
+        if (packageMTU.search(/\D/g) != -1) {
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('dhcp-packageMTU');
+            text.innerText = '<%:Invalid MTU, MTU should between 46 and 9000%>';
+            return;
+        }
+        if (hostname!=""&&!hostNameLimit(hostname)){
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('dhcp-hostname');
+            text.innerText = '<%:host name error%>';
+            return;
+        }
+        if (manualdns) {
+            if (!isValidIP(dns)) {
+                text.innerText = '<%:preferred DNS server address error%>';
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('dhcp-manual-dns');
+                return;
+            }else if (dnsbak!="" && !isValidIP(dnsbak)){
+                text.innerText = '<%:alternate DNS server address error, please input again%>';
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('dhcp-manual-dnsbak');
+                return;
+            }
+        }
+
+        document.getElementById("dhcp-saveTip").style.display='';
+        var params = {'wantype':wantype, 'manualdns':manualdns, 'dns':dns, 'dnsbak':dnsbak, 'hostname':hostname,
+            'unicast':unicast, 'wanspeed':wanspeed, 'packageMTU':packageMTU};
+        document.getElementById('netSetState').style.display = 'none';
+        document.getElementById('waiting').style.display = '';
+        if (saveDhcpFlag){
+            return;
+        }
+        console.log(params);
+        saveDhcpFlag = true;
+        XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_wan")%>', params,
+            function(x, result){
+                saveDhcpFlag = false;
+                console.log(result);
+                document.getElementById("dhcp-saveTip").style.display='none';
+                document.getElementById('netSetState').style.display = '';
+                document.getElementById('waiting').style.display = 'none';
+                var err = document.getElementById('Error');
+                var text = err.getElementsByTagName('span')[0];
+                if (result==null) {
+                    err.style.visibility = 'visible';
+                    text.innerText = '<%:router connection failure%>';
+                }else if ( result.code == 0) {
+                    document.getElementById("dhcp-saveTipSucess").style.display='';
+                    getWan_count = 0;
+                    wanType_global = 1;
+                    getWan();
+                    setTimeout(function () {
+                        document.getElementById("dhcp-saveTipSucess").style.display='none';
+                    },"2000");
+                } else if (result.code == 1) {
+                    if (wanType_global==1){
+                        var err = document.getElementById('Error');
+                        var text = err.getElementsByTagName('span')[0];
+                        text.innerText = '<%:Connection failed%>';
+                        err.style.visibility = 'visible';
+                    }
+                } else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    function saveStatic() {
+        var wantype = 2;
+		var ipaddr = document.getElementById('static-ipaddr').value;
+        var netmask = document.getElementById('static-netmask').value;
+        var gateway = document.getElementById('static-gateway').value;
+        var dns = document.getElementById('static-dns').value;
+        var dnsbak = document.getElementById('static-dnsbak').value;
+        var err = document.getElementById('Error');
+        var text = err.getElementsByTagName('span')[0];
+		if (!isValidIP(ipaddr)) {
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('static-ipaddr');
+			text.innerText = '<%:The IP address is invalid. Please input again%>';
+            return;
+		}else if (!lannetMaskLimit(netmask)){
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('static-netmask');
+			text.innerText = '<%:Subnet mask is not valid%>';
+            return;
+		} else if (!isValidIP(gateway)){
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('static-gateway');
+			text.innerText = '<%:Gateway error%>';
+            return;
+        }else if (!isValidIP(dns)){
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('static-dns');
+			text.innerText= '<%:preferred DNS server address error%>';
+            return;
+        }else if (dnsbak!=undefined&&dnsbak!=null&&dnsbak!=""&&!isValidIP(dnsbak)) {
+            err.style.visibility = 'visible';
+			text.innerText = '<%:alternate DNS server address error, please input again%>';
+            errTipDoc = document.getElementById('static-dnsbak');
+            return;
+        }
+        var packageMTU = document.getElementById('static-packageMTU').value;
+        if (packageMTU==null||packageMTU==""){
+            text.innerText = '<%:MTU can not be empty%>'
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('static-packageMTU');
+            return;
+        }
+        if (packageMTU.search(/\D/g) != -1) {
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('static-packageMTU');
+            text.innerText = '<%:Invalid MTU, MTU should between 46 and 9000%>';
+            return;
+        }
+        var staticWanspeedType = document.getElementById('static-wanspeed-type');
+        var index = staticWanspeedType.selectedIndex;
+        var wanspeed = staticWanspeedType[index].value;
+        var err = document.getElementById('Error');
+        var text = err.getElementsByTagName('span')[0];
+        var params = {'wantype':wantype, 'ipaddr':ipaddr, 'netmask':netmask,
+			'gateway':gateway, 'dns':dns, 'dnsbak':dnsbak, 'packageMTU':packageMTU, 'wanspeed':wanspeed};
+        document.getElementById("static-saveTip").style.display='';
+        document.getElementById("static-saveTipSucess").style.display='none';
+        XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_wan")%>', params,
+            function(x, result){
+                console.log(result);
+                setTimeout(function () {
+                    document.getElementById("static-saveTip").style.display='none';
+                },"6000");
+                var err = document.getElementById('Error');
+                var text = err.getElementsByTagName('span')[0];
+                if (result==null) {
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if (result!=null&&result.code == 0) {
+                    wanType_global = 2;
+                    getWan_count = 0;
+                    setTimeout(function () {
+                        getWan();
+                    },"4000");
+                    setTimeout(function () {
+                        document.getElementById("static-saveTipSucess").style.display='';
+                    },"6000");
+                    setTimeout(function () {
+                        document.getElementById("static-saveTipSucess").style.display='none';
+                    },"8000");
+                }else {
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    function savePppoeAdvanced() {
+        document.getElementById("pppoe-saveTipSucess").style.display='none';
+//        var wantype = 4;
+        /*var account = document.getElementById('pppoe-account').value;
+        var password = document.getElementById('pppoe-password').value;
+        var pppoeMode = document.getElementById('pppoe-mode');
+        var mode = pppoeMode.selectedIndex;
+        var pppoeWanspeedType = document.getElementById('pppoe-wanspeed-type');
+        var index = pppoeWanspeedType.selectedIndex;
+        var wanspeed = pppoeWanspeedType[index].value;*/
+//        var pppoeConnectmode = document.getElementById('pppoe-connectmode');
+//        var connectmode = pppoeConnectmode.selectedIndex;
+//        var disconnectinterval = document.getElementById('pppoe-disconnectinterval').value;
+        var packageMTU = document.getElementById('pppoe-packageMTU').value;
+        var servicename = document.getElementById('pppoe-servicename').value;
+        var servername = document.getElementById('pppoe-servername').value;
+        var useoperatoraddress = document.getElementById('pppoe-useoperatoraddress').checked;
+        var operatoraddress = document.getElementById('pppoe-operatoraddress').value;
+        var manualdns = document.getElementById('pppoe-manualdns').checked;
+        var dns = document.getElementById('pppoe-manual-dns').value;
+        var dnsbak = document.getElementById('pppoe-manual-dnsbak').value;
+        var err = document.getElementById('Error');
+        var text = err.getElementsByTagName('span')[0];
+        /*if (strlen(account)<2||strlen(account)>32){
+            text.innerText = '账号长度不合法。';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('pppoe-account');
+            return;
+		}
+		if (strlen(password)<6||strlen(password)>32) {
+            text.innerText = '密码长度不合法。';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('pppoe-password');
+            return;
+		}*/
+
+        if (packageMTU==null||packageMTU==""){
+            text.innerText = '<%:MTU can not be empty%>'
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('pppoe-packageMTU');
+            return;
+        }
+        if (packageMTU.search(/\D/g) != -1) {
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('pppoe-packageMTU');
+            text.innerText = '<%:Invalid MTU, MTU should between 46 and 8992%>';
+            return;
+        }
+        if (packageMTU>8992||packageMTU<46){
+            errTipDoc = document.getElementById('pppoe-packageMTU');
+            text.innerText = '<%:Invalid MTU, MTU should between 46 and 8992%>';
+            err.style.visibility = 'visible';
+            return
+        }
+        /*if (servicename==null||servicename==""){
+            text.innerText = '服务名不能为空。';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('pppoe-servicename');
+            return;
+        }
+        if (servername==null||servername==""){
+            text.innerText = '服务器名不能为空。';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('pppoe-servername');
+            return;
+        }*/
+        if (useoperatoraddress){
+            if (!isValidIP(operatoraddress)){
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('pppoe-operatoraddress');
+				text.innerText = '<%:Operator address error, please input again%>';
+                return;
+            }
+        }
+        if (manualdns){
+            if (!isValidIP(dns)){
+				text.innerText = '<%:preferred DNS server address error%>';
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('pppoe-manual-dns');
+				text.innerText = '<%:preferred DNS server address error%>';
+                return;
+            }else if (dnsbak!=undefined&&dnsbak!=null&&dnsbak!=""&&!isValidIP(dnsbak)){
+				text.innerText = '<%:alternate DNS server address error, please input again%>';
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('pppoe-manual-dnsbak');
+                return;
+            }
+		}
+        document.getElementById("pppoe-saveTip").style.display='';
+        var params = {'packageMTU':packageMTU, 'servicename':servicename, 'servername':servername,
+					'useoperatoraddress':useoperatoraddress, 'operatoraddress':operatoraddress, 'manualdns':manualdns,
+					'dns':dns, 'dnsbak':dnsbak};
+        console.log("pppoeParams",params);
+        XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_pppoe_advanced")%>', params,
+            function(x, result){
+                console.log(result);
+                document.getElementById("pppoe-saveTip").style.display='none';
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if (result!=null&&result.code == 0) {
+                    document.getElementById("pppoe-saveTipSucess").style.display='';
+                    setTimeout(function () {
+                        document.getElementById("pppoe-saveTipSucess").style.display='none';
+                    },"2000");
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // other button functions
+    function updateDhcp() {
+        var wantype = 1;
+        var updateip = true;
+        var dns = '';
+        var params = {'wantype':wantype, 'updateip':updateip, 'dns':dns};
+        console.log(params);
+        document.getElementById('break').style.display = 'none';
+        document.getElementById('linked').style.display = 'none';
+        document.getElementById('linking').style.display = '';
+		document.getElementById('netStatus').innerText = '<%:Connecting...%>';
+        document.getElementById('update').disabled = 'disabled';
+        wan_in_setting = 1;
+        document.getElementById('waiting').style.display = '';
+        XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_wan")%>', params,
+            function(x, result){
+                console.log(result);
+                wan_in_setting = 0;
+                if (result==null) {
+                    document.getElementById('update').disabled = '';
+                    document.getElementById('waiting').style.display = 'none';
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if (result!=null&&result.code == 0) {
+                    getWan_count = 0;
+                    wanType_global = 1;
+                    getWan();
+                }else {
+                    document.getElementById('update').disabled = '';
+                    document.getElementById('waiting').style.display = 'none';
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    function releaseDhcp() {
+        document.getElementById('dhcp-ipaddr').innerText = '';
+        document.getElementById('dhcp-netmask').innerText = '';
+        document.getElementById('dhcp-gateway').innerText = '';
+        document.getElementById('dhcp-dns').innerText = '';
+        document.getElementById('release').disabled = 'disabled';
+        var wantype = 1;
+        var releaseip = true;
+        var dns = '';
+        var params = {'wantype':wantype, 'releaseip':releaseip, 'dns':dns};
+        console.log(params);
+        document.getElementById('break').style.display = 'none';
+        document.getElementById('linked').style.display = 'none';
+        document.getElementById('linking').style.display = '';
+		document.getElementById('netStatus').innerText = '<%:Connecting...%>';
+        XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_wan")%>', params,
+            function(x, result){
+                console.log(result);
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if (result!=null&&result.code == 0) {
+                    getWan_count = 0;
+                    wanType_global =1;
+                    getWan();
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+
+
+    }
+
+    function ppoeConnect() {
+		if (document.getElementById('netStatus').innerText == '<%:disconnected unplugged port of WAN%>') {
+            var err = document.getElementById('Error');
+            var text = err.getElementsByTagName('span')[0];
+			text.innerText = '<%:WAN port is not connected%>';
+            err.style.visibility = 'visible';
+            return;
+		}
+        var wantype = 4;
+        var account = document.getElementById('pppoe-account').value;
+        var password = document.getElementById('pppoe-password').value;
+//        var dns = document.getElementById('pppoe-manual-dns').value;
+        /*var pppoeMode = document.getElementById('pppoe-mode');
+        var mode = pppoeMode.selectedIndex;*/
+        var pppoeWanspeedType = document.getElementById('pppoe-wanspeed-type');
+        var index = pppoeWanspeedType.selectedIndex;
+        var wanspeed = pppoeWanspeedType[index].value;
+        var err = document.getElementById('Error');
+        var text = err.getElementsByTagName('span')[0];
+        if (account==null||account==""){
+            text.innerText = '<%:Make sure the account or password is empty%>';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('pppoe-account');
+            return;
+        }else if (strlen(account)>64){
+			text.innerText = '<%:Long account length%>';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('pppoe-account');
+            return;
+		}
+        if (password==null||password=="") {
+            text.innerText = '<%:Make sure the account or password is empty%>';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('pppoe-password');
+            return;
+        }else if (strlen(password)>64){
+            text.innerText = '<%:Long password length%>';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('pppoe-password');
+            return;
+        }
+        document.getElementById('pppoeConn').disabled = 'disabled';
+        var params = {'wantype':wantype, 'account':account, 'password':password, 'connect':1,
+            		'wanspeed':wanspeed};
+        console.log(params);
+        document.getElementById('pppoeConn').disabled = 'disabled';
+        document.getElementById('waiting').style.display='';
+        XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_wan")%>', params,
+            function(x, result){
+                console.log(result);
+                document.getElementById('waiting').style.display='none';
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if (result!=null && result.code == 0) {
+                    wanType_global =4;
+                    getWan_count = 0;
+                    getWan();
+                    if (wanType_global==4){
+                        var err = document.getElementById('Error');
+                        var text = err.getElementsByTagName('span')[0];
+						text.innerText = '<%:Successful connection!%>';
+                        err.style.visibility = 'visible';
+                    }
+                    document.getElementById('pppoeDiscon').disabled = '';
+                } else {
+                    if (wanType_global==4){
+                        document.getElementById('pppoeConn').disabled = '';
+                        var err = document.getElementById('Error');
+                        var text = err.getElementsByTagName('span')[0];
+                        text.innerText = result.msg;
+                        err.style.visibility = 'visible';
+                    }
+                }
+            });
+    }
+
+    function ppoeDisconnect() {
+        var account = document.getElementById('pppoe-account').value;
+        var password = document.getElementById('pppoe-password').value;
+//        var dns = document.getElementById('pppoe-manual-dns').value;
+//        var pppoeMode = document.getElementById('pppoe-mode');
+//        var mode = pppoeMode.selectedIndex;
+        var pppoeWanspeedType = document.getElementById('pppoe-wanspeed-type');
+        var index = pppoeWanspeedType.selectedIndex;
+        var wanspeed = pppoeWanspeedType[index].value;
+        var params = {'wantype':4, 'connect':0, 'account':account, 'password':password,
+            		'wanspeed':wanspeed};
+        console.log(params);
+        document.getElementById('pppoeDiscon').disabled = 'disabled';
+        XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_wan")%>', params,
+            function(x, result){
+                console.log(result);
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                    document.getElementById('pppoeDiscon').disabled = '';
+                }else if (result!=null && result.code == 0) {
+                    wanType_global = 4;
+                    getWan_count = 0;
+                    getWan();
+                } else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    document.getElementById('pppoeDiscon').disabled = '';
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    function setPppoeConnectionMode() {
+        var pppoeConnectmode = document.getElementById('pppoe-connectmode');
+		var connectmode = pppoeConnectmode.selectedIndex;
+        var disconnectinterval = document.getElementById('pppoe-disconnectinterval').value;
+        if (disconnectinterval==null||disconnectinterval==""){
+            var err = document.getElementById('Error');
+            var text = err.getElementsByTagName('span')[0];
+			text.innerText = '<%:Automatic wire break waiting time input error%>';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('pppoe-disconnectinterval');
+            return;
+        }
+        var params = {'connectmode':connectmode, 'disconnectinterval':disconnectinterval};
+        console.log(params);
+        document.getElementById('waiting').style.display='';
+        XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_pppoe_connection_mode")%>', params,
+            function(x, result){
+                console.log(result);
+                document.getElementById('waiting').style.display='none';
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if (result!=null && result.code == 0) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+					text.innerText = '<%:Save successfully%>';
+                    err.style.visibility = 'visible';
+                } else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // page functions
+    function setLinkStatus(flag,wantype) {
+        if (!wan_in_setting) {
+            if (flag == 1) {
+                document.getElementById('break').style.display = 'none';
+                document.getElementById('linking').style.display = 'none';
+                document.getElementById('linked').style.display = '';
+                document.getElementById('netStatus').innerText = '<%:connected%>';
+                if (wantype==1) {
+                    document.getElementById('update').disabled = 'disabled';
+                    document.getElementById('release').disabled = '';
+                }
+            } else if (flag == 0) {
+                document.getElementById('linked').style.display = 'none';
+                document.getElementById('linking').style.display = 'none';
+                document.getElementById('break').style.display = '';
+                document.getElementById('netStatus').innerText = '<%:disconnected%>';
+                if (wantype == 1){
+                    document.getElementById('update').disabled = '';
+                    document.getElementById('release').disabled = 'disabled';
+                }
+            } else {
+                document.getElementById('linked').style.display = 'none';
+                document.getElementById('linking').style.display = 'none';
+                document.getElementById('break').style.display = '';
+                document.getElementById('netStatus').innerText = '<%:Disconnected not connected%>';
+                if (wantype==1){
+                    document.getElementById('update').disabled = '';
+                    document.getElementById('release').disabled = 'disabled';
+                }
+            }
+        }
+    }
+
+    function connectmodeChange() {
+		var pppoeConnectmodeSelect = document.getElementById('pppoe-connectmode');
+		var index = pppoeConnectmodeSelect.selectedIndex;
+		if (index == 0) {
+		    document.getElementById('disconnectinterval-tr').style.display = '';
+		} else {
+            document.getElementById('disconnectinterval-tr').style.display = 'none';
+		}
+    }
+
+    function displayOption(wantypeIndex) {
+        var wanSelect = document.getElementById("wan-connect-type");
+        var closeTableId = wanSelect[selected].value;
+        var openTableId = wanSelect[wantypeIndex].value;
+        selected = wantypeIndex;
+        wanSelect.selectedIndex = selected;
+        document.getElementById(closeTableId).style.display = "none";
+        document.getElementById(openTableId).style.display = "";
+    }
+
+    function openManualDns(wantype) {
+        var openId = wantype+'-manualdns';
+        var open = document.getElementById(openId).checked;
+        var dnsId = wantype+'-manual-dns';
+        var dnsbakId = wantype+'-manual-dnsbak';
+        if (open) {
+            document.getElementById(dnsId).disabled = '';
+            document.getElementById(dnsbakId).disabled = '';
+        } else {
+            document.getElementById(dnsId).disabled = 'disabled';
+            document.getElementById(dnsbakId).disabled = 'disabled';
+        }
+    }
+    function openUserOper() {
+        var open = document.getElementById('pppoe-useoperatoraddress').checked;
+        if (open) {
+            document.getElementById('pppoe-operatoraddress').disabled = '';
+        } else {
+            document.getElementById('pppoe-operatoraddress').disabled = 'disabled';
+        }
+    }
+    function clickHelphc(i) {
+        if (i==0){
+            document.getElementById("Helphc").style.visibility="visible";
+        } else {
+            document.getElementById("Helphc").style.visibility="hidden";
+        }
+    }
+
+    function changeBtn(){
+        var wanSelect = document.getElementById("wan-connect-type");
+        var index = wanSelect.selectedIndex;
+        if (index==0){
+            if (wanType_global!=1){
+                document.getElementById('update').disabled = '';
+                document.getElementById('release').disabled = 'disabled';
+                document.getElementById('dhcp-ipaddr').innerText = '';
+                document.getElementById('dhcp-netmask').innerText = '';
+                document.getElementById('dhcp-gateway').innerText = '';
+                document.getElementById('dhcp-dns').innerText = '';
+            }
+        }
+        if (index==2){
+            if (wanType_global!=4){
+                document.getElementById('pppoeConn').disabled = '';
+                document.getElementById('pppoeDiscon').disabled = 'disabled';
+            }
+        }
+    }
+
+</script>

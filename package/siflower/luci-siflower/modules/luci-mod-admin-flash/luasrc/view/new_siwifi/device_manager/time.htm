@@ -1,0 +1,127 @@
+<%+header%>
+<fieldset>
+    <legend>时间设置</legend>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>>
+            <span class="detail">操作成功</span>
+            <input class="subBtn" value="确 定" type="button" onclick="closeTip()">
+        </div>
+    </div>
+    <li class="border-line"></li>
+    <table  class="tb-no-border">
+        <tr><td class="wan-td-left">时区：</td><td class="wan-td-right"><span id="zone"></span>
+        <select id="zones" onchange="zoneOption()">
+        </select></td></tr>
+        <tr><td class="wan-td-left">日期：</td><td class="wan-td-right"><span id="date"></span></td></tr>
+        <tr><td class="wan-td-left">时间：</td><td class="wan-td-right"><span id="time"></span></td></tr>
+        <tr><td></td><td class="wan-td-right">
+            <button onclick="saveTime()">保存</button>
+            <i id="saveTip" class="hsSubLoading saving" style="display: none"></i>
+            <i id="saveTipSucess" class="hsSubLoading save-suc" style="display: none"></i>
+        </td></tr>
+    </table>
+</fieldset>
+<%+footer%>
+<script>
+    // global vars
+    var zones;
+    var zone;
+
+    // page load functions
+    getTime();
+
+    // router get interfaces
+    function getTime() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "systemnew","get_date")%>', null,
+            function(x, result) {
+                if(result!=null&&result.code == 0) {
+                    console.log(result);
+                    var e;
+                    zone = result.zone;
+                    var selectIndex;
+                    console.log(zone);
+                    zones = result.zones;
+                    var html;
+                    for (var i = 0; i<zones.length; i++) {
+                        html += '<option value="'+i+'">'+zones[i]+'</option>';
+                        if (zones[i] == zone) {
+                            selectIndex = i;
+                        }
+                    }
+                    document.getElementById('zones').innerHTML = html;
+                    var zonesSelect = document.getElementById('zones');
+                    zonesSelect.selectedIndex = selectIndex;
+                    var curTime;
+                    setInterval(function () {
+                        curTime = this.timestampToTime(result.date + zoneoffset(zone));
+                        if (e = document.getElementById('date'))
+                            e.innerText = curTime.date;
+                        if (e = document.getElementById('time'))
+                            e.innerText = curTime.time;
+                        result.date++;
+                    }, 1000);
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '获取数据失败，请重试'
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // router set interfaces
+    function saveTime() {
+        var zonesSelect = document.getElementById('zones');
+        var selectIndex = zonesSelect.selectedIndex;
+        var zone = zones[selectIndex];
+        var params = {'zone':zone};
+        console.log(params);
+        document.getElementById("saveTip").style.display='';
+        document.getElementById("saveTipSucess").style.display='none';
+        XHR.post('<%=luci.dispatcher.build_url("admin", "systemnew","set_date")%>', params,
+            function(x, result){
+                console.log(result);
+                document.getElementById("saveTip").style.display='none';
+                if (result!=null&&result.code == 0) {
+                    document.getElementById("saveTipSucess").style.display='';
+                    setTimeout(function () {
+                        document.getElementById("saveTipSucess").style.display='none';
+                    },"2000");
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '保存失败';
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // zone functions
+    function zoneOption() {
+        var zonesSelect = document.getElementById('zones');
+        var zonesSelectedIndex = zonesSelect.selectedIndex;
+        var zoneIndex = zonesSelect[zonesSelectedIndex].value;
+        zone = zones[zoneIndex];
+    }
+
+    function zoneoffset(zone) {
+        var n;
+        var zhour;
+        var zmin;
+        var symbol;
+        n = zone.search(/GMT/i);
+        zhour = zone.substr(n + 4, 2);
+        zmin = zone.substr(n + 7, 2);
+        symbol = zone.substr(n + 3, 1);
+        zhour = parseInt(zhour);
+        zmin = parseInt(zmin);
+        n = zhour * 3600 + zmin * 60;
+        if (symbol == "+")
+            return n;
+        else if (symbol == "-")
+            return -n;
+        else
+            return 0;
+    }
+</script>

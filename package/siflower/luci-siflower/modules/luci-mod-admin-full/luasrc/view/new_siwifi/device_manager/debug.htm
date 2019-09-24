@@ -1,0 +1,266 @@
+<%+header%>
+<fieldset>
+	<legend><%:diagnostic tools%></legend>
+    <ul><li class="border-line"></li></ul>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>
+			<span class="detail"><%:operate successfully%></span>
+			<input class="subBtn" value="<%:confirm%>" type="button" onclick="closeTip()">
+        </div>
+    </div>
+    <div style="margin: 2.67em auto auto 6.67em">
+		<p class="debug-text"><%:diagnostic tools intro%></p>
+        <table>
+			<tr><td class="wan-td-right"><%:parameter setting%></td></tr>
+			<tr><td class="wan-td-right"><%:selection opeartion%></td><td class="wan-td-right">
+                <input type="radio" name="operation" value="ping" onchange="changeDiagnosticTool()">Ping
+                <input type="radio" name="operation" value="tracert" onchange="changeDiagnosticTool()">Tracert
+            </td></tr>
+			<tr><td class="wan-td-right"><%:IP address/domain name%></td><td class="wan-td-right"><input type="text" id="ipaddr" onkeyup="nStrLimit(this)" ></td></tr>
+			<tr><td class="wan-td-right"><%:Ping packet amount%></td><td class="wan-td-right"><input type="text" id="pingamount" onkeyup="numLimit(this)" maxlength="2">(1-50)</td></tr>
+			<tr><td class="wan-td-right"><%:Ping packet size%></td><td class="wan-td-right"><input type="text" id="size" onkeyup="numLimit(this)" maxlength="4"><%:(4-1472)bytes%></td></tr>
+			<tr><td class="wan-td-right"><%:Ping timeout%></td><td class="wan-td-right"><input type="text" id="timeout" onkeyup="numLimit(this)" maxlength="3"><%:(1-100)s%></td></tr>
+			<tr><td class="wan-td-right"><%:Tracert hop count%></td><td class="wan-td-right"><input type="text" id="tracertamount" onkeyup="numLimit(this)" maxlength="2">(1-30)</td></tr>
+        </table>
+        <table>
+			<tr><td class="wan-td-right"><%:diagnostic results%></td></tr>
+            <tr><td style="height: 13.33em">
+                <textarea id="diagnostic-result" style="width: 100%; height: 100%;min-height: 140px;">
+                </textarea>
+            </td></tr>
+        </table>
+		<button id="btn-start" onclick="startDiagnosticTool()"><%:start%></button>
+		<button id="btn-stop" onclick="stopDiagnosticTool()" style="display: none"><%:over%></button>
+    </div>
+</fieldset>
+<%+footer%>
+<script>
+
+    var errTipDoc;
+    var timer;
+    //start status;
+    changeDiagnosticTool();
+
+    // router interfaces
+    function startDiagnosticTool() {
+//        document.getElementById('btn-start').onclick = null;
+        var radios = document.getElementsByName('operation');
+        for (var i=0; i<radios.length; i++) {
+            if (radios[i].checked) {
+                var params;
+                if (radios[i].value == 'ping') {
+                    var action = 'ping';
+                    var ipaddr = document.getElementById('ipaddr').value;
+                    var pingamount = document.getElementById('pingamount').value;
+                    var size = document.getElementById('size').value;
+                    var timeout = document.getElementById('timeout').value;
+                    var lines = pingamount;
+                    var extraline = 6;
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    if (ipaddr==null||ipaddr=='') {
+                        errTipDoc = document.getElementById('ipaddr');
+						text.innerText = '<%:IP address or domain name can not be empty%>';
+                        err.style.visibility = 'visible';
+                        return
+                    }
+                    if (!debugVaildIp(ipaddr)&&!isValidDomain(ipaddr)) {
+                        errTipDoc = document.getElementById('ipaddr');
+                        text.innerText = '<%:IP address or domain name is illegal%>';
+                        err.style.visibility = 'visible';
+                        return
+                    }
+                    if(pingamount>50||pingamount<1){
+                        errTipDoc = document.getElementById('pingamount');
+						text.innerText = '<%:The number of Ping packages is limited to 1-50%>';
+                        err.style.visibility = 'visible';
+                        return
+                    }
+                    if (size>1472||size<4){
+                        errTipDoc = document.getElementById('size');
+						text.innerText = '<%:Ping packet size is limited to 4-1472%>';
+                        err.style.visibility = 'visible';
+                        return
+                    }
+                    if (timeout>100||timeout<1){
+                        errTipDoc = document.getElementById('timeout');
+						text.innerText = '<%:Ping timeout limit is 1-100 seconds%>';
+                        err.style.visibility = 'visible';
+                        return
+                    }
+                    params = {'action':action, 'ipaddr':ipaddr, 'pingamount':pingamount, 'size':size, 'timeout':timeout}
+                    console.log("params",params);
+                } else {
+                    var action = 'tracert';
+                    var ipaddr = document.getElementById('ipaddr').value;
+                    var tracertamount = document.getElementById('tracertamount').value;
+                    var lines = tracertamount;
+                    var extraline = 2;
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    if (ipaddr==null||ipaddr=='') {
+                        errTipDoc = document.getElementById('ipaddr');
+						text.innerText = '<%:IP address or domain name can not be empty%>';
+                        err.style.visibility = 'visible';
+                        return
+                    }
+                    if (!debugVaildIp(ipaddr)&&!isValidDomain(ipaddr)) {
+                        errTipDoc = document.getElementById('ipaddr');
+						text.innerText = '<%:IP address or domain name is illegal%>';
+                        err.style.visibility = 'visible';
+                        return
+                    }
+                    if (tracertamount>30||tracertamount<1){
+                        errTipDoc = document.getElementById('tracertamount');
+						text.innerText = '<%:Tracert hop count is limited to 1-30%>';
+                        err.style.visibility = 'visible';
+                        return
+                    }
+                    params = {'action':action, 'ipaddr':ipaddr, 'tracertamount':tracertamount};
+                    console.log("params",params);
+                }
+                document.getElementById('btn-start').onclick = null;
+                document.getElementById('btn-start').style.display = 'none';
+                document.getElementById('btn-stop').style.display = '';
+                XHR.post('<%=luci.dispatcher.build_url("admin", "systemnew","start_diagnostic_tool")%>', params,
+                    function(x, result){
+                        console.log(result);
+                        if (result==null) {
+                            var err = document.getElementById('Error');
+                            var text = err.getElementsByTagName('span')[0];
+                            err.style.visibility = 'visible';
+							text.innerText = '<%:router connection failure%>';
+                        }else if (result!=null&&result.code == 0) {
+						/*var html = '<tr><th><%:serial number%></th><th><%:diagnostic results%></th></tr>';
+                            for (var i=0; i<result.info.length; i++) {
+                                html += '<tr><td>'+(i+1)+'</td><td>'+result.info[i]+'</td></tr>';
+                            }
+                            document.getElementById('diagnostic-result').innerHTML = html;*/
+                            var time_out_count = 0;
+                            timer = setInterval(function () {
+                                XHR.get('<%=luci.dispatcher.build_url("admin", "systemnew","get_diagnostic_result")%>', null,
+                                    function(x, result){
+                                        console.log(result);
+                                        if (result.code == 0) {
+                                            var infoArray = result.info[0].split('\n');
+                                            timeout--;
+                                            if (infoArray[0] != 'Destination Host Unreachable!') {
+                                                document.getElementById('diagnostic-result').value = result.info[0];
+                                                }else{
+                                                    if(time_out_count == 5){
+                                                        document.getElementById('diagnostic-result').value = result.info[0];
+                                                        clearInterval(timer);
+                                                        document.getElementById('btn-start').style.display = '';
+                                                        document.getElementById('btn-start').onclick = function () { startDiagnosticTool() };
+                                                        document.getElementById('btn-stop').style.display = 'none';
+                                                    }
+                                                    time_out_count++;
+                                                }
+                                            if (infoArray.length >= (parseInt(extraline) + parseInt(lines))) {
+                                                clearInterval(timer);
+                                                document.getElementById('btn-start').style.display = '';
+                                                document.getElementById('btn-start').onclick = function () { startDiagnosticTool() };
+                                                document.getElementById('btn-stop').style.display = 'none';
+                                                flag = false;
+                                            } else if (timeout < 1) {
+                                                if (infoArray[0] == 'Destination Host Unreachable!') {
+                                                    document.getElementById('diagnostic-result').value = result.info[0];
+                                                    clearInterval(timer);
+                                                    document.getElementById('btn-start').style.display = '';
+                                                    document.getElementById('btn-start').onclick = function () { startDiagnosticTool() };
+                                                    document.getElementById('btn-stop').style.display = 'none';
+                                                    flag = false;
+                                                }
+                                                if (infoArray[1] == '') {
+                                                    document.getElementById('diagnostic-result').value = 'ping: sendto: Network is unreachable';
+                                                    clearInterval(timer);
+                                                    document.getElementById('btn-start').style.display = '';
+                                                    document.getElementById('btn-start').onclick = function () { startDiagnosticTool() };
+                                                    document.getElementById('btn-stop').style.display = 'none';
+                                                    flag = false;
+                                                }
+                                            }
+                                        }
+                                    });
+                            }, 1000);
+                            /*setInterval(function () {
+                                XHR.get('<%=luci.dispatcher.build_url("admin", "systemnew","get_diagnostic_result")%>', null,
+                                    function(x, result){
+                                        console.log(result);
+                                        if (result.code == 0) {
+                                            var html = '';
+                                            for (var i=0; i<result.info.length; i++) {
+                                                html += result.info[i]+'\n';
+                                            }
+                                            document.getElementById('diagnostic-result').value = html;
+                                        }
+                                    });
+                            }, 1000);*/
+                        }else {
+                            var err = document.getElementById('Error');
+                            var text = err.getElementsByTagName('span')[0];
+                            text.innerText = result.msg;
+                            err.style.visibility = 'visible';
+                        }
+                    });
+            }
+        }
+    }
+    
+    function stopDiagnosticTool() {
+        document.getElementById('btn-stop').onclick = null;
+        document.getElementById('btn-start').onclick = function () { startDiagnosticTool() };
+        var radios = document.getElementsByName('operation');
+        for (var i=0; i<radios.length; i++) {
+            if (radios[i].checked) {
+                var params;
+                if (radios[i].value == 'ping') {
+                    params = {'action': 'ping'};
+                } else {
+                    params = {'action': 'tracert'};
+                }
+            }
+        }
+        XHR.post('<%=luci.dispatcher.build_url("admin", "systemnew","stop_diagnostic_tool")%>', params,
+            function(x, result){
+                console.log(result);
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if (result!=null&&result.code == 0) {
+                    clearInterval(timer);
+                    document.getElementById('btn-start').style.display = '';
+                    document.getElementById('btn-stop').style.display = 'none';
+                    document.getElementById('btn-stop').onclick = function () { stopDiagnosticTool() };
+                } else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // page functions
+    function changeDiagnosticTool() {
+        var radios = document.getElementsByName('operation');
+        for (var i=0; i<radios.length; i++) {
+            if (radios[i].checked) {
+                if (radios[i].value == 'ping') {
+                    document.getElementById('pingamount').disabled = '';
+                    document.getElementById('size').disabled = '';
+                    document.getElementById('timeout').disabled = '';
+                    document.getElementById('tracertamount').disabled = 'disabled';
+                } else {
+                    document.getElementById('pingamount').disabled = 'disabled';
+                    document.getElementById('size').disabled = 'disabled';
+                    document.getElementById('timeout').disabled = 'disabled';
+                    document.getElementById('tracertamount').disabled = '';
+                }
+            }
+        }
+    }
+</script>

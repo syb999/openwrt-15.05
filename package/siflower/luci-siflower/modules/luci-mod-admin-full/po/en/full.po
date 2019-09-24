@@ -1,0 +1,2384 @@
+msgid ""
+msgstr ""
+
+msgid "common"
+msgstr "Common"
+
+msgid "advanced"
+msgstr "Advanced"
+
+msgid "safty exit"
+msgstr "Safty Exit"
+
+msgid "successfully set"
+msgstr "Successfully set"
+
+msgid "confirm"
+msgstr "Confirm"
+
+msgid "connected device number"
+msgstr "Connected Device Number:"
+
+msgid "management"
+msgstr "Device Management"
+
+msgid "internet connection"
+msgstr "Internet Connection:"
+
+msgid "broadband dial-up"
+msgstr "Broadband Dial-up"
+
+msgid "static IP address"
+msgstr "Static IP Address"
+
+msgid "automatically get IP address"
+msgstr "Automatically Get IP Address"
+
+msgid "network setting"
+msgstr "Network Setting"
+
+msgid "SSID"
+msgstr "SSID:"
+
+msgid "wireless settings"
+msgstr "Wireless Setting"
+
+msgid "connected device"
+msgstr "Connected Device"
+
+msgid "banned device"
+msgstr "Banned Device"
+
+msgid "automatic detection"
+msgstr "Automatic Detection"
+
+msgid "broadband account"
+msgstr "Broadband Account"
+
+msgid "broadband password"
+msgstr "Broadband Password"
+
+msgid "IP address"
+msgstr "IP Address"
+
+msgid "DNS server"
+msgstr "DNS Server"
+
+msgid "subnet mask"
+msgstr "Subnet Mask"
+
+msgid "gateway"
+msgstr "Gateway"
+
+msgid "preferred DNS server"
+msgstr "Preferred DNS Server"
+
+msgid "alternate DNS server"
+msgstr "Alternate DNS Server"
+
+msgid "save"
+msgstr "Save"
+
+msgid "IP address format error"
+msgstr "IP address format error，please input again"
+
+msgid "Subnet mask is not valid"
+msgstr "Subnet mask is not valid，please input again"
+
+msgid "Gateway error"
+msgstr "Gateway error,please input again"
+
+msgid "Please input the correct preferred DNS server"
+msgstr "Please input the correct preferred DNS server"
+
+msgid "Please input the correct alternate DNS server"
+msgstr "Please input the correct alternate DNS server"
+
+msgid "host network"
+msgstr "Host Network"
+
+msgid "Please input the SSID"
+msgstr "Please input the SSID"
+
+msgid "wireless name cannot be all space"
+msgstr "The wireless name cannot be all Space，please input again"
+
+msgid "wireless password"
+msgstr "Wireless Password:"
+
+msgid "The password length error"
+msgstr "The password shoud be no less than 8 bits long"
+
+msgid "password contain invalid character"
+msgstr "Password contain invalid character"
+
+msgid "password strength"
+msgstr "password strength"
+
+msgid "weak"
+msgstr "weak"
+
+msgid "Setting up，please wait a moment..."
+msgstr "Setting up，please wait a moment..."
+
+msgid "Setting failed!"
+msgstr "Setting failed!"
+
+msgid "Please select your access method"
+msgstr "Please select your access method"
+
+msgid "Obtained from the old router"
+msgstr "Obtained from the old router"
+
+msgid "pppoe transplant intro"
+msgstr "Connect the old router to the power supply, and insert one end of the network cable into the WAN port of the old router and the other end into the LAN port of the routing."
+
+msgid "start obtain"
+msgstr "Start obtain"
+
+msgid "sync pppoe info from old router timeout"
+msgstr "Get broadband dialing information timeout from old router."
+
+msgid "failed to get network configuration from old router"
+msgstr "Failed to get network configuration from old router!"
+
+msgid "skip the guide"
+msgstr "Skip The Guide"
+
+msgid "automatically get IP address intro"
+msgstr "IP Will be automatically obtained from the operator，please continue to the next step"
+
+msgid "next"
+msgstr "Next"
+
+msgid "Password length error"
+msgstr "Password length error，please enter at least 8-63 characters"
+
+msgid "wireless password intro"
+msgstr "The wireless password is 8-63 characters，preferalby a combination of alphanumeric symbols"
+
+msgid "previous"
+msgstr "Previous"
+
+msgid "Welcome to sirouter"
+msgstr "Welcome to sirouter"
+
+msgid "I have read and agreed"
+msgstr "I have read and agreed "
+
+msgid "user license agreement"
+msgstr "user license agreement "
+
+msgid "and"
+msgstr "and "
+
+msgid "statement about siflower smart routers and privacy"
+msgstr "statement about siflower smart routers and privacy"
+
+msgid "join"
+msgstr "Join "
+
+msgid "user experience improvement program"
+msgstr "user experience improvement program"
+
+msgid "/proto.htm"
+msgstr "/proto_en.htm"
+
+msgid "/private.htm"
+msgstr "/private_en.htm"
+
+msgid "/project.htm"
+msgstr "/project_en.htm"
+
+msgid "Please encrypt your wireless network"
+msgstr "Please encrypt your wireless network"
+
+msgid "Do not encrypt"
+msgstr "Do not encrypt and take your own risk"
+
+msgid "Make sure the account or password is empty"
+msgstr "Make sure the bandwidth or password is empty"
+
+msgid "cancel"
+msgstr "Cancel"
+
+msgid "diagnostic tools"
+msgstr "Diagnostic Tools"
+
+msgid "operate successfully"
+msgstr "Operate successfully"
+
+msgid "diagnostic tools intro"
+msgstr "You can use Ping or Tracert on this page to diagnostic the connection of the router"
+
+msgid "parameter setting"
+msgstr "Parameter Setting"
+
+msgid "selection opeartion"
+msgstr "Selection Opeartion"
+
+msgid "IP address/domain name"
+msgstr "IP Address/Domain Name"
+
+msgid "Ping packet amount"
+msgstr "Ping Packet Amount"
+
+msgid "Ping packet size"
+msgstr "Ping Packet Size"
+
+msgid "(4-1472)bytes"
+msgstr "(4-1472)bytes"
+
+msgid "Ping timeout"
+msgstr "Ping Timeout"
+
+msgid "Tracert hop count"
+msgstr "Tracert Hop Count"
+
+msgid "diagnostic results"
+msgstr "Diagnostic Results"
+
+msgid "start"
+msgstr "Start"
+
+msgid "over"
+msgstr "Over"
+
+msgid "backup"
+msgstr "Backup"
+
+msgid "import successfully"
+msgstr "Load successfully"
+
+msgid "export button intro"
+msgstr "Click this button to back up the router's current configuration"
+
+msgid "Export the configuration"
+msgstr "Export The Configuration"
+
+msgid "Import the configuration"
+msgstr "Import The Configuration"
+
+msgid "import"
+msgstr "Import"
+
+msgid "import the configuration intro"
+msgstr "Select the profile and click the load profile button"
+
+msgid "browser"
+msgstr "Browser"
+
+msgid "note"
+msgstr "Note"
+
+msgid "backup note1"
+msgstr "After loading the configuration file, the router's existing configuration is lost. If the loading configuration is wrong, the router may be unable to be managed. In case of unmanageable situation, please long press the Reset button of the router to restore the factory setting."
+
+msgid "backup note2"
+msgstr "Make sure the router is turned on during the entire loading of the configuration file, and the failure of the loading process carries the risk of damaging the router"
+
+msgid "backup note3"
+msgstr "The loading process lasts about 20 seconds, and when the loading is finished, the router will restart automatically"
+
+msgid "Configuration is underway"
+msgstr "Configuration is underway, please wait a moment..."
+
+msgid "Select the load profile first"
+msgstr "Select the load profile first"
+
+msgid "Configuration file type illegal"
+msgstr "Configuration file type illegal! Please reselect"
+
+msgid "Connection to router failed!"
+msgstr "Connection to router failed!"
+
+msgid "modify password"
+msgstr "Modify Password"
+
+msgid "Two password input inconsistent!"
+msgstr "Two password input inconsistent!"
+
+msgid "original password"
+msgstr "Original Password"
+
+msgid "new password"
+msgstr "New Password"
+
+msgid "confirm new password"
+msgstr "Confirm New Password"
+
+msgid "The original password cannot be empty"
+msgstr "The original password cannot be empty"
+
+msgid "New password length error"
+msgstr "New password should be no less than 6 characters long!"
+
+msgid "Setting failed, please check the original password !"
+msgstr "Setting failed, please check the original password is correct!"
+
+msgid "reboot"
+msgstr "Reboot"
+
+msgid "Are you sure you want to reboot the router?"
+msgstr "Are you sure you want to reboot the router?"
+
+msgid "Please confirm to upgarde the router"
+msgstr "Please confirm to upgarde the router, when start upgrading, please wait 3-5 minutes and please do not unplug the power."
+
+msgid "Reset is underway, please wait..."
+msgstr "Reset is underway, please wait..."
+
+msgid "buzzer"
+msgstr "Buzzer"
+
+msgid "enabled"
+msgstr "Enabled"
+
+msgid "The request to restart failed, please try again"
+msgstr "The request to restart failed, please try again"
+
+msgid "The switch setting failed. Please try again!"
+msgstr "The switch setting failed. Please try again!"
+
+msgid "Failed to get the initial state of the buzzer"
+msgstr "Failed to get the initial state of the buzzer"
+
+msgid "factory reset"
+msgstr "Factory Reset"
+
+msgid "factory reset confirm"
+msgstr "After the factory settings are restored，all configurations will be reset，making sure to restore the factory settings?"
+
+msgid "factory reset button"
+msgstr "Clicking this button will restore all router Settings to the factory default state"
+
+msgid "It's recovering. Please wait..."
+msgstr "It's recovering. Please wait..."
+
+msgid "The request to restore factory Settings failed. Please try again"
+msgstr "The request to restore factory Settings failed. Please try again"
+
+msgid "software upgrading"
+msgstr "Software Upgrading"
+
+msgid "Failed to get data, please try again"
+msgstr "Failed to get data, please try again"
+
+msgid "upgrade intro"
+msgstr "Please select the upgrade software and click the upgrade button to upgrade"
+
+msgid "whether or not"
+msgstr "Whether To Keep The Configuration Or Not"
+
+msgid "current hardware version"
+msgstr "Current Hardware Version:"
+
+msgid "current software version"
+msgstr "Current Software Version:"
+
+msgid "OTA online upgrade"
+msgstr "OTA Online Upgrade"
+
+msgid "Upgrade is in progress"
+msgstr "Upgrade is in progress, please wait a moment..."
+
+msgid "Please select upgrade image first!"
+msgstr "Please select upgrade image first!"
+
+msgid "Image file type illegal"
+msgstr "Image file type illegal! Please reselect"
+
+msgid "Upgrade failed!"
+msgstr "Upgrade failed!"
+
+msgid "Error downloading image"
+msgstr "Error downloading image. Upgrade stopped"
+
+msgid "OTA file download error"
+msgstr "OTA file download error"
+
+msgid "It is the latest version"
+msgstr "It is the latest version"
+
+msgid "system log"
+msgstr "System Log"
+
+msgid "Sure to clear all logs?"
+msgstr "Sure to clear all logs?"
+
+msgid "refresh"
+msgstr "Refresh"
+
+msgid "save all logs"
+msgstr "Save All Logs"
+
+msgid "clear"
+msgstr "Clear"
+
+msgid "index"
+msgstr "Index"
+
+msgid "log type"
+msgstr "Log Type"
+
+msgid "content"
+msgstr "Content"
+
+msgid "Data clearance failed!"
+msgstr "Data clearance failed!"
+
+msgid "time setting"
+msgstr "Time Setting"
+
+msgid "time zone"
+msgstr "Time Zone"
+
+msgid "date"
+msgstr "Date"
+
+msgid "time"
+msgstr "Time"
+
+msgid "Save failed"
+msgstr "Save failed"
+
+msgid "DHCP server"
+msgstr "DHCP Server"
+
+msgid "Invalid input! Please refer to the correct format:"
+msgstr "Invalid input! Please refer to the correct format:"
+
+msgid "XXX.XXX.XXX.XXX,X is the number of 0~9"
+msgstr "XXX.XXX.XXX.XXX,X is the number of 0~9"
+
+msgid "address pool start address"
+msgstr "Address Pool Start Address"
+
+msgid "address pool end address"
+msgstr "Address Pool End Address"
+
+msgid "address of the lease"
+msgstr "Address Of The Lease"
+
+msgid "hour intro"
+msgstr "Hour（supports 1-24 hours and defaults to 12 hours ）"
+
+msgid "DHCP device"
+msgstr "DHCP Device"
+
+msgid "help"
+msgstr "Help"
+
+msgid "DHCP server help"
+msgstr "The DHCP server can automatically assign TCP/IP protocol parameters such as IP, subnet mask and so on to the devices in the LAN."
+
+msgid "Address pool start/end address"
+msgstr "Address Pool Start/End Address"
+
+msgid "Address pool start/end address intro"
+msgstr "The start/end address of the IP automatically assigned by the DHCP server"
+
+msgid "address of the lease intro"
+msgstr "The IP is automatically assigned to the valid time, after that time the LAN device will re-acquire the IP."
+
+msgid "gateway intro"
+msgstr "Optionally, it is recommended to enter the IP address of the router LAN port, which defaults to 192.168.4.1."
+
+msgid "DNS server intro"
+msgstr "Optionally, if the operator has a DNS server address provided, please fill in here"
+
+msgid "fail to get"
+msgstr "fail to get"
+
+msgid "host"
+msgstr "Host"
+
+msgid "effective time"
+msgstr "Effective Time"
+
+msgid "refresh failed"
+msgstr "refresh failed"
+
+msgid "Illegal address pool"
+msgstr "Illegal address pool, please input again"
+
+msgid "Unreasonable gateway"
+msgstr "Unreasonable gateway, please input again"
+
+msgid "Wrong preferred DNS address"
+msgstr "Wrong preferred DNS address, please input again"
+
+msgid "Wrong DNS address"
+msgstr "Wrong DNS address, please input again"
+
+msgid "The address lease term is 1-24"
+msgstr "The address lease term is 1-24, please input reasonably!"
+
+msgid "IP and MAC mapping table"
+msgstr "IP And MAC Mapping Table"
+
+msgid "IP and MAC bound"
+msgstr "IP And MAC Bound"
+
+msgid "add"
+msgstr "Add"
+
+msgid "delete all"
+msgstr "Delete All"
+
+msgid "delete the selected"
+msgstr "Delete The Selected"
+
+msgid "IP and MAC binding help"
+msgstr "Adding an IP and MAC binding entry can set a fixed IP address for the host that specifies the MAC address, and the IP address and MAC address in the entry will be ARP bound to protect the host from ARP attacks"
+
+msgid "For example"
+msgstr "For Example"
+
+msgid "For example intro"
+msgstr "If you want to set a fixed IP address 192.168.4.80 for the host of Zhang San MAC address is 00-e0-4c-00-07-be, protect zhang SAN's host from ARP attack. Then the IP and MAC binding entry can be set according to the following information:"
+
+msgid "MAC address"
+msgstr "MAC Address"
+
+msgid "Zhangsan"
+msgstr "Zhangsan"
+
+msgid "edit"
+msgstr "Edit"
+
+msgid "Failed to get binding information"
+msgstr "Failed to get binding information"
+
+msgid "status"
+msgstr "Status"
+
+msgid "Add to bound Settings"
+msgstr "Add To Bound"
+
+msgid "Anonymous host"
+msgstr "Anonymous Host"
+
+msgid "Is binding"
+msgstr "Is Binding"
+
+msgid "unbound"
+msgstr "Unbound"
+
+msgid "Refresh failed!"
+msgstr "Refresh failed!"
+
+msgid "IP address in WAN segment and LAN segment and visitor network network, please input again！"
+msgstr "IP address in WAN segment and LAN segment and visitor network network, please input again！"
+
+msgid "Add binding failed!"
+msgstr "Add binding failed!"
+
+msgid "Deletion successfully！"
+msgstr "Deletion successfully！"
+
+msgid "Deletion failed!"
+msgstr "Deletion failed!"
+
+msgid "MAC address format incorrect"
+msgstr "MAC address format incorrect! MAC address format 00:24:21:19:19:BD:E4!"
+
+msgid "MAC address cannot be broadcast address here!"
+msgstr "MAC address cannot be broadcast address here!"
+
+msgid "MAC address cannot be multicast address here!"
+msgstr "MAC address cannot be multicast address here!"
+
+msgid "IP address format error, please input again"
+msgstr "IP address format error, please input again"
+
+msgid "The IP address has been occupied"
+msgstr "The IP address has been occupied, the current added entry cannot be saved, please manually release the IP address"
+
+msgid "The MAC address has been occupied"
+msgstr "The MAC address has been occupied, the current added entry cannot be saved, please modify"
+
+msgid "Modification failed!"
+msgstr "Modification failed!"
+
+msgid "LAN setting"
+msgstr "LAN Setting"
+
+msgid "LAN IP setting"
+msgstr "LAN IP Setting"
+
+msgid "auto（recommendation）"
+msgstr "Auto（Recommendation）"
+
+msgid "manual"
+msgstr "Manual"
+
+msgid "MAC address setting"
+msgstr "MAC Address Setting"
+
+msgid "Use the router to the LAN's MAC address"
+msgstr "Use the router to the LAN's MAC address"
+
+msgid "LAN port IP setup"
+msgstr "LAN port IP setup"
+
+msgid "Support automatic and manual Settings"
+msgstr "Support automatic and manual Settings"
+
+msgid "LAN help 1"
+msgstr "When set to automatic, it has a lan-wan conflict detection mechanism, which is mainly manifested as:"
+
+msgid "LAN help 2"
+msgstr "When the IP address obtained by router WAN port is in the same network segment as LAN port IP address, the IP address of router LAN port will be automatically changed to other network segments.For example, the router LAN port's default IP address is 192.168.4.1. If the IP address obtained by router WAN port is 192.168.8.x, the LAN port IP address will automatically change to 192.168.0.1"
+
+msgid "LAN help 3"
+msgstr "After the router LAN port IP address changes, the previously set items such as virtual server and DMZ host will fail"
+
+msgid "LAN help 4"
+msgstr "After the LAN port IP address changes, the user can still log in to the router to manage the page through the domain name"
+
+msgid "LAN help 5"
+msgstr "To ensure that devices connected to the router have normal Internet access, it is recommended that the device be configured to acquire IP addresses dynamically.If the device is a fixed IP address, change the IP address of the device and the gateway according to the LAN port."
+
+msgid "IP address of the router to the LAN."
+msgstr "IP address of the router to the LAN."
+
+msgid "Router to LAN subnet mask"
+msgstr "Router to LAN subnet mask, generally 255.255.255.0"
+
+msgid "Just a moment, please..."
+msgstr "Just a moment, please..."
+
+msgid "LAN set confirm"
+msgstr "If your computer uses a manually set IP address, modify the computer's IP address, subnet mask, and default gateway."
+
+msgid "alter need input address confirm"
+msgstr "After the modification, you need to manually enter the address to access the router . Confirm the changes?"
+
+msgid "The network segment of IP address is illegal"
+msgstr "The network segment of IP address is illegal, please input again"
+
+msgid "Invalid input, setting failed!"
+msgstr "Invalid input, setting failed!"
+
+msgid "Use the MAC address of the router"
+msgstr "Use The MAC Address Of The Router "
+
+msgid "use the MAC address of the current managed PC"
+msgstr "Use The MAC Address Of The Current Managed PC （MAC Address Clone）"
+
+msgid "use custom MAC address"
+msgstr "Use Custom MAC Address "
+
+msgid "MAC help"
+msgstr "This function can set the MAC address of the router to the wan. Generally, this address does not need to be changed.But in some areas the operators will tie the route to the MAC address, and at this point the operators will provide a \"valid MAC address\".You need to use this feature to set the MAC address to that \"valid MAC address\" in order to properly share the Internet."
+
+msgid "Failed to set MAC address"
+msgstr "Failed to set MAC address"
+
+msgid "wan connection type"
+msgstr "Wan Connection Type"
+
+msgid "Packet MTUbyte"
+msgstr "Packet MTUbyte"
+
+msgid "auto negotiation"
+msgstr "Auto Negotiation"
+
+msgid "10M full duplex"
+msgstr "10M Full Duplex"
+
+msgid "10M half duplex"
+msgstr "10M Half Duplex"
+
+msgid "break"
+msgstr "Break"
+
+msgid "connect"
+msgstr "Connect"
+
+msgid "Connection mode"
+msgstr "Connection Mode"
+
+msgid "Connect on demand"
+msgstr "Connect on demand and automatically when there is access"
+
+msgid "Automatic connection"
+msgstr "Automatic connection after startup and disconnection"
+
+msgid "Manual connection by user"
+msgstr "Manual connection by user"
+
+msgid "Automatic wire break waiting time"
+msgstr "Automatic wire break waiting time"
+
+msgid "minute0 means no automatic break"
+msgstr "0 means no automatic break"
+
+msgid "Broadband dial-up advanced setup"
+msgstr "Broadband Dial-up Advanced Setup"
+
+msgid "default is 1500, please do not modify if not necessary"
+msgstr "default 1500,do not modify if not necessary"
+
+msgid "default is 1480, please do not modify if not necessary"
+msgstr "default 1480,do not modify if not necessary"
+
+msgid "service name"
+msgstr "Service Name"
+
+msgid "server name"
+msgstr "Server Name"
+
+msgid "Use the IP address specified by the operator"
+msgstr "Use the IP address specified by the operator"
+
+msgid "IP address designated by the operator"
+msgstr "IP Address Designated By The Operator"
+
+msgid "Manually set the DNS server"
+msgstr "Manually Set The DNS Server"
+
+msgid "optional"
+msgstr "Optional"
+
+msgid "update"
+msgstr "Update"
+
+msgid "release"
+msgstr "Release"
+
+msgid "host name"
+msgstr "Host Name"
+
+msgid "Get IP by unicast generally not selected"
+msgstr "Get IP By Unicast Generally Not Selected"
+
+msgid "WAN port speed setting"
+msgstr "WAN Port Speed Setting"
+
+msgid "WAN connection type intro"
+msgstr "The way operators provide access to the Internet"
+
+msgid "using temporary IP"
+msgstr "Access to the Internet using temporary IP assigned dynamically by the operator"
+
+msgid "IP address, subnet mask, gateway"
+msgstr "IP Address, Subnet Mask, Gateway"
+
+msgid "Operator dynamic allocation of network parameters"
+msgstr "Operator dynamic allocation of network parameters"
+
+msgid "Packet MTU"
+msgstr "Packet MTU"
+
+msgid "Packet maximum transmission unit"
+msgstr "The maximum transmission unit of the packet can be set to a range of 46-9000"
+
+msgid "Packet maximum transmission unit for pppoe"
+msgstr "The maximum transmission unit of the packet can be set to a range of 46-8992"
+
+msgid "Manually set the DNS server in dhcp"
+msgstr "The operator will automatically assign DNS server under the automatic access of IP address. If necessary, it can also be set manually"
+
+msgid "Get IP by unicast"
+msgstr "Get IP By Unicast"
+
+msgid "Get IP by unicast intro"
+msgstr "The DHCP servers of a few operators do not support broadcast request mode, if you cannot get IP address under normal network connections, you can choose unicast mode"
+
+msgid "WAN port speed setting intro"
+msgstr "Set the speed of the WAN port and the duplex mode. Some small broadband lines are forced to be 10Mbps, so the router cannot be used normally. At this time, the WAN port rate can be forced to be 10Mbps"
+
+msgid "Service name/server name"
+msgstr "Service Name/Server Name"
+
+msgid "Service name/server name intro"
+msgstr "Please do not fill out this form unless it is specifically requested by the operator"
+
+msgid "Use operators to specify IP addresses"
+msgstr "Use operators to specify IP addresses"
+
+msgid "specifies IP address intro"
+msgstr "If the operator specifies an IP address, select this option and fill in the specific address"
+
+msgid "Manually set the DNS server in pppoe"
+msgstr "Broadband dial-up service operators will automatically assign DNS servers and can set them up manually if necessary"
+
+msgid "Please wait for the detect"
+msgstr "Please wait for the detect"
+
+msgid "connected"
+msgstr "Connected"
+
+msgid "disconnected"
+msgstr "Disconnected"
+
+msgid "disconnected unplugged port of WAN"
+msgstr "Unplugged"
+
+msgid "Failed to get data!"
+msgstr "Failed to get data！"
+
+msgid "Invalid MTU, MTU should between 46 and 9000"
+msgstr "Invalid MTU, MTU should between 46 and 9000"
+
+msgid "Invalid MTU, MTU should between 46 and 8992"
+msgstr "Invalid MTU, MTU should between 46 and 8992"
+
+msgid "MTU can not be empty"
+msgstr "MTU can not be empty"
+
+msgid "host name error"
+msgstr "Your host name contains illegal characters, using a combination of letters a-z, A-Z, Numbers 0-9, and connectors -"
+
+msgid "preferred DNS server address error"
+msgstr "DNS server address preferred error, please input again"
+
+msgid "IP address error, please input again"
+msgstr "IP address error, please input again"
+
+msgid "Connection failed"
+msgstr "Connection failed"
+
+msgid "Connect timeout"
+msgstr "Connect timeout"
+
+msgid "Save data failed"
+msgstr "Save data failed"
+
+msgid "The IP address is invalid. Please input again"
+msgstr "The IP address is invalid. Please input again"
+
+msgid "Network segment and LAN interface IP address conflict"
+msgstr "Network segment and LAN interface IP address conflict"
+
+msgid "Operator address error, please input again"
+msgstr "Operator address error, please input again"
+
+msgid "Connecting..."
+msgstr "Connecting..."
+
+msgid "Update failed!"
+msgstr "Update Failed!"
+
+msgid "Disconnecting..."
+msgstr "Disconnecting, please wait a moment..."
+
+msgid "Release failed!"
+msgstr "Release Failed!"
+
+msgid "Disconnected unplugged port of WAN"
+msgstr "Unplugged"
+
+msgid "WAN port is not connected"
+msgstr "WAN Port Is Not Connected"
+
+msgid "Long account length"
+msgstr "Account length is too long"
+
+msgid "Long password length"
+msgstr "Password length is too long"
+
+msgid "Successful connection!"
+msgstr "Successful connection!"
+
+msgid "Automatic wire break waiting time input error"
+msgstr "Automatic wire break waiting time input error, please re-enter 0-99!"
+
+msgid "Save successfully"
+msgstr "Save successfully"
+
+msgid "Disconnected not connected"
+msgstr "Unplugged"
+
+msgid "peanut shell dynamic domain name"
+msgstr "Peanut Shell Dynamic Domain Name"
+
+msgid "service provider"
+msgstr "Service Provider"
+
+msgid "username"
+msgstr "Username"
+
+msgid "password"
+msgstr "Password"
+
+msgid "auto login"
+msgstr "Auto Login"
+
+msgid "domian name information"
+msgstr "Domian Name Information"
+
+msgid "login"
+msgstr "Login"
+
+msgid "exit"
+msgstr "Exit"
+
+msgid "DDNS help"
+msgstr "Through the DDNS service, the service provider can bind the fixed domain name to the public network IP that is connected to the Internet, so that when the host and router communicate, the domain name can be directly used for access."
+
+msgid "Service provider"
+msgstr "Service Provider"
+
+msgid "The DDNS service provider of this router"
+msgstr "The DDNS service provider of this router is peanut shell www.oray.com"
+
+msgid "User name/password"
+msgstr "User Name/Password"
+
+msgid "User name/password registered on the DDNS server address."
+msgstr "User name/password registered on the DDNS server address."
+
+msgid "Connection status"
+msgstr "Connection Status"
+
+msgid "Connection status with the DDNS server"
+msgstr "Connection status with the DDNS server"
+
+msgid "Service type"
+msgstr "Service Type"
+
+msgid "Current service type of DDNS"
+msgstr "Current service type of DDNS"
+
+msgid "Domain information"
+msgstr "Domain Information"
+
+msgid "List of domain name services obtained from the DDNS server"
+msgstr "List of domain name services obtained from the DDNS server"
+
+msgid "DDNS help note"
+msgstr "Note: Before logging in, you first need to apply for a DDNS account from the DDNS service provider"
+
+msgid "save setting successfully"
+msgstr "Save setting successfully."
+
+msgid "The length of the account is not less than 2!"
+msgstr "The length of the account is not less than 2!"
+
+msgid "Password length not less than 8!"
+msgstr "Password length not less than 8!"
+
+msgid "operation failure"
+msgstr "operation failure"
+
+msgid "DMZ host"
+msgstr "DMZ Host"
+
+msgid "DMZ host address"
+msgstr "DMZ Host Address"
+
+msgid "DMZ help"
+msgstr "Through the DMZ host function, devices in the wan can directly access the DMZ host in the LAN"
+
+msgid "DMZ help for example"
+msgstr "If you want a host with an IP address of 192.168.4.100 in the LAN to be directly accessed by the devices in the wan, you can turn on the DMZ host function and enter 192.168.4.100 at the \"DMZ host IP address\" for saving."
+
+msgid "ip is not in the lan segment"
+msgstr "The IP address is not the IP of the LAN segment. Please input again"
+
+msgid "static route setup"
+msgstr "Static Route Setup"
+
+msgid "Delete all"
+msgstr "Delete All"
+
+msgid "Delete Selected"
+msgstr "Delete Selected"
+
+msgid "system routing table"
+msgstr "System Routing Table"
+
+msgid "routing function help"
+msgstr "The routing function can set a static route entry, which will be forwarded as specified when the packet matches the static route successfully."
+
+msgid "destination net address"
+msgstr "Destination Net Address"
+
+msgid "The address the packet needs to arrive at"
+msgstr "The address the packet needs to arrive at"
+
+msgid "Subnet mask of destination address"
+msgstr "Subnet mask of destination address"
+
+msgid "next hop address"
+msgstr "Next Hop Address"
+
+msgid "next router address help"
+msgstr "The next router address that can be forwarded directly before the packet reaches the destination address"
+
+msgid "interface"
+msgstr "Interface"
+
+msgid "Failed to refresh data"
+msgstr "Failed to refresh data"
+
+msgid "already in the system routing table"
+msgstr "Unable to add the destination network address already in the system routing table"
+
+msgid "Destination network address is not valid"
+msgstr "Destination network address is not valid, please input again"
+
+msgid "Next hop address error"
+msgstr "Next hop address error, please input again"
+
+msgid "delete successfully"
+msgstr "Delete successfully"
+
+msgid "delete failed"
+msgstr "Delete failed"
+
+msgid "modify successfully"
+msgstr "Modify successfully"
+
+msgid "UPnP setting"
+msgstr "UPnP Setting"
+
+msgid "UPnP help"
+msgstr "When the UPnP service is turned on, the device can automatically discover and control the router device at the front end, and automatically negotiate the communication port with the router according to the software requirements, so as to conduct normal communication"
+
+msgid "Description of the application included in the UPnP request"
+msgstr "Description of the application included in the UPnP request"
+
+msgid "external port"
+msgstr "External Port"
+
+msgid "An external port that the router opens for the application"
+msgstr "An external port that the router opens for the application"
+
+msgid "protocol type"
+msgstr "Protocol Type"
+
+msgid "The type of protocol opened"
+msgstr "The type of protocol opened"
+
+msgid "internal port"
+msgstr "Internal Port"
+
+msgid "An internal port that the router opens for the local host"
+msgstr "An internal port that the router opens for the local host"
+
+msgid "The IP address of the local host contained in the UPnP request"
+msgstr "The IP address of the local host contained in the UPnP request"
+
+msgid "Indicates whether the port is enabled."
+msgstr "Indicates whether the port is enabled."
+
+msgid "UPnP help note"
+msgstr "Note: using UPnP requires support from routers, operating systems, and the application itself"
+
+msgid "APP description"
+msgstr "APP Description"
+
+msgid "disabled"
+msgstr "Disabled"
+
+msgid "virtual server"
+msgstr "Virtual Server"
+
+msgid "virtual server help"
+msgstr "The router itself is integrated with a firewall so that by default computers in the wan will not be able to access certain servers in the LAN via the router.The virtual server functionality addresses this problem. Define a service port through the virtual server,All service requests for this port will be redirected to the server on the LAN specified by IP address."
+
+msgid "common server"
+msgstr "Common Server"
+
+msgid "common server help"
+msgstr "The common server drop-down list lists some common services, from which you can select the required services"
+
+msgid "external port help"
+msgstr "The service port that the router provides to the wan. You can enter a port number or a port segment, such as 6001-6008"
+
+msgid "internal port help"
+msgstr "The service port that the router provides to the LAN. If the internal port is the same as the service port, you can leave it empty or fill in 0, or enter a specific port number such as: 80."
+
+msgid "IP address help"
+msgstr "The IP address of the computer that serves as a server in the LAN"
+
+msgid "protocol"
+msgstr "Protocol"
+
+msgid "The protocol used by the server"
+msgstr "The protocol used by the server"
+
+msgid "vs help for example"
+msgstr "If your FTP server port number 21 has an IP address of 192.168.4.2, you can specify the following virtual server rules"
+
+msgid "vs help note"
+msgstr "Note: the external port of the virtual server cannot be the same as the \"LAN WEB management port\" or \"remote WEB management port\", otherwise the virtual server will be disabled due to conflict"
+
+msgid "Failed to get information"
+msgstr "Failed to get information"
+
+msgid "Please enter the correct external port"
+msgstr "Please enter the correct external port"
+
+msgid "Please enter the correct internal port"
+msgstr "Please enter the correct internal port"
+
+msgid "Please enter password"
+msgstr "Please enter password"
+
+msgid "No encryption"
+msgstr "No Encryption"
+
+msgid "country and region"
+msgstr "Country and Region:"
+
+msgid "United States"
+msgstr "United States"
+
+msgid "Canada"
+msgstr "Canada"
+
+msgid "Europe"
+msgstr "Europe"
+
+msgid "Switzerland"
+msgstr "Switzerland"
+
+msgid "Russia"
+msgstr "Russia"
+
+msgid "Japan"
+msgstr "Japan"
+
+msgid "India"
+msgstr "India"
+
+msgid "Singapore"
+msgstr "Singapore"
+
+msgid "China"
+msgstr "China"
+
+msgid "Israel"
+msgstr "Israel"
+
+msgid "North Korea"
+msgstr "North Korea"
+
+msgid "South Korea"
+msgstr "South Korea"
+
+msgid "Turkey"
+msgstr "Turkey"
+
+msgid "Australia"
+msgstr "Australia"
+
+msgid "South Africa"
+msgstr "South Africa"
+
+msgid "Brazil"
+msgstr "Brazil"
+
+msgid "Taiwan"
+msgstr "Taiwan"
+
+msgid "New Zealand"
+msgstr "New Zealand"
+
+msgid "channel"
+msgstr "Channel:"
+
+msgid "Turn on wireless radio"
+msgstr "Turn On Wireless Radio"
+
+msgid "auto"
+msgstr "Auto"
+
+msgid "model"
+msgstr "Model:"
+
+msgid "Spectrum bandwidth"
+msgstr "Spectrum Bandwidth:"
+
+msgid "Signal strength"
+msgstr "Signal Strength:"
+
+msgid "low"
+msgstr "Low"
+
+msgid "middle"
+msgstr "Middle"
+
+msgid "high"
+msgstr "High"
+
+msgid "Open AP isolation"
+msgstr "Open AP Isolation"
+
+msgid "The wireless wi-fi name of the router"
+msgstr "The wireless wi-fi name of the router"
+
+msgid "wireless password help"
+msgstr "Wireless encryption USES wpa2-psk/wpa-psk encryption method and AES encryption algorithm. The wireless password is 8-63 characters, preferably a combination of Numbers, letters and symbols"
+
+msgid "channel help"
+msgstr "Wireless data signal transmission channel, the router will automatically choose the best channel based on the surrounding wireless environment"
+
+msgid "Wireless mode in which the router works"
+msgstr "Wireless mode in which the router works"
+
+msgid "The bandwidth of the wireless data transmitted"
+msgstr "The bandwidth of the wireless data transmitted by the router"
+
+msgid "Signal strength help"
+msgstr "The signal intensity of different grades can be selected according to actual use"
+
+msgid "Open AP isolation help"
+msgstr "When enabled, each wireless device connected to the router can be securely isolated"
+
+msgid "the length of the SSID is too long！"
+msgstr "The length of the SSID is too long！"
+
+msgid "No more than 10 Chinese characters in wireless name!"
+msgstr "No more than 10 Chinese characters in wireless name!"
+
+msgid "Password length not less than 8 bits!"
+msgstr "Password length not less than 8 bits!！"
+
+msgid "Password long long, please input again！"
+msgstr "Password long long, please input again！"
+
+msgid "visitor network"
+msgstr "Visitor Network"
+
+msgid "Whether visitors are allowed access to Intranet resources"
+msgstr "Whether Visitors Are Allowed Access To Intranet Resources:"
+
+msgid "no"
+msgstr "No"
+
+msgid "yes"
+msgstr "Yes"
+
+msgid "maximum upload speed on visitor network"
+msgstr "Maximum Upload Speed:"
+
+msgid "KB/s（0 means no limit）"
+msgstr " KB/s(0 means no limit)"
+
+msgid "maximum download speed in visitor network"
+msgstr "Maximum Download Speed:"
+
+msgid "whether to set the visitor network opening time"
+msgstr "Whether To Set The Visitor Network Opening Time:"
+
+msgid "open"
+msgstr "Open"
+
+msgid "Automatically shut down the visitor network after hours"
+msgstr "Automatically Shut Down The Visitor Network After Hours"
+
+msgid "Set the opening time of the cycle"
+msgstr "Set The Opening Time Of The Cycle"
+
+msgid "Opening hours"
+msgstr "Opening Hours"
+
+msgid "visitor network help"
+msgstr "The visitor network provides a special wireless network for visitors to use, which can realize the security isolation between the visitors and the Intranet, thus effectively guaranteeing the data security of the Intranet"
+
+msgid "Wireless name, wireless password"
+msgstr "Wireless Name, Wireless Password"
+
+msgid "Wireless name, wireless password help"
+msgstr "Wireless wi-fi name and wireless password for visitors. The wireless password is 8-63 characters, preferably a combination of Numbers, letters and symbols"
+
+msgid "Set the visitor's access to the Intranet"
+msgstr "Set the visitor's access to the Intranet. It is recommended to keep the default value \"no\", at which time visitors can only access the external network through the router"
+
+msgid "Maximum upload/download speed of visitor network"
+msgstr "Maximum Upload/Download Speed Of Visitor Network"
+
+msgid "Set the maximum Internet speed for the entire visitor network"
+msgstr "Set the maximum Internet speed for the entire visitor network"
+
+msgid "Whether to set the visitor network opening time"
+msgstr "Whether To Set The Visitor Network Opening Time"
+
+msgid "Set the opening time of the visitor network"
+msgstr "Set the opening time of the visitor network"
+
+msgid "No more than 10 characters"
+msgstr "No more than 10 characters"
+
+msgid "Timeouts should be set between 0 and 24 hours"
+msgstr "Timeouts should be set between 0 and 24 hours"
+
+msgid "Please select the cycle opening time"
+msgstr "Please select the cycle opening time"
+
+msgid "hour"
+msgstr "Hour"
+
+msgid "Monday"
+msgstr "Monday"
+
+msgid "Tuesday"
+msgstr "Tuesday"
+
+msgid "Wednesday"
+msgstr "Wednesday"
+
+msgid "Thursday"
+msgstr "Thursday"
+
+msgid "Friday"
+msgstr "Friday"
+
+msgid "Saturday"
+msgstr "Saturday"
+
+msgid "Sunday"
+msgstr "Sunday"
+
+msgid "WDS wireless bridge"
+msgstr "WDS Wireless Bridge"
+
+msgid "wds host password changed"
+msgstr "Host router password changed"
+
+msgid "wds host ssid missed"
+msgstr "Host router wifi is not found"
+
+msgid "Connection failed. Please try again"
+msgstr "Connection failed. Please try again"
+
+msgid "Scanning is underway, please wait a moment..."
+msgstr "Scanning is underway, please wait a moment..."
+
+msgid "WDS netgroup wizard"
+msgstr "WDS Netgroup Wizard"
+
+msgid "WDS intro1"
+msgstr "With the WDS feature, wireless bridges between primary and secondary routers can be made to extend wireless network coverage"
+
+msgid "WDS intro2"
+msgstr "After truning on the WDS function,the router will network as a slave"
+
+msgid "return"
+msgstr "Return"
+
+msgid "please select a network"
+msgstr "Please Select A Network"
+
+msgid "Enter the wireless password for the main router"
+msgstr "Enter The Wireless Password For The Main Router"
+
+msgid "Please set the wireless parameters of this router"
+msgstr "Please Set The Wireless Parameters Of This Router"
+
+msgid "WDS network group information"
+msgstr "WDS Network Group Information"
+
+msgid "master router"
+msgstr "Master Router"
+
+msgid "This router"
+msgstr "This Router"
+
+msgid "LAN port IP address"
+msgstr "LAN Port IP Address:"
+
+msgid "Close the WDS"
+msgstr "Close"
+
+msgid "Please select the main router you want to bridge"
+msgstr "Please Select The Main Router You Want To Bridge"
+
+msgid "Encrypted information"
+msgstr "Encrypted Information"
+
+msgid "select"
+msgstr "Select"
+
+msgid "Scan failed"
+msgstr "Scan Failed"
+
+msgid "connecting, please wait a moment..."
+msgstr "Connecting, please wait a moment..."
+
+msgid "Failed to get information, please reconnect!"
+msgstr "Failed to get information, please reconnect!"
+
+msgid "We are reconnecting. Please wait a moment..."
+msgstr "We are reconnecting. Please wait a moment..."
+
+msgid "Setting failed, please reset"
+msgstr "Setting failed, please reset"
+
+msgid "Operation failed, please try again!"
+msgstr "Operation failed, please try again!"
+
+msgid "set successfully"
+msgstr "Set successfully"
+
+msgid "device information"
+msgstr "Device Information"
+
+msgid "device model"
+msgstr "Device Model"
+
+msgid "current system time"
+msgstr "current system time"
+
+msgid "system runtime"
+msgstr "system runtime"
+
+msgid "wireless parameter"
+msgstr "wireless parameter"
+
+msgid "wireless mode"
+msgstr "wireless mode"
+
+msgid "band bandwidth"
+msgstr "band bandwidth"
+
+msgid "wireless service"
+msgstr "wireless service"
+
+msgid "network name encoding"
+msgstr "network name encoding"
+
+msgid "network type"
+msgstr "network type"
+
+msgid "employee network"
+msgstr "employee network"
+
+msgid "encryption"
+msgstr "encryption"
+
+msgid "not encrypt"
+msgstr "not encrypt"
+
+msgid "set password"
+msgstr "set password"
+
+msgid "wireless internal network isolation"
+msgstr "wireless internal network isolation"
+
+msgid "enable"
+msgstr "enable"
+
+msgid "Enable/disable this network"
+msgstr "Enable/disable this network"
+
+msgid "wireless client"
+msgstr "wireless client"
+
+msgid "serial number"
+msgstr "serial number"
+
+msgid "Plug in the wireless network"
+msgstr "Plug in the wireless network"
+
+msgid "Access time"
+msgstr "Access time"
+
+msgid "setting"
+msgstr "setting"
+
+msgid "Please enter wireless name"
+msgstr "Please enter wireless name"
+
+msgid "The length of the wireless name is too long"
+msgstr "The length of the wireless name is too long"
+
+msgid "No more than 10 Chinese characters in wireless name"
+msgstr "No more than 10 Chinese characters in wireless name"
+
+msgid "Set the password to no less than 8 bits"
+msgstr "Set the password to no less than 8 bits"
+
+msgid "Connection failed, please try again"
+msgstr "Connection failed, please try again"
+
+msgid "Setting failed"
+msgstr "Setting failed"
+
+msgid "add successfully"
+msgstr "add successfully"
+
+msgid "wireless MAC address filtering"
+msgstr "wireless MAC address filtering"
+
+msgid "Enable wireless MAC address filtering"
+msgstr "Enable wireless MAC address filtering"
+
+msgid "wireless MAC address filtering rule settings"
+msgstr "wireless MAC address filtering rule settings"
+
+msgid "effective range"
+msgstr "effective range"
+
+msgid "remarks"
+msgstr "remarks"
+
+msgid "VLAN setting"
+msgstr "VLAN setting"
+
+msgid "wireless network and VLAN binding"
+msgstr "wireless network and VLAN binding"
+
+msgid "The MAC address list is empty"
+msgstr "The MAC address list is empty"
+
+msgid "MAC address format is not legal"
+msgstr "MAC address format is not legal"
+
+msgid "Please select the filter effective range"
+msgstr "Please select the filter effective range"
+
+msgid "add failure"
+msgstr "add failure"
+
+msgid "successfully delete"
+msgstr "successfully delete"
+
+msgid "Delete failed"
+msgstr "Delete failed"
+
+msgid "Enable MAC address filtering is that the filter rule cannot be empty"
+msgstr "Enable MAC address filtering is that the filter rule cannot be empty"
+
+msgid "There is an illegal ssid, please check the input"
+msgstr "There is an illegal ssid, please check the input"
+
+msgid "Connection to router failed"
+msgstr "Connection to router failed"
+
+msgid "When wireless binding to the VLAN is enabled, the VLAN ID cannot be empty"
+msgstr "When wireless binding to the VLAN is enabled, the VLAN ID cannot be empty"
+
+msgid "Invalid vlanID, please make sure its value is between 1-4049"
+msgstr "Invalid vlanID, please make sure its value is between 1-4049"
+
+msgid "fail to modify"
+msgstr "fail to modify"
+
+msgid "default gateway"
+msgstr "default gateway"
+
+msgid "LED switch"
+msgstr "LED switch"
+
+msgid "enable WiFi control"
+msgstr "enable WiFi control"
+
+msgid "WEB service port"
+msgstr "WEB service port"
+
+msgid "WEB session timeout"
+msgstr "WEB session timeout"
+
+msgid "account management"
+msgstr "account management"
+
+msgid "confirm password"
+msgstr "confirm password"
+
+msgid "view system logs"
+msgstr "view system logs"
+
+msgid "view"
+msgstr "view"
+
+msgid "download system log"
+msgstr "download system log"
+
+msgid "download"
+msgstr "Download"
+
+msgid "time & language"
+msgstr "Time and Language"
+
+msgid "prefered NTP server"
+msgstr "prefered NTP server"
+
+msgid "alternate NTP server"
+msgstr "alternate NTP server"
+
+msgid "configuration management"
+msgstr "configuration management"
+
+msgid "backup configuration"
+msgstr "backup configuration"
+
+msgid "import configuration"
+msgstr "import configuration"
+
+msgid "browse"
+msgstr "Browse"
+
+msgid "load the configuration"
+msgstr "load the configuration"
+
+msgid "recover factory reset"
+msgstr "Recover Factory Reset"
+
+msgid "restart device "
+msgstr "restart device"
+
+msgid "restart"
+msgstr "restart"
+
+msgid "software upgrade"
+msgstr "software upgrade"
+
+msgid "Ping watchdog"
+msgstr "Ping watchdog"
+
+msgid "destination IP address"
+msgstr "destination IP address"
+
+msgid "contract period"
+msgstr "contract period"
+
+msgid "start delay"
+msgstr "start delay"
+
+msgid "maximum number of lost packets"
+msgstr "maximum number of lost packets"
+
+msgid "Subnet mask is not valid, please input again"
+msgstr "Subnet mask is not valid, please input again"
+
+msgid "Gateway error, please input again"
+msgstr "Gateway error, please input again"
+
+msgid "The port number range is limited to 0-65535"
+msgstr "The port number range is limited to 0-65535"
+
+msgid "WEB session timeout should be limited to 30-300 seconds"
+msgstr "WEB session timeout should be limited to 30-300 seconds"
+
+msgid "It's jumping, please wait..."
+msgstr "It's jumping, please wait..."
+
+msgid "Two password input inconsistent"
+msgstr "Two password input inconsistent"
+
+msgid "The original password is wrong, please input again"
+msgstr "The original password is wrong, please input again"
+
+msgid "log contents"
+msgstr "log contents"
+
+msgid "Recovering, please wait..."
+msgstr "Recovering, please wait..."
+
+msgid "Factory reset failed"
+msgstr "Factory reset failed"
+
+msgid "The preferred NTP server cannot be empty"
+msgstr "The preferred NTP server cannot be empty"
+
+msgid "Not legal domain name or IP, please input again！"
+msgstr "Not legal domian name or IP, please input again！"
+
+msgid "Please select load profile first"
+msgstr "Please select laod profile first"
+
+msgid "File type illegal! Please reselect"
+msgstr "File type illegal! Please reselect"
+
+msgid "Please wait while configuration is underway..."
+msgstr "Please wait while configuration is underway..."
+
+msgid "Image files are illegal"
+msgstr "Image files are illegal"
+
+msgid "Upgrade error"
+msgstr "Upgrade error"
+
+msgid "Is being upgraded, please wait a moment..."
+msgstr "Is being upgraded, please wait a moment..."
+
+msgid "The contract period is limited to 10-300 seconds"
+msgstr "The contract period is limited to 100-300 seconds"
+
+msgid "The startup delay is limited to 60-300 seconds"
+msgstr "The startup delay is limited to 60-300 seconds"
+
+msgid "The number of bags allowed is limited to 1-35535"
+msgstr "The number of bags allowed is limited to 1-35535"
+
+msgid "connection fails"
+msgstr "connection fails"
+
+msgid "Are you sure to restore factory Settings"
+msgstr "Are you sure to restore factory Settings"
+
+msgid "Are you sure to restart the panel"
+msgstr "Are you sure to restart the panel"
+
+msgid "Are you sure to confirm import configuration"
+msgstr "Are you sure to confirm import configuration"
+
+msgid "After setting the IP address, the PC must visit the management page in the unified network segment."
+msgstr "After setting the IP address, the PC must visit the management page in the unified network segment"
+
+msgid "advanced settings"
+msgstr "advanced settings"
+
+msgid "wireless channel"
+msgstr "wireless channel"
+
+msgid "transmission power"
+msgstr "transmission power"
+
+msgid "Beacon time slot"
+msgstr "Beacon time slot"
+
+msgid "Milliseconds 40-1000"
+msgstr "Milliseconds 40-1000"
+
+msgid "Client limitations"
+msgstr "Client limitations"
+
+msgid "Prohibit signal strength below"
+msgstr "Prohibit signal strength below"
+
+msgid "DBm wireless client access range error"
+msgstr "DBm wireless client access (-90dbm ~ -30dbm, less than -40dbm is recommended)"
+
+msgid "The kick signal strength is lower than"
+msgstr "The kick signal strength is lower than"
+
+msgid "Wireless client of dBm"
+msgstr "Wireless client of dBm (-90dbm ~ -30dbm, less than -40dbm is recommended)"
+
+msgid "Isolation between wireless networks"
+msgstr "Isolation between wireless networks"
+
+msgid "Wireless network name cannot be empty"
+msgstr "Wireless network name cannot be empty"
+
+msgid "Cannot set duplicate wireless network name"
+msgstr "Cannot set duplicate wireless network name"
+
+msgid "Set 2.4g wireless network to no more than 4"
+msgstr "Set 2.4g wireless network to no more than 4"
+
+msgid "Set up 5G wireless network to no more than 4"
+msgstr "Set up 5G wireless network to no more than 4"
+
+msgid "The transmission power range is 0-20dbm"
+msgstr "The transmission power range is 0-20dbm"
+
+msgid "Beacon time slots range from 40 to 1000 milliseconds"
+msgstr "Beacon time slots range from 40 to 1000 milliseconds"
+
+msgid "The client limit is 1-40"
+msgstr "The client limit is 1-40"
+
+msgid "The signal strength must not be empty"
+msgstr "The signal strength must not be empty"
+
+msgid "The wireless client access range error"
+msgstr "The wireless client access range is between -90dbm and -30dbm, it is recommended not to be greater than -40dbm"
+
+msgid "The kick signal strength cannot be empty"
+msgstr "The kick signal strength cannot be empty"
+
+msgid "Wireless client ban signal strength range error"
+msgstr "Wireless client ban signal strength range is at least 5dbm higher than kick signal strength!"
+
+msgid "wireless client ban signal strength range should be enable"
+msgstr "Wireless client ban signal strength range should be enable!"
+
+msgid "The router is not encrypted and confirm the connection. Please click next."
+msgstr "The router is not encrypted and confirm the connection. Please click next."
+
+msgid "router connection failure"
+msgstr "Router connection failure"
+
+msgid "password should be no more than 63 bits long"
+msgstr "password should be no more than 63 bits long"
+
+msgid "router function"
+msgstr "Router Function"
+
+msgid "please select"
+msgstr "Please Select"
+
+msgid "alternate DNS server address error, please input again"
+msgstr "alternate DNS server address error, please input again"
+
+msgid "configuration failure"
+msgstr "Configuration failure"
+
+msgid "IP address or domain name can not be empty"
+msgstr "IP address or domain name can not be empty,please input again"
+
+msgid "IP address or domain name is illegal"
+msgstr "IP address or domain name is illegal,please input again"
+
+msgid "Ping timeout limit is 1-100 seconds"
+msgstr "Ping timeout limit is 1-100 seconds. Please input reasonably."
+
+msgid "Ping packet size is limited to 4-1472"
+msgstr "Ping packet size is limited to 4-1472 bytes, please input reasonably."
+
+msgid "The number of Ping packages is limited to 1-50"
+msgstr "The number of Ping packages is limited to 1-50. Please input reasonably."
+
+msgid "Tracert hop count is limited to 1-30"
+msgstr "Tracert hop count is limited to 1-30. Please input reasonably. "
+
+msgid "Debugging failed. Please try again."
+msgstr "Debugging failed. Please try again."
+
+msgid "Current connection device"
+msgstr "Current Connection Device"
+
+msgid "Current network speed"
+msgstr "Current Network Speed"
+
+msgid "Limit download speed"
+msgstr "Download Speed Limit"
+
+msgid "Limit upload speed"
+msgstr "Upload Speed Limit"
+
+msgid "Disable"
+msgstr "Disable"
+
+msgid "Currently banned devices"
+msgstr "Currently Banned Devices"
+
+msgid "Lift a ban"
+msgstr "Lift A Ban"
+
+msgid "please enter at least 8-63 characters"
+msgstr "please enter at least 8-63 characters"
+
+msgid "WAN connection is not connected"
+msgstr "WAN connection is not connected. Please check whether the cable is inserted. "
+
+msgid "Login password"
+msgstr "Login password"
+
+msgid "Forget the password"
+msgstr "Forget the password"
+
+msgid "If you forget your password, please resume the factory settings. Recovery: When the device is powered on, hold down the Reset button until all the lights are on at the same time and release"
+msgstr "If you forget your password, please resume the factory settings. Recovery: When the device is powered on, hold down the Reset button until all the lights are on at the same time and release"
+
+msgid "scan me to download the app"
+msgstr "Scan me to download the App"
+
+msgid "experience more features"
+msgstr "Experience more features"
+
+msgid "parameters"
+msgstr "parameters"
+
+msgid "device management"
+msgstr "device management"
+
+msgid "Manage"
+msgstr "Manage"
+
+msgid "Advanced"
+msgstr "Advanced"
+
+msgid "upgrading"
+msgstr "Upgrading"
+
+msgid "OTA"
+msgstr "OTA"
+
+msgid "whether auto OTA"
+msgstr "Whether auto OTA"
+
+msgid "Export"
+msgstr "Export"
+
+msgid "Wireless"
+msgstr "Wireless"
+
+msgid "WAN setting"
+msgstr "WAN Setting"
+
+msgid "Parameters"
+msgstr "Parameters"
+
+msgid "to encrypt"
+msgstr "To Encrypt"
+
+msgid "AP SET"
+msgstr "AP SET"
+
+msgid "operated"
+msgstr "operated"
+
+msgid "Scan"
+msgstr "Scan"
+
+msgid "LoadConfig"
+msgstr "LoadConfig"
+
+msgid "Group List"
+msgstr "Group List"
+
+msgid "add new"
+msgstr "Add"
+
+msgid "backups"
+msgstr "backups"
+
+msgid "Group Name"
+msgstr "Group Name:"
+
+msgid "Wireless Status"
+msgstr "Wireless Status:"
+
+msgid "ENABLE"
+msgstr "Enable"
+
+msgid "forbid"
+msgstr "forbid"
+
+msgid "1-32 characters"
+msgstr "1-32 characters"
+
+msgid "Wireless isolation"
+msgstr "Wireless isolation"
+
+msgid "Wireless hide"
+msgstr "Wireless hide"
+
+msgid "off the security options"
+msgstr "off the security options"
+
+msgid "Wireless password"
+msgstr "Wireless Password"
+
+msgid "bandwidth limit"
+msgstr "band-width-limit"
+
+msgid "upload limit"
+msgstr "band-width-limit-upload"
+
+msgid "download limit"
+msgstr "band-width-limit-download"
+
+msgid "Edit list"
+msgstr "Edit List"
+
+msgid "frequency band"
+msgstr "Frequency Band:"
+
+msgid "Name"
+msgstr "Name:"
+
+msgid "(1-45characters)"
+msgstr "（1-45characters）"
+
+msgid "AP alive-time"
+msgstr "AP alive-time:"
+
+msgid "(20-80 seconds)"
+msgstr "（20-80 seconds）"
+
+msgid "client-alive-time"
+msgstr "client-alive-time"
+
+msgid "client-idle-time"
+msgstr "client-idle-time"
+
+msgid "ON"
+msgstr "ON"
+
+msgid "OFF"
+msgstr "OFF"
+
+msgid "group-info"
+msgstr "Group-info"
+
+msgid "Set"
+msgstr "Set"
+
+msgid "Please input group name"
+msgstr "Please input group name"
+
+msgid "Please input SSID"
+msgstr "Please input SSID"
+
+msgid "Please input wireless-password"
+msgstr "Please input wireless-password"
+
+msgid "Please input upload limit"
+msgstr "Please input band-width-limit-upload"
+
+msgid "Please input download limit"
+msgstr "Please input band-width-limit-download"
+
+msgid "set successful"
+msgstr "set"
+
+msgid "modified"
+msgstr "modified"
+
+msgid "modify failed,please retry"
+msgstr "modify failed,please retry"
+
+msgid "connect failed,please retry "
+msgstr "connect failed,please retry"
+
+msgid "modify failed"
+msgstr "modify failed"
+
+msgid "Please select loadconfig file"
+msgstr "Please select loadconfig file"
+
+msgid "deleted"
+msgstr "deleted"
+
+msgid "operation"
+msgstr "operation"
+
+msgid "offline"
+msgstr "offline"
+
+msgid "abnormal"
+msgstr "abnormal"
+
+msgid "IP and MAC binding setting"
+msgstr "IP and MAC binding setting"
+
+msgid "MAC Address"
+msgstr "MAC Address"
+
+msgid "(3-1800 seconds)"
+msgstr "(3-1800 seconds)"
+
+msgid "(60-86400 seconds)"
+msgstr "(60-86400 seconds)"
+
+msgid "One network address filter can be enabled, and when enabled, other MAC addresses cannot use the network"
+msgstr "One network address filter can be enabled, and when enabled, other MAC addresses cannot use the network"
+
+msgid "With this enabled, the VLAN associated with the current wireless network can be set, and the host under the current wireless network will not be able to communicate with the devices in other vlans"
+msgstr "With this enabled, the VLAN associated with the current wireless network can be set, and the host under the current wireless network will not be able to communicate with the devices in other vlans"
+
+msgid "(note: WLAN ID 0/1/2 cannot be set)"
+msgstr "(note: WLAN ID 0/1/2 cannot be set)"
+
+msgid "Operation failed. The current entry conflicts with the existing one"
+msgstr "Operation failed. The current entry conflicts with the existing one"
+
+msgid "LED light switch: after setting, press the LED key on the panel to trigger the WIFI switch"
+msgstr "LED light switch: after setting, press the LED key on the panel to trigger the WIFI switch"
+
+msgid "The first time you start the panel you do not synchronize network time"
+msgstr "The first time you start the panel you do not synchronize network time"
+
+msgid "You can set up different NTP servers, which will automatically synchronize the time when the AP is online"
+msgstr "You can set up different NTP servers, which will automatically synchronize the time when the AP is online"
+
+msgid "If the specified IP cannot PING, the system should restart automatically if the set threshold is reached."
+msgstr "If the specified IP cannot PING, the system should restart automatically if the set threshold is reached."
+
+msgid "Port number cannot be empty"
+msgstr "Port number cannot be empty"
+
+msgid "Configured successfully, please manually jump IP address after network restart!"
+msgstr "Configured successfully, please manually jump IP address after network restart!"
+
+msgid "This is used to set the wireless working mode of the AP"
+msgstr "This is used to set the wireless working mode of the AP"
+
+msgid "language set"
+msgstr "Language Setting"
+
+msgid "language"
+msgstr "Language"
+
+msgid "input param error"
+msgstr "Input param error"
+
+msgid "no mac address received"
+msgstr "no mac address received"
+
+msgid "operation is not permit"
+msgstr "operation is not permit"
+
+msgid "param protocol version not found"
+msgstr "param protocol version not found"
+
+msgid "get dhcp ip timeout"
+msgstr "get dhcp ip timeout"
+
+msgid "pppoe connect timeout"
+msgstr "pppoe connect timeout"
+
+msgid "pppoe username or password error"
+msgstr "pppoe username or password error"
+
+msgid "check wan out of link"
+msgstr "check wan out of link"
+
+msgid "dns in the same segment with lan"
+msgstr "dns in the same segment with lan"
+
+msgid "wan in the same segment with lan"
+msgstr "wan in the same segment with lan"
+
+msgid "download image checksum error"
+msgstr "download image checksum error"
+
+msgid "image version newest"
+msgstr "image version newest"
+
+msgid "localversion the same with otaversion"
+msgstr "localversion the same with otaversion"
+
+msgid "otaversion information not downloaded"
+msgstr "otaversion information not downloaded"
+
+msgid "waiting for ota upgrade"
+msgstr "waiting for ota upgrade"
+
+msgid "old password is incorrect"
+msgstr "old password is incorrect"
+
+msgid "wifi wds connect fail"
+msgstr "wifi wds connect fail"
+
+msgid "file read or write fail"
+msgstr "File operate failed!"
+
+msgid "not enough storage"
+msgstr "Storage not enough!"
+
+msgid "unknown error"
+msgstr "Unknown error!"
+
+msgid "try again"
+msgstr "Try again!"
+
+msgid "device busy"
+msgstr "Devices busy!"
+
+msgid "device ont found"
+msgstr "Device not found!"
+
+msgid "device online, can not be remove"
+msgstr "device online,can not be remove!"
+
+msgid "ap no response"
+msgstr "ap no response"
+
+msgid "connection reset by peer"
+msgstr "Device being set up by others, try again later"
+
+msgid "protocol version not support"
+msgstr "protocol version not support"
+
+msgid "unknown command"
+msgstr "unknown command"
+
+msgid "unknown signal_mode"
+msgstr "unknown signal_mode"
+
+msgid "no ssid exist in router"
+msgstr "no ssid exist in router"
+
+msgid "ssid doesn't match"
+msgstr "ssid doesn't match"
+
+msgid "reset is running, can't reset in this interval"
+msgstr "reset is running, can't reset in this interval"
+
+msgid "can't get lan speed"
+msgstr "can't get lan speed"
+
+msgid "authentication fail"
+msgstr "authentication fail"
+
+msgid "router has been bind"
+msgstr "router has been bound"
+
+msgid "empty userid"
+msgstr "empty userID"
+
+msgid "internel socket error"
+msgstr "internel socket error"
+
+msgid "bind router fail"
+msgstr "bind router fail"
+
+msgid "router has not bind yet"
+msgstr "router has not bound yet"
+
+msgid "unbind router fail"
+msgstr "unbind router fail"
+
+msgid "unbind fail case caller is not binder"
+msgstr "unbind fail case caller is not binder"
+
+msgid "set device fail mac-addr is empty"
+msgstr "set device fail MAC-addr is empty"
+
+msgid "set wifi fail the setting param is empty"
+msgstr "set wifi fail the setting param is empty"
+
+msgid "execute check wan type exception"
+msgstr "execute check wan type exception"
+
+msgid "prase wan type result fail"
+msgstr "prase wan type result fail"
+
+msgid "execute get wan type exception"
+msgstr "execute get wan type exception"
+
+msgid "execute set wan unable to get type"
+msgstr "execute set wan unable to get type"
+
+msgid "execute set wan get a unnormal type"
+msgstr "execute set wan get a unnormal type"
+
+msgid "execute set wan unable to get dns input"
+msgstr "execute set wan unable to get DNS input"
+
+msgid "save user ip address and port fail"
+msgstr "save user ip address and port fail"
+
+msgid "execute set wan pppoe connect timeout"
+msgstr "execute set wan pppoe connect timeout"
+
+msgid "check manager param fail"
+msgstr "check manager param fail"
+
+msgid "do manager operation fail"
+msgstr "do manager operation fail"
+
+msgid "checksum not match the ota_checksum"
+msgstr "checksum not match the ota_checksum"
+
+msgid "upload log file to cloud failed"
+msgstr "upload log file to cloud failed"
+
+msgid "upload log url info failed"
+msgstr "upload log url info failed"
+
+msgid "waiting for another log upload"
+msgstr "waiting for another log upload"
+
+msgid "create p2p fail"
+msgstr "create p2p fail"
+
+msgid "destroy p2p fail"
+msgstr "destroy p2p fail"
+
+msgid "some mandatory parameter is nil"
+msgstr "some mandatory parameter is nil"
+
+msgid "some parameters of zigbee rule is illegal"
+msgstr "some parameters of zigbee rule is illegal"
+
+msgid "the request type is unknown"
+msgstr "the request type is unknown"
+
+msgid "the database parameter is illegal"
+msgstr "the database parameter is illegal"
+
+msgid "the device does not exist in database"
+msgstr "the device does not exist in database"
+
+msgid "the setting devices no one online"
+msgstr "the setting devices no one online"
+
+msgid "create zigbee rule failed"
+msgstr "create zigbee rule failed"
+
+msgid "upload image type error"
+msgstr "upload image type error"
+
+msgid "input password invalid"
+msgstr "input password invalid"
+
+msgid "wifi number reach limit"
+msgstr "wifi number reach limit"
+
+msgid "wifi channal not match htmode"
+msgstr "wifi channal not match htmode"
+
+msgid "input mac address invalid"
+msgstr "input mac address invalid"
+
+msgid "gateway and LAN not in the same segment"
+msgstr "gateway and LAN not in the same segment"
+
+msgid "gateway is not in WAN segment"
+msgstr "Gateway and IP address not in the same segment"
+
+msgid "ac upgrade ap fail"
+msgstr "ac upgrade ap fail"
+
+msgid "download img fail, please check your network"
+msgstr "download img fail, please check your network"
+
+msgid "get remote server info fail"
+msgstr "get remote server info fail"
+
+msgid "OTA checking software version"
+msgstr "Checking if the current software version is up to date..."
+
+msgid "ota download"
+msgstr "OTA start downloading image from server."
+
+msgid "ap ota download"
+msgstr "AP OTA start downloading image from server."
+
+msgid "ap ota upgrade"
+msgstr "AP OTA start upgrading ap now."
+
+msgid "no ap need upgrade"
+msgstr "AP OTA there is not ap need to be upgraded."
+
+msgid "ap mac list"
+msgstr "AP OTA upgrade ap list: "
+
+msgid "send upgrade to ap error"
+msgstr "AP OTA send upgrade command to ap, but get error."
+
+msgid "ap flash"
+msgstr "AP OTA all aps are in upgrading progress."
+
+msgid "ap mac upgrade error"
+msgstr "AP OTA AP upgrade error: "
+
+msgid "ap upgrade timeout"
+msgstr "AP OTA waiting for upgrade progress is timeout."
+
+msgid "ap upgrade done"
+msgstr "AP OTA upgrade is done."
+
+msgid "ap download error"
+msgstr "AP OTA the ap image downloaded is error."
+
+msgid "ota flash"
+msgstr "Device is in upgrading progress."
+
+msgid "ap timeout"
+msgstr "AP upgrade timeout."
+
+msgid "OTA not run"
+msgstr "OTA is not running."
+
+msgid "frequence intergration"
+msgstr "Frequence Intergration"
+
+msgid "confirm to alter wifi"
+msgstr "Please confirm whether to modify owner network information.If you modify it, wireless devices may be disconnected and need to reconnect."
+
+msgid "input netmask is illegal"
+msgstr "input netmask is illegal"

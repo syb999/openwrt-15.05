@@ -1,0 +1,163 @@
+<%#
+ Copyright 2008 Steven Barth <steven@midlink.org>
+ Copyright 2008-2012 Jo-Philipp Wich <jow@openwrt.org>
+ Licensed to the public under the Apache License 2.0.
+-%>
+
+<%
+local systemnew = require "luci.controller.admin.systemnew"
+function checkFileExist(file)
+	local f = io.open(file, "r")
+	if f then
+		io.close(f)
+		return 1
+	else
+		return 0
+	end
+end
+%>
+<!DOCTYPE html>
+<html class="loginBg" lang="<%=luci.i18n.context.lang%>">
+<head>
+    <meta charset="utf-8">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=500px,initial-scale=0.7">
+<% if checkFileExist("/www/luci-static/material/routerStyle.css") == 1 then%>
+	<link rel="stylesheet" href="<%=media%>/routerStyle.css">
+<% end %>
+    <script src="<%=media%>/js/jquery.min.js"></script>
+    <script src="<%=media%>/js/siwifi.js"></script>
+</head>
+<body class="loginBg" >
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+	<div class="cbi-map">
+		<div id="logo-img" style="visibility: hidden"> </div>
+		<h2 style="visibility: hidden"><a id="content" name="content"><%:Authorization Required%></a></h2>
+		<fieldset class="cbi-section"><fieldset class="cbi-section-node">
+			<div class="cbi-value" style="visibility: hidden">
+				<label class="cbi-value-title"><%:Username%></label>
+				<div class="cbi-value-field">
+					<input class="cbi-input-user" type="text" name="luci_username" value="<%=duser%>" />
+				</div>
+			</div>
+			<!--<div class="cbi-value cbi-value-last cbi-value-div">
+				<div class="cbi-value-field">
+				<label class="cbi-value-title">&lt;!&ndash;<%:Password%>&ndash;&gt;登录密码</label>
+					<table class="line-row"><tr><td valign="top"></td></tr></table>
+					<input class="cbi-input-password" type="password" name="password" />
+
+				</div>
+				<div class="div-button">
+					<input type="submit" value="<%:Login%>" class="cbi-button cbi-button-apply" />
+					&lt;!&ndash;<input type="reset" value="<%:Reset%>" class="cbi-button cbi-button-reset" />&ndash;&gt;
+				</div>
+			</div>-->
+			<div>
+				<table class="lg-tb-st">
+					<tr>
+						<td colspan="2">
+							<div class="cbi-map-descr">
+								<%- if fuser then %>
+								<div class="loginTip"><%:Invalid password! Please try again.%></div>
+								<% else -%>
+								<div class="loginTip"><%:Please input password.%></div>
+								<% end -%>
+							</div>
+						</td>
+					</tr>
+					<tr><td>
+						<table class="login-tb">
+							<tr style="width: 16em;">
+								<td><input class="cbi-input-password" type="password" name="password" maxlength="31" /></td>
+							</tr>
+						</table>
+					</td>
+						<td class="sub-td"><input type="submit" value="<%:Login%>" class="cbi-button" />
+							<!--<input type="reset" value="<%:Reset%>" class="cbi-button cbi-button-reset" />-->
+						</td>
+					</tr>
+					<tr><td colspan="3">
+						<li class="loginHelp" onclick="forgetPwd()">
+							<i class="loginHelp"></i>
+							<span class="loginHelp"><%:Forget the password%></span>
+							<div id="loginFeg" class="loginFeg" style="visibility: hidden;">
+								<i class=""></i>
+								<p class="" style="margin-bottom:0px;"><%:forget password intro%></p>
+							</div>
+						</li>
+					</td></tr>
+					<tr><td colspan="3">
+						<div style="margin:auto;">
+							<img src="<%=media%>/images/QRcode.png" style="width:18em;margin:auto;margin-top:8em;"></img>
+							<p class="loginTip" style="margin:auto;margin-top:0px;"><%:scan me to download the app%><br><%:experience more features%></p>
+						</div>
+					</td></tr>
+				</table>
+
+			</div>
+		</fieldset></fieldset>
+	</div>
+</form>
+<script type="text/javascript">//<![CDATA[
+    var input = document.getElementsByName('password')[0];
+    if (input)
+        input.focus();
+    setStyle();
+
+    function forgetPwd(){
+        var div = document.getElementById("loginFeg");
+        if (div.style.visibility=="hidden"){
+            div.style.visibility="visible";
+        }else {
+            div.style.visibility="hidden";
+        }
+    }
+
+    function setStyle(){
+        var result = <%=systemnew.get_style()%>;
+        var style= result.style;
+        console.log("style", style);
+        var isIE678 = !-[1,];
+        if(isIE678 ){
+            console.log("I am IE 6 or 7 or 8.");
+        }
+        var font = style["font"];
+        addCSS(font, "color");
+        var background = style["background"];
+        addCSS(background, "background");
+        var border = style["border"];
+        addCSS(border, "border-color");
+        var borderBottom = style["border_bottom"];
+        addCSS(borderBottom, "border-bottom-color");
+    }
+//]]></script>
+
+<%
+local uci  = require "luci.model.uci".cursor()
+local fs  = require "nixio.fs"
+local https_key = uci:get("uhttpd", "main", "key")
+local https_port = uci:get("uhttpd", "main", "listen_https")
+if type(https_port) == "table" then
+	https_port = https_port[1]
+end
+
+if https_port and fs.access(https_key) then
+	https_port = https_port:match("(%d+)$")
+%>
+
+<script type="text/javascript">//<![CDATA[
+	if (document.location.protocol != 'https:') {
+		var url = 'https://' + window.location.hostname + ':' + '<%=https_port%>' + window.location.pathname;
+		var img=new Image;
+		img.onload=function(){window.location = url};
+		img.src='https://' + window.location.hostname + ':' + '<%=https_port%>' + '<%=resource%>/cbi/up.gif?' + Math.random();;
+		setTimeout(function(){
+			img.src=''
+		}, 5000);
+	}
+//]]></script>
+
+<% end %>
+</body>
+</html>
+

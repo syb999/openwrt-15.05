@@ -1,0 +1,1097 @@
+<%+header%>
+<div>
+	<div id="Error">
+		<div id="hsErr" class="hsTip">
+			<i class="altIcon"></i>
+			<span class="detail"><%:get data failed%></span>
+			<input class="subBtn" value="<%:confirm%>" type="button" onclick="closeTip()">
+		</div>
+	</div>
+	<div id="setBtnTip">
+		<div id="BtnTip" class="hsTip">
+			<i class="altIcon"></i>
+			<span class="detail"><%:get data failed%></span>
+			<input class="subBtn" value="<%:confirm%>" type="button" onclick="setBtnTip(1)">
+			<input class="subBtn" value="<%:cancel%>" type="button" onclick="setBtnTip(2)">
+		</div>
+	</div>
+	<div style="display: inline">
+		<fieldset>
+			<legend><%:device management%></legend>
+			<table class="no-border">
+				<tr><td class="inline-text-L"><%:Intelligent DHCP%></td><td class="inline-text-R"><input id="dhcpServer_status" type="checkbox"><%:enable DHCP control%></td></tr>
+				<tr><td class="inline-text-L"><%:Connection mode%></td><td class="inline-text-R"><select id="connect_select" onchange="connect_mode()"><option value="dyna"><%:Dynamic ip%></option><option value="stat"><%:Static ip%></option></select></td></tr>
+				<tr><td class="inline-text-L"><%:IP address%></td><td class="inline-text-R"><input id="ipaddr" onkeyup="nStrLimit(this)" disabled  maxlength="15"></td></tr>
+				<tr><td class="inline-text-L"><%:subnet mask%></td><td class="inline-text-R"><input id="netmask" onkeyup="nStrLimit(this)" disabled  maxlength="15"></td></tr>
+				<tr><td class="inline-text-L"><%:default gateway%></td><td class="inline-text-R"><input id="gateway" onkeyup="nStrLimit(this)" disabled maxlength="15"></td></tr>
+				<tr><td class="inline-text-L"><%:default DNS%></td><td class="inline-text-R"><input id="defaultDNS" onkeyup="nStrLimit(this)" disabled maxlength="15" size="0"></td></tr>
+				<tr><td class="inline-text-L"><%:standby DNS%></td><td class="inline-text-R"><input id="standbyDNS" onkeyup="nStrLimit(this)" disabled  maxlength="15" size="0"></td></tr>
+				<tr><td class="inline-text-L"><%:LED switch%></td><td class="inline-text-R"><input id="led" type="checkbox" style="float: left;margin-top: 1px"> <label style="float:left;margin-top: 2px"><%:enable WiFi control%></label>
+						<i class="btnHelp" onclick="getHelp('ledFeg')" style="margin-left: 20px;margin-top: 0px;"></i>
+						<li class="btnHelp">
+						<div id="ledFeg" class="btnFeg" style="visibility: hidden;">
+							<i style="top:3px"></i>
+							<p class="helpWord"><%:led intro%></p>
+						</div>
+						</li>
+				</td></tr>
+				<tr><td class="inline-text-L"><%:WEB service port%></td><td class="inline-text-R"><input id="web-port" onkeyup="numLimit(this)" maxlength="5" value="80"><%:port range 1-65535%></td></tr>
+				<tr><td class="inline-text-L"><%:WEB session timeout%></td><td class="inline-text-R"><input id="web-timeout"onkeyup="numLimit(this)" maxlength="3" value="30"><%:Seconds (30-300)%></td></tr>
+				<tr><td colspan="2" class="no-border"><button onclick="setIp()"><%:confirm%></button></td></tr>
+			</table>
+		</fieldset>
+	</div>
+	<div style="display: inline">
+		<fieldset>
+			<legend><%:account management%></legend>
+			<table class="no-border">
+				<tr><td class="inline-text-L"><%:original password%></td><td class="inline-text-R"><input type="password" id="old-pwd" onkeyup="nStrLimit(this)" maxlength="31"><input id="old-pwd-cb" type="checkbox" onchange="changePwdInputType(['old-pwd-cb','old-pwd'])"><%:display password%></td></tr>
+				<tr><td class="inline-text-L"><%:set password%></td><td class="inline-text-R"><input type="password" id="new-pwd" onkeyup="nStrLimit(this)" maxlength="31"><input id="new-pwd-cb" type="checkbox" onchange="changePwdInputType(['new-pwd-cb','new-pwd'])"><%:display password%></td></tr>
+				<tr><td class="inline-text-L"><%:confirm password%></td><td class="inline-text-R"><input type="password" id="renew-pwd" onkeyup="nStrLimit(this)" maxlength="31"></td></tr>
+				<tr><td colspan="2" class="no-border"><button onclick="setPassword()"><%:confirm%></button></td></tr>
+			</table>
+		</fieldset>
+	</div>
+</div>
+<div style="clear: both">
+	<div style="display: inline">
+		<fieldset>
+			<legend><%:system log%></legend>
+			<table class="no-border">
+				<tr><td class="inline-text-L"><%:view system log%></td><td class="inline-text-R"><button onclick="getLog()"><%:view%></button></td></tr>
+				<tr><td class="inline-text-L"><%:download system log%></td><td class="inline-text-R"><button onclick="location.href='<%=controller%>/admin/systemp/download_log'"><%:download%></button></td></tr>
+			</table>
+
+		</fieldset>
+	</div>
+	<div id="show-syslog" class="hsVignetteCon" style="display: none;top: 541px">
+		<div class="hsVignette hsVigWDS">
+			<p class="hsVigTtop"><i class="hsVigClose" onclick="closeSettingDiv()"></i></p>
+			<p class="hsVigWDSPWD"><%:system log%></p>
+			<fieldset>
+				<legend></legend>
+				<table id="log-table">
+				</table>
+				<div id="logTblpagIngList" class="pageListPo" style="overflow: hidden; display: none;">
+					<span class="pageArrow pageArrowLa" id="logTblpagIngListlistArrowL" onclick="goToEnd()"></span>
+					<span class="pageArrow pageArrowL" id="logListlistArrowL" onclick="toNextPage()"></span>
+					<div class="pageListContent">
+						<div class="pageListDiv" id="logTblpagIngListlistDiv" style="margin-left: 0px;">
+						</div>
+					</div>
+					<span class="pageArrow pageArrowR" id="logListlistArrowR" onclick="toBackPage()"></span>
+					<span class="pageArrow pageArrowFi" id="logTblpagIngListlistArrowR" onclick="backToStart()"></span>
+				</div>
+				<div class="add-height"></div>
+			</fieldset>
+		</div>
+	</div>
+	<div style="display: inline">
+		<fieldset>
+			<legend><%:Language set%></legend>
+			<li class="border-line"></li>
+			<table  class="tb-no-border">
+				<tr><td class="inline-text-L"><%:language%></td><td class="inline-text-R"><span id="language"></span>
+						<select id="languages" onchange="LangOption()">
+				</select></td></tr>
+				<tr><td colspan="2" class="no-border"><button onclick="saveLang()"><%:Save%></button></td></tr>
+			</table>
+		</fieldset>
+	</div>
+
+	<div style="display: inline">
+		<fieldset>
+			<legend><%:time setting%></legend>
+			<table class="no-border">
+				<tr><td class="inline-text-L"><%:time zone%></td><td class="inline-text-R"><select id="zones-select" onchange="zoneOption()" style="float: left;"></select>
+						<i class="btnHelp" onclick="getHelp('timeFeg')"></i>
+						<li class="btnHelp">
+						<div id="timeFeg" class="btnFeg" style="visibility: hidden;">
+							<i class=""></i>
+							<p class="helpWord"><%:time intro%><br><%:time intro 2%></p>
+						</div>
+						</li>
+				</td></tr>
+				<tr><td class="inline-text-L"><%:date%></td><td class="inline-text-R"><span style="margin-left: 13px;" id="date"></span></td></tr>
+				<tr><td class="inline-text-L"><%:time%></td><td class="inline-text-R"><span style="margin-left: 13px;" id="time"></span></td></tr>
+				<tr><td class="inline-text-L"><%:prefered NTP server%></td><td class="inline-text-R"><input id="ntp" onkeyup="nStrLimit(this)"></td></tr>
+				<tr><td class="inline-text-L"><%:alternate NTP server%></td><td class="inline-text-R"><input id="ntp-bak" onkeyup="nStrLimit(this)"></td></tr>
+				<tr><td colspan="2" class="no-border"><button onclick="setDate()"><%:Save%></button></td></tr>
+			</table>
+		</fieldset>
+	</div>
+</div>
+<div style="clear: both">
+	<div>
+		<fieldset>
+			<legend><%:configuration management%></legend>
+			<table class="no-border">
+				<tr><td class="inline-text-L"><%:export configuration%></td><td class="inline-text-R"><button onclick="location.href='<%=controller%>/admin/systemp/export_config'"><%:export%></button></td></tr>
+				<tr><td class="inline-text-L"><%:import configuration%></td><td class="inline-text-R">
+						<form id="uploadForm-config">
+							<input type="text" id="textld" class="txt" />
+							<input type="button" class="btn" value="<%:browse%>" />
+							<input type="button" class="btn" value="<%:import%>" onclick="setConfig()" />
+							<input type="file" name="file" class="file" id="fileld" onchange="document.getElementById('textld').value=this.files[0].name"/>
+						</form>
+				</td></tr>
+				<tr><td colspan="2" class="no-border">
+						<div class="pointDiv" id="pointDiv" style="display: none; float: left">
+							<div id="bar" class="chlidValue"></div>
+						</div>
+				</td></tr>
+				<tr><td class="inline-text-L"><%:factory reset%></td><td class="inline-text-R"><button onclick="setReset()" style="width: 120px"><%:factory reset%></button></td></tr>
+				<tr><td class="inline-text-L"><%:reboot%></td><td class="inline-text-R"><button onclick="setRestart()"><%:reboot%></button></td></tr>
+			</table>
+		</fieldset>
+	</div>
+</div>
+<div>
+	<div>
+		<fieldset>
+			<legend><%:software upgrade%></legend>
+			<table class="no-border">
+				<tr><td class="inline-text-L"><%:current hardware version%></td><td class="inline-text-R"><span id="hardware-version"></span></td></tr>
+				<tr><td class="inline-text-L"><%:current software version%></td><td class="inline-text-R"><span id="software-version"></span></td></tr>
+				<tr><td class="inline-text-L"><%:software upgrade%></td><td class="inline-text-R">
+						<form id="uploadForm">
+							<input type="text" id="textfield" class="txt" />
+							<input type="button" class="btn" value="<%:browse%>" />
+							<input type="button" class="btn" value="<%:software upgrade%>" onclick="upgrade()" />
+							<input type="file" name="file" class="file" id="fileField" onchange="document.getElementById('textfield').value=this.files[0].name"/>
+						</form>
+				</td></tr>
+				<tr><td colspan="2" class="no-border">
+						<div class="pointDiv" id="pointDiv2" style="display: none; float: left">
+							<div id="bar2" class="chlidValue"></div>
+						</div>
+				</td></tr>
+			</table>
+			<div id="waiting" style="display: none">
+				<div class="LoadConCover">
+					<div class="coverLoadCon">
+						<div class="coverLoad">
+							<i class="coverLoadClose" onclick="coverClose()"></i>
+							<i class="coverLoading" ></i>
+							<p class="coverLoadNote"><%:Upgrading, please wait...%></p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</fieldset>
+	</div>
+</div>
+<div>
+	<div>
+		<fieldset>
+			<legend><%:Ping watchdog%></legend>
+			<table class="no-border">
+				<tr><td class="inline-text-L"><%:Ping watchdog%></td><td class="inline-text-R"><input type="checkbox" id="ping-enable" onchange="enablePingInput()"style="float: left;margin-top: 1px;"><label style="float: left;margin-top: 2px;"><%:enable%></label>
+						<i class="btnHelp" onclick="getHelp('pingDogFeg')" style="margin-left: 20px;margin-top:0px;"></i>
+						<li class="btnHelp">
+						<div id="pingDogFeg" class="btnFeg" style="visibility: hidden;">
+							<i style="top:3px"></i>
+							<p class="helpWord"><%:ping intro%></p>
+						</div>
+						</li>
+				</td></tr>
+				<tr><td class="inline-text-L"><%:destination IP address%></td><td class="inline-text-R"><input id="ping-ip" onkeyup="nStrLimit(this)" maxlength="15" value="0.0.0.0"></td></tr>
+				<tr><td class="inline-text-L"><%:contract period%></td><td class="inline-text-R"><input id="ping-period" onkeyup="numLimit(this)" maxlength="3" value="30"><%:Seconds (10-300)%></td></tr>
+				<tr><td class="inline-text-L"><%:start delay%></td><td class="inline-text-R"><input id="ping-delay" onkeyup="numLimit(this)" maxlength="3" value="300"><%:Seconds (60-300)%></td></tr>
+				<tr><td class="inline-text-L"><%:maxinum number of lost packets%></td><td class="inline-text-R"><input id="ping-miss" onkeyup="numLimit(this)" maxlength="5" value="6">(1-65535)</td></tr>
+				<tr><td colspan="2" class="no-border"><button onclick="setPing()"><%:confirm%></button></td></tr>
+			</table>
+		</fieldset>
+	</div>
+</div>
+<%+footer%>
+<script>
+var zones;
+var zone;
+var sysinfo;
+var inid_ip;
+var inid_port;
+var inid_netmask;
+var inid_getway;
+var inid_timeout;
+var inid_dhcp_enable;
+var inid_defaultDNS;
+var inid_standbyDNS;
+var inid_connectmode;
+var pinginfo;
+var logNum = 0;
+var currentPage = 0;
+var toEnd = false;
+var toStart = false;
+var setFunc;
+var errTipDoc;
+getSysinfo();
+getDate();
+getVersion();
+getPing();
+getLang();
+connect_mode();
+var timeTimer;
+function connect_mode() {
+	var sel = document.getElementById("connect_select");
+	var status = sel.options[sel.selectedIndex].value;
+	if (status == 'dyna') {
+    document.getElementById("ipaddr").disabled = true;
+	document.getElementById("netmask").disabled = true;
+    document.getElementById("gateway").disabled = true;
+    document.getElementById("defaultDNS").disabled = true;
+    document.getElementById("standbyDNS").disabled = true;
+	}else if (status == 'stat') {
+	document.getElementById("ipaddr").disabled = false;
+	document.getElementById("netmask").disabled = false;
+    document.getElementById("gateway").disabled = false;
+    document.getElementById("defaultDNS").disabled = false;
+    document.getElementById("standbyDNS").disabled = false;
+	}
+}
+
+function getSysinfo() {
+	XHR.get('<%=luci.dispatcher.build_url("admin", "systemp","get_sysinfo")%>', null,
+				function(x, result){
+				if (result.code == 0) {
+				sysinfo = result.info;
+				inid_ip = result.info.lan_ip;
+				inid_port = result.info.web_port;
+				inid_getway = result.info.gateway==undefined?'':result.info.gateway;
+				inid_netmask = result.info.mask;
+				inid_timeout = result.info.web_timeout;
+				inid_dhcp_enable = result.info.dhcp_enable;
+				inid_connectmode = result.info.connectmode;
+				inid_defaultDNS = result.info.defaultDNS;
+				inid_standbyDNS = result.info.standbyDNS;
+				if (result.info.led == "1") {
+				document.getElementById('led').checked= true;
+				}else {
+				document.getElementById('led').checked= false;
+				}
+				if (result.info.dhcp_enable == "1"){
+				document.getElementById('dhcpServer_status').checked = true;
+				}else {
+				document.getElementById('dhcpServer_status').checked = false;
+				}
+				if (result.info.connectmode == "0"){
+					document.getElementById("connect_select")[0].selected=true;
+				}else if (result.info.connectmode == "1"){
+					document.getElementById("connect_select")[1].selected=true;
+				}
+				connect_mode();
+				if (result.info.lan_ip != undefined) {
+				document.getElementById('ipaddr').value = result.info.lan_ip;
+				}
+				if (result.info.defaultDNS != undefined) {
+				document.getElementById('defaultDNS').value = result.info.defaultDNS;
+				}
+				if (result.info.standbyDNS != undefined) {
+				document.getElementById('standbyDNS').value = result.info.standbyDNS;
+				}
+				if (result.info.mask != undefined) {
+					document.getElementById('netmask').value = result.info.mask;
+				}
+				if (result.info.gateway != undefined) {
+					document.getElementById('gateway').value = result.info.gateway;
+				}
+				if (result.info.web_port != undefined) {
+					document.getElementById('web-port').value = result.info.web_port;
+				}
+				if (result.info.web_timeout != undefined) {
+					document.getElementById('web-timeout').value = result.info.web_timeout;
+				}
+				}
+				});
+}
+function setSysinfo() {
+	sysinfo.lan_ip = document.getElementById('ipaddr').value;
+	sysinfo.mask = document.getElementById('netmask').value;
+	sysinfo.gateway = document.getElementById('gateway').value;
+	sysinfo.web_port = document.getElementById('web-port').value;
+	sysinfo.web_timeout = document.getElementById('web-timeout').value;
+	sysinfo.defaultDNS = document.getElementById('defaultDNS').value;
+	sysinfo.standbyDNS = document.getElementById('standbyDNS').value;
+	sysinfo.connectmode = document.getElementById('connect_select').selectedIndex;
+	var enable = document.getElementById('led').checked;
+	if (enable){
+		sysinfo.led = "1";
+	}else {
+		sysinfo.led = "0";
+	}
+    var dhcp_enable = document.getElementById('dhcpServer_status').checked;
+	if (dhcp_enable){
+		sysinfo.dhcp_enable = "1";
+	}else {
+		sysinfo.dhcp_enable = "0";
+	}
+	var err = document.getElementById('Error');
+	var text = err.getElementsByTagName('span')[0];
+	if (sysinfo.web_port==''){
+		err.style.visibility = 'visible';
+		text.innerText = '<%:Port number cannot be empty%>';
+		return;
+	}
+	if (sysinfo.connectmode == 1){
+		if (!isValidIP(sysinfo.lan_ip)) {
+			err.style.visibility = 'visible';
+			errTipDoc = document.getElementById('ipaddr');
+			text.innerText = '<%:IP address is invalid%>';
+			return;
+		}else if (!lannetMaskLimit(sysinfo.mask)){
+			err.style.visibility = 'visible';
+			errTipDoc = document.getElementById('netmask');
+			text.innerText = '<%:Subnet mask is not valid%>';
+			return;
+		} else if (!isValidIP(sysinfo.gateway)){
+			err.style.visibility = 'visible';
+			errTipDoc = document.getElementById('gateway');
+			text.innerText = '<%:Gateway error%>';
+			return;
+		}else if (!isValidIP(sysinfo.defaultDNS)){
+			err.style.visibility = 'visible';
+			errTipDoc = document.getElementById('defaultDNS');
+			text.innerText = '<%:defaultDNS error%>';
+			return;
+		}else if (sysinfo.standbyDNS !="" && !isValidIP(sysinfo.standbyDNS)){
+			err.style.visibility = 'visible';
+			errTipDoc = document.getElementById('standbyDNS');
+			text.innerText = '<%:standbyDNS error%>';
+			return;
+		}
+	}
+	if (sysinfo.web_port > 65535||sysinfo.web_port < 1||sysinfo.web_port.search(/\D/g) != -1){
+		err.style.visibility = 'visible';
+		errTipDoc = document.getElementById('web-port');
+		text.innerText = '<%:The port number range error%>';
+		return;
+	} else if (sysinfo.web_timeout>300||sysinfo.web_timeout<30||sysinfo.web_timeout.search(/\D/g) != -1){
+		err.style.visibility = 'visible';
+		errTipDoc = document.getElementById('web-timeout');
+		text.innerText = '<%:WEB session timeout error%>';
+		return;
+	}
+	if (sysinfo.connectmode == inid_connectmode && sysinfo.dhcp_enable == inid_dhcp_enable && inid_ip == sysinfo.lan_ip && inid_getway == sysinfo.gateway && inid_netmask == sysinfo.mask && inid_defaultDNS == sysinfo.defaultDNS && inid_standbyDNS == sysinfo.standbyDNS){
+		return ;
+	}
+	var params = {'info':sysinfo};
+	XHR.post('<%=luci.dispatcher.build_url("admin", "systemp","set_sysinfo")%>', params,
+				function(x, result){
+				var err = document.getElementById('Error');
+				var text = err.getElementsByTagName('span')[0];
+				if (result==null){
+				text.innerText = '<%:Connection failed, please try again%>';
+				err.style.visibility = 'visible';
+				} else if (result!=null&&result.code == 0) {
+				text.innerText = '<%:set successfully%>';
+				err.style.visibility = 'visible';
+				inid_connectmode=document.getElementById('connect_select').selectedIndex;
+				} else {
+					text.innerText = result.msg;
+					err.style.visibility = 'visible';
+				 	if (result.code==1732){
+						errTipDoc = document.getElementById('gateway');
+					}
+				}
+			});
+}
+function setPassword() {
+	var passwordold = document.getElementById('old-pwd').value;
+	var passwordnew = document.getElementById('new-pwd').value;
+	var repasswordnew = document.getElementById('renew-pwd').value;
+	var err = document.getElementById('Error');
+	var text = err.getElementsByTagName('span')[0];
+	if (passwordold==null||passwordold==""){
+		text.innerText = '<%:The original password cannot be empty%>';
+		err.style.visibility = 'visible';
+		errTipDoc = document.getElementById('old-pwd');
+		return;
+	}
+	if (passwordnew.length <6){
+		text.innerText = '<%:New password length error%>';
+		err.style.visibility = 'visible';
+		errTipDoc = document.getElementById('new-pwd');
+		return;
+	}
+	if (passwordnew != repasswordnew) {
+		text.innerText = '<%:Two password input inconsistent!%>';
+		err.style.visibility = 'visible';
+		errTipDoc = document.getElementById('renew-pwd');
+		return;
+	}
+	var params = {'passwordold':passwordold, 'passwordnew':passwordnew};
+	XHR.post('<%=luci.dispatcher.build_url("admin", "systemp","set_password")%>', params,
+				function(x, result){
+				    var err = document.getElementById('Error');
+				    var text = err.getElementsByTagName('span')[0];
+				    if (result==null){
+				        text.innerText = '<%:Connection failed. Please try again%>';
+				        err.style.visibility = 'visible';
+				    } else if (result!=null&&result.code == 0) {
+				        text.innerText = '<%:set successfully%>';
+				        err.style.visibility = 'visible';
+				    }else {
+				        text.innerText = result.msg;
+				        err.style.visibility = 'visible';
+				    }
+		});
+}
+function getLog() {
+	XHR.get('<%=luci.dispatcher.build_url("admin", "systemp","get_log")%>', null,
+				function(x, result){
+				if (result.code == 0) {
+				document.getElementById('show-syslog').style.display = '';
+				var html = '<tr><th><%:index%></th><th><%:log contents%></th></tr>';
+				logNum = result.logs.length;
+				for (var i=0; i<result.logs.length; i++) {
+				if (i<10) {
+				html += '<tr><td>'+result.logs[i].index+'</td><td class="log-td-right">'+result.logs[i].content+'</td></tr>'
+				}else {
+				html += '<tr style="display: none"><td>'+result.logs[i].index+'</td><td class="log-td-right">'+result.logs[i].content+'</td></tr>'
+				}
+
+				}
+                var log_table=document.getElementById('log-table');
+                if(log_table){
+                    setTableInnerHTML(log_table,html);
+                }
+				currentPage = 1;
+				toPageByPNum(currentPage);
+				}
+				});
+}
+
+function reset() {
+	var err = document.getElementById('Error');
+	var text = err.getElementsByTagName('span')[0];
+	var wait = document.getElementById('waiting');
+	wait.getElementsByTagName('p')[0].innerText = '<%:Recovering, please wait...%>';
+	document.getElementById("waiting").style.display='';
+	XHR.get('<%=luci.dispatcher.build_url("admin", "systemp","reset")%>', null,
+				function(x, result){
+				console.log(result);
+				if (result==null){
+				document.getElementById("waiting").style.display='none';
+				text.innerText = '<%:Connection failed, please try again%>';
+				err.style.visibility = 'visible';
+				} else if (result.code==0){
+				setTimeout(function () {
+					setInterval(function () {
+						pageRedirect("http://192.168.4.1");
+						},3000)
+					},10000)
+				}else {
+				document.getElementById("waiting").style.display='none';
+				text.innerText = result.msg;
+				err.style.visibility = 'visible';
+				}
+				});
+}
+function restart() {
+	var err = document.getElementById('Error');
+	var text = err.getElementsByTagName('span')[0];
+	var wait = document.getElementById('waiting');
+	wait.getElementsByTagName('p')[0].innerText = '<%:Reset is underway, please wait...%>';
+	document.getElementById("waiting").style.display='';
+	XHR.get('<%=luci.dispatcher.build_url("admin", "systemp","restart")%>', null,
+				function(x, result){
+				console.log(result);
+				if (result==null){
+				document.getElementById("waiting").style.display='none';
+				text.innerText = '<%:Connection failed, please try again%>';
+				err.style.visibility = 'visible';
+				} else if (result.code==0){
+				setTimeout(function () {
+					setInterval(function () {
+						pageRedirect("http://"+sysinfo.lan_ip+":"+sysinfo.web_port);
+						},3000)
+					},10000)
+				}else {
+				document.getElementById("waiting").style.display='none';
+				text.innerText = result.msg;
+				err.style.visibility = 'visible';
+				}
+				});
+}
+function getDate() {
+	clearInterval(timeTimer);
+	XHR.get('<%=luci.dispatcher.build_url("admin", "systemp","get_date")%>', null,
+				function(x, result){
+				console.log(result);
+				zones = result.zones;
+				zone = result.zone;
+				var html;
+				var selectIndex;
+				for (var i=0; i<zones.length; i++) {
+				html += '<option value="'+i+'">'+zones[i]+'</option>';
+				if (zones[i] == zone) {
+				selectIndex = i;
+				}
+				}
+				var zonesSelect = document.getElementById('zones-select');
+				zonesSelect.innerHTML = html;
+				zonesSelect.selectedIndex = selectIndex;
+				if (result.ntp_list[0]!=undefined){
+				document.getElementById('ntp').value = result.ntp_list[0];
+				}
+				if (result.ntp_list[1]!=undefined){
+				document.getElementById('ntp-bak').value = result.ntp_list[1];
+				}
+				var curTime;
+				timeTimer = setInterval(function () {
+							curTime = this.timestampToTime(result.date + zoneoffset(zone));
+							document.getElementById('date').innerText = curTime.date;
+							document.getElementById('time').innerText = curTime.time;
+							result.date++;
+							}, 1000);
+				});
+}
+
+function setDate() {
+	var zonesSelect = document.getElementById('zones-select');
+	var selectIndex = zonesSelect.selectedIndex;
+	var zone = zones[selectIndex];
+	var ntp = document.getElementById('ntp').value;
+	var ntp_bak = document.getElementById('ntp-bak').value;
+	var ntp_list =new Array();
+	var err = document.getElementById('Error');
+	var text = err.getElementsByTagName('span')[0];
+	if (ntp==""){
+		text.innerText = '<%:The preferred NTP server cannot be empty%>';
+		err.style.visibility = 'visible';
+		errTipDoc = document.getElementById('ntp');
+		return;
+	}
+	if (!debugVaildIp(ntp)&&!isValidDomain(ntp)) {
+		errTipDoc = document.getElementById('ntp');
+		text.innerText = '<%:Not legal domain name or IP%>';
+		err.style.visibility = 'visible';
+		return
+	}
+	ntp_list[0]=ntp;
+	if (ntp_bak!=""){
+		if (!debugVaildIp(ntp_bak)&&!isValidDomain(ntp_bak)) {
+			errTipDoc = document.getElementById('ntp-bak');
+			text.innerText = '<%:Not legal domian name or IP, please input again!%>';
+			err.style.visibility = 'visible';
+			return
+		}
+		ntp_list[1]= ntp_bak;
+	}
+	var params = {'zone':zone,'ntp_list':ntp_list};
+	console.log(params);
+	XHR.post('<%=luci.dispatcher.build_url("admin", "systemp","set_date")%>', params,
+				function (x, result) {
+				console.log(result);
+				if (result==null){
+				text.innerText = '<%:Connection failed, please try again%>';
+				err.style.visibility = 'visible';
+				} else if (result.code==0){
+				text.innerText = '<%:set successfully%>';
+				err.style.visibility = 'visible';
+				getDate();
+				} else {
+				text.innerText = result.msg;
+				err.style.visibility = 'visible';
+				}
+				});
+}
+function importConfig() {
+	var file = document.getElementById('fileld').files[0];
+	var fd = new FormData();
+	fd.append("archive",file);
+	var err = document.getElementById('Error');
+	var text = err.getElementsByTagName('span')[0];
+	if(file==null||file==undefined||file==""){
+		text.innerText = '<%:Please select load profile first%>';
+		err.style.visibility = 'visible';
+		return;
+	}else if (!file.name.endsWith(".tar.gz")) {
+		text.innerText = '<%:File type illegal! Please reselect%>';
+		err.style.visibility = 'visible';
+		return;
+	}
+	document.getElementById('pointDiv').style.display='';
+	console.log(fd);
+	XHR.upload('<%=luci.dispatcher.build_url("admin", "systemp","import_config")%>', fd, function (x, result) {
+				document.getElementById("waiting").style.display='none';
+				console.log(result);
+				if (result==null){
+				text.innerText = '<%:Connection failure, please try again%>';
+				err.style.visibility = 'visible';
+				}else if(result.code==0){
+				text.innerText = '<%:Configured successfully%>';
+				err.style.visibility = 'visible';
+				}else {
+				text.innerText = result.msg;
+				err.style.visibility = 'visible';
+				}
+
+				/*setTimeout(function () {
+				  setInterval(function () {
+				  XHR.get('<%=luci.dispatcher.build_url("admin", "logout","action_logout")%>', null,
+				  function(x, result) {
+				  if (x.response!=""&&x.response!=null) {
+				  window.location.reload();
+				  }
+				  });
+				  },3000)
+				  },10000)*/
+	}, function (x) {
+		console.log("x:"+x);
+		var pg=document.getElementById('bar');
+		pg.style.width = x;
+		if (x == "100%"){
+			var wait = document.getElementById('waiting');
+			wait.getElementsByTagName('p')[0].innerText = '<%:Please wait while configuration is underway...%>';
+			document.getElementById("waiting").style.display='';
+			document.getElementById('pointDiv').style.display='none'
+		}
+	});
+}
+function getVersion() {
+	XHR.get('<%=luci.dispatcher.build_url("admin", "systemp","get_version")%>', null,
+				function(x, result){
+				console.log(result);
+				if (result.hardware != undefined) {
+				document.getElementById('hardware-version').innerText = result.hardware;
+				}
+				if (result.software != undefined) {
+				document.getElementById('software-version').innerText = result.software;
+				}
+				});
+}
+function upgrade() {
+	var file = document.getElementById("fileField").files[0];
+	var fd = new FormData();
+	fd.append("image",file);
+	var err = document.getElementById('Error');
+	var text = err.getElementsByTagName('span')[0];
+	if(file==null||file==undefined||file==""){
+		text.innerText = '<%:Please select upgrade image first%>';
+		err.style.visibility = 'visible';
+		return;
+	}else if (!file.name.endsWith(".bin")) {
+		text.innerText = '<%:File type illegal! Please reselect%>';
+		err.style.visibility = 'visible';
+		return;
+	}
+	document.getElementById("pointDiv2").style.display='';
+	console.log(fd);
+	XHR.upload('<%=luci.dispatcher.build_url("admin", "systemp","upgrade")%>', fd, function (x, result) {
+				console.log(result);
+				if (result==null){
+				document.getElementById("waiting").style.display='none';
+				text.innerText = '<%:Connection failed, please try again%>';
+				err.style.visibility = 'visible';
+				} else if (result.code==0){
+				setTimeout(function () {
+					setInterval(function () {
+						XHR.get('<%=luci.dispatcher.build_url("admin", "logout","action_logout")%>', null,
+							function(x, result) {
+							if (x.response!=""&&x.response!=null) {
+							window.location.reload();
+							}
+							});
+						},3000)
+					},10000)
+				} else {
+				    document.getElementById("waiting").style.display='none';
+				    text.innerText = result.msg;
+				    err.style.visibility = 'visible';
+				}
+
+	}, function (x) {
+		console.log("x:"+x);
+		var pg=document.getElementById('bar2');
+		pg.style.width = x;
+		if (x == "100%"){
+			var wait = document.getElementById('waiting');
+			wait.getElementsByTagName('p')[0].innerText = '<%:Is being upgraded, please wait a moment...%>';
+			document.getElementById("waiting").style.display='';
+			document.getElementById('pointDiv2').style.display='none'
+		}
+	});
+}
+function coverClose() {
+	document.getElementById("waiting").style.display="none";
+}
+function getPing() {
+	XHR.get('<%=luci.dispatcher.build_url("admin", "systemp","get_ping")%>', null,
+				function(x, result){
+				console.log(result);
+				var err = document.getElementById('Error');
+				var text = err.getElementsByTagName('span')[0];
+				if (result==null){
+				text.innerText = '<%:Connection failed, please try again%>';
+				err.style.visibility = 'visible';
+				} else if (result.code == 0) {
+				pinginfo = result.info;
+				if (pinginfo.enable == "1") {
+				document.getElementById('ping-enable').checked = true;
+				} else {
+				document.getElementById('ping-enable').checked = false;
+				document.getElementById('ping-ip').disabled = 'disabled';
+				document.getElementById('ping-period').disabled = 'disabled';
+				document.getElementById('ping-delay').disabled = 'disabled';
+				document.getElementById('ping-miss').disabled = 'disabled';
+				}
+				document.getElementById('ping-ip').value = pinginfo.ip;
+				document.getElementById('ping-period').value = pinginfo.period;
+				document.getElementById('ping-delay').value = pinginfo.delay;
+				document.getElementById('ping-miss').value = pinginfo.miss;
+				}
+				});
+}
+function setPing() {
+	var enable = document.getElementById('ping-enable').checked;
+	if (enable){
+		pinginfo.enable = "1";
+	}else {
+		pinginfo.enable = "0";
+	}
+	pinginfo.ip = document.getElementById('ping-ip').value;
+	pinginfo.period = document.getElementById('ping-period').value;
+	pinginfo.delay = document.getElementById('ping-delay').value;
+	pinginfo.miss = document.getElementById('ping-miss').value;
+	if (enable){
+		var err = document.getElementById('Error');
+		var text = err.getElementsByTagName('span')[0];
+		if (!isValidPingIp(pinginfo.ip)) {
+			err.style.visibility = 'visible';
+			errTipDoc = document.getElementById('ping-ip');
+			text.innerText = '<%:IP address is invalid%>';
+			return;
+		}else if (pinginfo.period>300||pinginfo.period<10||pinginfo.period.search(/\D/g) != -1){
+			err.style.visibility = 'visible';
+			errTipDoc = document.getElementById('ping-period');
+			text.innerText = '<%:The contract period is limited to 10-300 seconds%>';
+			return;
+		}else if (pinginfo.delay>300||pinginfo.delay<60||pinginfo.delay.search(/\D/g) != -1){
+			err.style.visibility = 'visible';
+			errTipDoc = document.getElementById('ping-delay');
+			text.innerText = '<%:The startup delay is limited to 60-300 seconds%>';
+			return;
+		}else if (pinginfo.miss>65535||pinginfo.miss<1||pinginfo.miss.search(/\D/g) != -1){
+			err.style.visibility = 'visible';
+			errTipDoc = document.getElementById('ping-miss');
+			text.innerText = '<%:The number of bags allowed is limited to 1-65535%>';
+			return;
+		}
+	}
+	var params = {'info':pinginfo};
+	console.log("pinginfo",params);
+	XHR.post('<%=luci.dispatcher.build_url("admin", "systemp","set_ping")%>', params,
+				function(x, result){
+				console.log(result);
+				var err = document.getElementById('Error');
+				var text = err.getElementsByTagName('span')[0];
+				if (result==null){
+				text.innerText = '<%:Connection failed, please try again%>';
+				err.style.visibility = 'visible';
+				} else if (result!=null&&result.code == 0) {
+				text.innerText = '<%:set successfully%>';
+				err.style.visibility = 'visible';
+				getPing();
+				}else {
+				text.innerText = result.msg;
+				err.style.visibility = 'visible';
+				}
+				});
+}
+function enablePingInput() {
+	if (document.getElementById('ping-enable').checked) {
+		document.getElementById('ping-ip').disabled = '';
+		document.getElementById('ping-period').disabled = '';
+		document.getElementById('ping-delay').disabled = '';
+		document.getElementById('ping-miss').disabled = '';
+	} else {
+		document.getElementById('ping-ip').disabled = 'disabled';
+		document.getElementById('ping-period').disabled = 'disabled';
+		document.getElementById('ping-delay').disabled = 'disabled';
+		document.getElementById('ping-miss').disabled = 'disabled';
+	}
+}
+function changePwdInputType(arr) {
+	if (document.getElementById(arr[0]).checked) {
+		document.getElementById(arr[1]).type = 'text';
+	} else {
+		document.getElementById(arr[1]).type = 'password';
+	}
+}
+function timestampToTime(timestamp) {
+	var date = new Date(timestamp * 1000);
+	var Y = date.getUTCFullYear() + '-';
+	var M = (date.getUTCMonth()+1 < 10 ? '0'+(date.getMonth()+1) : date.getMonth()+1) + '-';
+	var D = date.getUTCDate();
+	var h = date.getUTCHours();
+	var m = date.getUTCMinutes();
+	var s = date.getUTCSeconds();
+	var dateAndTime = {'date':Y+zero(M)+zero(D), 'time':this.zero(h)+":"+this.zero(m)+":"+this.zero(s)};
+	return dateAndTime;
+}
+function zoneoffset(zone) {
+	var n;
+	var zhour;
+	var zmin;
+	var symbol;
+	n = zone.search(/GMT/i);
+	zhour = zone.substr(n + 4, 2);
+	zmin = zone.substr(n + 7, 2);
+	symbol = zone.substr(n + 3, 1);
+	zhour = parseInt(zhour);
+	zmin = parseInt(zmin);
+	n = zhour * 3600 + zmin * 60;
+	if (symbol == "+")
+	  return n;
+	else if (symbol == "-")
+	  return -n;
+	else
+	  return 0;
+}
+function zoneOption() {
+	var zonesSelect = document.getElementById('zones-select');
+	var zonesSelectedIndex = zonesSelect.selectedIndex;
+	var zoneIndex = zonesSelect[zonesSelectedIndex].value;
+	zone = zones[zoneIndex];
+}
+function zero(s) {
+	return s < 10 ? '0' + s: s;
+}
+function backToStart() {
+	var pages = parseInt(logNum/10) +1;
+	currentPage = 1;
+	toStart = true;
+	toPageByPNum(currentPage);
+}
+function goToEnd() {
+	var pages = parseInt(logNum/10) +1;
+	toEnd = true;
+	toPageByPNum(pages);
+	currentPage = pages;
+}
+function toBackPage() {
+	if (currentPage-1>0) {
+		toPageByPNum(currentPage-1);
+		currentPage -=1;
+	}
+}
+function toNextPage() {
+	var pages = parseInt(logNum/10) +1;
+	if (pages >= currentPage +1) {
+		toPageByPNum(currentPage+1);
+		currentPage +=1;
+	}
+}
+function topage(e) {
+	var index = parseInt(e.innerText);
+	toPageByPNum(index);
+	currentPage = index;
+}
+function toPageByPNum(index) {
+	var pages = parseInt(logNum/10) +1;
+	if (pages<2)
+	  return;
+	document.getElementById("logTblpagIngList").style.display='';
+	var page_html = '';
+	for (var i = 1 ;i <= pages;i++){
+		if (i < index){
+			page_html += '<span class="ListSpan"  style="cursor: pointer;" onclick="topage(this)">'+i+'</span>';
+		} else if (index==i) {
+			page_html += '<span class="listSpanS"  style="cursor: default;" onclick="topage(this)">'+i+'</span>';
+		}else {
+			page_html += '<span class="ListSpan" onclick="topage(this)">'+i+'</span>';
+		}
+	}
+	var pageNumDiv = document.getElementById('logTblpagIngListlistDiv');
+	pageNumDiv.innerHTML = page_html;
+	pageIndexView(index);
+	pageView(index);
+}
+function pageView(page) {
+	var startNum = 10*(page -1)+1;
+	var endNum = 10*page;
+	if(endNum>logNum)
+	  endNum = logNum;
+	var tb = document.getElementById('log-table');
+	for (var i = 1; i < logNum ;i ++){
+		if (i>=startNum && i<= endNum){
+			tb.rows[i].style.display = '';
+		} else {
+			tb.rows[i].style.display = 'none';
+		}
+	}
+}
+function pageIndexView(index) {
+	var pages = parseInt(logNum/10) +1;
+	var pageNumDiv = document.getElementById('logTblpagIngListlistDiv');
+	if (pages<=5)
+	  return;
+	if (((pages-currentPage)<=2&&currentPage < index)||toEnd||(pages-index<=2)){
+		toEnd = false;
+		var left = (parseInt((pages-5)/3)*(-57)+(pages-5)%3*(-20))+'px';
+		pageNumDiv.style.marginLeft = left;
+	}else if((currentPage<=2&&currentPage > index)||toStart||index<=2){
+		toStart = false;
+		pageNumDiv.style.marginLeft = "0px";
+	} else {
+		if (index%3 != 0&&currentPage < index){
+			var left = parseInt(index/3)*(-57)+'px';
+			pageNumDiv.style.marginLeft = left;
+		}else if (index%3 != 0 &&currentPage > index){
+			var left = parseInt(index/3-1)*(-57)+'px';
+			pageNumDiv.style.marginLeft = left;
+		}
+	}
+}
+function closeSettingDiv() {
+	document.getElementById('show-syslog').style.display = 'none';
+}
+
+function setBtnTip(x){
+	document.getElementById('setBtnTip').style.visibility = 'hidden';
+	if (x==1){
+		if (setFunc==1){
+			reset();
+		} else if (setFunc==2){
+			restart();
+		} else if (setFunc==3){
+			importConfig();
+		}else if (setFunc == 4){
+			setSysinfo();
+		}
+	}
+}
+
+function setReset() {
+	setFunc = 1;
+	var err = document.getElementById('setBtnTip');
+	var text = err.getElementsByTagName('span')[0];
+	text.innerText = '<%:Are you sure to restore factory Settings%>';
+	err.style.visibility = 'visible';
+}
+function setRestart() {
+	setFunc = 2;
+	var err = document.getElementById('setBtnTip');
+	var text = err.getElementsByTagName('span')[0];
+	text.innerText = '<%:Are you sure to restart the panel%>';
+	err.style.visibility = 'visible';
+}
+function setConfig() {
+	setFunc = 3;
+	var err = document.getElementById('setBtnTip');
+	var text = err.getElementsByTagName('span')[0];
+	text.innerText = '<%:Are you sure to confirm import configuration%>';
+	err.style.visibility = 'visible';
+}
+function setIp() {
+	sysinfo.lan_ip = document.getElementById('ipaddr').value;
+	sysinfo.mask = document.getElementById('netmask').value;
+	sysinfo.gateway = document.getElementById('gateway').value;
+	sysinfo.defaultDNS = document.getElementById('defaultDNS').value;
+	sysinfo.standbyDNS = document.getElementById('standbyDNS').value;
+	sysinfo.web_port = document.getElementById('web-port').value;
+	sysinfo.web_timeout = document.getElementById('web-timeout').value;
+	sysinfo.connectmode = document.getElementById('connect_select').selectedIndex;
+	/*if (inid_connectmode == 1 && sysinfo.connectmode == 0)
+	{
+		XHR.get('<%=luci.dispatcher.build_url("admin", "systemp","get_ipaddr")%>', null,
+				function(x, result){
+				var err = document.getElementById('Error');
+				var text = err.getElementsByTagName('span')[0];
+				if (result==null){
+				text.innerText = '<%:connect failed,please retry%>';
+				err.style.visibility = 'visible';
+				} else if (result!=null && result.code == 0) {
+				tmp_ipaddr = result.tmp_ip;
+				if (inid_ip != tmp_ipaddr){
+					setFunc = 4;
+					var err = document.getElementById('setBtnTip');
+					var text = err.getElementsByTagName('span')[0];
+					text.innerText = '设置之后，需要访问'+tmp_ipaddr+',是否确认设置';
+					err.style.visibility = 'visible';
+					} else {
+						setSysinfo();
+					}
+				}
+			});
+		setFunc = 4;
+		var err = document.getElementById('setBtnTip');
+		var text = err.getElementsByTagName('span')[0];
+		text.innerText = '设置之后，ip地址会发生变化，可以通过'+"192.168.5.252"+'进行访问,是否确认设置';
+		err.style.visibility = 'visible';
+	} else {*/
+		if (inid_ip!=sysinfo.lan_ip || inid_connectmode != sysinfo.connectmode){
+		setFunc = 4;
+		var err = document.getElementById('setBtnTip');
+		var text = err.getElementsByTagName('span')[0];
+		text.innerText = '<%:setting the IP address confirm%>';
+		err.style.visibility = 'visible';
+		} else {
+			setSysinfo();
+		}
+//	}
+}
+
+function saveLang() {
+	var langSelect = document.getElementById('languages');
+	var language = langSelect[langSelect.selectedIndex].text;
+	var params = {'lang':language};
+	console.log(params);
+	XHR.post('<%=luci.dispatcher.build_url("admin", "systemp","set_lang")%>', params,
+				function(x, result){
+				console.log(result);
+				if (result==null) {
+				var err = document.getElementById('Error');
+				var text = err.getElementsByTagName('span')[0];
+				err.style.visibility = 'visible';
+				text.innerText = '<%:Connection failed, please try again%>';
+				}else if (result!=null&&result.code == 0) {
+				var err = document.getElementById('Error');
+				var text = err.getElementsByTagName('span')[0];
+				err.style.visibility = 'visible';
+				text.innerText = '<%:set successfully%>';
+				setTimeout(function(){
+					location.reload();
+					},1000);
+				}else {
+				var err = document.getElementById('Error');
+				var text = err.getElementsByTagName('span')[0];
+				text.innerText = result.msg;
+				err.style.visibility = 'visible';
+				}
+				});
+}
+function getLang() {
+	XHR.get('<%=luci.dispatcher.build_url("admin", "systemp","get_lang")%>', null,
+				function(x, result) {
+				console.log(result);
+				if (result==null) {
+				var err = document.getElementById('Error');
+				var text = err.getElementsByTagName('span')[0];
+				err.style.visibility = 'visible';
+				text.innerText = '<%:Connection failed, please try again%>';
+				}else if(result!=null&&result.code == 0) {
+				console.log(result);
+				var html;
+				var language = result.lang;
+				var languages = result.data;
+				var selectIndex = 0;
+				for (var i = 0; i<languages.length; i++) {
+				html += '<option value="'+i+'">'+languages[i]+'</option>';
+				if (languages[i] == language) {
+				selectIndex = i;
+				}
+				}
+				var languageSel = document.getElementById('languages');
+				languageSel.innerHTML = html;
+				languageSel.selectedIndex = selectIndex;
+				}else {
+					var err = document.getElementById('Error');
+					var text = err.getElementsByTagName('span')[0];
+					text.innerText = result.msg;
+					err.style.visibility = 'visible';
+				}
+				});
+}
+</script>

@@ -1,0 +1,504 @@
+<%-
+local uci = require "luci.model.uci"
+local _uci_real  = cursor or _uci_real or uci.cursor()
+local is_ac = _uci_real:get("basic_setting", "ac", "enable") == "1" and true or false;
+-%>
+<%+header%>
+<fieldset>
+    <% local is_ac = _uci_real:get("basic_setting", "ac", "enable") == "1" and true or false; if is_ac then %>
+	<legend><%:AC upgrading%></legend>
+    <% else %>
+	<legend><%:software upgrading%></legend>
+    <% end %>
+    <ul><li class="border-line"></li></ul>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>
+			<span class="detail"><%:Failed to get data, please try again%></span>
+			<input class="subBtn" value="<%:confirm%>" type="button" onclick="closeTip()">
+        </div>
+    </div>
+    <div class="file-box">
+		<p><%:upgrade intro%></p>
+        <form id="uploadForm">
+            <input type="text" id="textfield" class="txt" />
+			<input type="button" class="btn" value="<%:browser%>" />
+            <input type="file" name="file" class="file" id="fileField" onchange="setFileName('fileField','textfield')"/>
+			<input type="checkbox" id="save-config"><input type="button" class="btn lbtn" disabled="disabled" value="<%:whether or not%>" />
+			<input type="button" class="btn" value="<%:upgrading%>" onclick="upgradeClick(0)" />
+        </form>
+        <p class="upDesTiTop"><%:current hardware version%><span id="hardware-version"> </span></p>
+        <p class="upDesTi" style="white-space: nowrap;"><%:current software version%><span id="software-version"> </span> </p>
+        <div class="pointDiv" id="pointDiv" style="display: none;">
+            <div id="bar" class="chlidValue"></div>
+        </div>
+    </div>
+    <% local is_ac = _uci_real:get("basic_setting", "ac", "enable") == "1" and true or false; if is_ac then %>
+	<legend><%:AP upgrading%></legend>
+    <ul><li style="margin-top:90px;" class="border-line"></li></ul>
+    <div class="file-box">
+		<p><%:upgrade intro%></p>
+        <form id="apUploadForm">
+            <input type="text" id="apTextfield" class="txt" />
+			<input type="button" class="btn" value="<%:browser%>" />
+            <input type="file" name="file" class="file" id="apFileField" onchange="setFileName('apFileField','apTextfield')"/>
+			<input type="button" class="btn" value="<%:upgrading%>" onclick="apUpgradeClick(0)" />
+        </form>
+        <table id="ap-mac-version">
+        </table>
+        <div class="pointDiv" id="apPointDiv" style="display: none;">
+            <div id="apBar" class="chlidValue"></div>
+        </div>
+    </div>
+    <% end %>
+	<legend><%:OTA online upgrade%></legend>
+    <ul><li style="margin-top:90px;" class="border-line"></li></ul>
+    <div class="file-box">
+        <form id="apUploadForm">
+            <input type="button" onclick="apUpgradeClick(1)" class="btn lbtn" value="<%:OTA online upgrade%>" style="width:130px;"/>
+            <p><input id="auto-ota" type="checkbox" onclick="autoOTAswitch(this);"><span style="position: relative;bottom: 2px;"><%:whether auto OTA%></span></p>
+        </form>
+        <div class="pointDiv" id="otaPointDiv" style="display: none;">
+            <div id="otaBar" class="chlidValue"></div>
+        </div>
+    </div>
+    <div id="waiting" style="display: none">
+        <div class="LoadConCover">
+            <div class="coverLoadCon">
+                <div class="coverLoad">
+                    <i class="coverLoadClose" onclick="coverClose()"></i>
+                    <i class="coverLoading" ></i>
+					<p class="coverLoadNote"><%:Upgrade is in progress%></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="isSureTip">
+        <div id="lanTip" class="hsTip">
+            <i class="altIcon"></i>
+			<span class="detail"><%:Please confirm to upgarde the router%></span>
+			<input class="subBtn" value="<%:confirm%>" type="button" onclick="upgradeTip(1)">
+			<input class="subBtn" value="<%:cancel%>" type="button" onclick="upgradeTip(2)">
+        </div>
+    </div>
+</fieldset>
+<%+footer%>
+<script>
+    // page load functions
+	var isOta = 0;
+	var isAp = 0;
+	var noDevice = 0;
+	var errTipDoc;
+    getVersion();
+    refreshApTable();
+    getAutoOTAswitch();
+    function setFileName(fileid,textid) {
+        var value = document.getElementById(fileid).value;
+        var arr = value.split('\\');
+        var filename = arr[arr.length - 1];
+        document.getElementById(textid).value = filename;
+    }
+    function upgradeClick(i) {
+        document.getElementById('isSureTip').style.visibility = 'visible';
+        if (i==1){
+           isOta = 1;
+        }
+    }
+    function upgradeTip(i){
+        document.getElementById('isSureTip').style.visibility = 'hidden';
+        if (i==1){
+			if (isOta == 0){
+				if (isAp == 0){
+					upgrade();
+				}
+				else{
+					isAp = 0;
+					apUpgrade();
+				}
+			}
+			else{
+				isOta = 0;
+				otaUpgrade();
+			}
+        }
+    }
+    // router interfaces
+    function getVersion() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "systemnew","get_version")%>', null,
+            function(x, result) {
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if(result!=null&&result.code == 0) {
+                    console.log(result);
+                    var e;
+                    if (e = document.getElementById('hardware-version'))
+                        e.innerText = result.hardware;
+                    if (e = document.getElementById('software-version'))
+                        e.innerText = result.software;
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    function upgrade() {
+        var file = document.getElementById("fileField").files[0];
+        var fd = new FormData();
+        fd.append("image",file);
+        var saveConfig = document.getElementById('save-config').checked;
+        if (saveConfig) {
+            fd.append("keep",'');
+        } else {
+            fd.append("keep",'-n');
+        }
+        var err = document.getElementById('Error');
+        var text = err.getElementsByTagName('span')[0];
+        if(file==null||file==undefined||file==""){
+			text.innerText = '<%:Please select upgrade image first!%>';
+            err.style.visibility = 'visible';
+            return;
+        }else if (!file.name.endsWith(".bin")) {
+			text.innerText = '<%:Image file type illegal%>';
+            err.style.visibility = 'visible';
+            return;
+        }
+        console.log("fd:"+fd);
+        document.getElementById('pointDiv').style.display='';
+        XHR.upload('<%=luci.dispatcher.build_url("admin", "systemnew","upgrade")%>', fd, function (x, result) {
+            console.log("result:"+result);
+            if (result ==null){
+			text.innerText = '<%:router connection failure%>';
+                err.style.visibility = 'visible';
+                document.getElementById("waiting").style.display='none';
+            } else if (result.code == 0){
+                setTimeout(function () {
+                    setInterval(function () {
+                        if (saveConfig){
+                            XHR.get('<%=luci.dispatcher.build_url("admin", "logout","action_logout")%>', null,
+                                function(x, result) {
+                                    if (x.response!=""&&x.response!=null) {
+                                        window.location.reload();
+                                    }
+                                });
+                        } else {
+                            pageRedirect(document.location.protocol+"//siwifi.cn");
+                        }
+                    },3000)
+                },10000)
+            } else {
+                document.getElementById("waiting").style.display='none';
+                text.innerText = result.msg;
+                err.style.visibility = 'visible';
+            }
+
+        }, function (x) {
+            console.log("x:"+x);
+            var pg=document.getElementById('bar');
+            pg.style.width = x;
+            if (x == "100%"){
+                var waiting = document.getElementById('waiting');
+                var waitingP = waiting.getElementsByTagName('p')[0];
+                waiting.style.display = '';
+                waitingP.innerText = '<%:Upgrade is in progress%>';
+                document.getElementById('pointDiv').style.display='none'
+            }
+
+        });
+    }
+	var flag = false;
+	var mode = 0;
+	function otaUpgrade() {
+		var params = {"check":0};
+		console.log(params);
+
+		var waiting = document.getElementById('waiting');
+		var waitingP = waiting.getElementsByTagName('p')[0];
+		waiting.style.display = '';
+		waitingP.innerText = '<%:OTA checking software version%>';
+		<%if is_ac then %>
+			XHR.post('<%=luci.dispatcher.build_url("admin", "systemnew","ac_ota_upgrade")%>', params,
+		<% else %>
+			XHR.post('<%=luci.dispatcher.build_url("admin", "systemnew","ota_upgrade")%>', params,
+		<% end %>
+			function(x, result) {
+				console.log(result);
+				mode =  result.mode;
+				var err = document.getElementById('Error');
+				var text = err.getElementsByTagName('span')[0];
+				if (result==null){
+					document.getElementById('waiting').style.display = 'none';
+					text.innerText = "<%:router connection failure%>";
+					err.style.visibility = 'visible';
+				}else if(result.code == 0) {
+					var params1 = {"check":1, "mode":mode};
+					console.log("1",params1);
+					var downloadTimer = setInterval(function () {
+						<% if is_ac then %>
+						XHR.post('<%=luci.dispatcher.build_url("admin", "systemnew","ac_ota_upgrade")%>', params1,
+						<% else %>
+						XHR.post('<%=luci.dispatcher.build_url("admin", "systemnew","ota_upgrade")%>', params1,
+						<% end %>
+							function(x, result) {
+								console.log(result);
+								if (result==null){
+									document.getElementById('waiting').style.display = 'none';
+									text.innerText = "<%:router connection failure%>";
+									err.style.visibility = 'visible';
+									clearInterval(downloadTimer);
+								}else if (result.code==0){
+									if (result.status==1){
+										document.getElementById('waiting').style.display = 'none';
+										document.getElementById('otaPointDiv').style.display=''
+										console.log("x:"+result.downloaded);
+										var pg=document.getElementById('otaBar');
+										pg.style.width = result.downloaded+"%";
+									}else if (result.status==2){
+										document.getElementById('otaPointDiv').style.display='none'
+										waitingP.innerText = result.status_msg;
+										waiting.style.display = '';
+										if (mode == 1) {
+											clearInterval(downloadTimer);
+											setTimeout(function () {
+														setInterval(function () {
+															pageRedirect(document.location.protocol+"//siwifi.cn");
+															},2000)
+														},10000);
+										}
+										else if(mode == 3){
+											// if ap done
+											if (result.ac_start == 1){
+												clearInterval(downloadTimer);
+												setTimeout(function () {
+													setInterval(function () {
+														pageRedirect(document.location.protocol+"//siwifi.cn");
+													},2000)
+													//TODO: base device num decide how long to wait
+												},10000);
+											}
+										}
+
+									}else if (result.status==3) {
+										document.getElementById('otaPointDiv').style.display='none';
+										document.getElementById('waiting').style.display = 'none';
+										text.innerText = result.status_msg;
+										err.style.visibility = 'visible';
+										clearInterval(downloadTimer);
+										refreshApTable();
+									}
+								}else {
+									document.getElementById('otaPointDiv').style.display='none'
+									document.getElementById('waiting').style.display = 'none';
+									text.innerText = result.msg;
+									err.style.visibility = 'visible';
+									clearInterval(downloadTimer);
+								}
+							});
+					},2000)
+				} else {
+					document.getElementById('waiting').style.display = 'none';
+					text.innerText = result.msg;
+					err.style.visibility = 'visible';
+				}
+			});
+	}
+
+    function apUpgrade() {
+        var file = document.getElementById("apFileField").files[0];
+        var fd = new FormData();
+        fd.append("image",file);
+        var err = document.getElementById('Error');
+        var text = err.getElementsByTagName('span')[0];
+        if(file==null||file==undefined||file==""){
+            text.innerText = '<%:Please select upgrade image first!%>';
+            err.style.visibility = 'visible';
+            return;
+        }else if (!file.name.endsWith(".bin")) {
+            text.innerText = '<%:Image file type illegal%>';
+            err.style.visibility = 'visible';
+            return;
+        }else if (noDevice == 1) {
+            text.innerText = '<%:no device found%>';
+            err.style.visibility = 'visible';
+            return;
+        }
+        console.log("fd:"+fd);
+        document.getElementById('apPointDiv').style.display='';
+        XHR.upload('<%=luci.dispatcher.build_url("admin", "systemnew","ap_upgrade")%>', fd, function (x, result) {
+            console.log("result:"+result);
+            if (result ==null){
+                text.innerText = '<%:router connection failure%>';
+                err.style.visibility = 'visible';
+                document.getElementById("waiting").style.display='none';
+            } else if (result.code == 0){
+                var param = {"update_list":result.update_list};
+                console.log("param",param);
+				var scount = 0
+                var downloadTimer = setInterval(function () {
+					scount++;
+                    XHR.post('<%=luci.dispatcher.build_url("admin", "systemnew","ap_upgrade_check")%>', param,
+                        function(x, result) {
+                            console.log(result);
+                            if (result==null){
+                                text.innerText = "<%:router connection failure%>";
+                                err.style.visibility = 'visible';
+                                clearInterval(downloadTimer);
+                            }else if (result.code==0){
+                                var waiting = document.getElementById('waiting');
+                                var waitingP = waiting.getElementsByTagName('p')[0];
+								if (result.upgrade_status == 1) {
+                                    document.getElementById('apPointDiv').style.display='none'
+									//TODO update error list
+                                    waitingP.innerText = '<%:ap local upgrade done%>';
+                                    document.getElementById('waiting').style.display = '';
+                                    clearInterval(downloadTimer);
+                                    setTimeout(function () {
+                                        waiting.style.display = 'none';
+                                        location.reload();
+                                    },800)
+								}
+                            }
+                        });
+					if (scount > 13){
+						clearInterval(downloadTimer);
+						document.getElementById('apPointDiv').style.display='none'
+						document.getElementById("waiting").style.display='none';
+						text.innerText ="<%:ap timeout%>";
+						err.style.visibility = 'visible';
+
+					}
+				},10000)
+
+			} else {
+				document.getElementById('apPointDiv').style.display='none'
+					document.getElementById("waiting").style.display='none';
+				text.innerText = result.msg;
+				err.style.visibility = 'visible';
+			}
+
+		}, function (x) {
+			console.log("x:"+x);
+			var pg=document.getElementById('apBar');
+			pg.style.width = x;
+			if (x == "100%"){
+                var waiting = document.getElementById('waiting');
+                var waitingP = waiting.getElementsByTagName('p')[0];
+                waiting.style.display = '';
+                waitingP.innerText = '<%:Upgrade is in progress%>';
+                document.getElementById('apPointDiv').style.display='none'
+            }
+
+        });
+    }
+    function apUpgradeClick(i) {
+        document.getElementById('isSureTip').style.visibility = 'visible';
+        if (i==1){
+           isOta = 1;
+        }
+	isAp=1;
+    }
+    function refreshApTable() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "systemnew","refresh_ap_table")%>', null,
+            function(x, result) {
+        /*
+                    var result={
+                        code : 0,
+                        msg : "Error",
+                        devices : [{mac : "ac:12:00:bd:32:ew",softVersion : "v1.123"},{mac : "ad:32:fe:3a:ea:3f",softVersion : "v1.456"}]
+                    }
+            */
+                console.log("refresh",result);
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if(result!=null&&result.code == 0) {
+                    console.log(result);
+                    devices = result.devices;
+					var html = '<tr><th><%:MAC address%></th><th><%:software version%></th></tr>';
+                    html += '<tr>';
+                    if (isEmptyObject(devices)) {
+                        html += '<tr><td colspan="2"><%:no device found%></td></tr>';
+                        noDevice = 1;
+                    } else {
+                        for(var i in devices){
+							html += '<td>'+devices[i].mac+'</td><td>'+devices[i].softVersion+'</td>'
+                            html += '</tr><tr>';
+                        }
+                    }
+                    html +="</tr>";
+                    var apMacTable = document.getElementById('ap-mac-version');
+                    if(apMacTable){
+                        setTableInnerHTML(apMacTable, html);
+                    }
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+    function isEmptyObject(obj) {
+        for (var key in obj){
+            return false;//返回false，不为空对象
+        }
+        return true;//返回true，为空对象
+    }
+
+    function autoOTAswitch(ele) {
+        var enable = ele.checked?1:0;
+        var params = {"enable": enable};
+        var waiting = document.getElementById('waiting');
+        var waitingP = waiting.getElementsByTagName('p')[0];
+        waiting.style.display = '';
+        waitingP.innerText = '<%:Setting up，please wait a moment...%>';
+        XHR.post('<%=luci.dispatcher.build_url("admin", "systemnew","set_auto_ota")%>', params,
+            function(x, result) {
+                console.log(result);
+                document.getElementById("waiting").style.display='none';
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+                    text.innerText = '<%:router connection failure%>';
+                }else if(result!=null&&result.code == 0) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+                    text.innerText = '<%:set successfully%>';
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    function getAutoOTAswitch() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "systemnew","get_auto_ota")%>', null,
+            function(x, result) {
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+                    text.innerText = '<%:router connection failure%>';
+                }else if(result!=null&&result.code == 0) {
+                    document.getElementById('auto-ota').checked = !!parseInt(result.enable,10);
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+</script>

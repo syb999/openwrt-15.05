@@ -1,0 +1,119 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+msgid "AP SET"
+msgstr ""
+
+msgid "LoadConfig intro"
+msgstr ""
+
+msgid "auto refresh"
+msgstr ""
+
+msgid "import config"
+msgstr ""
+
+msgid "export config"
+msgstr ""
+
+msgid "Security options"
+msgstr ""
+
+msgid "encryption(WPA2-PSK)"
+msgstr ""
+
+msgid "LED"
+msgstr ""
+
+msgid "return group"
+msgstr ""
+
+msgid "change group"
+msgstr ""
+
+msgid "group detail list"
+msgstr ""
+
+msgid "file read or write fail"
+msgstr ""
+
+msgid "not enough storage"
+msgstr ""
+
+msgid "unknown error"
+msgstr ""
+
+msgid "try again"
+msgstr ""
+
+msgid "device busy"
+msgstr ""
+
+msgid "device ont found"
+msgstr ""
+
+msgid "device online, can not be remove"
+msgstr ""
+
+msgid "The character length cannot be more than 32 bits!"
+msgstr ""
+
+msgid "The SSID character length cannot be more than 32 bits!"
+msgstr ""
+
+msgid "The password length is no less than 8 bits!"
+msgstr ""
+
+msgid "Please input 2.4g network SSID!"
+msgstr ""
+
+msgid "Please input 5g network SSID!"
+msgstr ""
+
+msgid "Please input AP name!"
+msgstr ""
+
+msgid "this group name is already exist"
+msgstr ""
+
+msgid "group name contain invalid character"
+msgstr ""
+
+msgid "The AP name cannot be more than 45 characters!"
+msgstr ""
+
+msgid "The ap_alive_time limit is 20-80 seconds!"
+msgstr ""
+
+msgid "AP number"
+msgstr ""
+
+msgid "is abnormal,cannot join bulk edit!"
+msgstr ""
+
+msgid "bulk edit"
+msgstr ""
+
+msgid "delete"
+msgstr ""
+
+msgid "hardware version"
+msgstr ""
+
+msgid "AC upgrading"
+msgstr ""
+
+msgid "AP upgrading"
+msgstr ""
+
+msgid "ap local upgrade done"
+msgstr ""
+
+msgid "no device found"
+msgstr ""
+
+msgid "in setting"
+msgstr ""
+
+msgid "ap version not newest"
+msgstr ""

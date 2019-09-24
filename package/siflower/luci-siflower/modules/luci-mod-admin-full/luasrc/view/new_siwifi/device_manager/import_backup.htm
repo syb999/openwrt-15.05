@@ -1,0 +1,118 @@
+<%+header%>
+<fieldset>
+	<legend><%:Export the configuration%></legend>
+    <ul><li class="border-line"></li></ul>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>
+			<span class="detail"><%:import successfully%></span>
+			<input class="subBtn" value="<%:confirm%>" type="button" onclick="closeTip()">
+        </div>
+    </div>
+    <div class="div-box">
+		<p class="backup-text"><%:export button intro%></p>
+		<button onclick="location.href='<%=controller%>/admin/systemnew/export_config'"><%:Export%></button>
+    </div>
+    <fieldset>
+        <ul><li class="border-line"></li></ul>
+		<legend><%:Import the configuration%></legend>
+        <ul><li class="border-line"></li></ul>
+        <div class="file-box">
+			<p class="backup-text"><%:import the configuration intro%></p>
+            <form id="uploadForm">
+                <input type="text" id="textld" class="txt" />
+				<input type="button" class="btn" value="<%:browser%>" />
+                <input type="file" name="file" class="file" id="fileld" onchange="setFileName('fileld');"/>
+				<input type="button" class="btn" value="<%:import%>" onclick="importConfig()" />
+                <div class="pointDiv" id="pointDiv" style="display: none; float: left">
+                    <div id="bar" class="chlidValue"></div>
+                </div>
+            </form>
+        </div>
+        <div class="notice-box div-box ">
+			<p class="backup-text"><%:note%><br>
+			<%:backup note1%><br>
+			<%:backup note2%><br>
+			<%:backup note3%></p>
+        </div>
+        <div id="waiting" style="display: none">
+            <div class="LoadConCover">
+                <div class="coverLoadCon">
+                    <div class="coverLoad">
+                        <i class="coverLoadClose" onclick="coverClose()"></i>
+                        <i class="coverLoading" ></i>
+                        <p id="waitPg" class="waitPg"></p>
+						<p class="coverLoadNote"><%:Configuration is underway%></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </fieldset>
+</fieldset>
+<%+footer%>
+<script>
+    var errTipDoc;
+    function setFileName(id) {
+        var value = document.getElementById(id).value;
+        var arr = value.split('\\');
+        var filename = arr[arr.length - 1];
+        document.getElementById('textld').value = filename;
+    }
+    // router interfaces
+    function importConfig() {
+        var file = document.getElementById('fileld').files[0];
+        var fd = new FormData();
+        fd.append("archive",file);
+        var err = document.getElementById('Error');
+        var text = err.getElementsByTagName('span')[0];
+        if(file==null||file==undefined||file==""){
+			text.innerText = '<%:Select the load profile first%>';
+            err.style.visibility = 'visible';
+            return;
+        }else if (!file.name.endsWith(".tar.gz")) {
+			text.innerText = '<%:Configuration file type illegal%>';
+            err.style.visibility = 'visible';
+            return;
+        }
+        console.log(fd);
+        document.getElementById('pointDiv').style.display='';
+        XHR.upload('<%=luci.dispatcher.build_url("admin", "systemnew","import_config")%>', fd, function (x, result) {
+            console.log(result);
+            if (result ==null){
+			text.innerText = '<%:router connection failure%>';
+                err.style.visibility = 'visible';
+                document.getElementById("waiting").style.display='none';
+            } else if (result.code == 0){
+                setTimeout(function () {
+                    setInterval(function () {
+                        pageRedirect(document.location.protocol+"//siwifi.cn");
+                    },3000)
+                },10000)
+                /*setTimeout(function () {
+                    setInterval(function () {
+                        XHR.get('<%=luci.dispatcher.build_url("admin", "logout","action_logout")%>', null,
+                            function(x, result) {
+                                if (x.response!=""&&x.response!=null) {
+                                    window.location.reload();
+                                }
+                            });
+                    },3000)
+                },10000)*/
+            } else {
+                document.getElementById("waiting").style.display='none';
+                text.innerText = result.msg;
+                err.style.visibility = 'visible';
+            }
+
+        }, function (x) {
+            console.log(x);
+            var pg=document.getElementById('bar');
+            pg.style.width = x;
+            if (x == "100%"){
+                document.getElementById("waiting").style.display='';
+                document.getElementById('pointDiv').style.display='none'
+            }
+
+        });
+    }
+</script>

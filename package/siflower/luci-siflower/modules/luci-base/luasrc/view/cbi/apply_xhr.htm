@@ -1,0 +1,51 @@
+<% export("cbi_apply_xhr", function(id, configs, redirect) -%>
+<fieldset class="cbi-section" id="cbi-apply-<%=id%>">
+	<legend><%:Applying changes%></legend>
+	<script type="text/javascript">//<![CDATA[
+		var apply_xhr = new XHR();
+
+		apply_xhr.get('<%=luci.dispatcher.build_url("servicectl", "restart", table.concat(configs, ","))%>', null,
+			function() {
+				var checkfinish = function() {
+					apply_xhr.get('<%=luci.dispatcher.build_url("servicectl", "status")%>', null,
+						function(x) {
+							if( x.responseText == 'finish' )
+							{
+								var e = document.getElementById('cbi-apply-<%=id%>-status');
+								if( e )
+								{
+									e.innerHTML = '<%:Configuration applied.%>';
+									window.setTimeout(function() {
+										e.parentNode.style.display = 'none';
+										<% if redirect then %>location.href='<%=redirect%>';<% end %>
+									}, 1000);
+								}
+							}
+							else
+							{
+								var e = document.getElementById('cbi-apply-<%=id%>-status');
+								if( e && x.responseText ) e.innerHTML = x.responseText;
+
+								window.setTimeout(checkfinish, 1000);
+							}
+						}
+					);
+				}
+
+				window.setTimeout(checkfinish, 1000);
+			}
+		);
+	//]]></script>
+<!--/*start modified by mark.cai 2015/8/01 delete the refresh operation to avoid the bug in LED*/-->
+<!--/*start modified by mark.cai 2015/7/25 Add a refresh operation to make language take effect after we change the language and press the "Save & Apply"
+*/-->
+<!--         <script type="text/javascript">
+                location=location;
+         </script> -->
+<!--/*end modified by mark.cai 2015/7/25 Add a refresh operation to make language take effect after wo change the language and press the "Save & Apply"
+*/-->
+<!--/*end modified by mark.cai 2015/8/01 delete the refresh operation to avoid the bug in LED*/-->
+	<img src="<%=resource%>/icons/loading.gif" alt="<%:Loading%>" style="vertical-align:middle" />
+	<span id="cbi-apply-<%=id%>-status"><%:Waiting for changes to be applied...%></span>
+</fieldset>
+<%-	end) %>

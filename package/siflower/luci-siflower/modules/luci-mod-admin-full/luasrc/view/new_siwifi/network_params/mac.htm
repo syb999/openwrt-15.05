@@ -1,0 +1,139 @@
+<%+header%>
+<fieldset class="mac">
+	<legend><%:MAC address setting%></legend>
+	<i class="helpBtn" helpstr="dynamicIpHelp" onclick="clickHelp(0)"></i>
+	<ul><li class="border-line"></li></ul>
+	<div id="Error">
+		<div id="hsErr" class="hsTip">
+			<i class="altIcon"></i>
+			<span class="detail"><%:MAC address format incorrect%></span>
+			<input class="subBtn" value="<%:confirm%>" type="button" onclick="closeTip()">
+		</div>
+	</div>
+	<table class="tb-no-border">
+		<tr><td class="mac-td-left"><input type="radio" name="mac" class="tb-rd" value="0" /></td><td class="mac-td-right"><%:Use the MAC address of the router%><span id="routermac"></span></td></tr>
+		<tr><td class="mac-td-left"><input type="radio" name="mac" class="tb-rd" value="1" /></td><td class="mac-td-right"><%:use the MAC address of the current managed PC%><span id="devicemac"></span></td></tr>
+		<tr><td class="mac-td-left"><input type="radio" name="mac" class="tb-rd" value="2" /></td><td class="mac-td-right"><span style="position: relative;*top: -10px;"><%:use custom MAC address%></span><input id="custommac" type="text" onkeyup="nStrLimit(this)" maxlength="17"></td></tr>
+		<tr><td></td><td class="wan-td-right">
+				<button onclick="setMac()"><%:save%></button>
+			<i id="saveTip" class="hsSubLoading saving" style="display: none"></i>
+			<i id="saveTipSucess" class="hsSubLoading save-suc" style="display: none"></i>
+		</td></tr>
+	</table>
+	<div id="Help" class="Help"><p class="helpTop">
+		<span class="helpDes"><%:help%></span>
+		<i class="helpClose" onclick="clickHelp(1)"></i></p>
+		<div class="helpDetail"><ul id="macCloneHelp" class="help">
+		<li class="title">
+			<%:MAC help%>
+		</li>
+	</ul></div></div>
+</fieldset>
+<%+footer%>
+<script>
+	// global vars
+    var Drag =  document.getElementById("Help");
+    var errTipDoc;
+
+    // page load functions
+    getMac();
+    dragFunc(Drag);
+
+    // router get interfaces
+	function getMac() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "networknew","get_mac")%>', null,
+            function(x, result) {
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if(result.code == 0) {
+                    console.log(result);
+                    var e;
+                    if (result.routermac != undefined) {
+                        document.getElementById('routermac').innerText = result.routermac;
+					}
+                    if (result.devicemac != undefined) {
+                        document.getElementById('devicemac').innerText = result.devicemac;
+                    }
+                    if (result.custommac != undefined) {
+                        document.getElementById('custommac').value = result.custommac;
+                    }
+                    var mode = result.mode;
+                    var radio = document.getElementsByName('mac');
+                    for (var i = 0; i<radio.length; i++) {
+                        if (radio[i].value == mode) {
+                            radio[i].checked = true;
+                            break;
+                        }
+                    }
+                }
+            });
+    }
+
+    // router set interfaces
+    function setMac() {
+        var radio = document.getElementsByName('mac');
+        for (var i = 0; i<radio.length; i++) {
+            if (radio[i].checked == true) {
+                var mode = i;
+                break;
+			}
+		}
+		var params;
+		if (mode == 2) {
+            var custommac = document.getElementById('custommac').value;
+            var mac_verify = this.isValidMac(custommac);
+            var err = document.getElementById('Error');
+            var text = err.getElementsByTagName('span')[0];
+            if (!mac_verify){
+				text.innerText = '<%:MAC address format incorrect%>';
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('custommac');
+                return;
+            }
+            if (custommac.toUpperCase()=="FF:FF:FF:FF:FF:FF"){
+				text.innerText = '<%:MAC address cannot be broadcast address here!%>';
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('custommac');
+                return;
+            }
+            var custommacf = custommac.substring(0,2);
+            var custommac10 = parseInt(custommacf,16);
+            if (custommac10%2==1){
+				text.innerText = '<%:MAC address cannot be multicast address here!%>';
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('custommac');
+                return;
+            }
+            params = {'mode':mode, 'custommac':custommac};
+		} else {
+            params = {'mode':mode};
+		}
+		console.log(params);
+        document.getElementById("saveTip").style.display='';
+        document.getElementById("saveTipSucess").style.display='none';
+        XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_mac")%>', params,
+            function(x, result){
+                console.log(result);
+                document.getElementById("saveTip").style.display='none';
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if (result!=null&&result.code == 0) {
+                    document.getElementById("saveTipSucess").style.display='';
+                    setTimeout(function () {
+                        document.getElementById("saveTipSucess").style.display='none';
+                    },"2000");
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+				}
+            });
+    }
+</script>

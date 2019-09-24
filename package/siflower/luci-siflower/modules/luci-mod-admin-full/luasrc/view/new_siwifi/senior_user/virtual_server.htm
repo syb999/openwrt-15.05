@@ -1,0 +1,407 @@
+<%+header%>
+<fieldset>
+	<legend><%:virtual server%></legend>
+    <i class="helpBtn" helpstr="dynamicIpHelp" onclick="clickHelp(0)"></i>
+    <ul><li class="border-line"></li></ul>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>
+			<span class="detail"><%:Save successfully%></span>
+			<input class="subBtn" value="<%:confirm%>" type="button" onclick="closeTip()">
+        </div>
+    </div>
+    <div style="float: right">
+        <ul id="virLsUl" class="gridToolBar">
+			<li gridtype="add" class="add" onclick="addVirtualServer()"><i></i><span><%:add%></span></li>
+			<li id="delAllUn" gridtype="delAll" style="display: none" class="delAllUn"><i></i><span><%:Delete all%></span></li>
+			<li id="delAll" gridtype="delAll" class="delAll" onclick="deleteAllVirtualServer()"><i></i><span><%:Delete all%></span></li>
+			<li id="delSelUn" gridtype="delSel" class="delSelUn"><i></i><span><%:Delete Selected%></span></li>
+			<li id="delSel" gridtype="delSel" style="display: none" class="delSel" onclick="deleteSelectedVirtualServer()"><i></i><span><%:Delete Selected%></span></li>
+        </ul>
+    </div>
+    <table id="virtual-servers">
+    </table>
+    <div id="Help" class="Help"><p class="helpTop">
+		<span class="helpDes"><%:help%></span>
+    <i class="helpClose" onclick="clickHelp(1)"></i></p>
+    <div class="helpDetail"><ul id="virtualServerCfgHelp" class="help">
+        <li class="title">
+            <%:virtual server help%>
+        </li>
+		<li class="title"><%:common server%></li>
+		<li class="content"><%:common server help%></li>
+		<li class="title"><%:external port%></li>
+		<li class="content"><%:external port help%></li>
+		<li class="title"><%:internal port%></li>
+		<li class="content"><%:internal port help%></li>
+		<li class="title"><%:IP address%></li>
+		<li class="content"><%:IP address help%></li>
+		<li class="title"><%:protocol%></li>
+		<li class="content"><%:The protocol used by the server%></li>
+		<li class="title"><%:For example%></li>
+		<li class="content"><%:vs help for example%></li>
+        <li class="table">
+            <table>
+				<tbody><tr><td><%:common server%></td><td><%:external port%></td><td><%:internal port%></td><td><%:IP address%></td><td><%:protocol%></td></tr>
+                <tr><td>FTP</td><td>21</td><td>21</td><td>192.168.4.2</td><td>ALL</td></tr>
+                </tbody></table>
+        </li>
+		<li class="warnning"><%:vs help note%></li>
+    </ul></div></div>
+</fieldset>
+<%+footer%>
+<script>
+    // global vars
+    var servers = {};
+    var get_servers_bak;
+    var Drag =  document.getElementById("Help");
+    var action;
+    var editIndex;
+    var lan;
+    var errTipDoc;
+
+    // page load functions
+    getVirtualServers();
+    dragFunc(Drag);
+    // router get interfaces
+    function getVirtualServers() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "advancednew","get_virtual_server")%>', null,
+            function(x, result) {
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if(result!=null&&result.code == 0) {
+                    console.log(result);
+                    servers = {};
+                    var get_servers = result.servers;
+                    document.getElementById("delSelUn").style.display='';
+                    document.getElementById("delSel").style.display='none';
+                    if ($.isEmptyObject(get_servers)) {
+                        document.getElementById("delAllUn").style.display='';
+                        document.getElementById("delAll").style.display='none';
+                    } else {
+                        document.getElementById("delAllUn").style.display='none';
+                        document.getElementById("delAll").style.display='';
+                    }
+                    get_servers_bak = get_servers;
+                    var t = 0;
+                    for (m in get_servers) {
+                        if (get_servers[m].externalport == '53') {
+                            get_servers[m].servertype = 'DNS';
+                        } else if (get_servers[m].externalport == '21') {
+                            get_servers[m].servertype = 'FTP';
+                        } else if (get_servers[m].externalport == '70') {
+                            get_servers[m].servertype = 'Gopher';
+                        } else if (get_servers[m].externalport == '80') {
+                            get_servers[m].servertype = 'HTTP';
+                        } else if (get_servers[m].externalport == '119') {
+                            get_servers[m].servertype = 'NNTP';
+                        } else if (get_servers[m].externalport == '110') {
+                            get_servers[m].servertype = 'POP3';
+                        } else if (get_servers[m].externalport == '1723') {
+                            get_servers[m].servertype = 'PPTP';
+                        } else if (get_servers[m].externalport == '25') {
+                            get_servers[m].servertype = 'SMTP';
+                        } else if (get_servers[m].externalport == '1080') {
+                            get_servers[m].servertype = 'SOCK';
+                        } else if (get_servers[m].externalport == '23') {
+                            get_servers[m].servertype = 'Telnet';
+                        }
+                        if (get_servers[m].protocaltype != '') {
+                            for (n in get_servers) {
+                                if (n != m && get_servers[n].externalport == get_servers[m].externalport && get_servers[n].internalport == get_servers[m].internalport && get_servers[n].ipaddr == get_servers[m].ipaddr) {
+                                    get_servers[m].protocaltype = 'all';
+                                    get_servers[n].protocaltype = '';
+                                }
+                            }
+                            servers[t] = get_servers[m];
+                            t++;
+                        }
+                    }
+					var html = '<tr><th><input type="checkbox" id="vs-all" onchange="checkAll()"></th><th><%:common server%></th><th><%:external port%></th><th><%:internal port%></th><th><%:IP address%></th><th><%:protocol type%></th><th><%:edit%></th></tr>';
+                    for(i in servers){
+                        html += '<tr><td><input type="checkbox" id="vs-'+i+'" onchange="checkTd('+i+')"></td><td>'+servers[i].servertype+'</td><td>'+servers[i].externalport+'</td><td>'+servers[i].internalport+'</td><td>'+
+                            servers[i].ipaddr+'</td><td>'+servers[i].protocaltype.toUpperCase()+'</td><td style="cursor: pointer;" onclick="editVirtualServer('+i+')"><i class="edit"></i></td></tr>';
+                    }
+                    html +='<tr id="add-virtual-server"></tr>';
+                    setTableInnerHTML(document.getElementById('virtual-servers'),html);
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // router set interfaces
+    function saveVirtualServer() {
+        var externalport = document.getElementById('vs-externalport').value;
+        var internalport = document.getElementById('vs-internalport').value;
+        var ipaddr = document.getElementById('vs-ipaddr').value;
+        var vsProtocaltype = document.getElementById('vs-protocaltype');
+        var vsProtocaltypeSelectedIndex = vsProtocaltype.selectedIndex;
+        var protocaltype = vsProtocaltype[vsProtocaltypeSelectedIndex].value;
+        var err = document.getElementById('Error');
+        var text = err.getElementsByTagName('span')[0];
+        if (!isValidIP(ipaddr)) {
+			text.innerText = '<%:IP address error, please input again%>';
+            errTipDoc = document.getElementById('vs-ipaddr');
+            err.style.visibility = 'visible';
+            return;
+        }
+        if (externalport == '' || externalport == null || !checkVirtulServerExternalPort(externalport)) {
+            errTipDoc = document.getElementById('vs-externalport');
+			text.innerText = '<%:Please enter the correct external port%>';
+            err.style.visibility = 'visible';
+            return;
+        }
+        if (internalport == '' || internalport == null || !checkPortRange(internalport)) {
+            errTipDoc = document.getElementById('vs-internalport');
+			text.innerText = '<%:Please enter the correct internal port%>';
+            err.style.visibility = 'visible';
+            return;
+        }
+        var save_virtual_server = {'externalport':externalport, 'internalport':internalport, 'ipaddr':ipaddr, 'protocaltype':protocaltype};
+        var upload_servers = [];
+        if (action == 'add') {
+            for (var i in get_servers_bak) {
+                if (get_servers_bak[i].protocaltype != '') {
+                    upload_servers.push(get_servers_bak[i]);
+                }
+            }
+            upload_servers.push(save_virtual_server);
+        } else {
+            for (var i in servers) {
+                if (i != editIndex) {
+                    if (servers[i].protocaltype != '') {
+                        upload_servers.push(servers[i]);
+                    }
+                } else {
+                    upload_servers.push(save_virtual_server);
+                }
+            }
+        }
+        var params = {'servers':upload_servers};
+        console.log(params);
+        XHR.post('<%=luci.dispatcher.build_url("admin", "advancednew","set_virtual_server")%>', params,
+            function(x, result){
+                console.log(result);
+                var err = document.getElementById('Error');
+                var text = err.getElementsByTagName('span')[0];
+                if (result==null){
+				text.innerText = '<%:router connection failure%>';
+                    err.style.visibility = 'visible';
+                }else if (result!=null&&result.code == 0) {
+                    getVirtualServers();
+					text.innerText = '<%:Save successfully%>';
+                    err.style.visibility = 'visible';
+                } else {
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+
+            });
+    }
+
+    function deleteSelectedVirtualServer() {
+        var checkboxId;
+        var servers_after_deleted = [];
+        for (i in servers) {
+            checkboxId = 'vs-'+i;
+            if (document.getElementById(checkboxId).checked == true) {
+                if (servers[i].protocaltype == 'all') {
+                    for (j in get_servers_bak) {
+                        if (get_servers_bak[j].externalport == servers[i].externalport && get_servers_bak[j].internalport == servers[i].internalport && get_servers_bak[j].ipaddr == servers[i].ipaddr) {
+                            get_servers_bak[j].protocaltype = '';
+                        }
+                    }
+                } else {
+                    for (j in get_servers_bak) {
+                        if (get_servers_bak[j].externalport == servers[i].externalport && get_servers_bak[j].internalport == servers[i].internalport && get_servers_bak[j].ipaddr == servers[i].ipaddr && get_servers_bak[j].protocaltype == servers[i].protocaltype) {
+                            get_servers_bak[j].protocaltype = '';
+                        }
+                    }
+                }
+            }
+        }
+        for (m in get_servers_bak) {
+            if (get_servers_bak[m].protocaltype != '') {
+                servers_after_deleted.push(get_servers_bak[m]);
+            }
+        }
+        var params = {'servers':servers_after_deleted};
+        XHR.post('<%=luci.dispatcher.build_url("admin", "advancednew","set_virtual_server")%>', params,
+            function(x, result){
+                console.log(result);
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if (result!=null&&result.code == 0) {
+                    getVirtualServers();
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+					text.innerText = '<%:delete successfully%>';
+                    err.style.visibility = 'visible';
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    function deleteAllVirtualServer() {
+        var params = {'servers':{}};
+        XHR.post('<%=luci.dispatcher.build_url("admin", "advancednew","set_virtual_server")%>', params,
+            function(x, result){
+                console.log(result);
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if (result!=null&&result.code == 0) {
+                    getVirtualServers();
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+					text.innerText = '<%:delete successfully%>';
+                    err.style.visibility = 'visible';
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // other button functions
+    function addVirtualServer() {
+        getVirtualServers();
+        setTimeout(function(){
+				var addHtml = '<td></td><td><select id="vs-servertype" onchange="servertypeOptionChange()"><option disabled selected value><%:please select%></option><option value="dns">DNS</option><option value="ftp">FTP</option>' +
+                '<option value="gopher">Gopher</option><option value="http">HTTP</option><option value="nntp">NNTP</option><option value="pop3">POP3</option>' +
+                '<option value="pptp">PPTP</option><option value="smtp">SMTP</option><option value="sock">SOCK</option><option value="telnet">Telnet</option></select></td>' +
+                '<td><input id="vs-externalport" onkeyup="numLimit(this)" maxlength="8"></td><td><input id="vs-internalport" onkeyup="numLimit(this)" maxlength="8"></td><td>'+
+                '<input id="vs-ipaddr" onkeyup="nStrLimit(this)" maxlength="15"></td><td><select id="vs-protocaltype"><option value="all">ALL</option><option value="tcp">TCP</option><option value="udp">UDP</option></select></td>' +
+                '<td><button class="mac-cancel" onclick="getVirtualServers()"><%:cancel%></button><br><button class="mac-save" onclick="saveVirtualServer()"><%:save%></button></td>';
+            setTrInnerHTML(document.getElementById('add-virtual-server'),addHtml);
+        },600);
+        action = 'add';
+    }
+
+    function editVirtualServer(i) {
+        getVirtualServers();
+        setTimeout(function(){
+            console.log(i);
+            console.log(servers[i]);
+            i = parseInt(i);
+            editIndex = i;
+            if (servers[i].protocaltype == 'all') {
+                var editHtml = '<td><input type="checkbox" id="vs-'+i+'" onchange="checkTd('+i+')"></td><td><select id="vs-servertype" onchange="servertypeOptionChange()"><option disabled selected value>'+servers[i].servertype+'</option><option value="dns">DNS</option><option value="ftp">FTP</option>' +
+                    '<option value="gopher">Gopher</option><option value="http">HTTP</option><option value="nntp">NNTP</option><option value="pop3">POP3</option>' +
+                    '<option value="pptp">PPTP</option><option value="smtp">SMTP</option><option value="sock">SOCK</option><option value="telnet">Telnet</option></select></td>' +
+                    '<td><input id="vs-externalport"  onkeyup="numLimit(this)" maxlength="8" value="'+servers[i].externalport+'"></td><td><input id="vs-internalport"  onkeyup="numLimit(this)" maxlength="8" value="'+servers[i].internalport+'"></td><td>'+
+                    '<input id="vs-ipaddr"  onkeyup="nStrLimit(this)" maxlength="15"value="'+servers[i].ipaddr+'"></td><td><select id="vs-protocaltype"><option value="all" selected="selected">ALL</option><option value="tcp">TCP</option><option value="udp">UDP</option></select></td>' +
+                    '<td><button class="mac-cancel" onclick="getVirtualServers()"><%:cancel%></button><br><button class="mac-save" onclick="saveVirtualServer()"><%:save%></button></td>';
+            } else if (servers[i].protocaltype == 'tcp') {
+                var editHtml = '<td><input type="checkbox" id="vs-'+i+'" onchange="checkTd('+i+')"></td><td><select id="vs-servertype" onchange="servertypeOptionChange()"><option disabled selected value>'+servers[i].servertype+'</option><option value="dns">DNS</option><option value="ftp">FTP</option>' +
+                    '<option value="gopher">Gopher</option><option value="http">HTTP</option><option value="nntp">NNTP</option><option value="pop3">POP3</option>' +
+                    '<option value="pptp">PPTP</option><option value="smtp">SMTP</option><option value="sock">SOCK</option><option value="telnet">Telnet</option></select></td>' +
+                    '<td><input id="vs-externalport" onkeyup="numLimit(this)" maxlength="8" value="'+servers[i].externalport+'"></td><td><input id="vs-internalport" onkeyup="numLimit(this)" maxlength="8" value="'+servers[i].internalport+'"></td><td>'+
+                    '<input id="vs-ipaddr"  onkeyup="nStrLimit(this)" maxlength="15" value="'+servers[i].ipaddr+'"></td><td><select id="vs-protocaltype"><option value="all">ALL</option><option value="tcp" selected="selected">TCP</option><option value="udp">UDP</option></select></td>' +
+                    '<td><button class="mac-cancel" onclick="getVirtualServers()"><%:cancel%></button><br><button class="mac-save" onclick="saveVirtualServer()"><%:save%></button></td>';
+            } else if (servers[i].protocaltype == 'udp') {
+                var editHtml = '<td><input type="checkbox" id="vs-'+i+'" onchange="checkTd('+i+')"></td><td><select id="vs-servertype" onchange="servertypeOptionChange()"><option disabled selected value>'+servers[i].servertype+'</option><option value="dns">DNS</option><option value="ftp">FTP</option>' +
+                    '<option value="gopher">Gopher</option><option value="http">HTTP</option><option value="nntp">NNTP</option><option value="pop3">POP3</option>' +
+                    '<option value="pptp">PPTP</option><option value="smtp">SMTP</option><option value="sock">SOCK</option><option value="telnet">Telnet</option></select></td>' +
+                    '<td><input id="vs-externalport" onkeyup="numLimit(this)" maxlength="8" value="'+servers[i].externalport+'"></td><td><input id="vs-internalport"  onkeyup="numLimit(this)" maxlength="8"value="'+servers[i].internalport+'"></td><td>'+
+                    '<input id="vs-ipaddr" onkeyup="nStrLimit(this)" maxlength="15"  value="'+servers[i].ipaddr+'"></td><td><select id="vs-protocaltype"><option value="all">ALL</option><option value="tcp">TCP</option><option value="udp" selected="selected">UDP</option></select></td>' +
+                    '<td><button class="mac-cancel" onclick="getVirtualServers()"><%:cancel%></button><br><button class="mac-save" onclick="saveVirtualServer()"><%:save%></button></td>';
+            }
+            var table = document.getElementById("virtual-servers");
+            i +=1;
+            setTrInnerHTML(table.rows[i],editHtml);
+        },600);
+        action = 'edit';
+    }
+
+    // page functions
+    function servertypeOptionChange() {
+        var vsServertype = document.getElementById('vs-servertype');
+        var vsServertypeSelectedIndex = vsServertype.selectedIndex;
+        var servertype = vsServertype[vsServertypeSelectedIndex].value;
+        if (servertype == 'dns') {
+            document.getElementById('vs-externalport').value = '53';
+        } else if (servertype == 'ftp') {
+            document.getElementById('vs-externalport').value = '21';
+        } else if (servertype == 'gopher') {
+            document.getElementById('vs-externalport').value = '70';
+        } else if (servertype == 'http') {
+            document.getElementById('vs-externalport').value = '80';
+        } else if (servertype == 'nntp') {
+            document.getElementById('vs-externalport').value = '119';
+        } else if (servertype == 'pop3') {
+            document.getElementById('vs-externalport').value = '110';
+        } else if (servertype == 'pptp') {
+            document.getElementById('vs-externalport').value = '1723';
+        } else if (servertype == 'smtp') {
+            document.getElementById('vs-externalport').value = '25';
+        } else if (servertype == 'sock') {
+            document.getElementById('vs-externalport').value = '1080';
+        } else if (servertype == 'telnet') {
+            document.getElementById('vs-externalport').value = '23';
+        }
+    }
+
+    function checkAll() {
+        var allIpMac = document.getElementById("vs-all");
+        if (allIpMac.checked == true) {
+            var selected_vs;
+            var vs_id;
+            for (var i in servers) {
+                vs_id = 'vs-'+i;
+                selected_vs = document.getElementById(vs_id);
+                selected_vs.checked = true;
+                document.getElementById("delSel").style.display="";
+                document.getElementById("delSelUn").style.display="none";
+            }
+
+        }else {
+            var selected_vs;
+            var vs_id;
+            for (var i in servers) {
+                vs_id = 'vs-'+i;
+                selected_vs = document.getElementById(vs_id);
+                selected_vs.checked = false;
+                document.getElementById("delSel").style.display="none";
+                document.getElementById("delSelUn").style.display="";
+            }
+        }
+    }
+
+    function checkTd(i) {
+        for (i in servers) {
+            var chekedItem = document.getElementById("vs-" + i);
+            if (chekedItem != null && chekedItem != "") {
+                if (chekedItem.checked == true) {
+                    document.getElementById("delSel").style.display = "";
+                    document.getElementById("delSelUn").style.display = "none";
+                    return
+                } else {
+                    document.getElementById("delSel").style.display = "none";
+                    document.getElementById("delSelUn").style.display = "";
+                }
+
+            }
+
+        }
+    }
+
+</script>

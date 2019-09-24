@@ -1,0 +1,217 @@
+<%+header%>
+<fieldset class="lan">
+	<legend class="title"><%:LAN setting%></legend>
+	<i class="helpBtn" helpstr="dynamicIpHelp" onclick="clickHelp(0)"></i>
+	<ul><li class="border-line"></li></ul>
+	<div id="Error">
+		<div id="hsErr" class="hsTip">
+			<i class="altIcon"></i>
+			<span class="detail"><%:Invalid input! Please refer to the correct format:%><br><%:XXX.XXX.XXX.XXX,X is the number of 0~9%></span>
+			<input class="subBtn" value="<%:confirm%>" type="button" onclick="closeTip()">
+		</div>
+	</div>
+	<table class="tb-no-border">
+		<tr><td class="wan-td-left"><%:MAC address%></td><td class="wan-td-right"><span id="mac"></span></td></tr>
+		<tr><td class="wan-td-left"><%:LAN IP setting%></td><td class="wan-td-right"><select id="lan-ip-setting" onchange="lanSettingTypeChange()">
+					<option id="auto" value="auto"><%:auto（recommendation）%></option>
+					<option id="manual" value="manual"><%:manual%></option>
+		</select></td></tr>
+		<tr><td class="wan-td-left"><%:IP address%></td><td class="wan-td-right"><input id="ipaddr" type="text" onkeyup="nStrLimit(this)" maxlength="15"></td></tr>
+		<tr><td class="wan-td-left"><%:subnet mask%></td><td class="wan-td-right"><input id="netmask" type="text" onkeyup="nStrLimit(this)" maxlength="17"></td></tr>
+		<tr><td></td><td class="wan-td-right">
+				<button onclick="setLan()"><%:save%></button>
+			<i id="saveTip" class="hsSubLoading saving" style="display: none"></i>
+			<i id="saveTipSucess" class="hsSubLoading save-suc" style="display: none"></i>
+		</td></tr>
+	</table>
+	<div id="Help" class="Help"><p class="helpTop">
+		<span class="helpDes"><%:help%></span>
+		<i class="helpClose" onclick="clickHelp(1)"></i></p>
+		<div class="helpDetail"><ul id="lanHelp" class="help">
+				<li class="title"><%:MAC address%></li>
+				<li class="content"><%:IP address of the router to the LAN.%></li>
+				<li class="title"><%:LAN IP setting%></li>
+				<li class="content"><%:Support automatic and manual Settings%></li>
+				<li class="title"><%:LAN help 1%></li>
+		<ul class="listNum">
+			<li>
+				<%:LAN help 2%>
+			</li>
+			<li>
+				<%:LAN help 3%>
+			</li>
+			<li>
+				<%:LAN help 4%>
+			</li>
+			<li>
+				<%:LAN help 5%>
+			</li>
+		</ul>
+		<li class="title"><%:IP address%></li>
+		<li class="content"><%:IP address of the router to the LAN.%></li>
+		<li class="title"><%:subnet mask%></li>
+		<li class="content"><%:Router to LAN subnet mask%></li>
+	</ul></div></div>
+	<div id="waiting" style="display: none">
+		<div class="LoadConCover">
+			<div class="coverLoadCon">
+				<div class="coverLoad">
+					<i class="coverLoadClose" onclick="coverClose()"></i>
+					<i class="coverLoading" ></i>
+					<p id="waitTipNote" class="coverLoadNote"><%:Just a moment, please...%></p>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="isSureTip">
+		<div id="lanTip" class="hsTip">
+			<i class="altIcon"></i>
+			<span class="detail"><%:LAN set confirm%></span>
+			<input class="subBtn" value="<%:confirm%>" type="button" onclick="closeLanTip(1)">
+			<input class="subBtn" value="<%:cancel%>" type="button" onclick="closeLanTip(3)">
+		</div>
+	</div>
+	<div id="isSureTip2" style="visibility: hidden;">
+		<div id="lanTip2" class="hsTip">
+			<i class="altIcon"></i>
+			<span class="detail"><%:alter need input address confirm%></span>
+			<input class="subBtn" value="<%:confirm%>" type="button" onclick="closeLanTip(2)">
+			<input class="subBtn" value="<%:cancel%>" type="button" onclick="closeLanTip(3)">
+		</div>
+	</div>
+</fieldset>
+<%+footer%>
+<script>
+	// global vars
+    var errTipDoc = document.getElementById("ipaddr");
+    var Drag =  document.getElementById("Help");
+
+    //params of set lan
+	var lanParams;
+
+    // page load functions
+    dragFunc(Drag);
+
+    // router get interfaces
+    XHR.get('<%=luci.dispatcher.build_url("admin", "networknew","get_lan")%>', null,
+        function(x, result) {
+            if(result.code == 0) {
+                console.log(result);
+                var e;
+                if (result.mac != undefined) {
+                    document.getElementById('mac').innerText = result.mac;
+				}
+				if (result.mode != undefined) {
+                    if (result.mode == 0) {
+                        document.getElementById('lan-ip-setting').value = 'auto';
+                    } else {
+                        document.getElementById('lan-ip-setting').value = 'manual';
+                    }
+				}
+                if (result.ip != undefined) {
+                    document.getElementById('ipaddr').value = result.ip;
+                }
+                if (result.netmask != undefined) {
+                    document.getElementById('netmask').value = result.netmask;
+                }
+                lanSettingTypeChange();
+            }
+        });
+
+    // router set interfaces
+    function setLan() {
+        var select_mode = document.getElementById('lan-ip-setting').value;
+        var mode;
+        if (select_mode == 'auto') {
+            mode = 0;
+        } else {
+            mode = 1;
+        }
+		var ipaddr = document.getElementById('ipaddr').value;
+        var ipaddr_verify = isValidIP(ipaddr);
+        var err = document.getElementById('Error');
+        var text = err.getElementsByTagName('span')[0];
+        if(mode==1){
+			text.innerText = '<%:Invalid input! Please refer to the correct format:%><br><%:XXX.XXX.XXX.XXX,X is the number of 0~9%>';
+            if (!ipaddr_verify) {
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById("ipaddr");
+				text.innerText = '<%:IP address error, please input again%>';
+                return;
+            }
+            var netmask = document.getElementById('netmask').value;
+            var netmask_verify = lannetMaskLimit(netmask);
+            if (!netmask_verify) {
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById("netmask");
+				text.innerText = '<%:Subnet mask is not valid%>';
+                return;
+            }
+            document.getElementById('isSureTip').style.visibility = 'visible';
+        }
+		var params = {'mode':mode, 'address':ipaddr, 'netmask':netmask};
+        lanParams = params;
+        if (mode==0){
+            closeLanTip(1);
+        }
+    }
+
+    // page functions
+    function lanSettingTypeChange() {
+        var lanIpSettingSelect = document.getElementById('lan-ip-setting');
+        var lanIpSettingSelectedIndex = lanIpSettingSelect.selectedIndex;
+        if (lanIpSettingSelect[lanIpSettingSelectedIndex].value == 'auto') {
+            document.getElementById('ipaddr').disabled = 'disabled';
+            document.getElementById('netmask').disabled = 'disabled';
+		} else {
+            document.getElementById('ipaddr').disabled = '';
+            document.getElementById('netmask').disabled = '';
+		}
+	}
+	function closeLanTip(i) {
+        document.getElementById('isSureTip').style.visibility = 'hidden';
+        document.getElementById('isSureTip2').style.visibility = 'hidden';
+        if (i==1){
+            if (document.location.protocol == "http:") {
+                i++;
+            }else{
+                document.getElementById('isSureTip2').style.visibility = 'visible';
+            }
+        }
+        if (i==2){
+            document.getElementById("saveTip").style.display='';
+            document.getElementById("saveTipSucess").style.display='none';
+            console.log(lanParams);
+            XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_lan")%>', lanParams,
+                function(x, result){
+                    console.log(result);
+                    document.getElementById("saveTip").style.display='none';
+                    if(result==null){
+                        var err = document.getElementById('Error');
+                        var text = err.getElementsByTagName('span')[0];
+						text.innerText = '<%:router connection failure%>';
+                        err.style.visibility = 'visible';
+					}else if (result!=null && result.code == 0) {
+                        document.getElementById("saveTipSucess").style.display='';
+                        setTimeout(function () {
+                            document.getElementById("saveTipSucess").style.display='none';
+                        },"2000");
+                        if (document.location.protocol == "http:") {
+                            document.getElementById('waiting').style.display='';
+                            setTimeout(function () {
+                                setInterval(function () {
+                                    pageRedirect(document.location.protocol+"//"+lanParams.address);
+                                },3000)
+                            },"2000");
+                        }
+                    }else {
+                        var err = document.getElementById('Error');
+                        var text = err.getElementsByTagName('span')[0];
+                        text.innerText = result.msg;
+                        err.style.visibility = 'visible';
+                    }
+                });
+		}
+    }
+</script>
+

@@ -1,0 +1,247 @@
+<%+header%>
+<fieldset class="dhcp">
+    <legend>DHCP服务器</legend>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>>
+            <span class="detail">无效的输入！请参考正确格式：<br>XXX.XXX.XXX.XXX，X为0~9的数字。</span>
+            <input class="subBtn" value="确 定" type="button" onclick="closeTip()">
+        </div>
+    </div>
+    <i class="helpBtn" helpstr="dynamicIpHelp" onclick="clickHelp(0)"></i>
+    <div class="bWlSwitchCon dhcp">
+        <div id="switchCon" class="switchCon" onclick="switchChange()">
+            <i class="switchBg"></i>
+            <i id="switchOn" class="switchBall" style=""></i>
+            <i id="switchOff" class="switchBallOff" style="display: none;"></i>
+        </div>
+        <span id="switchSpan" class="bWlSwitchOff">已开启</span>
+    </div>
+    <li class="border-line"></li>
+   <!-- <div class="checkboxSwitch">
+        <input id="switchInput" type="checkbox">
+        <label for="switchInput"></label>
+    </div>-->
+    <table  class="tb-no-border">
+        <tr><td class="wan-td-left">地址池开始地址：</td><td class="wan-td-right"><input id="ipbegin" type="text" onkeyup="nStrLimit(this)" maxlength="15"></td></tr>
+        <tr><td class="wan-td-left">地址池结束地址：</td><td class="wan-td-right"><input id="ipend" type="text" onkeyup="nStrLimit(this)" maxlength="15"></td></tr>
+        <tr><td class="wan-td-left">地址租期：</td><td class="wan-td-right"><input id="lease" type="text" onkeyup="numLimit(this)" maxlength="3">小时(支持1-240小时，默认为12小时)</td></tr>
+        <tr><td class="wan-td-left">网关：</td><td class="wan-td-right"><input id="gateway" type="text" onkeyup="nStrLimit(this)" maxlength="15"></td></tr>
+        <tr><td class="wan-td-left">首选DNS服务器：</td><td class="wan-td-right"><input id="dns" type="text" onkeyup="nStrLimit(this)" maxlength="15"></td></tr>
+        <tr><td class="wan-td-left">备用DNS服务器：</td><td class="wan-td-right"><input id="dnsbak" type="text" onkeyup="nStrLimit(this)" maxlength="15"></td></tr>
+        <tr><td></td><td class="wan-td-right">
+            <button onclick="setDhcp()">保存</button>
+            <i id="saveTip" class="hsSubLoading saving" style="display: none"></i>
+            <i id="saveTipSucess" class="hsSubLoading save-suc" style="display: none"></i>
+        </td></tr>
+        <tr><td  colspan="2">
+            <fieldset class="notChild">
+                <li class="border-line"></li>
+                <legend>DHCP设备</legend>
+                <li class="border-line bottom"></li>
+                <ul id="dhcpLsUl" class="gridToolBar">
+                    <li gridtype="refresh" class="refresh" onclick="refreshDhcpDevices()"><i></i><span>刷新</span></li>
+                </ul>
+                <table id="dhcp-devices">
+                </table>
+            </fieldset>
+        </td></tr>
+    </table>
+    <div id="Help"><p class="helpTop">
+        <span class="helpDes">帮助</span>
+        <i class="helpClose" onclick="clickHelp(1)"></i></p>
+        <div id="helpDetail"><ul id="dhcpServerHelp" class="help">
+        <li class="title">DHCP服务器能够自动给局域网当中的设备分配IP、子网掩码等TCP/IP协议参数。</li>
+        <li class="title">地址池开始/结束地址</li>
+        <li class="content">DHCP服务器自动分配的IP的开始/结束地址。</li>
+        <li class="title">地址租期</li>
+        <li class="content">自动分配的IP的有效时间，超过该时间后局域网内的设备将重新获取IP。</li>
+        <li class="title">网关</li>
+        <li class="content">可选项，建议填入路由器LAN口的IP地址，默认为192.168.4.1。</li>
+        <li class="title">DNS服务器</li>
+        <li class="content">可选项，如果运营商有提供DNS服务器地址，请填于此。</li>
+    </ul></div></div>
+</fieldset>
+<%+footer%>
+<script>
+    // global vars
+    var result_bak;
+    var errTipDoc = document.getElementById("ipbegin");
+    var Drag =  document.getElementById("Help");
+    var checkEnable = false;
+
+    // page load functions
+    getDhcp();
+    refreshDhcpDevices();
+    dragFunc(Drag);
+
+    // router get interfaces
+    function getDhcp() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "networknew","get_dhcp")%>', null,
+            function(x, result) {
+                if(result!=null&&result.code == 0) {
+                    console.log(result);
+                    result_bak = result;
+                    var e;
+                    switchChecked(result.enable);
+                    if (e = document.getElementById('ipbegin'))
+                        e.value = result.ipbegin;
+                    if (e = document.getElementById('ipend'))
+                        e.value = result.ipend;
+                    if (e = document.getElementById('lease'))
+                        e.value = parseInt(result.lease);
+                    if (result.gateway != undefined) {
+                        if (e = document.getElementById('gateway'))
+                            e.value = result.gateway;
+                    }
+                    if (result.dns != undefined) {
+                        if (e = document.getElementById('dns'))
+                            e.value = result.dns;
+                    }
+                    if (result.dnsbak != undefined) {
+                        if (e = document.getElementById('dnsbak'))
+                            e.value = result.dnsbak;
+                    }
+                    checkEnable = true;
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '获取失败！';
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    function refreshDhcpDevices() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "networknew","get_dhcp_devices")%>', null,
+            function(x, result) {
+                if(result!=null&&result.code == 0) {
+                    console.log(result);
+                    var devices = result.devices;
+                    var html = '<tr><th>主机</th><th>MAC地址</th><th>IP地址</th><th>有效时间</th></tr>';
+                    html += '<tr>';
+                    if (devices == null) {
+                        html += 'devices is null';
+                    } else {
+                        for(var i in devices){
+                            html += '<td>'+devices[i].name+'</td><td>'+devices[i].mac+'</td><td>'+devices[i].ipaddr+'</td><td>'+devices[i].term+'</td>';
+                            html += '</tr><tr>';
+                        }
+                    }
+                    html +="</tr>";
+                    document.getElementById('dhcp-devices').innerHTML = html;
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '刷新失败！';
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // router set interfaces
+    function setDhcp() {
+        var enable = false;
+        var status = document.getElementById("switchSpan").innerHTML;
+        if (status=="已开启"){
+            enable = true;
+        }
+        var ipbegin_full = document.getElementById('ipbegin').value;
+        var err = document.getElementById('Error');
+        var text = err.getElementsByTagName('span')[0];
+        text.innerText = '无效的输入！请参考正确格式：<br>XXX.XXX.XXX.XXX，X为0~9的数字。';
+        if (!isValidIP(ipbegin_full)) {
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById("ipbegin");
+            return;
+        }
+        var ipbeginArray = ipbegin_full.split(".");
+        var ipbegin = parseInt(ipbeginArray[3]);
+        var ipend_full = document.getElementById('ipend').value;
+        if (!this.isValidIP(ipend_full)) {
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById("ipend");
+            return;
+        }
+        var ipendArray = ipend_full.split(".");
+        var ipend = parseInt(ipendArray[3]);
+        var lease = document.getElementById('lease').value+'h';
+        var gateway = document.getElementById('gateway').value;
+        var dns = document.getElementById('dns').value;
+        var dnsbak = document.getElementById('dnsbak').value;
+        if (gateway != "" && !isValidIP(gateway)){
+            document.getElementById("Error").style.visibility = 'visible';
+            errTipDoc = document.getElementById('gateway');
+            return;
+        }else if (dns != "" && !isValidIP(dns)){
+            document.getElementById("Error").style.visibility = 'visible';
+            errTipDoc = document.getElementById('dns');
+            return;
+        }else if (dnsbak != "" && !isValidIP(dnsbak)){
+            document.getElementById("Error").style.visibility = 'visible';
+            errTipDoc = document.getElementById('dnsbak');
+            return;
+        }
+        var leaseNum = document.getElementById('lease').value;
+        if(leaseNum>240||leaseNum<1){
+            var err = document.getElementById('Error');
+            var text = err.getElementsByTagName('span')[0];
+            text.innerText = '地址租期范围为1-240，请合理输入！';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('lease');
+            return;
+
+        }
+        if (gateway == '') {
+            var params = {'enable':enable, 'ipbegin':ipbegin, 'ipend':ipend, 'lease':lease, 'dns':dns, 'dnsbak':dnsbak};
+        } else {
+            var params = {'enable':enable, 'ipbegin':ipbegin, 'ipend':ipend, 'lease':lease, 'gateway':gateway, 'dns':dns, 'dnsbak':dnsbak};
+        }
+        console.log(params);
+        document.getElementById("saveTip").style.display='';
+        document.getElementById("saveTipSucess").style.display='none';
+        XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_dhcp")%>', params,
+            function(x, result){
+                document.getElementById("saveTip").style.display='none';
+                console.log(result);
+                if (result!=null&&result.code == 0) {
+                    document.getElementById("saveTipSucess").style.display='';
+                    setTimeout(function () {
+                        document.getElementById("saveTipSucess").style.display='none';
+                    },"2000");
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '设置失败！';
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // page functions
+    function switchChange() {
+        var status = document.getElementById("switchSpan").innerHTML;
+        var flag = true;
+        if (status=="已开启"){
+            flag = false;
+        }
+        if (checkEnable) {
+            var enable_params = result_bak;
+            enable_params.enable = flag;
+            if (enable_params.dns == undefined) {
+                enable_params.dns = '';
+            }
+            var ipbeginArray = enable_params.ipbegin.split(".");
+            enable_params.ipbegin = parseInt(ipbeginArray[3]);
+            var ipendArray = enable_params.ipend.split(".");
+            enable_params.ipend = parseInt(ipendArray[3]);
+            var params = enable_params;
+            console.log(result_bak);
+            XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_dhcp")%>', params,
+                function(x, result){
+                    console.log(result);
+                });
+        }
+        switchChecked(flag);
+    }
+</script>

@@ -1,0 +1,116 @@
+<%+header%>
+<fieldset class="mac">
+	<legend>MAC地址设置</legend>
+	<div id="Error">
+		<div id="hsErr" class="hsTip">
+			<i class="altIcon"></i>>
+			<span class="detail">mac地址格式不正确！mac地址格式为00:24:21:19:BD:E4</span>
+			<input class="subBtn" value="确 定" type="button" onclick="closeTip()">
+		</div>
+	</div>
+	<i class="helpBtn" helpstr="dynamicIpHelp" onclick="clickHelp(0)"></i>
+	<li class="border-line"></li>
+	<table class="tb-no-border">
+		<tr><td class="mac-td-left"><input type="radio" name="mac" class="tb-rd" value="0" /></td><td class="mac-td-right">使用路由器的MAC地址：<span id="routermac"></span></td></tr>
+		<tr><td class="mac-td-left"><input type="radio" name="mac" class="tb-rd" value="1" /></td><td class="mac-td-right">使用当前管理PC的MAC地址(MAC地址克隆)：<span id="devicemac"></span></td></tr>
+		<tr><td class="mac-td-left"><input type="radio" name="mac" class="tb-rd" value="2" /></td><td class="mac-td-right">使用自定义MAC地址：<input id="custommac" type="text" onkeyup="nStrLimit(this)" maxlength="17"></td></tr>
+		<tr><td></td><td class="wan-td-right">
+			<button onclick="setMac()">保存</button>
+			<i id="saveTip" class="hsSubLoading saving" style="display: none"></i>
+			<i id="saveTipSucess" class="hsSubLoading save-suc" style="display: none"></i>
+		</td></tr>
+	</table>
+	<div id="Help"><p class="helpTop">
+		<span class="helpDes">帮助</span>
+		<i class="helpClose" onclick="clickHelp(1)"></i></p>
+		<div id="helpDetail"><ul id="macCloneHelp" class="help">
+		<li class="title">
+			通过本功能可以设置路由器对广域网的MAC地址，一般情况下不需要更改此地址，
+			但某些地区的运营商会将线路与MAC地址进行绑定，此时运营商会提供一个“有效的MAC地址”，
+			您需要通过本功能将MAC地址设置为该“有效的MAC地址”才能正常共享上网。
+		</li>
+	</ul></div></div>
+</fieldset>
+<%+footer%>
+<script>
+	// global vars
+    var Drag =  document.getElementById("Help");
+
+    // page load functions
+    getMac();
+    dragFunc(Drag);
+
+    // router get interfaces
+	function getMac() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "networknew","get_mac")%>', null,
+            function(x, result) {
+                if(result.code == 0) {
+                    console.log(result);
+                    var e;
+                    if (result.routermac != undefined) {
+                        document.getElementById('routermac').innerText = result.routermac;
+					}
+                    if (result.devicemac != undefined) {
+                        document.getElementById('devicemac').innerText = result.devicemac;
+                    }
+                    if (result.custommac != undefined) {
+                        document.getElementById('custommac').value = result.custommac;
+                    }
+                    var mode = result.mode;
+                    var radio = document.getElementsByName('mac');
+                    for (var i = 0; i<radio.length; i++) {
+                        if (radio[i].value == mode) {
+                            radio[i].checked = true;
+                            break;
+                        }
+                    }
+                }
+            });
+    }
+
+    // router set interfaces
+    function setMac() {
+        var radio = document.getElementsByName('mac');
+        for (var i = 0; i<radio.length; i++) {
+            if (radio[i].checked == true) {
+                var mode = i;
+                break;
+			}
+		}
+		var params;
+		if (mode == 2) {
+            var custommac = document.getElementById('custommac').value;
+            var mac_verify = this.isValidMac(custommac);
+            if (!mac_verify){
+                var err = document.getElementById('Error');
+                var text = err.getElementsByTagName('span')[0];
+                text.innerText = 'mac地址格式不正确！mac地址格式为00:24:21:19:BD:E4！'
+                err.style.visibility = 'visible';
+                document.getElementById('custommac').focus();
+                return;
+			}
+            params = {'mode':mode, 'custommac':custommac};
+		} else {
+            params = {'mode':mode};
+		}
+		console.log(params);
+        document.getElementById("saveTip").style.display='';
+        document.getElementById("saveTipSucess").style.display='none';
+        XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_mac")%>', params,
+            function(x, result){
+                console.log(result);
+                document.getElementById("saveTip").style.display='none';
+                if (result!=null&&result.code == 0) {
+                    document.getElementById("saveTipSucess").style.display='';
+                    setTimeout(function () {
+                        document.getElementById("saveTipSucess").style.display='none';
+                    },"2000");
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '设置MAC地址失败！'
+                    err.style.visibility = 'visible';
+				}
+            });
+    }
+</script>

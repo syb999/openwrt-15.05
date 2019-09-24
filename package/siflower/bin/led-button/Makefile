@@ -53,6 +53,7 @@ define Package/led-button/install
 	$(INSTALL_BIN) ./files/check_btn_cfg $(1)/bin/
 	$(INSTALL_BIN) ./files/led_button_init  $(1)/etc/init.d/
 	$(INSTALL_BIN) ./files/wps.sh  $(1)/usr/share/led-button/
+	$(INSTALL_BIN) ./files/wps_func.sh  $(1)/usr/share/led-button/
 	$(INSTALL_BIN) ./files/wps_config.sh  $(1)/usr/share/led-button/
 	$(INSTALL_BIN) ./files/wifi_ctrl.sh  $(1)/usr/share/led-button/
 endef

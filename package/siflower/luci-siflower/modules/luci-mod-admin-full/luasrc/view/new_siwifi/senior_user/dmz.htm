@@ -1,0 +1,167 @@
+<%+header%>
+<fieldset class="dmz">
+	<legend><%:DMZ host%></legend>
+    <i class="helpBtn" helpstr="dynamicIpHelp" onclick="clickHelp(0)"></i>
+    <div class="bWlSwitchCon dhcp">
+        <div id="switchCon" class="switchCon" onclick="switchChange()">
+            <i class="switchBg"></i>
+            <i id="switchOn" class="switchBall" style=""></i>
+            <i id="switchOff" class="switchBallOff" style="display: none;"></i>
+        </div>
+        <span id="switchSpan" class="bWlSwitchOff"><%:disabled%></span>
+    </div>
+    <ul><li class="border-line"></li></ul>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>
+            <span class="detail"><%:Invalid input! Please refer to the correct format:%><br><%:XXX.XXX.XXX.XXX,X is the number of 0~9%></span>
+            <!--<span class="detail"><%:The IP address is not the IP of the LAN segment%></span>-->
+            <input class="subBtn" value="<%:confirm%>" type="button" onclick="closeTip()">
+        </div>
+    </div>
+    <table class="tb-no-border">
+        <tr>
+            <td class="wan-td-left"><%:DMZ host address%></td><td class="wan-td-right"><input id="ipaddr" type="text" onkeyup="nStrLimit(this)" maxlength="15"></td>
+        </tr>
+        <tr>
+            <td></td><td class="wan-td-left">
+                <button onclick="saveDmz()"><%:save%></button>
+            <i id="saveTip" class="hsSubLoading saving" style="display: none"></i>
+            <i id="saveTipSucess" class="hsSubLoading save-suc" style="display: none"></i>
+        </td>
+        </tr>
+    </table>
+    <div id="Help" class="Help"><p class="helpTop">
+        <span class="helpDes"><%:help%></span>
+        <i class="helpClose" onclick="clickHelp(1)"></i></p>
+        <div class="helpDetail"><ul id="DMZHelp" class="help">
+                <li class="title"><%:DMZ help%></li>
+                <li class="title"><%:For example%></li>
+                <li class="content"><%:DMZ help for example%></li>
+    </ul></div></div>
+</fieldset>
+<%+footer%>
+<script>
+    // global vars
+    var Drag =  document.getElementById("Help");
+    var errTipDoc;
+    var checkEnable = false;
+
+    // page load functions
+    getDmzHost();
+    dragFunc(Drag);
+
+    // router get interfaces
+    function getDmzHost() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "advancednew","get_dmz_host")%>', null,
+            function(x, result) {
+                console.log(result);
+                var e;
+                switchChecked(result.enable);
+                if (result.ipaddr != undefined) {
+                    if (e = document.getElementById('ipaddr'))
+                        e.value = result.ipaddr;
+                }
+                checkEnable = true;
+            });
+    }
+
+    // router set interfaces
+    function saveDmz() {
+        var enable = false;
+        var status = document.getElementById("switchSpan").innerHTML;
+		if (status=="<%:enabled%>"){
+            enable=true;
+        }
+        var ipaddr = document.getElementById('ipaddr').value;
+        if (enable) {
+            if (!isValidIP(ipaddr)){
+                var err = document.getElementById('Error');
+                var text = err.getElementsByTagName('span')[0];
+				text.innerText = '<%:Invalid input! Please refer to the correct format:%>\n<%:XXX.XXX.XXX.XXX,X is the number of 0~9%>';
+                err.style.visibility = 'visible';
+                errTipDoc = document.getElementById('ipaddr');
+                switchChecked(false);
+                return;
+            }
+        }
+        if (ipaddr!=""&&!isValidIP(ipaddr)){
+            var err = document.getElementById('Error');
+            var text = err.getElementsByTagName('span')[0];
+			text.innerText = '<%:Invalid input! Please refer to the correct format:%>\n<%:XXX.XXX.XXX.XXX,X is the number of 0~9%>';
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById('ipaddr');
+            return;
+        }
+        var params = {'params':{'enable':enable, 'ipaddr':ipaddr}};
+        if (ipaddr =="" ){
+            params = {'params':{'enable':enable}};
+        }else{
+            params = {'params':{'enable':enable, 'ipaddr':ipaddr}};
+        }
+        console.log(params);
+        document.getElementById("saveTip").style.display='';
+        document.getElementById("saveTipSucess").style.display='none';
+        XHR.post('<%=luci.dispatcher.build_url("admin", "advancednew","set_dmz_host")%>', params,
+            function(x, result){
+                console.log(result);
+                document.getElementById("saveTip").style.display='none';
+                var err = document.getElementById('Error');
+                var text = err.getElementsByTagName('span')[0];
+                if (result==null) {
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if (result!=null&&result.code == 0) {
+                    document.getElementById("saveTipSucess").style.display='';
+                    setTimeout(function () {
+                        document.getElementById("saveTipSucess").style.display='none';
+                    },"2000");
+                }else {
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+                getDmzHost();
+            });
+    }
+
+    function switchDisable(divId){
+        document.getElementById(divId).onclick = function(){
+            ;
+        }
+    }
+    function switchEnable(divId){
+        setTimeout(function(){
+            document.getElementById(divId).onclick = function(){
+                switchChange();
+            };
+        },1000)
+    }
+    // page functions
+    function switchChange() {
+        var status = document.getElementById("switchSpan").innerHTML;
+        var flag = true;
+        switchDisable('switchCon');
+		if (status=="<%:enabled%>"){
+            flag = false;
+        }
+        switchChecked(flag);
+        if (checkEnable) {
+            saveDmz();
+        }
+        switchEnable('switchCon');
+    }
+    function switchChecked(flag) {
+        if (flag) {
+            document.getElementById("switchSpan").innerText = '<%:enabled%>';
+            document.getElementById("switchSpan").className = "bWlSwitchOff spanSwitchOn";
+            document.getElementById("switchOn").style.display = "";
+            document.getElementById("switchOff").style.display = "none"
+        } else {
+            document.getElementById("switchSpan").innerText = '<%:disabled%>';
+            document.getElementById("switchSpan").className = "bWlSwitchOff";
+            document.getElementById("switchOn").style.display = "none";
+            document.getElementById("switchOff").style.display = "";
+        }
+    }
+
+</script>

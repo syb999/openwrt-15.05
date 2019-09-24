@@ -1,0 +1,644 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2009-06-10 03:40+0200\n"
+"PO-Revision-Date: 2012-04-03 08:44+0200\n"
+"Last-Translator: yanze.zhang<yanze.zhang@siflower.com.cn>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Pootle 2.0.4\n"
+
+msgid "Main"
+msgstr "Main"
+
+msgid "Secure"
+msgstr "Secure"
+
+msgid "token expire"
+msgstr "Token expires,please log in again!"
+
+msgid "safty exit"
+msgstr "Safty Exit"
+
+msgid "ping intro"
+msgstr "If the specified IP cannot access, the panel would reboot automatically when threshold is reached."
+
+msgid "time intro"
+msgstr "First boot up local time is not synchronize with network time,"
+
+msgid "time intro 2"
+msgstr "You can set up different NTP servers, which will automatically synchronize the time when the AP cound access the internet."
+
+msgid "browse"
+msgstr "Browse"
+
+msgid "view system log"
+msgstr "System Logs"
+
+msgid "display password"
+msgstr "Display Password"
+
+msgid "led intro"
+msgstr "Press the LED key on the panel to trigger the WIFI switch."
+
+msgid "Seconds (30-300)"
+msgstr "Seconds (30-300)"
+
+msgid "Seconds (10-300)"
+msgstr "Seconds (60-300)"
+
+msgid "Seconds (60-300)"
+msgstr "Seconds (60-300)"
+
+msgid "mac filter title"
+msgstr "MAC Address Filter Setting"
+
+msgid "filter intro"
+msgstr "When enabled, the MAC addresses not in the list  cannot access to  the network"
+
+msgid "unbounding"
+msgstr "Unbounding"
+
+msgid "client intro"
+msgstr "The maximum number of devices can connected at the same time"
+
+msgid "beacon intro"
+msgstr "Beacon frames are broadcasted to publish the SSID of wireless network"
+
+msgid "tx intro"
+msgstr "AP transmit power"
+
+msgid "signal intro"
+msgstr "The data signal transmission channel. If \"automatic\" is selected, the device will automatically select a suitable channel according to the surrounding environment."
+
+msgid "channel intro"
+msgstr "The bandwidth for wireless data transmission"
+
+msgid "wireless mode intro"
+msgstr "Set the wireless mode of AP."
+
+msgid "Employee network introduce"
+msgstr "Employee network: ordinary wireless network."
+
+msgid "Visitor network introduce"
+msgstr "Visitor network: devices connected with visitor network cannot communicate with devices in other networks. This feature cannot take effect when across AP."
+
+msgid "Isolate introduce"
+msgstr "When enabled, devices connected with the same wireless network would not be able to communicate with other devices, and the feature will not take effect when across AP."
+
+msgid "network Isolate introduce"
+msgstr "When enabled, devices connected with different wireless network would not be able to communicate with other devices, and the feature will not take effect when across AP."
+
+msgid "WiFi stop broadcasting when disable"
+msgstr "WiFi stop broadcasting when disable"
+
+msgid "set"
+msgstr "Set"
+
+msgid "confirm"
+msgstr "Confirm"
+
+msgid "broadcast"
+msgstr "Wireless Broadcast"
+
+msgid "set successfully"
+msgstr "Set Successfully"
+
+msgid "device info"
+msgstr "Device Information"
+
+msgid "device model"
+msgstr "Device Model"
+
+msgid "current system time"
+msgstr "Current System Time"
+
+msgid "system runtime"
+msgstr "System Runtime"
+
+msgid "wireless param"
+msgstr "Wireless Parameter"
+
+msgid "wireless mode"
+msgstr "Wireless Mode"
+
+msgid "band bandwidth"
+msgstr "Band Bandwidth"
+
+msgid "wireless service"
+msgstr "Wireless Service"
+
+msgid "network name encoding"
+msgstr "Network Name Encoding"
+
+msgid "network type"
+msgstr "Network Type"
+
+msgid "employee network"
+msgstr "Employee Network"
+
+msgid "visitor network"
+msgstr "Visitor Network"
+
+msgid "encryption"
+msgstr "Encryption"
+
+msgid "not encrypt"
+msgstr "Not Encrypt"
+
+msgid "set password"
+msgstr "Password"
+
+msgid "wireless internal isolation"
+msgstr "Wireless Internal Isolation"
+
+msgid "enable"
+msgstr "Enable"
+
+msgid "disable"
+msgstr "Disable"
+
+msgid "auto"
+msgstr "Auto"
+
+msgid "Enable/disable this network"
+msgstr "Enable/Disable"
+
+msgid "wireless client"
+msgstr "Wireless Client"
+
+msgid "index"
+msgstr "Index"
+
+msgid "Access Wireless SSID"
+msgstr "Access Wireless SSID"
+
+msgid "Access time"
+msgstr "Access Time"
+
+msgid "changing"
+msgstr "Changing"
+
+msgid "Please enter wireless name"
+msgstr "Please enter wireless name"
+
+msgid "wireless name length error"
+msgstr "The length of the wireless name is too long"
+
+msgid "wireless name characters error"
+msgstr "No more than 10 Chinese characters in wireless name"
+
+msgid "wireless password error"
+msgstr "Set the password to no less than 8 bits"
+
+msgid "Connection failed, please try again"
+msgstr "Connection failed, please try again"
+
+msgid "Setting failed"
+msgstr "Setting failed"
+
+msgid "add successfully"
+msgstr "Add successfully"
+
+msgid "wireless MAC address filter"
+msgstr "Wireless MAC Address Filter"
+
+msgid "Enable wireless MAC address filter"
+msgstr "Enable Wireless MAC Address Filter"
+
+msgid "mac address filter function"
+msgstr "MAC address filtering allows only MAC addresses in the rule list to access the corresponding wireless network."
+
+msgid "wireless MAC address filter rule settings"
+msgstr "Wireless MAC address filter rule settings"
+
+msgid "effective range"
+msgstr "Effective Range"
+
+msgid "remarks"
+msgstr "Remarks"
+
+msgid "VLAN setting"
+msgstr "VLAN Setting"
+
+msgid "wireless network and VLAN binding"
+msgstr "Wireless Network And VLAN Binding"
+
+msgid "VLAN binding intro"
+msgstr "With this enabled, the VLAN associated with the current wireless network can be set, and the host under the current wireless network will not be able to communicate with the devices in other vlans"
+
+msgid "VLAN binding intro note"
+msgstr "(note: WLAN ID 0/1/2 cannot be set)"
+
+msgid "add"
+msgstr "Add"
+
+msgid "delete"
+msgstr "Delete"
+
+msgid "The MAC address list is empty"
+msgstr "The MAC address list is empty"
+
+msgid "MAC address format is not legal"
+msgstr "MAC address format is not legal"
+
+msgid "Please select the filter effective range"
+msgstr "Please select the filter effective range"
+
+msgid "add failure"
+msgstr "Add failure"
+
+msgid "successfully delete"
+msgstr "Successfully delete"
+
+msgid "Delete failed"
+msgstr "Delete failed"
+
+msgid "filter rule cannot be empty"
+msgstr "Enable MAC address filtering is that the filter rule cannot be empty"
+
+msgid "MAC address filter conflict"
+msgstr "Operation failed. The current entry conflicts with the existing one!"
+
+msgid "illegal ssid"
+msgstr "There is an illegal ssid, please check the input"
+
+msgid "Connection to router failed"
+msgstr "Connection to router failed"
+
+msgid "successfully set"
+msgstr "Successfully set"
+
+msgid "VLAN ID cannot be empty"
+msgstr "When wireless binding to the VLAN is enabled, the VLAN ID cannot be empty"
+
+msgid "Invalid vlanID"
+msgstr "Invalid vlanID, please make sure its value is between 3-4049"
+
+msgid "fail to modify"
+msgstr "Fail to modify"
+
+msgid "get data failed"
+msgstr "Get data failed"
+
+msgid "cancel"
+msgstr "Cancel"
+
+msgid "device management"
+msgstr "Device Management"
+
+msgid "subnet mask"
+msgstr "Subnet Mask"
+
+msgid "default gateway"
+msgstr "Default Gateway"
+
+msgid "LED switch"
+msgstr "LED Switch"
+
+msgid "enable WiFi control"
+msgstr "Enable WiFi Control"
+
+msgid "WEB service port"
+msgstr "WEB Service Port"
+
+msgid "WEB session timeout"
+msgstr "WEB Session Timeout"
+
+msgid "account management"
+msgstr "Account Management"
+
+msgid "original password"
+msgstr "Original Password"
+
+msgid "set password"
+msgstr "Set Password"
+
+msgid "confirm password"
+msgstr "Confirm Password"
+
+msgid "system log"
+msgstr "System Log"
+
+msgid "view"
+msgstr "View"
+
+msgid "download system log"
+msgstr "Download"
+
+msgid "download"
+msgstr "Download"
+
+msgid "Language set"
+msgstr "Language Set"
+
+msgid "language"
+msgstr "Language"
+
+msgid "time setting"
+msgstr "Time Setting"
+
+msgid "time zone"
+msgstr "Time Zone"
+
+msgid "date"
+msgstr "Date"
+
+msgid "time"
+msgstr "Time"
+
+msgid "prefered NTP server"
+msgstr "Prefered NTP Server"
+
+msgid "alternate NTP server"
+msgstr "Alternate NTP Server"
+
+msgid "configuration management"
+msgstr "Configuration Management"
+
+msgid "export configuration"
+msgstr "Export Configuration"
+
+msgid "export"
+msgstr "Export"
+
+msgid "import configuration"
+msgstr "Import Configuration"
+
+msgid "import"
+msgstr "Import"
+
+msgid "factory reset"
+msgstr "Factory Reset"
+
+msgid "reboot"
+msgstr "Reboot"
+
+msgid "restart"
+msgstr "Restart"
+
+msgid "software upgrade"
+msgstr "Upgrade"
+
+msgid "current hardware version"
+msgstr "Current Hardware Version"
+
+msgid "current software version"
+msgstr "Current Software Version"
+
+msgid "hardware version"
+msgstr "Hardware Version"
+
+msgid "software version"
+msgstr "Software Version"
+
+msgid "Upgrading，please wait..."
+msgstr "Upgrading，please wait..."
+
+msgid "Ping watchdog"
+msgstr "Ping Watchdog"
+
+msgid "destination IP address"
+msgstr "Destination IP Address"
+
+msgid "contract period"
+msgstr "Contract Period"
+
+msgid "start delay"
+msgstr "Start Delay"
+
+msgid "maxinum number of lost packets"
+msgstr "Maximum Number of Lost Packets"
+
+msgid "IP address is invalid"
+msgstr "The IP address is invalid. Please input again"
+
+msgid "Subnet mask is not valid"
+msgstr "Subnet mask is not valid, please input again"
+
+msgid "Gateway error"
+msgstr "Gateway error, please input again"
+
+msgid "port range 1-65535"
+msgstr "port range 1-65535"
+
+msgid "The port number range error"
+msgstr "The port number range is limited to 1-65535"
+
+msgid "Port number cannot be empty"
+msgstr "Port number cannot be empty!"
+
+msgid "WEB session timeout error"
+msgstr "WEB session timeout should be limited to 30-300 seconds"
+
+msgid "redirecting, please wait"
+msgstr "Redirecting, please wait..."
+
+msgid "The original password cannot be empty"
+msgstr "The original password cannot be empty"
+
+msgid "New password length error"
+msgstr "New password should be no less than 6 characters long"
+
+msgid "Two password input inconsistent!"
+msgstr "Two password input inconsistent"
+
+msgid "old password is incorrect"
+msgstr "The original password is wrong, please input again"
+
+msgid "log contents"
+msgstr "Log Contents"
+
+msgid "Recovering, please wait..."
+msgstr "Recovering, please wait..."
+
+msgid "Factory reset failed"
+msgstr "Factory reset failed"
+
+msgid "Reset is underway, please wait..."
+msgstr "Reset is underway, please wait..."
+
+msgid "The preferred NTP server cannot be empty"
+msgstr "The preferred NTP server cannot be empty"
+
+msgid "Not legal domain name or IP"
+msgstr "Not legal domian name or IP, please input again！"
+
+msgid "Please select load profile first"
+msgstr "Please select laod profile first"
+
+msgid "File type illegal! Please reselect"
+msgstr "File type illegal! Please reselect"
+
+msgid "Please wait while configuration is underway..."
+msgstr "Please wait while configuration is underway..."
+
+msgid "Configured successfully"
+msgstr "Configured successfully, please manually jump IP address after network restart!"
+
+msgid "Please select upgrade image first"
+msgstr "Please select upgrade image first"
+
+msgid "Image files are illegal"
+msgstr "Image files are illegal"
+
+msgid "Upgrade error"
+msgstr "Upgrade error"
+
+msgid "Is being upgraded, please wait a moment..."
+msgstr "Is being upgraded, please wait a moment..."
+
+msgid "The IP address is invalid. Please input again"
+msgstr "The IP address is invalid. Please input again"
+
+msgid "The contract period is limited to 10-300 seconds"
+msgstr "The contract period is limited to 100-300 seconds"
+
+msgid "The startup delay is limited to 60-300 seconds"
+msgstr "The startup delay is limited to 60-300 seconds"
+
+msgid "The number of bags allowed is limited to 1-65535"
+msgstr "The number of bags allowed is limited to 1-65535"
+
+msgid "Are you sure to restore factory Settings"
+msgstr "Are you sure to restore factory Settings"
+
+msgid "Are you sure to restart the panel"
+msgstr "Are you sure to restart the panel"
+
+msgid "Are you sure to confirm import configuration"
+msgstr "Are you sure to confirm import configuration"
+
+msgid "setting the IP address confirm"
+msgstr "After setting the IP address, the PC must visit the management page in the unified network segment(You can set the IP address of the pc to 192.168.4.xxx and access it through 192.168.4.252)"
+
+msgid "wireless internal network isolation"
+msgstr "Wireless Internal Network Isolation"
+
+msgid "wireless channel"
+msgstr "Wireless Channel"
+
+msgid "signal strength"
+msgstr "Signal Strength"
+
+msgid "low"
+msgstr "Low"
+
+msgid "middle"
+msgstr "Middle"
+
+msgid "high"
+msgstr "High"
+
+msgid "Beacon time slot"
+msgstr "Beacon Time Slot"
+
+msgid "Milliseconds 40-1000"
+msgstr "Milliseconds 40-1000"
+
+msgid "Client limitations"
+msgstr "Client Limitations"
+
+msgid "Prohibit signal strength below"
+msgstr "Prohibit signal strength below"
+
+msgid "DBm wireless client access range error"
+msgstr "dBm wireless client access (-90dbm ~ -30dbm, less than -40dbm is recommended)"
+
+msgid "The kick signal strength is lower than"
+msgstr "The kick signal strength is lower than"
+
+msgid "Wireless client of dBm"
+msgstr "dBm wireless client (-90dbm ~ -30dbm, less than -40dbm is recommended)"
+
+msgid "Isolation between wireless networks"
+msgstr "Isolation Between Wireless Networks"
+
+msgid "Wireless network name cannot be empty"
+msgstr "Wireless network name cannot be empty"
+
+msgid "Cannot set duplicate wireless network name"
+msgstr "Cannot set duplicate wireless network name"
+
+msgid "Set 2.4g wireless network to no more than 4"
+msgstr "Set 2.4g wireless network to no more than 4"
+
+msgid "Set up 5G wireless network to no more than 4"
+msgstr "Set up 5G wireless network to no more than 4"
+
+msgid "The transmission power range is 0-20dbm"
+msgstr "The transmission power range is 0-20dbm"
+
+msgid "Beacon time slots range from 40 to 1000 milliseconds"
+msgstr "Beacon time slots range from 40 to 1000 milliseconds"
+
+msgid "The client limit is 1-40"
+msgstr "The client limit is 1-40"
+
+msgid "The signal strength must not be empty"
+msgstr "The signal strength must not be empty"
+
+msgid "The wireless client access range error"
+msgstr "The wireless client access range is between -90dbm and -30dbm, it is recommended not to be greater than -40dbm"
+
+msgid "The kick signal strength cannot be empty"
+msgstr "The kick signal strength cannot be empty"
+
+msgid "Wireless client ban signal strength range error"
+msgstr "Wireless client ban signal strength range is at least 5dbm higher than kick signal strength!"
+
+msgid "wireless client ban signal strength range should be enable"
+msgstr "Wireless client ban signal strength range should be enable!"
+
+msgid "input password invalid"
+msgstr "Input password invalid"
+
+msgid "wifi number reach limit"
+msgstr "Wifi number reach limit"
+
+msgid "gateway and LAN not in the same segment"
+msgstr "Gateway and LAN not in the same segment"
+
+msgid "upload image type error"
+msgstr "Upload image type error"
+
+msgid "unknown command"
+msgstr "Unknown command"
+
+msgid "input param  error"
+msgstr "Input param  error"
+
+msgid "input mac address invalid"
+msgstr "Input mac address invalid"
+
+msgid "Intelligent DHCP"
+msgster "Intelligent DHCP Server"
+
+msgid "enable DHCP control"
+msgster "enable"
+
+msgid "Connection mode"
+msgster "Connection mode"
+
+msgid "Dynamic ip"
+msgster "Dynamic ip"
+
+msgid "Static ip"
+msgster "Static ip"
+
+msgid "default DNS"
+msgster "default DNS Server"
+
+msgid "standby DNS"
+msgster "Standby DNS Server"
+
+msgid "defaultDNS error"
+msgster "default DNS invalid"
+
+msgid "standbyDNS error"
+msgster "standby DNS invalid"

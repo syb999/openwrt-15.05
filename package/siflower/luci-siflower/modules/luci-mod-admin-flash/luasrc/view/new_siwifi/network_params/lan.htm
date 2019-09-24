@@ -1,0 +1,155 @@
+<%+header%>
+<fieldset class="lan">
+	<legend>LAN口设置</legend>
+	<div id="Error">
+		<div id="hsErr" class="hsTip">
+			<i class="altIcon"></i>>
+			<span class="detail">无效的输入！请参考正确格式：<br>XXX.XXX.XXX.XXX，X为0~9的数字。</span>
+			<input class="subBtn" value="确 定" type="button" onclick="closeTip()">
+		</div>
+	</div>
+	<i class="helpBtn" helpstr="dynamicIpHelp" onclick="clickHelp(0)"></i>
+	<li class="border-line"></li>
+	<table class="tb-no-border">
+		<tr><td class="wan-td-left">MAC地址：</td><td class="wan-td-right"><span id="mac"></span></td></tr>
+		<tr><td class="wan-td-left">LAN口IP设置：</td><td class="wan-td-right"><select id="lan-ip-setting" onchange="lanSettingTypeChange()">
+			<option id="auto" value="auto">自动(推荐)</option>
+			<option id="manual" value="manual">手动</option>
+		</select></td></tr>
+		<tr><td class="wan-td-left">IP地址：</td><td class="wan-td-right"><input id="ipaddr" type="text" onkeyup="nStrLimit(this)" maxlength="15"></td></tr>
+		<tr><td class="wan-td-left">子网掩码：</td><td class="wan-td-right"><input id="netmask" type="text" onkeyup="nStrLimit(this)" maxlength="17"></td></tr>
+		<tr><td></td><td class="wan-td-right">
+			<button onclick="setLan()">保存</button>
+			<i id="saveTip" class="hsSubLoading saving" style="display: none"></i>
+			<i id="saveTipSucess" class="hsSubLoading save-suc" style="display: none"></i>
+		</td></tr>
+	</table>
+	<div id="Help"><p class="helpTop">
+		<span class="helpDes">帮助</span>
+		<i class="helpClose" onclick="clickHelp(1)"></i></p>
+		<div id="helpDetail"><ul id="lanHelp" class="help">
+		<li class="title">MAC地址</li>
+		<li class="content">路由器对局域网的MAC地址。</li>
+		<li class="title">LAN口IP设置</li>
+		<li class="content">支持自动和手动两种设置。</li>
+		<li class="title">当设置为自动时，具有LAN-WAN冲突检测机制，主要表现为：</li>
+		<ul class="listNum">
+			<li>
+				当路由器WAN口获取的IP地址与LAN口IP地址在同一网段，路由器LAN口IP地址会自动变更到其他网段。
+				如：路由器LAN口默认IP地址为192.168.4.1，如果路由器WAN口获取到的IP地址为192.168.4.X，那么LAN口IP地址会自动变为192.168.0.1。
+			</li>
+			<li>路由器LAN口IP地址变更之后，虚拟服务器、DMZ主机等原来设置好的条目将失效。</li>
+			<li>LAN口IP地址变更之后，用户仍可以通过域名登录路由器管理页面。</li>
+			<li>
+				为保证连接到路由器的设备能正常上网，建议设备配置为动态获取IP地址。
+				如果设备是固定IP地址，请根据LAN口变更之后的IP地址，对应更改设备的IP地址和网关。
+			</li>
+		</ul>
+		<li class="title">IP地址</li>
+		<li class="content">路由器对局域网的IP地址。</li>
+		<li class="title">子网掩码</li>
+		<li class="content">路由器对局域网的子网掩码，一般为255.255.255.0。</li>
+	</ul></div></div>
+</fieldset>
+<%+footer%>
+<script>
+	// global vars
+    var errTipDoc = document.getElementById("ipaddr");
+    var Drag =  document.getElementById("Help");
+
+    // page load functions
+    dragFunc(Drag);
+
+    // router get interfaces
+    XHR.get('<%=luci.dispatcher.build_url("admin", "networknew","get_lan")%>', null,
+        function(x, result) {
+            if(result.code == 0) {
+                console.log(result);
+                var e;
+                if (result.mac != undefined) {
+                    document.getElementById('mac').innerText = result.mac;
+				}
+				if (result.mode != undefined) {
+                    if (result.mode == 0) {
+                        document.getElementById('lan-ip-setting').value = 'auto';
+                    } else {
+                        document.getElementById('lan-ip-setting').value = 'manual';
+                    }
+				}
+                if (result.ipaddr != undefined) {
+                    document.getElementById('ipaddr').value = result.ipaddr;
+                }
+                if (result.netmask != undefined) {
+                    document.getElementById('netmask').value = result.netmask;
+                }
+                lanSettingTypeChange();
+            }
+        });
+
+    // router set interfaces
+    function setLan() {
+        var select_mode = document.getElementById('lan-ip-setting').value;
+        var mode;
+        if (select_mode == 'auto') {
+            mode = 0;
+        } else {
+            mode = 1;
+        }
+		var ipaddr = document.getElementById('ipaddr').value;
+        var ipaddr_verify = isValidIP(ipaddr);
+        var err = document.getElementById('Error');
+        var text = err.getElementsByTagName('span')[0];
+        text.innerText = '无效的输入！请参考正确格式：<br>XXX.XXX.XXX.XXX，X为0~9的数字。'
+        if (!ipaddr_verify) {
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById("ipaddr");
+            return;
+		}
+		var netmask = document.getElementById('netmask').value;
+		var netmask_verify = isValidNetmask(netmask);
+		if (!netmask_verify) {
+            err.style.visibility = 'visible';
+            errTipDoc = document.getElementById("netmask");
+            return;
+		}
+		var params = {'mode':mode, 'ipaddr':ipaddr, 'netmask':netmask};
+        document.getElementById("saveTip").style.display='';
+        document.getElementById("saveTipSucess").style.display='none';
+		console.log(params);
+		XHR.post('<%=luci.dispatcher.build_url("admin", "networknew","set_lan")%>', params,
+			function(x, result){
+				console.log(result);
+				document.getElementById("saveTip").style.display='none';
+                if (result!=null && result.code == 0) {
+                    document.getElementById("saveTipSucess").style.display='';
+                    setTimeout(function () {
+                        document.getElementById("saveTipSucess").style.display='none';
+                    },"2000");
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '设置失败！';
+                    err.style.visibility = 'visible';
+                }
+				setTimeout(function () {
+                    setInterval(function () {
+                        pageRedirect("http://"+ipaddr);
+                    },3000)
+                },"2000");
+			});
+    }
+
+    // page functions
+    function lanSettingTypeChange() {
+        var lanIpSettingSelect = document.getElementById('lan-ip-setting');
+        var lanIpSettingSelectedIndex = lanIpSettingSelect.selectedIndex;
+        if (lanIpSettingSelect[lanIpSettingSelectedIndex].value == 'auto') {
+            document.getElementById('ipaddr').disabled = 'disabled';
+            document.getElementById('netmask').disabled = 'disabled';
+		} else {
+            document.getElementById('ipaddr').disabled = '';
+            document.getElementById('netmask').disabled = '';
+		}
+	}
+</script>
+

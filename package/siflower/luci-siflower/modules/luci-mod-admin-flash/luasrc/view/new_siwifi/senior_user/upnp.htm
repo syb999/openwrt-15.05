@@ -1,0 +1,106 @@
+<%+header%>
+<fieldset class="upnp">
+    <legend>UPnP设置</legend>
+    <i class="helpBtn" helpstr="dynamicIpHelp" onclick="clickHelp(0)"></i>
+    <div class="bWlSwitchCon dhcp">
+        <div id="switchCon" class="switchCon" onclick="switchChange()">
+            <i class="switchBg"></i>
+            <i id="switchOn" class="switchBall" style=""></i>
+            <i id="switchOff" class="switchBallOff" style="display: none;"></i>
+        </div>
+        <span id="switchSpan" class="bWlSwitchOff" style="color: rgb(108, 144, 68);">已开启</span>
+    </div>
+    <li class="border-line"></li>
+    <ul id="upnpLsUl" class="gridToolBar">
+        <li gridtype="refresh" class="refresh" onclick="getUPnP()"><i></i><span>刷新</span></li>
+    </ul>
+    <table id="upnp">
+    </table>
+    <div id="Help"><p class="helpTop"><span class="helpDes">帮助</span>
+        <i class="helpClose" onclick="clickHelp(1)"></i></p>
+        <div id="helpDetail"><ul id="UpnpCfgHelp" class="help">
+        <li class="title">开启UPnP服务，设备可以自动发现和控制前端的路由器设备，并根据软件需要与路由器自动协商通信端口，从而进行正常通信。</li>
+        <li class="title">应用描述</li>
+        <li class="content">UPnP请求中包含的应用程序的描述。</li>
+        <li class="title">外部端口</li>
+        <li class="content">路由器为应用程序打开的外部端口。</li>
+        <li class="title">协议类型</li>
+        <li class="content">所打开的协议的类型。</li>
+        <li class="title">内部端口</li>
+        <li class="content">路由器为本地主机打开的内部端口。</li>
+        <li class="title">IP地址</li>
+        <li class="content">UPnP请求中包含的本地主机的IP地址。</li>
+        <li class="title">状态</li>
+        <li class="content">指示端口是否启用。</li>
+        <li class="warnning">注意：使用UPnP需要路由器、操作系统和应用软件本身的支持。</li>
+    </ul></div></div>
+</fieldset>
+<%+footer%>
+<script>
+    // global vars
+    var checkEnable = false;
+    var Drag =  document.getElementById("Help");
+
+    // page load functions
+    getUPnP();
+    dragFunc(Drag);
+
+    // router get interfaces
+    function getUPnP() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "advancednew","get_UPnP")%>', null,
+            function(x, result) {
+                console.log(result);
+                if(result.code == 0) {
+                    console.log(result);
+                    if (result.enable == 0) {
+                        setStatus(false);
+                    } else {
+                        setStatus(true);
+                    }
+                    var applications = result.applications;
+                    var html = '<tr><th>应用描述</th><th>外部端口</th><th>协议类型</th><th>内部端口</th><th>IP地址</th><th>状态</th></tr>';
+                    for(var i in applications){
+                        html += '<tr><td>'+applications[i].desc+'</td><td>'+applications[i].externalport+'</td><td>'+
+                            applications[i].protocaltype+'</td><td>'+applications[i].internalport+'</td><td>'+
+                            'ip'+'</td><td>'+applications[i].status+'</td></tr>';
+                    }
+                    document.getElementById('upnp').innerHTML = html;
+                }
+            });
+    }
+
+    // page functions
+    function setStatus(flag) {
+        console.log(flag);
+        if (flag) {
+            document.getElementById("switchSpan").innerText = "未开启";
+        } else {
+            document.getElementById("switchSpan").innerText = "已开启";
+        }
+        switchChange();
+    }
+
+    function switchChange() {
+        var status = document.getElementById("switchSpan").innerHTML;
+        var flag = true;
+        if (status=="已开启"){
+            flag = false;
+        }
+        switchChecked(flag);
+        if (checkEnable) {
+            if (checkStatus()) {
+                var enable = true;
+            } else {
+                var enable = false;
+            }
+            var params = {'params':{'enable':enable}};
+            console.log(params);
+            XHR.post('<%=luci.dispatcher.build_url("admin", "advancednew","set_UPnP")%>', params,
+                function(x, result){
+                    console.log(result);
+                });
+        } else {
+            checkEnable = true;
+        }
+    }
+</script>

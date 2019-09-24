@@ -1,0 +1,142 @@
+<%#
+ Copyright 2008 Steven Barth <steven@midlink.org>
+ Copyright 2008-2012 Jo-Philipp Wich <jow@openwrt.org>
+ Licensed to the public under the Apache License 2.0.
+-%>
+
+<% 
+function checkFileExist(file)
+	local f = io.open(file, "r")
+	if f then
+		io.close(f)
+		return 1
+	else
+		return 0
+	end
+end
+%>
+<!DOCTYPE html>
+<html lang="<%=luci.i18n.context.lang%>">
+<head>
+<% if checkFileExist("/www/luci-static/material/routerStyle.css") == 1 then%>
+	<link rel="stylesheet" href="<%=media%>/routerStyle.css">
+<% else %>
+	<link rel="stylesheet" href="<%=media%>/86vRouterStyle.css">
+<% end %>
+</head>
+<body class="bg" >
+<form method="post" action="<%=pcdata(luci.http.getenv("REQUEST_URI"))%>">
+	<div class="cbi-map">
+		<div id="logo-img" style="visibility: hidden"> </div>
+		<h2 style="visibility: hidden"><a id="content" name="content"><%:Authorization Required%></a></h2>
+		<div class="cbi-map-descr" style="visibility: hidden">
+			<%:Please enter your username and password.%>
+			<%- if fuser then %>
+			<div class="error"><%:Invalid username and/or password! Please try again.%></div>
+			<br />
+			<% end -%>
+		</div>
+		<fieldset class="cbi-section"><fieldset class="cbi-section-node">
+			<div class="cbi-value" style="visibility: hidden">
+				<label class="cbi-value-title"><%:Username%></label>
+				<div class="cbi-value-field">
+					<input class="cbi-input-user" type="text" name="luci_username" value="<%=duser%>" />
+				</div>
+			</div>
+			<!--<div class="cbi-value cbi-value-last cbi-value-div">
+				<div class="cbi-value-field">
+				<label class="cbi-value-title">&lt;!&ndash;<%:Password%>&ndash;&gt;登录密码</label>
+					<table class="line-row"><tr><td valign="top"></td></tr></table>
+					<input class="cbi-input-password" type="password" name="password" />
+
+				</div>
+				<div class="div-button">
+					<input type="submit" value="<%:Login%>" class="cbi-button cbi-button-apply" />
+					&lt;!&ndash;<input type="reset" value="<%:Reset%>" class="cbi-button cbi-button-reset" />&ndash;&gt;
+				</div>
+			</div>-->
+			<div>
+				<table class="lg-tb-st">
+					<tr><td>
+						<table class="login-tb">
+							<tr>
+								<td class="lb-pwd"><label class="cbi-value-title"><%:Password%></label></td>
+								<td>
+									<table class="pwd-tb">
+										<tr>
+											<td class="text-pwd"><input class="cbi-input-password" type="password" name="password" /></td>
+										</tr>
+									</table>
+								</td>
+							</tr>
+						</table>
+					</td>
+						<td class="sub-td"><input type="submit" value="<%:Login%>" class="cbi-button cbi-button-apply" />
+							<!--<input type="reset" value="<%:Reset%>" class="cbi-button cbi-button-reset" />-->
+						</td>
+					</tr>
+					<tr><td colspan="3">
+						<li class="loginHelp" onclick="forgetPwd()">
+							<i class="loginHelp"></i>
+							<span class="loginHelp"><%:Forget the password%></span>
+							<div id="loginFeg" style="visibility: hidden;">
+								<i class=""></i>
+								<p class=""><%:forget password intro%></p>
+							</div>
+						</li>
+					</td></tr>
+				</table>
+
+			</div>
+		</fieldset></fieldset>
+	</div>
+
+	<div>
+
+	</div>
+</form>
+<script type="text/javascript">//<![CDATA[
+	var input = document.getElementsByName('password')[0];
+	if (input)
+		input.focus();
+
+	function forgetPwd(){
+	  	var div = document.getElementById("loginFeg");
+	  	if (div.style.visibility=="hidden"){
+            div.style.visibility="visible";
+		}else {
+            div.style.visibility="hidden";
+		}
+
+	}
+//]]></script>
+
+<%
+local uci  = require "luci.model.uci".cursor()
+local fs  = require "nixio.fs"
+local https_key = uci:get("uhttpd", "main", "key")
+local https_port = uci:get("uhttpd", "main", "listen_https")
+if type(https_port) == "table" then
+	https_port = https_port[1]
+end
+
+if https_port and fs.access(https_key) then
+	https_port = https_port:match("(%d+)$")
+%>
+
+<script type="text/javascript">//<![CDATA[
+	if (document.location.protocol != 'https:') {
+		var url = 'https://' + window.location.hostname + ':' + '<%=https_port%>' + window.location.pathname;
+		var img=new Image;
+		img.onload=function(){window.location = url};
+		img.src='https://' + window.location.hostname + ':' + '<%=https_port%>' + '<%=resource%>/cbi/up.gif?' + Math.random();;
+		setTimeout(function(){
+			img.src=''
+		}, 5000);
+	}
+//]]></script>
+
+<% end %>
+</body>
+</html>
+

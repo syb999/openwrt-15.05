@@ -10,13 +10,13 @@ purl_check() {
 		return
 	fi
 	json_load_file "/tmp/updatelist.bin"
-	echo "++++update url success!" > dev/ttyS0
+	echo "++++update url success!" > /dev/ttyS0
 	json_get_var code2 "code"
 	echo "code2=$code2"
 	if [ "x$code2" == "x0" ]; then
 		json_select data
 		json_get_vars action updateAt province
-		echo "++++update action=$action!" > dev/ttyS0
+		echo "++++update action=$action!" > /dev/ttyS0
 		if [ "x$action" == "x1" -o "x$action" == "x2" ]; then
 			tscfg -u /tmp/updatelist.bin
 			checksum=`md5sum /etc/config/sf-ts-cfg.bin.tar.gz | awk '{print $1}'`

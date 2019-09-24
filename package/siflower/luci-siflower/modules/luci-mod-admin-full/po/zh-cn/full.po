@@ -1,0 +1,2384 @@
+msgid ""
+msgstr ""
+
+msgid "common"
+msgstr "常用设置"
+
+msgid "advanced"
+msgstr "高级设置"
+
+msgid "safty exit"
+msgstr "安全退出"
+
+msgid "successfully set"
+msgstr "设置成功"
+
+msgid "confirm"
+msgstr "确定"
+
+msgid "connected device number"
+msgstr "已连设备数量："
+
+msgid "management"
+msgstr "连接设备管理"
+
+msgid "internet connection"
+msgstr "上网方式："
+
+msgid "broadband dial-up"
+msgstr "宽带拨号上网"
+
+msgid "static IP address"
+msgstr "固定IP地址"
+
+msgid "automatically get IP address"
+msgstr "自动获得IP地址"
+
+msgid "network setting"
+msgstr "上网设置"
+
+msgid "SSID"
+msgstr "无线名称："
+
+msgid "wireless settings"
+msgstr "无线设置"
+
+msgid "connected device"
+msgstr "已连设备"
+
+msgid "banned device"
+msgstr "已禁设备"
+
+msgid "automatic detection"
+msgstr "自动检测"
+
+msgid "broadband account"
+msgstr "宽带账号"
+
+msgid "broadband password"
+msgstr "宽带密码"
+
+msgid "IP address"
+msgstr "IP地址"
+
+msgid "DNS server"
+msgstr "DNS服务器"
+
+msgid "subnet mask"
+msgstr "子网掩码"
+
+msgid "gateway"
+msgstr "网关"
+
+msgid "preferred DNS server"
+msgstr "首选DNS服务器"
+
+msgid "alternate DNS server"
+msgstr "备用DNS服务器"
+
+msgid "save"
+msgstr "保存"
+
+msgid "IP address format error"
+msgstr "IP地址格式错误，请重新输入"
+
+msgid "Subnet mask is not valid"
+msgstr "子网掩码不合法，请重新输入"
+
+msgid "Gateway error"
+msgstr "网关错误，请重新输入"
+
+msgid "Please input the correct preferred DNS server"
+msgstr "请输入正确的首选DNS服务器"
+
+msgid "Please input the correct alternate DNS server"
+msgstr "请输入正确的备用DNS服务器"
+
+msgid "host network"
+msgstr "主人网络"
+
+msgid "Please input the SSID"
+msgstr "请输入无线名称"
+
+msgid "wireless name cannot be all space"
+msgstr "无线名称不能全为空格，请重新输入"
+
+msgid "wireless password"
+msgstr "无线密码："
+
+msgid "The password length error"
+msgstr "密码长度不能少于8位"
+
+msgid "password contain invalid character"
+msgstr "密码包含非法字符"
+
+msgid "password strength"
+msgstr "密码强度"
+
+msgid "weak"
+msgstr "弱"
+
+msgid "Setting up，please wait a moment..."
+msgstr "正在设置，请稍等..."
+
+msgid "Setting failed!"
+msgstr "设置失败!"
+
+msgid "Please select your access method"
+msgstr "选择您的上网接入方式"
+
+msgid "Obtained from the old router"
+msgstr "从旧路由器获取"
+
+msgid "pppoe transplant intro"
+msgstr "请将旧路由器连接电源，并将网线的一头插入旧路由器的WAN口，另一头插入矽路由的LAN口。"
+
+msgid "start obtain"
+msgstr "开始获取"
+
+msgid "sync pppoe info from old router timeout"
+msgstr "从旧路由器获取宽带拨号信息超时。"
+
+msgid "failed to get network configuration from old router"
+msgstr "从旧路由器获取网络配置失败。"
+
+msgid "skip the guide"
+msgstr "跳过向导"
+
+msgid "automatically get IP address intro"
+msgstr "IP将自动从运营商处获取，请继续下一步"
+
+msgid "next"
+msgstr "下一步"
+
+msgid "Password length error"
+msgstr "密码长度错误,请输入8至63个字符"
+
+msgid "wireless password intro"
+msgstr "无线密码为8-63个字符，最好是数字、字母、符号的组合"
+
+msgid "previous"
+msgstr "上一步"
+
+msgid "Welcome to sirouter"
+msgstr "欢迎使用矽路由"
+
+msgid "I have read and agreed"
+msgstr "我已阅读并同意"
+
+msgid "user license agreement"
+msgstr "最终用户许可协议"
+
+msgid "and"
+msgstr "和"
+
+msgid "statement about siflower smart routers and privacy"
+msgstr "关于智能路由器与隐私的声明"
+
+msgid "join"
+msgstr "加入"
+
+msgid "user experience improvement program"
+msgstr "用户体验改进计划"
+
+msgid "/proto.htm"
+msgstr "/proto_zh.htm"
+
+msgid "/private.htm"
+msgstr "/private_zh.htm"
+
+msgid "/project.htm"
+msgstr "/project_zh.htm"
+
+msgid "Please encrypt your wireless network"
+msgstr "请加密您的无线网络"
+
+msgid "Do not encrypt"
+msgstr "不加密，并自行承担风险"
+
+msgid "Make sure the account or password is empty"
+msgstr "请确认宽带账号或密码是否为空"
+
+msgid "cancel"
+msgstr "取消"
+
+msgid "diagnostic tools"
+msgstr "诊断工具"
+
+msgid "operate successfully"
+msgstr "操作成功"
+
+msgid "diagnostic tools intro"
+msgstr "在本页可以使用Ping或Tracert，诊断路由器的连接状态"
+
+msgid "parameter setting"
+msgstr "参数设置"
+
+msgid "selection opeartion"
+msgstr "选择操作"
+
+msgid "IP address/domain name"
+msgstr "IP地址/域名"
+
+msgid "Ping packet amount"
+msgstr "Ping包数目"
+
+msgid "Ping packet size"
+msgstr "Ping包大小"
+
+msgid "(4-1472)bytes"
+msgstr "(4-1472)字节"
+
+msgid "Ping timeout"
+msgstr "Ping超时"
+
+msgid "Tracert hop count"
+msgstr "Tracert跳数"
+
+msgid "diagnostic results"
+msgstr "诊断结果"
+
+msgid "start"
+msgstr "开始"
+
+msgid "over"
+msgstr "结束"
+
+msgid "backup"
+msgstr "备份"
+
+msgid "import successfully"
+msgstr "载入成功"
+
+msgid "export button intro"
+msgstr "点此按钮可以备份路由器的当前配置"
+
+msgid "Export the configuration"
+msgstr "导出配置"
+
+msgid "Import the configuration"
+msgstr "载入配置"
+
+msgid "import"
+msgstr "导入"
+
+msgid "import the configuration intro"
+msgstr "请选择配置文件，然后点击载入配置按钮"
+
+msgid "browser"
+msgstr "浏览"
+
+msgid "note"
+msgstr "注意"
+
+msgid "backup note1"
+msgstr "载入配置文件后，路由器现有的配置丢失，如果载入配置有误，可能会导致路由器无法被管理，若出现无法管理的情况请长按路由器的Reset按钮恢复出厂设置"
+
+msgid "backup note2"
+msgstr "请确保路由器在整个载入配置文件过程中处于通电状态，载入过程断电会有损坏路由器的风险"
+
+msgid "backup note3"
+msgstr "载入过程持续约20秒，当载入结束后，路由器将会自动重启"
+
+msgid "Configuration is underway"
+msgstr "正在配置，请稍等..."
+
+msgid "Select the load profile first"
+msgstr "请先选择载入配置文件"
+
+msgid "Configuration file type illegal"
+msgstr "配置文件类型非法！请重新选择"
+
+msgid "Connection to router failed!"
+msgstr "连接路由器失败!"
+
+msgid "modify password"
+msgstr "修改登录密码"
+
+msgid "Two password input inconsistent!"
+msgstr "两次密码输入不一致！"
+
+msgid "original password"
+msgstr "原登录密码"
+
+msgid "new password"
+msgstr "新登录密码"
+
+msgid "confirm new password"
+msgstr "确认新登录密码"
+
+msgid "The original password cannot be empty"
+msgstr "原始密码不能为空"
+
+msgid "New password length error"
+msgstr "新密码长度不能少于6位！"
+
+msgid "Setting failed, please check the original password !"
+msgstr "设置失败，请检查原密码是否正确！"
+
+msgid "reboot"
+msgstr "重启路由器"
+
+msgid "Are you sure you want to reboot the router?"
+msgstr "确定要重启路由器？"
+
+msgid "Please confirm to upgarde the router"
+msgstr "请确认是否升级路由器，如果升级，需要等待3-5分钟，升级中请不要断开电源"
+
+msgid "Reset is underway, please wait..."
+msgstr "正在重启，请稍等..."
+
+msgid "buzzer"
+msgstr "蜂鸣器"
+
+msgid "enabled"
+msgstr "已开启"
+
+msgid "The request to restart failed, please try again"
+msgstr "请求重启失败，请重试"
+
+msgid "The switch setting failed. Please try again!"
+msgstr "开关设置失败，请重试"
+
+msgid "Failed to get the initial state of the buzzer"
+msgstr "获取蜂鸣器初始状态失败"
+
+msgid "factory reset"
+msgstr "恢复出厂设置"
+
+msgid "factory reset confirm"
+msgstr "恢复出厂设置后，所有配置将被重置，确定要恢复出厂设置？"
+
+msgid "factory reset button"
+msgstr "单击此按钮将使路由器所有设置恢复到出厂时的默认状态"
+
+msgid "It's recovering. Please wait..."
+msgstr "正在恢复，请稍等..."
+
+msgid "The request to restore factory Settings failed. Please try again"
+msgstr "请求恢复出厂设置失败，请重试"
+
+msgid "software upgrading"
+msgstr "软件升级"
+
+msgid "Failed to get data, please try again"
+msgstr "获取数据失败，请重试"
+
+msgid "upgrade intro"
+msgstr "请选择升级软件，然后点击升级按钮进行升级"
+
+msgid "whether or not"
+msgstr "是否保留配置"
+
+msgid "current hardware version"
+msgstr "当前硬件版本："
+
+msgid "current software version"
+msgstr "当前软件版本："
+
+msgid "OTA online upgrade"
+msgstr "OTA在线升级"
+
+msgid "Upgrade is in progress"
+msgstr "正在升级，请稍等..."
+
+msgid "Please select upgrade image first!"
+msgstr "请先选择升级版本镜像"
+
+msgid "Image file type illegal"
+msgstr "镜像文件类型非法！请重新选择"
+
+msgid "Upgrade failed!"
+msgstr "升级失败！"
+
+msgid "Error downloading image"
+msgstr "镜像下载错误，已停止升级"
+
+msgid "OTA file download error"
+msgstr "OTA文件下载错误"
+
+msgid "It is the latest version"
+msgstr "已是最新版本"
+
+msgid "system log"
+msgstr "系统日志"
+
+msgid "Sure to clear all logs?"
+msgstr "确定清除所有日志？"
+
+msgid "refresh"
+msgstr "刷新"
+
+msgid "save all logs"
+msgstr "保存所有日志"
+
+msgid "clear"
+msgstr "清除"
+
+msgid "index"
+msgstr "索引"
+
+msgid "log type"
+msgstr "日志类型"
+
+msgid "content"
+msgstr "内容"
+
+msgid "Data clearance failed!"
+msgstr "清除数据失败！"
+
+msgid "time setting"
+msgstr "时间设置"
+
+msgid "time zone"
+msgstr "时区"
+
+msgid "date"
+msgstr "日期"
+
+msgid "time"
+msgstr "时间"
+
+msgid "Save failed"
+msgstr "保存失败"
+
+msgid "DHCP server"
+msgstr "DHCP服务器"
+
+msgid "Invalid input! Please refer to the correct format:"
+msgstr "无效的输入！请参考正确的格式："
+
+msgid "XXX.XXX.XXX.XXX,X is the number of 0~9"
+msgstr "XXX.XXX.XXX.XXX,X为0~9的数字"
+
+msgid "address pool start address"
+msgstr "地址池开始地址"
+
+msgid "address pool end address"
+msgstr "地址池结束地址"
+
+msgid "address of the lease"
+msgstr "地址租期"
+
+msgid "hour intro"
+msgstr "小时（支持1-24小时，默认为12小时）"
+
+msgid "DHCP device"
+msgstr "DHCP 设备"
+
+msgid "help"
+msgstr "帮助"
+
+msgid "DHCP server help"
+msgstr "DHCP服务器能够自动给局域网当中的设备分配IP、子网掩码等TCP/IP协议参数"
+
+msgid "Address pool start/end address"
+msgstr "地址池开始/结束地址"
+
+msgid "Address pool start/end address intro"
+msgstr "DHCP服务器自动分配的IP的开始/结束地址"
+
+msgid "address of the lease intro"
+msgstr "自动分配的IP的有效时间，超过该时间后局域网内的设备将重新获取IP"
+
+msgid "gateway intro"
+msgstr "可选项，建议填入路由器LAN口的IP地址，默认为192.168.4.1"
+
+msgid "DNS server intro"
+msgstr "可选项，如果运营商有提供DNS服务器地址，请填于此"
+
+msgid "fail to get"
+msgstr "获取失败"
+
+msgid "host"
+msgstr "主机"
+
+msgid "effective time"
+msgstr "有效时间"
+
+msgid "refresh failed"
+msgstr "刷新失败"
+
+msgid "Illegal address pool"
+msgstr "非法的地址池，请重新输入"
+
+msgid "Unreasonable gateway"
+msgstr "不合理的网关，请重新输入"
+
+msgid "Wrong preferred DNS address"
+msgstr "错误的首选DNS地址，请重新输入"
+
+msgid "Wrong DNS address"
+msgstr "错误的DNS地址，请重新输入"
+
+msgid "The address lease term is 1-24"
+msgstr "地址租期范围为1-24,请合理输入！"
+
+msgid "IP and MAC mapping table"
+msgstr "IP与MAC映射表"
+
+msgid "IP and MAC bound"
+msgstr "IP与MAC绑定设置"
+
+msgid "add"
+msgstr "添加"
+
+msgid "delete all"
+msgstr "删除全部"
+
+msgid "delete the selected"
+msgstr "删除所选"
+
+msgid "IP and MAC binding help"
+msgstr "添加IP与MAC绑定条目可以为指定MAC地址的主机设置固定的IP地址，同时条目中的IP地址和MAC地址将进行ARP绑定，使得该主机可以免遭ARP攻击"
+
+msgid "For example"
+msgstr "举例说明"
+
+msgid "For example intro"
+msgstr "若想为张三的主机（MAC地址为00-E0-4C-00-07-BE）设置固定的IP地址（192.168.4.80），同时保护张三的主机免遭ARP攻击。则可按照以下信息设置IP与MAC绑定条目："
+
+msgid "MAC address"
+msgstr "MAC地址"
+
+msgid "Zhangsan"
+msgstr "张三"
+
+msgid "edit"
+msgstr "编辑"
+
+msgid "Failed to get binding information"
+msgstr "获取绑定信息失败"
+
+msgid "status"
+msgstr "状态"
+
+msgid "Add to bound Settings"
+msgstr "添加到绑定设置"
+
+msgid "Anonymous host"
+msgstr "匿名主机"
+
+msgid "Is binding"
+msgstr "已绑定"
+
+msgid "unbound"
+msgstr "未绑定"
+
+msgid "Refresh failed!"
+msgstr "刷新失败！"
+
+msgid "IP address in WAN segment and LAN segment and visitor network network, please input again！"
+msgstr "IP地址不在WAN网段和LAN网段，请重新输入！"
+
+msgid "Add binding failed!"
+msgstr "添加绑定失败！"
+
+msgid "Deletion successfully！"
+msgstr "删除成功！"
+
+msgid "Deletion failed!"
+msgstr "删除失败！"
+
+msgid "MAC address format incorrect"
+msgstr "mac地址格式不正确！mac地址格式为00:24:21:19:BD:E4!"
+
+msgid "MAC address cannot be broadcast address here!"
+msgstr "此处mac地址不能为广播地址！"
+
+msgid "MAC address cannot be multicast address here!"
+msgstr "此处mac地址不能为组播地址！"
+
+msgid "IP address format error, please input again"
+msgstr "ip地址格式错误，请重新输入"
+
+msgid "The IP address has been occupied"
+msgstr "该IP地址已经被占用，当前添加的条目无法保存，请手动释放该IP地址"
+
+msgid "The MAC address has been occupied"
+msgstr "该MAC地址已经被占用，当前添加的条目无法保存，请修改"
+
+msgid "Modification failed!"
+msgstr "修改失败！"
+
+msgid "LAN setting"
+msgstr "LAN口设置"
+
+msgid "LAN IP setting"
+msgstr "LAN口IP设置"
+
+msgid "auto（recommendation）"
+msgstr "自动（推荐）"
+
+msgid "manual"
+msgstr "手动"
+
+msgid "MAC address setting"
+msgstr "MAC地址设置"
+
+msgid "Use the router to the LAN's MAC address"
+msgstr "使用路由器对局域网的MAC地址"
+
+msgid "LAN port IP setup"
+msgstr "LAN口IP设置"
+
+msgid "Support automatic and manual Settings"
+msgstr "支持自动和手动两种设置"
+
+msgid "LAN help 1"
+msgstr "当设置为自动时，具有LAN-WAN冲突检测机制，主要表现为："
+
+msgid "LAN help 2"
+msgstr "当路由器WAN口获取的IP地址与LAN口IP地址在同一网段，路由器LAN口IP地址会自动变更到其他网段。如：路由器LAN口默认IP地址为192.168.4.1，如果路由器WAN口获取到的IP地址为192.168.4.X，那么LAN口IP地址会自动变为192.168.0.1"
+
+msgid "LAN help 3"
+msgstr "路由器LAN口IP地址变更之后，虚拟服务器、DMZ主机等原来设置好的条目将失效"
+
+msgid "LAN help 4"
+msgstr "LAN口IP地址变更之后，用户仍可以通过域名登录路由器管理页面"
+
+msgid "LAN help 5"
+msgstr "为保证连接到路由器的设备能正常上网，建议设备配置为动态获取IP地址。如果设备是固定IP地址，请根据LAN口变更之后的IP地址，对应更改设备的IP地址和网关。"
+
+msgid "IP address of the router to the LAN."
+msgstr "路由器对局域网的IP地址"
+
+msgid "Router to LAN subnet mask"
+msgstr "路由器对局域网的子网掩码，一般为255.255.255.0"
+
+msgid "Just a moment, please..."
+msgstr "正在准备，请稍等..."
+
+msgid "LAN set confirm"
+msgstr "如果您的计算机使用了手动设置的ip地址，请对应修改计算机的IP地址，子网掩码及默认网关"
+
+msgid "alter need input address confirm"
+msgstr "修改后需要手动输入地址才能访问路由器，确认修改？"
+
+msgid "The network segment of IP address is illegal"
+msgstr "IP地址网段非法，请重新输入"
+
+msgid "Invalid input, setting failed!"
+msgstr "输入不合法，导致设置失败！"
+
+msgid "Use the MAC address of the router"
+msgstr "使用路由器的MAC地址 "
+
+msgid "use the MAC address of the current managed PC"
+msgstr "使用当前管理PC的MAC地址（MAC地址克隆）"
+
+msgid "use custom MAC address"
+msgstr "使用自定义MAC地址 "
+
+msgid "MAC help"
+msgstr "通过本功能可以设置路由器对广域网的MAC地址，一般情况下不需要更改此地址，但某些地区的运营商会将线路与MAC地址进行绑定，此时运营商会提供一个“有效的MAC地址”，您需要通过本功能将MAC地址设置为该“有效的MAC地址”才能正常共享上网。"
+
+msgid "Failed to set MAC address"
+msgstr "设置MAC地址失败"
+
+msgid "wan connection type"
+msgstr "WAN口连接类型"
+
+msgid "Packet MTUbyte"
+msgstr "数据包MTU字节"
+
+msgid "auto negotiation"
+msgstr "自动协商"
+
+msgid "10M full duplex"
+msgstr "10M全双工"
+
+msgid "10M half duplex"
+msgstr "10M半双工"
+
+msgid "break"
+msgstr "断开"
+
+msgid "connect"
+msgstr "连接"
+
+msgid "Connection mode"
+msgstr "连接模式"
+
+msgid "Connect on demand"
+msgstr "按需连接，在有访问时自动连接"
+
+msgid "Automatic connection"
+msgstr "自动连接，在开机和断线后自动连接"
+
+msgid "Manual connection by user"
+msgstr "手动连接，由用户手动连接"
+
+msgid "Automatic wire break waiting time"
+msgstr "自动断线等待时间"
+
+msgid "minute0 means no automatic break"
+msgstr "0表示不自动断线"
+
+msgid "Broadband dial-up advanced setup"
+msgstr "宽带拨号高级设置"
+
+msgid "default is 1500, please do not modify if not necessary"
+msgstr "默认是1500，如非必要，请勿修改"
+
+msgid "default is 1480, please do not modify if not necessary"
+msgstr "默认是1480，如非必要，请勿修改"
+
+msgid "service name"
+msgstr "服务名"
+
+msgid "server name"
+msgstr "服务器名"
+
+msgid "Use the IP address specified by the operator"
+msgstr "使用运营商指定的IP地址"
+
+msgid "IP address designated by the operator"
+msgstr "运营商指定的IP地址"
+
+msgid "Manually set the DNS server"
+msgstr "手动设置DNS服务器"
+
+msgid "optional"
+msgstr "可选"
+
+msgid "update"
+msgstr "更新"
+
+msgid "release"
+msgstr "释放"
+
+msgid "host name"
+msgstr "主机名"
+
+msgid "Get IP by unicast generally not selected"
+msgstr "单播方式获取IP一般情况下请勿选择"
+
+msgid "WAN port speed setting"
+msgstr "WAN口速率设置"
+
+msgid "WAN connection type intro"
+msgstr "运营商所提供的上网方式"
+
+msgid "using temporary IP"
+msgstr "使用运营商动态分配的临时IP进行上网的方式"
+
+msgid "IP address, subnet mask, gateway"
+msgstr "IP地址、子网掩码、网关"
+
+msgid "Operator dynamic allocation of network parameters"
+msgstr "运营商动态分配的上网参数"
+
+msgid "Packet MTU"
+msgstr "数据包MTU"
+
+msgid "Packet maximum transmission unit"
+msgstr "数据包的最大传输单元，可设置范围为46 ～ 9000"
+
+msgid "Packet maximum transmission unit for pppoe"
+msgstr "数据包的最大传输单元，可设置范围为46 ～ 8992"
+
+msgid "Manually set the DNS server in dhcp"
+msgstr "自动获得IP地址上网方式下运营商会自动分配DNS服务器，如有需要也可以手动设置"
+
+msgid "Get IP by unicast"
+msgstr "单播方式获取IP"
+
+msgid "Get IP by unicast intro"
+msgstr "少数运营商的DHCP服务器不支持广播的请求方式，如果您在网络连接正常的情况下无法获取IP地址，可以选择单播的方式"
+
+msgid "WAN port speed setting intro"
+msgstr "设置WAN口的速率以及双工模式。个别小区宽带线路被强制为10Mbps导致路由器无法正常使用，此时可以通过将WAN口速率强制为10Mbps解决"
+
+msgid "Service name/server name"
+msgstr "服务名/服务器名"
+
+msgid "Service name/server name intro"
+msgstr "如若不是运营商特别要求，请勿填写"
+
+msgid "Use operators to specify IP addresses"
+msgstr "使用运营商指定IP地址"
+
+msgid "specifies IP address intro"
+msgstr "如果运营商指定了IP地址，请选择此项并填写具体的地址"
+
+msgid "Manually set the DNS server in pppoe"
+msgstr "宽带拨号上网方式运营商会自动分配DNS服务器，如有需要也可以手动设置"
+
+msgid "Please wait for the detect"
+msgstr "正在检测，请稍等"
+
+msgid "connected"
+msgstr "已连接"
+
+msgid "disconnected"
+msgstr "已断开"
+
+msgid "disconnected unplugged port of WAN"
+msgstr "已断开（WAN口未插线）"
+
+msgid "Failed to get data!"
+msgstr "获取数据失败！"
+
+msgid "Invalid MTU, MTU should between 46 and 9000"
+msgstr "MTU输入错误，请重新输入(46-9000)"
+
+msgid "Invalid MTU, MTU should between 46 and 8992"
+msgstr "MTU输入错误，请重新输入(46-8992)"
+
+msgid "MTU can not be empty"
+msgstr "MTU不可为空"
+
+msgid "host name error"
+msgstr "您的主机名中包含非法字符，请使用字母（a-z，A-Z）、数字（0-9）和连接符（-）的组合"
+
+msgid "preferred DNS server address error"
+msgstr "首选DNS服务器地址错误，请重新输入"
+
+msgid "IP address error, please input again"
+msgstr "IP地址错误，请重新输入"
+
+msgid "Connection failed"
+msgstr "连接失败"
+
+msgid "Connect timeout"
+msgstr "连接超时"
+
+msgid "Save data failed"
+msgstr "保存数据失败"
+
+msgid "The IP address is invalid. Please input again"
+msgstr "IP地址非法，请重新输入"
+
+msgid "Network segment and LAN interface IP address conflict"
+msgstr "网段与LAN口IP地址冲突"
+
+msgid "Operator address error, please input again"
+msgstr "运营商地址错误，请重新输入"
+
+msgid "Connecting..."
+msgstr "正在连接..."
+
+msgid "Update failed!"
+msgstr "更新失败！"
+
+msgid "Disconnecting..."
+msgstr "正在断开，请稍等... "
+
+msgid "Release failed!"
+msgstr "释放失败！"
+
+msgid "Disconnected unplugged port of WAN"
+msgstr "已断开（WAN口未插线）"
+
+msgid "WAN port is not connected"
+msgstr "WAN口未连接"
+
+msgid "Long account length"
+msgstr "账号长度过长"
+
+msgid "Long password length"
+msgstr "密码长度过长"
+
+msgid "Successful connection!"
+msgstr "连接成功！"
+
+msgid "Automatic wire break waiting time input error"
+msgstr "自动断线等待时间输入错误，请重新输入（0-99）!"
+
+msgid "Save successfully"
+msgstr "保存成功"
+
+msgid "Disconnected not connected"
+msgstr "已断开（未接线）"
+
+msgid "peanut shell dynamic domain name"
+msgstr "花生壳动态域名"
+
+msgid "service provider"
+msgstr "服务提供者"
+
+msgid "username"
+msgstr "用户名"
+
+msgid "password"
+msgstr "密码"
+
+msgid "auto login"
+msgstr "自动登录"
+
+msgid "domian name information"
+msgstr "域名信息"
+
+msgid "login"
+msgstr "登录"
+
+msgid "exit"
+msgstr "退出"
+
+msgid "DDNS help"
+msgstr "通过DDNS服务，可以将固定的域名和接入Internet的公网IP进行绑定，使得外网主机和路由器进行通信时，可直接使用域名进行访问"
+
+msgid "Service provider"
+msgstr "服务提供商"
+
+msgid "The DDNS service provider of this router"
+msgstr "本路由器的DDNS服务提供商为花生壳（www.oray.com）"
+
+msgid "User name/password"
+msgstr "用户名/密码"
+
+msgid "User name/password registered on the DDNS server address."
+msgstr "在DDNS服务器地址上注册的用户名/密码。"
+
+msgid "Connection status"
+msgstr "连接状态"
+
+msgid "Connection status with the DDNS server"
+msgstr "与DDNS服务器的连接状态"
+
+msgid "Service type"
+msgstr "服务类型"
+
+msgid "Current service type of DDNS"
+msgstr "当前DDNS的服务类型"
+
+msgid "Domain information"
+msgstr "域名信息"
+
+msgid "List of domain name services obtained from the DDNS server"
+msgstr "从DDNS服务器获得的域名服务列表"
+
+msgid "DDNS help note"
+msgstr "注意：在登录之前，您首先需要到DDNS服务提供商处申请一个DDNS的账号"
+
+msgid "save setting successfully"
+msgstr "保存设置成功。"
+
+msgid "The length of the account is not less than 2!"
+msgstr "账号长度不小于2！"
+
+msgid "Password length not less than 8!"
+msgstr "密码长度不少于8!"
+
+msgid "operation failure"
+msgstr "操作失败"
+
+msgid "DMZ host"
+msgstr "DMZ主机"
+
+msgid "DMZ host address"
+msgstr "DMZ主机地址"
+
+msgid "DMZ help"
+msgstr "通过DMZ主机功能，广域网中的设备可直接访问局域网中的DMZ主机"
+
+msgid "DMZ help for example"
+msgstr "如果要让局域网中IP地址为192.168.4.100的主机能够被广域网中的设备直接访问，则可以开启DMZ主机功能，在“DMZ主机IP地址”处填入192.168.4.100保存即可。"
+
+msgid "ip is not in the lan segment"
+msgstr "IP地址不是局域网网段的IP，请重新输入"
+
+msgid "static route setup"
+msgstr "静态路由设置"
+
+msgid "Delete all"
+msgstr "删除全部"
+
+msgid "Delete Selected"
+msgstr "删除所选"
+
+msgid "system routing table"
+msgstr "系统路由表"
+
+msgid "routing function help"
+msgstr "路由功能可设置静态路由条目，当数据包与静态路由匹配成功时，将按照指定的路径进行转发。"
+
+msgid "destination net address"
+msgstr "目的网络地址"
+
+msgid "The address the packet needs to arrive at"
+msgstr "数据包需要到达的地址"
+
+msgid "Subnet mask of destination address"
+msgstr "目的地址的子网掩码"
+
+msgid "next hop address"
+msgstr "下一跳地址"
+
+msgid "next router address help"
+msgstr "数据包到达目的地址前，可以直接转发的下一个路由器地址"
+
+msgid "interface"
+msgstr "接口"
+
+msgid "Failed to refresh data"
+msgstr "刷新数据失败!"
+
+msgid "already in the system routing table"
+msgstr "无法添加系统路由表中的已有的目的网络地址"
+
+msgid "Destination network address is not valid"
+msgstr "目的网络地址不合法，请重新输入"
+
+msgid "Next hop address error"
+msgstr "下一跳地址错误，请重新输入"
+
+msgid "delete successfully"
+msgstr "删除成功"
+
+msgid "delete failed"
+msgstr "删除失败"
+
+msgid "modify successfully"
+msgstr "修改成功"
+
+msgid "UPnP setting"
+msgstr "UPnP设置"
+
+msgid "UPnP help"
+msgstr "开启UPnP服务，设备可以自动发现和控制前端的路由器设备，并根据软件需要与路由器自动协商通信端口，从而进行正常通信"
+
+msgid "Description of the application included in the UPnP request"
+msgstr "UPnP请求中包含的应用程序的描述"
+
+msgid "external port"
+msgstr "外部端口"
+
+msgid "An external port that the router opens for the application"
+msgstr "路由器为应用程序打开的外部端口"
+
+msgid "protocol type"
+msgstr "协议类型"
+
+msgid "The type of protocol opened"
+msgstr "所打开的协议的类型"
+
+msgid "internal port"
+msgstr "内部端口"
+
+msgid "An internal port that the router opens for the local host"
+msgstr "路由器为本地主机打开的内部端口"
+
+msgid "The IP address of the local host contained in the UPnP request"
+msgstr "UPnP请求中包含的本地主机的IP地址"
+
+msgid "Indicates whether the port is enabled."
+msgstr "指示端口是否启用"
+
+msgid "UPnP help note"
+msgstr "注意：使用UPnP需要路由器、操作系统和应用软件本身的支持"
+
+msgid "APP description"
+msgstr "应用描述"
+
+msgid "disabled"
+msgstr "未开启"
+
+msgid "virtual server"
+msgstr "虚拟服务器"
+
+msgid "virtual server help"
+msgstr "本路由器自身集成了防火墙，这样在默认设置下广域网中的计算机将无法通过本路由器访问局域网中的某些服务器，虚拟服务器功能可以解决该问题。通过虚拟服务器定义一个服务端口，所有对此端口的服务请求将被重新定位给通过IP地址指定的局域网中的服务器。"
+
+msgid "common server"
+msgstr "常用服务器"
+
+msgid "common server help"
+msgstr "常用服务器下拉列表中列举了一些常用的服务，您可以从中选择所需要的服务"
+
+msgid "external port help"
+msgstr "路由器提供给广域网的服务端口。您可以输入一个端口号，也可以输入一个端口段，如：6001-6008"
+
+msgid "internal port help"
+msgstr "路由器提供给局域网的服务端口。如果内部端口与服务端口相同，您可以留空（或者填0），或者输入一个具体端口号，如：80。"
+
+msgid "IP address help"
+msgstr "局域网中作为服务器的计算机的IP地址"
+
+msgid "protocol"
+msgstr "协议"
+
+msgid "The protocol used by the server"
+msgstr "服务器所使用的协议"
+
+msgid "vs help for example"
+msgstr "如果您的FTP服务器（端口号为21）IP地址为192.168.4.2，这时您可以指定如下的虚拟服务器规则"
+
+msgid "vs help note"
+msgstr "注意：虚拟服务器的外部端口不能与“局域网WEB管理端口”或者“远程WEB管理端口”相同，否则会发生冲突，导致虚拟服务器不起作用"
+
+msgid "Failed to get information"
+msgstr "获取信息失败"
+
+msgid "Please enter the correct external port"
+msgstr "请输入正确的外部端口"
+
+msgid "Please enter the correct internal port"
+msgstr "请输入正确的内部端口"
+
+msgid "Please enter password"
+msgstr "请输入密码"
+
+msgid "No encryption"
+msgstr "不加密"
+
+msgid "country and region"
+msgstr "国家及地区："
+
+msgid "United States"
+msgstr "美国"
+
+msgid "Canada"
+msgstr "加拿大"
+
+msgid "Europe"
+msgstr "欧洲"
+
+msgid "Switzerland"
+msgstr "瑞士"
+
+msgid "Russia"
+msgstr "俄罗斯"
+
+msgid "Japan"
+msgstr "日本"
+
+msgid "India"
+msgstr "印度"
+
+msgid "Singapore"
+msgstr "新加坡"
+
+msgid "China"
+msgstr "中国"
+
+msgid "Israel"
+msgstr "以色列"
+
+msgid "North Korea"
+msgstr "朝鲜"
+
+msgid "South Korea"
+msgstr "韩国"
+
+msgid "Turkey"
+msgstr "土耳其"
+
+msgid "Australia"
+msgstr "澳大利亚"
+
+msgid "South Africa"
+msgstr "南非"
+
+msgid "Brazil"
+msgstr "巴西"
+
+msgid "Taiwan"
+msgstr "台湾"
+
+msgid "New Zealand"
+msgstr "新西兰"
+
+msgid "channel"
+msgstr "信道："
+
+msgid "Turn on wireless radio"
+msgstr "开启无线广播"
+
+msgid "auto"
+msgstr "自动"
+
+msgid "model"
+msgstr "模式："
+
+msgid "Spectrum bandwidth"
+msgstr "频段带宽："
+
+msgid "Signal strength"
+msgstr "信号强度："
+
+msgid "low"
+msgstr "低"
+
+msgid "middle"
+msgstr "中"
+
+msgid "high"
+msgstr "高"
+
+msgid "Open AP isolation"
+msgstr "开启AP隔离"
+
+msgid "The wireless wi-fi name of the router"
+msgstr "路由器的无线（Wi-Fi）名称"
+
+msgid "wireless password help"
+msgstr "无线加密使用WPA2-PSK/WPA-PSK加密方式、AES加密算法，无线密码为8-63个字符，最好是数字、字母、符号的组合"
+
+msgid "channel help"
+msgstr "无线数据信号传送的通道，此时路由器会自动根据周围的无线环境选择一个最好的信道模式"
+
+msgid "Wireless mode in which the router works"
+msgstr "路由器工作的无线模式"
+
+msgid "The bandwidth of the wireless data transmitted"
+msgstr "路由器传输无线数据的频段宽度"
+
+msgid "Signal strength help"
+msgstr "可以根据实际使用需要选择不同档次的信号强度"
+
+msgid "Open AP isolation help"
+msgstr "开启之后可以安全隔离连接到路由器的各个无线设备"
+
+msgid "the length of the SSID is too long！"
+msgstr "无线名称长度过长！"
+
+msgid "No more than 10 Chinese characters in wireless name!"
+msgstr "无线名称中中文字符不能超过10个！"
+
+msgid "Password length not less than 8 bits!"
+msgstr "密码长度不少于8位！"
+
+msgid "Password long long, please input again！"
+msgstr "密码长度过长，请重新输入！"
+
+msgid "visitor network"
+msgstr "访客网络"
+
+msgid "Whether visitors are allowed access to Intranet resources"
+msgstr "是否允许访客访问内网资源："
+
+msgid "no"
+msgstr "否"
+
+msgid "yes"
+msgstr "是"
+
+msgid "maximum upload speed on visitor network"
+msgstr "访客网络最大上传速度："
+
+msgid "KB/s（0 means no limit）"
+msgstr " KB/s（0表示不限制）"
+
+msgid "maximum download speed in visitor network"
+msgstr "访客网络最大下载速度："
+
+msgid "whether to set the visitor network opening time"
+msgstr "是否设置访客网络开放时间："
+
+msgid "open"
+msgstr "开放"
+
+msgid "Automatically shut down the visitor network after hours"
+msgstr "小时之后自动关闭访客网络"
+
+msgid "Set the opening time of the cycle"
+msgstr "设置周期的开放时间"
+
+msgid "Opening hours"
+msgstr "开放时间"
+
+msgid "visitor network help"
+msgstr "访客网络提供一个专门的无线网络供访客使用，可以实现对访客和内网的安全隔离，从而有效保障内网数据安全"
+
+msgid "Wireless name, wireless password"
+msgstr "无线名称、无线密码"
+
+msgid "Wireless name, wireless password help"
+msgstr "供访客使用的无线（Wi-Fi）名称和无线密码，无线密码为8-63个字符，最好是数字、字母、符号的组合"
+
+msgid "Set the visitor's access to the Intranet"
+msgstr "设置访客对内网的访问权限。建议保持默认值“否”，此时访客只能通过路由器访问外网"
+
+msgid "Maximum upload/download speed of visitor network"
+msgstr "访客网络最大上传/下载速度"
+
+msgid "Set the maximum Internet speed for the entire visitor network"
+msgstr "设置整个访客网络的最大上网速度"
+
+msgid "Whether to set the visitor network opening time"
+msgstr "是否设置访客网络开放时间"
+
+msgid "Set the opening time of the visitor network"
+msgstr "设置访客网络的开放时间"
+
+msgid "No more than 10 characters"
+msgstr "字符不能超过10个"
+
+msgid "Timeouts should be set between 0 and 24 hours"
+msgstr "超时时间应该设置在0-24小时之间"
+
+msgid "Please select the cycle opening time"
+msgstr "请选择周期开放的时间"
+
+msgid "hour"
+msgstr "小时"
+
+msgid "Monday"
+msgstr "星期一"
+
+msgid "Tuesday"
+msgstr "星期二"
+
+msgid "Wednesday"
+msgstr "星期三"
+
+msgid "Thursday"
+msgstr "星期四"
+
+msgid "Friday"
+msgstr "星期五"
+
+msgid "Saturday"
+msgstr "星期六"
+
+msgid "Sunday"
+msgstr "星期天"
+
+msgid "WDS wireless bridge"
+msgstr "WDS无线桥接"
+
+msgid "wds host password changed"
+msgstr "主路由器密码更改"
+
+msgid "wds host ssid missed"
+msgstr "未发现主路由器WiFi"
+
+msgid "Connection failed. Please try again"
+msgstr "连接失败，请重试"
+
+msgid "Scanning is underway, please wait a moment..."
+msgstr "正在扫描，请稍等... "
+
+msgid "WDS netgroup wizard"
+msgstr "WDS 网组向导"
+
+msgid "WDS intro1"
+msgstr "通过WDS功能，主、从路由器之间可以通过无线进行桥接，以扩展无线网络的覆盖范围。"
+
+msgid "WDS intro2"
+msgstr "开启WDS功能之后，本路由器将作为从路由器进行WDS 组网。"
+
+msgid "return"
+msgstr "返回"
+
+msgid "please select a network"
+msgstr "请选择一个网络"
+
+msgid "Enter the wireless password for the main router"
+msgstr "输入主路由器的无线密码"
+
+msgid "Please set the wireless parameters of this router"
+msgstr "请设置本路由器的无线参数"
+
+msgid "WDS network group information"
+msgstr "WDS 网组信息"
+
+msgid "master router"
+msgstr "主路由器"
+
+msgid "This router"
+msgstr "本路由器"
+
+msgid "LAN port IP address"
+msgstr "LAN口IP地址："
+
+msgid "Close the WDS"
+msgstr "关闭"
+
+msgid "Please select the main router you want to bridge"
+msgstr "请选择你需要桥接的主路由器"
+
+msgid "Encrypted information"
+msgstr "加密信息"
+
+msgid "select"
+msgstr "选择"
+
+msgid "Scan failed"
+msgstr "扫描失败"
+
+msgid "connecting, please wait a moment..."
+msgstr "正在连接，请稍等... "
+
+msgid "Failed to get information, please reconnect!"
+msgstr "获取信息失败，请重新连接！"
+
+msgid "We are reconnecting. Please wait a moment..."
+msgstr "正在重连，请稍等.."
+
+msgid "Setting failed, please reset"
+msgstr "设置失败，请重新设置"
+
+msgid "Operation failed, please try again!"
+msgstr "操作失败，请重试"
+
+msgid "set successfully"
+msgstr "设置成功"
+
+msgid "device information"
+msgstr "设备信息"
+
+msgid "device model"
+msgstr "设备型号"
+
+msgid "current system time"
+msgstr "当前系统时间"
+
+msgid "system runtime"
+msgstr "系统运行时间"
+
+msgid "wireless parameter"
+msgstr "无线参数"
+
+msgid "wireless mode"
+msgstr "无线模式"
+
+msgid "band bandwidth"
+msgstr "频段带宽"
+
+msgid "wireless service"
+msgstr "无线服务"
+
+msgid "network name encoding"
+msgstr "网络名称编码"
+
+msgid "network type"
+msgstr "网络类型"
+
+msgid "employee network"
+msgstr "员工网络"
+
+msgid "encryption"
+msgstr "加密方式"
+
+msgid "not encrypt"
+msgstr "不加密"
+
+msgid "set password"
+msgstr "设置密码"
+
+msgid "wireless internal network isolation"
+msgstr "无线网络内部隔离"
+
+msgid "enable"
+msgstr "启用"
+
+msgid "Enable/disable this network"
+msgstr "启用/禁用此网络"
+
+msgid "wireless client"
+msgstr "无线客户端"
+
+msgid "serial number"
+msgstr "序号"
+
+msgid "Plug in the wireless network"
+msgstr "插入的无线网络"
+
+msgid "Access time"
+msgstr "接入时间"
+
+msgid "setting"
+msgstr "设置"
+
+msgid "Please enter wireless name"
+msgstr "请输入无线名称"
+
+msgid "The length of the wireless name is too long"
+msgstr "无线名称长度过长"
+
+msgid "No more than 10 Chinese characters in wireless name"
+msgstr "无线名称中中文字符不能超过10个"
+
+msgid "Set the password to no less than 8 bits"
+msgstr "设置密码不能小于8位"
+
+msgid "Connection failed, please try again"
+msgstr "连接失败，请重试"
+
+msgid "Setting failed"
+msgstr "设置失败"
+
+msgid "add successfully"
+msgstr "添加成功"
+
+msgid "wireless MAC address filtering"
+msgstr "无线MAC地址过滤"
+
+msgid "Enable wireless MAC address filtering"
+msgstr "启用无线MAC地址过滤"
+
+msgid "wireless MAC address filtering rule settings"
+msgstr "无线MAC地址过滤规则设置"
+
+msgid "effective range"
+msgstr "生效范围"
+
+msgid "remarks"
+msgstr "备注"
+
+msgid "VLAN setting"
+msgstr "VLAN设置"
+
+msgid "wireless network and VLAN binding"
+msgstr "无线网络与VLAN绑定"
+
+msgid "The MAC address list is empty"
+msgstr "MAC地址列表为空"
+
+msgid "MAC address format is not legal"
+msgstr "MAC地址格式不合法"
+
+msgid "Please select the filter effective range"
+msgstr "请选择过滤生效范围"
+
+msgid "add failure"
+msgstr "添加失败"
+
+msgid "successfully delete"
+msgstr "删除成功"
+
+msgid "Delete failed"
+msgstr "删除失败"
+
+msgid "Enable MAC address filtering is that the filter rule cannot be empty"
+msgstr "启用MAC地址过滤是，过滤规则不能为空"
+
+msgid "There is an illegal ssid, please check the input"
+msgstr "存在不合法的ssid，请检查输入"
+
+msgid "Connection to router failed"
+msgstr "连接路由器失败"
+
+msgid "When wireless binding to the VLAN is enabled, the VLAN ID cannot be empty"
+msgstr "启用无线与VLAN绑定时，VLAN ID不能为空"
+
+msgid "Invalid vlanID, please make sure its value is between 1-4049"
+msgstr "无效的vlanID，请确保其值在1-4049之间"
+
+msgid "fail to modify"
+msgstr "修改失败"
+
+msgid "default gateway"
+msgstr "默认网关"
+
+msgid "LED switch"
+msgstr "LED开关"
+
+msgid "enable WiFi control"
+msgstr "启用WiFi控制功能"
+
+msgid "WEB service port"
+msgstr "WEB服务端口"
+
+msgid "WEB session timeout"
+msgstr "WEB会话超时时间"
+
+msgid "account management"
+msgstr "账号管理"
+
+msgid "confirm password"
+msgstr "确认密码"
+
+msgid "view system logs"
+msgstr "查看系统日志"
+
+msgid "view"
+msgstr "查看"
+
+msgid "download system log"
+msgstr "下载系统日志"
+
+msgid "download"
+msgstr "下载"
+
+msgid "time & language"
+msgstr "时间和语言"
+
+msgid "prefered NTP server"
+msgstr "首选NTP服务器"
+
+msgid "alternate NTP server"
+msgstr "备用NTP服务器"
+
+msgid "configuration management"
+msgstr "配置管理"
+
+msgid "backup configuration"
+msgstr "备份配置"
+
+msgid "import configuration"
+msgstr "导入配置"
+
+msgid "browse"
+msgstr "浏览"
+
+msgid "load the configuration"
+msgstr "载入配置"
+
+msgid "recover factory reset"
+msgstr "恢复出厂配置"
+
+msgid "restart device "
+msgstr "重启设备"
+
+msgid "restart"
+msgstr "重启"
+
+msgid "software upgrade"
+msgstr "软件升级"
+
+msgid "Ping watchdog"
+msgstr "Ping看门狗"
+
+msgid "destination IP address"
+msgstr "目标IP地址"
+
+msgid "contract period"
+msgstr "发包周期"
+
+msgid "start delay"
+msgstr "启动延迟"
+
+msgid "maximum number of lost packets"
+msgstr "最大丢包数"
+
+msgid "Subnet mask is not valid, please input again"
+msgstr "子网掩码不合法，请重新输入"
+
+msgid "Gateway error, please input again"
+msgstr "网关错误，请重新输入"
+
+msgid "The port number range is limited to 0-65535"
+msgstr "端口号范围限制在0-65535"
+
+msgid "WEB session timeout should be limited to 30-300 seconds"
+msgstr "WEB会话超时时间应该控制在30-300秒以内"
+
+msgid "It's jumping, please wait..."
+msgstr "正在跳转，请稍候... "
+
+msgid "Two password input inconsistent"
+msgstr "两次密码输入不一致"
+
+msgid "The original password is wrong, please input again"
+msgstr "原密码错误，请重新输入"
+
+msgid "log contents"
+msgstr "日志内容"
+
+msgid "Recovering, please wait..."
+msgstr "正在恢复，请稍候..."
+
+msgid "Factory reset failed"
+msgstr "恢复出厂设置失败"
+
+msgid "The preferred NTP server cannot be empty"
+msgstr "首选NTP服务器不能为空"
+
+msgid "Not legal domain name or IP, please input again！"
+msgstr "不是合法域名或IP，请重新输入！"
+
+msgid "Please select load profile first"
+msgstr "请先选择载入配置文件"
+
+msgid "File type illegal! Please reselect"
+msgstr "文件类型非法！请重新选择"
+
+msgid "Please wait while configuration is underway..."
+msgstr "正在配置，请稍候..."
+
+msgid "Image files are illegal"
+msgstr "镜像文件不合法"
+
+msgid "Upgrade error"
+msgstr "升级出错"
+
+msgid "Is being upgraded, please wait a moment..."
+msgstr "正在升级，请稍后..."
+
+msgid "The contract period is limited to 10-300 seconds"
+msgstr "发包周期限定在10-300秒内"
+
+msgid "The startup delay is limited to 60-300 seconds"
+msgstr "启动延迟限定在60-300秒内"
+
+msgid "The number of bags allowed is limited to 1-35535"
+msgstr "允许丢包数限定在1-35535内"
+
+msgid "connection fails"
+msgstr "连接失败"
+
+msgid "Are you sure to restore factory Settings"
+msgstr "是否确定恢复出厂设置"
+
+msgid "Are you sure to restart the panel"
+msgstr "是否确定重启面板"
+
+msgid "Are you sure to confirm import configuration"
+msgstr "是否确定导入配置"
+
+msgid "After setting the IP address, the PC must visit the management page in the unified network segment."
+msgstr "设置ip地址后，pc必须在统一网段才能访问管理页面，是否确认设置"
+
+msgid "advanced settings"
+msgstr "高级设置"
+
+msgid "wireless channel"
+msgstr "无线信道"
+
+msgid "transmission power"
+msgstr "发射功率"
+
+msgid "Beacon time slot"
+msgstr "Beacon时槽"
+
+msgid "Milliseconds 40-1000"
+msgstr "40-1000毫秒"
+
+msgid "Client limitations"
+msgstr "客户端限制"
+
+msgid "Prohibit signal strength below"
+msgstr "禁止信号强度低于"
+
+msgid "DBm wireless client access range error"
+msgstr "dBm的无线客户端接入（-90dBm~-30dBm,建议小于-40dbm）"
+
+msgid "The kick signal strength is lower than"
+msgstr "踢除信号强度低于"
+
+msgid "Wireless client of dBm"
+msgstr "dBm的无线客户端（-90dBm~-30dBm,建议小于-40dbm）"
+
+msgid "Isolation between wireless networks"
+msgstr "无线网络间隔离"
+
+msgid "Wireless network name cannot be empty"
+msgstr "无线网络名称不能为空"
+
+msgid "Cannot set duplicate wireless network name"
+msgstr "不能设置重复无线网络名称"
+
+msgid "Set 2.4g wireless network to no more than 4"
+msgstr "设置2.4G无线网络不能超过4个"
+
+msgid "Set up 5G wireless network to no more than 4"
+msgstr "设置5G无线网络不能超过4个"
+
+msgid "The transmission power range is 0-20dbm"
+msgstr "发射功率范围为0-20dbm"
+
+msgid "Beacon time slots range from 40 to 1000 milliseconds"
+msgstr "Beacon时槽范围为40-1000毫秒"
+
+msgid "The client limit is 1-40"
+msgstr "客户端限制范围为1-40个"
+
+msgid "The signal strength must not be empty"
+msgstr "禁止信号强度不能为空"
+
+msgid "The wireless client access range error"
+msgstr "无线客户端接入范围在-90dBM~-30dBm之间，建议不大于-40dbm！"
+
+msgid "The kick signal strength cannot be empty"
+msgstr "踢除信号强度不能为空"
+
+msgid "Wireless client ban signal strength range error"
+msgstr "无线客户端禁止信号强度范围至少比踢除信号强度高5dbm！"
+
+msgid "wireless client ban signal strength range should be enable"
+msgstr "应该启用禁止信号强度低于一定值的无线客户端接入的功能！"
+
+msgid "The router is not encrypted and confirm the connection. Please click next."
+msgstr "路由器没有加密并确认连接。请点击下一步"
+
+msgid "router connection failure"
+msgstr "路由器连接失败"
+
+msgid "password should be no more than 63 bits long"
+msgstr "密码不应超过63位"
+
+msgid "router function"
+msgstr "路由功能"
+
+msgid "please select"
+msgstr "请选择"
+
+msgid "alternate DNS server address error, please input again"
+msgstr "备用DNS服务器地址错误，请再次输入"
+
+msgid "configuration failure"
+msgstr "配置失败"
+
+msgid "IP address or domain name can not be empty"
+msgstr "IP地址或域名不能为空，请重新输入"
+
+msgid "IP address or domain name is illegal"
+msgstr "IP地址或域名非法，请重新输入"
+
+msgid "Ping timeout limit is 1-100 seconds"
+msgstr "Ping超时限制为1-100秒。请输入合理。"
+
+msgid "Ping packet size is limited to 4-1472"
+msgstr "Ping包大小限制在4-1472字节，请合理输入。"
+
+msgid "The number of Ping packages is limited to 1-50"
+msgstr " Ping包的数量限制在1-50个。请输入合理。"
+
+msgid "Tracert hop count is limited to 1-30"
+msgstr "Tracert跳数限制在1-30，请合理输入"
+
+msgid "Debugging failed. Please try again."
+msgstr "调试失败，请重试"
+
+msgid "Current connection device"
+msgstr "当前连接设备"
+
+msgid "Current network speed"
+msgstr "当前速度"
+
+msgid "Limit download speed"
+msgstr "下载速度限制"
+
+msgid "Limit upload speed"
+msgstr "上传速度限制"
+
+msgid "Disable"
+msgstr "禁用"
+
+msgid "Currently banned devices"
+msgstr "当前已禁设备"
+
+msgid "Lift a ban"
+msgstr "解禁"
+
+msgid "please enter at least 8-63 characters"
+msgstr "请输入至少8-63个字符"
+
+msgid "WAN connection is not connected"
+msgstr "WAN连接未连接，请检查电缆是否插入。"
+
+msgid "Login password"
+msgstr "登录密码"
+
+msgid "Forget the password"
+msgstr "忘记密码"
+
+msgid "If you forget your password, please resume the factory settings. Recovery: When the device  is powered on, hold down the Reset button until all the lights are on at the same time and release"
+msgstr "如果您忘记了密码，请恢复工厂设置。恢复:当设备接通电源时，按住复位按钮，直到所有的灯同时亮起，再松开"
+
+msgid "scan me to download the app"
+msgstr "扫我下载App"
+
+msgid "experience more features"
+msgstr "体验更多功能"
+
+msgid "parameters"
+msgstr "网络参数"
+
+msgid "device management"
+msgstr "设备管理"
+
+msgid "Manage"
+msgstr "设备管理"
+
+msgid "Advanced"
+msgstr "高级用户"
+
+msgid "upgrading"
+msgstr "软件升级"
+
+msgid "OTA"
+msgstr "OTA在线升级"
+
+msgid "whether auto OTA"
+msgstr "是否自动升级"
+
+msgid "Export"
+msgstr "导出配置"
+
+msgid "Wireless"
+msgstr "无线设置"
+
+msgid "WAN setting"
+msgstr "WAN口设置"
+
+msgid "Parameters"
+msgstr "网络参数"
+
+msgid "to encrypt"
+msgstr "去加密"
+
+msgid "AP SET"
+msgstr "AP设置"
+
+msgid "operated"
+msgstr "操作成功"
+
+msgid "Scan"
+msgstr "浏览"
+
+msgid "LoadConfig"
+msgstr "载入配置"
+
+msgid "Group List"
+msgstr "分组列表"
+
+msgid "add new"
+msgstr "新增"
+
+msgid "backups"
+msgstr "备份"
+
+msgid "Group Name"
+msgstr "分组名称："
+
+msgid "Wireless Status"
+msgstr "无线状态："
+
+msgid "ENABLE"
+msgstr "启用"
+
+msgid "forbid"
+msgstr "禁用"
+
+msgid "1-32 characters"
+msgstr "1-32个字符"
+
+msgid "Wireless isolation"
+msgstr "无线网络内部隔离"
+
+msgid "Wireless hide"
+msgstr "隐藏无线网络"
+
+msgid "off the security options"
+msgstr "关闭安全选项"
+
+msgid "Wireless password"
+msgstr "无线密码"
+
+msgid "bandwidth limit"
+msgstr "带宽控制"
+
+msgid "upload limit"
+msgstr "上传限制"
+
+msgid "download limit"
+msgstr "下载限制"
+
+msgid "Edit list"
+msgstr "编辑列表"
+
+msgid "frequency band"
+msgstr "频段："
+
+msgid "Name"
+msgstr "名称："
+
+msgid "(1-45characters)"
+msgstr "（1-45个字符）"
+
+msgid "AP alive-time"
+msgstr "AP保活时间："
+
+msgid "(20-80 seconds)"
+msgstr "（20-80秒）"
+
+msgid "client-alive-time"
+msgstr "客户端保活时间"
+
+msgid "client-idle-time"
+msgstr "客户端闲置时间"
+
+msgid "ON"
+msgstr "开启"
+
+msgid "OFF"
+msgstr "关闭"
+
+msgid "group-info"
+msgstr "分组统计信息"
+
+msgid "Set"
+msgstr "设置"
+
+msgid "Please input group name"
+msgstr "请输入分组名称"
+
+msgid "Please input SSID"
+msgstr "请输入SSID"
+
+msgid "Please input wireless-password"
+msgstr "请输入无线密码"
+
+msgid "Please input upload limit"
+msgstr "请输入上传限制"
+
+msgid "Please input download limit"
+msgstr "请输入下载限制"
+
+msgid "set successful"
+msgstr "设置成功"
+
+msgid "modified"
+msgstr "修改成功"
+
+msgid "modify failed,please retry"
+msgstr "修改失败，请重试"
+
+msgid "connect failed,please retry "
+msgstr "连接失败，请重试"
+
+msgid "modify failed"
+msgstr "修改失败"
+
+msgid "Please select loadconfig file"
+msgstr "请先选择载入配置文件"
+
+msgid "deleted"
+msgstr "删除成功"
+
+msgid "operation"
+msgstr "运行"
+
+msgid "offline"
+msgstr "离线"
+
+msgid "abnormal"
+msgstr "异常"
+
+msgid "IP and MAC binding setting"
+msgstr "IP与MAC绑定设置"
+
+msgid "MAC Address"
+msgstr "MAC地址"
+
+msgid "(3-1800 seconds)"
+msgstr "(3-1800秒)"
+
+msgid "(60-86400 seconds)"
+msgstr "(60-86400秒)"
+
+msgid "One network address filter can be enabled, and when enabled, other MAC addresses cannot use the network"
+msgstr "可以启用某个网络地址过滤功能，启用后，其他MAC地址无法使用此网络"
+
+msgid "With this enabled, the VLAN associated with the current wireless network can be set, and the host under the current wireless network will not be able to communicate with the devices in other vlans"
+msgstr "启用此项，可以设置当前无线网络关联的 VLAN，当前无线网络下的主机将不能与其他 VLAN 中的设备通信。"
+
+msgid "(note: WLAN ID 0/1/2 cannot be set)"
+msgstr "(注：WLAN ID为0/1/2不可以设置)"
+
+msgid "Operation failed. The current entry conflicts with the existing one"
+msgstr "操作失败，当前条目与已有条目冲突"
+
+msgid "LED light switch: after setting, press the LED key on the panel to trigger the WIFI switch"
+msgstr "LED灯开关：设置后，按面板上LED开关键，触发WIFI开关"
+
+msgid "The first time you start the panel you do not synchronize network time"
+msgstr "第一次启动面板时不同步网络时间"
+
+msgid "You can set up different NTP servers, which will automatically synchronize the time when the AP is online"
+msgstr "可以设置不同的NTP服务器，在AP可以上网的情况下，会自动时间同步"
+
+msgid "If the specified IP cannot PING, the system should restart automatically if the set threshold is reached."
+msgstr "如果指定IP无法PING通，达到了设定的阈值，系统应该自动重启。"
+
+msgid "Port number cannot be empty"
+msgstr "端口号不能为空"
+
+msgid "Configured successfully, please manually jump IP address after network restart!"
+msgstr "配置成功，请在网络重启后，手动跳转ip地址！"
+
+msgid "This is used to set the wireless working mode of the AP"
+msgstr "该项用于设置 AP 的无线工作模式"
+
+msgid "language set"
+msgstr "语言设置 "
+
+msgid "language"
+msgstr "语言"
+
+msgid "input param error"
+msgstr "传入参数不合法"
+
+msgid "no mac address received"
+msgstr "没有收到MAC地址"
+
+msgid "operation is not permit"
+msgstr "操作不允许"
+
+msgid "param protocol version not found"
+msgstr "未知的协议类型"
+
+msgid "get dhcp ip timeout"
+msgstr "获取IP超时"
+
+msgid "pppoe connect timeout"
+msgstr "拨号连接超时"
+
+msgid "pppoe username or password error"
+msgstr "拨号用户名或密码错误"
+
+msgid "check wan out of link"
+msgstr "WAN口未接网线"
+
+msgid "dns in the same segment with lan"
+msgstr "DNS和LAN网段冲突"
+
+msgid "wan in the same segment with lan"
+msgstr "WAN和LAN网段冲突"
+
+msgid "download image checksum error"
+msgstr "下载镜像错误"
+
+msgid "image version newest"
+msgstr "当前版本已是最新版本"
+
+msgid "localversion the same with otaversion"
+msgstr "OTA版本已是最新版本"
+
+msgid "otaversion information not downloaded"
+msgstr "OTA版本信息获取失败"
+
+msgid "waiting for ota upgrade"
+msgstr "OTA升级中..."
+
+msgid "old password is incorrect"
+msgstr "原密码不正确"
+
+msgid "wifi wds connect fail"
+msgstr "WDS连接失败"
+
+msgid "file read or write fail"
+msgstr "文件读写错误"
+
+msgid "not enough storage"
+msgstr "内存不足"
+
+msgid "unknown error"
+msgstr "未知错误"
+
+msgid "try again"
+msgstr "再次尝试"
+
+msgid "device busy"
+msgstr "设备正忙"
+
+msgid "device ont found"
+msgstr "设备离线或不存在"
+
+msgid "device online, can not be remove"
+msgstr "设备在线无法删除"
+
+msgid "ap no response"
+msgstr "设备没有响应"
+
+msgid "connection reset by peer"
+msgstr "设备正在被其他人设置，请稍后重试"
+
+msgid "protocol version not support"
+msgstr "协议类型不支持"
+
+msgid "unknown command"
+msgstr "未知命令"
+
+msgid "unknown signal_mode"
+msgstr "未知信号模式"
+
+msgid "no ssid exist in router"
+msgstr "路由器中没有SSID"
+
+msgid "ssid doesn't match"
+msgstr "SSID不匹配"
+
+msgid "reset is running, can't reset in this interval"
+msgstr "正在重置，此时无法重置"
+
+msgid "can't get lan speed"
+msgstr "无法获取LAN口速度"
+
+msgid "authentication fail"
+msgstr "验证失败"
+
+msgid "router has been bind"
+msgstr "路由器已绑定"
+
+msgid "empty userid"
+msgstr "空的用户ID"
+
+msgid "internel socket error"
+msgstr "内部套接字错误"
+
+msgid "bind router fail"
+msgstr "绑定路由器失败"
+
+msgid "router has not bind yet"
+msgstr "路由器尚未绑定"
+
+msgid "unbind router fail"
+msgstr "解绑路由器失败"
+
+msgid "unbind fail case caller is not binder"
+msgstr "解绑失败，调用者不是绑定者"
+
+msgid "set device fail mac-addr is empty"
+msgstr "设备设置失败，MAC地址为空"
+
+msgid "set wifi fail the setting param is empty"
+msgstr "wifi设置失败，设置参数为空"
+
+msgid "execute check wan type exception"
+msgstr "执行check wan type异常"
+
+msgid "prase wan type result fail"
+msgstr "发送wan type结果失败"
+
+msgid "execute get wan type exception"
+msgstr "执行get wan type异常"
+
+msgid "execute set wan unable to get type"
+msgstr "执行set wan未能获取类型"
+
+msgid "execute set wan get a unnormal type"
+msgstr "执行set wan得到一个异常类型"
+
+msgid "execute set wan unable to get dns input"
+msgstr "执行set wan未能获取DNS输入"
+
+msgid "save user ip address and port fail"
+msgstr "保存用户IP地址和端口失败"
+
+msgid "execute set wan pppoe connect timeout"
+msgstr "执行set wan pppoe连接超时"
+
+msgid "check manager param fail"
+msgstr "check manager param失败"
+
+msgid "do manager operation fail"
+msgstr "do manager operation失败"
+
+msgid "checksum not match the ota_checksum"
+msgstr "checksum与ota_checksum不匹配"
+
+msgid "upload log file to cloud failed"
+msgstr "上传日志文件到云失败"
+
+msgid "upload log url info failed"
+msgstr "上传日志url信息失败"
+
+msgid "waiting for another log upload"
+msgstr "等待另一个日志上传"
+
+msgid "create p2p fail"
+msgstr "创建P2P失败"
+
+msgid "destroy p2p fail"
+msgstr "销毁P2P失败"
+
+msgid "some mandatory parameter is nil"
+msgstr "某些必填参数为空"
+
+msgid "some parameters of zigbee rule is illegal"
+msgstr "某些zigbee规则参数非法"
+
+msgid "the request type is unknown"
+msgstr "请求类型未知"
+
+msgid "the database parameter is illegal"
+msgstr "数据库参数非法"
+
+msgid "the device does not exist in database"
+msgstr "数据库中不存在该设备"
+
+msgid "the setting devices no one online"
+msgstr "设置的设备不在线"
+
+msgid "create zigbee rule failed"
+msgstr "创建zigbee规则失败"
+
+msgid "upload image type error"
+msgstr "上传镜像类型错误"
+
+msgid "input password invalid"
+msgstr "输入密码无效"
+
+msgid "wifi number reach limit"
+msgstr "wifi数量达到上限"
+
+msgid "wifi channal not match htmode"
+msgstr "wifi 信道与htmode不匹配"
+
+msgid "input mac address invalid"
+msgstr "输入MAC地址无效"
+
+msgid "gateway and LAN not in the same segment"
+msgstr "网关与LAN口不在同一网段"
+
+msgid "gateway is not in WAN segment"
+msgstr "网关和IP地址不在同一网段"
+
+msgid "ac upgrade ap fail"
+msgstr "ac升级ap失败"
+
+msgid "download img fail, please check your network"
+msgstr "镜像下载失败，请检查您的网络"
+
+msgid "get remote server info fail"
+msgstr "获取远程服务器信息失败"
+
+msgid "OTA checking software version"
+msgstr "正在检测当前软件版本是否为最新..."
+
+msgid "ota download"
+msgstr "OTA 正在下载镜像。"
+
+msgid "ap ota download"
+msgstr "AP OTA 正在下载镜像。"
+
+msgid "ap ota upgrade"
+msgstr "AP OTA　开始升级。"
+
+msgid "no ap need upgrade"
+msgstr "AP OTA 没有AP需要更新镜像。"
+
+msgid "ap mac list"
+msgstr "AP OTA 更新AP列表为："
+
+msgid "send upgrade to ap error"
+msgstr "AP OTA 发送升级命令到AP失败。"
+
+msgid "ap flash"
+msgstr "AP OTA 所有AP开始进行升级流程。"
+
+msgid "ap mac upgrade error"
+msgstr "AP OTA 升级失败的AP："
+
+msgid "ap upgrade timeout"
+msgstr "AP OTA 升级流程超时。"
+
+msgid "ap upgrade done"
+msgstr "AP OTA 升级完成。"
+
+msgid "ap download error"
+msgstr "AP OTA 下载镜像文件错误。"
+
+msgid "ota flash"
+msgstr "设备开始升级流程。"
+
+msgid "ap timeout"
+msgstr "AP 升级超时。"
+
+msgid "OTA not run"
+msgstr "OTA 没有运行。"
+
+msgid "frequence intergration"
+msgstr "双频合一"
+
+msgid "confirm to alter wifi"
+msgstr "请确认是否修改主人网络信息，如果修改，连接的无线设备可能断开，需要重新连接。"
+
+msgid "input netmask is illegal"
+msgstr "输入子网掩码不合法"

@@ -1,0 +1,376 @@
+<%+header%>
+<fieldset class="router">
+	<legend><%:static route setup%></legend>
+    <i class="helpBtn" helpstr="dynamicIpHelp" onclick="clickHelp(0)"></i>
+    <ul><li class="border-line"></li></ul>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>
+			<span class="detail"><%:Invalid input! Please refer to the correct format:%><br><%:XXX.XXX.XXX.XXX,X is the number of 0~9%></span>
+			<input class="subBtn" value="<%:confirm%>" type="button" onclick="closeTip()">
+        </div>
+    </div>
+    <div style="float: right">
+        <ul id="routeStcUl" class="gridToolBar">
+			<li gridtype="add" class="add" onclick="addStaticRouteTr()"><i></i><span><%:add%></span></li>
+			<li id="delAllUn" gridtype="delAll" style="display: none" class="delAllUn"><i></i><span><%:Delete all%></span></li>
+			<li id="delAll" gridtype="delAll" class="delAll" onclick="deleteAllStaticRoutes()"><i></i><span><%:Delete all%></span></li>
+			<li id="delSelUn" gridtype="delSel" class="delSelUn"><i></i><span><%:Delete Selected%></span></li>
+			<li id="delSel" gridtype="delSel" style="display: none" class="delSel" onclick="deleteSelectedStaticRoutes()"><i></i><span><%:Delete Selected%></span></li>
+        </ul>
+    </div>
+    <table id="static-router">
+    </table>
+    <fieldset >
+        <ul><li class="border-line"></li></ul>
+		<legend><%:system routing table%></legend>
+        <ul><li class="border-line bottom"></li></ul>
+        <ul id="routeSysUl" class="gridToolBar">
+			<li gridtype="refresh" class="refresh" onclick="refreshSystemRoutes()"><i></i><span><%:refresh%></span></li>
+        </ul>
+        <table id="system-routes"></table>
+    </fieldset>
+    <div id="Help" class="Help"><p class="helpTop">
+		<span class="helpDes"><%:help%></span>
+        <i class="helpClose" onclick="clickHelp(1)"></i></p>
+        <div class="helpDetail"><ul id="routeTableHelp" class="help">
+				<li class="title"><%:routing function help%></li>
+				<li class="title"><%:destination net address%></li>
+				<li class="content"><%:The address the packet needs to arrive at%></li>
+				<li class="title"><%:subnet mask%></li>
+				<li class="content"><%:Subnet mask of destination address%></li>
+				<li class="title"><%:next hop address%></li>
+				<li class="content"><%:next router address help%></li>
+    </ul></div></div>
+</fieldset>
+<%+footer%>
+<script>
+    // global vars
+    var static_routers;
+    var sys_routers;
+    var errTipDoc;
+    var Drag =  document.getElementById("Help");
+
+    // page load functions
+    getStaticRouter();
+    refreshSystemRoutes();
+    dragFunc(Drag);
+
+    // router get interfaces
+    function getStaticRouter() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "advancednew","get_static_routing")%>', null,
+            function(x, result) {
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if(result!=null&&result.code == 0) {
+                    console.log("getStaticRouter",result);
+                    document.getElementById("delSelUn").style.display='';
+                    document.getElementById("delSel").style.display='none';
+                    if ($.isEmptyObject(result.routers)){
+                        document.getElementById("delAllUn").style.display='';
+                        document.getElementById("delAll").style.display='none';
+                    } else {
+                        document.getElementById("delAllUn").style.display='none';
+                        document.getElementById("delAll").style.display='';
+                    }
+                    var routers = result.routers;
+                    static_routers = result.routers;
+					var html = '<tr><th><input type="checkbox" id="cb-all" onchange="cbAll()"></th><th><%:destination net address%></th><th><%:subnet mask%></th><th><%:next hop address%></th><th><%:edit%></th></tr>';
+                    if (routers == '') {
+                        html += 'routers is null';
+                    } else {
+                        for(var i in routers){
+                            html += '<tr><td><input type="checkbox" id="cb-'+i+'" onchange="checkTd('+i+')"></td><td id="targetaddr-'+i+'">'+routers[i].targetaddr+'</td><td id="netmask-'+i+'">'+routers[i].netmask+'</td><td id="nextaddr-'+i+'">'+
+                                routers[i].nextaddr+'</td><td style="cursor: pointer;" onclick="editStaticRouter('+i+')"><i class="edit"></i></td></tr>';
+                        }
+                    }
+                    html +='<tr id="static-routes-add"></tr>';
+                    setTableInnerHTML(document.getElementById('static-router'),html);
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    function refreshSystemRoutes() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "advancednew","get_routing_table")%>', null,
+            function(x, result) {
+                console.log("refreshSystemRoutes",result);
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if(result!=null&&result.code == 0) {
+                    var routers = result.routers;
+                    sys_routers = result.routers;
+					var html = '<tr><th><%:destination net address%></th><th><%:subnet mask%></th><th><%:next hop address%></th><th><%:interface%></th></tr>';
+                    html += '<tr>';
+                    if (routers == null) {
+                        html += 'routers is null';
+                    } else {
+                        for(var i in routers){
+                            html += '<td>'+routers[i].targetaddr+'</td><td>'+routers[i].netmask+'</td><td>'+
+                                routers[i].nextaddr+'</td><td>'+routers[i].ifacetype+'</td>';
+                            html += '</tr><tr>';
+                        }
+                    }
+                    html +="</tr>";
+                    setTableInnerHTML(document.getElementById('system-routes'),html);
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // router set interfaces
+    function saveStaticRoute() {
+        var targetaddr = document.getElementById('add-targetaddr').value;
+        var err = document.getElementById('Error');
+        var text = err.getElementsByTagName('span')[0];
+        for (var i=0; i<sys_routers.length; i++) {
+            if (sys_routers[i].targetaddr == targetaddr) {
+				text.innerText = '<%:already in the system routing table%>';
+                err.style.visibility = 'visible';
+                return;
+            }
+        }
+        var netmask = document.getElementById('add-netmask').value;
+        var nextaddr = document.getElementById('add-nextaddr').value;
+        if (!isValidIP(targetaddr)) {
+			text.innerText = '<%:Destination network address is not valid%>';
+            document.getElementById("Error").style.visibility = 'visible';
+            errTipDoc = document.getElementById('add-targetaddr');
+            return;
+        }else if (!routerMaskLim(netmask)) {
+			text.innerText = '<%:Subnet mask is not valid%>';
+            document.getElementById("Error").style.visibility = 'visible';
+            errTipDoc = document.getElementById('add-netmask');
+            return;
+        }else if (!isValidIP(nextaddr)) {
+			text.innerText = '<%:Next hop address error%>';
+            document.getElementById("Error").style.visibility = 'visible';
+            errTipDoc = document.getElementById('add-nextaddr');
+            return;
+        }
+        var route = {'targetaddr':targetaddr, 'netmask':netmask, 'nextaddr':nextaddr};
+        console.log(static_routers);
+        var routers_array = [];
+        for (i in static_routers) {
+            routers_array.push(static_routers[i])
+        }
+        routers_array.push(route);
+        var params = {'routers':routers_array};
+        console.log(params);
+        XHR.post('<%=luci.dispatcher.build_url("admin", "advancednew","set_static_routing")%>', params,
+            function(x, result) {
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if(result!=null&&result.code == 0) {
+                    console.log(result);
+                    this.getStaticRouter();
+                    this.refreshSystemRoutes();
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    function deleteSelectedStaticRoutes() {
+        var cb_id;
+        var cb;
+        var static_routers_deleted = [];
+        for (var i in static_routers) {
+            cb_id = 'cb-'+i;
+            cb = document.getElementById(cb_id);
+            if (cb.checked != true) {
+                static_routers_deleted.push(static_routers[i]);
+            }
+        }
+        var params = {'routers':static_routers_deleted};
+        console.log(params);
+        XHR.post('<%=luci.dispatcher.build_url("admin", "advancednew","set_static_routing")%>', params,
+            function(x, result) {
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if(result!=null&&result.code == 0) {
+                    console.log(result);
+                    this.getStaticRouter();
+                    this.refreshSystemRoutes();
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+					text.innerText = '<%:delete successfully%>';
+                    err.style.visibility = 'visible';
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    function deleteAllStaticRoutes() {
+        var params = {'routers':[]};
+        XHR.post('<%=luci.dispatcher.build_url("admin", "advancednew","set_static_routing")%>', params,
+            function(x, result) {
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if(result!=null&&result.code == 0) {
+                    console.log(result);
+                    this.getStaticRouter();
+                    this.refreshSystemRoutes();
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+					text.innerText = '<%:delete successfully%>';
+                    err.style.visibility = 'visible';
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // other button functions
+    function addStaticRouteTr() {
+        getStaticRouter();
+        setTimeout(function(){
+            var html = '<td></td><td><input id="add-targetaddr" onkeyup="nStrLimit(this)" maxlength="15"></td><td><input id="add-netmask" onkeyup="nStrLimit(this)" maxlength="15"></td><td>'+
+                '<input id="add-nextaddr" onkeyup="nStrLimit(this)" maxlength="15"></td><td><button class="mac-cancel" onclick="getStaticRouter()"><%:cancel%></button><br><button class="mac-save"  onclick="saveStaticRoute()"><%:save%></button></td>';
+            setTrInnerHTML(document.getElementById('static-routes-add'),html);
+        },600);
+    }
+
+    function editStaticRouter(i) {
+        getStaticRouter();
+        setTimeout(function(){
+            console.log(i);
+            var editHtml = '<td><input type="checkbox" id="cb-'+i+'" onchange="checkTd('+i+')"></td><td><input id="add-targetaddr"  onkeyup="nStrLimit(this)" maxlength="15" value="'+static_routers[i].targetaddr+'"></td><td><input id="add-netmask" onkeyup="nStrLimit(this)" maxlength="15" value="'+static_routers[i].netmask+'"></td><td>'+
+                '<input id="add-nextaddr"  onkeyup="nStrLimit(this)" maxlength="15"value="'+static_routers[i].nextaddr+'"></td><td><button class="mac-cancel" onclick="getStaticRouter()"><%:cancel%></button><br><button  class="mac-save" onclick="modifyStaticRouter('+i+')"><%:save%></button></td>';
+            var table = document.getElementById("static-router");
+            i +=1;
+            setTrInnerHTML(table.rows[i],editHtml);
+        },600);
+    }
+
+    function modifyStaticRouter(i) {
+        var targetaddr = document.getElementById('add-targetaddr').value;
+        var err = document.getElementById('Error');
+        var text = err.getElementsByTagName('span')[0];
+        for (var j=0; j<sys_routers.length; j++) {
+            if (sys_routers[j].targetaddr == targetaddr) {
+				text.innerText = '<%:already in the system routing table%>';
+                err.style.visibility = 'visible';
+                return;
+            }
+        }
+        var netmask = document.getElementById('add-netmask').value;
+        var nextaddr = document.getElementById('add-nextaddr').value;
+        if (!isValidIP(targetaddr)) {
+			text.innerText = '<%:Destination network address is not valid%>';
+            document.getElementById("Error").style.visibility = 'visible';
+            errTipDoc = document.getElementById('add-targetaddr');
+            return;
+        }else if (!lannetMaskLimit(netmask)) {
+			text.innerText = '<%:Subnet mask is not valid%>';
+            document.getElementById("Error").style.visibility = 'visible';
+            errTipDoc = document.getElementById('add-netmask');
+            return;
+        }else if (!isValidIP(nextaddr)) {
+			text.innerText = '<%:Next hop address error%>';
+            document.getElementById("Error").style.visibility = 'visible';
+            errTipDoc = document.getElementById('add-nextaddr');
+            return;
+        }
+        console.log("i",i);
+        static_routers[i].targetaddr = targetaddr;
+        static_routers[i].netmask = netmask;
+        static_routers[i].nextaddr = nextaddr;
+        var params = {'routers':static_routers};
+        console.log(params);
+        XHR.post('<%=luci.dispatcher.build_url("admin", "advancednew","set_static_routing")%>', params,
+            function(x, result) {
+                if (result==null) {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    err.style.visibility = 'visible';
+					text.innerText = '<%:router connection failure%>';
+                }else if(result!=null&&result.code == 0) {
+                    console.log(result);
+                    getStaticRouter();
+                    refreshSystemRoutes();
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+					text.innerText = '<%:modify successfully%>';
+                    err.style.visibility = 'visible';
+                } else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = result.msg;
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // page functions
+    function cbAll() {
+        var cb_all = document.getElementById('cb-all');
+        if (cb_all.checked == true) {
+            for (var i in static_routers) {
+                var cb_id = 'cb-'+i;
+                var cb = document.getElementById(cb_id);
+                cb.checked = true;
+                document.getElementById("delSel").style.display="";
+                document.getElementById("delSelUn").style.display="none";
+            }
+        } else {
+            for (var i in static_routers) {
+                var cb_id = 'cb-'+i;
+                var cb = document.getElementById(cb_id);
+                cb.checked = false;
+                document.getElementById("delSel").style.display="none";
+                document.getElementById("delSelUn").style.display="";
+            }
+        }
+    }
+
+    function checkTd(i) {
+        for (i in static_routers){
+            var chekedItem = document.getElementById("cb-"+i);
+            if (chekedItem!=null&&chekedItem!="") {
+                if (chekedItem.checked == true){
+                    document.getElementById("delSel").style.display="";
+                    document.getElementById("delSelUn").style.display="none";
+                    return;
+                }else {
+                    document.getElementById("delSel").style.display="none";
+                    document.getElementById("delSelUn").style.display="";
+                }
+            }
+        }
+
+    }
+</script>

@@ -1,0 +1,643 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2009-12-21 23:08+0200\n"
+"PO-Revision-Date: 2015-04-23 13:49+0800\n"
+"Last-Translator: yanze.zhang<yanze.zhang@siflower.com.cn>\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 1.7.5\n"
+
+msgid "Main"
+msgstr "首页"
+
+msgid "Secure"
+msgstr "安全"
+
+msgid "token expire"
+msgstr "Token过期，请重新登录！"
+
+msgid "safty exit"
+msgstr "安全退出"
+
+msgid "ping intro"
+msgstr "如果指定IP无法访问，系统将会在到达阈值后重启"
+
+msgid "time intro"
+msgstr "第一次启动本地时间并未和网络时间同步，"
+
+msgid "time intro 2"
+msgstr "设置NTP服务器，系统会在可以上网的时候自动同步网络时间。"
+
+msgid "browse"
+msgstr "浏览"
+
+msgid "view system log"
+msgstr "查看系统日志"
+
+msgid "display password"
+msgstr "显示密码"
+
+msgid "led intro"
+msgstr "设置后按下面板led键，会控制WiFi开关。"
+
+msgid "Seconds (30-300)"
+msgstr "秒(30-300)"
+
+msgid "Seconds (10-300)"
+msgstr "秒(10-300)"
+
+msgid "Seconds (60-300)"
+msgstr "秒(60-300)"
+
+msgid "mac filter title"
+msgstr "MAC地址过滤设置"
+
+msgid "filter intro"
+msgstr "打开网络过滤功能，不在名单中的mac地址无法连接网络"
+
+msgid "unbounding"
+msgstr "未绑定"
+
+msgid "client intro"
+msgstr "同一时间可以连接的最大设备数"
+
+msgid "beacon intro"
+msgstr "Beacon帧用于广播告知无线网络的ssid信息"
+
+msgid "tx intro"
+msgstr "AP发射功率。"
+
+msgid "signal intro"
+msgstr "数据信号传输的频道，自动的情况下将根据周围环境选择一个最佳的频道。"
+
+msgid "channel intro"
+msgstr "设置无线数据传输带宽。"
+
+msgid "wireless mode intro"
+msgstr "设置ap无线网络工作模式。"
+
+msgid "Employee network introduce"
+msgstr "员工网络：一般无线网络。"
+
+msgid "Visitor network introduce"
+msgstr "访客网络：访客网络中的设备无法访问其他网络中的设备，此功能在不同ap之间无效。"
+
+msgid "Isolate introduce"
+msgstr "启用后，连接在同一个无线网络下的设备无法互相通讯，此功能在不同ap之间无效。"
+
+msgid "network Isolate introduce"
+msgstr "启用后，连接在不同无线网络下的设备无法互相通讯，此功能在不同ap之间无效。"
+
+msgid "WiFi stop broadcasting when disable"
+msgstr "关闭后wifi停止广播，无法被设备搜索到"
+
+msgid "set"
+msgstr "设置"
+
+msgid "confirm"
+msgstr "确认"
+
+msgid "broadcast"
+msgstr "无线广播"
+
+msgid "set successfully"
+msgstr "设置成功"
+
+msgid "device info"
+msgstr "设备信息"
+
+msgid "device model"
+msgstr "设备型号"
+
+msgid "current system time"
+msgstr "当前系统时间"
+
+msgid "system runtime"
+msgstr "系统运行时间"
+
+msgid "wireless param"
+msgstr "无线参数"
+
+msgid "wireless mode"
+msgstr "无线模式"
+
+msgid "band bandwidth"
+msgstr "频段带宽"
+
+msgid "wireless service"
+msgstr "无线服务"
+
+msgid "network name encoding"
+msgstr "网络名称编码"
+
+msgid "network type"
+msgstr "网络类型"
+
+msgid "employee network"
+msgstr "员工网络"
+
+msgid "visitor network"
+msgstr "访客网络"
+
+msgid "encryption"
+msgstr "加密方式"
+
+msgid "not encrypt"
+msgstr "不加密"
+
+msgid "set password"
+msgstr "密码"
+
+msgid "wireless internal isolation"
+msgstr "无线网络内部隔离"
+
+msgid "enable"
+msgstr "启用"
+
+msgid "disable"
+msgstr "禁用"
+
+msgid "auto"
+msgstr "自动"
+
+msgid "Enable/disable this network"
+msgstr "启用/禁用"
+
+msgid "wireless client"
+msgstr "无线客户端"
+
+msgid "index"
+msgstr "序号"
+
+msgid "Access Wireless SSID"
+msgstr "接入无线网络"
+
+msgid "Access time"
+msgstr "接入时间"
+
+msgid "changing"
+msgstr "切换中"
+
+msgid "Please enter wireless name"
+msgstr "请输入无线名称"
+
+msgid "wireless name length error"
+msgstr "无线名称长度过长"
+
+msgid "wireless name characters error"
+msgstr "无线名称中中文字符不能超过10个"
+
+msgid "wireless password error"
+msgstr "设置密码不能小于8位"
+
+msgid "Connection failed, please try again"
+msgstr "连接失败，请重试"
+
+msgid "Setting failed"
+msgstr "设置失败"
+
+msgid "add successfully"
+msgstr "添加成功"
+
+msgid "wireless MAC address filter"
+msgstr "无线MAC地址过滤"
+
+msgid "Enable wireless MAC address filter"
+msgstr "启用无线MAC地址过滤"
+
+msgid "mac address filter function"
+msgstr "的MAC地址过滤功能，仅允许规则列表中的MAC地址接入对应无线网络"
+
+msgid "wireless MAC address filter rule settings"
+msgstr "无线MAC地址过滤规则设置"
+
+msgid "effective range"
+msgstr "生效范围"
+
+msgid "remarks"
+msgstr "备注"
+
+msgid "VLAN setting"
+msgstr "VLAN设置"
+
+msgid "wireless network and VLAN binding"
+msgstr "无线网络与VLAN绑定"
+
+msgid "VLAN binding intro"
+msgstr "启用此功能后，可以设置与当前无线网络关联的VLAN，并且当前无线网络下的主机将无法与其他VLAN中的设备通信"
+
+msgid "VLAN binding intro note"
+msgstr "(注意:无法设置WLAN ID为0/1/2的网络)"
+
+msgid "add"
+msgstr "新增"
+
+msgid "delete"
+msgstr "删除"
+
+msgid "The MAC address list is empty"
+msgstr "MAC地址列表为空"
+
+msgid "MAC address format is not legal"
+msgstr "MAC地址格式不合法"
+
+msgid "Please select the filter effective range"
+msgstr "请选择过滤生效范围"
+
+msgid "add failure"
+msgstr "添加失败"
+
+msgid "successfully delete"
+msgstr "删除成功"
+
+msgid "Delete failed"
+msgstr "删除失败"
+
+msgid "filter rule cannot be empty"
+msgstr "启用MAC地址过滤时，过滤规则不能为空"
+
+msgid "MAC address filter conflict"
+msgstr "操作失败，当前条目与现有条目冲突！"
+
+msgid "illegal ssid"
+msgstr "存在不合法的ssid，请检查输入"
+
+msgid "Connection to router failed"
+msgstr "连接路由器失败"
+
+msgid "successfully set"
+msgstr "设置成功"
+
+msgid "VLAN ID cannot be empty"
+msgstr "启用无线与VLAN绑定时，VLAN ID不能为空"
+
+msgid "Invalid vlanID"
+msgstr "无效的vlanID，请确保其值在3-4049之间"
+
+msgid "fail to modify"
+msgstr "修改失败"
+
+msgid "get data failed"
+msgstr "获取失败"
+
+msgid "cancel"
+msgstr "取消"
+
+msgid "device management"
+msgstr "设备管理"
+
+msgid "subnet mask"
+msgstr "子网掩码"
+
+msgid "default gateway"
+msgstr "默认网关"
+
+msgid "LED switch"
+msgstr "LED开关"
+
+msgid "enable WiFi control"
+msgstr "启用WiFi控制功能"
+
+msgid "WEB service port"
+msgstr "WEB服务端口"
+
+msgid "WEB session timeout"
+msgstr "WEB会话超时时间"
+
+msgid "account management"
+msgstr "账号管理"
+
+msgid "original password"
+msgstr "原密码"
+
+msgid "set password"
+msgstr "设置密码"
+
+msgid "confirm password"
+msgstr "确认密码"
+
+msgid "system log"
+msgstr "系统日志"
+
+msgid "view"
+msgstr "查看"
+
+msgid "download system log"
+msgstr "下载系统日志"
+
+msgid "download"
+msgstr "下载"
+
+msgid "Language set"
+msgstr "语言设置"
+
+msgid "language"
+msgstr "语言"
+
+msgid "time setting"
+msgstr "时间设置"
+
+msgid "time zone"
+msgstr "时区"
+
+msgid "date"
+msgstr "日期"
+
+msgid "time"
+msgstr "时间"
+
+msgid "prefered NTP server"
+msgstr "首选NTP服务器"
+
+msgid "alternate NTP server"
+msgstr "备用NTP服务器"
+
+msgid "configuration management"
+msgstr "配置管理"
+
+msgid "export configuration"
+msgstr "导出配置"
+
+msgid "export"
+msgstr "导出"
+
+msgid "import configuration"
+msgstr "导入配置"
+
+msgid "import"
+msgstr "导入"
+
+msgid "factory reset"
+msgstr "恢复出厂配置"
+
+msgid "reboot"
+msgstr "重启设备"
+
+msgid "restart"
+msgstr "重启"
+
+msgid "software upgrade"
+msgstr "软件升级"
+
+msgid "current hardware version"
+msgstr "当前硬件版本"
+
+msgid "current software version"
+msgstr "当前软件版本"
+
+msgid "hardware version"
+msgstr "硬件版本"
+
+msgid "software version"
+msgstr "软件版本"
+
+msgid "Upgrading，please wait..."
+msgstr "正在升级，请稍等..."
+
+msgid "Ping watchdog"
+msgstr "Ping看门狗"
+
+msgid "destination IP address"
+msgstr "目标IP地址"
+
+msgid "contract period"
+msgstr "发包周期"
+
+msgid "start delay"
+msgstr "启动延迟"
+
+msgid "maxinum number of lost packets"
+msgstr "最大丢包数"
+
+msgid "IP address is invalid"
+msgstr "IP地址非法，请重新输入"
+
+msgid "Subnet mask is not valid"
+msgstr "子网掩码不合法，请重新输入"
+
+msgid "Gateway error"
+msgstr "网关错误，请重新输入"
+
+msgid "port range 1-65535"
+msgstr "端口范围 1-65535"
+
+msgid "The port number range error"
+msgstr "端口号范围限制在1-65535"
+
+msgid "Port number cannot be empty"
+msgstr "端口号不能为空！"
+
+msgid "WEB session timeout error"
+msgstr "WEB会话超时时间应该控制在30-300秒以内"
+
+msgid "redirecting, please wait"
+msgstr "正在跳转，请稍候... "
+
+msgid "The original password cannot be empty"
+msgstr "原始密码不能为空"
+
+msgid "New password length error"
+msgstr "新密码长度不能少于6位"
+
+msgid "Two password input inconsistent!"
+msgstr "两次密码输入不一致"
+
+msgid "old password is incorrect"
+msgstr "原密码错误，请重新输入"
+
+msgid "log contents"
+msgstr "日志内容"
+
+msgid "Recovering, please wait..."
+msgstr "正在恢复，请稍候..."
+
+msgid "Factory reset failed"
+msgstr "恢复出厂设置失败"
+
+msgid "Reset is underway, please wait..."
+msgstr "正在重启，请稍后..."
+
+msgid "The preferred NTP server cannot be empty"
+msgstr "首选NTP服务器不能为空"
+
+msgid "Not legal domain name or IP"
+msgstr "不是合法域名或IP，请重新输入！"
+
+msgid "Please select load profile first"
+msgstr "请先选择载入配置文件"
+
+msgid "File type illegal! Please reselect"
+msgstr "文件类型非法！请重新选择"
+
+msgid "Please wait while configuration is underway..."
+msgstr "正在配置，请稍候..."
+
+msgid "Configured successfully"
+msgstr "配置成功，请在网络重启后手动跳转IP地址！"
+
+msgid "Please select upgrade image first"
+msgstr "请先选择升级版本镜像"
+
+msgid "Image files are illegal"
+msgstr "镜像文件不合法"
+
+msgid "Upgrade error"
+msgstr "升级出错"
+
+msgid "Is being upgraded, please wait a moment..."
+msgstr "正在升级，请稍后..."
+
+msgid "The IP address is invalid. Please input again"
+msgstr "IP地址非法，请重新输入"
+
+msgid "The contract period is limited to 10-300 seconds"
+msgstr "发包周期限定在10-300秒内"
+
+msgid "The startup delay is limited to 60-300 seconds"
+msgstr "启动延迟限定在60-300秒内"
+
+msgid "The number of bags allowed is limited to 1-65535"
+msgstr "允许丢包数限定在1-65535内"
+
+msgid "Are you sure to restore factory Settings"
+msgstr "是否确定恢复出厂设置"
+
+msgid "Are you sure to restart the panel"
+msgstr "是否确定重启面板"
+
+msgid "Are you sure to confirm import configuration"
+msgstr "是否确定导入配置"
+
+msgid "setting the IP address confirm"
+msgstr "设置ip地址后，pc必须在统一网段才能访问管理页面（可设置pc的IP地址为192.168.4.xxx，通过192.168.4.252访问），是否确认设置"
+
+msgid "wireless internal network isolation"
+msgstr "无线内部网络隔离"
+
+msgid "wireless channel"
+msgstr "无线信道"
+
+msgid "signal strength"
+msgstr "信号强度"
+
+msgid "low"
+msgstr "低"
+
+msgid "middle"
+msgstr "中"
+
+msgid "high"
+msgstr "高"
+
+msgid "Beacon time slot"
+msgstr "Beacon时槽"
+
+msgid "Milliseconds 40-1000"
+msgstr "40-1000毫秒"
+
+msgid "Client limitations"
+msgstr "客户端限制"
+
+msgid "Prohibit signal strength below"
+msgstr "禁止信号强度低于"
+
+msgid "DBm wireless client access range error"
+msgstr "dBm的无线客户端接入(-90dBm~-30dBm,建议小于-40dbm)"
+
+msgid "The kick signal strength is lower than"
+msgstr "踢除信号强度低于"
+
+msgid "Wireless client of dBm"
+msgstr "dBm的无线客户端(-90dBm~-30dBm,建议小于-40dbm)"
+
+msgid "Isolation between wireless networks"
+msgstr "无线网络间隔离"
+
+msgid "Wireless network name cannot be empty"
+msgstr "无线网络名称不能为空"
+
+msgid "Cannot set duplicate wireless network name"
+msgstr "不能设置重复无线网络名称"
+
+msgid "Set 2.4g wireless network to no more than 4"
+msgstr "设置2.4G无线网络不能超过4个"
+
+msgid "Set up 5G wireless network to no more than 4"
+msgstr "设置5G无线网络不能超过4个"
+
+msgid "The transmission power range is 0-20dbm"
+msgstr "发射功率范围为0-20dbm"
+
+msgid "Beacon time slots range from 40 to 1000 milliseconds"
+msgstr "Beacon时槽范围为40-1000毫秒"
+
+msgid "The client limit is 1-40"
+msgstr "客户端限制范围为1-40个"
+
+msgid "The signal strength must not be empty"
+msgstr "禁止信号强度不能为空"
+
+msgid "The wireless client access range error"
+msgstr "无线客户端接入范围在-90dBM~-30dBm之间，建议不大于-40dbm！"
+
+msgid "The kick signal strength cannot be empty"
+msgstr "踢除信号强度不能为空"
+
+msgid "Wireless client ban signal strength range error"
+msgstr "无线客户端禁止信号强度范围至少比踢除信号强度高5dbm！"
+
+msgid "wireless client ban signal strength range should be enable"
+msgstr "应该启用禁止信号强度低于一定值的无线客户端接入的功能！"
+
+msgid "input password invalid"
+msgstr "输入的密码不合法"
+
+msgid "wifi number reach limit"
+msgstr "WIFI数目达到限制"
+
+msgid "gateway and LAN not in the same segment"
+msgstr "网关和LAN口不在同一网段"
+
+msgid "upload image type error"
+msgstr "上传镜像类型错误"
+
+msgid "unknown command"
+msgstr "未知操作"
+
+msgid "input param  error"
+msgstr "传入参数不合法"
+
+msgid "input mac address invalid"
+msgstr "MAC地址不合法"
+
+msgid "Intelligent DHCP"
+msgster "智能DHCP服务器"
+
+msgid "enable DHCP control"
+msgster "启用"
+
+msgid "Connection mode"
+msgster "连接方式"
+
+msgid "Dynamic ip"
+msgster "动态ip"
+
+msgid "Static ip"
+msgster "静态ip"
+
+msgid "default DNS"
+msgster "默认DNS服务器"
+
+msgid "standby DNS"
+msgster "备用DNS服务器"
+
+msgid "defaultDNS error"
+msgster "默认DNS服务器非法"
+
+msgid "standbyDNS error"
+msgster "备用DNS服务器非法"

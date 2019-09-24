@@ -1,0 +1,662 @@
+<%+header%>
+<fieldset class="wds">
+    <legend>WDS无线桥接</legend>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>>
+            <span class="detail">连接失败，请重试</span>
+            <input class="subBtn" value="确 定" type="button" onclick="closeTip()">
+        </div>
+    </div>
+    <li class="border-line"></li>
+    <div id="waiting" class="block" style="display: none">
+        <div class="LoadConCover">
+            <div class="coverLoadCon">
+                <div class="coverLoad">
+                    <i class="coverLoadClose" onclick="coverClose()"></i>
+                    <i class="coverLoading" ></i>
+                    <p id="waitTipNote" class="coverLoadNote">正在扫描，请稍等...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--<div style="display: none" id="guide-open" class="wds-guide">
+        <ul>
+            <li><button onclick="resetWDS()">重置WDS</button></li>
+            <li><input id="main-enable-display" type="checkbox" ></li>
+            <li><p>主路由器无线名称：</p></li>
+            <li><p>主路由器无线密码：</p></li>
+            <li><p>信道：</p></li>
+        </ul>
+        <ul>
+            <li></li>
+            <li class="no-pad"><p>已启用</p></li>
+            <li><input id="main-ssid-display"></li>
+            <li><input id="main-key-display"></li>
+            <li><input id="main-channel-display"></li>
+            <li><button onclick="resetMain()">保存</button></li>
+        </ul>
+    </div>-->
+    <div id="guide-wds" class="block" style="display: none">
+        <div class="WDSFNote">
+            <p class="WDSTitle">WDS组网向导</p>
+            <ul class="WDSFNote">
+                <li class="WDSFNoteF">通过WDS功能，主、从路由器之间可以通过无线进行桥接，以扩展无线网络的覆盖范围。</li>
+                <li>开启WDS功能之后，本路由器将作为从路由器进行WDS组网。</li>
+            </ul>
+        </div>
+        <div class="WDSBlockFuncA">
+            <input id="back" value="返回" class="btnA subBtn" style="display: inline;display: none" type="button" onclick="hideParts(['guide-wds']);showParts(['guide-open'])">
+            <input id="next" value="下一步" class="btnA subBtn" type="button" onclick="hideParts(['guide-wds']);showParts(['band-select'])">
+        </div>
+    </div>
+    <div id="band-select" class="block" style="display: none">
+        <div class="WDSFNote">
+            <p class="WDSTitle"><span>请选择一个网络</span><i class="helpClose" onclick="closeTipAnother(0)"></i></p>
+            <table  class="tb-no-border">
+                <tr><td><button onclick="getWifiScan('2.4G')">2.4G</button><button onclick="getWifiScan('5G')">5G</button></td></tr>
+            </table>
+        </div>
+    </div>
+    <div id="inputPwd" class="hsVignetteCon" style="display: none;">
+        <div class="hsVignette hsVigWDS">
+            <p class="hsVigTtop"><i class="hsVigClose" onclick="closeInputPwd()"></i></p>
+            <p class="hsVigWDSPWD">请输入主路由器的无线密码</p>
+            <ul class="gridLine gridLineA hsVigWDSPWD">
+                <li class="textConA textCon" style="">
+                    <input id="key" class="textA text hoverBd"  onkeyup="nStrLimit(this)" maxlength="63">
+                </li>
+                <input id="WDSMHPwd" value="下一步" class="btnA subBtn" type="button" onclick="wifiConnect()">
+            </ul>
+        </div>
+    </div>
+    <table id="24g" style="display: none;margin-top: 15px;">
+    </table>
+    <table id="5g" style="display: none;margin-top: 15px;">
+    </table>
+    <div id="logTblpagIngList" class="pageListPo" style="overflow: hidden; display: none;">
+        <span class="pageArrow pageArrowLa" id="logTblpagIngListlistArrowL" onclick="goToEnd()"></span>
+        <span class="pageArrow pageArrowL" id="logListlistArrowL" onclick="toNextPage()"></span>
+        <div class="pageListContent">
+            <div class="pageListDiv" id="logTblpagIngListlistDiv" style="margin-left: 0px;">
+            </div>
+        </div>
+        <span class="pageArrow pageArrowR" id="logListlistArrowR" onclick="toBackPage()"></span>
+        <span class="pageArrow pageArrowFi" id="logTblpagIngListlistArrowR" onclick="backToStart()"></span>
+    </div>
+    <div style="display: none" id="wds-this-settings" class="wds-this-settings">
+        <p class="WDSTitle">请设置本路由器的无线参数</p>
+        <table class="tb-no-border">
+            <tr><td class="wds-td2-left">无线网络名称:</td><td class="wds-td2-right"><input id="settings-ssid" maxlength="32"></td></tr>
+            <tr><td class="wds-td2-left">无线密码:</td><td class="wds-td2-right"><input id="settings-key" onkeyup="nStrLimit(this)" maxlength="63"></td></tr>
+            <tr><td class="wds-td2-left"><button onclick="hideParts(['wds-this-settings']);showParts(['band-select'])">上一步</button></td><td class="wds-td2-right"><button onclick="setWifiIfaceAndEnableWDS()">下一步</button></td></tr>
+        </table>
+    </div>
+    <div style="display: none" id="wds-infos" class="wds-infos">
+        <p class="WDSTitle"><span>WDS组网信息</span></p>
+        <table class="tb-no-border">
+            <tr><td colspan="2">主路由器</td></tr>
+            <tr><td class="wds-td2-left">无线网络名称：</td><td class="wds-td2-right"><span id="main-ssid"></span></td></tr>
+            <tr><td class="wds-td2-left">无线密码：</td><td class="wds-td2-right"><span id="main-key"></span></td></tr>
+            <tr><td colspan="2">本路由器</td></tr>
+            <tr><td class="wds-td2-left">无线网络名称：</td><td class="wds-td2-right"><span id="this-ssid"></span></td></tr>
+            <tr><td class="wds-td2-left">无线密码：</td><td class="wds-td2-right"><span id="this-key"></span></td></tr>
+            <tr><td class="wds-td2-left">LAN口IP地址：</td><td class="wds-td2-right"><span id="lan-ip"></span></td></tr>
+            <tr><td colspan="2"><button id="finish-btn" onclick="disableWDS()">关闭WDS</button></td></tr>
+        </table>
+    </div>
+</fieldset>
+<%+footer%>
+<script>
+    // global vars
+    var wifis_24g;
+    var wifis_5g;
+    var selectedWifiIndex;
+    var global_band;
+    var wanip;
+    var ssid;
+    var channel;
+    var encryption;
+    /*page*/
+    var wdsNum = 0;
+    var currentPage = 0;
+    var toEnd = false;
+    var toStart = false;
+
+    // page load functions
+    getWdsInfo();
+
+    // router get interfaces
+    function getWdsInfo() {
+        /*XHR.get('<%=luci.dispatcher.build_url("admin", "wirelessnew","get_wds_info")%>', null,
+            function(x, result) {
+                console.log(result);
+                if (result) {
+                    var thisIndex = 0;
+                    var mainIndex;
+                    if (result.info[thisIndex].enable == 1) {
+                        mainIndex = thisIndex+2;
+                        document.getElementById('main-enable-display').checked = result.info[thisIndex].enable;
+                        if (result.info[mainIndex].ssid != undefined) {
+                            document.getElementById('main-ssid-display').value = result.info[mainIndex].ssid;
+                        }
+                        if (result.info[mainIndex].key != undefined) {
+                            document.getElementById('main-key-display').value = result.info[mainIndex].key;
+                        }
+                        if (result.info[mainIndex].channel != undefined) {
+                            document.getElementById('main-channel-display').value = result.info[mainIndex].channel;
+                        }
+                        document.getElementById('guide-open').style.display = '';
+                    } else if (result.info[thisIndex+1].enable == 1) {
+                        mainIndex = thisIndex+3;
+                        document.getElementById('main-enable-display').checked = result.info[thisIndex+1].enable;
+                        if (result.info[mainIndex].ssid != undefined) {
+                            document.getElementById('main-ssid-display').value = result.info[mainIndex].ssid;
+                        }
+                        if (result.info[mainIndex].key != undefined) {
+                            document.getElementById('main-key-display').value = result.info[mainIndex].key;
+                        }
+                        if (result.info[mainIndex].channel != undefined) {
+                            document.getElementById('main-channel-display').value = result.info[mainIndex].channel;
+                        }
+                        document.getElementById('guide-open').style.display = '';
+                    } else {
+                        document.getElementById('guide-wds').style.display = '';
+                    }
+                } else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '获取信息失败，请重试！';
+                    err.style.visibility = 'visible';
+                }
+            });*/
+        XHR.get('<%=luci.dispatcher.build_url("admin", "wirelessnew","get_wds_info")%>', null,
+            function(x, result) {
+                console.log(result);
+                if (result.code == 0) {
+                    if (result.info[0].enable == 1) {
+                        document.getElementById('this-ssid').innerText = result.info[0].ssid;
+                        document.getElementById('this-key').innerText = result.info[0].key;
+                        document.getElementById('main-ssid').innerText = result.info[2].ssid;
+                        document.getElementById('main-key').innerText = result.info[2].key;
+                        document.getElementById('lan-ip').innerText = result.info[4].lanip;
+                        document.getElementById('wds-infos').style.display = '';
+                    } else if (result.info[1].enable == 1) {
+                        document.getElementById('this-ssid').innerText = result.info[1].ssid;
+                        document.getElementById('this-key').innerText = result.info[1].key;
+                        document.getElementById('main-ssid').innerText = result.info[3].ssid;
+                        document.getElementById('main-key').innerText = result.info[3].key;
+                        document.getElementById('lan-ip').innerText = result.info[4].lanip;
+                        document.getElementById('wds-infos').style.display = '';
+                    } else {
+                        document.getElementById('guide-wds').style.display = '';
+                    }
+                } else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '获取信息失败，请重试！';
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    function getWifiScan(band) {
+        document.getElementById('band-select').style.display = 'none';
+        document.getElementById('waiting').style.display = '';
+        var params = {'band':band};
+        console.log(params);
+        if (band == '2.4G') {
+            global_band = '2.4G';
+            XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","wifi_scan")%>', params,
+                function(x, result) {
+                    document.getElementById('waiting').style.display = 'none';
+                    console.log(result);
+                    if (result!=null&&result.code == 0) {
+                        wifis_24g = result.list;
+                        var noise_24g = result.noise;
+                        var q;
+                        console.log(wifis_24g);
+                        wifis_24g = signalSort(wifis_24g);
+                        console.log(wifis_24g);
+                        var html_24g = '<tr><th colspan="4"class="WDSTitle">请选择你需要桥接的主路由器<span id="wdsRefreshBtn" class="WDSRefresh" onclick="refreshWifiScan()"><i></i><span>刷新</span></span></th></tr>';
+                        html_24g += '<tr><td>无线网络名称</td><td>信号强度</td><td>加密信息</td><td>选择</td></tr>';
+                        wdsNum = wifis_24g.length;
+                        var signalValue;
+                        for (var i = 0; i<wifis_24g.length; i++) {
+                            q = (-1 * (noise_24g - wifis_24g[i].signal)) / 5;
+                            if (q<1) {
+                                signalValue = 4;
+                            } else if (q<2) {
+                                signalValue = 11;
+                            } else if (q<3) {
+                                signalValue = 18;
+                            } else if (q<4) {
+                                signalValue = 25;
+                            } else {
+                                signalValue = 32;
+                            }
+                            if (i<10) {
+                                html_24g += '<tr><td>'+wifis_24g[i].ssid+'</td><td><i class="signalCon"><i class="signal" style="width: '+signalValue+'px;"></i></i></td><td>'+wifis_24g[i].encryption.description+'</td>'+
+                                    '<td><input id="r-'+i+'" type="radio" name="wifi-24g" onchange="inputPwd('+i+')"></td></tr>'
+                            }else {
+                                html_24g += '<tr style="display: none"><td>'+wifis_24g[i].ssid+'</td><td><i class="signalCon"><i class="signal" style="width: '+signalValue+'px;"></i></i></td><td>'+wifis_24g[i].encryption.description+'</td>'+
+                                    '<td><input id="r-'+i+'" type="radio" name="wifi-24g" onchange="inputPwd('+i+')"></td></tr>'
+                            }
+                        }
+                        var t24g = document.getElementById('24g');
+                        t24g.innerHTML = html_24g;
+                        t24g.style.display = '';
+                        currentPage = 1;
+                        toPageByPNum(currentPage);
+                    }else {
+                        var err = document.getElementById('Error');
+                        var text = err.getElementsByTagName('span')[0];
+                        text.innerText = '扫描失败！';
+                        err.style.visibility = 'visible';
+                    }
+                });
+        } else {
+            global_band = '5G';
+            XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","wifi_scan")%>', params,
+                function(x, result) {
+                    document.getElementById('waiting').style.display = 'none';
+                    console.log(result);
+                    if (result!=null&&result.code == 0) {
+                        wifis_5g = result.list;
+                        var noise_5g = result.noise;
+                        var q;
+                        console.log(wifis_5g);
+                        wifis_5g = signalSort(wifis_5g);
+                        console.log(wifis_5g);
+                        var html_5g = '<tr><th colspan="4" class="WDSTitle">请选择你需要桥接的主路由器<span id="wdsRefreshBtn" class="WDSRefresh" onclick="refreshWifiScan()"><i></i><span>刷新</span></span></th></tr>';
+                        html_5g += '<tr><td>无线网络名称</td><td>信号强度</td><td>加密信息</td><td>选择</td></tr>';
+                        wdsNum = wifis_5g.length;
+                        var signalValue;
+                        for (var i = 0; i<wifis_5g.length; i++) {
+                            q = (-1 * (noise_5g - wifis_5g[i].signal)) / 5;
+                            if (q<1) {
+                                signalValue = 4;
+                            } else if (q<2) {
+                                signalValue = 11;
+                            } else if (q<3) {
+                                signalValue =18;
+                            } else if (q<4) {
+                                signalValue = 25;
+                            } else {
+                                signalValue = 32;
+                            }
+                            if (i<10) {
+                                html_5g += '<tr><td>'+wifis_5g[i].ssid+'</td><td><i class="signalCon"><i class="signal" style="width: '+signalValue+'px;"></i></i></td><td>'+wifis_5g[i].encryption.description+'</td>'+
+                                    '<td><input id="r5-'+i+'" type="radio" name="wifi-5g" onchange="inputPwd5('+i+')"></td></tr>'
+                            }else {
+                                html_5g += '<tr style="display: none"><td>'+wifis_5g[i].ssid+'</td><td><i class="signalCon"><i class="signal" style="width: '+signalValue+'px;"></i></i></td><td>'+wifis_5g[i].encryption.description+'</td>'+
+                                    '<td><input id="r5-'+i+'" type="radio" name="wifi-5g" onchange="inputPwd5('+i+')"></td></tr>'
+                            }
+                        }
+                        var t5g = document.getElementById('5g');
+                        t5g.innerHTML = html_5g;
+                        t5g.style.display = '';
+
+                        currentPage = 1;
+                        toPageByPNum(currentPage);
+                    }else {
+                        var err = document.getElementById('Error');
+                        var text = err.getElementsByTagName('span')[0];
+                        text.innerText = '扫描失败！';
+                        err.style.visibility = 'visible';
+                    }
+                });
+        }
+    }
+
+    function wifiConnect() {
+        var key = document.getElementById('key').value;
+        var params = {'ssid':ssid, 'key':key, 'encryption':'psk2+ccmp', 'channel':channel};
+        var need_redirect = {'redirect':0};
+        console.log(params);
+        document.getElementById('inputPwd').style.display = 'none';
+        document.getElementById("waitTipNote").innerText = "正在连接，请稍等...";
+        document.getElementById('waiting').style.display = '';
+        document.getElementById('settings-ssid').value = ssid;
+        document.getElementById('settings-key').value = key;
+        /*document.getElementById('main-ssid-display').value = ssid;
+        document.getElementById('main-key-display').value = key;
+        document.getElementById('main-channel-display').value = channel;*/
+        XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","wds_disable")%>', need_redirect,
+            function(x, result){
+                console.log(result);
+                if (result!=null&&result.code == 0) {
+                    sleep(3000);
+                    XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","wifi_connect")%>', params,
+                        function(x, result){
+                            console.log(result);
+                            document.getElementById('waiting').style.display = 'none';
+                            wanip = result.ip;
+                            if (wanip == 'nil') {
+                                var err = document.getElementById('Error');
+                                var text = err.getElementsByTagName('span')[0];
+                                text.innerText = '连接失败，请重试！';
+                                err.style.visibility = 'visible';
+                            } else {
+                                document.getElementById('wds-this-settings').style.display = '';
+                                document.getElementById("logTblpagIngList").style.display = 'none';
+                                document.getElementById('24g').style.display = 'none';
+                                document.getElementById('5g').style.display = 'none';
+                            }
+                        });
+                } else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '连接失败，请重试！';
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // router set interfaces
+    function setWifiIfaceAndEnableWDS() {
+	var ifaces = {'band':'', 'key':'', 'ssid':''};
+        ifaces.band = global_band;
+        ifaces.ssid = document.getElementById('settings-ssid').value;
+        ifaces.key = document.getElementById('settings-key').value;
+        XHR.get('<%=luci.dispatcher.build_url("admin", "wirelessnew","get_wds_info")%>', null,
+            function(x, result) {
+                console.log(result);
+                document.getElementById('waiting').style.display = 'none';
+                document.getElementById('wds-this-settings').style.display = 'none';
+                document.getElementById('lan-ip').innerText = result.info[4].lanip;
+                document.getElementById('this-ssid').innerText = ifaces.ssid;
+                document.getElementById('this-key').innerText = ifaces.key;
+                if (result.info[0].enable == 1) {
+                    document.getElementById('main-ssid').innerText = result.info[2].ssid;
+                    document.getElementById('main-key').innerText = result.info[2].key;
+                    document.getElementById('wds-infos').style.display = '';
+                } else if (result.info[1].enable == 1) {
+                    document.getElementById('main-ssid').innerText = result.info[3].ssid;
+                    document.getElementById('main-key').innerText = result.info[3].key;
+                    document.getElementById('wds-infos').style.display = '';
+                } else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '获取信息失败，请重新连接！'
+                    err.style.visibility = 'visible';
+                }
+                var params = {'ip':wanip, 'ifaces':ifaces};
+                XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","wds_enable")%>', params,
+                    function(x, result){
+                        console.log(result);
+                        if (result.code == 0) {
+                            if (result.redirect != 0) {
+                                sleep(3000);
+                                location.href = 'http://'+wanip;
+                            }
+                        }
+                    });
+            });
+    }
+
+    function resetMain() {
+        var enable = document.getElementById('main-enable-display').checked;
+        if (enable) {
+            document.getElementById('waiting').style.display = '';
+            var ssid = document.getElementById('main-ssid-display').value;
+            var key = document.getElementById('main-key-display').value;
+            var channel = document.getElementById('main-channel-display').value;
+            var params = {'ssid':ssid, 'key':key, 'encryption':'psk2+ccmp', 'channel':channel};
+            var need_redirect = {'redirect':0};
+            console.log(params);
+            XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","wds_disable")%>', need_redirect,
+                function(x, result){
+                    console.log(result);
+                    if (result!=null&&result.code == 0) {
+                        sleep(3000);
+                        XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","wifi_connect")%>', params,
+                            function(x, result){
+                                console.log(result);
+                                document.getElementById('waiting').style.display = '';
+                                if (result.ip == 'nil') {
+                                    var err = document.getElementById('Error');
+                                    var text = err.getElementsByTagName('span')[0];
+                                    text.innerText = '连接失败，请重试！'
+                                    err.style.visibility = 'visible';
+                                } else {
+                                    var params3 = {'ip':result.ip};
+                                    XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","wds_enable")%>', params3,
+                                        function(x, result){
+                                            console.log(result);
+                                            if (result.code == 0) {
+                                                document.getElementById('waiting').style.display = 'none';
+                                                var err = document.getElementById('Error');
+                                                var text = err.getElementsByTagName('span')[0];
+                                                text.innerText = '设置成功！';
+                                                err.style.visibility = 'visible';
+                                            }
+                                        });
+                                }
+                            });
+                    } else {
+                        var err = document.getElementById('Error');
+                        var text = err.getElementsByTagName('span')[0];
+                        text.innerText = '设置失败，请重新设置！';
+                        err.style.visibility = 'visible';
+                    }
+                });
+        } else {
+            var need_redirect = {'redirect':1};
+            XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","wds_disable")%>', need_redirect,
+                function(x, result) {
+                    console.log(result);
+                    if (result!=null&&result.code == 0) {
+                        sleep(3000);
+                        var err = document.getElementById('Error');
+                        var text = err.getElementsByTagName('span')[0];
+                        text.innerText = '设置成功';
+                        err.style.visibility = 'visible';
+                        location.href = 'http://'+result.ip;
+                        document.getElementById('guide-open').style.display = 'none';
+                        document.getElementById('guide-wds').style.display = '';
+                    }else {
+                        var err = document.getElementById('Error');
+                        var text = err.getElementsByTagName('span')[0];
+                        text.innerText = '设置失败！';
+                        err.style.visibility = 'visible';
+                    }
+                });
+        }
+    }
+
+    function disableWDS() {
+        var need_redirect = {'redirect':1};
+        XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","wds_disable")%>', need_redirect,
+            function(x, result) {
+                console.log(result);
+                if (result!=null&&result.code == 0) {
+                    document.getElementById('wds-infos').style.display = 'none';
+                    document.getElementById('guide-wds').style.display = '';
+                    location.href = 'http://'+result.ip;
+                } else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '操作失败，请重试！';
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // other button functions
+    function resetWDS() {
+        document.getElementById('guide-open').style.display = 'none';
+        document.getElementById('guide-wds').style.display = '';
+    }
+
+    function inputPwd(i) {
+        var radio = document.getElementById('r-'+i);
+        if (radio.checked) {
+            console.log(i);
+            selectedWifiIndex = i;
+            ssid = wifis_24g[i].ssid;
+            channel = wifis_24g[i].channel;
+            encryption = wifis_24g[i].encryption;
+            document.getElementById('inputPwd').style.display = '';
+        } else {
+            document.getElementById('inputPwd').style.display = 'none';
+        }
+    }
+
+    function inputPwd5(i) {
+        var radio = document.getElementById('r5-'+i);
+        if (radio.checked) {
+            console.log(i);
+            selectedWifiIndex = i;
+            ssid = wifis_5g[i].ssid;
+            channel = wifis_5g[i].channel;
+            encryption = wifis_5g[i].encryption;
+            document.getElementById('inputPwd').style.display = '';
+        } else {
+            document.getElementById('inputPwd').style.display = 'none';
+        }
+    }
+
+    function closeInputPwd() {
+        document.getElementById('inputPwd').style.display = 'none';
+        document.getElementById('r-'+selectedWifiIndex).checked = false;
+        document.getElementById('r5-'+selectedWifiIndex).checked = false;
+    }
+
+    function closeTipAnother(i) {
+        if (i==0) {
+            document.getElementById("band-select").style.display="none";
+        }
+    }
+
+    function closeTip() {
+        document.getElementById("Error").style.visibility = 'hidden';
+        document.getElementById('r-'+selectedWifiIndex).checked = false;
+        document.getElementById('r5-'+selectedWifiIndex).checked = false;
+    }
+
+    // paginate functions
+    function backToStart() {
+        var pages = parseInt(wdsNum/10) +1;
+        currentPage = 1;
+        toStart = true;
+        toPageByPNum(currentPage);
+    }
+
+    function goToEnd() {
+        var pages = parseInt(wdsNum/10) +1;
+        toEnd = true;
+        toPageByPNum(pages);
+        currentPage = pages;
+    }
+
+    function toBackPage() {
+        if (currentPage-1>0) {
+            toPageByPNum(currentPage-1);
+            currentPage -=1;
+        }
+    }
+
+    function toNextPage() {
+        var pages = parseInt(wdsNum/10) +1;
+        if (pages >= currentPage +1) {
+            toPageByPNum(currentPage+1);
+            currentPage +=1;
+        }
+    }
+
+    function topage(e) {
+        var index = parseInt(e.innerText);
+        toPageByPNum(index);
+        currentPage = index;
+    }
+
+    function toPageByPNum(index) {
+        var pages = parseInt(wdsNum/10) +1;
+        if (pages<2)
+            return;
+        document.getElementById("logTblpagIngList").style.display='';
+        var page_html = '';
+        for (var i = 1 ;i <= pages;i++){
+            if (i < index){
+                page_html += '<span class="ListSpan"  style="cursor: pointer;" onclick="topage(this)">'+i+'</span>';
+            } else if (index==i) {
+                page_html += '<span class="listSpanS"  style="cursor: default;" onclick="topage(this)">'+i+'</span>';
+            }else {
+                page_html += '<span class="ListSpan" onclick="topage(this)">'+i+'</span>';
+            }
+        }
+        var pageNumDiv = document.getElementById('logTblpagIngListlistDiv');
+        pageNumDiv.innerHTML = page_html;
+        pageIndexView(index);
+        pageView(index);
+    }
+
+    function pageView(page) {
+        var startNum = 10*(page -1);
+        var endNum = 10*page;
+        if(endNum>wdsNum)
+            endNum = wdsNum;
+        var tb;
+        if (global_band=="5G"){
+            tb = document.getElementById('5g');
+        } else {
+            tb = document.getElementById('24g');
+        }
+        for (var i = 2; i < wdsNum ;i ++){
+            if (i>=startNum && i<= endNum){
+                tb.rows[i].style.display = '';
+            } else {
+                tb.rows[i].style.display = 'none';
+            }
+        }
+    }
+
+    function pageIndexView(index) {
+        var pages = parseInt(wdsNum/10) +1;
+        var pageNumDiv = document.getElementById('logTblpagIngListlistDiv');
+        if (pages<=5)
+            return;
+        if (((pages-currentPage)<=2&&currentPage < index)||toEnd||(pages-index<=2)){
+            toEnd = false;
+            var left = (pages-5)*(-19)+'px';
+            pageNumDiv.style.marginLeft = left;
+        }else if((currentPage<=2&&currentPage > index)||toStart||index<=2){
+            toStart = false;
+            pageNumDiv.style.marginLeft = "0px";
+        } else {
+            if (index%3 != 0&&currentPage < index){
+                var left = parseInt(index/3)*(-57)+'px';
+                pageNumDiv.style.marginLeft = left;
+            }else if (index%3 != 0 &&currentPage > index){
+                var left = parseInt(index/3-1)*(-57)+'px';
+                pageNumDiv.style.marginLeft = left;
+            }
+        }
+    }
+
+    //signal sort
+    function signalSort(arr) {
+        var len = arr.length;
+        for (var i = 0; i < len; i++) {
+            for (var j = 0; j < len - 1 - i; j++) {
+                if (arr[j].signal < arr[j+1].signal) {        //相邻元素两两对比
+                    var temp = arr[j+1];        //元素交换
+                    arr[j+1] = arr[j];
+                    arr[j] = temp;
+                }
+            }
+        }
+        return arr;
+    }
+
+    function sleep(ms) {
+        var t = Date.now();
+        while(Date.now() - t <= ms);
+    }
+
+    function refreshWifiScan() {
+        getWifiScan(global_band);
+    }
+
+</script>

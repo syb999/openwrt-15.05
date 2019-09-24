@@ -1,0 +1,142 @@
+<%+header%>
+<fieldset class="upnp">
+	<legend><%:UPnP setting%></legend>
+    <i class="helpBtn" helpstr="dynamicIpHelp" onclick="clickHelp(0)"></i>
+    <div class="bWlSwitchCon dhcp">
+        <div id="switchCon" class="switchCon" onclick="switchChange()">
+            <i class="switchBg"></i>
+            <i id="switchOn" class="switchBall" style=""></i>
+            <i id="switchOff" class="switchBallOff" style="display: none;"></i>
+        </div>
+		<span id="switchSpan" class="bWlSwitchOff"><%:disabled%></span>
+    </div>
+    <ul><li class="border-line"></li></ul>
+    <ul id="upnpLsUl" class="gridToolBar">
+		<li gridtype="refresh" class="refresh" onclick="getUPnP()"><i></i><span><%:refresh%></span></li>
+    </ul>
+    <table id="upnp">
+    </table>
+	<div id="Help" class="Help"><p class="helpTop"><span class="helpDes"><%:help%></span>
+        <i class="helpClose" onclick="clickHelp(1)"></i></p>
+        <div class="helpDetail"><ul id="UpnpCfgHelp" class="help">
+				<li class="title"><%:UPnP help%></li>
+				<li class="title"><%:APP description%></li>
+				<li class="content"><%:The IP address of the local host contained in the UPnP request%></li>
+				<li class="title"><%:external port%></li>
+				<li class="content"><%:An external port that the router opens for the application%></li>
+				<li class="title"><%:protocol type%></li>
+				<li class="content"><%:The type of protocol opened%></li>
+				<li class="title"><%:internal port%></li>
+				<li class="content"><%:An internal port that the router opens for the local host%></li>
+				<li class="title"><%:IP address%></li>
+				<li class="content"><%:The IP address of the local host contained in the UPnP request%></li>
+				<li class="title"><%:status%></li>
+				<li class="content"><%:Indicates whether the port is enabled.%></li>
+				<li class="warnning"><%:UPnP help note%></li>
+    </ul></div></div>
+</fieldset>
+<%+footer%>
+<script>
+    // global vars
+    var checkEnable = false;
+    var Drag =  document.getElementById("Help");
+
+    // page load functions
+    getUPnP();
+    dragFunc(Drag);
+
+    // router get interfaces
+    function getUPnP() {
+        XHR.get('<%=luci.dispatcher.build_url("admin", "advancednew","get_UPnP")%>', null,
+            function(x, result) {
+                console.log(result);
+                if(result.code == 0) {
+                    console.log(result);
+                    if (result.enable == 0) {
+                        setStatus(false);
+                    } else {
+                        setStatus(true);
+                    }
+                    var applications = result.applications;
+					var html = '<tr><th><%:APP description%></th><th><%:external port%></th><th><%:protocol type%></th><th><%:internal port%></th><th><%:IP address%></th><th><%:status%></th></tr>';
+                    for(var i in applications){
+                        html += '<tr><td>'+applications[i].desc+'</td><td>'+applications[i].externalport+'</td><td>'+
+                            applications[i].protocaltype+'</td><td>'+applications[i].internalport+'</td><td>'+
+                            'ip'+'</td><td>'+applications[i].status+'</td></tr>';
+                    }
+                    setTableInnerHTML(document.getElementById('upnp'),html);
+                }
+            });
+    }
+
+    // page functions
+    function setStatus(flag) {
+        console.log(flag);
+        if (flag) {
+			document.getElementById("switchSpan").innerText = "<%:disabled%>";
+        } else {
+			document.getElementById("switchSpan").innerText = "<%:enabled%>";
+        }
+        switchChange();
+    }
+
+    function switchDisable(divId){
+        document.getElementById(divId).onclick = function(){
+            ;
+        }
+    }
+    function switchEnable(divId){
+        setTimeout(function(){
+            document.getElementById(divId).onclick = function(){
+                switchChange();
+            };
+        },1000)
+    }
+    function switchChange() {
+        var status = document.getElementById("switchSpan").innerHTML;
+        var flag = true;
+        switchDisable('switchCon');
+		if (status=="<%:enabled%>"){
+            flag = false;
+        }
+        switchChecked(flag);
+        if (checkEnable) {
+            if (checkStatus()) {
+                var enable = true;
+            } else {
+                var enable = false;
+            }
+            var params = {'params':{'enable':enable}};
+            console.log(params);
+            XHR.post('<%=luci.dispatcher.build_url("admin", "advancednew","set_UPnP")%>', params,
+                function(x, result){
+                    console.log(result);
+                });
+        } else {
+            checkEnable = true;
+        }
+        switchEnable('switchCon');
+    }
+    function switchChecked(flag) {
+        if (flag) {
+            document.getElementById("switchSpan").innerText = '<%:enabled%>';
+            document.getElementById("switchSpan").className = "bWlSwitchOff spanSwitchOn";
+            document.getElementById("switchOn").style.display = "";
+            document.getElementById("switchOff").style.display = "none"
+        } else {
+            document.getElementById("switchSpan").innerText = '<%:disabled%>';
+            document.getElementById("switchSpan").className = "bWlSwitchOff";
+            document.getElementById("switchOn").style.display = "none";
+            document.getElementById("switchOff").style.display = "";
+        }
+    }
+
+    function checkStatus() {
+        var status = document.getElementById("switchSpan").innerText;
+        if (status == '<%:enabled%>') {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+</script>

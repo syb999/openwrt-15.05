@@ -1,0 +1,52 @@
+<%+header%>
+<fieldset>
+    <legend>恢复出厂设置</legend>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>>
+            <span class="detail">操作成功</span>
+            <input class="subBtn" value="确 定" type="button" onclick="closeTip()">
+        </div>
+    </div>
+    <li class="border-line"></li>
+    <div style="margin: 0 auto auto 5rem;">
+        <button onclick="reset()" class="btn lbtn">恢复出厂设置</button><br><br><br>
+        单击此按钮将使路由器的所有设置恢复到出厂时的默认状态
+    </div>
+    <div id="waiting" style="display: none">
+        <div class="LoadConCover">
+            <div class="coverLoadCon">
+                <div class="coverLoad">
+                    <i class="coverLoadClose" onclick="coverClose()"></i>
+                    <i class="coverLoading" ></i>
+                    <p class="coverLoadNote">正在恢复，请稍等...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</fieldset>
+<%+footer%>
+<script>
+    // router interfaces
+    function reset() {
+        document.getElementById("waiting").style.display='';
+        XHR.get('<%=luci.dispatcher.build_url("admin", "systemnew","reset")%>', null,
+            function(x, result){
+                console.log(result);
+                if (result!=null&&result.code==0){
+                    setTimeout(function () {
+                        setInterval(function () {
+                            pageRedirect("http://192.168.4.1");
+                        },3000)
+                    },10000)
+                } else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '请求恢复出厂设置失败，请重试';
+                    err.style.visibility = 'visible';
+                    document.getElementById('waiting').style.display = "none";
+                }
+
+            });
+    }
+</script>

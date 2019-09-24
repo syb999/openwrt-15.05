@@ -1,0 +1,500 @@
+<%+header%>
+<fieldset class="owner">
+    <legend>主人网络</legend>
+    <div id="Error">
+        <div id="hsErr" class="hsTip">
+            <i class="altIcon"></i>>
+            <span class="detail">请输入密码！</span>
+            <input class="subBtn" value="确 定" type="button" onclick="closeTip()">
+        </div>
+    </div>
+    <i class="helpBtn" helpstr="dynamicIpHelp" onclick="clickHelp(0)"></i>
+    <div class="bWlSwitchCon dhcp">
+        <div id="switchCon" class="switchCon" onclick="switchChange()">
+            <i class="switchBg"></i>
+            <i id="switchOn" class="switchBall" style=""></i>
+            <i id="switchOff" class="switchBallOff" style="display: none;"></i>
+        </div>
+        <span id="switchSpan" class="bWlSwitchOff" >已开启</span>
+    </div>
+    <li class="border-line"></li>
+    <li class="ownerRadioSel">
+        <input type="radio" name="ownerType" value="2.4G" onchange="wirelessSel('ownerType')">2.4G
+        <input class="Radio5" type="radio" name="ownerType" value="5G" onchange="wirelessSel('ownerType')">5G
+    </li>
+    <table class="tb-no-border" id="2.4G">
+        <tr><td class="wan-td-left">无线名称：</td><td class="wan-td-right"> <input id="ssid" type="text" maxlength="32"><input id="broadcast" type="checkbox">开启无线广播</td></tr>
+        <tr><td class="wan-td-left">无线密码：</td><td class="wan-td-right"> <input id="key" type="text" onkeyup="nStrLimit(this)" maxlength="63"><input id="open" type="checkbox" onchange="isEncoded(['open','key'])">不加密</td></tr>
+        <tr><td class="wan-td-left">信道：</td><td class="wan-td-right"> <select id="channel">
+            <option value="auto">自动</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+        </select></td></tr>
+        <tr><td class="wan-td-left">模式：</td><td class="wan-td-right"> <select id="mode" onchange="modeSwitch('2.4G')">
+            <option value="11n">11n only</option>
+            <option value="11g">11g only</option>
+            <option value="11b">11b only</option>
+        </select></td></tr>
+        <tr><td class="wan-td-left">频段带宽：</td><td class="wan-td-right"> <select id="bandwidth">
+            <option value="auto">自动</option>
+            <option value="HT20" id="ht20">20MHZ</option>
+            <option value="HT40" id="ht40">40MHZ</option>
+        </select></td></tr>
+        <tr><td class="wan-td-left">信号强度：</td><td class="wan-td-right"> <select id="signal">
+            <option>低</option>
+            <option>中</option>
+            <option>高</option>
+        </select></td></tr>
+        <tr><td class="wan-td-left">
+            <input id="apartheid" type="checkbox"> </td><td class="wan-td-right"> 开启AP隔离
+        </td></tr>
+        <tr><td></td><td class="wan-td-right">
+            <button onclick="saveOwnerNetwork('2.4G')">保存</button>
+            <i id="24-saveTip" class="hsSubLoading saving" style="display: none"></i>
+            <i id="24-saveTipSucess" class="hsSubLoading save-suc" style="display: none"></i>
+        </td></tr>
+    </table>
+    <table class="tb-no-border" id="5G" style="display: none">
+        <tr><td class="wan-td-left">无线名称：</td><td class="wan-td-right"> <input id="ssid-5" type="text"><input id="broadcast-5" type="checkbox">开启无线广播</td></tr>
+        <tr><td class="wan-td-left">无线密码：</td><td class="wan-td-right"> <input id="key-5" type="text"><input id="open-5" type="checkbox" onchange="isEncoded(['open-5','key-5'])">不加密</td></tr>
+        <tr><td class="wan-td-left">信道：</td><td class="wan-td-right"> <select id="channel-5">
+            <option value="auto">自动</option>
+            <option value="36">36</option>
+            <option value="40">40</option>
+            <option value="44">44</option>
+            <option value="48">48</option>
+            <option value="52">52</option>
+            <option value="56">56</option>
+            <option value="60">60</option>
+            <option value="64">64</option>
+            <option value="149">149</option>
+            <option value="153">153</option>
+            <option value="157">157</option>
+            <option value="161">161</option>
+            <option value="165">165</option>
+        </select></td></tr>
+        <tr><td class="wan-td-left">模式：</td><td class="wan-td-right"> <select id="mode-5" onchange="modeSwitch('5G')">
+            <option value="11a">11a only</option>
+            <option value="11n">11n only</option>
+            <option value="11ac">11ac</option>
+        </select></td></tr>
+        <tr><td class="wan-td-left">频段带宽：</td><td class="wan-td-right"> <select id="bandwidth-5">
+            <option value="auto" id="auto-5">自动</option>
+            <option value="HT20" id="ht20-5">20MHZ</option>
+            <option value="HT40" id="ht40-5">40MHZ</option>
+            <option value="VHT20" id="vht20">20MHZ</option>
+            <option value="VHT40" id="vht40">40MHZ</option>
+            <option value="VHT80" id="vht80">80MHZ</option>
+        </select></td></tr>
+        <tr><td class="wan-td-left">信号强度：</td><td class="wan-td-right"> <select id="signal-5">
+            <option>低</option>
+            <option>中</option>
+            <option>高</option>
+        </select></td></tr>
+        <tr><td class="wan-td-left">
+            <input id="apartheid-5" type="checkbox"> </td><td class="wan-td-right"> 开启AP隔离
+        </td></tr>
+        <tr><td></td><td class="wan-td-right">
+            <button onclick="saveOwnerNetwork('5G')">保存</button>
+            <i id="5-saveTip" class="hsSubLoading saving" style="display: none"></i>
+            <i id="5-saveTipSucess" class="hsSubLoading save-suc" style="display: none"></i>
+        </td></tr>
+    </table>
+    <div id="Help">
+        <p class="helpTop"><span class="helpDes">帮助</span>
+            <i class="helpClose" onclick="clickHelp(1)"></i>
+        </p><div id="helpDetail"><ul id="wlanNetworkHelp" class="help">
+        <li class="title">无线名称</li>
+        <li class="content">路由器的无线(Wi-Fi)名称。</li>
+        <li class="title">无线密码</li>
+        <li class="content">无线加密使用WPA2-PSK/WPA-PSK加密方式、AES加密算法，无线密码为8-63个字符，最好是数字、字母、符号的组合。</li>
+        <li class="title">信道</li>
+        <li class="content">无线数据信号传送的通道，建议保持默认的自动，此时路由器会自动根据周围的无线环境选择一个最好的信道。</li>
+        <li class="title">模式</li>
+        <li class="content">路由器工作的无线模式。</li>
+        <li class="title">频段带宽</li>
+        <li class="content">路由器传输无线数据的频段宽度。</li>
+        <li class="title">信号强度</li>
+        <li class="content">可以根据实际使用需要选择不同档次的信号强度。</li>
+        <li class="title">开启AP隔离</li>
+        <li class="content">开启之后可以安全隔离连接到路由器的各个无线设备。</li>
+    </ul></div></div>
+</fieldset>
+<%+footer%>
+<script>
+    // global vars
+    var ifaces;
+    var wifistatus_24g;
+    var wifistatus_5g;
+    var errTipDoc = document.getElementById("ssid");
+    var Drag =  document.getElementById("Help");
+    var changeEnable = false;
+
+    // page load functions
+    getWifiIface();
+    dragFunc(Drag);
+
+    // router get interfaces
+    function getWifiIface() {
+        var radioSel = document.getElementsByName('ownerType');
+        XHR.get('<%=luci.dispatcher.build_url("admin", "wirelessnew","get_wifi_iface")%>', null,
+            function(x, result) {
+                if(result!=null&&result.code == 0) {
+                    radioSel[0].checked = true;
+                    console.log(result);
+                    ifaces = result.ifaces;
+                    var e;
+                    for (var i=0; i<result.ifaces.length; i++) {
+                        if (result.ifaces[i].band == '2.4G') {
+                            if (e = document.getElementById('ssid'))
+                                e.value = result.ifaces[i].ssid;
+                            if (e = document.getElementById('broadcast'))
+                                e.checked = result.ifaces[i].broadcast;
+                            if (result.ifaces[i].key != undefined) {
+                                if (e = document.getElementById('key'))
+                                    e.value = result.ifaces[i].key;
+                            }
+                            if (e = document.getElementById('open'))
+                                e.checked = result.ifaces[i].open;
+                            var channelIndex = result.ifaces[i].channel;
+                            var channel = document.getElementById('channel');
+                            if (channelIndex == 'auto') {
+                                channel.selectedIndex = 0;
+                            } else {
+                                channel.selectedIndex = channelIndex;
+                            }
+
+                            if (result.ifaces[i].hwmode != '11g') {
+                                document.getElementById('bandwidth').disabled = 'disabled';
+                            }
+                            if (result.ifaces[i].hwmode != undefined) {
+                                var mode_24g = document.getElementById('mode');
+                                if (result.ifaces[i].hwmode == '11b') {
+                                    mode_24g.selectedIndex = 2;
+                                } else if (result.ifaces[i].hwmode == '11g' && result.ifaces[i].htmode != undefined) {
+                                    mode_24g.selectedIndex = 0;
+                                } else {
+                                    mode_24g.selectedIndex = 1;
+                                }
+                            }
+                            if (result.ifaces[i].htmode != undefined) {
+                                var bandwidth_24g = document.getElementById('bandwidth');
+                                for (var j=0; j<bandwidth_24g.options.length; j++) {
+                                    if (bandwidth_24g[j].value == result.ifaces[i].htmode) {
+                                        bandwidth_24g.selectedIndex = j;
+                                        break;
+                                    }
+                                }
+                            }
+                            var signal = document.getElementById('signal');
+                            if (result.ifaces[i].signal != undefined) {
+                                signal.selectedIndex = result.ifaces[i].signal;
+                            } else {
+                                signal.selectedIndex = 2;
+                            }
+                            if (e = document.getElementById('apartheid'))
+                                e.checked = result.ifaces[i].apartheid;
+                            wifistatus_24g = result.ifaces[i].enable;
+                            switchChecked(wifistatus_24g);
+                        } else if (result.ifaces[i].band == '5G') {
+                            if (e = document.getElementById('ssid-5'))
+                                e.value = result.ifaces[i].ssid;
+                            if (e = document.getElementById('broadcast-5'))
+                                e.checked = result.ifaces[i].broadcast;
+                            if (result.ifaces[i].key != undefined) {
+                                if (e = document.getElementById('key-5'))
+                                    e.value = result.ifaces[i].key;
+                            }
+                            if (e = document.getElementById('open-5'))
+                                e.checked = result.ifaces[i].open;
+                            var channelValue = result.ifaces[i].channel;
+                            var channel = document.getElementById('channel-5');
+                            if (channelValue == 'auto') {
+                                channel.selectedIndex = 0;
+                            } else {
+                                for (var j=0; j<channel.options.length; j++) {
+                                    if (channel[j].value == channelValue) {
+                                        channel.selectedIndex = j;
+                                    }
+                                }
+                            }
+                            if (result.ifaces[i].hwmode != undefined) {
+                                var mode_5g = document.getElementById('mode-5');
+                                if (result.ifaces[i].hwmode == '11a' && result.ifaces[i].htmode == undefined) {
+                                    mode_5g.selectedIndex = 0;
+                                    document.getElementById('bandwidth-5').disabled = 'disabled';
+                                } else if (result.ifaces[i].hwmode == '11a' && result.ifaces[i].htmode != 'HT20' && result.ifaces[i].htmode != 'HT40') {
+                                    mode_5g.selectedIndex = 2;
+                                } else {
+                                    mode_5g.selectedIndex = 1;
+                                }
+                            }
+                            if (result.ifaces[i].htmode != undefined) {
+                                var bandwidth_5g = document.getElementById('bandwidth-5');
+                                for (var j=0; j<bandwidth_5g.options.length; j++) {
+                                    if (bandwidth_5g[j].value == result.ifaces[i].htmode) {
+                                        bandwidth_5g.selectedIndex = j;
+                                        break;
+                                    }
+                                }
+                            }
+                            var signal = document.getElementById('signal-5');
+                            if (result.ifaces[i].signal != undefined) {
+                                signal.selectedIndex = result.ifaces[i].signal;
+                            } else {
+                                signal.selectedIndex = 2;
+                            }
+                            if (e = document.getElementById('apartheid-5'))
+                                e.checked = result.ifaces[i].apartheid;
+                            wifistatus_5g = result.ifaces[i].enable;
+                        }
+                    }
+                    changeEnable = true;
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '获取信息失败！';
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // router set interfaces
+    function saveOwnerNetwork(wantype) {
+        if (wantype == '2.4G') {
+            for (var i=0; i<ifaces.length; i++) {
+                if (ifaces[i].band == '2.4G') {
+                    ifaces[i].ssid = document.getElementById('ssid').value;
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    if (ifaces[i].ssid == ''){
+                        text.innerText = '请输入无线名称！';
+                        err.style.visibility = 'visible';
+                        errTipDoc = document.getElementById('ssid');
+                        return;
+                    }else if (strlen(ifaces[i].ssid)>32){
+                        text.innerText = '无线名称长度过长！';
+                        err.style.visibility = 'visible';
+                        errTipDoc = document.getElementById('ssid');
+                        return;
+                    }
+                    ifaces[i].broadcast = document.getElementById('broadcast').checked;
+                    ifaces[i].key = document.getElementById('key').value;
+                    ifaces[i].open = document.getElementById('open').checked;
+                    if (ifaces[i].open == false && ifaces[i].key.length<8) {
+                        if (strlen(ifaces[i].key)<8) {
+                            text.innerText = '密码长度不少于8位！';
+                        }else if (strlen(ifaces[i].key)>64) {
+                            text.innerText = '密码长度过长，请重新输入！';
+                        }
+                        err.style.visibility = 'visible';
+                        errTipDoc = document.getElementById('key');
+                        return;
+                    }
+                    ifaces[i].apartheid = document.getElementById('apartheid').checked;
+                    var channelSelect = document.getElementById('channel');
+                    var channelSelectIndex = channelSelect.selectedIndex;
+                    ifaces[i].channel = channelSelect[channelSelectIndex].value;
+                    var modeSelect = document.getElementById('mode');
+                    var modeSelectIndex = modeSelect.selectedIndex;
+                    ifaces[i].mode = modeSelect[modeSelectIndex].value;
+                    var bandwidthSelect = document.getElementById('bandwidth');
+                    var bandwidthSelectIndex = bandwidthSelect.selectedIndex;
+                    ifaces[i].bandwidth = bandwidthSelect[bandwidthSelectIndex].value;
+                    if (checkStatus()) {
+                        var enable = true;
+                    } else {
+                        var enable = false;
+                    }
+                    ifaces[i].enable = enable;
+                    var signalSelect = document.getElementById('signal');
+                    var signal = signalSelect.selectedIndex;
+                    ifaces[i].signal = signal;
+                }
+            }
+        } else if (wantype == '5G') {
+            for (var i=0; i<ifaces.length; i++) {
+                if (ifaces[i].band == '5G') {
+                    ifaces[i].ssid = document.getElementById('ssid-5').value;
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    if (ifaces[i].ssid == ''){
+                        text.innerText = '请输入无线名称！';
+                        err.style.visibility = 'visible';
+                        errTipDoc = document.getElementById('ssid');
+                        return;
+                    }else if (strlen(ifaces[i].ssid)>32){
+                        text.innerText = '无线名称长度过长！';
+                        err.style.visibility = 'visible';
+                        errTipDoc = document.getElementById('ssid');
+                        return;
+                    }
+                    ifaces[i].broadcast = document.getElementById('broadcast-5').checked;
+                    ifaces[i].key = document.getElementById('key-5').value;
+                    ifaces[i].open = document.getElementById('open-5').checked;
+                    if (ifaces[i].open == false && ifaces[i].key.length<8) {
+                        if (strlen(ifaces[i].key)<8) {
+                            text.innerText = '密码长度不少于8位！';
+                        }else if (strlen(ifaces[i].key)>64) {
+                            text.innerText = '密码长度过长，请重新输入！';
+                        }
+                        err.style.visibility = 'visible';
+                        errTipDoc = document.getElementById('key');
+                        return;
+                    }
+                    ifaces[i].apartheid = document.getElementById('apartheid-5').checked;
+                    var channelSelect = document.getElementById('channel-5');
+                    var channelSelectIndex = channelSelect.selectedIndex;
+                    ifaces[i].channel = channelSelect[channelSelectIndex].value;
+                    var modeSelect = document.getElementById('mode-5');
+                    var modeSelectIndex = modeSelect.selectedIndex;
+                    ifaces[i].mode = modeSelect[modeSelectIndex].value;
+                    var bandwidthSelect = document.getElementById('bandwidth-5');
+                    var bandwidthSelectIndex = bandwidthSelect.selectedIndex;
+                    ifaces[i].bandwidth = bandwidthSelect[bandwidthSelectIndex].value;
+                    if (checkStatus()) {
+                        var enable = true;
+                    } else {
+                        var enable = false;
+                    }
+                    ifaces[i].enable = enable;
+                    var signalSelect = document.getElementById('signal-5');
+                    var signal = signalSelect.selectedIndex;
+                    ifaces[i].signal = signal;
+                    var signal = signalSelect.selectedIndex;
+                    ifaces[i].signal = signal;
+                }
+            }
+        }
+        document.getElementById("24-saveTip").style.display='';
+        document.getElementById("24-saveTipSucess").style.display='none';
+        document.getElementById("5-saveTip").style.display='';
+        document.getElementById("5-saveTipSucess").style.display='none';
+        var params = {'ifaces':ifaces};
+        console.log(params);
+        XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","set_wifi_iface")%>', params,
+            function(x, result){
+                console.log(result);
+                document.getElementById("24-saveTip").style.display='none';
+                document.getElementById("5-saveTip").style.display='none';
+                if (result!=null&&result.code == 0) {
+                    document.getElementById("24-saveTipSucess").style.display='';
+                    document.getElementById("5-saveTipSucess").style.display='';
+                    setTimeout(function () {
+                        document.getElementById("24-saveTipSucess").style.display='none';
+                        document.getElementById("5-saveTipSucess").style.display='none';
+                    },"2000");
+                }else {
+                    var err = document.getElementById('Error');
+                    var text = err.getElementsByTagName('span')[0];
+                    text.innerText = '保存失败！'
+                    err.style.visibility = 'visible';
+                }
+            });
+    }
+
+    // page functions
+    function display(name) {
+        if (name == '2.4G') {
+            setStatus(wifistatus_24g);
+            document.getElementById('5G').style.display = 'none';
+            document.getElementById('2.4G').style.display = '';
+            modeSwitch('2.4G');
+        } else {
+            setStatus(wifistatus_5g);
+            document.getElementById('2.4G').style.display = 'none';
+            document.getElementById('5G').style.display = '';
+            modeSwitch('5G');
+        }
+    }
+    
+    function wirelessSel(name) {
+        var wirelessSel = getRadioValue(name);
+        display(wirelessSel);
+    }
+
+    function modeSwitch(wantype) {
+        var mode;
+        if (wantype == '2.4G') {
+            mode = document.getElementById('mode');
+            var modeIndex = mode.selectedIndex;
+            var modeValue = mode[modeIndex].value;
+            if (modeValue != '11n') {
+                document.getElementById('bandwidth').disabled = 'disabled';
+            } else {
+                document.getElementById('bandwidth').disabled = '';
+            }
+        } else if (wantype == '5G') {
+            mode = document.getElementById('mode-5');
+            var modeIndex = mode.selectedIndex;
+            var modeValue = mode[modeIndex].value;
+            if (modeValue == '11n') {
+                document.getElementById('bandwidth-5').disabled = '';
+                document.getElementById('ht20-5').style.display = '';
+                document.getElementById('ht40-5').style.display = '';
+                document.getElementById('vht20').style.display = 'none';
+                document.getElementById('vht40').style.display = 'none';
+                document.getElementById('vht80').style.display = 'none';
+            } else if (modeValue == '11ac') {
+                document.getElementById('bandwidth-5').disabled = '';
+                document.getElementById('ht20-5').style.display = 'none';
+                document.getElementById('ht40-5').style.display = 'none';
+                document.getElementById('vht20').style.display = '';
+                document.getElementById('vht40').style.display = '';
+                document.getElementById('vht80').style.display = '';
+            } else {
+                document.getElementById('bandwidth-5').disabled = 'disabled';
+            }
+        }
+
+    }
+
+    function setStatus(flag) {
+        if (flag) {
+            document.getElementById("switchSpan").innerText = "未开启";
+        } else {
+            document.getElementById("switchSpan").innerText = "已开启";
+        }
+        switchChange();
+    }
+
+    function switchChange() {
+        var status = document.getElementById("switchSpan").innerHTML;
+        var flag = true;
+        if (status=="已开启") {
+            flag = false;
+        }
+        switchChecked(flag);
+        if (changeEnable) {
+            if (checkStatus()) {
+                var enable = true;
+            } else {
+                var enable = false;
+            }
+            var params;
+            var radioSel = getRadioValue('ownerType');
+            for (var i=0; i<ifaces.length; i++) {
+                if (ifaces[i].band == radioSel) {
+                    ifaces[i].enable = enable;
+                    params = {'ifaces':ifaces};
+                }
+            }
+            console.log(params);
+            XHR.post('<%=luci.dispatcher.build_url("admin", "wirelessnew","set_wifi_iface")%>', params,
+                function (x, result) {
+                    console.log(result);
+                });
+        }
+    }
+</script>
