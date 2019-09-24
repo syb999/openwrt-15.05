@@ -133,6 +133,7 @@ platform_check_image() {
 	zte-q7 |\
 	hc5962 |\
 	newifi-d1 |\
+	newifi-d2 |\
 	youku-yk1)
 		[ "$magic" != "27051956" ] && {
 			echo "Invalid image type."

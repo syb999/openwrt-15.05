@@ -448,6 +448,9 @@ ramips_board_detect() {
 	*"Newifi-D1")
 		name="newifi-d1"
 		;;
+	*"Newifi-D2")
+		name="newifi-d2"
+		;;
 	*)
 		name="generic"
 		;;
