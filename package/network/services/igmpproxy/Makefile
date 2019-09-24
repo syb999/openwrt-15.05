@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=igmpproxy
-PKG_VERSION:=0.1
-PKG_RELEASE:=8
+PKG_VERSION:=0.2.1
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=@SF/igmpproxy
-PKG_MD5SUM:=c56f41ec195bc1fe016369bf74efc5a1
-PKG_MAINTAINER:=Felix Fietkau <nbd@openwrt.org>
+PKG_SOURCE_URL:=https://github.com/pali/igmpproxy/releases/download/${PKG_VERSION}/
+PKG_HASH:=d351e623037390f575c1203d9cbb7ba33a8bdef85a3c5e1d2901c5a2a38449a1
+PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
 
 include $(INCLUDE_DIR)/package.mk
 
