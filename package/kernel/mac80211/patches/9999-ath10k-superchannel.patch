@@ -1,0 +1,28 @@
+--- a/drivers/net/wireless/ath/ath10k/core.h	2019-09-26 06:52:35.662839000 +0800
++++ b/drivers/net/wireless/ath/ath10k/core.h	2019-09-26 12:02:40.939238639 +0800
+@@ -48,7 +48,7 @@
+ #define WMI_READY_TIMEOUT (5 * HZ)
+ #define ATH10K_FLUSH_TIMEOUT_HZ (5 * HZ)
+ #define ATH10K_CONNECTION_LOSS_HZ (3 * HZ)
+-#define ATH10K_NUM_CHANS 41
++#define ATH10K_NUM_CHANS 49
+ #define ATH10K_MAX_5G_CHAN 173
+ 
+ /* Antenna noise floor */
+--- a/drivers/net/wireless/ath/ath10k/mac.c	2019-09-26 06:52:35.670839000 +0800
++++ b/drivers/net/wireless/ath/ath10k/mac.c	2019-09-26 11:59:35.777566436 +0800
+@@ -7701,6 +7701,14 @@
+ };
+ 
+ static const struct ieee80211_channel ath10k_5ghz_channels[] = {
++	CHAN5G(4, 5020, 0),
++	CHAN5G(8, 5040, 0),
++	CHAN5G(12, 5060, 0),
++	CHAN5G(16, 5080, 0),
++	CHAN5G(20, 5100, 0),
++	CHAN5G(24, 5120, 0),
++	CHAN5G(28, 5140, 0),
++	CHAN5G(32, 5160, 0),
+ 	CHAN5G(36, 5180, 0),
+ 	CHAN5G(40, 5200, 0),
+ 	CHAN5G(44, 5220, 0),

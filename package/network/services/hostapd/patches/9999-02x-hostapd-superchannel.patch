@@ -1,0 +1,56 @@
+--- a/src/common/ieee802_11_common.c	2019-09-25 15:54:02.864615000 +0800
++++ b/src/common/ieee802_11_common.c	2019-09-26 02:27:14.035001453 +0800
+@@ -772,14 +772,24 @@
+ 		return HOSTAPD_MODE_IEEE80211B;
+ 	}
+ 
+ 	if (freq >= 4900 && freq < 5000) {
+ 		if ((freq - 4000) % 5)
+ 			return NUM_HOSTAPD_MODES;
+-		*channel = (freq - 4000) / 5;
+-		*op_class = 0; /* TODO */
++
++		if (vht_opclass)
++			*op_class = vht_opclass;
++		else if (sec_channel == 1)
++			*op_class = 107;
++		else if (sec_channel == -1)
++			*op_class = 108;
++		else
++			*op_class = 106;
++
++		*channel = (freq - 4000) / 5;
++
+ 		return HOSTAPD_MODE_IEEE80211A;
+ 	}
+ 
+ 	switch (vht) {
+ 	case VHT_CHANWIDTH_80MHZ:
+ 		vht_opclass = 128;
+@@ -1361,6 +1375,15 @@
+ 	{ HOSTAPD_MODE_IEEE80211G, 83, 1, 9, 1, BW40PLUS, NO_P2P_SUPP },
+ 	{ HOSTAPD_MODE_IEEE80211G, 84, 5, 13, 1, BW40MINUS, NO_P2P_SUPP },
+ 
++	{ HOSTAPD_MODE_IEEE80211A, 106, 184, 196, 4, BW20, P2P_SUPP },
++	{ HOSTAPD_MODE_IEEE80211A, 107, 184, 192, 8, BW40PLUS, P2P_SUPP },
++	{ HOSTAPD_MODE_IEEE80211A, 108, 188, 196, 8, BW40MINUS, P2P_SUPP  },
++	{ HOSTAPD_MODE_IEEE80211A, 109, 4, 16, 4, BW20, P2P_SUPP },
++	{ HOSTAPD_MODE_IEEE80211A, 110, 4, 12, 8, BW40PLUS, P2P_SUPP },
++	{ HOSTAPD_MODE_IEEE80211A, 111, 8, 16, 8, BW40MINUS, P2P_SUPP  },
++	{ HOSTAPD_MODE_IEEE80211A, 112, 20, 32, 4, BW20, P2P_SUPP },
++	{ HOSTAPD_MODE_IEEE80211A, 113, 20, 28, 8, BW40PLUS, P2P_SUPP },
++	{ HOSTAPD_MODE_IEEE80211A, 114, 24, 28, 8, BW40MINUS, P2P_SUPP  },
+ 	{ HOSTAPD_MODE_IEEE80211A, 115, 36, 48, 4, BW20, P2P_SUPP },
+ 	{ HOSTAPD_MODE_IEEE80211A, 116, 36, 44, 8, BW40PLUS, P2P_SUPP },
+ 	{ HOSTAPD_MODE_IEEE80211A, 117, 40, 48, 8, BW40MINUS, P2P_SUPP },
+@@ -1383,9 +1406,9 @@
+ 	 * wpas_p2p_allow_channel() fail). wpas_p2p_verify_80mhz() should take
+ 	 * care of removing invalid channels.
+ 	 */
+-	{ HOSTAPD_MODE_IEEE80211A, 128, 36, 161, 4, BW80, P2P_SUPP },
++	{ HOSTAPD_MODE_IEEE80211A, 128, 4, 161, 4, BW80, P2P_SUPP },
+ 	{ HOSTAPD_MODE_IEEE80211A, 129, 50, 114, 16, BW160, P2P_SUPP },
+ 	{ HOSTAPD_MODE_IEEE80211A, 130, 36, 161, 4, BW80P80, P2P_SUPP },
+ 	{ HOSTAPD_MODE_IEEE80211AD, 180, 1, 4, 1, BW2160, P2P_SUPP },
+ 	{ -1, 0, 0, 0, 0, BW20, NO_P2P_SUPP }
+ };

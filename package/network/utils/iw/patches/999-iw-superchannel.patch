@@ -1,0 +1,24 @@
+--- a/util.c	2019-09-25 15:55:45.823320000 +0800
++++ b/util.c	2019-09-26 02:32:25.371087428 +0800
+@@ -295,8 +295,8 @@
+ {
+ 	/* see 802.11 17.3.8.3.2 and Annex J
+ 	 * there are overlapping channel numbers in 5GHz and 2GHz bands */
+-	if (chan <= 0)
+-		return 0; /* not supported */
++	//if (chan <= 0)
++	//	return 0; /* not supported */
+ 	switch (band) {
+ 	case NL80211_BAND_2GHZ:
+ 		if (chan == 14)
+@@ -1108,7 +1108,9 @@
+ int get_cf1(const struct chanmode *chanmode, unsigned long freq)
+ {
+ 	unsigned int cf1 = freq, j;
+-	unsigned int vht80[] = { 5180, 5260, 5500, 5580, 5660, 5745 };
++	unsigned int vht80[] = { 5020, 5040, 5060, 5080, 5100, 5120, 5140, 5160, 5180, \
++				 5200, 5220, 5240, 5260, 5280, 5300, 5320, 5500, 5580, \
++				 5600, 5620, 5640, 5660, 5680, 5700, 5720, 5745, 5765, 5785, 5805 };
+ 
+ 	switch (chanmode->width) {
+ 	case NL80211_CHAN_WIDTH_80:

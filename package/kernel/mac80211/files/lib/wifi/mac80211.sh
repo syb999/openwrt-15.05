@@ -112,8 +112,10 @@ detect_mac80211() {
 			dev_id="	option macaddr	$(cat /sys/class/ieee80211/${dev}/macaddress)"
 		fi
 
-		if [ x$mode_band == x"a" ]; then
-			ssid_wlan="_wlan"
+		if [ x$mode_band == x"g" ]; then
+			ssid_wlan="_2.4G"
+		else
+			ssid_wlan="_5G"
 		fi
 
 		cat <<EOF

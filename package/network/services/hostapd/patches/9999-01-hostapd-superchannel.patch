@@ -1,0 +1,1076 @@
+--- a/src/common/ieee802_11_common.c	2019-09-25 15:54:02.864615000 +0800
++++ b/src/common/ieee802_11_common.c	2019-09-26 02:27:14.035001453 +0800
+@@ -766,13 +766,1038 @@
+ 		return HOSTAPD_MODE_IEEE80211G;
+ 	}
+ 
+-	if (freq == 2484) {
+-		if (sec_channel || vht)
+-			return NUM_HOSTAPD_MODES;
++	if (freq == 2192) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 213;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2197) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 214;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2202) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 215;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2207) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 216;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2212) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 217;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2217) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 218;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2222) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 219;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2227) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 220;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2232) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 221;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2237) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 222;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2242) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 223;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2247) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 224;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2252) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 225;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2257) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 226;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2262) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 227;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2267) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 228;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
+ 
+-		*op_class = 82; /* channel 14 */
++	if (freq == 2272) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 229;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2277) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 230;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2282) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 231;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2287) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 232;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2292) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 233;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2297) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 234;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2302) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 235;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2307) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 236;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2312) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 237;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2317) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 238;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2322) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 239;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2327) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 240;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++ 
++	if (freq == 2332) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 241;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2337) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 242;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2342) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 243;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2347) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 244;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2352) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 245;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2357) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 246;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2362) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 247;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2367) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 248;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2372) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 249;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2377) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 250;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2382) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 251;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2387) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 252;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2392) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 253;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2397) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 254;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2402) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 255;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2407) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 0;
++		return HOSTAPD_MODE_IEEE80211G;
++	}
++
++	if (freq == 2484) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
+ 		*channel = 14;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++
++	if (freq == 2492) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 16;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
+ 
++	if (freq == 2497) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 16;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2502) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 18;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2507) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 19;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2512) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 20;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2517) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 21;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2522) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 22;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2527) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 23;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2532) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 24;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2537) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 25;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2542) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 26;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2547) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 27;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2552) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 28;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2557) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 29;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2562) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 30;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2567) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 31;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2572) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 32;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2577) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 33;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2582) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 34;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2587) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 35;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2592) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 36;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2597) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 37;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2602) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 38;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2607) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 39;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2612) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 40;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2617) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 41;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2622) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 42;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2627) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 43;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2632) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 44;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2637) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 45;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2642) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 46;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2647) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 47;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2652) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 48;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2657) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 49;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2662) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 50;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2667) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 51;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2672) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 52;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2677) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 53;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2682) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 54;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2687) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 55;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2692) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 56;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2697) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 57;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2702) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 58;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2707) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 59;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2712) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 60;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2717) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 61;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2722) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 62;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2727) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 63;
++		return HOSTAPD_MODE_IEEE80211B;
++	}
++
++	if (freq == 2732) {
++		if (sec_channel == 1)
++			*op_class = 83;
++		else if (sec_channel == -1)
++			*op_class = 84;
++		else
++			*op_class = 81;
++		*channel = 64;
+ 		return HOSTAPD_MODE_IEEE80211B;
+ 	}
+ 
+@@ -1358,12 +2383,12 @@
+ 
+ 
+ const struct oper_class_map global_op_class[] = {
+-	{ HOSTAPD_MODE_IEEE80211G, 81, 1, 13, 1, BW20, P2P_SUPP },
+-	{ HOSTAPD_MODE_IEEE80211G, 82, 14, 14, 1, BW20, NO_P2P_SUPP },
++	{ HOSTAPD_MODE_IEEE80211G, 81, 1, 14, 1, BW20, P2P_SUPP },
++	{ HOSTAPD_MODE_IEEE80211G, 82, 14, 14, 1, BW20, P2P_SUPP },
+ 
+ 	/* Do not enable HT40 on 2.4 GHz for P2P use for now */
+-	{ HOSTAPD_MODE_IEEE80211G, 83, 1, 9, 1, BW40PLUS, NO_P2P_SUPP },
+-	{ HOSTAPD_MODE_IEEE80211G, 84, 5, 13, 1, BW40MINUS, NO_P2P_SUPP },
++	{ HOSTAPD_MODE_IEEE80211G, 83, 1, 14, 1, BW40PLUS, P2P_SUPP },
++	{ HOSTAPD_MODE_IEEE80211G, 84, 1, 14, 1, BW40MINUS, P2P_SUPP },
+ 
+ 	{ HOSTAPD_MODE_IEEE80211A, 115, 36, 48, 4, BW20, P2P_SUPP },
+ 	{ HOSTAPD_MODE_IEEE80211A, 116, 36, 44, 8, BW40PLUS, P2P_SUPP },
+--- a/src/ap/hw_features.c	2019-09-25 15:54:02.584618000 +0800
++++ b/src/ap/hw_features.c	2019-09-26 02:05:40.899258371 +0800
+@@ -866,10 +866,7 @@
+ 	if ((iface->conf->hw_mode == HOSTAPD_MODE_IEEE80211G ||
+ 	     iface->conf->ieee80211n || iface->conf->ieee80211ac) &&
+ 	    iface->conf->channel == 14) {
+-		wpa_printf(MSG_INFO, "Disable OFDM/HT/VHT on channel 14");
+-		iface->conf->hw_mode = HOSTAPD_MODE_IEEE80211B;
+-		iface->conf->ieee80211n = 0;
+-		iface->conf->ieee80211ac = 0;
++		iface->conf->hw_mode = HOSTAPD_MODE_IEEE80211G;
+ 	}
+ 
+ 	iface->current_mode = NULL;
