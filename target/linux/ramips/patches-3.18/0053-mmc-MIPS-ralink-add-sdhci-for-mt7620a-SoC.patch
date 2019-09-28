@@ -1,6 +1,32 @@
+From f954801c6f48fc291c39ca8a888dbdfda1021415 Mon Sep 17 00:00:00 2001
+From: John Crispin <blogic@openwrt.org>
+Date: Thu, 13 Nov 2014 19:08:40 +0100
+Subject: [PATCH] mmc: MIPS: ralink: add sdhci for mt7620a SoC
+
+Signed-off-by: John Crispin <blogic@openwrt.org>
+---
+ drivers/mmc/host/Kconfig             |    2 +
+ drivers/mmc/host/Makefile            |    1 +
+ drivers/mmc/host/mtk-mmc/Kconfig     |   16 +
+ drivers/mmc/host/mtk-mmc/Makefile    |   42 +
+ drivers/mmc/host/mtk-mmc/board.h     |  137 ++
+ drivers/mmc/host/mtk-mmc/dbg.c       |  347 ++++
+ drivers/mmc/host/mtk-mmc/dbg.h       |  153 ++
+ drivers/mmc/host/mtk-mmc/mt6575_sd.h | 1001 +++++++++++
+ drivers/mmc/host/mtk-mmc/sd.c        | 3041 ++++++++++++++++++++++++++++++++++
+ 9 files changed, 4740 insertions(+)
+ create mode 100644 drivers/mmc/host/mtk-mmc/Kconfig
+ create mode 100644 drivers/mmc/host/mtk-mmc/Makefile
+ create mode 100644 drivers/mmc/host/mtk-mmc/board.h
+ create mode 100644 drivers/mmc/host/mtk-mmc/dbg.c
+ create mode 100644 drivers/mmc/host/mtk-mmc/dbg.h
+ create mode 100644 drivers/mmc/host/mtk-mmc/mt6575_sd.h
+ create mode 100644 drivers/mmc/host/mtk-mmc/sd.c
+
 --- a/drivers/mmc/host/Kconfig
 +++ b/drivers/mmc/host/Kconfig
-@@ -773,3 +773,5 @@ config MMC_SUNXI
+@@ -772,4 +772,6 @@ config MMC_SUNXI
+ 	depends on ARCH_SUNXI
  	help
  	  This selects support for the SD/MMC Host Controller on
  	  Allwinner sunxi SoCs.

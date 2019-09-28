@@ -89,6 +89,7 @@ platform_check_image() {
 	rt-n10-plus | \
 	rt-n13u | \
 	rt-n14u | \
+	fwr200-v2 | \
 	rt-n15 | \
 	rt-n56u | \
 	rut5xx | \

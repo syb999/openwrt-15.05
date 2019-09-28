@@ -15,7 +15,6 @@
 		bootargs = "console=ttyS0,115200";
 	};
 
-
 	sdhci@10130000 {
 		status = "okay";
 	};

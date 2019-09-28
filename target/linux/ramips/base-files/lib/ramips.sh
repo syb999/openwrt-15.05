@@ -181,6 +181,9 @@ ramips_board_detect() {
 	*"Asus RT-N14U")
 		name="rt-n14u"
 		;;
+	*"Fast FWR200 V2")
+		name="fwr200-v2"
+		;;
 	*"Asus RT-N13U")
 		name="rt-n13u"
 		;;

@@ -179,6 +179,7 @@ ramips_setup_interfaces()
 	f5d8235-v2 | \
 	hg255d | \
 	rt-n14u | \
+	fwr200-v2 | \
 	wrtnode | \
 	wt3020 | \
 	ur-326n4g | \
@@ -355,6 +356,7 @@ ramips_setup_macs()
 		wan_mac=$(macaddr_add "$lan_mac" 1)
 		;;
 
+	fwr200-v2 | \
 	daishuyun)
 		lan_mac=$(mtd_get_mac_binary factory 4)
 		wan_mac=$(macaddr_add "$lan_mac" 1)
