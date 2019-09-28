@@ -1,0 +1,74 @@
+msgid ""
+msgstr ""
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "No such spoofer result log"
+msgstr "没有spoofer的结果日志"
+
+msgid "result"
+msgstr "结果"
+
+msgid "Internet Protocol version"
+msgstr "Internet协议版本"
+
+msgid "IP address of spoofer client"
+msgstr "spoofer客户端的IP地址"
+
+msgid "Autonomous System Number"
+msgstr "自主系统号码"
+
+msgid "result of sending spoofed private addresses"
+msgstr "发送伪造的私有地址的结果"
+
+msgid "result of sending spoofed routable addresses"
+msgstr "发送伪造的可路由地址的结果"
+
+msgid "result of receiving spoofed private addresses"
+msgstr "接收伪造私有地址的结果"
+
+msgid "result of receiving spoofed internal addresses"
+msgstr "接收伪造内网地址的结果"
+
+msgid "summary report at website"
+msgstr "网站汇总报告"
+
+msgid "Share results publicly"
+msgstr "公开共享结果"
+
+msgid "Share results for remediation"
+msgstr "共享修复结果"
+
+msgid "Number of log files to keep"
+msgstr "要保留的日志文件数"
+
+msgid "Number of results to keep"
+msgstr "要保留的结果数"
+
+msgid "recommended unless blocked by your provider"
+msgstr "推荐，除非被您的提供商阻止"
+
+msgid "use development test server"
+msgstr "使用开发测试服务器"
+
+msgid "don't send any probe packets"
+msgstr "不发送任何探测数据包"
+
+msgid "run a test without a server"
+msgstr "在没有服务器的情况下运行测试"
+
+
+
+
+
+
+
+
+
+
+
+
+
