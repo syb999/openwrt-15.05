@@ -20,7 +20,6 @@ define Host/Install
 		ARCH="$(CONFIG_ARCH)" \
 		pregen \
 		install_headers
-	$(CP) $(BUILD_DIR_TOOLCHAIN)/linux-dev/* $(BUILD_DIR_TOOLCHAIN)/$(LIBC)-dev/
 endef
 
 $(eval $(call HostBuild))
