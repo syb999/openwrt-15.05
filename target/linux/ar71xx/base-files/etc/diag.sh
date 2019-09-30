@@ -18,6 +18,9 @@ get_status_led() {
 	antminer-s3)
 		status_led="antminer-s3:green:system"
 		;;
+	letv)
+		status_led="letv:green:status"
+		;;
 	csac)
 		status_led="csac:green:status"
 		;;

@@ -71,6 +71,17 @@ endef
 
 $(eval $(call Profile,AP136))
 
+define Profile/LETV
+	NAME:=LETV board
+	PACKAGES:=
+endef
+
+define Profile/LETV/Description
+	Package set optimized for the LETV board.
+endef
+
+$(eval $(call Profile,LETV))
+
 define Profile/CSAC
 	NAME:=CSAC
 	PACKAGES:=kmod-ath10k ath10k-firmware-qca9888-ct

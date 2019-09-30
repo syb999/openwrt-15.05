@@ -56,6 +56,15 @@ bsb)
 	ucidef_set_led_default "sys" "SYS" "bsb:red:sys" "1"
 	;;
 
+letv)
+	ucidef_set_led_netdev "wan" "WAN" "letv:green:wan" "eth1"
+	ucidef_set_led_switch "lan1" "LAN1" "letv:green:lan1" "switch0" "0x10"
+	ucidef_set_led_switch "lan2" "LAN2" "letv:green:lan2" "switch0" "0x08"
+	ucidef_set_led_switch "lan3" "LAN3" "letv:green:lan3" "switch0" "0x04"
+	ucidef_set_led_switch "lan4" "LAN4" "letv:green:lan4" "switch0" "0x02"
+	ucidef_set_led_wlan "wlan2g" "WLAN 2.4 GHz" "letv:green:wlan-2g" "phy0tpt"
+	;;
+
 bullet-m | \
 nanostation-m | \
 rocket-m | \
