@@ -258,6 +258,12 @@ get_status_led() {
 	daishuyun)
 		status_led="daishuyun:green:wifi"
 		;;
+	psg1208)
+		status_led="phicomm:white:wps"
+		;;
+	psg1218)
+		status_led="psg1218:blue:status"
+		;;
 	zbt-wg2626)
 		status_led="zbt-wg2626:green:status"
 		;;

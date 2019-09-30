@@ -136,6 +136,8 @@ platform_check_image() {
 	newifi-d1 |\
 	newifi-d2 |\
 	zbt-we1326 |\
+	psg1208 |\
+	psg1218 |\
 	youku-yk1)
 		[ "$magic" != "27051956" ] && {
 			echo "Invalid image type."

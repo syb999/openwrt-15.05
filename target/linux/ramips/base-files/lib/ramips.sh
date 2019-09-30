@@ -445,6 +445,12 @@ ramips_board_detect() {
 	*"Youku Yk1")
 		name="youku-yk1"
 		;;
+	*"Phicomm PSG1208")
+		name="psg1208"
+		;;
+	*"Phicomm PSG1218")
+		name="psg1218"
+		;;
 	*"HiWiFi HC5962")
 		name="hc5962"
 		;;

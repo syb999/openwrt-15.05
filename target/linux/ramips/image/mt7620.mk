@@ -70,3 +70,16 @@ define Device/xiaomi-miwifi-mini
 endef
 TARGET_DEVICES += xiaomi-miwifi-mini
 
+define Device/psg1208
+  DTS := PSG1208
+  IMAGE_SIZE := $(ralink_default_fw_size_8M)
+  DEVICE_TITLE := Phicomm PSG1208
+endef
+TARGET_DEVICES += psg1208
+
+define Device/psg1218
+  DTS := PSG1218
+  IMAGE_SIZE := $(ralink_default_fw_size_8M)
+  DEVICE_TITLE := Phicomm PSG1218
+endef
+TARGET_DEVICES += psg1218
