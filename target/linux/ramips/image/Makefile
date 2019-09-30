@@ -961,30 +961,26 @@ endif
 #
 
 ifeq ($(SUBTARGET),mt7621)
-  TARGET_DEVICES += $(1)
+  TARGET_DEVICES += pbr-m1 newifi-d1 newifi-d2 zbt-we1326
 endif
 
 define Device/mt7621
   DTS := MT7621
   IMAGE_SIZE := $(ralink_default_fw_size_4M)
 endef
-TARGET_DEVICES += mt7621
 
 define Device/wsr-600
   DTS := WSR-600
 endef
-TARGET_DEVICES += wsr-600
 
 define Device/re6500
   DTS := RE6500
 endef
-TARGET_DEVICES += re6500
 
 define Device/wsr-1166
   DTS := WSR-1166
   IMAGE/sysupgrade.bin := trx | pad-rootfs
 endef
-TARGET_DEVICES += wsr-1166
 
 define Device/dir-860l-b1
   DTS := DIR-860L-B1
@@ -1003,47 +999,44 @@ define Device/dir-860l-b1
 	seama-seal -m "signature=wrgac13_dlink.2013gui_dir860lb" | \
 	check-size $$$$(IMAGE_SIZE)
 endef
-TARGET_DEVICES += dir-860l-b1
 
 define Device/firewrt
   DTS := FIREWRT
   IMAGE_SIZE := $(ralink_default_fw_size_16M)
 endef
-TARGET_DEVICES += firewrt
 
 define Device/pbr-m1
   DTS := PBR-M1
   IMAGE_SIZE := $(ralink_default_fw_size_16M)
 endef
-TARGET_DEVICES += pbr-m1
 
 define Device/zbt-wg2626
   DTS := ZBT-WG2626
   IMAGE_SIZE := $(ralink_default_fw_size_16M)
 endef
-TARGET_DEVICES += zbt-wg2626
 
 define Device/newifi-d1
   DTS := Newifi-D1
   IMAGE_SIZE := $(ralink_default_fw_size_32M)
 endef
-TARGET_DEVICES += newifi-d1
 
 define Device/newifi-d2
   DTS := Newifi-D2
   IMAGE_SIZE := $(ralink_default_fw_size_32M)
 endef
-TARGET_DEVICES += newifi-d2
 
 define Device/zbt-we1326
   DTS := ZBT-WE1326
   IMAGE_SIZE := $(ralink_default_fw_size_16M)
 endef
-TARGET_DEVICES += zbt-we1326
 
 #
 # MT7621-nand Profiles
 #
+
+ifeq ($(SUBTARGET),mt7621)
+  TARGET_DEVICES += hc5962
+endif
 
 define Device/hc5962
   DTS := HC5962
@@ -1055,7 +1048,6 @@ define Device/hc5962
   FILESYSTEMS := squashfs
   IMAGE/sysupgrade.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(ralink_default_fw_size_32M)
 endef
-TARGET_DEVICES += hc5962
 
 #
 # MT7628 Profiles
