@@ -231,6 +231,11 @@ case $board in
 		set_wifi_led "asus:blue:air"
 		set_usb_led "asus:blue:usb"
 		;;
+	fwr200-v2)
+		ucidef_set_led_default "power" "power" "fast:green:power" "1"
+		ucidef_set_led_netdev "lan" "lan" "fast:green:lan" eth0.1
+		ucidef_set_led_netdev "wan" "wan" "fast:green:wan" eth0.2
+		;;
 	rp-n53)
 		ucidef_set_led_netdev "eth" "Network" "asus:white:back" "eth0"
 		set_wifi_led "asus:blue:wifi"
