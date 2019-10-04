@@ -32,8 +32,9 @@
  			chip->erase_suspended = 0;
  		}
  
- 		if (chip_good(map, adr, map_word_ff(map)))
+-		if (chip_ready(map, adr))
 -			break;
++		if (chip_good(map, adr, map_word_ff(map)))
 +			goto op_done;
  
  		if (time_after(jiffies, timeo)) {
@@ -50,7 +51,8 @@
  			chip->erase_suspended = 0;
  		}
  
- 		if (chip_good(map, adr, map_word_ff(map))) {
+-		if (chip_ready(map, adr)) {
++		if (chip_good(map, adr, map_word_ff(map))) {
  			xip_enable(map, chip, adr);
 -			break;
 +			goto op_done;
