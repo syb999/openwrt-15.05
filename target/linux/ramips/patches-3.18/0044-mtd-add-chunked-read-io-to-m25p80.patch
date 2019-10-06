@@ -1,33 +1,18 @@
---- a/drivers/mtd/devices/m25p80.c
-+++ b/drivers/mtd/devices/m25p80.c
-@@ -19,6 +19,7 @@
- #include <linux/errno.h>
- #include <linux/module.h>
- #include <linux/device.h>
-+#include <linux/of.h>
- 
- #include <linux/mtd/mtd.h>
- #include <linux/mtd/partitions.h>
-@@ -32,6 +33,7 @@ struct m25p {
- 	struct spi_device	*spi;
- 	struct spi_nor		spi_nor;
- 	struct mtd_info		mtd;
-+	u16			chunk_size;
- 	u8			command[MAX_CMD_SIZE];
- };
- 
-@@ -157,6 +159,61 @@ static int m25p80_read(struct spi_nor *n
- 	return 0;
+--- a/drivers/mtd/spi-nor/spi-nor.c
++++ b/drivers/mtd/spi-nor/spi-nor.c
+@@ -1016,6 +1016,66 @@ write_err:
+ 	return ret;
  }
  
-+static void m25p80_chunked_write(struct spi_nor *nor, loff_t _from, size_t _len,
-+			size_t *_retlen, const u_char *_buf)
++static int spi_nor_chunked_write(struct mtd_info *mtd, loff_t _to, size_t _len,
++				 size_t *_retlen, const u_char *_buf)
 +{
-+	struct m25p *flash = nor->priv;
++	struct spi_nor *nor = mtd_to_spi_nor(mtd);
 +	int chunk_size;
 +	int retlen = 0;
++	int ret;
 +
-+	chunk_size = flash->chunk_size;
++	chunk_size = nor->chunk_size;
 +	if (!chunk_size)
 +		chunk_size = _len;
 +
@@ -37,35 +22,39 @@
 +	while (retlen < _len) {
 +		size_t len = min_t(int, chunk_size, _len - retlen);
 +		const u_char *buf = _buf + retlen;
-+		loff_t from = _from + retlen;
++		loff_t to = _to + retlen;
 +
-+		nor->wait_till_ready(nor);
-+		nor->write_reg(nor, SPINOR_OP_WREN, NULL, 0, 0);
-+
-+		m25p80_write(nor, from, len, &retlen, buf);
++		if (nor->flags & SNOR_F_SST)
++			ret = sst_write(mtd, to, len, &retlen, buf);
++		else
++			ret = spi_nor_write(mtd, to, len, &retlen, buf);
++		if (ret)
++			return ret;
 +	}
++
 +	*_retlen += retlen;
++	return 0;
 +}
 +
-+static int m25p80_chunked_read(struct spi_nor *nor, loff_t _from, size_t _len,
-+			size_t *_retlen, u_char *_buf)
++static int spi_nor_chunked_read(struct mtd_info *mtd, loff_t _from, size_t _len,
++				size_t *_retlen, u_char *_buf)
 +{
-+	struct m25p *flash = nor->priv;
++	struct spi_nor *nor = mtd_to_spi_nor(mtd);
 +	int chunk_size;
++	int ret;
 +
-+	chunk_size = flash->chunk_size;
++	chunk_size = nor->chunk_size;
 +	if (!chunk_size)
 +		chunk_size = _len;
 +
 +	*_retlen = 0;
-+
 +	while (*_retlen < _len) {
 +		size_t len = min_t(int, chunk_size, _len - *_retlen);
 +		u_char *buf = _buf + *_retlen;
 +		loff_t from = _from + *_retlen;
 +		int retlen = 0;
-+		int ret = m25p80_read(nor, from, len, &retlen, buf);
 +
++		ret = spi_nor_read(mtd, from, len, &retlen, buf);
 +		if (ret)
 +			return ret;
 +
@@ -75,29 +64,60 @@
 +	return 0;
 +}
 +
- static int m25p80_erase(struct spi_nor *nor, loff_t offset)
+ static int macronix_quad_enable(struct spi_nor *nor)
  {
- 	struct m25p *flash = nor->priv;
-@@ -197,6 +254,7 @@ static int m25p_probe(struct spi_device
- 	struct spi_nor *nor;
- 	enum read_mode mode = SPI_NOR_NORMAL;
- 	char *flash_name = NULL;
-+	u32 val;
- 	int ret;
+ 	int ret, val;
+@@ -1197,10 +1257,12 @@ int spi_nor_scan(struct spi_nor *nor, co
+ 	}
  
- 	data = dev_get_platdata(&spi->dev);
-@@ -244,6 +302,14 @@ static int m25p_probe(struct spi_device
- 	if (ret)
- 		return ret;
- 
-+	if (spi->dev.of_node &&
-+	    !of_property_read_u32(spi->dev.of_node, "m25p,chunked-io", &val)) {
-+		dev_warn(&spi->dev, "using chunked io\n");
-+		nor->read = m25p80_chunked_read;
-+		nor->write = m25p80_chunked_write;
-+		flash->chunk_size = val;
+ 	/* sst nor chips use AAI word program */
+-	if (info->flags & SST_WRITE)
++	if (info->flags & SST_WRITE) {
+ 		mtd->_write = sst_write;
+-	else
++		nor->flags |= SNOR_F_SST;
++	} else {
+ 		mtd->_write = spi_nor_write;
 +	}
-+
- 	ppdata.of_node = spi->dev.of_node;
  
- 	return mtd_device_parse_register(&flash->mtd, NULL, &ppdata,
+ 	if (info->flags & USE_FSR)
+ 		nor->flags |= SNOR_F_USE_FSR;
+@@ -1228,11 +1290,20 @@ int spi_nor_scan(struct spi_nor *nor, co
+ 	mtd->writebufsize = nor->page_size;
+ 
+ 	if (np) {
++		u32 val;
++
+ 		/* If we were instantiated by DT, use it */
+ 		if (of_property_read_bool(np, "m25p,fast-read"))
+ 			nor->flash_read = SPI_NOR_FAST;
+ 		else
+ 			nor->flash_read = SPI_NOR_NORMAL;
++
++		if (!of_property_read_u32(np, "m25p,chunked-io", &val)) {
++			dev_info(dev, "using chunked io (size=%d)\n", val);
++			mtd->_read = spi_nor_chunked_read;
++			mtd->_write = spi_nor_chunked_write;
++			nor->chunk_size = val;
++		}
+ 	} else {
+ 		/* If we weren't instantiated by DT, default to fast-read */
+ 		nor->flash_read = SPI_NOR_FAST;
+--- a/include/linux/mtd/spi-nor.h
++++ b/include/linux/mtd/spi-nor.h
+@@ -115,6 +115,7 @@ enum spi_nor_ops {
+ 
+ enum spi_nor_option_flags {
+ 	SNOR_F_USE_FSR		= BIT(0),
++	SNOR_F_SST		= BIT(1),
+ };
+ 
+ struct mtd_info;
+@@ -157,6 +158,7 @@ struct spi_nor {
+ 	struct device		*dev;
+ 	struct device_node	*flash_node;
+ 	u32			page_size;
++	u16			chunk_size;
+ 	u8			addr_width;
+ 	u8			erase_opcode;
+ 	u8			read_opcode;
