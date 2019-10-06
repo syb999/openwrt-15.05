@@ -1,0 +1,38 @@
+--- a/dma.c	2019-10-06 03:06:20.254088000 +0800
++++ b/dma.c	2019-10-06 03:08:54.404150453 +0800
+@@ -356,7 +356,7 @@
+ }
+ 
+ static int
+-mt76_dma_rx_fill(struct mt76_dev *dev, struct mt76_queue *q)
++mt76_dma_rx_fill(struct mt76_dev *dev, struct mt76_queue *q, bool napi)
+ {
+ 	dma_addr_t addr;
+ 	void *buf;
+@@ -429,7 +429,7 @@
+ 
+ 	mt76_dma_rx_cleanup(dev, q);
+ 	mt76_dma_sync_idx(dev, q);
+-	mt76_dma_rx_fill(dev, q);
++	mt76_dma_rx_fill(dev, q, false);
+ 
+ 	if (!q->rx_head)
+ 		return;
+@@ -513,7 +513,7 @@
+ 		dev->drv->rx_skb(dev, q - dev->q_rx, skb);
+ 	}
+ 
+-	mt76_dma_rx_fill(dev, q);
++	mt76_dma_rx_fill(dev, q, false);
+ 	return done;
+ }
+ 
+@@ -554,7 +554,7 @@
+ 	for (i = 0; i < ARRAY_SIZE(dev->q_rx); i++) {
+ 		netif_napi_add(&dev->napi_dev, &dev->napi[i], mt76_dma_rx_poll,
+ 			       64);
+-		mt76_dma_rx_fill(dev, &dev->q_rx[i]);
++		mt76_dma_rx_fill(dev, &dev->q_rx[i], false);
+ 		skb_queue_head_init(&dev->rx_skb[i]);
+ 		napi_enable(&dev->napi[i]);
+ 	}
