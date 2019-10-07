@@ -358,7 +358,7 @@ define KernelPackage/ath10k/config
 
        config ATH10K_LEDS
                bool "Enable LED support"
-               default y
+               default n
                depends on PACKAGE_kmod-ath10k
 
        config ATH10K_THERMAL
