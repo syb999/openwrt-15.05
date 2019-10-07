@@ -885,6 +885,14 @@ include mt7620.mk
 endif
 
 #
+# MT7620A-8m Profiles
+#
+
+ifeq ($(SUBTARGET),mt7620-8m)
+include mt7620-8m.mk
+endif
+
+#
 # MT7621 Profiles
 #
 

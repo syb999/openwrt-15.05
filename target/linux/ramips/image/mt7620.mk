@@ -50,12 +50,6 @@ define Device/daishuyun
 endef
 TARGET_DEVICES += daishuyun
 
-define Device/rt-n14u
-  DTS := RT-N14U
-  DEVICE_TITLE := Asus RT-N14u
-endef
-TARGET_DEVICES += rt-n14u
-
 define Device/fwr200-v2
   DTS := FWR200_V2
   DEVICE_TITLE := FAST FWR200-V2
@@ -70,16 +64,4 @@ define Device/xiaomi-miwifi-mini
 endef
 TARGET_DEVICES += xiaomi-miwifi-mini
 
-define Device/psg1208
-  DTS := PSG1208
-  IMAGE_SIZE := $(ralink_default_fw_size_8M)
-  DEVICE_TITLE := Phicomm PSG1208
-endef
-TARGET_DEVICES += psg1208
 
-define Device/psg1218
-  DTS := PSG1218
-  IMAGE_SIZE := $(ralink_default_fw_size_8M)
-  DEVICE_TITLE := Phicomm PSG1218
-endef
-TARGET_DEVICES += psg1218
