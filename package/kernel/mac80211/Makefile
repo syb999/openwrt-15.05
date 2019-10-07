@@ -10,10 +10,10 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=mac80211
 
-PKG_VERSION:=4.19-rc5-1
+PKG_VERSION:=4.19.66-1
 PKG_RELEASE:=1
-PKG_SOURCE_URL:=https://mirrors.edge.kernel.org/pub/linux/kernel/projects/backports/stable/v4.19-rc5/
-PKG_HASH:=5b61e64ea79d22bbac9e8612d5d5485974f223de00d4ec250b0faf4b7baf9957
+PKG_SOURCE_URL:=@KERNEL/linux/kernel/projects/backports/stable/v4.19.66/
+PKG_MD5SUM:=b70c9519b12a8fba2af38a40d22c9254
 
 PKG_SOURCE:=backports-$(PKG_VERSION).tar.xz
 PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/backports-$(PKG_VERSION)
@@ -110,6 +110,7 @@ define KernelPackage/mac80211
   KCONFIG:=\
 	CONFIG_AVERAGE=y
   FILES:= $(PKG_BUILD_DIR)/net/mac80211/mac80211.ko
+  ABI_VERSION:=$(PKG_VERSION)-$(PKG_RELEASE)
   MENU:=1
 endef
 
@@ -1299,7 +1300,7 @@ endef
 
 define KernelPackage/rt2400-pci
 $(call KernelPackage/rt2x00/Default)
-  DEPENDS+= @PCI_SUPPORT +kmod-rt2x00-pci
+  DEPENDS+= @PCI_SUPPORT +kmod-rt2x00-pci +kmod-eeprom-93cx6
   TITLE+= (RT2400 PCI)
   FILES:=$(PKG_BUILD_DIR)/drivers/net/wireless/ralink/rt2x00/rt2400pci.ko
   AUTOLOAD:=$(call AutoProbe,rt2400pci)
@@ -1307,7 +1308,7 @@ endef
 
 define KernelPackage/rt2500-pci
 $(call KernelPackage/rt2x00/Default)
-  DEPENDS+= @PCI_SUPPORT +kmod-rt2x00-pci
+  DEPENDS+= @PCI_SUPPORT +kmod-rt2x00-pci +kmod-eeprom-93cx6
   TITLE+= (RT2500 PCI)
   FILES:=$(PKG_BUILD_DIR)/drivers/net/wireless/ralink/rt2x00/rt2500pci.ko
   AUTOLOAD:=$(call AutoProbe,rt2500pci)
@@ -1341,7 +1342,7 @@ endef
 
 define KernelPackage/rt2800-pci
 $(call KernelPackage/rt2x00/Default)
-  DEPENDS+= @PCI_SUPPORT +kmod-rt2x00-pci +kmod-rt2800-lib +kmod-rt2800-mmio +rt2800-pci-firmware
+  DEPENDS+= @PCI_SUPPORT +kmod-rt2x00-pci +kmod-rt2800-lib +kmod-rt2800-mmio +kmod-eeprom-93cx6 +rt2800-pci-firmware
   TITLE+= (RT2860 PCI)
   FILES:=$(PKG_BUILD_DIR)/drivers/net/wireless/ralink/rt2x00/rt2800pci.ko
   AUTOLOAD:=$(call AutoProbe,rt2800pci)
@@ -1358,7 +1359,7 @@ endef
 
 define KernelPackage/rt61-pci
 $(call KernelPackage/rt2x00/Default)
-  DEPENDS+= @PCI_SUPPORT +kmod-rt2x00-pci +rt61-pci-firmware
+  DEPENDS+= @PCI_SUPPORT +kmod-rt2x00-pci +kmod-eeprom-93cx6 +kmod-lib-crc-itu-t +rt61-pci-firmware
   TITLE+= (RT2x61 PCI)
   FILES:=$(PKG_BUILD_DIR)/drivers/net/wireless/ralink/rt2x00/rt61pci.ko
   AUTOLOAD:=$(call AutoProbe,rt61pci)
@@ -1366,7 +1367,7 @@ endef
 
 define KernelPackage/rt73-usb
   $(call KernelPackage/rt2x00/Default)
-  DEPENDS+= @USB_SUPPORT +kmod-rt2x00-usb +rt73-usb-firmware
+  DEPENDS+= @USB_SUPPORT +kmod-rt2x00-usb +kmod-lib-crc-itu-t +rt73-usb-firmware
   TITLE+= (RT73 USB)
   FILES:=$(PKG_BUILD_DIR)/drivers/net/wireless/ralink/rt2x00/rt73usb.ko
   AUTOLOAD:=$(call AutoProbe,rt73usb)
@@ -1780,12 +1781,17 @@ config-$(CONFIG_LEDS_TRIGGERS) += MAC80211_LEDS B43_LEDS B43LEGACY_LEDS
 MAKE_OPTS:= -C "$(PKG_BUILD_DIR)" \
 	CROSS_COMPILE="$(KERNEL_CROSS)" \
 	ARCH="$(LINUX_KARCH)" \
+	$(KERNEL_MAKE_FLAGS) \
 	EXTRA_CFLAGS="-I$(PKG_BUILD_DIR)/include $(IREMAP_CFLAGS)" \
 	KLIB_BUILD="$(LINUX_DIR)" \
 	MODPROBE=true \
 	KLIB=$(TARGET_MODULES_DIR) \
 	KERNEL_SUBLEVEL=$(lastword $(subst ., ,$(KERNEL_PATCHVER))) \
 	KBUILD_LDFLAGS_MODULE_PREREQ=
+
+ifneq ($(findstring c,$(OPENWRT_VERBOSE)),)
+  MAKE_OPTS += V=1
+endif
 
 define ConfigVars
 $(subst $(space),,$(foreach opt,$(config-$(1)),CPTCFG_$(opt)=$(1)
