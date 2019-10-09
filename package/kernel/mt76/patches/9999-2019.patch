@@ -1,0 +1,38 @@
+--- a/mt7603_regs.h	2018-11-08 12:11:22.000000000 +0800
++++ b/mt7603_regs.h	2019-01-24 11:57:15.648952182 +0800
+@@ -319,7 +319,8 @@
+ #define MT_TMAC_TCR_SMOOTHING		BIT(31)
+ 
+ #define MT_WMM_TXOP_BASE		MT_WF_TMAC(0x010)
+-#define MT_WMM_TXOP(_n)			(MT_WMM_TXOP_BASE + (((_n) / 2) << 2))
++#define MT_WMM_TXOP(_n)			(MT_WMM_TXOP_BASE + \
++					 ((((_n) / 2) ^ 0x1) << 2))
+ #define MT_WMM_TXOP_SHIFT(_n)		((_n & 1) * 16)
+ #define MT_WMM_TXOP_MASK		GENMASK(15, 0)
+ 
+--- a/mt7603_mac.c	2018-11-08 12:11:22.000000000 +0800
++++ b/mt7603_mac.c	2019-01-24 11:39:48.222243746 +0800
+@@ -598,14 +598,11 @@
+ 	u16 val[4];
+ 	u16 probe_val;
+ 	u32 w9 = mt76_rr(dev, addr + 9 * 4);
+-	int count;
+ 	int i;
+ 
+ 	if (!mt76_poll(dev, MT_WTBL_UPDATE, MT_WTBL_UPDATE_BUSY, 0, 5000))
+ 		return;
+ 
+-	for (i = 0, count = 0; i < n_rates; i++)
+-		count += max_t(int, 2 * MT7603_RATE_RETRY, rates[i].count);
+ 	for (i = n_rates; i < 4; i++)
+ 		rates[i] = rates[n_rates - 1];
+ 
+@@ -673,7 +670,7 @@
+ 	if (!sta->wcid.tx_rate_set)
+ 		mt76_poll(dev, MT_WTBL_UPDATE, MT_WTBL_UPDATE_BUSY, 0, 5000);
+ 
+-	sta->rate_count = count;
++	sta->rate_count = 2 * MT7603_RATE_RETRY * n_rates;
+ 	sta->wcid.tx_rate_set = true;
+ }
+ 
