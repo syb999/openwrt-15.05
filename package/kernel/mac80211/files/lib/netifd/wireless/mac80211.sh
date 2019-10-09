@@ -99,7 +99,9 @@ mac80211_hostapd_setup_base() {
 		append base_cfg "acs_exclude_dfs=1" "$N"
 
 	json_get_vars noscan ht_coex
-	json_get_values ht_capab_list ht_capab
+	json_get_values ht_capab_list ht_capab tx_burst
+
+	[ "$tx_burst" = 0 ] && tx_burst=
 
 	ieee80211n=1
 	ht_capab=
@@ -229,6 +231,7 @@ mac80211_hostapd_setup_base() {
 			vht_link_adapt:3 \
 			vht160:2
 
+		set_default tx_burst 2.0
 		append base_cfg "ieee80211ac=1" "$N"
 		vht_cap=0
 		for cap in $(iw phy "$phy" info | awk -F "[()]" '/VHT Capabilities/ { print $2 }'); do
@@ -310,6 +313,7 @@ mac80211_hostapd_setup_base() {
 ${channel:+channel=$channel}
 ${channel_list:+chanlist=$channel_list}
 ${noscan:+noscan=$noscan}
+${tx_burst:+tx_queue_data2_burst=$tx_burst}
 $base_cfg
 
 EOF
