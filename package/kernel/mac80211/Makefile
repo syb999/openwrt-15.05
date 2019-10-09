@@ -398,14 +398,14 @@ ifneq ($(CONFIG_B43_FW_5_100_138),)
   PKG_B43_FWV4_OBJECT:=$(PKG_B43_FWV4_NAME)-$(PKG_B43_FWV4_VERSION)/linux/wl_apsta.o
   PKG_B43_FWV4_SOURCE:=$(PKG_B43_FWV4_NAME)-$(PKG_B43_FWV4_VERSION).tar.bz2
   PKG_B43_FWV4_SOURCE_URL:=http://www.lwfinger.com/b43-firmware/
-  PKG_B43_FWV4_HASH:=f1e7067aac5b62b67b8b6e4c517990277804339ac16065eb13c731ff909ae46f
+  PKG_B43_FWV4_MD5SUM:=f4e357b09eaf5d8b1f1920cf3493a555
 else
   PKG_B43_FWV4_NAME:=broadcom-wl
   PKG_B43_FWV4_VERSION:=4.150.10.5
   PKG_B43_FWV4_OBJECT:=$(PKG_B43_FWV4_NAME)-$(PKG_B43_FWV4_VERSION)/driver/wl_apsta_mimo.o
   PKG_B43_FWV4_SOURCE:=$(PKG_B43_FWV4_NAME)-$(PKG_B43_FWV4_VERSION).tar.bz2
   PKG_B43_FWV4_SOURCE_URL:=http://mirror2.openwrt.org/sources/
-  PKG_B43_FWV4_HASH:=a9f4e276a4d8d3a1cd0f2eb87080ae89b77f0a7140f06d4e9e2135fc44fdd533
+  PKG_B43_FWV4_MD5SUM:=0c6ba9687114c6b598e8019e262d9a60
 endif
 endif
 endif
@@ -718,7 +718,7 @@ PKG_BRCMSMAC_FW_VERSION:=5.100.138
 PKG_BRCMSMAC_FW_OBJECT:=$(PKG_BRCMSMAC_FW_NAME)-$(PKG_BRCMSMAC_FW_VERSION)/linux/wl_apsta.o
 PKG_BRCMSMAC_FW_SOURCE:=$(PKG_BRCMSMAC_FW_NAME)-$(PKG_BRCMSMAC_FW_VERSION).tar.bz2
 PKG_BRCMSMAC_FW_SOURCE_URL:=http://www.lwfinger.com/b43-firmware/
-PKG_BRCMSMAC_FW_HASH:=f1e7067aac5b62b67b8b6e4c517990277804339ac16065eb13c731ff909ae46f
+PKG_BRCMSMAC_FW_MD5SUM:=f4e357b09eaf5d8b1f1920cf3493a555
 
 define Download/brcmsmac
   FILE:=$(PKG_BRCMSMAC_FW_SOURCE)
@@ -1024,7 +1024,7 @@ define Download/ipw2100
 	http://mirror.ox.ac.uk/sites/ftp.openbsd.org/pub/OpenBSD/distfiles/firmware/ \
 	http://firmware.openbsd.org/firmware-dist/
   FILE:=$(IPW2100_NAME)-$(IPW2100_VERSION).tgz
-  HASH:=e1107c455e48d324a616b47a622593bc8413dcce72026f72731c0b03dae3a7a2
+  MD5SUM:=46aa75bcda1a00efa841f9707bbbd113
 endef
 $(eval $(call Download,ipw2100))
 
@@ -1052,7 +1052,7 @@ define Download/ipw2200
 	http://mirror.ox.ac.uk/sites/ftp.openbsd.org/pub/OpenBSD/distfiles/firmware/ \
 	http://firmware.openbsd.org/firmware-dist/
   FILE:=$(IPW2200_NAME)-$(IPW2200_VERSION).tgz
-  HASH:=c6818c11c18cc030d55ff83f64b2bad8feef485e7742f84f94a61d811a6258bd
+  MD5SUM:=eaba788643c7cc7483dd67ace70f6e99
 endef
 $(eval $(call Download,ipw2200))
 
@@ -1568,7 +1568,7 @@ ZD1211FW_VERSION:=1.4
 define Download/zd1211rw
   FILE:=$(ZD1211FW_NAME)-$(ZD1211FW_VERSION).tar.bz2
   URL:=@SF/zd1211/
-  HASH:=866308f6f59f7075f075d4959dff2ede47735c751251fecd1496df1ba4d338e1
+  MD5SUM:=19f28781d76569af8551c9d11294c870
 endef
 $(eval $(call Download,zd1211rw))
 
