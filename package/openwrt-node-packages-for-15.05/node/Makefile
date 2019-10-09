@@ -63,7 +63,7 @@ define Package/node/config
 
 	choice
 		prompt "Version Selection"
-		default NODEJS_6
+		default NODEJS_8
 		help
 		 Select node.js version.
 
