@@ -6,24 +6,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=node
 
-ifeq ($(CONFIG_NODEJS_8),y)
 PKG_VERSION:=v8.16.0
 PKG_RELEASE:=1
 PKG_MD5SUM:=3c340a1599aa60bd920dc7e153bc1e4a
 PATCH_DIR:=./patches/v8.x
-else
-ifeq ($(CONFIG_NODEJS_4),y)
-PKG_VERSION:=v4.9.1
-PKG_RELEASE:=1
-PKG_MD5SUM:=b69940f0c201f753ec1eaffd35a36231
-PATCH_DIR:=./patches/v4.x
-else
-PKG_VERSION:=v6.17.1
-PKG_RELEASE:=1
-PKG_MD5SUM:=61d29e619c9acf202349a5e89a4d3e56
-PATCH_DIR:=./patches/v6.x
-endif
-endif
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://nodejs.org/dist/${PKG_VERSION}
