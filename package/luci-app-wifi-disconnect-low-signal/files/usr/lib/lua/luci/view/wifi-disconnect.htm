@@ -1,0 +1,14 @@
+<%+header%>
+<div class="cbi-map">
+        <h2 name="content"><%=translate("wifi-disconnect-low-signal")%></h2>
+<p> &nbsp  &nbsp  &nbsp &nbsp &nbsp 请在WIFI中参照下面模板配置</p>
+<p> &nbsp  &nbsp  &nbsp &nbsp &nbsp option signal_connect '-70'</p>
+<p> &nbsp  &nbsp  &nbsp &nbsp &nbsp option signal_stay '-80'</p>
+<p> &nbsp  &nbsp  &nbsp &nbsp &nbsp option option signal_strikes '3'</p>
+<p> &nbsp  &nbsp  &nbsp &nbsp &nbsp option signal_poll_time '5'</p>
+<p> &nbsp  &nbsp  &nbsp &nbsp &nbsp option signal_drop_reason '3'</p>
+
+<p>&nbsp  &nbsp  &nbsp &nbsp &nbsp  Black List 黑名单（格式为MAC地址取掉 ：号）</p>
+<p>&nbsp  &nbsp  &nbsp &nbsp &nbsp option signal_blacklist 'AABBCCDDEEFF'</p>
+</div>
+<%+footer%>

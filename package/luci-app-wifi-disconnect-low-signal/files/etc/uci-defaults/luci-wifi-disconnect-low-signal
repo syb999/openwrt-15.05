@@ -1,0 +1,11 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@wifi-disconnect-low-signal[-1]
+	add ucitrack wifi-disconnect-low-signal
+	set ucitrack.@wifi-disconnect-low-signal[-1].init=wifi-disconnect-low-signal
+	commit ucitrack
+EOF
+
+rm -f /tmp/luci-indexcache
+exit 0
