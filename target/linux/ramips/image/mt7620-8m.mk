@@ -21,7 +21,7 @@ define Build/zyimage
 endef
 
 define Device/ai-br100
-  DTS := AI-BR100
+  DTS := AIBR100
   DEVICE_TITLE := Aigale Ai-BR100
   DEVICE_PACKAGES:= kmod-usb2 kmod-usb-ohci
 endef
