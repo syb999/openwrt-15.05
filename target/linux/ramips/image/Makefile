@@ -970,7 +970,7 @@ endef
 # MT7621-nand Profiles
 #
 
-ifeq ($(SUBTARGET),mt7621)
+ifeq ($(SUBTARGET),mt7621-nand)
   TARGET_DEVICES += hc5962
 endif
 
