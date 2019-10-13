@@ -1,20 +1,17 @@
-Index: compat-wireless-2016-01-10/include/net/mac80211.h
-===================================================================
---- compat-wireless-2016-01-10.orig/include/net/mac80211.h	2017-05-22 15:13:49.444745553 +0800
-+++ compat-wireless-2016-01-10/include/net/mac80211.h	2017-05-22 15:13:50.088745572 +0800
-@@ -3599,6 +3599,8 @@
- 
+--- a/include/net/mac80211.h
++++ b/include/net/mac80211.h
+@@ -3599,7 +3599,9 @@
  	void (*wake_tx_queue)(struct ieee80211_hw *hw,
  			      struct ieee80211_txq *txq);
+ 	void (*sync_rx_queues)(struct ieee80211_hw *hw);
 +
 +	int (*priv_ioctl)(struct ieee80211_hw *hw, struct ifreq *rq, int cmd);
- };
  
- /**
-Index: compat-wireless-2016-01-10/net/mac80211/Kconfig
-===================================================================
---- compat-wireless-2016-01-10.orig/net/mac80211/Kconfig	2017-05-22 15:13:48.856745536 +0800
-+++ compat-wireless-2016-01-10/net/mac80211/Kconfig	2017-05-22 15:13:50.088745572 +0800
+ 	int (*start_nan)(struct ieee80211_hw *hw,
+ 			 struct ieee80211_vif *vif,
+ 			 struct cfg80211_nan_conf *conf);
+--- a/net/mac80211/Kconfig
++++ b/net/mac80211/Kconfig
 @@ -308,6 +308,10 @@
  
  	  If unsure, say N.
@@ -26,10 +23,8 @@ Index: compat-wireless-2016-01-10/net/mac80211/Kconfig
  config MAC80211_STA_HASH_MAX_SIZE
  	int "Station hash table maximum size" if MAC80211_DEBUG_MENU
  	default 0
-Index: compat-wireless-2016-01-10/net/mac80211/driver-ops.h
-===================================================================
---- compat-wireless-2016-01-10.orig/net/mac80211/driver-ops.h	2016-01-15 20:00:10.000000000 +0800
-+++ compat-wireless-2016-01-10/net/mac80211/driver-ops.h	2017-05-22 15:13:50.088745572 +0800
+--- a/net/mac80211/driver-ops.h
++++ b/net/mac80211/driver-ops.h
 @@ -69,6 +69,20 @@
  int drv_start(struct ieee80211_local *local);
  void drv_stop(struct ieee80211_local *local);
@@ -51,13 +46,11 @@ Index: compat-wireless-2016-01-10/net/mac80211/driver-ops.h
  #ifdef CONFIG_PM
  static inline int drv_suspend(struct ieee80211_local *local,
  			      struct cfg80211_wowlan *wowlan)
-Index: compat-wireless-2016-01-10/net/mac80211/iface.c
-===================================================================
---- compat-wireless-2016-01-10.orig/net/mac80211/iface.c	2017-05-22 15:13:48.996745540 +0800
-+++ compat-wireless-2016-01-10/net/mac80211/iface.c	2017-05-22 15:13:50.088745572 +0800
-@@ -1147,6 +1147,22 @@
- 	return stats;
+--- a/net/mac80211/iface.c
++++ b/net/mac80211/iface.c
+@@ -1188,6 +1188,22 @@
  }
+ #endif
  
 +#ifdef CPTCFG_MAC80211_PRIV_IOCTL
 +static int ieee80211_do_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
@@ -76,30 +69,28 @@ Index: compat-wireless-2016-01-10/net/mac80211/iface.c
 +
 +
  static const struct net_device_ops ieee80211_dataif_ops = {
- 	.ndo_open		= ieee80211_open,
- 	.ndo_stop		= ieee80211_stop,
-@@ -1157,6 +1173,9 @@
- 	.ndo_set_mac_address 	= ieee80211_change_mac,
- 	.ndo_select_queue	= ieee80211_netdev_select_queue,
- 	.ndo_get_stats64	= ieee80211_get_stats64,
+ #if LINUX_VERSION_IS_LESS(4,10,0)
+ 	.ndo_change_mtu = __change_mtu,
+@@ -1270,6 +1270,9 @@
+ #else
+ 	.ndo_get_stats64 = bp_ieee80211_get_stats64,
+ #endif
 +#ifdef CPTCFG_MAC80211_PRIV_IOCTL
 +	.ndo_do_ioctl = ieee80211_do_ioctl,
 +#endif
  };
  
- #if LINUX_VERSION_CODE >= KERNEL_VERSION(3,14,0) || \
-Index: compat-wireless-2016-01-10/.local-symbols
-===================================================================
---- compat-wireless-2016-01-10.orig/.local-symbols	2017-05-22 15:13:49.804745564 +0800
-+++ compat-wireless-2016-01-10/.local-symbols	2017-05-22 15:16:01.712749453 +0800
+ static void ieee80211_if_free(struct net_device *dev)
+--- a/local-symbols
++++ b/local-symbols
 @@ -70,6 +70,7 @@
  MAC80211_TDLS_DEBUG=
  MAC80211_DEBUG_COUNTERS=
  MAC80211_STA_HASH_MAX_SIZE=
 +MAC80211_PRIV_IOCTL=
- BT=
- BT_BREDR=
- BT_HS=
+ WLAN=
+ WIRELESS_WDS=
+ PCMCIA_RAYCS=
 @@ -1196,3 +1197,4 @@
  USB_PRINTER=
  USB_WDM=

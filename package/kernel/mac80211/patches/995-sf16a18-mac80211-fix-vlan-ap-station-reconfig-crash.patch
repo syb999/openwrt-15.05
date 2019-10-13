@@ -1,7 +1,5 @@
-Index: compat-wireless-2016-01-10/net/mac80211/util.c
-===================================================================
---- compat-wireless-2016-01-10.orig/net/mac80211/util.c	2017-09-15 11:28:29.097069942 +0800
-+++ compat-wireless-2016-01-10/net/mac80211/util.c	2017-09-15 11:35:05.645081634 +0800
+--- a/net/mac80211/util.c
++++ b/net/mac80211/util.c
 @@ -1752,7 +1752,7 @@
  	struct ieee80211_hw *hw = &local->hw;
  	struct ieee80211_sub_if_data *sdata;

@@ -1,5 +1,5 @@
---- compat-wireless-2016-01-10.orig/net/mac80211/Kconfig	2018-12-06 14:38:16.966654339 +0800
-+++ compat-wireless-2016-01-10/net/mac80211/Kconfig	2018-12-06 16:20:05.106910673 +0800
+--- a/net/mac80211/Kconfig
++++ b/net/mac80211/Kconfig
 @@ -316,6 +316,10 @@
  	bool "Enable rwnx macro in mac80211, this is add by siflower"
      depends on MAC80211
@@ -12,8 +12,8 @@
  	int "Station hash table maximum size" if MAC80211_DEBUG_MENU
  	default 0
 
---- compat-wireless-2016-01-10.orig/net/wireless/Kconfig	2018-12-06 17:02:27.707017375 +0800
-+++ compat-wireless-2016-01-10/net/wireless/Kconfig	2018-12-06 17:05:00.515023788 +0800
+--- a/net/wireless/Kconfig
++++ b/net/wireless/Kconfig
 @@ -170,6 +170,12 @@
  	  Drivers should select this option if they require cfg80211's
  	  wext compatibility symbols to be exported.
@@ -25,11 +25,11 @@
 +	  add support for siflower monitor driver.
 +
  config LIB80211
- 	tristate "lib80211"
+ 	tristate
  	depends on m
-
---- compat-wireless-2016-01-10.orig/.local-symbols	2018-12-06 14:38:16.966654339 +0800
-+++ compat-wireless-2016-01-10/.local-symbols	2018-12-06 18:31:55.971242659 +0800
+ 	default n
+--- a/local-symbols
++++ b/local-symbols
 @@ -36,6 +36,7 @@
  CFG80211_CRDA_SUPPORT=
  CFG80211_WEXT=
@@ -43,6 +43,6 @@
  MAC80211_STA_HASH_MAX_SIZE=
  MAC80211_PRIV_IOCTL=
 +MAC80211_SIFLOWER_MONITOR_ENABLE=
- BT=
- BT_BREDR=
- BT_HS=
+ WLAN=
+ WIRELESS_WDS=
+ PCMCIA_RAYCS=

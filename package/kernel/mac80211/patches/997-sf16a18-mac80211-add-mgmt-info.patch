@@ -1,7 +1,5 @@
-Index: compat-wireless-2016-01-10/net/mac80211/offchannel.c
-===================================================================
---- compat-wireless-2016-01-10.orig/net/mac80211/offchannel.c	2016-01-15 20:00:10.000000000 +0800
-+++ compat-wireless-2016-01-10/net/mac80211/offchannel.c	2018-03-19 14:50:50.466868211 +0800
+--- a/net/mac80211/offchannel.c
++++ b/net/mac80211/offchannel.c
 @@ -772,6 +772,53 @@
  	return ieee80211_cancel_roc(local, cookie, false);
  }
@@ -65,10 +63,8 @@ Index: compat-wireless-2016-01-10/net/mac80211/offchannel.c
  		ieee80211_tx_skb(sdata, skb);
  		ret = 0;
 
-Index: compat-wireless-2016-01-10/net/mac80211/rx.c
-===================================================================
---- compat-wireless-2016-01-10.orig/net/mac80211/rx.c	2018-03-19 13:56:06.410771388 +0800
-+++ compat-wireless-2016-01-10/net/mac80211/rx.c	2018-03-19 14:50:46.438868093 +0800
+--- a/net/mac80211/rx.c
++++ b/net/mac80211/rx.c
 @@ -2898,6 +2898,53 @@
  	return RX_QUEUED;
  }

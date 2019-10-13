@@ -160,7 +160,7 @@ config wifi-iface
 	option group 1
 	option netisolate 0
 	option disable_input 0
-	option wps_pushbutton '0'
+	option wps_pushbutton '1'
 	option wps_label '0'
 	option rps_cpus $rps_cpus
 
