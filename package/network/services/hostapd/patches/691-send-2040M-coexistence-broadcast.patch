@@ -1,0 +1,33 @@
+Index: hostapd-2015-03-25/src/ap/ieee802_11_ht.c
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/ieee802_11_ht.c	2016-06-07 13:17:21.000000000 +0800
++++ hostapd-2015-03-25/src/ap/ieee802_11_ht.c	2018-06-06 15:32:05.371275256 +0800
+@@ -289,6 +289,28 @@
+ 				       HOSTAPD_MODULE_IEEE80211,
+ 				       HOSTAPD_LEVEL_INFO,
+ 				       "Switching to 20 MHz operation");
++		struct ieee80211_mgmt *resp;
++
++		/*
++		 * IEEE 802.11-REVma/D9.0 - 7.3.1.11
++		 * Return the Action frame to the source without change
++		 * except that MSB of the Category set to 1.
++		 */
++		wpa_printf(MSG_DEBUG, "IEEE 802.11: Return Action "
++			   "frame back to broadcast");
++		resp = os_malloc(len);
++		if (resp == NULL)
++			return;
++		os_memcpy(resp, mgmt, len);
++		os_memcpy(resp->da, broadcast_ether_addr, ETH_ALEN);
++		os_memcpy(resp->sa, hapd->own_addr, ETH_ALEN);
++		os_memcpy(resp->bssid, hapd->own_addr, ETH_ALEN);
++
++		if (hostapd_drv_send_mlme(hapd, resp, len, 0) < 0) {
++			wpa_printf(MSG_ERROR, "IEEE 802.11: Failed to send "
++				   "Action frame");
++		}
++		os_free(resp);
+ 			iface->conf->secondary_channel = 0;
+ 			ieee802_11_set_beacons(iface);
+ 		}

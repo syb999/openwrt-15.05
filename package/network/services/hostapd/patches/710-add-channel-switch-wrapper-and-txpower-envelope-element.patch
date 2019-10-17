@@ -1,0 +1,205 @@
+--- a/src/ap/beacon.c	2018-05-07 16:38:56.502667974 +0800
++++ b/src/ap/beacon.c	2018-05-07 16:39:51.426670279 +0800
+@@ -453,6 +453,8 @@
+ 	if (hapd->iconf->ieee80211ac && !hapd->conf->disable_11ac) {
+ 		pos = hostapd_eid_vht_capabilities(hapd, pos);
+ 		pos = hostapd_eid_vht_operation(hapd, pos);
++		pos = hostapd_eid_txpower_envelope(hapd, pos);
++		pos = hostapd_eid_wb_chsw_wrapper(hapd, pos);
+ 	}
+ 	if (hapd->conf->vendor_vht)
+ 		pos = hostapd_eid_vendor_vht(hapd, pos);
+@@ -932,6 +934,8 @@
+ 	if (hapd->iconf->ieee80211ac && !hapd->conf->disable_11ac) {
+ 		tailpos = hostapd_eid_vht_capabilities(hapd, tailpos);
+ 		tailpos = hostapd_eid_vht_operation(hapd, tailpos);
++		tailpos = hostapd_eid_txpower_envelope(hapd, tailpos);
++		tailpos = hostapd_eid_wb_chsw_wrapper(hapd, tailpos);
+ 	}
+ 	if (hapd->conf->vendor_vht)
+ 		tailpos = hostapd_eid_vendor_vht(hapd, tailpos);
+--- a/src/ap/ieee802_11.h	2018-05-07 16:40:18.642671421 +0800
++++ b/src/ap/ieee802_11.h	2018-05-07 16:40:57.034673032 +0800
+@@ -52,6 +52,8 @@
+ u8 * hostapd_eid_vht_capabilities(struct hostapd_data *hapd, u8 *eid);
+ u8 * hostapd_eid_vht_operation(struct hostapd_data *hapd, u8 *eid);
+ u8 * hostapd_eid_vendor_vht(struct hostapd_data *hapd, u8 *eid);
++u8 * hostapd_eid_wb_chsw_wrapper(struct hostapd_data *hapd, u8 *eid);
++u8 * hostapd_eid_txpower_envelope(struct hostapd_data *hapd, u8 *eid);
+ int hostapd_ht_operation_update(struct hostapd_iface *iface);
+ void ieee802_11_send_sa_query_req(struct hostapd_data *hapd,
+ 				  const u8 *addr, const u8 *trans_id);
+--- a/src/ap/ieee802_11_vht.c	2018-05-07 16:41:53.010675381 +0800
++++ b/src/ap/ieee802_11_vht.c	2018-05-07 16:42:34.718677132 +0800
+@@ -131,6 +131,171 @@
+ }
+
+
++u8 * hostapd_eid_wb_chsw_wrapper(struct hostapd_data *hapd, u8 *eid)
++{
++	u8 bw, chan1, chan2 = 0;
++	int freq1;
++
++	if (!hapd->cs_freq_params.channel ||
++	    !hapd->cs_freq_params.vht_enabled)
++		return eid;
++
++	/* bandwidth: 0: 40, 1: 80, 2: 160, 3: 80+80 */
++	switch (hapd->cs_freq_params.bandwidth) {
++	case 40:
++		bw = 0;
++		break;
++	case 80:
++		/* check if it's 80+80 */
++		if (!hapd->cs_freq_params.center_freq2)
++			bw = 1;
++		else
++			bw = 3;
++		break;
++	case 160:
++		bw = 2;
++		break;
++	default:
++		/* not valid VHT bandwidth or not in CSA */
++		return eid;
++	}
++
++	freq1 = hapd->cs_freq_params.center_freq1 ?
++		hapd->cs_freq_params.center_freq1 :
++		hapd->cs_freq_params.freq;
++	if (ieee80211_freq_to_chan(freq1, &chan1) !=
++	    HOSTAPD_MODE_IEEE80211A)
++		return eid;
++
++	if (hapd->cs_freq_params.center_freq2 &&
++	    ieee80211_freq_to_chan(hapd->cs_freq_params.center_freq2,
++				   &chan2) != HOSTAPD_MODE_IEEE80211A)
++		return eid;
++
++	*eid++ = WLAN_EID_VHT_CHANNEL_SWITCH_WRAPPER;
++	*eid++ = 11; /* Length of Channel Switch Wrapper */
++	*eid++ = WLAN_EID_VHT_WIDE_BW_CHSWITCH;
++	*eid++ = 3; /* Length of Wide Bandwidth Channel Switch element */
++	*eid++ = bw; /* New Channel Width */
++	*eid++ = chan1; /* New Channel Center Frequency Segment 0 */
++	*eid++ = chan2; /* New Channel Center Frequency Segment 1 */
++   *eid++ = WLAN_EID_VHT_TRANSMIT_POWER_ENVELOPE; *eid++ = 4; *eid++ = 2; *eid++ = 0x28; *eid++ = 0x28; *eid++ = 0x28;
++	return eid;
++}
++
++
++u8 * hostapd_eid_txpower_envelope(struct hostapd_data *hapd, u8 *eid)
++{
++	struct hostapd_iface *iface = hapd->iface;
++	struct hostapd_config *iconf = iface->conf;
++	struct hostapd_hw_modes *mode = iface->current_mode;
++	struct hostapd_channel_data *chan;
++	int dfs, i;
++	u8 channel, tx_pwr_count, local_pwr_constraint;
++	int max_tx_power;
++	u8 tx_pwr;
++
++	if (!mode)
++		return eid;
++
++	if (ieee80211_freq_to_chan(iface->freq, &channel) == NUM_HOSTAPD_MODES)
++		return eid;
++
++	for (i = 0; i < mode->num_channels; i++) {
++		if (mode->channels[i].freq == iface->freq)
++			break;
++	}
++	if (i == mode->num_channels)
++		return eid;
++
++	switch (iface->conf->vht_oper_chwidth) {
++	case VHT_CHANWIDTH_USE_HT:
++		if (iconf->secondary_channel == 0) {
++			/* Max Transmit Power count = 0 (20 MHz) */
++			tx_pwr_count = 0;
++		} else {
++			/* Max Transmit Power count = 1 (20, 40 MHz) */
++			tx_pwr_count = 1;
++		}
++		break;
++	case VHT_CHANWIDTH_80MHZ:
++		/* Max Transmit Power count = 2 (20, 40, and 80 MHz) */
++		tx_pwr_count = 2;
++		break;
++	case VHT_CHANWIDTH_80P80MHZ:
++	case VHT_CHANWIDTH_160MHZ:
++		/* Max Transmit Power count = 3 (20, 40, 80, 160/80+80 MHz) */
++		tx_pwr_count = 3;
++		break;
++	default:
++		return eid;
++	}
++
++	/*
++	 * Below local_pwr_constraint logic is referred from
++	 * hostapd_eid_pwr_constraint.
++	 *
++	 * Check if DFS is required by regulatory.
++	 */
++	dfs = hostapd_is_dfs_required(hapd->iface);
++	if (dfs < 0)
++		dfs = 0;
++
++	/*
++	 * In order to meet regulations when TPC is not implemented using
++	 * a transmit power that is below the legal maximum (including any
++	 * mitigation factor) should help. In this case, indicate 3 dB below
++	 * maximum allowed transmit power.
++	 */
++	if (hapd->iconf->local_pwr_constraint == -1)
++		local_pwr_constraint = (dfs == 0) ? 0 : 3;
++	else
++		local_pwr_constraint = hapd->iconf->local_pwr_constraint;
++
++	/*
++	 * A STA that is not an AP shall use a transmit power less than or
++	 * equal to the local maximum transmit power level for the channel.
++	 * The local maximum transmit power can be calculated from the formula:
++	 * local max TX pwr = max TX pwr - local pwr constraint
++	 * Where max TX pwr is maximum transmit power level specified for
++	 * channel in Country element and local pwr constraint is specified
++	 * for channel in this Power Constraint element.
++	 */
++	chan = &mode->channels[i];
++	max_tx_power = chan->max_tx_power - local_pwr_constraint;
++
++	/*
++	 * Local Maximum Transmit power is encoded as two's complement
++	 * with a 0.5 dB step.
++	 */
++	max_tx_power *= 2; /* in 0.5 dB steps */
++	if (max_tx_power > 127) {
++		/* 63.5 has special meaning of 63.5 dBm or higher */
++		max_tx_power = 127;
++	}
++	if (max_tx_power < -128)
++		max_tx_power = -128;
++	if (max_tx_power < 0)
++		tx_pwr = 0x80 + max_tx_power + 128;
++	else
++		tx_pwr = max_tx_power;
++
++	*eid++ = WLAN_EID_VHT_TRANSMIT_POWER_ENVELOPE;
++	*eid++ = 2 + tx_pwr_count;
++
++	/*
++	 * Max Transmit Power count and
++	 * Max Transmit Power units = 0 (EIRP)
++	 */
++	*eid++ = tx_pwr_count;
++
++	for (i = 0; i <= tx_pwr_count; i++)
++		*eid++ = tx_pwr;
++
++	return eid;
++}
++
++
+ u16 copy_sta_vht_capab(struct hostapd_data *hapd, struct sta_info *sta,
+ 		       const u8 *vht_capab, size_t vht_capab_len)
+ {

@@ -1,0 +1,10 @@
+--- a/src/common/hw_features_common.c
++++ b/src/common/hw_features_common.c
+@@ -380,6 +380,7 @@
+ 			return -1;
+ 		if (center_segment0 != 0 &&
+ 		    5000 + center_segment0 * 5 != data->center_freq1 &&
++		    4000 + center_segment0 * 5 != data->center_freq1 &&
+ 		    2407 + center_segment0 * 5 != data->center_freq1)
+ 			return -1;
+ 		break;

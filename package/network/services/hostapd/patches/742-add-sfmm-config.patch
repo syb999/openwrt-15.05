@@ -1,0 +1,404 @@
+Index: hostapd-2015-03-25/hostapd/config_file.c
+===================================================================
+--- hostapd-2015-03-25.orig/hostapd/config_file.c	2018-09-20 16:48:21.422629566 +0800
++++ hostapd-2015-03-25/hostapd/config_file.c	2018-09-20 16:49:40.518631898 +0800
+@@ -21,7 +21,6 @@
+ #include "ap/ap_config.h"
+ #include "config_file.h"
+ 
+-
+ #ifndef CONFIG_NO_RADIUS
+ #ifdef EAP_SERVER
+ static struct hostapd_radius_attr *
+@@ -1915,7 +1914,6 @@
+ }
+ #endif /* CONFIG_ACS */
+ 
+-
+ static int hostapd_config_fill(struct hostapd_config *conf,
+ 			       struct hostapd_bss_config *bss,
+ 			       char *buf, char *pos, int line)
+@@ -3321,6 +3319,12 @@
+ 		conf->disassociate_weak_sig_sta_enable = atoi(pos);
+ 	} else if (os_strcmp(buf, "weak_sta_signal") == 0) {
+ 		conf->weak_sta_signal = atoi(pos);
++	} else if (os_strcmp(buf, "sf_mm") == 0) {
++		conf->sf_mm= atoi(pos);
++		bss->sf_mm_wl = NULL;
++	} else if (os_strcmp(buf, "whitelist_config") == 0) {
++		int lenth = strlen(pos) > 16 ? 16 : strlen(pos);
++		memcpy(conf->whitelist_config, pos, lenth);
+ 	} else {
+ 		wpa_printf(MSG_ERROR,
+ 			   "Line %d: unknown configuration item '%s'",
+Index: hostapd-2015-03-25/src/ap/ap_config.h
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/ap_config.h	2018-09-20 16:48:21.422629566 +0800
++++ hostapd-2015-03-25/src/ap/ap_config.h	2018-09-20 16:48:21.422629566 +0800
+@@ -553,6 +553,7 @@
+ 	int radio_measurements;
+ 
+ 	int vendor_vht;
++	void *sf_mm_wl;
+ };
+ 
+ 
+@@ -661,6 +662,9 @@
+ 	int prohibit_weak_sig_sta_enable;
+ 	int disassociate_weak_sig_sta_enable;
+ 	int weak_sta_signal;
++	int sf_mm;
++	/* config file name */
++	char whitelist_config[16];
+ };
+ 
+ 
+Index: hostapd-2015-03-25/src/ap/beacon.c
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/beacon.c	2018-09-20 16:48:21.422629566 +0800
++++ hostapd-2015-03-25/src/ap/beacon.c	2018-09-20 16:48:21.422629566 +0800
+@@ -540,7 +540,6 @@
+ 	return wildcard ? WILDCARD_SSID_MATCH : NO_SSID_MATCH;
+ }
+ 
+-
+ void handle_probe_req(struct hostapd_data *hapd,
+ 		      const struct ieee80211_mgmt *mgmt, size_t len,
+ 		      struct hostapd_frame_info *fi)
+@@ -635,12 +634,21 @@
+ 	}
+ #endif /* CONFIG_P2P */
+ 
++	if (hapd->iconf->sf_mm) {
++		if (check_sta_whitelist(hapd->conf->sf_mm_wl, mgmt->sa))
++			goto unhidden;
++		else
++			goto check_hidden;
++	}
++
++check_hidden:
+ 	if (hapd->conf->ignore_broadcast_ssid && elems.ssid_len == 0 &&
+ 	    elems.ssid_list_len == 0) {
+ 		wpa_printf(MSG_MSGDUMP, "Probe Request from " MACSTR " for "
+ 			   "broadcast SSID ignored", MAC2STR(mgmt->sa));
+ 		return;
+ 	}
++unhidden:
+ 
+ 	sta = ap_get_sta(hapd, mgmt->sa);
+ 
+Index: hostapd-2015-03-25/src/ap/ubus.c
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/ubus.c	2018-09-20 16:48:21.422629566 +0800
++++ hostapd-2015-03-25/src/ap/ubus.c	2018-09-20 16:48:21.422629566 +0800
+@@ -14,8 +14,8 @@
+ #include "wps_hostapd.h"
+ #include "sta_info.h"
+ #include "ubus.h"
+-
+-#define CONFIG_SF_MM_UBUS_NOTIFY
++#include <libubox/avl.h>
++#include <uci.h>
+ 
+ static struct ubus_context *ctx;
+ static struct blob_buf b;
+@@ -26,12 +26,13 @@
+ 	return container_of(obj, struct hostapd_data, ubus.obj);
+ }
+ 
+-
+ struct ubus_banned_client {
+ 	struct avl_node avl;
+ 	u8 addr[ETH_ALEN];
+ };
+ 
++typedef struct ubus_banned_client sf_mm_whitelist;
++
+ static void ubus_receive(int sock, void *eloop_ctx, void *sock_ctx)
+ {
+ 	struct ubus_context *ctx = eloop_ctx;
+@@ -395,6 +396,109 @@
+ }
+ 
+ enum {
++	SF_MM_STA_MACADDR_LIST,
++	__SF_MM_STA_ATTR_MAX
++};
++
++static const struct blobmsg_policy sf_mm_policy[] = {
++	[SF_MM_STA_MACADDR_LIST] = { .name = "sta_macaddr_list", .type = BLOBMSG_TYPE_TABLE },
++};
++
++/*
++ * Return 1 if sta was found or 0 if not found
++ */
++int check_sta_whitelist(struct avl_tree *tree, const u8 *addr)
++{
++	if (!tree)
++		return 0;
++
++	return avl_find(tree, addr) == NULL ? 0 : 1;
++}
++
++int show_sta_whitelist(struct ubus_context *ctx, struct ubus_object *obj,
++			struct ubus_request_data *req, const char *method,
++			struct blob_attr *msg)
++{
++	struct hostapd_data *hapd = container_of(obj, struct hostapd_data, ubus.obj);
++	sf_mm_whitelist *sta;
++	void *list;
++	char mac_buf[20];
++
++	if (!hapd->iconf->sf_mm)
++		return UBUS_STATUS_METHOD_NOT_FOUND;
++
++	blob_buf_init(&b, 0);
++	list = blobmsg_open_table(&b, "clients");
++	avl_for_each_element((struct avl_tree *)hapd->conf->sf_mm_wl, sta, avl) {
++		sprintf(mac_buf, MACSTR, MAC2STR(sta->addr));
++		blobmsg_add_string(&b, "addr", mac_buf);
++	}
++	blobmsg_close_array(&b, list);
++	ubus_send_reply(ctx, req, b.head);
++
++	return 0;
++}
++
++int add_sta_whitelist(struct ubus_context *uctx, struct ubus_object *obj,
++		      struct ubus_request_data *req, const char *method,
++		      struct blob_attr *msg)
++{
++	struct hostapd_data *hapd = container_of(obj, struct hostapd_data, ubus.obj);
++	sf_mm_whitelist *sta;
++	struct blob_attr *tb[__SF_MM_STA_ATTR_MAX], *cur;
++	int rem;
++
++	if (!hapd->iconf->sf_mm)
++		return UBUS_STATUS_METHOD_NOT_FOUND;
++
++	blobmsg_parse(sf_mm_policy, __SF_MM_STA_ATTR_MAX, tb, blob_data(msg), blob_len(msg));
++
++	if (!tb[SF_MM_STA_MACADDR_LIST])
++		return UBUS_STATUS_INVALID_ARGUMENT;
++
++	blobmsg_for_each_attr(cur, tb[SF_MM_STA_MACADDR_LIST], rem) {
++		sta = os_zalloc(sizeof(*sta));
++		if (hwaddr_aton(blobmsg_get_string(cur), sta->addr)) {
++			free(sta);
++			return UBUS_STATUS_INVALID_ARGUMENT;
++		}
++		sta->avl.key = sta->addr;
++		avl_insert(hapd->conf->sf_mm_wl, &sta->avl);
++	}
++
++	return 0;
++}
++int del_sta_whitelist(struct ubus_context *uctx, struct ubus_object *obj,
++		      struct ubus_request_data *req, const char *method,
++		      struct blob_attr *msg)
++{
++	struct hostapd_data *hapd = container_of(obj, struct hostapd_data, ubus.obj);
++	sf_mm_whitelist *sta;
++	struct blob_attr *tb[__SF_MM_STA_ATTR_MAX], *cur;
++	u8 addr[ETH_ALEN];
++	int rem;
++
++	if (!hapd->iconf->sf_mm)
++		return UBUS_STATUS_METHOD_NOT_FOUND;
++
++	blobmsg_parse(sf_mm_policy, __SF_MM_STA_ATTR_MAX, tb, blob_data(msg), blob_len(msg));
++
++	if (!tb[SF_MM_STA_MACADDR_LIST])
++		return UBUS_STATUS_INVALID_ARGUMENT;
++
++	blobmsg_for_each_attr(cur, tb[SF_MM_STA_MACADDR_LIST], rem) {
++		hwaddr_aton(blobmsg_get_string(cur), addr);
++		sta = avl_find_element(hapd->conf->sf_mm_wl, addr, sta, avl);
++		if (!sta)
++			continue;
++		avl_delete(hapd->conf->sf_mm_wl, &sta->avl);
++		free(sta);
++	}
++
++	return 0;
++}
++
++enum {
+ 	HIDDEN_ELEMENTS,
+ 	__UPDATE_ELEMENTS_MAX
+ };
+@@ -446,6 +550,9 @@
+ #endif
+ 	UBUS_METHOD("set_vendor_elements", hostapd_vendor_elements, ve_policy),
+ 	UBUS_METHOD("update_params", hostapd_update_params, up_policy),
++	UBUS_METHOD_NOARG("show_sta_whitelist", show_sta_whitelist),
++	UBUS_METHOD("add_sta_whitelist", add_sta_whitelist, sf_mm_policy),
++	UBUS_METHOD("del_sta_whitelist", del_sta_whitelist, sf_mm_policy),
+ };
+ 
+ static struct ubus_object_type bss_object_type =
+@@ -456,6 +563,66 @@
+ 	return memcmp(k1, k2, ETH_ALEN);
+ }
+ 
++static int uci_hwaddr_parse(const char *txt, u8 *addr)
++{
++	size_t i;
++
++	for (i = 0; i < ETH_ALEN; i++) {
++		int a;
++
++		a = hex2byte(txt);
++		if (a < 0)
++			return -1;
++		txt += 2;
++		addr[i] = a;
++		if (i < ETH_ALEN - 1 && *txt++ != '_')
++			return -1;
++	}
++	return txt ? 0 : -1;
++}
++
++static int accept_sta_file(char *uci_config, struct avl_tree *tree)
++{
++	struct uci_context *ctx = uci_alloc_context();
++	struct uci_package *p = NULL;
++	struct uci_section *s;
++	struct uci_element *e1, *e2;
++	struct uci_option *o;
++	sf_mm_whitelist *sta;
++	int internet;
++	char buf[20];
++
++	uci_set_confdir(ctx, "/etc/config");
++
++	if (uci_load(ctx, uci_config, &p) == 0) {
++		uci_foreach_element(&p->sections, e1) {
++			memset(buf, 0, sizeof(buf));
++			internet = 0;
++			s = uci_to_section(e1);
++			uci_foreach_element(&s->options, e2) {
++				o = uci_to_option(e2);
++				if (strcmp(o->e.name, "mac") == 0)
++					strcpy(buf, o->v.string);
++				if (strcmp(o->e.name, "internet") == 0)
++					internet = atoi(o->v.string);
++			}
++			if (internet == 1) {
++				sta = os_zalloc(sizeof(*sta));
++				if (uci_hwaddr_parse(buf, sta->addr)) {
++					free(sta);
++					continue;
++				}
++				sta->avl.key = sta->addr;
++				avl_insert(tree, &sta->avl);
++			}
++		}
++		uci_unload(ctx,p);
++	}
++	uci_free_context(ctx);
++
++	return 0;
++}
++
+ void hostapd_ubus_add_bss(struct hostapd_data *hapd)
+ {
+ 	struct ubus_object *obj = &hapd->ubus.obj;
+@@ -468,6 +635,13 @@
+ 	if (asprintf(&name, "hostapd.%s", hapd->conf->iface) < 0)
+ 		return;
+ 
++	if (hapd->iconf->sf_mm) {
++		hapd->conf->sf_mm_wl = os_malloc(sizeof(struct avl_tree));
++		avl_init(hapd->conf->sf_mm_wl,  avl_compare_macaddr, false, NULL);
++		/* Read from config file */
++		accept_sta_file(hapd->iconf->whitelist_config, hapd->conf->sf_mm_wl);
++	}
++
+ 	avl_init(&hapd->ubus.banned, avl_compare_macaddr, false, NULL);
+ 	obj->name = name;
+ 	obj->type = &bss_object_type;
+@@ -481,6 +655,7 @@
+ {
+ 	struct ubus_object *obj = &hapd->ubus.obj;
+ 	char *name = (char *) obj->name;
++	sf_mm_whitelist *sta, *tmp;
+ 
+ 	if (!ctx)
+ 		return;
+@@ -490,6 +665,13 @@
+ 		hostapd_ubus_ref_dec();
+ 	}
+ 
++	if (hapd->iconf->sf_mm && hapd->conf->sf_mm_wl) {
++		avl_remove_all_elements((struct avl_tree *)hapd->conf->sf_mm_wl, sta, avl, tmp)
++			free(sta);
++		free(hapd->conf->sf_mm_wl);
++		hapd->conf->sf_mm_wl = NULL;
++	}
++
+ 	free(name);
+ }
+ 
+@@ -527,30 +709,34 @@
+ 	ban = avl_find_element(&hapd->ubus.banned, addr, ban, avl);
+ 	if (ban)
+ 		return -2;
+-#ifdef CONFIG_SF_MM_UBUS_NOTIFY
+-    if (req->type == HOSTAPD_UBUS_ASSOC_REQ) {
+-        uint32_t sf_mm_ubus = 0;
+-        if (!ubus_lookup_id(ctx, "sf_mm_ubus", &sf_mm_ubus))
+-        {
+-            blob_buf_init(&b, 0);
+-            blobmsg_add_macaddr(&b, "address", addr);
+-            if (req->mgmt_frame)
+-                blobmsg_add_macaddr(&b, "target", req->mgmt_frame->da);
+-            if (req->frame_info)
+-                blobmsg_add_u32(&b, "signal", req->frame_info->ssi_signal);
+-            blobmsg_add_u32(&b, "freq", hapd->iface->freq);
+-            ubus_invoke(ctx, sf_mm_ubus, "sta_connect", b.head, NULL, 0, 3000);
+-        }
+-    }
+-#endif
+-    if (!hapd->ubus.obj.has_subscribers)
+-        return 0;
+ 
+-    if (req->type < ARRAY_SIZE(types))
+-        type = types[req->type];
++	if (hapd->iconf->sf_mm) {
++		if (req->type == HOSTAPD_UBUS_ASSOC_REQ
++		    && !check_sta_whitelist(hapd->conf->sf_mm_wl, addr)) {
++			uint32_t sf_mm_ubus = 0;
++			if (!ubus_lookup_id(ctx, "sf_mm_ubus", &sf_mm_ubus))
++			{
++				blob_buf_init(&b, 0);
++				blobmsg_add_macaddr(&b, "address", addr);
++				if (req->mgmt_frame)
++					blobmsg_add_macaddr(&b, "target", req->mgmt_frame->da);
++				if (req->frame_info)
++					blobmsg_add_u32(&b, "signal", req->frame_info->ssi_signal);
++				blobmsg_add_u32(&b, "freq", hapd->iface->freq);
++				ubus_invoke(ctx, sf_mm_ubus, "sta_connect", b.head, NULL, 0, 3000);
++			}
++		}
++	}
++
++	if (!hapd->ubus.obj.has_subscribers)
++		return 0;
++
++	if (req->type < ARRAY_SIZE(types))
++		type = types[req->type];
++
++	blob_buf_init(&b, 0);
++	blobmsg_add_macaddr(&b, "address", addr);
+ 
+-    blob_buf_init(&b, 0);
+-    blobmsg_add_macaddr(&b, "address", addr);
+ 	if (req->mgmt_frame)
+ 		blobmsg_add_macaddr(&b, "target", req->mgmt_frame->da);
+ 	if (req->frame_info)
+@@ -568,3 +754,4 @@
+ 
+ 	return 0;
+ }
++

@@ -1,0 +1,76 @@
+Index: hostapd-2015-03-25/src/ap/hostapd.c
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/hostapd.c	2019-05-09 18:48:36.383304105 +0800
++++ hostapd-2015-03-25/src/ap/hostapd.c	2019-05-09 18:55:47.975316830 +0800
+@@ -117,6 +117,7 @@
+ 			wpa_printf(MSG_ERROR, "Failed to configure WPA IE for "
+ 				   "the kernel driver.");
+ 	} else if (hapd->wpa_auth) {
++		rsn_preauth_iface_deinit(hapd);
+ 		wpa_deinit(hapd->wpa_auth);
+ 		hapd->wpa_auth = NULL;
+ 		hostapd_set_privacy(hapd, 0);
+@@ -158,6 +159,16 @@
+ 	}
+ }
+ 
++/* deauth all stations connected */
++void hostapd_sta_deauth_all(struct hostapd_data *hapd)
++{
++	struct hostapd_iface *iface = hapd->iface;
++	size_t j;
++
++	for (j = 0; j < iface->num_bss; j++)
++	      hostapd_flush_old_stations(iface->bss[j],
++				      WLAN_REASON_PREV_AUTH_NOT_VALID);
++}
+ 
+ int hostapd_reload_config(struct hostapd_iface *iface)
+ {
+Index: hostapd-2015-03-25/src/ap/hostapd.h
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/hostapd.h	2019-05-09 18:48:36.395304105 +0800
++++ hostapd-2015-03-25/src/ap/hostapd.h	2019-05-09 18:55:50.515316904 +0800
+@@ -448,6 +448,8 @@
+ 				const struct hostapd_freq_params *freq_params);
+ void hostapd_cleanup_cs_params(struct hostapd_data *hapd);
+ 
++void hostapd_sta_deauth_all(struct hostapd_data *hapd);
++
+ /* utils.c */
+ int hostapd_register_probereq_cb(struct hostapd_data *hapd,
+ 				 int (*cb)(void *ctx, const u8 *sa,
+Index: hostapd-2015-03-25/src/ap/ubus.c
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/ubus.c	2019-05-09 18:48:36.423304106 +0800
++++ hostapd-2015-03-25/src/ap/ubus.c	2019-05-09 18:55:56.275317074 +0800
+@@ -310,6 +310,16 @@
+ }
+ 
+ static int
++hostapd_sta_deauth(struct ubus_context *ctx, struct ubus_object *obj,
++			struct ubus_request_data *req, const char *method,
++			struct blob_attr *msg)
++{
++	struct hostapd_data *hapd = container_of(obj, struct hostapd_data, ubus.obj);
++	hostapd_sta_deauth_all(hapd);
++	return 0;
++}
++
++static int
+ hostapd_bss_update_beacon(struct ubus_context *ctx, struct ubus_object *obj,
+ 			struct ubus_request_data *req, const char *method,
+ 			struct blob_attr *msg)
+@@ -550,6 +560,7 @@
+ 	UBUS_METHOD_NOARG("list_bans", hostapd_bss_list_bans),
+ 	UBUS_METHOD_NOARG("wps_start", hostapd_bss_wps_start),
+ 	UBUS_METHOD_NOARG("wps_cancel", hostapd_bss_wps_cancel),
++	UBUS_METHOD_NOARG("deauth", hostapd_sta_deauth),
+ 	UBUS_METHOD_NOARG("update_beacon", hostapd_bss_update_beacon),
+ #ifdef NEED_AP_MLME
+ 	UBUS_METHOD("switch_chan", hostapd_switch_chan, csa_policy),
+@@ -830,4 +841,3 @@
+ 
+ 	return 0;
+ }
+-

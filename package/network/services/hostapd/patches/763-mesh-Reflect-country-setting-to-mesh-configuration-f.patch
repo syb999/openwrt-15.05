@@ -1,0 +1,39 @@
+From fed51174d6fd3e2b2d7edd3cefb384328e0d325a Mon Sep 17 00:00:00 2001
+From: Peter Oh <peter.oh@bowerswilkins.com>
+Date: Mon, 27 Aug 2018 14:28:39 -0700
+Subject: [PATCH] mesh: Reflect country setting to mesh configuration for DFS
+
+wpa_supplicant configuration has country parameter that is supposed to
+be used in AP mode to indicate supporting IEEE 802.11h and 802.11d.
+Reflect this configuration to Mesh also since Mesh is required to
+support 802.11h and 802.11d to use DFS channels.
+
+Signed-off-by: Peter Oh <peter.oh@bowerswilkins.com>
+---
+ wpa_supplicant/mesh.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/wpa_supplicant/mesh.c b/wpa_supplicant/mesh.c
+index e0ccb0f..f2f0961 100644
+--- a/wpa_supplicant/mesh.c
++++ b/wpa_supplicant/mesh.c
+@@ -299,6 +299,16 @@ static int wpa_supplicant_mesh_init(struct wpa_supplicant *wpa_s,
+ 	bss->conf->start_disabled = 1;
+ 	bss->conf->mesh = MESH_ENABLED;
+ 	bss->conf->ap_max_inactivity = wpa_s->conf->mesh_max_inactivity;
++
++	if (ieee80211_is_dfs(ssid->frequency)
++			     && wpa_s->conf->country[0]) {
++		conf->ieee80211h = 1;
++		conf->ieee80211d = 1;
++		conf->country[0] = wpa_s->conf->country[0];
++		conf->country[1] = wpa_s->conf->country[1];
++		conf->country[2] = ' ';
++	}
++
+ 	bss->iconf = conf;
+ 	ifmsh->conf = conf;
+ 
+-- 
+1.9.1
+

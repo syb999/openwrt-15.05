@@ -1,0 +1,111 @@
+Index: hostapd-2015-03-25/hostapd/config_file.c
+===================================================================
+--- hostapd-2015-03-25.orig/hostapd/config_file.c	2018-09-05 19:28:59.135220188 +0800
++++ hostapd-2015-03-25/hostapd/config_file.c	2018-09-05 19:32:24.727226250 +0800
+@@ -2019,6 +2019,8 @@
+ 		bss->ap_max_inactivity = atoi(pos);
+ 	} else if (os_strcmp(buf, "skip_inactivity_poll") == 0) {
+ 		bss->skip_inactivity_poll = atoi(pos);
++	} else if (os_strcmp(buf, "max_all_num_sta") == 0) {
++		conf->max_all_num_sta = atoi(pos);
+ 	} else if (os_strcmp(buf, "country_code") == 0) {
+ 		os_memcpy(conf->country, pos, 2);
+ 		/* FIX: make this configurable */
+Index: hostapd-2015-03-25/src/ap/ap_config.c
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/ap_config.c	2018-09-05 19:28:59.135220188 +0800
++++ hostapd-2015-03-25/src/ap/ap_config.c	2018-09-05 19:30:32.583222944 +0800
+@@ -150,7 +150,7 @@
+ 	hostapd_config_defaults_bss(bss);
+ 
+ 	conf->num_bss = 1;
+-
++	conf->max_all_num_sta = MAX_STA_COUNT;
+ 	conf->beacon_int = 100;
+ 	conf->rts_threshold = -1; /* use driver default: 2347 */
+ 	conf->fragm_threshold = -1; /* user driver default: 2346 */
+Index: hostapd-2015-03-25/src/ap/ap_config.h
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/ap_config.h	2018-09-05 19:28:59.135220188 +0800
++++ hostapd-2015-03-25/src/ap/ap_config.h	2018-09-05 19:31:52.295225294 +0800
+@@ -584,7 +584,7 @@
+ 
+ 	int ap_table_max_size;
+ 	int ap_table_expiration_time;
+-
++	int max_all_num_sta;/*  to limit the linked stas number */
+ 	char country[3]; /* first two octets: country code as described in
+ 			  * ISO/IEC 3166-1. Third octet:
+ 			  * ' ' (ascii 32): all environments
+Index: hostapd-2015-03-25/src/ap/beacon.c
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/beacon.c	2018-09-05 19:28:59.119220188 +0800
++++ hostapd-2015-03-25/src/ap/beacon.c	2018-09-05 19:31:58.487225476 +0800
+@@ -671,7 +671,8 @@
+ 		return;
+ 	}
+ 
+-	if (!sta && hapd->num_sta >= hapd->conf->max_num_sta)
++	if (!sta && hapd->num_sta >= hapd->conf->max_num_sta ||
++				hapd->iface->all_num_sta >= hapd->iconf->max_all_num_sta)
+ 		wpa_printf(MSG_MSGDUMP, "Probe Request from " MACSTR " ignored,"
+ 			   " too many connected stations.", MAC2STR(mgmt->sa));
+ 
+Index: hostapd-2015-03-25/src/ap/hostapd.h
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/hostapd.h	2018-09-05 19:28:59.111220188 +0800
++++ hostapd-2015-03-25/src/ap/hostapd.h	2018-09-05 19:32:04.807225663 +0800
+@@ -350,6 +350,8 @@
+ 
+ 	u16 hw_flags;
+ 
++	int all_num_sta;
++
+ 	/* Number of associated Non-ERP stations (i.e., stations using 802.11b
+ 	 * in 802.11g BSS) */
+ 	int num_sta_non_erp;
+Index: hostapd-2015-03-25/src/ap/sta_info.c
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/sta_info.c	2018-09-05 19:28:59.127220188 +0800
++++ hostapd-2015-03-25/src/ap/sta_info.c	2018-09-05 19:32:13.623225923 +0800
+@@ -33,7 +33,7 @@
+ #include "wnm_ap.h"
+ #include "ndisc_snoop.h"
+ #include "sta_info.h"
+-
++//int all_num_sta = 0;
+ static void ap_sta_remove_in_other_bss(struct hostapd_data *hapd,
+ 				       struct sta_info *sta);
+ static void ap_handle_session_timer(void *eloop_ctx, void *timeout_ctx);
+@@ -179,6 +179,7 @@
+ 			~BIT((sta->aid - 1) % 32);
+ 
+ 	hapd->num_sta--;
++	hapd->iface->all_num_sta--;
+ 	if (sta->nonerp_set) {
+ 		sta->nonerp_set = 0;
+ 		hapd->iface->num_sta_non_erp--;
+@@ -627,10 +628,12 @@
+ 		return sta;
+ 
+ 	wpa_printf(MSG_DEBUG, "  New STA");
+-	if (hapd->num_sta >= hapd->conf->max_num_sta) {
++	if (hapd->num_sta >= hapd->conf->max_num_sta ||
++				hapd->iface->all_num_sta >= hapd->iconf->max_all_num_sta) {
+ 		/* FIX: might try to remove some old STAs first? */
+-		wpa_printf(MSG_DEBUG, "no more room for new STAs (%d/%d)",
+-			   hapd->num_sta, hapd->conf->max_num_sta);
++		wpa_printf(MSG_DEBUG, "no more room for new STAs (%d/%d),(%d/%d)",
++			   hapd->num_sta, hapd->conf->max_num_sta,
++			   hapd->iface->all_num_sta, hapd->iconf->max_all_num_sta);
+ 		return NULL;
+ 	}
+ 
+@@ -659,6 +662,7 @@
+ 	sta->next = hapd->sta_list;
+ 	hapd->sta_list = sta;
+ 	hapd->num_sta++;
++	hapd->iface->all_num_sta++;
+ 	ap_sta_hash_add(hapd, sta);
+ 	sta->ssid = &hapd->conf->ssid;
+ 	ap_sta_remove_in_other_bss(hapd, sta);

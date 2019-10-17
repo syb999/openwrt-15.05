@@ -1,0 +1,59 @@
+Index: hostapd-2015-03-25/src/ap/ubus.c
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/ubus.c	2018-09-08 12:55:13.120422381 +0800
++++ hostapd-2015-03-25/src/ap/ubus.c	2018-09-08 14:09:18.604608939 +0800
+@@ -15,6 +15,8 @@
+ #include "sta_info.h"
+ #include "ubus.h"
+ 
++#define CONFIG_SF_MM_UBUS_NOTIFY
++
+ static struct ubus_context *ctx;
+ static struct blob_buf b;
+ static int ctx_ref;
+@@ -63,6 +65,7 @@
+ 
+ 	ctx->connection_lost = hostapd_ubus_connection_lost;
+ 	eloop_register_read_sock(ctx->sock.fd, ubus_receive, ctx, NULL);
++
+ 	return true;
+ }
+ 
+@@ -483,15 +486,30 @@
+ 	ban = avl_find_element(&hapd->ubus.banned, addr, ban, avl);
+ 	if (ban)
+ 		return -2;
++#ifdef CONFIG_SF_MM_UBUS_NOTIFY
++    if (req->type == HOSTAPD_UBUS_ASSOC_REQ) {
++        uint32_t sf_mm_ubus = 0;
++        if (!ubus_lookup_id(ctx, "sf_mm_ubus", &sf_mm_ubus))
++        {
++            blob_buf_init(&b, 0);
++            blobmsg_add_macaddr(&b, "address", addr);
++            if (req->mgmt_frame)
++                blobmsg_add_macaddr(&b, "target", req->mgmt_frame->da);
++            if (req->frame_info)
++                blobmsg_add_u32(&b, "signal", req->frame_info->ssi_signal);
++            blobmsg_add_u32(&b, "freq", hapd->iface->freq);
++            ubus_invoke(ctx, sf_mm_ubus, "sta_connect", b.head, NULL, 0, 3000);
++        }
++    }
++#endif
++    if (!hapd->ubus.obj.has_subscribers)
++        return 0;
+ 
+-	if (!hapd->ubus.obj.has_subscribers)
+-		return 0;
+-
+-	if (req->type < ARRAY_SIZE(types))
+-		type = types[req->type];
++    if (req->type < ARRAY_SIZE(types))
++        type = types[req->type];
+ 
+-	blob_buf_init(&b, 0);
+-	blobmsg_add_macaddr(&b, "address", addr);
++    blob_buf_init(&b, 0);
++    blobmsg_add_macaddr(&b, "address", addr);
+ 	if (req->mgmt_frame)
+ 		blobmsg_add_macaddr(&b, "target", req->mgmt_frame->da);
+ 	if (req->frame_info)

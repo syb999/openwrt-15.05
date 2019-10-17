@@ -1,0 +1,31 @@
+From a73c9842618361980b2d02c2c0edf0e4414d7c8e Mon Sep 17 00:00:00 2001
+From: Peter Oh <poh@qca.qualcomm.com>
+Date: Mon, 9 Nov 2015 19:20:29 -0800
+Subject: [PATCH] Set WMM flag to Mesh STA by default
+
+Set WLAN_STA_WMM flag to Mesh STA by default since Mesh STAs are QoS
+STAs. Mesh STA's HT capabilities won't be parsed properly without the
+flag.
+
+Signed-off-by: Peter Oh <poh@qca.qualcomm.com>
+---
+ wpa_supplicant/mesh_mpm.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/wpa_supplicant/mesh_mpm.c b/wpa_supplicant/mesh_mpm.c
+index 86b2bcb..0a05815 100644
+--- a/wpa_supplicant/mesh_mpm.c
++++ b/wpa_supplicant/mesh_mpm.c
+@@ -548,6 +548,9 @@ static struct sta_info * mesh_mpm_add_peer(struct wpa_supplicant *wpa_s,
+ 			return NULL;
+ 	}
+ 
++	/* Set WMM by default since Mesh STAs are QoS STAs */
++	sta->flags |= WLAN_STA_WMM;
++
+ 	/* initialize sta */
+ 	if (copy_supp_rates(wpa_s, sta, elems)) {
+ 		ap_free_sta(data, sta);
+-- 
+1.9.1
+

@@ -1,0 +1,210 @@
+Index: hostapd-2015-03-25/hostapd/config_file.c
+===================================================================
+--- hostapd-2015-03-25.orig/hostapd/config_file.c	2018-06-20 11:26:11.157418035 +0800
++++ hostapd-2015-03-25/hostapd/config_file.c	2018-06-20 11:28:47.197424584 +0800
+@@ -2601,7 +2601,17 @@
+ 				   line);
+ 			return -1;
+ 		}
+-#endif /* CONFIG_ACS */
++	} else if (os_strcmp(buf, "acs_chan_dynamic_select_enable") == 0) {
++		conf->acs_chan_dynamic_select_enable = atoi(pos);
++	} else if (os_strcmp(buf, "acs_chan_dynamic_select_period") == 0) {
++		conf->acs_chan_dynamic_select_period = atoi(pos);
++	} else if (os_strcmp(buf, "switch_channel_even_have_sta_enable") == 0) {
++		conf->switch_channel_even_have_sta_enable = atoi(pos);
++	} else if (os_strcmp(buf, "acs_chan_busy_per") == 0) {
++		conf->acs_chan_busy_per = atoi(pos);
++	} else if (os_strcmp(buf, "acs_chan_bet_per") == 0) {
++		conf->acs_chan_bet_per = atoi(pos);
++	#endif /* CONFIG_ACS */
+ 	} else if (os_strcmp(buf, "dtim_period") == 0) {
+ 		bss->dtim_period = atoi(pos);
+ 		if (bss->dtim_period < 1 || bss->dtim_period > 255) {
+Index: hostapd-2015-03-25/src/ap/acs.c
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/acs.c	2016-06-07 13:17:21.000000000 +0800
++++ hostapd-2015-03-25/src/ap/acs.c	2018-06-20 11:31:42.177431927 +0800
+@@ -602,6 +602,24 @@
+ 		   n_chans == 4 ? 80 :
+ 		   -1);
+ 
++	FILE *channel_file = NULL;
++	u8 acs_chan_last_chan = 0;
++	char buf[8];
++	if(iface->conf->acs_chan_dynamic_select_enable)
++	{
++		if (iface->current_mode->mode == HOSTAPD_MODE_IEEE80211G)
++			channel_file = fopen("/var/run/hostapd/24g.channel", "r");
++		else
++			channel_file = fopen("/var/run/hostapd/5g.channel", "r");
++	}
++
++	if (channel_file)
++	{
++		fgets(buf, sizeof(buf), channel_file);
++		fclose(channel_file);
++		acs_chan_last_chan = atoi((char *)&buf);
++	}
++
+ 	for (i = 0; i < iface->current_mode->num_channels; i++) {
+ 		double total_weight;
+ 		struct acs_bias *bias, tmp_bias;
+@@ -633,6 +651,16 @@
+ 				   chan->chan);
+ 			continue;
+ 		}
++		
++		if(acs_chan_last_chan && acs_chan_last_chan == chan->chan)
++		{
++			//current channel(last channel) is not busy enouth to have to change it 
++			if(iface->conf->acs_chan_busy_per && (chan->interference_factor * 100) < iface->conf->acs_chan_busy_per)
++			{
++				ideal_chan = chan;
++				break;
++			}
++		}
+ 
+ 		factor = 0;
+ 		if (acs_usable_chan(chan))
+@@ -697,7 +725,15 @@
+ 		factor /= total_weight;
+ 
+ 		bias = NULL;
+-		if (iface->conf->acs_chan_bias) {
++		if(acs_chan_last_chan)
++		{
++			if(acs_chan_last_chan == chan->chan)
++			{
++				tmp_bias.channel = chan->chan;
++				tmp_bias.bias = (45 - iface->conf->acs_chan_bet_per) / 45.0;
++				bias = &tmp_bias;
++			}
++		} else if (iface->conf->acs_chan_bias) {
+ 			for (k = 0; k < iface->conf->num_acs_chan_bias; k++) {
+ 				bias = &iface->conf->acs_chan_bias[k];
+ 				if (bias->channel == chan->chan)
+@@ -941,3 +977,19 @@
+ 
+ 	return HOSTAPD_CHAN_ACS;
+ }
++
++void ap_dynamic_select_channel_timeout(void *eloop_ctx, void *timeout_ctx)
++{
++	struct hostapd_data *hapd = eloop_ctx;
++
++	//if have sta connection,and switch_channel_even_have_sta_enable false,return
++	if(!hapd->iconf->switch_channel_even_have_sta_enable && hapd->num_sta > 0)
++	{
++		eloop_register_timeout(hapd->iconf->acs_chan_dynamic_select_period * 60, 0,
++				       ap_dynamic_select_channel_timeout, hapd, NULL);
++		return;
++	}
++
++	eloop_terminate();
++	return;
++}
+Index: hostapd-2015-03-25/src/ap/acs.h
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/acs.h	2016-06-07 13:17:21.000000000 +0800
++++ hostapd-2015-03-25/src/ap/acs.h	2018-06-20 11:32:00.429432693 +0800
+@@ -13,7 +13,7 @@
+ #ifdef CONFIG_ACS
+ 
+ enum hostapd_chan_status acs_init(struct hostapd_iface *iface);
+-
++void ap_dynamic_select_channel_timeout(void *eloop_ctx, void *timeout_ctx);
+ #else /* CONFIG_ACS */
+ 
+ static inline enum hostapd_chan_status acs_init(struct hostapd_iface *iface)
+@@ -22,6 +22,11 @@
+ 	return HOSTAPD_CHAN_INVALID;
+ }
+ 
++void ap_dynamic_select_channel_timeout(void *eloop_ctx, void *timeout_ctx)
++{
++	wpa_printf(MSG_ERROR, "ACS was disabled on your build, rebuild hostapd with CONFIG_ACS=y or set channel");
++		return;
++}
+ #endif /* CONFIG_ACS */
+ 
+ #endif /* ACS_H */
+Index: hostapd-2015-03-25/src/ap/ap_config.c
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/ap_config.c	2018-06-20 11:26:11.157418035 +0800
++++ hostapd-2015-03-25/src/ap/ap_config.c	2018-06-20 11:32:53.141434905 +0800
+@@ -185,6 +185,11 @@
+ 	conf->acs_ch_list.num = 0;
+ #ifdef CONFIG_ACS
+ 	conf->acs_num_scans = 5;
++	conf->acs_chan_dynamic_select_enable = 0;
++	conf->acs_chan_dynamic_select_period = 8;
++	conf->switch_channel_even_have_sta_enable = 0;
++	conf->acs_chan_busy_per = 50;
++	conf->acs_chan_bet_per = 20;
+ #endif /* CONFIG_ACS */
+ 	conf->sta_min_dbm = -75;
+ 	conf->prohibit_weak_sig_sta_enable = 0;
+Index: hostapd-2015-03-25/src/ap/ap_config.h
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/ap_config.h	2018-06-20 11:26:11.157418035 +0800
++++ hostapd-2015-03-25/src/ap/ap_config.h	2018-06-20 11:33:15.029435823 +0800
+@@ -651,6 +651,11 @@
+ 		double bias;
+ 	} *acs_chan_bias;
+ 	unsigned int num_acs_chan_bias;
++	int acs_chan_dynamic_select_enable;
++	unsigned int acs_chan_dynamic_select_period;
++	int switch_channel_even_have_sta_enable;
++	unsigned int acs_chan_busy_per;
++	unsigned int acs_chan_bet_per;
+ #endif /* CONFIG_ACS */
+ 	int sta_min_dbm;
+ 	int prohibit_weak_sig_sta_enable;
+Index: hostapd-2015-03-25/src/ap/hostapd.c
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/hostapd.c	2018-06-20 11:26:11.105418033 +0800
++++ hostapd-2015-03-25/src/ap/hostapd.c	2018-06-20 11:33:39.293436842 +0800
+@@ -41,7 +41,7 @@
+ #include "x_snoop.h"
+ #include "dhcp_snoop.h"
+ #include "ndisc_snoop.h"
+-
++#include "acs.h"
+ 
+ static int hostapd_flush_old_stations(struct hostapd_data *hapd, u16 reason);
+ static int hostapd_setup_encryption(char *iface, struct hostapd_data *hapd);
+@@ -1544,6 +1544,10 @@
+ 	if (iface->interfaces && iface->interfaces->terminate_on_error > 0)
+ 		iface->interfaces->terminate_on_error--;
+ 
++	//setup of interface done,if user have dynamic channel select enable,loop a timer
++	if(hapd->iconf->acs_chan_dynamic_select_enable)
++		eloop_register_timeout(hapd->iconf->acs_chan_dynamic_select_period * 60, 0,
++				       ap_dynamic_select_channel_timeout, hapd, NULL);
+ 	return 0;
+ 
+ fail:
+Index: hostapd-2015-03-25/src/ap/hw_features.c
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/hw_features.c	2018-06-20 11:26:10.941418026 +0800
++++ hostapd-2015-03-25/src/ap/hw_features.c	2018-06-20 11:34:11.973438213 +0800
+@@ -833,6 +833,18 @@
+ 			hostapd_hw_get_freq(iface->bss[0],
+ 					    iface->conf->channel),
+ 			iface->conf->channel);
++		//write valid channel to /var/run/24g.channel /var/run/5g.channel	
++		FILE *channel_file = NULL;
++		if (iface->current_mode->mode == HOSTAPD_MODE_IEEE80211G)
++			channel_file = fopen("/var/run/hostapd/24g.channel", "w+");
++		else
++			channel_file = fopen("/var/run/hostapd/5g.channel", "w+");
++		
++		if (channel_file)
++		{
++			fprintf(channel_file,"%d\n",iface->conf->channel);
++			fclose(channel_file);
++		}
+ 		break;
+ 	case HOSTAPD_CHAN_ACS:
+ 		wpa_printf(MSG_ERROR, "ACS error - reported complete, but no result available");

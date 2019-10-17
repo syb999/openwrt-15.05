@@ -1,0 +1,43 @@
+Index: hostapd-2015-03-25/src/ap/beacon.c
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/beacon.c	2019-04-29 19:18:07.921883161 +0800
++++ hostapd-2015-03-25/src/ap/beacon.c	2019-04-29 19:21:29.457889103 +0800
+@@ -868,23 +868,23 @@
+ 
+ 	/* SSID */
+ 	*pos++ = WLAN_EID_SSID;
+-	if (!hapd->conf->conditionally_ignore_bcast_ssid) {
+-		if (hapd->conf->ignore_broadcast_ssid == 2) {
+-			/* clear the data, but keep the correct length of the SSID */
+-			*pos++ = hapd->conf->ssid.ssid_len;
+-			os_memset(pos, 0, hapd->conf->ssid.ssid_len);
+-			pos += hapd->conf->ssid.ssid_len;
+-		} else if (hapd->conf->ignore_broadcast_ssid) {
+-			*pos++ = 0; /* empty SSID */
+-		} else {
+-			*pos++ = hapd->conf->ssid.ssid_len;
+-			os_memcpy(pos, hapd->conf->ssid.ssid,
+-					hapd->conf->ssid.ssid_len);
+-			pos += hapd->conf->ssid.ssid_len;
+-		}
+-	} else {
++	//if (!hapd->conf->conditionally_ignore_bcast_ssid) {
++	if (hapd->conf->ignore_broadcast_ssid == 2) {
++		/* clear the data, but keep the correct length of the SSID */
++		*pos++ = hapd->conf->ssid.ssid_len;
++		os_memset(pos, 0, hapd->conf->ssid.ssid_len);
++		pos += hapd->conf->ssid.ssid_len;
++	} else if (hapd->conf->ignore_broadcast_ssid) {
+ 		*pos++ = 0; /* empty SSID */
++	} else {
++		*pos++ = hapd->conf->ssid.ssid_len;
++		os_memcpy(pos, hapd->conf->ssid.ssid,
++				hapd->conf->ssid.ssid_len);
++		pos += hapd->conf->ssid.ssid_len;
+ 	}
++	//} else {
++	//	*pos++ = 0; /* empty SSID */
++	//}
+ 
+ 	/* Supported rates */
+ 	pos = hostapd_eid_supp_rates(hapd, pos);

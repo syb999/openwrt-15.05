@@ -1,0 +1,73 @@
+Index: hostapd-2015-03-25/hostapd/config_file.c
+===================================================================
+--- hostapd-2015-03-25.orig/hostapd/config_file.c	2019-05-16 15:08:48.244746503 +0800
++++ hostapd-2015-03-25/hostapd/config_file.c	2019-05-16 15:10:30.436749516 +0800
+@@ -1067,7 +1067,7 @@
+ 	memcpy(&r0_kh[18], mac, 17);
+ 	r0_kh[35] = ' ';
+ 	memcpy(&r0_kh[36], "00112233445566778899aabbccddeeff\0", 33);
+-	
++
+ 	memcpy(&r1_kh, &r0_kh, sizeof(r0_kh));
+ 	if(add_r0kh(bss, (char *)&r0_kh) < 0)
+ 	{
+@@ -2078,6 +2078,8 @@
+ 		os_memcpy(conf->country, pos, 2);
+ 		/* FIX: make this configurable */
+ 		conf->country[2] = ' ';
++	} else if (os_strcmp(buf, "rd_disabled") == 0) {
++		conf->rd_disabled = atoi(pos);
+ 	} else if (os_strcmp(buf, "ieee80211d") == 0) {
+ 		conf->ieee80211d = atoi(pos);
+ 	} else if (os_strcmp(buf, "ieee80211h") == 0) {
+Index: hostapd-2015-03-25/src/ap/ap_config.h
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/ap_config.h	2019-05-16 15:08:48.208746502 +0800
++++ hostapd-2015-03-25/src/ap/ap_config.h	2019-05-16 15:10:43.464749900 +0800
+@@ -586,6 +586,7 @@
+ 
+ 	int ap_table_max_size;
+ 	int ap_table_expiration_time;
++	int rd_disabled; /* whether radar_detection is disabled or not. */
+ 	int max_all_num_sta;/*  to limit the linked stas number */
+ 	char country[3]; /* first two octets: country code as described in
+ 			  * ISO/IEC 3166-1. Third octet:
+Index: hostapd-2015-03-25/src/ap/hostapd.c
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/hostapd.c	2019-05-16 15:08:48.264746504 +0800
++++ hostapd-2015-03-25/src/ap/hostapd.c	2019-05-16 15:10:36.400749692 +0800
+@@ -1308,14 +1308,18 @@
+ 		return -1;
+ 
+ 	if (hapd->iconf->country[0] && hapd->iconf->country[1]) {
+-		char country[4], previous_country[4];
++		char country[5], previous_country[4];
+ 
+ 		hostapd_set_state(iface, HAPD_IFACE_COUNTRY_UPDATE);
+ 		if (hostapd_get_country(hapd, previous_country) < 0)
+ 			previous_country[0] = '\0';
+ 
+ 		os_memcpy(country, hapd->iconf->country, 3);
+-		country[3] = '\0';
++		if (hapd->iconf->rd_disabled)
++		      country[3] = 'T';
++		else
++		      country[3] = 'F';
++		country[4] = '\0';
+ 		if (hostapd_set_country(hapd, country) < 0) {
+ 			wpa_printf(MSG_ERROR, "Failed to set country code");
+ 			return -1;
+Index: hostapd-2015-03-25/src/drivers/driver_nl80211.c
+===================================================================
+--- hostapd-2015-03-25.orig/src/drivers/driver_nl80211.c	2019-05-16 15:08:48.128746500 +0800
++++ hostapd-2015-03-25/src/drivers/driver_nl80211.c	2019-05-16 15:10:50.828750117 +0800
+@@ -1357,7 +1357,8 @@
+ 	alpha2[2] = '\0';
+ 
+ 	if (!nl80211_cmd(drv, msg, 0, NL80211_CMD_REQ_SET_REG) ||
+-	    nla_put_string(msg, NL80211_ATTR_REG_ALPHA2, alpha2)) {
++	    nla_put_string(msg, NL80211_ATTR_REG_ALPHA2, alpha2) ||
++		   ((alpha2_arg[3] == 'T') && nla_put_u32(msg, NL80211_ATTR_DFS_CAC_TIME, 0))) {
+ 		nlmsg_free(msg);
+ 		return -EINVAL;
+ 	}

@@ -1,0 +1,52 @@
+Index: hostapd-2015-03-25/wpa_supplicant/events.c
+===================================================================
+--- hostapd-2015-03-25.orig/wpa_supplicant/events.c	2018-10-31 19:13:32.862719621 +0800
++++ hostapd-2015-03-25/wpa_supplicant/events.c	2018-10-31 19:24:34.934739141 +0800
+@@ -2792,6 +2792,31 @@
+ 					     locally_generated);
+ }
+
++/*
++ * Modified by nevermore, set wifi deauth/disassoc reason.
++ * Now completed by writing a non-zero value to /tmp/wds_$macaddr.
++ */
++static int set_wds_connect_status(const unsigned char *addr, int reason)
++{
++	FILE *fp;
++	char mac_buf[20];
++	char filename[32] = "/tmp/wds_reason_code";
++
++	if (addr == NULL)
++		return 0;
++
++	fp = fopen(filename, "w+");
++	if (reason == WLAN_REASON_MICHAEL_MIC_FAILURE || reason == WLAN_REASON_4WAY_HANDSHAKE_TIMEOUT ||
++			reason == WLAN_REASON_DEAUTH_LEAVING ||
++			reason == WLAN_REASON_PREV_AUTH_NOT_VALID)
++		fwrite("2\n", 1, 2, fp);
++	else
++		fwrite("1\n", 1, 2, fp);
++	fclose(fp);
++
++	return 0;
++}
++
+
+ static void wpas_event_disassoc(struct wpa_supplicant *wpa_s,
+ 				struct disassoc_info *info)
+@@ -2809,6 +2834,7 @@
+ 		ie = info->ie;
+ 		ie_len = info->ie_len;
+ 		reason_code = info->reason_code;
++		set_wds_connect_status(addr, reason_code);
+ 		locally_generated = info->locally_generated;
+ 		wpa_dbg(wpa_s, MSG_DEBUG, " * reason %u%s", reason_code,
+ 			locally_generated ? " (locally generated)" : "");
+@@ -2863,6 +2889,7 @@
+ 		ie = info->ie;
+ 		ie_len = info->ie_len;
+ 		reason_code = info->reason_code;
++		set_wds_connect_status(addr, reason_code);
+ 		locally_generated = info->locally_generated;
+ 		wpa_dbg(wpa_s, MSG_DEBUG, " * reason %u%s",
+ 			reason_code,

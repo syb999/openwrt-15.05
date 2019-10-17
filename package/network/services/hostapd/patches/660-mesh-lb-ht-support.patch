@@ -1,0 +1,44 @@
+--- a/wpa_supplicant/wpa_supplicant.c
++++ b/wpa_supplicant/wpa_supplicant.c
+@@ -1817,10 +1817,6 @@
+ 	if (!freq->ht_enabled)
+ 		return;
+ 
+-	/* Setup higher BW only for 5 GHz */
+-	if (mode->mode != HOSTAPD_MODE_IEEE80211A)
+-		return;
+-
+ 	for (chan_idx = 0; chan_idx < mode->num_channels; chan_idx++) {
+ 		pri_chan = &mode->channels[chan_idx];
+ 		if (pri_chan->chan == channel)
+@@ -1834,7 +1830,7 @@
+ 	if (pri_chan->flag & (HOSTAPD_CHAN_DISABLED | HOSTAPD_CHAN_NO_IR))
+ 		return;
+ 
+-	/* Check/setup HT40+/HT40- */
++	/* Check/setup hb HT40+/HT40- */
+ 	for (j = 0; j < ARRAY_SIZE(ht40plus); j++) {
+ 		if (ht40plus[j] == channel) {
+ 			ht40 = 1;
+@@ -1842,6 +1838,10 @@
+ 		}
+ 	}
+ 
++	/* Check/setup lb HT40+/HT40- */
++	if (channel < 7)
++		ht40 = 1;
++
+ 	/* Find secondary channel */
+ 	for (i = 0; i < mode->num_channels; i++) {
+ 		sec_chan = &mode->channels[i];
+@@ -1911,6 +1911,10 @@
+ 		   "IBSS/mesh: setup freq channel %d, sec_channel_offset %d",
+ 		   freq->channel, freq->sec_channel_offset);
+ 
++	/* Setup higher BW only for 5 GHz */
++	if (mode->mode != HOSTAPD_MODE_IEEE80211A)
++		return;
++
+ 	if (!drv_supports_vht(wpa_s, ssid))
+ 		return;
+ 

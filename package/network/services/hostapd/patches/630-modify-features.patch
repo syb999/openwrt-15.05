@@ -1,0 +1,27 @@
+--- a/src/utils/build_features.h
++++ b/src/utils/build_features.h
+@@ -3,14 +3,22 @@
+ 
+ static inline int has_feature(const char *feat)
+ {
+-#ifdef IEEE8021X_EAPOL
++#if (defined(IEEE8021X_EAPOL) || defined(EAP_SERVER))
+ 	if (!strcmp(feat, "eap"))
+ 		return 1;
+ #endif
+-#ifdef IEEE80211N
++#ifdef CONFIG_IEEE80211N
+ 	if (!strcmp(feat, "11n"))
+ 		return 1;
+ #endif
++#ifdef CONFIG_IEEE80211W
++	if (!strcmp(feat, "11w"))
++		return 1;
++#endif
++#ifdef CONFIG_IEEE80211R
++	if (!strcmp(feat, "11r"))
++		return 1;
++#endif
+ 	return 0;
+ }
+ 

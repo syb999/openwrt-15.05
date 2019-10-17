@@ -1,0 +1,20 @@
+Index: hostapd-2015-03-25/src/ap/ap_config.c
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/ap_config.c	2016-06-07 13:17:21.000000000 +0800
++++ hostapd-2015-03-25/src/ap/ap_config.c	2017-07-06 11:35:50.078989221 +0800
+@@ -803,6 +803,15 @@
+ 	}
+ #endif /* CONFIG_IEEE80211N */
+ 
++#ifdef CONFIG_IEEE80211AC
++	if (full_config && conf->ieee80211ac &&
++	    bss->ssid.security_policy == SECURITY_STATIC_WEP) {
++		bss->disable_11ac = 1;
++		wpa_printf(MSG_ERROR, "VHT (IEEE 802.11n) with WEP is not "
++			   "allowed, disabling VHT capabilities");
++	}
++#endif /* CONFIG_IEEE80211AC */
++
+ #ifdef CONFIG_WPS
+ 	if (full_config && bss->wps_state && bss->ignore_broadcast_ssid) {
+ 		wpa_printf(MSG_INFO, "WPS: ignore_broadcast_ssid "

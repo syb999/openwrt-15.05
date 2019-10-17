@@ -1,0 +1,29 @@
+From f3e1570576e16812b19e2fe7df3d31b9ee8e6068 Mon Sep 17 00:00:00 2001
+From: Masashi Honma <masashi.honma@gmail.com>
+Date: Tue, 7 Feb 2017 11:50:57 +0900
+Subject: [PATCH] VHT: Fill VHT capability with hardware capability
+
+Previously, VHT capability was default value (=0x0000). This makes
+VHT Capabilities Info in VHT Capabilities IE in mesh peering
+open/confirm frame 0x0000. This patch fills it with hardware capability.
+
+Signed-off-by: Masashi Honma <masashi.honma@gmail.com>
+---
+ wpa_supplicant/ap.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/wpa_supplicant/ap.c b/wpa_supplicant/ap.c
+index 608d355..1721d6a 100644
+--- a/wpa_supplicant/ap.c
++++ b/wpa_supplicant/ap.c
+@@ -168,6 +168,7 @@ int wpa_supplicant_conf_ap_ht(struct wpa_supplicant *wpa_s,
+ 
+ 			if (mode->vht_capab && ssid->vht) {
+ 				conf->ieee80211ac = 1;
++				conf->vht_capab |= mode->vht_capab;
+ 				wpas_conf_ap_vht(wpa_s, conf, mode);
+ 			}
+ 		}
+-- 
+1.9.1
+

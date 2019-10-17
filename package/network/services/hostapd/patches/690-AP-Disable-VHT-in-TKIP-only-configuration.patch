@@ -1,0 +1,37 @@
+From 59d7cff7e3d9a8fad3a865b6629b11a149183d69 Mon Sep 17 00:00:00 2001
+From: Filip Matusiak <filip.matusiak@tieto.com>
+Date: Mon, 17 Oct 2016 16:53:09 +0200
+Subject: [PATCH] AP: Disable VHT in TKIP-only configuration
+
+This has already been done for WEP, but there's same constraint for not
+allowing VTH rates in case of TKIP.
+
+Signed-off-by: Filip Matusiak <filip.matusiak@tieto.com>
+---
+ src/ap/ap_config.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/src/ap/ap_config.c b/src/ap/ap_config.c
+index 228de2b..8c5bda7 100644
+--- a/src/ap/ap_config.c
++++ b/src/ap/ap_config.c
+@@ -848,6 +848,16 @@ static int hostapd_config_check_bss(struct hostapd_bss_config *bss,
+ 		wpa_printf(MSG_ERROR,
+ 			   "VHT (IEEE 802.11ac) with WEP is not allowed, disabling VHT capabilities");
+ 	}
++
++	if (full_config && conf->ieee80211ac && bss->wpa &&
++	    !(bss->wpa_pairwise & WPA_CIPHER_CCMP) &&
++	    !(bss->rsn_pairwise & (WPA_CIPHER_CCMP | WPA_CIPHER_GCMP |
++				   WPA_CIPHER_CCMP_256 | WPA_CIPHER_GCMP_256)))
++	{
++		bss->disable_11ac = 1;
++		wpa_printf(MSG_ERROR,
++			   "VHT (IEEE 802.11ac) with WPA/WPA2 requires CCMP/GCMP to be enabled, disabling VHT capabilities");
++	}
+ #endif /* CONFIG_IEEE80211AC */
+ 
+ #ifdef CONFIG_WPS
+-- 
+1.9.1
+

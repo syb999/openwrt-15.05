@@ -1,0 +1,94 @@
+Index: hostapd-2015-03-25/hostapd/Makefile
+===================================================================
+--- hostapd-2015-03-25.orig/hostapd/Makefile	2016-06-07 13:17:21.000000000 +0800
++++ hostapd-2015-03-25/hostapd/Makefile	2018-10-25 17:21:35.223237662 +0800
+@@ -214,6 +214,10 @@
+ NEED_AES_OMAC1=y
+ endif
+ 
++ifdef CONFIG_CUSTOM_WIFI_ONLINE
++CFLAGS += -DCONFIG_CUSTOM_WIFI_ONLINE
++endif
++
+ ifdef CONFIG_IEEE80211R
+ CFLAGS += -DCONFIG_IEEE80211R
+ OBJS += ../src/ap/wpa_auth_ft.o
+Index: hostapd-2015-03-25/src/ap/sta_info.c
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/sta_info.c	2016-06-07 13:17:21.000000000 +0800
++++ hostapd-2015-03-25/src/ap/sta_info.c	2018-10-25 17:21:07.799236853 +0800
+@@ -977,6 +977,52 @@
+ 
+ #endif /* CONFIG_IEEE80211W */
+ 
++#ifdef CONFIG_CUSTOM_WIFI_ONLINE
++struct wifi_custom_data
++{
++	//int len;
++	u_int8_t mac[6];
++	int online;
++	char ifname[20];
++} __attribute__((packed));
++
++#define CUSTOM_WIFI_LISTEN_PORT 7892 
++static broadcast_ap_sta_authorized(char *mac,char *ifname,int online)
++{
++	int sock, ret;
++	struct sockaddr_in servaddr;
++	//int ifname_len = 0;
++	struct wifi_custom_data custom_data = {0};
++
++	//ifname_len = strlen(ifname);
++	//custom_data.len = 6 + 4 + ifname_len + 1;
++	memcpy(&custom_data.mac,mac,6);
++	custom_data.online = online;
++
++	memcpy(custom_data.ifname,ifname,strlen(ifname));
++
++	//msg_len = custom_data.len + 4;
++	
++	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
++		wpa_printf(MSG_ERROR, "custom wifi socket error:");
++		return;
++	}
++	memset(&servaddr, 0, sizeof(servaddr));
++	servaddr.sin_family = AF_INET;
++	servaddr.sin_port = htons(CUSTOM_WIFI_LISTEN_PORT);
++	servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
++
++	if(sendto(sock, &custom_data, sizeof(custom_data), 0, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
++	{
++		wpa_printf(MSG_ERROR, "custom wifi send error");
++		goto SOCKET_ERR;
++	}
++	
++SOCKET_ERR:
++	close(sock);
++	return;
++}
++#endif
+ 
+ void ap_sta_set_authorized(struct hostapd_data *hapd, struct sta_info *sta,
+ 			   int authorized)
+@@ -1035,6 +1081,10 @@
+ 			wpa_msg_no_global(hapd->msg_ctx_parent, MSG_INFO,
+ 					  AP_STA_CONNECTED "%s%s",
+ 					  buf, ip_addr);
++
++#ifdef CONFIG_CUSTOM_WIFI_ONLINE
++		broadcast_ap_sta_authorized((char *)&sta->addr,(char *)&(hapd->conf->iface),1);
++#endif
+ 	} else {
+ 		wpa_msg(hapd->msg_ctx, MSG_INFO, AP_STA_DISCONNECTED "%s", buf);
+ 
+@@ -1042,6 +1092,10 @@
+ 		    hapd->msg_ctx_parent != hapd->msg_ctx)
+ 			wpa_msg_no_global(hapd->msg_ctx_parent, MSG_INFO,
+ 					  AP_STA_DISCONNECTED "%s", buf);
++
++#ifdef CONFIG_CUSTOM_WIFI_ONLINE
++		broadcast_ap_sta_authorized((char *)&sta->addr,(char *)&(hapd->conf->iface),0);
++#endif
+ 	}
+ }
+ 

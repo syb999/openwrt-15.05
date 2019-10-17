@@ -1,0 +1,172 @@
+Index: hostapd-2015-03-25/hostapd/config_file.c
+===================================================================
+--- hostapd-2015-03-25.orig/hostapd/config_file.c	2018-06-14 16:25:26.040416405 +0800
++++ hostapd-2015-03-25/hostapd/config_file.c	2018-06-14 16:33:27.544436612 +0800
+@@ -3301,6 +3301,14 @@
+ 	} else if (os_strcmp(buf, "wowlan_triggers") == 0) {
+ 		os_free(bss->wowlan_triggers);
+ 		bss->wowlan_triggers = os_strdup(pos);
++	} else if (os_strcmp(buf, "prohibit_weak_sig_sta_enable") == 0) {
++		conf->prohibit_weak_sig_sta_enable = atoi(pos);
++	} else if (os_strcmp(buf, "sta_min_dbm") == 0) {
++		conf->sta_min_dbm = atoi(pos);
++	} else if (os_strcmp(buf, "disassociate_weak_sig_sta_enable") == 0) {
++		conf->disassociate_weak_sig_sta_enable = atoi(pos);
++	} else if (os_strcmp(buf, "weak_sta_signal") == 0) {
++		conf->weak_sta_signal = atoi(pos);
+ 	} else {
+ 		wpa_printf(MSG_ERROR,
+ 			   "Line %d: unknown configuration item '%s'",
+Index: hostapd-2015-03-25/src/ap/ap_config.c
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/ap_config.c	2018-06-14 16:25:26.092416408 +0800
++++ hostapd-2015-03-25/src/ap/ap_config.c	2018-06-14 16:34:01.468438036 +0800
+@@ -186,6 +186,10 @@
+ #ifdef CONFIG_ACS
+ 	conf->acs_num_scans = 5;
+ #endif /* CONFIG_ACS */
++	conf->sta_min_dbm = -75;
++	conf->prohibit_weak_sig_sta_enable = 0;
++	conf->disassociate_weak_sig_sta_enable = 0;
++	conf->weak_sta_signal = -75;
+ 
+ 	return conf;
+ }
+Index: hostapd-2015-03-25/src/ap/ap_config.h
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/ap_config.h	2018-06-14 16:25:26.040416405 +0800
++++ hostapd-2015-03-25/src/ap/ap_config.h	2018-06-14 16:34:26.776439098 +0800
+@@ -652,6 +652,10 @@
+ 	} *acs_chan_bias;
+ 	unsigned int num_acs_chan_bias;
+ #endif /* CONFIG_ACS */
++	int sta_min_dbm;
++	int prohibit_weak_sig_sta_enable;
++	int disassociate_weak_sig_sta_enable;
++	int weak_sta_signal;
+ };
+ 
+ 
+Index: hostapd-2015-03-25/src/ap/ieee802_11.c
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/ieee802_11.c	2018-06-14 16:25:26.084416407 +0800
++++ hostapd-2015-03-25/src/ap/ieee802_11.c	2018-06-14 16:35:09.336440884 +0800
+@@ -1721,6 +1721,10 @@
+ 		.frame_info = fi,
+ 	};
+ 
++	if(hapd->iconf->prohibit_weak_sig_sta_enable)
++		if(fi->ssi_signal < hapd->iconf->sta_min_dbm)
++			return;
++
+ 	if (len < IEEE80211_HDRLEN + (reassoc ? sizeof(mgmt->u.reassoc_req) :
+ 				      sizeof(mgmt->u.assoc_req))) {
+ 		wpa_printf(MSG_INFO, "handle_assoc(reassoc=%d) - too short payload (len=%lu)",
+Index: hostapd-2015-03-25/src/ap/sta_info.c
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/sta_info.c	2016-06-07 13:17:21.000000000 +0800
++++ hostapd-2015-03-25/src/ap/sta_info.c	2018-06-14 16:39:02.396450665 +0800
+@@ -246,6 +246,8 @@
+ 	wpa_printf(MSG_DEBUG, "%s: cancel ap_handle_timer for " MACSTR,
+ 		   __func__, MAC2STR(sta->addr));
+ 	eloop_cancel_timeout(ap_handle_timer, hapd, sta);
++	if(hapd->iconf->disassociate_weak_sig_sta_enable)
++		eloop_cancel_timeout(ap_sta_sig_handle_timer, hapd, sta);
+ 	eloop_cancel_timeout(ap_handle_session_timer, hapd, sta);
+ 	eloop_cancel_timeout(ap_handle_session_warning_timer, hapd, sta);
+ 	eloop_cancel_timeout(ap_sta_deauth_cb_timeout, hapd, sta);
+@@ -321,6 +323,42 @@
+ 	}
+ }
+ 
++/**
++ * ap_sta_sig_handle_timer - Per STA timer handler
++ * @eloop_ctx: struct hostapd_data *
++ * @timeout_ctx: struct sta_info *
++ *
++ * This function is called to check station signal and to remove
++ * stations whose signal is too weak.
++ */
++void ap_sta_sig_handle_timer(void *eloop_ctx, void *timeout_ctx)
++{
++	struct hostap_sta_driver_data data;
++	struct hostapd_data *hapd = eloop_ctx;
++	struct sta_info *sta = timeout_ctx;
++
++	//get signal
++	if (hostapd_drv_read_sta_data(hapd, &data, sta->addr) < 0)
++		return;
++	//if signal is too weak,deauth sta
++	if(data.last_rssi < hapd->iconf->weak_sta_signal + 0x100)
++	{
++		sta->too_weak_count ++;
++		if(sta->too_weak_count > 5)
++		{
++			ap_sta_deauthenticate(hapd,sta,WLAN_REASON_UNSPECIFIED);
++			return;
++		}
++		//if have a too weak signal,then get signal every 5 seconds
++		eloop_register_timeout(2, 0, ap_sta_sig_handle_timer, hapd, sta);
++	}
++	else
++	{
++		//if have a signal that is good,then set too_weak_count to 0
++		sta->too_weak_count = 0;
++		eloop_register_timeout(5, 0, ap_sta_sig_handle_timer, hapd, sta);
++	}
++}
+ 
+ /**
+  * ap_handle_timer - Per STA timer handler
+@@ -611,6 +649,9 @@
+ 			   hapd->conf->ap_max_inactivity);
+ 		eloop_register_timeout(hapd->conf->ap_max_inactivity, 0,
+ 				       ap_handle_timer, hapd, sta);
++		//check sta signal every ap_max_inactivity seconds
++		if(hapd->iconf->disassociate_weak_sig_sta_enable)
++			eloop_register_timeout(5, 0, ap_sta_sig_handle_timer, hapd, sta);
+ 	}
+ 
+ 	/* initialize STA info data */
+Index: hostapd-2015-03-25/src/ap/sta_info.h
+===================================================================
+--- hostapd-2015-03-25.orig/src/ap/sta_info.h	2018-06-14 16:25:26.080416407 +0800
++++ hostapd-2015-03-25/src/ap/sta_info.h	2018-06-14 16:36:25.968444100 +0800
+@@ -169,6 +169,7 @@
+ 	u16 last_seq_ctrl;
+ 	/* Last Authentication/(Re)Association Request/Action frame subtype */
+ 	u8 last_subtype;
++	u8 too_weak_count;
+ };
+ 
+ 
+@@ -201,6 +202,7 @@
+ void ap_sta_ip6addr_del(struct hostapd_data *hapd, struct sta_info *sta);
+ void hostapd_free_stas(struct hostapd_data *hapd);
+ void ap_handle_timer(void *eloop_ctx, void *timeout_ctx);
++void ap_sta_sig_handle_timer(void *eloop_ctx, void *timeout_ctx);
+ void ap_sta_replenish_timeout(struct hostapd_data *hapd, struct sta_info *sta,
+ 			      u32 session_timeout);
+ void ap_sta_session_timeout(struct hostapd_data *hapd, struct sta_info *sta,
+Index: hostapd-2015-03-25/src/drivers/driver_nl80211.c
+===================================================================
+--- hostapd-2015-03-25.orig/src/drivers/driver_nl80211.c	2018-06-14 16:25:26.076416407 +0800
++++ hostapd-2015-03-25/src/drivers/driver_nl80211.c	2018-06-14 16:41:21.784456514 +0800
+@@ -5271,6 +5271,7 @@
+ 		[NL80211_STA_INFO_RX_PACKETS] = { .type = NLA_U32 },
+ 		[NL80211_STA_INFO_TX_PACKETS] = { .type = NLA_U32 },
+ 		[NL80211_STA_INFO_TX_FAILED] = { .type = NLA_U32 },
++		[NL80211_STA_INFO_SIGNAL] = { .type = NLA_U8 },
+ 	};
+ 
+ 	nla_parse(tb, NL80211_ATTR_MAX, genlmsg_attrdata(gnlh, 0),
+@@ -5309,6 +5310,9 @@
+ 	if (stats[NL80211_STA_INFO_TX_FAILED])
+ 		data->tx_retry_failed =
+ 			nla_get_u32(stats[NL80211_STA_INFO_TX_FAILED]);
++	if (stats[NL80211_STA_INFO_SIGNAL])
++		data->last_rssi =
++			nla_get_u8(stats[NL80211_STA_INFO_SIGNAL]);
+ 
+ 	return NL_SKIP;
+ }
