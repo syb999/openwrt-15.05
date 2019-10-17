@@ -26,40 +26,40 @@
 +		translate("signal accessible value"))
 +	signal_connect:depends({mode="ap"},{mode="ap-wds"},{mode="mesh"})
 +	signal_connect.placeholder = "-60"
-+	signal_connect = "range(-10,-90)"
-+	signal_connect = true
++	--signal_connect.datatype = "range(-10,-90)"
++	signal_connect.default = "-60"
 +
 +	signal_stay = s:taboption("rssi", Value, "signal_stay",
 +		translate("signal_stay"),
 +		translate("signal automatic disconnection value"))
 +	signal_stay:depends({mode="ap"},{mode="ap-wds"},{mode="mesh"})
 +	signal_stay.placeholder = "-70"
-+	signal_stay = "range(-30,-90)"
-+	signal_stay = true
++	--signal_stay.datatype = "range(-30,-90)"
++	signal_stay.default = "-70"
 +
 +	signal_strikes = s:taboption("rssi", Value, "signal_strikes",
 +		translate("signal_strikes"),
 +		translate("signal strikes times"))
 +	signal_strikes:depends({mode="ap"},{mode="ap-wds"},{mode="mesh"})
 +	signal_strikes.placeholder = "3"
-+	signal_strikes = "range(1,10)"
-+	signal_strikes = true
++	signal_strikes.datatype = "range(1,10)"
++	signal_strikes.default = "3"
 +
 +	signal_poll_time = s:taboption("rssi", Value, "signal_poll_time",
 +		translate("signal_poll_time"),
 +		translate("signal polling times"))
 +	signal_poll_time:depends({mode="ap"},{mode="ap-wds"},{mode="mesh"})
 +	signal_poll_time.placeholder = "5"
-+	signal_poll_time = "range(3,10)"
-+	signal_poll_time = true
++	signal_poll_time.datatype = "range(3,20)"
++	signal_poll_time.default = "5"
 +
 +	signal_drop_reason = s:taboption("rssi", Value, "signal_drop_reason",
 +		translate("signal_drop_reason"),
 +		translate("signal drop reason"))
 +	signal_drop_reason:depends({mode="ap"},{mode="ap-wds"},{mode="mesh"})
 +	signal_drop_reason.placeholder = "3"
-+	signal_drop_reason = "range(2,10)"
-+	signal_drop_reason = true
++	signal_drop_reason.datatype = "range(3,5)"
++	signal_drop_reason.default = "3"
 +
  end
  
@@ -86,7 +86,7 @@
 +msgid "signal polling times"
 +msgstr "信号轮询次数（默认5）"
 +
-+msgid "signal_drop_reason"
++msgid "signal drop reason"
 +msgstr "信号检测次数（默认3）"
 +
  #~ msgid "CPU frequency"
