@@ -1,5 +1,7 @@
---- a/include/net/cfg80211.h
-+++ b/include/net/cfg80211.h
+Index: compat-wireless-2016-01-10/include/net/cfg80211.h
+===================================================================
+--- compat-wireless-2016-01-10.orig/include/net/cfg80211.h	2019-05-16 16:44:22.176915556 +0800
++++ compat-wireless-2016-01-10/include/net/cfg80211.h	2019-05-16 16:47:45.044921537 +0800
 @@ -133,6 +133,7 @@
  	IEEE80211_CHAN_IR_CONCURRENT	= 1<<10,
  	IEEE80211_CHAN_NO_20MHZ		= 1<<11,
@@ -8,8 +10,10 @@
  };
  
  #define IEEE80211_CHAN_NO_HT40 \
---- a/net/wireless/nl80211.c
-+++ b/net/wireless/nl80211.c
+Index: compat-wireless-2016-01-10/net/wireless/nl80211.c
+===================================================================
+--- compat-wireless-2016-01-10.orig/net/wireless/nl80211.c	2019-05-16 16:44:21.416915533 +0800
++++ compat-wireless-2016-01-10/net/wireless/nl80211.c	2019-05-16 16:46:53.752920025 +0800
 @@ -4988,12 +4988,44 @@
  	return err;
  }
@@ -19,14 +23,14 @@
 +{
 +	struct cfg80211_registered_device *rdev;
 +	struct wiphy *wiphy;
-+	enum nl80211_band band;
++	enum ieee80211_band band;
 +	struct ieee80211_supported_band *sband;
 +	unsigned int i;
 +	struct ieee80211_channel *chan;
 +
 +	list_for_each_entry(rdev, &cfg80211_rdev_list, list) {
 +		wiphy = &rdev->wiphy;
-+		for (band = 0; band < NUM_NL80211_BANDS; band++)
++		for (band = 0; band < IEEE80211_NUM_BANDS; band++)
 +		{
 +			sband = wiphy->bands[band];
 +			if (!sband)
@@ -76,8 +80,10 @@
  	case NL80211_USER_REG_HINT_INDOOR:
  		if (info->attrs[NL80211_ATTR_SOCKET_OWNER]) {
  			owner_nlportid = genl_info_snd_portid(info);
---- a/net/wireless/reg.c
-+++ b/net/wireless/reg.c
+Index: compat-wireless-2016-01-10/net/wireless/reg.c
+===================================================================
+--- compat-wireless-2016-01-10.orig/net/wireless/reg.c	2019-05-16 16:44:21.292915530 +0800
++++ compat-wireless-2016-01-10/net/wireless/reg.c	2019-05-16 16:48:38.580923115 +0800
 @@ -1026,7 +1026,10 @@
  	if (rd_flags & NL80211_RRF_NO_IR_ALL)
  		channel_flags |= IEEE80211_CHAN_NO_IR;

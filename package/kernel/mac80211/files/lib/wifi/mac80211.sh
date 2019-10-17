@@ -151,8 +151,7 @@ config wifi-iface
 	option network  lan
 	option mode     ap
 	option ssid     $ssid
-	option encryption psk2+ccmp
-	option key      12345678
+	option encryption none
 	option isolate '0'
 	option hidden '0'
 	option macfilter   disable
@@ -160,7 +159,7 @@ config wifi-iface
 	option group 1
 	option netisolate 0
 	option disable_input 0
-	option wps_pushbutton '1'
+	option wps_pushbutton '0'
 	option wps_label '0'
 	option rps_cpus $rps_cpus
 

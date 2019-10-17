@@ -1,5 +1,7 @@
---- a/net/mac80211/util.c
-+++ b/net/mac80211/util.c
+Index: compat-wireless-2016-01-10/net/mac80211/util.c
+===================================================================
+--- compat-wireless-2016-01-10.orig/net/mac80211/util.c	2016-01-15 20:00:10.000000000 +0800
++++ compat-wireless-2016-01-10/net/mac80211/util.c	2018-05-03 18:45:28.052483145 +0800
 @@ -2101,7 +2101,12 @@
  	 * If this is for hw restart things are still running.
  	 * We may want to change that later, however.

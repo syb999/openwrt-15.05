@@ -1,5 +1,7 @@
---- a/net/mac80211/tx.c
-+++ b/net/mac80211/tx.c
+Index: compat-wireless-2016-01-10/net/mac80211/tx.c
+===================================================================
+--- compat-wireless-2016-01-10.orig/net/mac80211/tx.c	2017-03-28 17:27:03.333271558 +0800
++++ compat-wireless-2016-01-10/net/mac80211/tx.c	2017-03-28 17:44:08.289301776 +0800
 @@ -627,6 +627,9 @@
  		case WLAN_CIPHER_SUITE_CCMP_256:
  		case WLAN_CIPHER_SUITE_GCMP:
@@ -9,4 +11,4 @@
 +#endif
  			if (!ieee80211_is_data_present(hdr->frame_control) &&
  			    !ieee80211_use_mfp(hdr->frame_control, tx->sta,
- 					       tx->skb) &&
+ 					       tx->skb))

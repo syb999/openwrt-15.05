@@ -1,5 +1,7 @@
---- a/net/mac80211/Kconfig
-+++ b/net/mac80211/Kconfig
+Index: compat-wireless-2016-01-10/net/mac80211/Kconfig
+===================================================================
+--- compat-wireless-2016-01-10.orig/net/mac80211/Kconfig	2019-01-11 11:17:36.460951639 +0800
++++ compat-wireless-2016-01-10/net/mac80211/Kconfig	2019-01-11 11:21:44.900962065 +0800
 @@ -320,6 +320,14 @@
  	bool "Enable monitor in mac80211, this is add by siflower"
  	depends on MAC80211
@@ -15,8 +17,10 @@
  config MAC80211_STA_HASH_MAX_SIZE
  	int "Station hash table maximum size" if MAC80211_DEBUG_MENU
  	default 0
---- a/net/mac80211/ieee80211_i.h
-+++ b/net/mac80211/ieee80211_i.h
+Index: compat-wireless-2016-01-10/net/mac80211/ieee80211_i.h
+===================================================================
+--- compat-wireless-2016-01-10.orig/net/mac80211/ieee80211_i.h	2019-01-11 11:17:35.248951589 +0800
++++ compat-wireless-2016-01-10/net/mac80211/ieee80211_i.h	2019-01-11 11:22:02.848962819 +0800
 @@ -40,12 +40,20 @@
  
  /* Maximum number of broadcast/multicast frames to buffer when some of the
@@ -38,8 +42,10 @@
  
  /* Required encryption head and tailroom */
  #define IEEE80211_ENCRYPT_HEADROOM 8
---- a/net/mac80211/sta_info.h
-+++ b/net/mac80211/sta_info.h
+Index: compat-wireless-2016-01-10/net/mac80211/sta_info.h
+===================================================================
+--- compat-wireless-2016-01-10.orig/net/mac80211/sta_info.h	2016-01-15 20:00:10.000000000 +0800
++++ compat-wireless-2016-01-10/net/mac80211/sta_info.h	2019-01-11 11:22:12.860963239 +0800
 @@ -579,7 +579,11 @@
  }
  

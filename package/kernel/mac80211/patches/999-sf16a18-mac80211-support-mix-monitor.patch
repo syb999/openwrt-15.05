@@ -1,7 +1,9 @@
---- a/net/mac80211/cfg.c
-+++ b/net/mac80211/cfg.c
+Index: compat-wireless-2016-01-10/net/mac80211/cfg.c
+===================================================================
+--- compat-wireless-2016-01-10.orig/net/mac80211/cfg.c	2018-11-26 11:46:23.569228544 +0800
++++ compat-wireless-2016-01-10/net/mac80211/cfg.c	2018-11-26 11:34:45.000000000 +0800
 @@ -537,9 +537,14 @@
- 		sdata = rtnl_dereference(local->monitor_sdata);
+ 				lockdep_is_held(&local->iflist_mtx));
  		if (sdata) {
  			ieee80211_vif_release_channel(sdata);
 +#ifdef CPTCFG_MAC80211_SIFLOWER_MONITOR_ENABLE
@@ -16,6 +18,8 @@
  	} else if (local->open_count == local->monitors) {
  		local->_oper_chandef = *chandef;
  		ieee80211_hw_config(local, 0);
+Index: compat-wireless-2016-01-10/net/mac80211/iface.c
+===================================================================
 --- compat-wireless-2016-01-10.orig/net/mac80211/iface.c	2018-11-26 11:46:24.225228564 +0800
 +++ compat-wireless-2016-01-10/net/mac80211/iface.c	2018-11-26 11:39:38.000000000 +0800
 @@ -412,7 +412,9 @@
@@ -51,8 +55,8 @@
 +	set_bit(SDATA_STATE_RUNNING, &sdata->state);
 +#endif
  
- 	skb_queue_head_init(&sdata->skb_queue);
- 	INIT_WORK(&sdata->work, ieee80211_iface_work);
+ 	return 0;
+ }
 @@ -598,7 +608,11 @@
  			res = drv_add_interface(local, sdata);
  			if (res)
@@ -86,8 +90,10 @@
  }
  
  static int ieee80211_stop(struct net_device *dev)
---- a/net/mac80211/util.c
-+++ b/net/mac80211/util.c
+Index: compat-wireless-2016-01-10/net/mac80211/util.c
+===================================================================
+--- compat-wireless-2016-01-10.orig/net/mac80211/util.c	2018-11-26 11:46:24.257228565 +0800
++++ compat-wireless-2016-01-10/net/mac80211/util.c	2018-11-26 11:40:55.000000000 +0800
 @@ -2088,7 +2088,11 @@
  		mutex_unlock(&local->mtx);
  	}
@@ -100,8 +106,10 @@
  		ieee80211_add_virtual_monitor(local);
  
  	/*
---- a/net/wireless/chan.c
-+++ b/net/wireless/chan.c
+Index: compat-wireless-2016-01-10/net/wireless/chan.c
+===================================================================
+--- compat-wireless-2016-01-10.orig/net/wireless/chan.c	2018-11-26 11:46:24.201228563 +0800
++++ compat-wireless-2016-01-10/net/wireless/chan.c	2018-11-26 11:35:40.000000000 +0800
 @@ -861,8 +861,10 @@
  {
  	if (!rdev->ops->set_monitor_channel)
