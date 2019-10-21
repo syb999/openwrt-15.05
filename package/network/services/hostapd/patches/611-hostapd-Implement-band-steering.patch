@@ -1,0 +1,1267 @@
+From 326cc809440569c9c47f4cd768763385162b452f Mon Sep 17 00:00:00 2001
+From: Robert Marko <robimarko@gmail.com>
+Date: Thu, 16 May 2019 16:17:33 +0200
+Subject: [PATCH] hostapd: Implement band-steering
+
+This is a adaptation of Googles band steering
+---
+ hostapd/Makefile      |   5 +
+ hostapd/defconfig     |   3 +
+ hostapd/main.c        |  44 ++-
+ src/ap/beacon.c       |   7 +
+ src/ap/ieee802_11.c   |  36 +-
+ src/ap/sta_info.c     |  11 +
+ src/ap/steering.c     | 815 ++++++++++++++++++++++++++++++++++++++++++
+ src/ap/steering.h     | 138 +++++++
+ src/common/wpa_ctrl.h |   2 +
+ 9 files changed, 1053 insertions(+), 8 deletions(-)
+ create mode 100644 src/ap/steering.c
+ create mode 100644 src/ap/steering.h
+
+--- a/hostapd/Makefile
++++ b/hostapd/Makefile
+@@ -330,6 +330,11 @@ NEED_SHA384=y
+ NEED_SHA512=y
+ endif
+ 
++ifdef CONFIG_BAND_STEERING
++CFLAGS += -DCONFIG_BAND_STEERING
++OBJS += ../src/ap/steering.o
++endif
++
+ ifdef CONFIG_FILS
+ CFLAGS += -DCONFIG_FILS
+ OBJS += ../src/ap/fils_hlp.o
+--- a/hostapd/defconfig
++++ b/hostapd/defconfig
+@@ -370,6 +370,9 @@ CONFIG_IPV6=y
+ # Experimental implementation of draft-harkins-owe-07.txt
+ #CONFIG_OWE=y
+ 
++# Band steering support
++#CONFIG_BAND_STEERING=y
++
+ # Override default value for the wpa_disable_eapol_key_retries configuration
+ # parameter. See that parameter in hostapd.conf for more details.
+ #CFLAGS += -DDEFAULT_WPA_DISABLE_EAPOL_KEY_RETRIES=1
+--- a/hostapd/main.c
++++ b/hostapd/main.c
+@@ -30,6 +30,9 @@
+ #include "config_file.h"
+ #include "eap_register.h"
+ #include "ctrl_iface.h"
++#ifdef CONFIG_BAND_STEERING
++#include "ap/steering.h"
++#endif /* CONFIG_BAND_STEERING */
+ 
+ 
+ struct hapd_global {
+@@ -41,6 +44,11 @@ static struct hapd_global global;
+ static int daemonize = 0;
+ static char *pid_file = NULL;
+ 
++#ifdef CONFIG_BAND_STEERING
++	char *steering_path = NULL;
++	int steering_rsi_threshold = -60;
++	char *steering_target_interface = NULL;
++#endif /* CONFIG_BAND_STEERING */
+ 
+ #ifndef CONFIG_NO_HOSTAPD_LOGGER
+ static void hostapd_logger_cb(void *ctx, const u8 *addr, unsigned int module,
+@@ -301,6 +309,12 @@ hostapd_interface_init(struct hapd_inter
+ 		return NULL;
+ 	}
+ 
++#ifdef CONFIG_BAND_STEERING
++	if (bandsteer_interface_init(iface)) {
++		return NULL;
++	}
++#endif /* CONFIG_BAND_STEERING */
++
+ 	return iface;
+ }
+ 
+@@ -366,6 +380,13 @@ static int hostapd_global_init(struct ha
+ 	}
+ 	interfaces->eloop_initialized = 1;
+ 
++#ifdef CONFIG_BAND_STEERING
++	if (bandsteer_init()) {
++		wpa_printf(MSG_ERROR, "Failed to initialize band steering");
++		return -1;
++	}
++#endif /* CONFIG_BAND_STEERING */
++
+ 	random_init(entropy_file);
+ 
+ #ifndef CONFIG_NATIVE_WINDOWS
+@@ -493,6 +514,11 @@ static void usage(void)
+ #endif /* CONFIG_DEBUG_SYSLOG */
+ 		"   -S   start all the interfaces synchronously\n"
+ 		"   -t   include timestamps in some debug messages\n"
++#ifdef CONFIG_BAND_STEERING
++		"   -l   log band steering timestamps in this directory\n"
++		"   -r   steering rsi threshold (dbm), dflt=-60\n"
++		"   -n   steering target interface name\n"
++#endif /* CONFIG_BAND_STEERING */
+ 		"   -v   show hostapd version\n");
+ 
+ 	exit(1);
+@@ -680,7 +706,7 @@ int main(int argc, char *argv[])
+ 	wpa_supplicant_event = hostapd_wpa_event;
+ 	wpa_supplicant_event_global = hostapd_wpa_event_global;
+ 	for (;;) {
+-		c = getopt(argc, argv, "b:Bde:f:hi:KP:sSTtu:g:G:v::");
++		c = getopt(argc, argv, "b:Bde:f:hi:KP:sSTtu:vg:G:n:l:r:");
+ 		if (c < 0)
+ 			break;
+ 		switch (c) {
+@@ -756,6 +782,22 @@ int main(int argc, char *argv[])
+ 							&if_names_size, optarg))
+ 				goto out;
+ 			break;
++#ifdef CONFIG_BAND_STEERING
++		case 'l':
++			steering_path = optarg;
++			break;
++		case 'n':
++			steering_target_interface = optarg;
++			break;
++		case 'r':
++			for (i = 0; optarg[i] && isdigit(optarg[i]); i++);
++			if (optarg[i] == '\0') {
++				steering_rsi_threshold = -atoi(optarg);
++								wpa_printf(MSG_INFO, "steering_rsi_threshold = %d",
++											steering_rsi_threshold);
++			}
++			break;
++#endif /* CONFIG_BAND_STEERING */
+ 		default:
+ 			usage();
+ 			break;
+--- a/src/ap/beacon.c
++++ b/src/ap/beacon.c
+@@ -32,6 +32,9 @@
+ #include "dfs.h"
+ #include "taxonomy.h"
+ #include "ieee802_11_auth.h"
++#ifdef CONFIG_BAND_STEERING
++#include "ap/steering.h"
++#endif /* CONFIG_BAND_STEERING */
+ 
+ 
+ #ifdef NEED_AP_MLME
+@@ -750,6 +753,10 @@ void handle_probe_req(struct hostapd_dat
+ 		.elems = &elems,
+ 	};
+ 
++#ifdef CONFIG_BAND_STEERING
++	write_probe_timestamp(hapd, mgmt->sa, ssi_signal);
++#endif /* CONFIG_BAND_STEERING */
++
+ 	if (len < IEEE80211_HDRLEN)
+ 		return;
+ 	ie = ((const u8 *) mgmt) + IEEE80211_HDRLEN;
+--- a/src/ap/ieee802_11.c
++++ b/src/ap/ieee802_11.c
+@@ -50,6 +50,9 @@
+ #include "fils_hlp.h"
+ #include "dpp_hostapd.h"
+ #include "gas_query_ap.h"
++#ifdef CONFIG_BAND_STEERING
++#include "ap/steering.h"
++#endif /* CONFIG_BAND_STEERING */
+ 
+ 
+ #ifdef CONFIG_FILS
+@@ -3300,7 +3303,7 @@ void fils_hlp_timeout(void *eloop_ctx, v
+ 
+ static void handle_assoc(struct hostapd_data *hapd,
+ 			 const struct ieee80211_mgmt *mgmt, size_t len,
+-			 int reassoc, int rssi)
++			 int reassoc, int rssi, int ssi_signal)
+ {
+ 	u16 capab_info, listen_interval, seq_ctrl, fc;
+ 	u16 resp = WLAN_STATUS_SUCCESS, reply_res;
+@@ -3529,6 +3532,13 @@ static void handle_assoc(struct hostapd_
+ 		left = res;
+ 	}
+ #endif /* CONFIG_FILS */
++#ifdef CONFIG_BAND_STEERING
++	steering_reason s_reason = NOSTEER_REASON_UNSPECIFIED;
++	struct os_reltime probe_delta_time, steer_delta_time, defer_delta_time;
++	os_memset(&probe_delta_time, 0, sizeof(probe_delta_time));
++	os_memset(&steer_delta_time, 0, sizeof(steer_delta_time));
++	os_memset(&defer_delta_time, 0, sizeof(defer_delta_time));
++#endif /* CONFIG_BAND_STEERING */
+ 
+ 	/* followed by SSID and Supported rates; and HT capabilities if 802.11n
+ 	 * is used */
+@@ -3536,6 +3546,16 @@ static void handle_assoc(struct hostapd_
+ 	if (resp != WLAN_STATUS_SUCCESS)
+ 		goto fail;
+ 
++#ifdef CONFIG_BAND_STEERING
++	if (should_steer_on_assoc(hapd, mgmt->sa, ssi_signal,
++					 reassoc, &s_reason, &probe_delta_time,
++					 &steer_delta_time, &defer_delta_time)) {
++		resp = WLAN_STATUS_ASSOC_REJECTED_TEMPORARILY;
++		//sta->disassoc_reason = REASON_ASSOC_REJECT_STEER;
++		goto fail;
++	}
++#endif /* CONFIG_BAND_STEERING */
++
+ 	if (hostapd_get_aid(hapd, sta) < 0) {
+ 		hostapd_logger(hapd, mgmt->sa, HOSTAPD_MODULE_IEEE80211,
+ 			       HOSTAPD_LEVEL_INFO, "No room for more AIDs");
+@@ -3698,7 +3718,8 @@ static void handle_assoc(struct hostapd_
+ 
+ 
+ static void handle_disassoc(struct hostapd_data *hapd,
+-			    const struct ieee80211_mgmt *mgmt, size_t len)
++			    const struct ieee80211_mgmt *mgmt, size_t len,
++			    int ssi_signal)
+ {
+ 	struct sta_info *sta;
+ 
+@@ -3763,7 +3784,8 @@ static void handle_disassoc(struct hosta
+ 
+ 
+ static void handle_deauth(struct hostapd_data *hapd,
+-			  const struct ieee80211_mgmt *mgmt, size_t len)
++			  const struct ieee80211_mgmt *mgmt, size_t len,
++			  int ssi_signal)
+ {
+ 	struct sta_info *sta;
+ 
+@@ -4131,22 +4153,22 @@ int ieee802_11_mgmt(struct hostapd_data
+ 		break;
+ 	case WLAN_FC_STYPE_ASSOC_REQ:
+ 		wpa_printf(MSG_DEBUG, "mgmt::assoc_req");
+-		handle_assoc(hapd, mgmt, len, 0, ssi_signal);
++		handle_assoc(hapd, mgmt, len, 0, ssi_signal, fi->ssi_signal);
+ 		ret = 1;
+ 		break;
+ 	case WLAN_FC_STYPE_REASSOC_REQ:
+ 		wpa_printf(MSG_DEBUG, "mgmt::reassoc_req");
+-		handle_assoc(hapd, mgmt, len, 1, ssi_signal);
++		handle_assoc(hapd, mgmt, len, 1, ssi_signal, fi->ssi_signal);
+ 		ret = 1;
+ 		break;
+ 	case WLAN_FC_STYPE_DISASSOC:
+ 		wpa_printf(MSG_DEBUG, "mgmt::disassoc");
+-		handle_disassoc(hapd, mgmt, len);
++		handle_disassoc(hapd, mgmt, len, fi->ssi_signal);
+ 		ret = 1;
+ 		break;
+ 	case WLAN_FC_STYPE_DEAUTH:
+ 		wpa_msg(hapd->msg_ctx, MSG_DEBUG, "mgmt::deauth");
+-		handle_deauth(hapd, mgmt, len);
++		handle_deauth(hapd, mgmt, len, fi->ssi_signal);
+ 		ret = 1;
+ 		break;
+ 	case WLAN_FC_STYPE_ACTION:
+--- a/src/ap/sta_info.c
++++ b/src/ap/sta_info.c
+@@ -38,6 +38,9 @@
+ #include "sta_info.h"
+ #include "vlan.h"
+ #include "wps_hostapd.h"
++#ifdef CONFIG_BAND_STEERING
++#include "ap/steering.h"
++#endif /* CONFIG_BAND_STEERING */
+ 
+ static void ap_sta_remove_in_other_bss(struct hostapd_data *hapd,
+ 				       struct sta_info *sta);
+@@ -1220,6 +1223,10 @@ void ap_sta_set_authorized(struct hostap
+ 		}
+ #endif /* CONFIG_P2P */
+ 
++#ifdef CONFIG_BAND_STEERING
++		write_connect_timestamp(hapd, sta->addr);
++#endif /* CONFIG_BAND_STEERING */
++
+ 		keyid = ap_sta_wpa_get_keyid(hapd, sta);
+ 		if (keyid) {
+ 			os_snprintf(keyid_buf, sizeof(keyid_buf),
+@@ -1237,6 +1244,10 @@ void ap_sta_set_authorized(struct hostap
+ 			wpa_msg_no_global(hapd->msg_ctx_parent, MSG_INFO,
+ 					  AP_STA_DISCONNECTED "%s", buf);
+ 	}
++	
++#ifdef CONFIG_BAND_STEERING
++		write_disconnect_timestamp(hapd, sta->addr);
++#endif /* CONFIG_BAND_STEERING */
+ 
+ #ifdef CONFIG_FST
+ 	if (hapd->iface->fst) {
+--- /dev/null
++++ b/src/ap/steering.c
+@@ -0,0 +1,815 @@
++/*
++ * hostapd / Interface steering
++ * Copyright (c) 2015 Google, Inc.
++ *
++ * This software may be distributed under the terms of the BSD license.
++ * See README for more details.
++ */
++
++#include "includes.h"
++
++#include <sys/stat.h>
++#include <unistd.h>
++#include <dirent.h>
++#include "common.h"
++#include "common/defs.h"
++#include "common/ieee802_11_defs.h"
++#include "common/wpa_ctrl.h"
++#include "hostapd.h"
++#include "steering.h"
++
++#define BANDSTEER_DIR_MODE S_IRWXU
++
++static char ifnames[][IFNAMSIZ] = {"wlan-2400mhz", "wlan-5000mhz"};
++
++/* Creates the directory if it doesn't already exist.
++ * Returns 0 if the directory already exists or it was created.
++ * It does not attempt to create the parent directory.
++ */
++static int ensure_dir_exists(const char *path, mode_t mode) {
++	int rc;
++	rc = mkdir(path, mode);
++	if ((rc == -1) && (errno == EEXIST)) {
++		rc = 0;
++	}
++	return rc;
++}
++
++/**
++ * Returns the interface name used for steering this BSS.  This corresponds to
++ * the name of the first BSS on the interface.
++ */
++static char *steering_interface_name(const struct hostapd_data *hapd) {
++	return hapd->iface->bss[0]->conf->iface;
++}
++
++/**
++ * Convert the ssid into a string that is usable in a filename. The resulting
++ * string must be unique. Since SSIDs are user defined, they are a potential
++ * attack vector into the system. So, their encoding cannot be misinterpreted
++ * as any other filename. In other words, we cannot allow ssid encodings
++ * like '../bin' or '/' as trying to access such files by name could cause
++ * problems.
++ *
++ * The resulting ssid_string is null terminated.
++ *
++ * Returns the length of the resulting ssid string. Note that if the buffer
++ * is not large enough, then it will be filled with as many characters as
++ * will fit.
++ */
++static int ssid_to_str(char *buf, size_t buf_size,
++                       const u8 *ssid, size_t ssid_len) {
++	int i, j;
++	char add_char;
++	u8 bits;
++	if (buf_size == 0) {
++		return 0;
++	}
++
++	j = 0;
++	for (i = 0; i < ssid_len; i++) {
++		if (isalnum(ssid[i]) || (ssid[i] != 0x0 && os_strchr("_- ", ssid[i]))) {
++			if (ssid[i] == ' ') {
++				add_char = '+';
++			} else {
++				add_char = ssid[i];
++			}
++			if (j >= buf_size - 1) {
++				break;
++			}
++			buf[j++] = add_char;
++		} else {
++			/* Encode the 8 bit value */
++			char alnum_chars[] = "0123456789ABCDEFGHIJKLMNOPQRSTUV";
++			if (j >= buf_size - 3) {
++				break;
++			}
++			bits = (ssid[i] >> 4) & 0xF;
++			buf[j++] = '=';
++			buf[j++] = alnum_chars[bits];
++			bits = ssid[i] & 0xF;
++			buf[j++] = alnum_chars[bits];
++		}
++	}
++
++	buf[j] = '\0';
++	return j;
++}
++
++/**
++ * Returns the filename-safe name used for SSID timestamps for this BSS.  Note
++ * that the value returned is in a static variable, so it is valid only until
++ * this function is called again.
++ */
++static char *steering_ssid_name(const struct hostapd_data *hapd,
++                                char *buf, size_t buf_size) {
++	ssid_to_str(buf, buf_size,
++	            hapd->conf->ssid.ssid, hapd->conf->ssid.ssid_len);
++	return buf;
++}
++
++/**
++ * Gets the appropriate timestamp directory path and puts it into buf.
++ * It returns the number of characters written.
++ *
++ * hapd: struct representing this particular BSS.
++ * steer_event: actual type of the event (e.g. STEER_EVENT_PROBE,
++ *    STEER_EVENT_ATTEMPT, STEER_EVENT_CONNECT).
++ *    If steer_event is STEER_EVENT_CONNECT, then the timestamp directory is
++ *    chosen based upon the SSID for this interface (the interface type
++ *    does not matter in this case).
++ * interface_type: whether to use the CURRENT_INTERFACE (i.e. hapd) or the
++ *    steering TARGET_INTERFACE for interface-based timestamps (all but
++ *    LOG_CONNECT).
++ */
++static int get_timestamp_dir(const struct hostapd_data *hapd,
++                             steer_event_type steer_event,
++                             steering_interface_type interface_type,
++                             char *buf,
++                             size_t buf_size) {
++	if (steering_path == NULL) {
++		return 0;
++	}
++
++	int pos;
++	pos = os_strlcpy(buf, steering_path, buf_size);
++	pos += os_strlcpy(&buf[pos], "/", buf_size - pos);
++
++	char *subdir;
++	if (steer_event == STEER_EVENT_CONNECT) {
++		pos += os_strlcpy(&buf[pos], "s_", buf_size - pos);
++		pos += ssid_to_str(&buf[pos], buf_size - pos,
++		                   hapd->conf->ssid.ssid,
++		                   hapd->conf->ssid.ssid_len);
++	} else if (interface_type == TARGET_INTERFACE) {
++		pos += os_strlcpy(&buf[pos], "i_", buf_size - pos);
++		pos += os_strlcpy(&buf[pos], steering_target_interface,
++		                  buf_size - pos);
++	} else {
++		pos += os_strlcpy(&buf[pos], "i_", buf_size - pos);
++		pos += os_strlcpy(&buf[pos], steering_interface_name(hapd),
++		                  buf_size - pos);
++	}
++	return pos;
++}
++
++static int get_timestamp_filename(const u8 *mac,
++                                  const struct hostapd_data *hapd,
++                                  steer_event_type steer_event,
++                                  steering_interface_type interface_type,
++                                  char *buf, size_t buf_size) {
++	int pos;
++	if (steering_path == NULL) {
++		return 0;
++	}
++
++	pos = get_timestamp_dir(hapd, steer_event, interface_type, buf,
++	                        buf_size);
++	if (os_snprintf(&buf[pos], buf_size - pos, "/" COMPACT_MACSTR ".%d",
++	                MAC2STR(mac), steer_event) < 0) {
++		wpa_printf(MSG_ERROR, "os_snprintf couldn't format filename: %s",
++		           strerror(errno));
++		return 0;
++	}
++
++	return 1;
++}
++
++
++int bandsteer_init() {
++	char mkpath[256];
++	char *p;
++	int rc = 0;
++
++	if (!steering_path) {
++		hostapd_logger(NULL, NULL, HOSTAPD_MODULE_IEEE80211,
++		                 HOSTAPD_LEVEL_INFO, "Steering disabled");
++		return 0;
++	}
++
++	hostapd_logger(NULL, NULL, HOSTAPD_MODULE_IEEE80211, HOSTAPD_LEVEL_INFO,
++	               "Steering enabled: target=%s, dir=%s",
++	               steering_target_interface, steering_path);
++
++	if (steering_path[0] != '/') {
++		wpa_printf(MSG_ERROR,
++		           "Band steering path (%s) is not absolute.",
++		           steering_path);
++		return -1;
++	}
++
++	os_strlcpy(mkpath, steering_path, sizeof(mkpath));
++	mkpath[sizeof(mkpath) - 1] = '\0';
++	for (p=&mkpath[1]; p && !rc; ) {
++		if (*p == '\0') {
++			/* No more subdirectories to check/create */
++			return 0;
++		}
++		if (*p == '/') {
++			/* Consecutive slashes in pathname */
++			return -1;
++		}
++		p = strchr(p, '/');
++		if (!p) {
++			/* This is the last subdirectory component */
++			return ensure_dir_exists(mkpath, BANDSTEER_DIR_MODE);
++		}
++		*p = '\0';
++		rc = ensure_dir_exists(mkpath, BANDSTEER_DIR_MODE);
++		*p = '/';
++		p++;
++	}
++	return rc;
++}
++
++/**
++ * Initializes steering data structures needed for a particular ssid.
++ * Returns 0 on success.
++ */
++static int bandsteer_ssid_init(struct hostapd_data *hapd) {
++	char mkpath[256];
++	if (!steering_path) {
++		return 0;
++	}
++	get_timestamp_dir(hapd, STEER_EVENT_CONNECT, CURRENT_INTERFACE,
++	                  mkpath, sizeof(mkpath));
++	wpa_printf(MSG_INFO, "bandsteer_bss_init - %s", mkpath);
++	return ensure_dir_exists(mkpath, BANDSTEER_DIR_MODE);
++}
++
++int bandsteer_interface_init(struct hostapd_iface *iface) {
++	char mkpath[256];
++	int k;
++	int rc;
++	if (!steering_path) {
++		return 0;
++	}
++	get_timestamp_dir(iface->bss[0], STEER_EVENT_PROBE, CURRENT_INTERFACE,
++	                  mkpath, sizeof(mkpath));
++	wpa_printf(MSG_INFO, "bandsteer_interface_init - %s", mkpath);
++	rc = ensure_dir_exists(mkpath, BANDSTEER_DIR_MODE);
++	if (rc) {
++		return rc;
++	}
++
++	/* Ensure that timestamp directories exist for each SSID */
++	for (k = 0; k < iface->num_bss; k++) {
++		rc = bandsteer_ssid_init(iface->bss[k]);
++		if (rc) {
++			return rc;
++		}
++	}
++	return 0;
++}
++
++static int should_garbage_collect(const struct dirent *name, int type) {
++	char *extension = os_strrchr(name->d_name, '.');
++	char buf[4];
++	os_snprintf(buf, sizeof(buf), ".%d", type);
++
++	return os_strncmp(extension, buf, sizeof(buf)) == 0;
++}
++
++static int is_probe_timestamp(const struct dirent *name) {
++	return should_garbage_collect(name, STEER_EVENT_PROBE);
++}
++
++static int is_attempt_timestamp(const struct dirent *name) {
++	return should_garbage_collect(name, STEER_EVENT_ATTEMPT);
++}
++
++static int is_failed_timestamp(const struct dirent *name) {
++	return should_garbage_collect(name, STEER_EVENT_FAILED);
++}
++
++static int is_connect_timestamp(const struct dirent *name) {
++	return should_garbage_collect(name, STEER_EVENT_CONNECT);
++}
++
++static int is_defer_timestamp(const struct dirent *name) {
++	return should_garbage_collect(name, STEER_EVENT_DEFER);
++}
++
++static int file_ctime_lt(const struct dirent **a, const struct dirent **b) {
++	struct stat astat, bstat;
++
++	/* If we can't stat both of the files, give up and say they're equivalent. */
++	if (stat((*a)->d_name, &astat) == -1 || stat((*b)->d_name, &bstat) == -1) {
++		return 0;
++	}
++
++	return astat.st_ctime - bstat.st_ctime;
++}
++
++/**
++ * Delete all but the most recent MAX_TIMESTAMP_FILES files of the
++ * given type for the BSS represented by hapd.
++ * Returns the number of files deleted.
++ */
++static int garbage_collect_timestamp_files(
++		const struct hostapd_data *hapd,
++		steer_event_type steer_event) {
++	int num_timestamp_files = 0, num_timestamp_files_deleted = 0, i = 0;
++	struct dirent **namelist;
++	char original_cwd[1024];
++	char timestamp_dir[1024];
++	char *filename;
++	int error = 0;
++	int (*timestamp_filter)(const struct dirent *) = NULL;
++
++	if (getcwd(original_cwd, sizeof(original_cwd)) == NULL) {
++		wpa_printf(MSG_ERROR, "getcwd(): %s", strerror(errno));
++		return -1;
++	}
++
++	get_timestamp_dir(hapd, steer_event, CURRENT_INTERFACE,
++	                  timestamp_dir, sizeof(timestamp_dir));
++
++	if (chdir(timestamp_dir) == -1) {
++		wpa_printf(MSG_ERROR, "chdir(%s): %s",
++		           timestamp_dir, strerror(errno));
++		return -1;
++	}
++
++	switch(steer_event) {
++	case STEER_EVENT_PROBE:
++		timestamp_filter = is_probe_timestamp;
++		break;
++	case STEER_EVENT_ATTEMPT:
++		timestamp_filter = is_attempt_timestamp;
++		break;
++	case STEER_EVENT_FAILED:
++		timestamp_filter = is_failed_timestamp;
++		break;
++	case STEER_EVENT_SUCCESSFUL:
++		break;
++	case STEER_EVENT_CONNECT:
++		timestamp_filter = is_connect_timestamp;
++		break;
++	case STEER_EVENT_DEFER:
++		timestamp_filter = is_defer_timestamp;
++		break;
++	case NUM_STEER_EVENTS:
++		break;
++	}
++
++	num_timestamp_files = scandir(timestamp_dir, &namelist,
++	                              timestamp_filter, file_ctime_lt);
++	/* TODO(walker): Remove eligible timestamps (like DEFER)
++	 * when they have expired. */
++	for (i = 0; i < num_timestamp_files; ++i) {
++		/* TODO(walker): Check the below "-2" comment. With the filter
++		 * function, I do not believe "." and ".." are included. */
++		if (MAX_STEERING_TIMESTAMP_FILES <
++		    /* The -2 is because scandir includes "." and "..". */
++		    (num_timestamp_files - 2) - num_timestamp_files_deleted) {
++			filename = namelist[i]->d_name;
++			if (filename[0] != '.' && !error) {
++				if (unlink(filename) == -1) {
++					wpa_printf(MSG_ERROR, "unlink(%s): %s", filename, strerror(errno));
++					error = 1;
++				} else {
++					++num_timestamp_files_deleted;
++				}
++			}
++		}
++		os_free(namelist[i]);
++ 	}
++	os_free(namelist);
++
++	if (chdir(original_cwd) == -1) {
++		wpa_printf(MSG_ERROR, "chdir(%s): %s", original_cwd, strerror(errno));
++		return -1;
++ 	}
++
++	return error ? -1 : num_timestamp_files_deleted;
++}
++
++/**
++ * Reads a timestamp from either request_logging_path or steering_timestamp_path
++ * (based on path) for the source address in mgmt, putting the result in
++ * timestamp.  Returns 1 if the read succeeded, 0 otherwise.
++ */
++static int read_timestamp(const struct hostapd_data *hapd,
++                          const u8 *mac,
++                          steer_event_type steer_event,
++                          steering_interface_type interface_type,
++                          struct os_reltime *timestamp) {
++	FILE *f;
++	char filename[1024];
++	int success = 1;
++	struct stat st;
++	os_time_t sec = 0, usec = 0;
++
++	if (!get_timestamp_filename(mac, hapd, steer_event, interface_type,
++	                            filename, sizeof(filename))) {
++		return 0;
++	}
++
++	if (stat(filename, &st) == -1) {
++		return 0;
++	}
++
++	f = fopen(filename, "r");
++	if (f == NULL) {
++		wpa_printf(MSG_ERROR, "open(%s) for read: %s", filename, strerror(errno));
++		return 0;
++	}
++
++	if (timestamp) {
++		if (fscanf(f, "%ld %ld", &timestamp->sec, &timestamp->usec) != 2) {
++			wpa_printf(MSG_ERROR, "fscanf from %s: %s", filename, strerror(errno));
++			success = 0;
++		}
++	}
++
++	if (fclose(f) == EOF) {
++		wpa_printf(MSG_ERROR, "fclose(%s): %s", filename, strerror(errno));
++		return 0;
++	}
++
++	return success;
++}
++
++Boolean is_sta_2g5g_capable(const u8 *mac)
++{
++	char probepath[BUFFER_SIZE];
++	size_t buf_size;
++	int pos;
++	struct stat st;
++	Boolean is_2g_capable = FALSE, is_5g_capable = FALSE;
++
++	if (steering_path == NULL)
++		return FALSE;
++
++	buf_size = sizeof(probepath);
++	pos = os_strlcpy(probepath, steering_path, buf_size);
++	pos += os_strlcpy(&probepath[pos], "/", buf_size - pos);
++	pos += os_strlcpy(&probepath[pos],  "i_", buf_size - pos);
++	pos += os_strlcpy(&probepath[pos], ifnames[0], buf_size - pos);
++	os_snprintf(&probepath[pos], buf_size - pos, "/" COMPACT_MACSTR ".%d",
++		    MAC2STR(mac), STEER_EVENT_PROBE);
++
++	if (stat(probepath, &st) != -1)
++		is_2g_capable = TRUE;
++
++	os_memset(probepath, 0, buf_size);
++
++	pos = os_strlcpy(probepath, steering_path, buf_size);
++	pos += os_strlcpy(&probepath[pos], "/", buf_size - pos);
++	pos += os_strlcpy(&probepath[pos],  "i_", buf_size - pos);
++	pos += os_strlcpy(&probepath[pos], ifnames[1], buf_size - pos);
++	os_snprintf(&probepath[pos], buf_size - pos, "/" COMPACT_MACSTR ".%d",
++		    MAC2STR(mac), STEER_EVENT_PROBE);
++
++	if (stat(probepath, &st) != -1)
++		is_5g_capable = TRUE;
++
++	return (is_2g_capable && is_5g_capable);
++}
++
++/**
++ * Writes timestamp for the source address in mgmt to request_logging_path.
++ * Also garbage collects timestamps.
++ * Returns 1 if the write succeeded, 0 otherwise.
++ */
++static int write_timestamp(const struct hostapd_data *hapd,
++                           const u8 *mac,
++                           steer_event_type steer_event,
++                           const struct os_reltime *timestamp) {
++	FILE *f;
++	char filename[1024], tmp_filename[1024];
++	int success = 0;
++
++	if (garbage_collect_timestamp_files(hapd, steer_event) == -1) {
++		wpa_printf(MSG_ERROR,
++		           "Garbage collecting steering timestamp files failed: %s",
++		           strerror(errno));
++		return 0;
++	}
++
++	if (!get_timestamp_filename(mac, hapd, steer_event, CURRENT_INTERFACE,
++	                            filename, sizeof(filename))) {
++		return 0;
++	}
++
++	/* Create a temporary filename to prevent multiple interfaces on the
++	 * same band from touching each others' writes.
++	 */
++	if (os_snprintf(tmp_filename, sizeof(tmp_filename), "%s%s", filename,
++	                os_strrchr(hapd->iface->config_fname, '.')) < 0) {
++		wpa_printf(MSG_ERROR, "os_snprintf couldn't format temp filename: %s",
++		           strerror(errno));
++		return 0;
++	}
++
++	if ((f = fopen(tmp_filename, "w")) == NULL) {
++		wpa_printf(MSG_ERROR, "fopen(%s) for write: %s", tmp_filename,
++		           strerror(errno));
++		return 0;
++	}
++
++	if (timestamp) {
++		if (fprintf(f, "%ld %ld", timestamp->sec, timestamp->usec) < 0) {
++			wpa_printf(MSG_ERROR, "fprintf to %s: %s", tmp_filename, strerror(errno));
++		} else {
++			success = 1;
++		}
++	}
++
++	if (fclose(f) == EOF) {
++		wpa_printf(MSG_ERROR, "fclose(%s): %s", tmp_filename, strerror(errno));
++		return 0;
++	}
++
++	if (rename(tmp_filename, filename) != 0) {
++		wpa_printf(MSG_ERROR, "rename(%s, %s): %s", tmp_filename, filename,
++		           strerror(errno));
++		return 0;
++	}
++
++	wpa_printf(MSG_INFO, "Set timestamp for " MACSTR
++	           " (iface=%s/%s, event=%d)",
++	           MAC2STR(mac), steering_interface_name(hapd),
++	           hapd->conf->iface, steer_event);
++	return success;
++}
++
++/**
++ * Calls write_timestamp_file unless there is an existing timestamp younger than
++ * BANDSTEERING_EXPIRATION_SECONDS.
++ * Returns 0 on write or garbage collection failure, 1 otherwise.
++ */
++static int maybe_write_timestamp(const struct hostapd_data *hapd,
++                                 const u8 *mac,
++                                 steer_event_type steer_event,
++                                 const struct os_reltime *timestamp) {
++	struct os_reltime now, prev_timestamp;
++
++	os_get_reltime(&now);
++	if (!read_timestamp(hapd, mac, steer_event, CURRENT_INTERFACE,
++	                    &prev_timestamp) ||
++	    os_reltime_expired(&now, &prev_timestamp,
++	                       BANDSTEERING_FRESH_SECONDS)) {
++		if (!write_timestamp(hapd, mac, steer_event, timestamp)) {
++			wpa_printf(MSG_ERROR, "Failed to write timestamp file.");
++			return 0;
++		}
++	}
++	return 1;
++}
++
++int write_probe_timestamp(const struct hostapd_data *hapd,
++                          const u8 *mac,
++                          int ssi_signal) {
++	struct os_reltime now;
++	if (!steering_path || (ssi_signal < steering_rsi_threshold)) {
++		return 0;
++	}
++
++	os_get_reltime(&now);
++	maybe_write_timestamp(hapd, mac, STEER_EVENT_PROBE, &now);
++	return 0;
++}
++
++int write_connect_timestamp(const struct hostapd_data *hapd,
++                            const u8 *sta_mac) {
++	struct os_reltime now;
++	os_get_reltime(&now);
++	write_timestamp(hapd, sta_mac, STEER_EVENT_CONNECT, &now);
++	return 0;
++}
++
++int write_disconnect_timestamp(const struct hostapd_data *hapd,
++                               const u8 *sta_mac) {
++	struct os_reltime now;
++	os_get_reltime(&now);
++	/* TODO(walker): Reduce the number of extraneous timestamps by only
++	 * writing the timestamp for the target interface (but that assumes
++	 * the algorithm can never steer in multiple directions). Better
++	 * would just be to clean up expired timestamps when garbage
++	 * collecting. */
++	write_timestamp(hapd, sta_mac, STEER_EVENT_DEFER, &now);
++	return 0;
++}
++
++const char *steering_reason_str(steering_reason reason)
++{
++	switch (reason) {
++	case STEER:
++		return "steered";
++	case NOSTEER_TARGET_INTERFACE:
++		return "target-interface";
++	case NOSTEER_REASSOC:
++		return "reassoc";
++	case NOSTEER_NEW_STATION:
++		return "new-station";
++	case NOSTEER_DEFERRED:
++		return "deferred";
++	case NOSTEER_NON_CANDIDATE:
++		return "non-candidate";
++	case NOSTEER_WEAK_SIGNAL:
++		return "weak-signal";
++	case NOSTEER_RECENTLY_STEERED:
++		return "recently-steered";
++	case NOSTEER_REASON_UNSPECIFIED:
++		return "unspecified";
++	case UNKNOWN_STEERING_REASON:
++		/* Fall through intended. This case should not occur. */
++	default:
++		return "unknown";
++	}
++}
++
++/*
++ * To be called upon receiving an ASSOC request. Returns 1 if the sta with
++ * |mac| should be steered, 0 otherwise.
++ */
++int should_steer_on_assoc(const struct hostapd_data *hapd,
++			  const u8 *sta_mac, int ssi_signal,
++			  int reassoc, steering_reason *s_reason,
++			  struct os_reltime *p_probe_delta_time,
++			  struct os_reltime *p_steer_delta_time,
++			  struct os_reltime *p_defer_delta_time) {
++	struct os_reltime now, probe_time, bandsteer_time, probe_delta_time,
++		steer_delta_time, defer_time, defer_delta_time;
++	int have_timestamp;
++	char *steering_name;
++        char buf[128];
++	os_memset(p_probe_delta_time, 0, sizeof(*p_probe_delta_time));
++	os_memset(p_steer_delta_time, 0, sizeof(*p_steer_delta_time));
++	os_memset(p_defer_delta_time, 0, sizeof(*p_defer_delta_time));
++
++	if (steering_target_interface == NULL) {
++		return FALSE;
++	}
++	steering_name = steering_interface_name(hapd);
++	if (!strcmp(steering_target_interface, steering_name)) {
++		hostapd_logger(hapd->msg_ctx, sta_mac,
++		               HOSTAPD_MODULE_IEEE80211, HOSTAPD_LEVEL_INFO,
++		               "Assoc on steering target (%s); rssi=%d",
++		               steering_name, ssi_signal);
++		wpa_msg(hapd->msg_ctx, MSG_INFO,
++		               AP_STA_NO_STEERING MACSTR " target-interface %d",
++		               MAC2STR(sta_mac), ssi_signal);
++		*s_reason = NOSTEER_TARGET_INTERFACE;
++		return FALSE;
++	}
++	/* Steering is enabled and this is not the target interface. */
++
++	if (reassoc) {
++		hostapd_logger(hapd->msg_ctx, sta_mac,
++		               HOSTAPD_MODULE_IEEE80211, HOSTAPD_LEVEL_INFO,
++		               "Assoc no steer - reassoc; rssi=%d",
++		               ssi_signal);
++		wpa_msg(hapd->msg_ctx, MSG_INFO,
++		               AP_STA_NO_STEERING MACSTR " reassoc %d",
++		               MAC2STR(sta_mac), ssi_signal);
++		*s_reason = NOSTEER_REASSOC;
++		return FALSE;
++	}
++
++	/* Check that this station has previously connected on this SSID */
++	if (!read_timestamp(hapd, sta_mac, STEER_EVENT_CONNECT,
++	                    CURRENT_INTERFACE, NULL)) {
++		hostapd_logger(hapd->msg_ctx, sta_mac,
++		               HOSTAPD_MODULE_IEEE80211, HOSTAPD_LEVEL_INFO,
++		               "Assoc no steer - new station (%s); rssi=%d "
++		               "ssid=%s",
++		               steering_name, ssi_signal,
++		               steering_ssid_name(hapd, buf, sizeof(buf)));
++		wpa_msg(hapd->msg_ctx, MSG_INFO,
++		               AP_STA_NO_STEERING MACSTR " new-station %d",
++		               MAC2STR(sta_mac), ssi_signal);
++		*s_reason = NOSTEER_NEW_STATION;
++		return FALSE;
++	}
++
++	os_get_reltime(&now);
++
++	/* Do not steer if steering is currently deferred to the target. This
++	 * happens for a time after a device has disconnected from that
++	 * target. */
++	/* TODO(walker): Probably more correct to store the actual expiration
++	 * in the timestamp, but that requires more complicated logic when
++	 * writing the timestamp, requiring that we write
++	 * max(current expiration, desired expiration) instead of just
++	 * overwriting the timestamp like we do now. For current code meets
++	 * our immediate needs. */
++	if (read_timestamp(hapd, sta_mac, STEER_EVENT_DEFER, TARGET_INTERFACE,
++	                   &defer_time) &&
++	    !os_reltime_expired(&now, &defer_time, BANDSTEERING_DEFER_SECONDS)) {
++		os_reltime_sub(&now, &defer_time, &defer_delta_time);
++		int defer_delta_ms = defer_delta_time.sec * 1000 +
++			defer_delta_time.usec / 1000;
++
++		hostapd_logger(hapd->msg_ctx, sta_mac,
++		               HOSTAPD_MODULE_IEEE80211, HOSTAPD_LEVEL_INFO,
++		               "Assoc no steer - deferred; rssi=%d"
++		               " defer_delta_t=%ld.%02ld",
++		               ssi_signal, defer_delta_time.sec,
++		               defer_delta_time.usec / 10000);
++		wpa_msg(hapd->msg_ctx, MSG_INFO,
++		        AP_STA_NO_STEERING MACSTR " deferred %d"
++		        " defer_delta_ms:%d",
++		        MAC2STR(sta_mac), ssi_signal, defer_delta_ms);
++		*p_defer_delta_time = defer_delta_time;
++		*s_reason = NOSTEER_DEFERRED;
++		return FALSE;
++	}
++
++	if (!read_timestamp(hapd, sta_mac, STEER_EVENT_PROBE, TARGET_INTERFACE,
++	                    &probe_time)) {
++		hostapd_logger(hapd->msg_ctx, sta_mac,
++		               HOSTAPD_MODULE_IEEE80211, HOSTAPD_LEVEL_INFO,
++		               "Assoc no steer - non-candidate; rssi=%d",
++		               ssi_signal);
++		wpa_msg(hapd->msg_ctx, MSG_INFO,
++		               AP_STA_NO_STEERING MACSTR " non-candidate %d",
++		               MAC2STR(sta_mac), ssi_signal);
++		*s_reason = NOSTEER_NON_CANDIDATE;
++		return FALSE;
++	}
++
++	/* We do not want to steer a station if its signal strength indicates
++	 * it is not a candidate NOW.
++	 * If the assoc signal strength is weak
++	 * (rssi < steering_rsi_threshold [dflt=-60]), then we will not steer.
++	 * If the assoc signal strength is not strong
++	 * (rssi < BANDSTEERING_THRESHOLD_RSSI [-45]) and we have not
++	 * recently (within BANDSTEERING_RECENT_SECONDS [15]) received a
++	 * probe request on the target interface, then we also will not
++	 * steer. */
++	os_reltime_sub(&now, &probe_time, &probe_delta_time);
++	int probe_delta_ms = probe_delta_time.sec * 1000 +
++		probe_delta_time.usec / 1000;
++	if ((ssi_signal < steering_rsi_threshold) ||
++	    ((os_reltime_expired(&now, &probe_time,
++	                         BANDSTEERING_RECENT_SECONDS) &&
++	      (ssi_signal < BANDSTEERING_THRESHOLD_RSSI)))) {
++		hostapd_logger(hapd->msg_ctx, sta_mac,
++		               HOSTAPD_MODULE_IEEE80211, HOSTAPD_LEVEL_INFO,
++		               "Assoc no steer - weak signal; "
++		               "rssi=%d probe_delta_t=%ld.%02ld",
++		               ssi_signal, probe_delta_time.sec,
++		               probe_delta_time.usec / 10000);
++		wpa_msg(hapd->msg_ctx, MSG_INFO,
++		        AP_STA_NO_STEERING MACSTR " weak-signal %d"
++		        " probe_delta_ms:%d",
++		        MAC2STR(sta_mac), ssi_signal, probe_delta_ms);
++		*s_reason = NOSTEER_WEAK_SIGNAL;
++		*p_probe_delta_time = probe_delta_time;
++		return FALSE;
++	}
++
++	/* Steer station if it has never been steered or if it hasn't been
++	 * steered recently. */
++	have_timestamp = read_timestamp(hapd, sta_mac, STEER_EVENT_ATTEMPT,
++	                                CURRENT_INTERFACE, &bandsteer_time);
++	if (!have_timestamp) {
++		steer_delta_time.sec = 0;
++		steer_delta_time.usec = 0;
++	} else {
++		os_reltime_sub(&now, &bandsteer_time, &steer_delta_time);
++	}
++	int steer_delta_ms = steer_delta_time.sec * 1000 +
++		steer_delta_time.usec / 1000;
++	if (!have_timestamp ||
++	    os_reltime_expired(&now, &bandsteer_time,
++	                       BANDSTEERING_EXPIRATION_SECONDS)) {
++		write_timestamp(hapd, sta_mac, STEER_EVENT_ATTEMPT, &now);
++		hostapd_logger(hapd->msg_ctx, sta_mac,
++		               HOSTAPD_MODULE_IEEE80211, HOSTAPD_LEVEL_INFO,
++		               "Assoc steer; rssi=%d steer_delta_t=%ld.%02ld "
++		               "probe_delta_t=%ld.%02ld",
++		               ssi_signal, steer_delta_time.sec,
++		               steer_delta_time.usec / 10000,
++		               probe_delta_time.sec,
++		               probe_delta_time.usec / 10000);
++		wpa_msg(hapd->msg_ctx, MSG_INFO,
++			AP_STA_STEERING MACSTR " %d steer_delta_ms:%d "
++			"probe_delta_ms:%d",
++			MAC2STR(sta_mac), ssi_signal, steer_delta_ms,
++			probe_delta_ms);
++		*p_probe_delta_time = probe_delta_time;
++		*p_steer_delta_time = steer_delta_time;
++		*s_reason = STEER;
++		return TRUE;
++	}
++
++	write_timestamp(hapd, sta_mac, STEER_EVENT_FAILED, &now);
++	os_reltime_sub(&now, &bandsteer_time, &steer_delta_time);
++	hostapd_logger(hapd->msg_ctx, sta_mac,
++	               HOSTAPD_MODULE_IEEE80211, HOSTAPD_LEVEL_INFO,
++	               "Assoc steer fail; steer_delta_t=%ld.%02ld rssi=%d",
++	               steer_delta_time.sec, steer_delta_time.usec / 10000,
++	               ssi_signal);
++	wpa_msg(hapd->msg_ctx, MSG_INFO,
++		AP_STA_NO_STEERING MACSTR " recently-steered %d "
++		"steer_delta_ms:%d",
++		MAC2STR(sta_mac), ssi_signal, steer_delta_ms);
++	*p_probe_delta_time = probe_delta_time;
++	*p_steer_delta_time = steer_delta_time;
++	*s_reason = NOSTEER_RECENTLY_STEERED;
++	return FALSE;
++}
+--- /dev/null
++++ b/src/ap/steering.h
+@@ -0,0 +1,138 @@
++/*
++ * hostapd / Interface steering
++ * Copyright (c) 2015 Google, Inc.
++ *
++ * This software may be distributed under the terms of the BSD license.
++ * See README for more details.
++ */
++
++#ifndef STEERING_H
++#define STEERING_H
++
++#define MAX_STEERING_TIMESTAMP_FILES 100
++/* BANDSTEERING_FRESH_SECONDS is how long we consider a probe timestamp to be
++ * fresh (and we do not need to overwrite it). */
++#define BANDSTEERING_FRESH_SECONDS 10
++/* BANDSTEERING_EXPIRATION_SECONDS is how long, after steering a station, we
++ * allow it to connect to the non-target interface. */
++#define BANDSTEERING_EXPIRATION_SECONDS 210
++/* BANDSTEERING_THRESHOLD_RSSI is the minimum RSSI of the [2.4GHz] assoc request
++ * at which we will definitely steer candidate stations. */
++#define BANDSTEERING_THRESHOLD_RSSI -45
++/* BANDSTEERING_RECENT_SECONDS is the amount of time a probe on the target
++ * interface is considered recent. If the assoc request meets the MIN_RSSI
++ * and there has been a target probe request in the last RECENT_SECONDS, then
++ * we will steer the station. */
++#define BANDSTEERING_RECENT_SECONDS 15
++/* BANDSTEERING_DEFER_SECONDS is how long we will not steer a station to
++ * a given interface. */
++#define BANDSTEERING_DEFER_SECONDS 20
++
++/* Generic buffer size */
++#define BUFFER_SIZE 512
++
++extern char *steering_path;
++/* steering_rsi_threshold is the minimum RSSI for two things:
++ * 1. a probe request if it is to be recorded on an interface
++ * 2. the [2.4GHz] assoc request if we are to consider steering the station
++ *     We will never steer if the assoc request is weaker than this. */
++extern int steering_rsi_threshold;
++extern char *steering_target_interface;
++
++struct hostapd_data;
++enum hostapd_hw_mode;
++struct ieee80211_mgmt;
++struct os_reltime;
++
++typedef enum {
++  STEER_EVENT_PROBE,
++  STEER_EVENT_ATTEMPT,
++  STEER_EVENT_FAILED,
++  STEER_EVENT_SUCCESSFUL,
++  STEER_EVENT_CONNECT,
++  STEER_EVENT_DEFER,
++  NUM_STEER_EVENTS
++} steer_event_type;
++
++typedef enum {
++  CURRENT_INTERFACE,
++  TARGET_INTERFACE,
++  NUM_STEERING_PATH_TYPES
++} steering_interface_type;
++
++typedef enum {
++    UNKNOWN_STEERING_REASON = 0,
++    STEER = 1,  /* Station was steered. */
++    NOSTEER_TARGET_INTERFACE = 2,  /* Assoc attempt was on target interface. */
++    NOSTEER_REASSOC = 3,  /* Assoc was actually a reassoc attempt. */
++    NOSTEER_NEW_STATION = 4,  /* Assoc was from a previously unseen station. */
++    NOSTEER_DEFERRED = 5,  /* Steering is currently deferred to the target. */
++    NOSTEER_NON_CANDIDATE = 6,  /* Station is not a known candidate for steering */
++    NOSTEER_WEAK_SIGNAL = 7,  /* Station not steered because signal is too weak.*/
++    NOSTEER_RECENTLY_STEERED = 8,  /* Station was recently steered. */
++    NOSTEER_REASON_UNSPECIFIED = 9  /* No reason given for not steering. */
++} steering_reason;
++
++/**
++ * Initializes infrastructure needed by band steering code. This should be
++ * called at startup.
++ */
++int bandsteer_init();
++
++/**
++ * Initializes bandsteering infrastructure related to one particular interface.
++ * This should be called after bandsteer_init() but prior to bringing up an
++ * AP on the interface.
++ *
++ * Returns 0 if no error, non-zero if there is any error.
++ */
++int bandsteer_interface_init(struct hostapd_iface *iface);
++
++/**
++ * Writes a probe timestamp for the mac address to request_logging_path if
++ * the ssi_signal is strong enough. This indicates both that
++ * 1. the station is a candidate to be steered to this frequency band, and
++ * 2. the station has a strong enough signal that we may steer it in the near
++ *     future.
++ * Returns 1 if the write succeeded, 0 otherwise.
++ */
++int write_probe_timestamp(const struct hostapd_data *hapd,
++                          const u8 *mac,
++                          int ssi_signal);
++
++/**
++ * Writes a connect timestamp for the mac address for this interface's SSID.
++ * This indicates that the station has connected on this SSID and we can
++ * steer it from now on.
++ */
++int write_connect_timestamp(const struct hostapd_data *hapd, const u8 *sta_mac);
++
++/**
++ * Writes a steering event timestamp for the mac address to prevent steering
++ * for a period of time after the device is disconnected.
++ */
++int write_disconnect_timestamp(const struct hostapd_data *hapd,
++			       const u8 *sta_mac);
++
++/**
++ * Return a string giving the reason for steering or not steering.
++ */
++const char *steering_reason_str(steering_reason reason);
++
++/**
++ * Determine if the given sta_mac should be steered to a different interface.
++ * In the process, it records when the station was steered.
++ * Return 1 if it shold be steered, 0 otherwise.
++ */
++int should_steer_on_assoc(const struct hostapd_data *hapd,
++			  const u8 *sta_mac, int ssi_signal,
++			  int reassoc, steering_reason *s_reason,
++			  struct os_reltime *probe_delta_time,
++			  struct os_reltime *steer_delta_time,
++			  struct os_reltime *defer_delta_time);
++
++Boolean is_sta_2g5g_capable(const u8 *mac);
++
++extern int steering_mechanism;
++
++#endif /* STEERING_H */
+--- a/src/common/wpa_ctrl.h
++++ b/src/common/wpa_ctrl.h
+@@ -300,6 +300,8 @@ extern "C" {
+ #define AP_STA_DISCONNECTED "AP-STA-DISCONNECTED "
+ #define AP_STA_POSSIBLE_PSK_MISMATCH "AP-STA-POSSIBLE-PSK-MISMATCH "
+ #define AP_STA_POLL_OK "AP-STA-POLL-OK "
++#define AP_STA_STEERING "AP-STA-STEERING "
++#define AP_STA_NO_STEERING "AP-STA-NO-STEERING "
+ 
+ #define AP_REJECTED_MAX_STA "AP-REJECTED-MAX-STA "
+ #define AP_REJECTED_BLOCKED_STA "AP-REJECTED-BLOCKED-STA "
