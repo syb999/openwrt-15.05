@@ -1,5 +1,5 @@
---- /dev/null	2019-04-12 19:02:40.796000000 +0800
-+++ b/wpa_supplicant/ubus.c	2019-04-12 04:26:28.000000000 +0800
+--- /dev/null
++++ b/wpa_supplicant/ubus.c
 @@ -0,0 +1,265 @@
 +/*
 + * wpa_supplicant / ubus support
