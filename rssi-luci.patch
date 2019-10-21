@@ -1,5 +1,5 @@
---- a/feeds/luci/modules/luci-mod-admin-full/luasrc/model/cbi/admin_network/wifi.lua	2019-10-10 20:46:07.502245000 +0800
-+++ b/feeds/luci/modules/luci-mod-admin-full/luasrc/model/cbi/admin_network/wifi.lua	2019-10-11 00:04:33.610853000 +0800
+--- a/feeds/luci/modules/luci-mod-admin-full/luasrc/model/cbi/admin_network/wifi.lua
++++ b/feeds/luci/modules/luci-mod-admin-full/luasrc/model/cbi/admin_network/wifi.lua
 @@ -108,6 +108,7 @@
  s:tab("general", translate("General Setup"))
  s:tab("macfilter", translate("MAC-Filter"))
@@ -25,17 +25,17 @@
 +		translate("signal_connect"),
 +		translate("signal accessible value"))
 +	signal_connect:depends({mode="ap"},{mode="ap-wds"},{mode="mesh"})
-+	signal_connect.placeholder = "-60"
++	signal_connect.placeholder = "-70"
 +	--signal_connect.datatype = "range(-10,-90)"
-+	signal_connect.default = "-60"
++	signal_connect.default = "-70"
 +
 +	signal_stay = s:taboption("rssi", Value, "signal_stay",
 +		translate("signal_stay"),
 +		translate("signal automatic disconnection value"))
 +	signal_stay:depends({mode="ap"},{mode="ap-wds"},{mode="mesh"})
-+	signal_stay.placeholder = "-70"
++	signal_stay.placeholder = "-80"
 +	--signal_stay.datatype = "range(-30,-90)"
-+	signal_stay.default = "-70"
++	signal_stay.default = "-80"
 +
 +	signal_strikes = s:taboption("rssi", Value, "signal_strikes",
 +		translate("signal_strikes"),
@@ -64,8 +64,8 @@
  end
  
  
---- a/feeds/luci/modules/luci-base/po/zh-cn/base.po	2019-10-10 20:46:07.498246000 +0800
-+++ b/feeds/luci/modules/luci-base/po/zh-cn/base.po	2019-10-11 00:04:28.118922000 +0800
+--- a/feeds/luci/modules/luci-base/po/zh-cn/base.po
++++ b/feeds/luci/modules/luci-base/po/zh-cn/base.po
 @@ -3157,6 +3157,25 @@
  msgid "« Back"
  msgstr "« 后退"
@@ -75,10 +75,10 @@
 +msgstr "弱信号剔除"
 +
 +msgid "signal accessible value"
-+msgstr "允许接入的信号值（不建议超过-80dbm，默认-60）"
++msgstr "允许接入的信号值（不建议超过-80dbm，默认-70）"
 +
 +msgid "signal automatic disconnection value"
-+msgstr "自动剔除弱信号（不建议超过-80dbm，默认-70）"
++msgstr "自动剔除弱信号（不建议超过-85dbm，默认-80）"
 +
 +msgid "signal strikes times"
 +msgstr "信号检测次数（默认3）"
@@ -86,7 +86,7 @@
 +msgid "signal polling times"
 +msgstr "信号轮询次数（默认5）"
 +
-+msgid "signal drop reason"
++msgid "signal_drop_reason"
 +msgstr "信号检测次数（默认3）"
 +
  #~ msgid "CPU frequency"
