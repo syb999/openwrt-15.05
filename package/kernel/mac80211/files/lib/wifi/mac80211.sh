@@ -139,8 +139,8 @@ config wifi-iface
 	option encryption none
 	option disassoc_low_ack 0
 	option isolate 0
-	option signal_connect -70
-	option signal_stay -80
+	option signal_connect -95
+	option signal_stay -100
 	option signal_strikes 3
 	option signal_poll_time 5
 	option signal_drop_reason 3
