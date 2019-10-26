@@ -427,6 +427,9 @@ ramips_board_detect() {
 	*"Daishuyun")
 		name="daishuyun"
 		;;
+	*"GHL-R-001")
+		name="ghl"
+		;;
 	*"Mediatek MT7621 evaluation board")
 		name="mt7621"
 		;;

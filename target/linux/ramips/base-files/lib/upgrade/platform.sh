@@ -138,6 +138,7 @@ platform_check_image() {
 	zbt-we1326 |\
 	psg1208 |\
 	psg1218 |\
+	ghl |\
 	youku-yk1)
 		[ "$magic" != "27051956" ] && {
 			echo "Invalid image type."
