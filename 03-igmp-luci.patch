@@ -1,0 +1,14 @@
+--- a/feeds/luci/modules/luci-mod-admin-full/luasrc/model/cbi/admin_network/ifaces.lua
++++ b/feeds/luci/modules/luci-mod-admin-full/luasrc/model/cbi/admin_network/ifaces.lua
+@@ -233,6 +233,11 @@
+ 		translate("Enables the Spanning Tree Protocol on this bridge"))
+ 	stp:depends("type", "bridge")
+ 	stp.rmempty = true
++
++	igmp = s:taboption("physical", Flag, "igmp_snooping", translate("Enable <abbr title=\"Internet Group Management Protocol\">IGMP</abbr> snooping"),
++		translate("Enables IGMP snooping on this bridge"))
++	igmp:depends("type", "bridge")
++	igmp.rmempty = true
+ end
+ 
+ 
