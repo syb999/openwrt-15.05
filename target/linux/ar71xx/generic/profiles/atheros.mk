@@ -82,6 +82,17 @@ endef
 
 $(eval $(call Profile,LETV))
 
+define Profile/K2T
+	NAME:=K2T
+	PACKAGES:=kmod-ath10k ath10k-firmware-qca9888-ct
+endef
+
+define Profile/K2T/Description
+	Package set optimized for the K2T board.
+endef
+
+$(eval $(call Profile,K2T))
+
 define Profile/CSAC
 	NAME:=CSAC
 	PACKAGES:=kmod-ath10k ath10k-firmware-qca9888-ct
