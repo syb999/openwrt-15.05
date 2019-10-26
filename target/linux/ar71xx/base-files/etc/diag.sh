@@ -21,6 +21,9 @@ get_status_led() {
 	letv)
 		status_led="letv:green:status"
 		;;
+	k2t)
+		status_led="k2t:yellow:lan"
+		;;
 	csac)
 		status_led="csac:green:status"
 		;;

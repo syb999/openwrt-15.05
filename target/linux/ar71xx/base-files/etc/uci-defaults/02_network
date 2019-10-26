@@ -29,6 +29,17 @@ letv)
 	ucidef_add_switch_vlan "switch0" "2" "5 6"
 	;;
 
+k2t)
+	ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
+	ucidef_add_switch "switch0" "1" "1"
+	ucidef_add_switch_vlan "switch0" "1" "0t 3 5"
+	ucidef_add_switch_vlan "switch0" "2" "0t 4"
+	mac_lan=$(cat /sys/class/net/eth0/address)
+	[ -n "$mac_lan" ] && ucidef_set_interface_macaddr "lan" "$mac_lan"
+	mac_wan=$(macaddr_add "$mac_lan" +1)
+	[ -n "$mac_wan" ] && ucidef_set_interface_macaddr "wan" "$mac_wan"
+	;;
+
 csac)
 	ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
 	ucidef_add_switch "switch0" "1" "1"

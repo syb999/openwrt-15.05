@@ -38,6 +38,10 @@ board=$(ar71xx_board_name)
 case "$FIRMWARE" in
 "soc_wmac.eeprom")
 	case $board in
+	k2t)
+		ath9k_eeprom_extract "art" 4096 2048
+		ath9k_patch_firmware_mac $(macaddr_add $(head -c400 $(find_mtd_chardev config) | grep -o wan_mac.* | cut -d\" -f3) +3)
+		;;
 	csac)
 		ath9k_eeprom_extract "art" 4096 2048
 		ath9k_patch_firmware_mac $(macaddr_add $(head -c400 $(find_mtd_chardev config) | grep -o wan_mac.* | cut -d\" -f3) +3)

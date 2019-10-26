@@ -144,6 +144,13 @@ define Device/weio
 endef
 TARGET_DEVICES += weio
 
+define Device/K2T
+  BOARDNAME = K2T
+  IMAGE_SIZE = 15744k
+  CONSOLE = ttyATH0,115200
+  MTDPARTS := spi0.0:192k(u-boot)ro,64k(config)ro,320k(permanent),15744k(firmware),64k(art)ro
+endef
+TARGET_DEVICES += K2T
 
 define Device/wndr3700
   BOARDNAME = WNDR3700
