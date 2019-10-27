@@ -61,7 +61,7 @@
 	pinctrl {
 		state_default: pinctrl0 {
 			default {
-				ralink,group = "i2c", "uartf", "wled", "nd_sd";
+				ralink,group = "i2c", "uartf", "rgmii1", "rgmii2", "ephy", "wled", "nd_sd";
 				ralink,function = "gpio";
 			};
 		};
