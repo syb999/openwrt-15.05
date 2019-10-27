@@ -1,0 +1,11 @@
+--- a/feeds/packages/net/wget/Makefile
++++ b/feeds/packages/net/wget/Makefile
+@@ -42,7 +42,7 @@
+ 
+ define Package/wget
+ $(call Package/wget/Default)
+-  DEPENDS+= +libopenssl +librt
++  DEPENDS+= +libopenssl +librt +zlib
+   TITLE+= (with SSL support)
+   VARIANT:=ssl
+ endef
