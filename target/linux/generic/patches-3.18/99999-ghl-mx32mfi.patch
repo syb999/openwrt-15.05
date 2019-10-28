@@ -25,7 +25,7 @@
  
  	tmp = nor->read_reg(nor, SPINOR_OP_RDID, id, SPI_NOR_MAX_ID_LEN);
  	if (tmp < 0) {
-@@ -923,8 +925,12 @@
+@@ -923,10 +925,14 @@
  	for (tmp = 0; tmp < ARRAY_SIZE(spi_nor_ids) - 1; tmp++) {
  		info = &spi_nor_ids[tmp];
  		if (info->id_len) {
@@ -39,8 +39,12 @@
 +			}
  		}
  	}
++	if (first_match)
++		return first_match;
  	dev_err(nor->dev, "unrecognized JEDEC id bytes: %02x, %2x, %2x\n",
-@@ -1246,7 +1252,7 @@
+ 		id[0], id[1], id[2]);
+ 	return ERR_PTR(-ENODEV);
+@@ -1246,7 +1254,7 @@
  		info = spi_nor_match_id(name);
  	/* Try to auto-detect if chip name wasn't specified or not found */
  	if (!info)
@@ -49,7 +53,7 @@
  	if (IS_ERR_OR_NULL(info))
  		return -ENOENT;
  
-@@ -1257,7 +1263,7 @@
+@@ -1257,7 +1265,7 @@
  	if (name && info->id_len) {
  		const struct flash_info *jinfo;
  
