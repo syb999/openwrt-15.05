@@ -1,0 +1,118 @@
+From 6052317afdb43f8a194b1b7bc4f6dfdc2a10d262 Mon Sep 17 00:00:00 2001
+From: Rosy Song <rosysong@rosinson.com>
+Date: Sat, 8 Sep 2018 15:07:01 +0800
+Subject: [PATCH] modules: add backup module for mtdblock devices
+cc mod by lunaticurey @ 125438787  
+Signed-off-by: Rosy Song <rosysong@rosinson.com>
+---
+ modules/luci-base/luasrc/sys.lua              | 18 ++++++++++
+ .../luasrc/controller/admin/system.lua        | 18 ++++++++++
+ .../luasrc/view/admin_system/flashops.htm     | 34 +++++++++++++++++++
+ 3 files changed, 70 insertions(+)
+
+diff --git a/modules/luci-base/luasrc/sys.lua b/modules/luci-base/luasrc/sys.lua
+index 823e20770c..1436a3a235 100644
+--- a/feeds/luci/modules/luci-base/luasrc/sys.lua
++++ b/feeds/luci/modules/luci-base/luasrc/sys.lua
+@@ -70,6 +70,24 @@ function mounts()
+ 	return data
+ end
+ 
++function mtds()
++	local data = {}
++
++	if fs.access("/proc/mtd") then
++		for l in io.lines("/proc/mtd") do
++			local d, s, e, n = l:match('^([^%s]+)%s+([^%s]+)%s+([^%s]+)%s+"([^%s]+)"')
++			if s and n then
++				local d = {}
++				d.size = tonumber(s, 16)
++				d.name = n
++				table.insert(data, d)
++			end
++		end
++	end
++
++	return data
++end
++
+ -- containing the whole environment is returned otherwise this function returns
+ -- the corresponding string value for the given name or nil if no such variable
+ -- exists.
+diff --git a/modules/luci-mod-admin-full/luasrc/controller/admin/system.lua b/modules/luci-mod-admin-full/luasrc/controller/admin/system.lua
+index 2fa7847fc6..46d2e36c32 100644
+--- a/feeds/luci/modules/luci-mod-admin-full/luasrc/controller/admin/system.lua
++++ b/feeds/luci/modules/luci-mod-admin-full/luasrc/controller/admin/system.lua
+@@ -35,4 +35,7 @@ function index()
+ 	entry({"admin", "system", "flashops"}, call("action_flashops"), _("Backup / Flash Firmware"), 70)
++	entry({"admin", "system", "flashops", "reset"}, call("action_reset"))
++	entry({"admin", "system", "flashops", "backup"}, call("action_backup"))
++	entry({"admin", "system", "flashops", "backupmtdblock"}, call("action_backupmtdblock"))
+ 	entry({"admin", "system", "flashops", "backupfiles"}, form("admin_system/backupfiles"))
+ 
+ 	entry({"admin", "system", "reboot"}, call("action_reboot"), _("Reboot"), 90)
+@@ -376,3 +379,19 @@ function action_backup()
+ 		nixio.exec("/bin/sh", "-c", command)
+ 	end
+ end
++function action_backupmtdblock()
++	local http = require "luci.http"
++	local mv = http.formvalue("mtdblockname")
++	local m, s, n = mv:match('^([^%s]+)/([^%s]+)/([^%s]+)')
++
++	local reader = ltn12_popen("dd if=/dev/mtd%s conv=notrunc 2>/dev/null" % n)
++
++	luci.http.header(
++		'Content-Disposition', 'attachment; filename="backup-%s-%s-%s.bin"' %{
++			luci.sys.hostname(), m,
++			os.date("%Y-%m-%d")
++		})
++
++	luci.http.prepare_content("application/octet-stream")
++	luci.ltn12.pump.all(reader, luci.http.write)
++end
+diff --git a/modules/luci-mod-admin-full/luasrc/view/admin_system/flashops.htm b/modules/luci-mod-admin-full/luasrc/view/admin_system/flashops.htm
+index f3d2e8d7b0..8204d38e34 100644
+--- a/feeds/luci/modules/luci-mod-admin-full/luasrc/view/admin_system/flashops.htm
++++ b/feeds/luci/modules/luci-mod-admin-full/luasrc/view/admin_system/flashops.htm
+@@ -86,6 +86,40 @@
+ 		<% else %>
+ 			<div class="cbi-section-descr"><%:Sorry, there is no sysupgrade support present; a new firmware image must be flashed manually. Please refer to the wiki for device specific install instructions.%></div>
+ 		<% end %>
++
++	<% local mtds = require("luci.sys").mtds(); if #mtds > 0 then -%>
++	<legend><%:Save mtdblock contents%></legend>
++	<div class="cbi-section-descr"><%:Click "Save mtdblock" to download specified mtdblock file. (NOTE: THIS FEATURE IS FOR PROFESSIONALS! )%></div>
++	<div class="cbi-section-node">
++		<form class="inline" method="post" action="<%=luci.dispatcher.build_url('admin/system/flashops/backupmtdblock')%>">
++			<input type="hidden" name="token" value="<%=token%>" />
++			<div class="cbi-value">
++				<label class="cbi-value-title" for="mtdblockname"><%:Choose mtdblock%></label>
++				<div class="cbi-value-field">
++					<select class="cbi-input-select" data-update="change" name="mtdblockname" id="mtdblockname">
++						<% for i, key in ipairs(mtds) do
++							if key and key.name ~= "rootfs_data" then -%>
++								<option<%=
++									attr("id", "mtdblockname-" .. key.name) ..
++									attr("value", key.name .. '/'.. key.size .. '/' .. i - 1) ..
++									attr("data-index", i) ..
++									ifattr(key.name == "linux" or key.name == "firmware", "selected", "selected")
++								%>><%=pcdata(key.name)%></option>
++						<%	end
++						 end -%>
++					</select>
++				</div>
++			</div>
++			<div class="cbi-value cbi-value-last<% if reset_avail then %> cbi-value-error<% end %>">
++				<label class="cbi-value-title" for="image"><%:Download mtdblock%></label>
++				<div class="cbi-value-field">
++					<input type="submit" class="cbi-button cbi-button-action important" value="<%:Save mtdblock%>" />
++				</div>
++			</div>
++		</form>
++	</div>
++	<% end %>
++
+ 	</fieldset>
+ 
+ </fieldset>
