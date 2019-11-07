@@ -25,17 +25,17 @@
 +		translate("signal_connect"),
 +		translate("signal accessible value"))
 +	signal_connect:depends({mode="ap"},{mode="ap-wds"},{mode="mesh"})
-+	signal_connect.placeholder = "-70"
-+	--signal_connect.datatype = "range(-10,-90)"
-+	signal_connect.default = "-70"
++	signal_connect.placeholder = "-95"
++	--signal_connect.datatype = "range(-10,-95)"
++	signal_connect.default = "-95"
 +
 +	signal_stay = s:taboption("rssi", Value, "signal_stay",
 +		translate("signal_stay"),
 +		translate("signal automatic disconnection value"))
 +	signal_stay:depends({mode="ap"},{mode="ap-wds"},{mode="mesh"})
-+	signal_stay.placeholder = "-80"
-+	--signal_stay.datatype = "range(-30,-90)"
-+	signal_stay.default = "-80"
++	signal_stay.placeholder = "-100"
++	--signal_stay.datatype = "range(-30,-100)"
++	signal_stay.default = "-100"
 +
 +	signal_strikes = s:taboption("rssi", Value, "signal_strikes",
 +		translate("signal_strikes"),
