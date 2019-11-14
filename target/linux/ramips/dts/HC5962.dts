@@ -116,11 +116,6 @@
 				ralink,group = "uart3", "jtag";
 				ralink,function = "gpio";
 			};
-
-			pa {
-				ralink,group = "pa";
-				ralink,function = "pa";
-			};
 		};
 	};
 };
