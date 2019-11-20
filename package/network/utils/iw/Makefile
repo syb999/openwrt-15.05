@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=iw
-PKG_VERSION:=4.14
+PKG_VERSION:=5.0.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/software/network/iw
-PKG_MD5SUM:=9e6bb70ae4f19283e921fc59c6079556
+PKG_MD5SUM:=04d9ca2f20a11213985cea0c53bb3928
 
 PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
 PKG_LICENSE:=GPL-2.0
@@ -28,6 +28,7 @@ define Package/iw
   DEPENDS:= +libnl-tiny
 endef
 
+
 define Build/Configure
 	echo "const char iw_version[] = \"$(PKG_VERSION)\";" > $(PKG_BUILD_DIR)/version.c
 	echo "#!/bin/sh" > $(PKG_BUILD_DIR)/version.sh
@@ -38,7 +39,8 @@ TARGET_CPPFLAGS:= \
 	-I$(STAGING_DIR)/usr/include/libnl-tiny \
 	$(TARGET_CPPFLAGS) \
 	-DCONFIG_LIBNL20 \
-	-D_GNU_SOURCE
+	-D_GNU_SOURCE \
+    -DIW_FULL
 
 MAKE_FLAGS += \
 	CFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS) -ffunction-sections -fdata-sections" \
@@ -46,11 +48,13 @@ MAKE_FLAGS += \
 	NL1FOUND="" NL2FOUND=Y \
 	NLLIBNAME="libnl-tiny" \
 	LIBS="-lm -lnl-tiny" \
-	V=1
+	V=1 \
+    IW_FULL=1
 
 define Package/iw/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/iw $(1)/usr/sbin/
 endef
+
 
 $(eval $(call BuildPackage,iw))
