@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mt76
-PKG_VERSION:=2019-03-23
+PKG_VERSION:=2019-08-22
 PKG_RELEASE=1
 
 PKG_LICENSE:=GPLv2
@@ -10,7 +10,7 @@ PKG_LICENSE_FILES:=
 PKG_SOURCE_URL:=https://github.com/openwrt/mt76
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=a5f5605f3246e65341cc11098e8168aff22a824b
+PKG_SOURCE_VERSION:=2a0edbb4473b71dfaa4756f7189abf6cb7f7be8b
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.xz
 
 PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
@@ -56,7 +56,7 @@ endef
 define KernelPackage/mt76-usb
   $(KernelPackage/mt76-default)
   TITLE:=MediaTek MT76xx wireless driver USB support
-  DEPENDS+=+kmod-usb-core +kmod-mt76-core
+  DEPENDS += +kmod-usb-core +kmod-mt76-core
   FILES:=\
 	$(PKG_BUILD_DIR)/mt76-usb.ko
 endef
@@ -86,10 +86,10 @@ endef
 define KernelPackage/mt76x0e
   $(KernelPackage/mt76-default)
   TITLE:=MediaTek MT76x0E wireless driver
-  DEPENDS+=+kmod-mt76x0-common
+  DEPENDS+=@PCI_SUPPORT +kmod-mt76x0-common
   FILES:=\
 	$(PKG_BUILD_DIR)/mt76x0/mt76x0e.ko
-  AUTOLOAD:=$(call AutoLoad,52,mt76x0e)
+  AUTOLOAD:=$(call AutoLoad,51,mt76x0e)
 endef
 
 define KernelPackage/mt76x0u
@@ -98,7 +98,7 @@ define KernelPackage/mt76x0u
   DEPENDS+=+kmod-mt76x0-common +kmod-mt76x02-usb
   FILES:=\
 	$(PKG_BUILD_DIR)/mt76x0/mt76x0u.ko
-  AUTOLOAD:=$(call AutoLoad,52,mt76x0u)
+  AUTOLOAD:=$(call AutoLoad,51,mt76x0u)
 endef
 
 define KernelPackage/mt76x2-common
@@ -114,13 +114,13 @@ define KernelPackage/mt76x2u
   DEPENDS+=+kmod-mt76x2-common +kmod-mt76x02-usb
   FILES:=\
 	$(PKG_BUILD_DIR)/mt76x2/mt76x2u.ko
-  AUTOLOAD:=$(call AutoLoad,52,mt76x2u)
+  AUTOLOAD:=$(call AutoLoad,51,mt76x2u)
 endef
 
 define KernelPackage/mt76x2
   $(KernelPackage/mt76-default)
   TITLE:=MediaTek MT76x2 wireless driver
-  DEPENDS+=+kmod-mt76x2-common
+  DEPENDS+=@PCI_SUPPORT +kmod-mt76x2-common
   FILES:=\
 	$(PKG_BUILD_DIR)/mt76x2/mt76x2e.ko
   AUTOLOAD:=$(call AutoLoad,51,mt76x2e)
@@ -129,10 +129,19 @@ endef
 define KernelPackage/mt7603
   $(KernelPackage/mt76-default)
   TITLE:=MediaTek MT7603 wireless driver
-  DEPENDS+=+kmod-mt76-core
+  DEPENDS+=@PCI_SUPPORT +kmod-mt76-core
   FILES:=\
 	$(PKG_BUILD_DIR)/mt7603/mt7603e.ko
   AUTOLOAD:=$(call AutoLoad,51,mt7603e)
+endef
+
+define KernelPackage/mt7615e
+  $(KernelPackage/mt76-default)
+  TITLE:=MediaTek MT7615 wireless driver
+  DEPENDS+=@PCI_SUPPORT +kmod-mt76-core
+  FILES:=\
+	$(PKG_BUILD_DIR)/mt7615/mt7615e.ko
+  AUTOLOAD:=$(call AutoLoad,51,mt7615e)
 endef
 
 NOSTDINC_FLAGS = \
@@ -178,13 +187,16 @@ endif
 ifdef CONFIG_PACKAGE_kmod-mt7603
   PKG_MAKE_FLAGS += CONFIG_MT7603E=m
 endif
+ifdef CONFIG_PACKAGE_kmod-mt7615e
+  PKG_MAKE_FLAGS += CONFIG_MT7615E=m
+endif
 
 define Build/Compile
 	+$(MAKE) $(PKG_JOBS) -C "$(LINUX_DIR)" \
-		$(KERNEL_MAKE_FLAGS) \
-		$(PKG_MAKE_FLAGS) \
 		ARCH="$(LINUX_KARCH)" \
 		CROSS_COMPILE="$(TARGET_CROSS)" \
+		$(KERNEL_MAKE_FLAGS) \
+		$(PKG_MAKE_FLAGS) \
 		SUBDIRS="$(PKG_BUILD_DIR)" \
 		NOSTDINC_FLAGS="$(NOSTDINC_FLAGS)" \
 		modules
@@ -232,6 +244,15 @@ define KernelPackage/mt7603/install
 		$(1)/lib/firmware
 endef
 
+define KernelPackage/mt7615e/install
+	$(INSTALL_DIR) $(1)/lib/firmware
+	cp \
+		$(PKG_BUILD_DIR)/firmware/mt7615_cr4.bin \
+		$(PKG_BUILD_DIR)/firmware/mt7615_n9.bin \
+		$(PKG_BUILD_DIR)/firmware/mt7615_rom_patch.bin \
+		$(1)/lib/firmware
+endef
+
 $(eval $(call KernelPackage,mt76-core))
 $(eval $(call KernelPackage,mt76-usb))
 $(eval $(call KernelPackage,mt76x02-usb))
@@ -243,4 +264,5 @@ $(eval $(call KernelPackage,mt76x2-common))
 $(eval $(call KernelPackage,mt76x2u))
 $(eval $(call KernelPackage,mt76x2))
 $(eval $(call KernelPackage,mt7603))
+$(eval $(call KernelPackage,mt7615e))
 $(eval $(call KernelPackage,mt76))

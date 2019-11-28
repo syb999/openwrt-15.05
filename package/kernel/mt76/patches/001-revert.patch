@@ -58,9 +58,9 @@
  	mt76_dma_sync_idx(dev, q);
 -	mt76_dma_rx_fill(dev, q);
 +	mt76_dma_rx_fill(dev, q, false);
- }
  
- static void
+ 	if (!q->rx_head)
+ 		return;
 @@ -514,7 +512,7 @@
  		dev->drv->rx_skb(dev, q - dev->q_rx, skb);
  	}
@@ -78,15 +78,13 @@
 +		mt76_dma_rx_fill(dev, &dev->q_rx[i], false);
  		skb_queue_head_init(&dev->rx_skb[i]);
  		napi_enable(&dev->napi[i]);
- 	}
---- a/mt76.h
+ 	}--- a/mt76.h
 +++ b/mt76.h
-@@ -99,8 +99,7 @@ struct mt76_queue {
+@@ -99,6 +99,5 @@ struct mt76_queue {
  
  	dma_addr_t desc_dma;
  	struct sk_buff *rx_head;
 -	struct page_frag_cache rx_page;
- 	spinlock_t rx_page_lock;
  };
  
- struct mt76_mcu_ops {
+ struct mt76_sw_queue {
