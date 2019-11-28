@@ -78,7 +78,8 @@
 +		mt76_dma_rx_fill(dev, &dev->q_rx[i], false);
  		skb_queue_head_init(&dev->rx_skb[i]);
  		napi_enable(&dev->napi[i]);
- 	}--- a/mt76.h
+ 	}
+--- a/mt76.h
 +++ b/mt76.h
 @@ -99,6 +99,5 @@ struct mt76_queue {
  
