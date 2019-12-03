@@ -1,8 +1,8 @@
 --- a/Tests/RunCMake/CMakeLists.txt
 +++ b/Tests/RunCMake/CMakeLists.txt
-@@ -101,16 +101,6 @@
- add_RunCMake_test(TargetPolicies)
- add_RunCMake_test(alias_targets)
+@@ -289,15 +289,6 @@ add_RunCMake_test(no_install_prefix)
+ add_RunCMake_test(configure_file)
+ add_RunCMake_test(CTestTimeoutAfterMatch)
  
 -find_package(Qt4 QUIET)
 -find_package(Qt5Core QUIET)
@@ -10,23 +10,25 @@
 -  add_RunCMake_test(IncompatibleQt)
 -endif()
 -if (QT4_FOUND)
--  set(ObsoleteQtMacros_ARGS -DQT_QMAKE_EXECUTABLE:FILEPATH=${QT_QMAKE_EXECUTABLE})
--  add_RunCMake_test(ObsoleteQtMacros)
+-  add_RunCMake_test(ObsoleteQtMacros -DQT_QMAKE_EXECUTABLE:FILEPATH=${QT_QMAKE_EXECUTABLE})
 -endif()
 -
- if("${CMAKE_TEST_GENERATOR}" MATCHES "Visual Studio [^6]")
-   add_RunCMake_test(include_external_msproject)
-   add_RunCMake_test(SolutionGlobalSections)
+ find_package(PkgConfig QUIET)
+ if(PKG_CONFIG_FOUND)
+   add_RunCMake_test(FindPkgConfig)
 --- a/Tests/CMakeLists.txt
 +++ b/Tests/CMakeLists.txt
-@@ -262,10 +262,6 @@
+@@ -435,13 +435,6 @@ if(BUILD_TESTING)
  
    list(APPEND TEST_BUILD_DIRS ${CMake_TEST_INSTALL_PREFIX})
  
--  if(NOT QT4_FOUND)
--    find_package(Qt4)
+-  if(NOT DEFINED CMake_TEST_Qt4)
+-    set(CMake_TEST_Qt4 1)
+-  endif()
+-  if(CMake_TEST_Qt4 AND NOT QT4_FOUND)
+-    find_package(Qt4 QUIET)
 -  endif()
 -
-   if(QT4_FOUND)
+   if(CMake_TEST_Qt4 AND QT4_FOUND)
      # test whether the Qt4 which has been found works, on some machines
      # which run nightly builds there were errors like "wrong file format"
