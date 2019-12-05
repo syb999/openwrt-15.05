@@ -31,7 +31,7 @@
  	mt7603_beacon_set_timer(dev, -1, beacon_int);
 --- a/mt7603/dma.c
 +++ b/mt7603/dma.c
-@@ -135,26 +135,20 @@
+@@ -135,28 +135,20 @@
  	return 0;
  }
  
@@ -56,6 +56,8 @@
 -	for (i = MT_TXQ_MCU; i >= 0; i--)
 -		mt76_queue_tx_cleanup(dev, i, false);
 -
+-	mt7603_mac_sta_poll(dev);
+-
 -	tasklet_schedule(&dev->mt76.tx_tasklet);
 -
 -	return 0;
@@ -63,7 +65,7 @@
  }
  
  int mt7603_dma_init(struct mt7603_dev *dev)
-@@ -170,6 +164,8 @@
+@@ -170,6 +162,8 @@
  
  	mt76_dma_attach(&dev->mt76);
  
@@ -72,7 +74,7 @@
  	mt76_clear(dev, MT_WPDMA_GLO_CFG,
  		   MT_WPDMA_GLO_CFG_TX_DMA_EN |
  		   MT_WPDMA_GLO_CFG_RX_DMA_EN |
-@@ -218,15 +213,7 @@
+@@ -218,15 +211,7 @@
  		return ret;
  
  	mt76_wr(dev, MT_DELAY_INT_CFG, 0);

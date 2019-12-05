@@ -70,7 +70,19 @@
  	return done;
  }
  
-@@ -555,7 +553,7 @@
+@@ -548,8 +546,10 @@
+ 
+ 	rcu_read_unlock_bh();
+ 
+-	if (done < budget && napi_complete(napi))
++	if (done < budget) {
++		napi_complete(napi);
+ 		dev->drv->rx_poll_complete(dev, qid);
++	}
+ 
+ 	return done;
+ }
+@@ -555,7 +555,7 @@
  	for (i = 0; i < ARRAY_SIZE(dev->q_rx); i++) {
  		netif_napi_add(&dev->napi_dev, &dev->napi[i], mt76_dma_rx_poll,
  			       64);
@@ -89,3 +101,46 @@
  };
  
  struct mt76_sw_queue {
+--- a/mac80211.c
++++ b/mac80211.c
+@@ -506,9 +506,6 @@
+ 	survey->filled |= dev->drv->survey_flags;
+ 	if (chan == phy->main_chan) {
+ 		survey->filled |= SURVEY_INFO_IN_USE;
+-
+-		if (dev->drv->drv_flags & MT_DRV_SW_RX_AIRTIME)
+-			survey->filled |= SURVEY_INFO_TIME_BSS_RX;
+ 	}
+ 
+ 	survey->time_busy = div_u64(state->cc_busy, 1000);
+@@ -514,7 +511,6 @@
+ 	spin_lock_bh(&dev->cc_lock);
+ 	survey->time = div_u64(state->cc_active, 1000);
+ 	survey->time_busy = div_u64(state->cc_busy, 1000);
+-	survey->time_bss_rx = div_u64(state->cc_bss_rx, 1000);
+ 	survey->time_rx = div_u64(state->cc_rx, 1000);
+ 	survey->time_tx = div_u64(state->cc_tx, 1000);
+ 	spin_unlock_bh(&dev->cc_lock);
+--- a/agg-rx.c
++++ b/agg-rx.c
+@@ -279,13 +279,17 @@
+ 
+ void mt76_rx_aggr_stop(struct mt76_dev *dev, struct mt76_wcid *wcid, u8 tidno)
+ {
+-	struct mt76_rx_tid *tid = NULL;
++	struct mt76_rx_tid *tid;
+ 
+-	rcu_swap_protected(wcid->aggr[tidno], tid,
+-			   lockdep_is_held(&dev->mutex));
++	rcu_read_lock();
++
++	tid = rcu_dereference(wcid->aggr[tidno]);
+ 	if (tid) {
++		rcu_assign_pointer(wcid->aggr[tidno], NULL);
+ 		mt76_rx_aggr_shutdown(dev, tid);
+ 		kfree_rcu(tid, rcu_head);
+ 	}
++
++	rcu_read_unlock();
+ }
+ EXPORT_SYMBOL_GPL(mt76_rx_aggr_stop);
