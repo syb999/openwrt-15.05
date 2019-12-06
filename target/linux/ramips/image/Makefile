@@ -981,7 +981,6 @@ endif
 
 define Device/hc5962
   DTS := HC5962
-  IMAGE_SIZE := $(ralink_default_fw_size_32M)
   BLOCKSIZE := 128KiB
   IMAGES := sysupgrade.bin
   PAGESIZE := 2048

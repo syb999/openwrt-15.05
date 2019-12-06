@@ -83,6 +83,10 @@
 		mtd-mac-address = <&factory 0xe006>;
 	};	
 
+	xhci@1e1c0000 {
+		status = "okay";
+	};
+
 	gpio-leds {
 		compatible = "gpio-leds";
 
@@ -118,4 +122,5 @@
 			};
 		};
 	};
+
 };
