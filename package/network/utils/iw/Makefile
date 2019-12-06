@@ -39,8 +39,7 @@ TARGET_CPPFLAGS:= \
 	-I$(STAGING_DIR)/usr/include/libnl-tiny \
 	$(TARGET_CPPFLAGS) \
 	-DCONFIG_LIBNL20 \
-	-D_GNU_SOURCE \
-    -DIW_FULL
+	-D_GNU_SOURCE
 
 MAKE_FLAGS += \
 	CFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS) -ffunction-sections -fdata-sections" \
@@ -48,8 +47,7 @@ MAKE_FLAGS += \
 	NL1FOUND="" NL2FOUND=Y \
 	NLLIBNAME="libnl-tiny" \
 	LIBS="-lm -lnl-tiny" \
-	V=1 \
-    IW_FULL=1
+	V=1
 
 define Package/iw/install
 	$(INSTALL_DIR) $(1)/usr/sbin
