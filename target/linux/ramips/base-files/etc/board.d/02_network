@@ -151,12 +151,18 @@ ramips_setup_interfaces()
 	psg1208|\
 	psg1218|\
 	hc5962|\
-	newifi-d2|\
 	zbt-we1326|\
 	zbt-wg2626)
 		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
 		ucidef_add_switch "switch0" "1" "1"
 		ucidef_add_switch_vlan "switch0" "1" "0 1 2 3 6t"
+		ucidef_add_switch_vlan "switch0" "2" "4 6t"
+		;;
+
+	newifi-d2)
+		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
+		ucidef_add_switch "switch0" "1" "1"
+		ucidef_add_switch_vlan "switch0" "1" "0 1 2 6t"
 		ucidef_add_switch_vlan "switch0" "2" "4 6t"
 		;;
 
