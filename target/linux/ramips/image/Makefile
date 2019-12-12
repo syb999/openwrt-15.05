@@ -33,6 +33,7 @@ KERNEL_LOADADDR := $(loadaddr-y)
 
 KERNEL_DTB = kernel-bin | patch-dtb | lzma
 define Device/Default
+  PROFILES = Default $$(DTS)
   KERNEL_DEPENDS = $$(wildcard ../dts/$$(DTS).dts)
   KERNEL := $(KERNEL_DTB) | uImage lzma
   IMAGES := sysupgrade.bin
@@ -898,7 +899,7 @@ endif
 #
 
 ifeq ($(SUBTARGET),mt7621)
-  TARGET_DEVICES += pbr-m1 newifi-d1 newifi-d2 zbt-we1326 ghl
+  TARGET_DEVICES := pbr-m1 newifi-d1 newifi-d2 zbt-we1326 ghl
 endif
 
 define Device/mt7621
