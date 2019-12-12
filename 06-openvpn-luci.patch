@@ -1,0 +1,1817 @@
+--- a/feeds/luci/applications/luci-app-openvpn/luasrc/controller/openvpn.lua
++++ b/feeds/luci/applications/luci-app-openvpn/luasrc/controller/openvpn.lua
+@@ -8,4 +8,47 @@
+ 	entry( {"admin", "services", "openvpn"}, cbi("openvpn"), _("OpenVPN") )
+ 	entry( {"admin", "services", "openvpn", "basic"},    cbi("openvpn-basic"),    nil ).leaf = true
+ 	entry( {"admin", "services", "openvpn", "advanced"}, cbi("openvpn-advanced"), nil ).leaf = true
++	entry( {"admin", "services", "openvpn", "file"},     form("openvpn-file"),    nil ).leaf = true
++	entry( {"admin", "services", "openvpn", "upload"},   call("ovpn_upload"))
++end
++
++function ovpn_upload()
++	local fs     = require("nixio.fs")
++	local http   = require("luci.http")
++	local util   = require("luci.util")
++	local uci    = require("luci.model.uci").cursor()
++	local upload = http.formvalue("ovpn_file")
++	local name   = http.formvalue("instance_name2")
++	local file   = "/etc/openvpn/" ..name.. ".ovpn"
++
++	if name and upload then
++		local fp
++
++		http.setfilehandler(
++			function(meta, chunk, eof)
++				local data = util.trim(chunk:gsub("\r\n", "\n")) .. "\n"
++				data = util.trim(data:gsub("[\128-\255]", ""))
++
++				if not fp and meta and meta.name == "ovpn_file" then
++					fp = io.open(file, "w")
++				end
++				if fp and data then
++					fp:write(data)
++				end
++				if fp and eof then
++					fp:close()
++				end
++			end
++		)
++
++		if fs.access(file) then
++			if not uci:get_first("openvpn", name) then
++				uci:set("openvpn", name, "openvpn")
++				uci:set("openvpn", name, "config", file)
++				uci:save("openvpn")
++				uci:commit("openvpn")
++			end
++		end
++	end
++	http.redirect(luci.dispatcher.build_url('admin/services/openvpn'))
+ end
+--- /dev/null
++++ b/feeds/luci/applications/luci-app-openvpn/luasrc/model/cbi/openvpn-file.lua
+@@ -0,0 +1,82 @@
++-- Licensed to the public under the Apache License 2.0.
++
++local ip        = require("luci.ip")
++local fs        = require("nixio.fs")
++local util      = require("luci.util")
++local uci       = require("luci.model.uci").cursor()
++local cfg_file  = uci:get("openvpn", arg[1], "config")
++local auth_file = cfg_file:match("(.+)%..+").. ".auth"
++
++local m = Map("openvpn")
++
++local p = m:section( SimpleSection )
++p.template = "openvpn/pageswitch"
++p.mode     = "file"
++p.instance = arg[1]
++
++if not cfg_file or not fs.access(cfg_file) then
++	local f = SimpleForm("error", nil, translatef("The OVPN config file (%s) could not be found, please check your configuration.", cfg_file or "n/a"))
++	f:append(Template("openvpn/ovpn_css"))
++	f.reset = false
++	f.submit = false
++	return m, f
++end
++
++if fs.stat(cfg_file).size >= 102400 then
++	f = SimpleForm("error", nil,
++		translatef("The size of the OVPN config file (%s) is too large for online editing in LuCI (&ge; 100 KB). ", cfg_file)
++		.. translate("Please edit this file directly in a terminal session."))
++	f:append(Template("openvpn/ovpn_css"))
++	f.reset = false
++	f.submit = false
++	return m, f
++end
++
++f = SimpleForm("cfg", nil)
++f:append(Template("openvpn/ovpn_css"))
++f.submit = translate("Save")
++f.reset = false
++
++s = f:section(SimpleSection, nil, translatef("Section to modify the OVPN config file (%s)", cfg_file))
++file = s:option(TextValue, "data1")
++file.datatype = "string"
++file.rows = 20
++
++function file.cfgvalue()
++	return fs.readfile(cfg_file) or ""
++end
++
++function file.write(self, section, data1)
++	return fs.writefile(cfg_file, "\n" .. util.trim(data1:gsub("\r\n", "\n")) .. "\n")
++end
++
++function file.remove(self, section, value)
++	return fs.writefile(cfg_file, "")
++end
++
++function s.handle(self, state, data1)
++	return true
++end
++
++s = f:section(SimpleSection, nil, translatef("Section to add an optional 'auth-user-pass' file with your credentials (%s)", auth_file))
++file = s:option(TextValue, "data2")
++file.datatype = "string"
++file.rows = 5
++
++function file.cfgvalue()
++	return fs.readfile(auth_file) or ""
++end
++
++function file.write(self, section, data2)
++	return fs.writefile(auth_file, util.trim(data2:gsub("\r\n", "\n")) .. "\n")
++end
++
++function file.remove(self, section, value)
++	return fs.writefile(auth_file, "")
++end
++
++function s.handle(self, state, data2)
++	return true
++end
++
++return m, f
+--- a/feeds/luci/applications/luci-app-openvpn/luasrc/model/cbi/openvpn-advanced.lua
++++ b/feeds/luci/applications/luci-app-openvpn/luasrc/model/cbi/openvpn-advanced.lua
+@@ -1,194 +1,697 @@
+ -- Copyright 2008 Steven Barth <steven@midlink.org>
+ -- Licensed to the public under the Apache License 2.0.
+ 
+-require("luci.ip")
+-require("luci.model.uci")
+-
++local fs = require("nixio.fs")
+ 
+ local knownParams = {
+ 	--
+-	--	Widget			Name							Default(s)														Description	Option(s)
+-	--
++	--Widget
++	--	Name
++	--	Default(s)
++	--	Description
++	--	Option(s)
+ 
+ 	{ "Service", {
+-		-- initialisation and daemon options
+-		{ ListValue,	"verb",							{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },						translate("Set output verbosity") },
+-		{ Flag,			"mlock",						0,																translate("Disable Paging") },
+-		{ Flag,			"disable_occ",					0,																translate("Disable options consistency check") },
+-	--	{ Value,		"user",							"root",															translate("Set UID to user") },
+-	--	{ Value,		"group",						"root",															translate("Set GID to group") },
+-		{ Value,		"cd",							"/etc/openvpn",													translate("Change to directory before initialization") },
+-		{ Value,		"chroot",						"/var/run",														translate("Chroot to directory after initialization") },
+-	--	{ Value,		"daemon",						"Instance-Name",												translate("Daemonize after initialization") },
+-	--	{ Value,		"syslog",						"Instance-Name",												translate("Output to syslog and do not daemonize") },
+-		{ Flag,			"passtos",						0,																translate("TOS passthrough (applies to IPv4 only)") },
+-	--	{ Value,		"inetd",						"nowait Instance-Name",											translate("Run as an inetd or xinetd server") },
+-		{ Value,		"log",							"/var/log/openvpn.log",											translate("Write log to file") },
+-		{ Value,		"log_append",					"/var/log/openvpn.log",											translate("Append log to file") },
+-		{ Flag,			"suppress_timestamps",			0,																translate("Don't log timestamps") },
+-	--	{ Value,		"writepid",						"/var/run/openvpn.pid",											translate("Write process ID to file") },
+-		{ Value,		"nice",							0,																translate("Change process priority") },
+-		{ Flag,			"fast_io",						0,																translate("Optimize TUN/TAP/UDP writes") },
+-		{ Value,		"echo",							"some params echoed to log",									translate("Echo parameters to log") },
+-		{ ListValue,	"remap_usr1",					{ "SIGHUP", "SIGTERM" },										translate("Remap SIGUSR1 signals") },
+-		{ Value,		"status",						"/var/run/openvpn.status 5",									translate("Write status to file every n seconds") },
+-		{ Value,		"status_version",				{ 1, 2 },														translate("Status file format version") },	-- status
+-		{ Value,		"mute",							5,																translate("Limit repeated log messages") },
+-
+-		{ Value,		"up",							"/usr/bin/ovpn-up",												translate("Shell cmd to execute after tun device open") },
+-		{ Value,		"up_delay",						5,																translate("Delay tun/tap open and up script execution") },
+-		{ Value,		"down",							"/usr/bin/ovpn-down",											translate("Shell cmd to run after tun device close") },
+-		{ Flag,			"down_pre",						0,																translate("Call down cmd/script before TUN/TAP close") },
+-		{ Flag,			"up_restart",					0,																translate("Run up/down scripts for all restarts") },
+-		{ Value,		"route_up",						"/usr/bin/ovpn-routeup",										translate("Execute shell cmd after routes are added") },
+-		{ Value,		"ipchange",						"/usr/bin/ovpn-ipchange",										translate("Execute shell command on remote ip change"),	{ mode="p2p" } },
+-		{ DynamicList,	"setenv",						{ "VAR1 value1", "VAR2 value2" },								translate("Pass environment variables to script") },
+-		{ Value,		"tls_verify",					"/usr/bin/ovpn-tlsverify",										translate("Shell command to verify X509 name") },
+-		{ Value,		"client_connect",				"/usr/bin/ovpn-clientconnect",									translate("Run script cmd on client connection") },
+-		{ Flag,			"client_disconnect",			0,																translate("Run script cmd on client disconnection") },
+-		{ Value,		"learn_address",				"/usr/bin/ovpn-learnaddress",									translate("Executed in server mode whenever an IPv4 address/route or MAC address is added to OpenVPN's internal routing table") },
+-		{ Value,		"auth_user_pass_verify",		"/usr/bin/ovpn-userpass via-env",								translate("Executed in server mode on new client connections, when the client is still untrusted") },
+-		{ ListValue,	"script_security",				{ 0, 1, 2, 3 },													translate("Policy level over usage of external programs and scripts"),	{mode="server" } },
++	-- initialisation and daemon options
++		{ ListValue,
++			"verb",
++			{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
++			translate("Set output verbosity") },
++		{ Flag,
++			"mlock",
++			0,
++			translate("Disable Paging") },
++		{ Flag,
++			"disable_occ",
++			0,
++			translate("Disable options consistency check") },
++	--	{ Value,
++	--		"user",
++	--		"root",
++	--		translate("Set UID to user") },
++	--	{ Value,
++	--		"group",
++	--		"root",
++	--		translate("Set GID to group") },
++		{ Value,
++			"cd",
++			"/etc/openvpn",
++			translate("Change to directory before initialization") },
++		{ Value,
++			"chroot",
++			"/var/run",
++			translate("Chroot to directory after initialization") },
++	--	{ Value,
++	--		"daemon",
++	--		"Instance-Name",
++	--		translate("Daemonize after initialization") },
++	--	{ Value,
++	--		"syslog",
++	--		"Instance-Name",
++	--		translate("Output to syslog and do not daemonize") },
++		{ Flag,
++			"passtos",
++			0,
++			translate("TOS passthrough (applies to IPv4 only)") },
++	--	{ Value,
++	--		"inetd",
++	--		"nowait Instance-Name",
++	--		translate("Run as an inetd or xinetd server") },
++		{ Value,
++			"log",
++			"/var/log/openvpn.log",
++			translate("Write log to file") },
++		{ Value,
++			"log_append",
++			"/var/log/openvpn.log",
++			translate("Append log to file") },
++		{ Flag,
++			"suppress_timestamps",
++			0,
++			translate("Don't log timestamps") },
++	--	{ Value,
++	--		"writepid",
++	--		"/var/run/openvpn.pid",
++	--		translate("Write process ID to file") },
++		{ Value,
++			"nice",
++			0,
++			translate("Change process priority") },
++		{ Flag,
++			"fast_io",
++			0,
++			translate("Optimize TUN/TAP/UDP writes") },
++		{ Value,
++			"echo",
++			"some params echoed to log",
++			translate("Echo parameters to log") },
++		{ ListValue,
++			"remap_usr1",
++			{ "SIGHUP", "SIGTERM" },
++			translate("Remap SIGUSR1 signals") },
++		{ Value,
++			"status",
++			"/var/run/openvpn.status 5",
++			translate("Write status to file every n seconds") },
++		{ Value,
++			"status_version",
++			{ 1, 2 },
++			translate("Status file format version") },	-- status
++		{ Value,
++			"mute",
++			5,
++			translate("Limit repeated log messages") },
++		{ Value,
++			"up",
++			"/usr/bin/ovpn-up",
++			translate("Shell cmd to execute after tun device open") },
++		{ Value,
++			"up_delay",
++			5,
++			translate("Delay tun/tap open and up script execution") },
++		{ Value,
++			"down",
++			"/usr/bin/ovpn-down",
++			translate("Shell cmd to run after tun device close") },
++		{ Flag,
++			"down_pre",
++			0,
++			translate("Call down cmd/script before TUN/TAP close") },
++		{ Flag,
++			"up_restart",
++			0,
++			translate("Run up/down scripts for all restarts") },
++		{ Value,
++			"route_up",
++			"/usr/bin/ovpn-routeup",
++			translate("Execute shell cmd after routes are added") },
++		{ Value,
++			"ipchange",
++			"/usr/bin/ovpn-ipchange",
++			translate("Execute shell command on remote ip change"),
++			{ mode="p2p" } },
++		{ DynamicList,
++			"setenv",
++			{ "VAR1 value1", "VAR2 value2" },
++			translate("Pass environment variables to script") },
++		{ Value,
++			"tls_verify",
++			"/usr/bin/ovpn-tlsverify",
++			translate("Shell command to verify X509 name") },
++		{ Value,
++			"client_connect",
++			"/usr/bin/ovpn-clientconnect",
++			translate("Run script cmd on client connection") },
++		{ Flag,
++			"client_disconnect",
++			0,
++			translate("Run script cmd on client disconnection") },
++		{ Value,
++			"learn_address",
++			"/usr/bin/ovpn-learnaddress",
++			translate("Executed in server mode whenever an IPv4 address/route or MAC address is added to OpenVPN's internal routing table") },
++		{ Value,
++			"auth_user_pass_verify",
++			"/usr/bin/ovpn-userpass via-env",
++			translate("Executed in server mode on new client connections, when the client is still untrusted") },
++		{ ListValue,
++			"script_security",
++			{ 0, 1, 2, 3 },
++			translate("Policy level over usage of external programs and scripts") },
+ 	} },
+ 
+ 	{ "Networking", {
+-		-- socket config
+-		{ ListValue,	"mode",							{ "p2p", "server" },											translate("Major mode") },
+-		{ Value,		"local",						"0.0.0.0",														translate("Local host name or ip address") },
+-		{ Value,		"port",							1194,															translate("TCP/UDP port # for both local and remote") },
+-		{ Value,		"lport",						1194,															translate("TCP/UDP port # for local (default=1194)") },
+-		{ Value,		"rport",						1194,															translate("TCP/UDP port # for remote (default=1194)") },
+-		{ Flag,			"float",						0,																translate("Allow remote to change its IP or port") },
+-		{ Flag,			"nobind",						0,																translate("Do not bind to local address and port") },
+-
+-		{ Value,		"dev",							"tun0",															translate("tun/tap device") },
+-		{ ListValue,	"dev_type",						{ "tun", "tap" },												translate("Type of used device") },
+-		{ Value,		"dev_node",						"/dev/net/tun",													translate("Use tun/tap device node") },
+-		{ Flag,			"tun_ipv6",						0,																translate("Make tun device IPv6 capable") },
+-
+-		{ Value,		"ifconfig",						"10.200.200.3 10.200.200.1",									translate("Set tun/tap adapter parameters") },
+-		{ Flag,			"ifconfig_noexec",				0,																translate("Don't actually execute ifconfig") },
+-		{ Flag,			"ifconfig_nowarn",				0,																translate("Don't warn on ifconfig inconsistencies") },
+-
+-		{ DynamicList,	"route",						"10.123.0.0 255.255.0.0",										translate("Add route after establishing connection") },
+-		{ Value,		"route_gateway",				"10.234.1.1",													translate("Specify a default gateway for routes") },
+-		{ Value,		"route_delay",					0,																translate("Delay n seconds after connection") },
+-		{ Flag,			"route_noexec",					0,																translate("Don't add routes automatically") },
+-
+-		{ ListValue,	"mtu_disc",						{ "yes", "maybe", "no" },										translate("Enable Path MTU discovery") },
+-		{ Flag,			"mtu_test",						0,																translate("Empirically measure MTU") },
+-		{ ListValue,			"comp_lzo",				{ "yes", "no", "adaptive" },																translate("Use fast LZO compression") },
+-		{ Flag,			"comp_noadapt",					0,																translate("Don't use adaptive lzo compression"),	{ comp_lzo=1 } },
+-		{ Value,		"link_mtu",						1500,															translate("Set TCP/UDP MTU") },
+-		{ Value,		"tun_mtu",						1500,															translate("Set tun/tap device MTU") },
+-		{ Value,		"tun_mtu_extra",				1500,															translate("Set tun/tap device overhead") },
+-		{ Value,		"fragment",						1500,															translate("Enable internal datagram fragmentation"),	{ proto="udp" } },
+-		{ Value, 		"mssfix",						1500,															translate("Set upper bound on TCP MSS"),	{ proto="udp" } },
+-		{ Value,		"sndbuf",						65536,															translate("Set the TCP/UDP send buffer size") },
+-		{ Value,		"rcvbuf",						65536,															translate("Set the TCP/UDP receive buffer size") },
+-		{ Value,		"txqueuelen",					100,															translate("Set tun/tap TX queue length") },
+-		{ Value,		"shaper",						10240,															translate("Shaping for peer bandwidth") },
+-
+-		{ Value,		"inactive",						240,															translate("tun/tap inactivity timeout") },
+-		{ Value,		"keepalive",					"10 60",														translate("Helper directive to simplify the expression of --ping and --ping-restart in server mode configurations") },
+-		{ Value,		"ping",							30,																translate("Ping remote every n seconds over TCP/UDP port") },
+-		{ Value,		"ping_exit",					120,															translate("Remote ping timeout") },
+-		{ Value,		"ping_restart",					60,																translate("Restart after remote ping timeout") },
+-		{ Flag,			"ping_timer_rem",				0,																translate("Only process ping timeouts if routes exist") },
+-
+-		{ Flag,			"persist_tun",					0,																translate("Keep tun/tap device open on restart") },
+-		{ Flag,			"persist_key",					0,																translate("Don't re-read key on restart") },
+-		{ Flag,			"persist_local_ip",				0,																translate("Keep local IP address on restart") },
+-		{ Flag,			"persist_remote_ip",			0,																translate("Keep remote IP address on restart") },
+-
+-		-- management channel
+-		{ Value,		"management",					"127.0.0.1 31194 /etc/openvpn/mngmt-pwds",						translate("Enable management interface on <em>IP</em> <em>port</em>") },
+-		{ Flag,			"management_query_passwords",	0,																translate("Query management channel for private key") },	-- management
+-		{ Flag,			"management_hold",				0,																translate("Start OpenVPN in a hibernating state") },	-- management
+-		{ Value,		"management_log_cache",			100,															translate("Number of lines for log file history") },	-- management
+-		{ ListValue,	"topology",						{ "net30", "p2p", "subnet" },									translate("'net30', 'p2p', or 'subnet'"),	{dev_type="tun" } },
++	-- socket config
++		{ ListValue,
++			"mode",
++			{ "p2p", "server" },
++			translate("Major mode") },
++		{ Value,
++			"local",
++			"0.0.0.0",
++			translate("Local host name or ip address") },
++		{ Value,
++			"port",
++			1194,
++			translate("TCP/UDP port # for both local and remote") },
++		{ Value,
++			"lport",
++			1194,
++			translate("TCP/UDP port # for local (default=1194)") },
++		{ Value,
++			"rport",
++			1194,
++			translate("TCP/UDP port # for remote (default=1194)") },
++		{ Flag,
++			"float",
++			0,
++			translate("Allow remote to change its IP or port") },
++		{ Flag,
++			"nobind",
++			0,
++			translate("Do not bind to local address and port") },
++		{ Value,
++			"dev",
++			"tun0",
++			translate("tun/tap device") },
++		{ ListValue,
++			"dev_type",
++			{ "tun", "tap" },
++			translate("Type of used device") },
++		{ Value,
++			"dev_node",
++			"/dev/net/tun",
++			translate("Use tun/tap device node") },
++		{ Value,
++			"ifconfig",
++			"10.200.200.3 10.200.200.1",
++			translate("Set tun/tap adapter parameters") },
++		{ Flag,
++			"ifconfig_noexec",
++			0,
++			translate("Don't actually execute ifconfig") },
++		{ Flag,
++			"ifconfig_nowarn",
++			0,
++			translate("Don't warn on ifconfig inconsistencies") },
++		{ DynamicList,
++			"route",
++			"10.123.0.0 255.255.0.0",
++			translate("Add route after establishing connection") },
++		{ Value,
++			"route_gateway",
++			"10.234.1.1",
++			translate("Specify a default gateway for routes") },
++		{ Value,
++			"route_delay",
++			0,
++			translate("Delay n seconds after connection") },
++		{ Flag,
++			"route_noexec",
++			0,
++			translate("Don't add routes automatically") },
++		{ Flag,
++			"route_nopull",
++			0,
++			translate("Don't pull routes automatically") },
++		{ ListValue,
++			"mtu_disc",
++			{ "yes", "maybe", "no" },
++			translate("Enable Path MTU discovery") },
++		{ Flag,
++			"mtu_test",
++			0,
++			translate("Empirically measure MTU") },
++		{ Value,
++			"link_mtu",
++			1500,
++			translate("Set TCP/UDP MTU") },
++		{ Value,
++			"tun_mtu",
++			1500,
++			translate("Set tun/tap device MTU") },
++		{ Value,
++			"tun_mtu_extra",
++			1500,
++			translate("Set tun/tap device overhead") },
++		{ Value,
++			"fragment",
++			1500,
++			translate("Enable internal datagram fragmentation"),
++			{ proto="udp" } },
++		{ Value,
++			"mssfix",
++			1500,
++			translate("Set upper bound on TCP MSS"),
++			{ proto="udp" } },
++		{ Value,
++			"sndbuf",
++			65536,
++			translate("Set the TCP/UDP send buffer size") },
++		{ Value,
++			"rcvbuf",
++			65536,
++			translate("Set the TCP/UDP receive buffer size") },
++		{ Value,
++			"txqueuelen",
++			100,
++			translate("Set tun/tap TX queue length") },
++		{ Value,
++			"shaper",
++			10240,
++			translate("Shaping for peer bandwidth") },
++		{ Value,
++			"inactive",
++			240,
++			translate("tun/tap inactivity timeout") },
++		{ Value,
++			"keepalive",
++			"10 60",
++			translate("Helper directive to simplify the expression of --ping and --ping-restart in server mode configurations") },
++		{ Value,
++			"ping",
++			30,
++			translate("Ping remote every n seconds over TCP/UDP port") },
++		{ Value,
++			"ping_exit",
++			120,
++			translate("Remote ping timeout") },
++		{ Value,
++			"ping_restart",
++			60,
++			translate("Restart after remote ping timeout") },
++		{ Flag,
++			"ping_timer_rem",
++			0,
++			translate("Only process ping timeouts if routes exist") },
++		{ Flag,
++			"persist_tun",
++			0,
++			translate("Keep tun/tap device open on restart") },
++		{ Flag,
++			"persist_key",
++			0,
++			translate("Don't re-read key on restart") },
++		{ Flag,
++			"persist_local_ip",
++			0,
++			translate("Keep local IP address on restart") },
++		{ Flag,
++			"persist_remote_ip",
++			0,
++			translate("Keep remote IP address on restart") },
++	-- management channel
++		{ Value,
++			"management",
++			"127.0.0.1 31194 /etc/openvpn/mngmt-pwds",
++			translate("Enable management interface on <em>IP</em> <em>port</em>") },
++	-- management
++		{ Flag,
++			"management_query_passwords",
++			0,
++			translate("Query management channel for private key") },
++	-- management
++		{ Flag,
++			"management_hold",
++			0,
++			translate("Start OpenVPN in a hibernating state") },
++	-- management
++		{ Value,
++			"management_log_cache",
++			100,
++			translate("Number of lines for log file history") },
++		{ ListValue,
++			"topology",
++			{ "net30", "p2p", "subnet" },
++			translate("'net30', 'p2p', or 'subnet'"),
++			{dev_type="tun" } },
+ 	} },
+ 
+ 	{ "VPN", {
+-		{ Value,		"server",						"10.200.200.0 255.255.255.0",									translate("Configure server mode"),	{ server_mode="1" } },
+-		{ Value,		"server_bridge",				"10.200.200.1 255.255.255.0 10.200.200.200 10.200.200.250",		translate("Configure server bridge"),	{ server_mode="1" } },
+-		{ DynamicList,	"push",							{ "redirect-gateway", "comp-lzo" },								translate("Push options to peer"),	{ server_mode="1" } },
+-		{ Flag,			"push_reset",					0,																translate("Don't inherit global push options"),	{ server_mode="1" } },
+-		{ Flag,			"disable",						0,																translate("Client is disabled"),	{ server_mode="1" } },
+-		{ Value,		"ifconfig_pool",				"10.200.200.100 10.200.200.150 255.255.255.0",					translate("Set aside a pool of subnets"),	{ server_mode="1" } },
+-		{ Value,		"ifconfig_pool_persist",		"/etc/openvpn/ipp.txt 600",										translate("Persist/unpersist ifconfig-pool"),	{ server_mode="1" } },
+---		{ Flag,			"ifconfig_pool_linear",			0,																translate("Use individual addresses rather than /30 subnets"),	{ server_mode="1" } }, -- deprecated and replaced by --topology p2p
+-		{ Value,		"ifconfig_push",				"10.200.200.1 255.255.255.255",									translate("Push an ifconfig option to remote"),	{ server_mode="1" } },
+-		{ Value,		"iroute",						"10.200.200.0 255.255.255.0",									translate("Route subnet to client"),	{ server_mode="1" } },
+-		{ Flag,			"client_to_client",				0,																translate("Allow client-to-client traffic"),	{ server_mode="1" } },
+-		{ Flag,			"duplicate_cn",					0,																translate("Allow multiple clients with same certificate"),	{ server_mode="1" } },
+-		{ Value,		"client_config_dir",			"/etc/openvpn/ccd",												translate("Directory for custom client config files"),	{ server_mode="1" } },
+-		{ Flag,			"ccd_exclusive",				0,																translate("Refuse connection if no custom client config"),	{ server_mode="1" } },
+-		{ Value,		"tmp_dir",						"/var/run/openvpn",												translate("Temporary directory for client-connect return file"),	{ server_mode="1" } },
+-		{ Value,		"hash_size",					"256 256",														translate("Set size of real and virtual address hash tables"),	{ server_mode="1" } },
+-		{ Value,		"bcast_buffers",				256,															translate("Number of allocated broadcast buffers"),	{ server_mode="1" } },
+-		{ Value,		"tcp_queue_limit",				64,																translate("Maximum number of queued TCP output packets"),	{ server_mode="1" } },
+-		{ Value,		"max_clients",					10,																translate("Allowed maximum of connected clients"),	{ server_mode="1" } },
+-		{ Value,		"max_routes_per_client",		256,															translate("Allowed maximum of internal"),	{ server_mode="1" } },
+-		{ Value,		"connect_freq",					"3 10",															translate("Allowed maximum of new connections"),	{ server_mode="1" } },
+-		{ Flag,			"client_cert_not_required",		0,																translate("Don't require client certificate"),	{ server_mode="1" } },
+-		{ Flag,			"username_as_common_name",		0,																translate("Use username as common name"),	{ server_mode="1" } },
+-		{ Flag,			"client",						0,																translate("Configure client mode"),	{ server_mode="0" }, { server_mode="" } },
+-		{ Flag,			"pull",							0,																translate("Accept options pushed from server"),	{ client="1" } },
+-		{ Value,		"auth_user_pass",				"/etc/openvpn/userpass.txt",									translate("Authenticate using username/password"),	{ client="1" } },
+-		{ ListValue,	"auth_retry",					{ "none", "nointeract", "interact" },							translate("Handling of authentication failures"),	{ client="1" } },
+-		{ Value,		"explicit_exit_notify",			1,																translate("Send notification to peer on disconnect"),	{ client="1" } },
+-		{ DynamicList,	"remote",						"1.2.3.4",														translate("Remote host name or ip address"),	{ client="1" } },
+-		{ Flag,			"remote_random",				1,																translate("Randomly choose remote server"),	{ client="1" } },
+-		{ ListValue,	"proto",						{ "udp", "tcp-client", "tcp-server" },							translate("Use protocol"),	{ client="1" } },
+-		{ Value,		"connect_retry",				5,																translate("Connection retry interval"),	{ proto="tcp-client" }, { client="1" } },
+-		{ Value,		"http_proxy", 					"192.168.1.100 8080",											translate("Connect to remote host through an HTTP proxy"),	{ client="1" } },
+-		{ Flag,			"http_proxy_retry",				0,																translate("Retry indefinitely on HTTP proxy errors"),	{ client="1" } },
+-		{ Value,		"http_proxy_timeout",			5,																translate("Proxy timeout in seconds"),	{ client="1" } },
+-		{ DynamicList,	"http_proxy_option",			{ "VERSION 1.0", "AGENT OpenVPN/2.0.9" },						translate("Set extended HTTP proxy options"),	{ client="1" } },
+-		{ Value,		"socks_proxy", 					"192.168.1.200 1080",											translate("Connect through Socks5 proxy"),	{ client="1" } },
+-		{ Value,		"socks_proxy_retry",			5,																translate("Retry indefinitely on Socks proxy errors"),	{ client="1" } },	-- client && socks_proxy
+-		{ Value,		"resolv_retry",					"infinite",														translate("If hostname resolve fails, retry"),	{ client="1" } },
+-		{ ListValue,	"redirect_gateway",				{ "", "local", "def1", "local def1" },							translate("Automatically redirect default route"),	{ client="1" } },
++		{ Value,
++			"server",
++			"10.200.200.0 255.255.255.0",
++			translate("Configure server mode"),
++			{ client="0" }, { client="" } },
++		{ Value,
++			"server_bridge",
++			"10.200.200.1 255.255.255.0 10.200.200.200 10.200.200.250",
++			translate("Configure server bridge"),
++			{ client="0" }, { client="" } },
++		{ DynamicList,
++			"push",
++			{ "redirect-gateway" },
++			translate("Push options to peer"),
++			{ client="0" }, { client="" } },
++		{ Flag,
++			"push_reset",
++			0,
++			translate("Don't inherit global push options"),
++			{ client="0" }, { client="" } },
++		{ Flag,
++			"disable",
++			0,
++			translate("Client is disabled"),
++			{ client="0" }, { client="" } },
++		{ Value,
++			"ifconfig_pool",
++			"10.200.200.100 10.200.200.150 255.255.255.0",
++			translate("Set aside a pool of subnets"),
++			{ client="0" }, { client="" } },
++		{ Value,
++			"ifconfig_pool_persist",
++			"/etc/openvpn/ipp.txt 600",
++			translate("Persist/unpersist ifconfig-pool"),
++			{ client="0" }, { client="" } },
++		{ Value,
++			"ifconfig_push",
++			"10.200.200.1 255.255.255.255",
++			translate("Push an ifconfig option to remote"),
++			{ client="0" }, { client="" } },
++		{ Value,
++			"iroute",
++			"10.200.200.0 255.255.255.0",
++			translate("Route subnet to client"),
++			{ client="0" }, { client="" } },
++		{ Flag,
++			"client_to_client",
++			0,
++			translate("Allow client-to-client traffic"),
++			{ client="0" }, { client="" } },
++		{ Flag,
++			"duplicate_cn",
++			0,
++			translate("Allow multiple clients with same certificate"),
++			{ client="0" }, { client="" } },
++		{ Value,
++			"client_config_dir",
++			"/etc/openvpn/ccd",
++			translate("Directory for custom client config files"),
++			{ client="0" }, { client="" } },
++		{ Flag,
++			"ccd_exclusive",
++			0,
++			translate("Refuse connection if no custom client config"),
++			{ client="0" }, { client="" } },
++		{ Value,
++			"tmp_dir",
++			"/var/run/openvpn",
++			translate("Temporary directory for client-connect return file"),
++			{ client="0" }, { client="" } },
++		{ Value,
++			"hash_size",
++			"256 256",
++			translate("Set size of real and virtual address hash tables"),
++			{ client="0" }, { client="" } },
++		{ Value,
++			"bcast_buffers",
++			256,
++			translate("Number of allocated broadcast buffers"),
++			{ client="0" }, { client="" } },
++		{ Value,
++			"tcp_queue_limit",
++			64,
++			translate("Maximum number of queued TCP output packets"),
++			{ client="0" }, { client="" } },
++		{ Value,
++			"max_clients",
++			10,
++			translate("Allowed maximum of connected clients"),
++			{ client="0" }, { client="" } },
++		{ Value,
++			"max_routes_per_client",
++			256,
++			translate("Allowed maximum of internal"),
++			{ client="0" }, { client="" } },
++		{ Value,
++			"connect_freq",
++			"3 10",
++			translate("Allowed maximum of new connections"),
++			{ client="0" }, { client="" } },
++		{ Flag,
++			"username_as_common_name",
++			0,
++			translate("Use username as common name"),
++			{ client="0" }, { client="" } },
++		{ Flag,
++			"client",
++			0,
++			translate("Configure client mode") },
++		{ Flag,
++			"pull",
++			0,
++			translate("Accept options pushed from server"),
++			{ client="1" } },
++		{ FileUpload,
++			"auth_user_pass",
++			"/etc/openvpn/userpass.txt",
++			translate("Authenticate using username/password"),
++			{ client="1" } },
++		{ ListValue,
++			"auth_retry",
++			{ "none", "nointeract", "interact" },
++			translate("Handling of authentication failures"),
++			{ client="1" } },
++		{ Value,
++			"explicit_exit_notify",
++			1,
++			translate("Send notification to peer on disconnect"),
++			{ client="1" } },
++		{ DynamicList,
++			"remote",
++			"1.2.3.4",
++			translate("Remote host name or ip address"),
++			{ client="1" } },
++		{ Flag,
++			"remote_random",
++			0,
++			translate("Randomly choose remote server"),
++			{ client="1" } },
++		{ ListValue,
++			"proto",
++			{ "udp", "tcp-client", "tcp-server" },
++			translate("Use protocol"),
++			{ client="1" } },
++		{ Value,
++			"connect_retry",
++			5,
++			translate("Connection retry interval"),
++			{ proto="tcp-client" }, { client="1" } },
++		{ Value,
++			"http_proxy",
++			"192.168.1.100 8080",
++			translate("Connect to remote host through an HTTP proxy"),
++			{ client="1" } },
++		{ Flag,
++			"http_proxy_retry",
++			0,
++			translate("Retry indefinitely on HTTP proxy errors"),
++			{ client="1" } },
++		{ Value,
++			"http_proxy_timeout",
++			5,
++			translate("Proxy timeout in seconds"),
++			{ client="1" } },
++		{ DynamicList,
++			"http_proxy_option",
++			{ "VERSION 1.0", "AGENT OpenVPN/2.0.9" },
++			translate("Set extended HTTP proxy options"),
++			{ client="1" } },
++		{ Value,
++			"socks_proxy",
++			"192.168.1.200 1080",
++			translate("Connect through Socks5 proxy"),
++			{ client="1" } },
++	-- client && socks_proxy
++		{ Value,
++			"socks_proxy_retry",
++			5,
++			translate("Retry indefinitely on Socks proxy errors"),
++			{ client="1" } },
++		{ Value,
++			"resolv_retry",
++			"infinite",
++			translate("If hostname resolve fails, retry"),
++			{ client="1" } },
++		{ ListValue,
++			"redirect_gateway",
++			{ "", "local", "def1", "local def1" },
++			translate("Automatically redirect default route"),
++			{ client="1" } },
+ 	} },
+ 
+ 	{ "Cryptography", {
+-		{ Value,		"secret",						"/etc/openvpn/secret.key 1",									translate("Enable Static Key encryption mode (non-TLS)") },
+-		{ Value,		"auth",							"SHA1",															translate("HMAC authentication for packets") }, -- parse
+-		{ Value,		"cipher",						"BF-CBC",														translate("Encryption cipher for packets") }, -- parse
+-		{ Value,		"keysize",						1024,															translate("Size of cipher key") }, -- parse
+-		{ Value,		"engine",						"dynamic",														translate("Enable OpenSSL hardware crypto engines") }, -- parse
+-		{ Flag,			"no_replay",					0,																translate("Disable replay protection") },
+-		{ Value,		"replay_window",				"64 15",														translate("Replay protection sliding window size") },
+-		{ Flag,			"mute_replay_warnings",			0,																translate("Silence the output of replay warnings") },
+-		{ Value,		"replay_persist",				"/var/run/openvpn-replay-state",								translate("Persist replay-protection state") },
+-		{ Flag,			"no_iv",						0,																translate("Disable cipher initialisation vector") },
+-		{ Flag,			"tls_server",					0,																translate("Enable TLS and assume server role"), { tls_client="" }, { tls_client="0" } },
+-		{ Flag,			"tls_client",					0,																translate("Enable TLS and assume client role"), { tls_server="" }, { tls_server="0" } },
+-		{ FileUpload,	"ca",							"/etc/easy-rsa/keys/ca.crt",									translate("Certificate authority") },
+-		{ FileUpload,	"dh",							"/etc/easy-rsa/keys/dh1024.pem",								translate("Diffie Hellman parameters") },
+-		{ FileUpload,	"cert",							"/etc/easy-rsa/keys/some-client.crt",							translate("Local certificate") },
+-		{ FileUpload,	"key",							"/etc/easy-rsa/keys/some-client.key",							translate("Local private key") },
+-		{ FileUpload,	"pkcs12",						"/etc/easy-rsa/keys/some-client.pk12",							translate("PKCS#12 file containing keys") },
+-		{ ListValue,	"key_method",					{ 1, 2 },														translate("Enable TLS and assume client role") },
+-		{ Value,		"tls_cipher",					"DHE-RSA-AES256-SHA:DHE-DSS-AES256-SHA:AES256-SHA:EDH-RSA-DES-CBC3-SHA:EDH-DSS-DES-CBC3-SHA:DES-CBC3-SHA:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA:AES128-SHA:RC4-SHA:RC4-MD5:EDH-RSA-DES-CBC-SHA:EDH-DSS-DES-CBC-SHA:DES-CBC-SHA:EXP-EDH-RSA-DES-CBC-SHA:EXP-EDH-DSS-DES-CBC-SHA:EXP-DES-CBC-SHA:EXP-RC2-CBC-MD5:EXP-RC4-MD5",
+-																														translate("TLS cipher") },
+-		{ Value,		"tls_timeout",					2,																translate("Retransmit timeout on TLS control channel") },
+-		{ Value,		"reneg_bytes",					1024,															translate("Renegotiate data chan. key after bytes") },
+-		{ Value,		"reneg_pkts",					100,															translate("Renegotiate data chan. key after packets") },
+-		{ Value,		"reneg_sec",					3600,															translate("Renegotiate data chan. key after seconds") },
+-		{ Value,		"hand_window",					60,																translate("Timeframe for key exchange") },
+-		{ Value,		"tran_window",					3600,															translate("Key transition window") },
+-		{ Flag,			"single_session",				0,																translate("Allow only one session") },
+-		{ Flag,			"tls_exit",						0,																translate("Exit on TLS negotiation failure") },
+-		{ Value,		"tls_auth",						"/etc/openvpn/tlsauth.key 1",									translate("Additional authentication over TLS") },
+-		--{ Value,		"askpass",						"[file]",														translate("Get PEM password from controlling tty before we daemonize") },
+-		{ Flag,			"auth_nocache",					0,																translate("Don't cache --askpass or --auth-user-pass passwords") },
+-		{ Value,		"tls_remote",					"remote_x509_name",												translate("Only accept connections from given X509 name") },
+-		{ ListValue,	"ns_cert_type",					{ "client", "server" },											translate("Require explicit designation on certificate") },
+-		{ ListValue,	"remote_cert_tls",				{ "client", "server" },											translate("Require explicit key usage on certificate") },
+-		{ Value,		"crl_verify",					"/etc/easy-rsa/keys/crl.pem",									translate("Check peer certificate against a CRL") },
+- 	} }
++		{ FileUpload,
++			"secret",
++			"/etc/openvpn/secret.key",
++			translate("Enable Static Key encryption mode (non-TLS)") },
++	-- parse
++		{ Value,
++			"auth",
++			"SHA1",
++			translate("HMAC authentication for packets") },
++	-- parse
++		{ Value,
++			"cipher",
++			"BF-CBC",
++			translate("Encryption cipher for packets") },
++	-- parse
++		{ Value,
++			"keysize",
++			1024,
++			translate("Size of cipher key") },
++	-- parse
++		{ Value,
++			"engine",
++			"dynamic",
++			translate("Enable OpenSSL hardware crypto engines") },
++		{ Value,
++			"replay_window",
++			"64 15",
++			translate("Replay protection sliding window size") },
++		{ Flag,
++			"mute_replay_warnings",
++			0,
++			translate("Silence the output of replay warnings") },
++		{ Value,
++			"replay_persist",
++			"/var/run/openvpn-replay-state",
++			translate("Persist replay-protection state") },
++		{ Flag,
++			"tls_server",
++			0,
++			translate("Enable TLS and assume server role"),
++			{ tls_client="" }, { tls_client="0" } },
++		{ Flag,
++			"tls_client",
++			0,
++			translate("Enable TLS and assume client role"),
++			{ tls_server="" }, { tls_server="0" } },
++		{ FileUpload,
++			"ca",
++			"/etc/easy-rsa/keys/ca.crt",
++			translate("Certificate authority") },
++		{ FileUpload,
++			"dh",
++			"/etc/easy-rsa/keys/dh1024.pem",
++			translate("Diffie Hellman parameters") },
++		{ FileUpload,
++			"cert",
++			"/etc/easy-rsa/keys/some-client.crt",
++			translate("Local certificate") },
++		{ FileUpload,
++			"key",
++			"/etc/easy-rsa/keys/some-client.key",
++			translate("Local private key") },
++		{ FileUpload,
++			"pkcs12",
++			"/etc/easy-rsa/keys/some-client.pk12",
++			translate("PKCS#12 file containing keys") },
++		{ ListValue,
++			"key_method",
++			{ 1, 2 },
++			translate("Enable TLS and assume client role") },
++		{ Value,
++			"tls_cipher",
++			"DHE-RSA-AES256-SHA:DHE-DSS-AES256-SHA:AES256-SHA:EDH-RSA-DES-CBC3-SHA:EDH-DSS-DES-CBC3-SHA:DES-CBC3-SHA:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA:AES128-SHA:RC4-SHA:RC4-MD5:EDH-RSA-DES-CBC-SHA:EDH-DSS-DES-CBC-SHA:DES-CBC-SHA:EXP-EDH-RSA-DES-CBC-SHA:EXP-EDH-DSS-DES-CBC-SHA:EXP-DES-CBC-SHA:EXP-RC2-CBC-MD5:EXP-RC4-MD5",
++			translate("TLS cipher") },
++		{ Value,
++			"tls_timeout",
++			2,
++			translate("Retransmit timeout on TLS control channel") },
++		{ Value,
++			"reneg_bytes",
++			1024,
++			translate("Renegotiate data chan. key after bytes") },
++		{ Value,
++			"reneg_pkts",
++			100,
++			translate("Renegotiate data chan. key after packets") },
++		{ Value,
++			"reneg_sec",
++			3600,
++			translate("Renegotiate data chan. key after seconds") },
++		{ Value,
++			"hand_window",
++			60,
++			translate("Timeframe for key exchange") },
++		{ Value,
++			"tran_window",
++			3600,
++			translate("Key transition window") },
++		{ Flag,
++			"single_session",
++			0,
++			translate("Allow only one session") },
++		{ Flag,
++			"tls_exit",
++			0,
++			translate("Exit on TLS negotiation failure") },
++		{ Value,
++			"tls_auth",
++			"/etc/openvpn/tlsauth.key",
++			translate("Additional authentication over TLS") },
++		{ Value,
++			"tls_crypt",
++			"/etc/openvpn/tlscrypt.key",
++			translate("Encrypt and authenticate all control channel packets with the key") },
++	--	{ Value,
++	--		"askpass",
++	--		"[file]",
++	--		translate("Get PEM password from controlling tty before we daemonize") },
++		{ Flag,
++			"auth_nocache",
++			0,
++			translate("Don't cache --askpass or --auth-user-pass passwords") },
++		{ Value,
++			"tls_remote",
++			"remote_x509_name",
++			translate("Only accept connections from given X509 name") },
++		{ ListValue,
++			"ns_cert_type",
++			{ "client", "server" },
++			translate("Require explicit designation on certificate") },
++		{ ListValue,
++			"remote_cert_tls",
++			{ "client", "server" },
++			translate("Require explicit key usage on certificate") },
++		{ Value,
++			"crl_verify",
++			"/etc/easy-rsa/keys/crl.pem",
++			translate("Check peer certificate against a CRL") },
++		{ Value,
++			"tls_version_min",
++			"1.0",
++			translate("The lowest supported TLS version") },
++		{ Value,
++			"tls_version_max",
++			"1.2",
++			translate("The highest supported TLS version") },
++		{ ListValue,
++			"key_direction",
++			{ 0, 1 },
++			translate("The key direction for 'tls-auth' and 'secret' options") },
++	} }
+ }
+ 
+ 
+@@ -196,8 +699,10 @@
+ local params = { }
+ 
+ local m = Map("openvpn")
+-local p = m:section( SimpleSection )
++m.redirect = luci.dispatcher.build_url("admin", "services", "openvpn")
++m.apply_on_parse = true
+ 
++local p = m:section( SimpleSection )
+ p.template = "openvpn/pageswitch"
+ p.mode     = "advanced"
+ p.instance = arg[1]
+@@ -227,19 +732,52 @@
+ 		option[2], option[4]
+ 	)
+ 
++	o.optional = true
++
+ 	if option[1] == DummyValue then
+ 		o.value = option[3]
++	elseif option[1] == FileUpload then
++
++		function o.cfgvalue(self, section)
++			local cfg_val = AbstractValue.cfgvalue(self, section)
++
++			if cfg_val then
++				return cfg_val
++			end
++		end
++
++		function o.formvalue(self, section)
++			local sel_val = AbstractValue.formvalue(self, section)
++			local txt_val = luci.http.formvalue("cbid."..self.map.config.."."..section.."."..self.option..".textbox")
++
++			if sel_val and sel_val ~= "" then
++				return sel_val
++			end
++
++			if txt_val and txt_val ~= "" then
++				return txt_val
++			end
++		end
++
++		function o.remove(self, section)
++			local cfg_val = AbstractValue.cfgvalue(self, section)
++			local txt_val = luci.http.formvalue("cbid."..self.map.config.."."..section.."."..self.option..".textbox")
++			
++			if cfg_val and fs.access(cfg_val) and txt_val == "" then
++				fs.unlink(cfg_val)
++			end
++			return AbstractValue.remove(self, section)
++		end
++	elseif option[1] == Flag then
++		o.default = nil
+ 	else
+ 		if option[1] == DynamicList then
+-			o.cast = nil
+ 			function o.cfgvalue(...)
+ 				local val = AbstractValue.cfgvalue(...)
+ 				return ( val and type(val) ~= "table" ) and { val } or val
+ 			end
+ 		end
+ 
+-		o.optional = true
+-
+ 		if type(option[3]) == "table" then
+ 			if o.optional then o:value("", "-- remove --") end
+ 			for _, v in ipairs(option[3]) do
+--- a/feeds/luci/applications/luci-app-openvpn/luasrc/model/cbi/openvpn-basic.lua
++++ b/feeds/luci/applications/luci-app-openvpn/luasrc/model/cbi/openvpn-basic.lua
+@@ -1,47 +1,100 @@
+ -- Copyright 2008 Steven Barth <steven@midlink.org>
+ -- Licensed to the public under the Apache License 2.0.
+ 
+-require("luci.ip")
+-require("luci.model.uci")
+-
++local fs = require("nixio.fs")
+ 
+ local basicParams = {
+-	--								
++	--
+ 	-- Widget, Name, Default(s), Description
+ 	--
+-					
+-	{ ListValue, "verb", { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 }, translate("Set output verbosity") },
+-	{ Value, "nice",0, translate("Change process priority") },
+-	{ Value,"port",1194, translate("TCP/UDP port # for both local and remote") },
+-	{ ListValue,"dev_type",{ "tun", "tap" }, translate("Type of used device") },
+-	{ Flag,"tun_ipv6",0, translate("Make tun device IPv6 capable") },
+-
+-	{ Value,"ifconfig","10.200.200.3 10.200.200.1", translate("Set tun/tap adapter parameters") },
+-	{ Value,"server","10.200.200.0 255.255.255.0", translate("Configure server mode") },
+-	{ Value,"server_bridge","192.168.1.1 255.255.255.0 192.168.1.128 192.168.1.254", translate("Configure server bridge") },
+-	{ Flag,"nobind",0, translate("Do not bind to local address and port") },
+-
+-	{ ListValue,"comp_lzo",{"yes","no","adaptive"}, translate("Use fast LZO compression") },
+-	{ Value,"keepalive","10 60", translate("Helper directive to simplify the expression of --ping and --ping-restart in server mode configurations") },
+-
+-	{ ListValue,"proto",{ "udp", "tcp" }, translate("Use protocol") },
+-
+-	{ Flag,"client",0, translate("Configure client mode") },
+-	{ Flag,"client_to_client",0, translate("Allow client-to-client traffic") },
+-	{ DynamicList,"remote","vpnserver.example.org", translate("Remote host name or ip address") },
+-
+-	{ FileUpload,"secret","/etc/openvpn/secret.key 1", translate("Enable Static Key encryption mode (non-TLS)") },
+-	{ FileUpload,"pkcs12","/etc/easy-rsa/keys/some-client.pk12", translate("PKCS#12 file containing keys") },
+-	{ FileUpload,"ca","/etc/easy-rsa/keys/ca.crt", translate("Certificate authority") },
+-	{ FileUpload,"dh","/etc/easy-rsa/keys/dh1024.pem", translate("Diffie Hellman parameters") },
+-	{ FileUpload,"cert","/etc/easy-rsa/keys/some-client.crt", translate("Local certificate") },
+-	{ FileUpload,"key","/etc/easy-rsa/keys/some-client.key", translate("Local private key") },
++	{ ListValue,
++		"verb",
++		{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
++		translate("Set output verbosity") },
++	{ Value,
++		"nice",
++		0,
++		translate("Change process priority") },
++	{ Value,
++		"port",
++		1194,
++		translate("TCP/UDP port # for both local and remote") },
++	{ ListValue,
++		"dev_type",
++		{ "tun", "tap" },
++		translate("Type of used device") },
++	{ Value,
++		"ifconfig",
++		"10.200.200.3 10.200.200.1",
++		translate("Set tun/tap adapter parameters") },
++	{ Value,
++		"server",
++		"10.200.200.0 255.255.255.0",
++		translate("Configure server mode") },
++	{ Value,
++		"server_bridge",
++		"192.168.1.1 255.255.255.0 192.168.1.128 192.168.1.254",
++		translate("Configure server bridge") },
++	{ Flag,
++		"nobind",
++		0,
++		translate("Do not bind to local address and port") },
++	{ Value,
++		"keepalive",
++		"10 60",
++		translate("Helper directive to simplify the expression of --ping and --ping-restart in server mode configurations") },
++	{ ListValue,
++		"proto",
++		{ "udp", "tcp-client", "tcp-server" },
++		translate("Use protocol") },
++	{ Flag,
++		"client",
++		0,
++		translate("Configure client mode") },
++	{ Flag,
++		"client_to_client",
++		0,
++		translate("Allow client-to-client traffic") },
++	{ DynamicList,
++		"remote",
++		"vpnserver.example.org",
++		translate("Remote host name or ip address") },
++	{ FileUpload,
++		"secret",
++		"/etc/openvpn/secret.key",
++		translate("Enable Static Key encryption mode (non-TLS)") },
++	{ ListValue,
++		"key_direction",
++		{ 0, 1 },
++		translate("The key direction for 'tls-auth' and 'secret' options") },
++	{ FileUpload,
++		"pkcs12",
++		"/etc/easy-rsa/keys/some-client.pk12",
++		translate("PKCS#12 file containing keys") },
++	{ FileUpload,
++		"ca",
++		"/etc/easy-rsa/keys/ca.crt",
++		translate("Certificate authority") },
++	{ FileUpload,
++		"dh",
++		"/etc/easy-rsa/keys/dh1024.pem",
++		translate("Diffie Hellman parameters") },
++	{ FileUpload,
++		"cert",
++		"/etc/easy-rsa/keys/some-client.crt",
++		translate("Local certificate") },
++	{ FileUpload,
++		"key",
++		"/etc/easy-rsa/keys/some-client.key",
++		translate("Local private key") },
+ }
+ 
+ 
+ local m = Map("openvpn")
+-local p = m:section( SimpleSection )
++m.redirect = luci.dispatcher.build_url("admin", "services", "openvpn")
++m.apply_on_parse = true
+ 
++local p = m:section( SimpleSection )
+ p.template = "openvpn/pageswitch"
+ p.mode     = "basic"
+ p.instance = arg[1]
+@@ -54,14 +107,47 @@
+ 		option[1], option[2],
+ 		option[2], option[4]
+ 	)
+-	
++
+ 	o.optional = true
+ 
+ 	if option[1] == DummyValue then
+ 		o.value = option[3]
++	elseif option[1] == FileUpload then
++
++		function o.cfgvalue(self, section)
++			local cfg_val = AbstractValue.cfgvalue(self, section)
++
++			if cfg_val then
++				return cfg_val
++			end
++		end
++
++		function o.formvalue(self, section)
++			local sel_val = AbstractValue.formvalue(self, section)
++			local txt_val = luci.http.formvalue("cbid."..self.map.config.."."..section.."."..self.option..".textbox")
++
++			if sel_val and sel_val ~= "" then
++				return sel_val
++			end
++
++			if txt_val and txt_val ~= "" then
++				return txt_val
++			end
++		end
++
++		function o.remove(self, section)
++			local cfg_val = AbstractValue.cfgvalue(self, section)
++			local txt_val = luci.http.formvalue("cbid."..self.map.config.."."..section.."."..self.option..".textbox")
++			
++			if cfg_val and fs.access(cfg_val) and txt_val == "" then
++				fs.unlink(cfg_val)
++			end
++			return AbstractValue.remove(self, section)
++		end
++	elseif option[1] == Flag then
++		o.default = nil
+ 	else
+ 		if option[1] == DynamicList then
+-			o.cast = nil
+ 			function o.cfgvalue(...)
+ 				local val = AbstractValue.cfgvalue(...)
+ 				return ( val and type(val) ~= "table" ) and { val } or val
+@@ -88,4 +174,3 @@
+ end
+ 
+ return m
+-
+--- a/feeds/luci/applications/luci-app-openvpn/luasrc/model/cbi/openvpn.lua
++++ b/feeds/luci/applications/luci-app-openvpn/luasrc/model/cbi/openvpn.lua
+@@ -4,7 +4,7 @@
+ local fs  = require "nixio.fs"
+ local sys = require "luci.sys"
+ local uci = require "luci.model.uci".cursor()
+-local testfullps = luci.sys.exec("ps --help 2>&1 | grep BusyBox") --check which ps do we have
++local testfullps = sys.exec("ps --help 2>&1 | grep BusyBox") --check which ps do we have
+ local psstring = (string.len(testfullps)>0) and  "ps w" or  "ps axfw" --set command we use to get pid
+ 
+ local m = Map("openvpn", translate("OpenVPN"))
+@@ -13,9 +13,16 @@
+ s.template_addremove = "openvpn/cbi-select-input-add"
+ s.addremove = true
+ s.add_select_options = { }
+-s.extedit = luci.dispatcher.build_url(
+-	"admin", "services", "openvpn", "basic", "%s"
+-)
++
++local cfg = s:option(DummyValue, "config")
++function cfg.cfgvalue(self, section)
++	local file_cfg = self.map:get(section, "config")
++	if file_cfg then
++		s.extedit = luci.dispatcher.build_url("admin", "services", "openvpn", "file", "%s")
++	else
++		s.extedit = luci.dispatcher.build_url("admin", "services", "openvpn", "basic", "%s")
++	end
++end
+ 
+ uci:load("openvpn_recipes")
+ uci:foreach( "openvpn_recipes", "openvpn_recipe",
+@@ -25,6 +32,15 @@
+ 	end
+ )
+ 
++function s.getPID(section) -- Universal function which returns valid pid # or nil
++	local pid = sys.exec("%s | grep -w '[o]penvpn(%s)'" % { psstring, section })
++	if pid and #pid > 0 then
++		return tonumber(pid:match("^%s*(%d+)"))
++	else
++		return nil
++	end
++end
++
+ function s.parse(self, section)
+ 	local recipe = luci.http.formvalue(
+ 		luci.cbi.CREATE_PREFIX .. self.config .. "." ..
+@@ -43,33 +59,54 @@
+ 		luci.cbi.CREATE_PREFIX .. self.config .. "." ..
+ 		self.sectiontype .. ".select"
+ 	)
+-	name = luci.http.formvalue(
++	local name = luci.http.formvalue(
+ 		luci.cbi.CREATE_PREFIX .. self.config .. "." ..
+ 		self.sectiontype .. ".text"
+ 	)
+-	if string.len(name)>3 and not name:match("[^a-zA-Z0-9_]") then
+-		uci:section(
+-			"openvpn", "openvpn", name,
+-			uci:get_all( "openvpn_recipes", recipe )
+-		)
+-
+-		uci:delete("openvpn", name, "_role")
+-		uci:delete("openvpn", name, "_description")
+-		uci:save("openvpn")
+-
+-		luci.http.redirect( self.extedit:format(name) )
+-	else
++	if #name > 3 and not name:match("[^a-zA-Z0-9_]") then
++		local s = uci:section("openvpn", "openvpn", name)
++		if s then
++			local options = uci:get_all("openvpn_recipes", recipe)
++			for k, v in pairs(options) do
++				if k ~= "_role" and k ~= "_description" then
++					if type(v) == "boolean" then
++						v = v and "1" or "0"
++					end
++					uci:set("openvpn", name, k, v)
++				end
++			end
++			uci:save("openvpn")
++			uci:commit("openvpn")
++			if extedit then
++				luci.http.redirect( self.extedit:format(name) )
++			end
++		end
++	elseif #name > 0 then
+ 		self.invalid_cts = true
+ 	end
++	return 0
+ end
+ 
++function s.remove(self, name)
++	local cfg_file  = "/etc/openvpn/" ..name.. ".ovpn"
++	local auth_file = "/etc/openvpn/" ..name.. ".auth"
++	if fs.access(cfg_file) then
++		fs.unlink(cfg_file)
++	end
++	if fs.access(auth_file) then
++		fs.unlink(auth_file)
++	end
++	uci:delete("openvpn", name)
++	uci:save("openvpn")
++	uci:commit("openvpn")
++end
+ 
+ s:option( Flag, "enabled", translate("Enabled") )
+ 
+ local active = s:option( DummyValue, "_active", translate("Started") )
+ function active.cfgvalue(self, section)
+-	local pid = sys.exec("%s | grep %s | grep openvpn | grep -v grep | awk '{print $1}'" % { psstring,section} )
+-	if pid and #pid > 0 and tonumber(pid) ~= nil then
++	local pid = s.getPID(section)
++	if pid ~= nil then
+ 		return (sys.process.signal(pid, 0))
+ 			and translatef("yes (%i)", pid)
+ 			or  translate("no")
+@@ -83,8 +120,8 @@
+ 	"admin", "services", "openvpn"
+ )
+ function updown.cbid(self, section)
+-	local pid = sys.exec("%s | grep %s | grep openvpn | grep -v grep | awk '{print $1}'" % { psstring,section} )
+-	self._state = pid and #pid > 0 and sys.process.signal(pid, 0)
++	local pid = s.getPID(section)
++	self._state = pid ~= nil and sys.process.signal(pid, 0)
+ 	self.option = self._state and "stop" or "start"
+ 	return AbstractValue.cbid(self, section)
+ end
+@@ -94,26 +131,45 @@
+ end
+ function updown.write(self, section, value)
+ 	if self.option == "stop" then
+-		local pid = sys.exec("%s | grep %s | grep openvpn | grep -v grep | awk '{print $1}'" % { psstring,section} )
+-		sys.process.signal(pid,15)
++		sys.call("/etc/init.d/openvpn stop %s" % section)
+ 	else
+-		luci.sys.call("/etc/init.d/openvpn start %s" % section)
++		sys.call("/etc/init.d/openvpn start %s" % section)
+ 	end
+ 	luci.http.redirect( self.redirect )
+ end
+ 
+-
+ local port = s:option( DummyValue, "port", translate("Port") )
+ function port.cfgvalue(self, section)
+ 	local val = AbstractValue.cfgvalue(self, section)
+-	return val or "1194"
++	if not val then
++		local file_cfg = self.map:get(section, "config")
++		if file_cfg  and fs.access(file_cfg) then
++			val = sys.exec("awk '{if(match(tolower($1),/^port$/)&&match($2,/[0-9]+/)){cnt++;printf $2;exit}}END{if(cnt==0)printf \"-\"}' " ..file_cfg)
++			if val == "-" then
++				val = sys.exec("awk '{if(match(tolower($1),/^remote$/)&&match($3,/[0-9]+/)){cnt++;printf $3;exit}}END{if(cnt==0)printf \"-\"}' " ..file_cfg)
++			end
++		end
++	end
++	return val or "-"
+ end
+ 
+ local proto = s:option( DummyValue, "proto", translate("Protocol") )
+ function proto.cfgvalue(self, section)
+ 	local val = AbstractValue.cfgvalue(self, section)
+-	return val or "udp"
++	if not val then
++		local file_cfg = self.map:get(section, "config")
++		if file_cfg and fs.access(file_cfg) then
++			val = sys.exec("awk '{if(match(tolower($1),/^proto$/)&&match(tolower($2),/^udp[46]*$|^tcp[46]*-server$|^tcp[46]*-client$/)){cnt++;printf tolower($2);exit}}END{if(cnt==0)printf \"-\"}' " ..file_cfg)
++			if val == "-" then
++				val = sys.exec("awk '{if(match(tolower($1),/^remote$/)&&match(tolower($4),/^udp[46]*$|^tcp[46]*-server$|^tcp[46]*-client$/)){cnt++;printf $4;exit}}END{if(cnt==0)printf \"-\"}' " ..file_cfg)
++			end
++		end
++	end
++	return val or "-"
+ end
+ 
++function m.on_after_apply(self,map)
++	sys.call('/etc/init.d/openvpn reload')
++end
+ 
+ return m
+--- a/feeds/luci/applications/luci-app-openvpn/luasrc/view/openvpn/pageswitch.htm
++++ b/feeds/luci/applications/luci-app-openvpn/luasrc/view/openvpn/pageswitch.htm
+@@ -4,27 +4,27 @@
+  Licensed to the public under the Apache License 2.0.
+ -%>
+ 
+-<fieldset class="cbi-section">
+-	<legend>
+-		<a href="<%=luci.dispatcher.build_url("admin", "services", "openvpn")%>"><%:Overview%></a> &raquo;
+-		<%=luci.i18n.translatef("Instance \"%s\"", self.instance)%>
+-	</legend>
++<%+openvpn/ovpn_css%>
+ 
+-	<% if self.mode == "basic" then %>
+-		<a href="<%=luci.dispatcher.build_url("admin", "services", "openvpn", "advanced", self.instance, "Service")%>"><%:Switch to advanced configuration »%></a>
+-	<% else %>
+-		<a href="<%=luci.dispatcher.build_url("admin", "services", "openvpn", "basic", self.instance)%>"><%:« Switch to basic configuration%></a>
+-		<hr style="margin:0.5em 0" />
++<div class="cbi-section">
++	<h3>
++		<a href="<%=luci.dispatcher.build_url('admin/services/openvpn')%>"><%:Overview%></a> &#187;
++		<%=luci.i18n.translatef("Instance \"%s\"", self.instance)%>
++	</h3>
++	<% if self.mode == "basic" then %>
++		<a href="<%=luci.dispatcher.build_url('admin/services/openvpn/advanced', self.instance, "Service")%>"><%:Switch to advanced configuration%> &#187;</a><p/>
++		<hr />
++	<% elseif self.mode == "advanced" then %>
++		<a href="<%=luci.dispatcher.build_url('admin/services/openvpn/basic', self.instance)%>"><%:Switch to basic configuration%> &#187;</a><p/>
++		<hr />
+ 		<%:Configuration category%>:
+ 		<% for i, c in ipairs(self.categories) do %>
+ 			<% if c == self.category then %>
+ 				<strong><%=translate(c)%></strong>
+ 			<% else %>
+-				<a href="<%=luci.dispatcher.build_url(
+-					"admin", "services", "openvpn", "advanced", self.instance, c
+-				)%>"><%=translate(c)%></a>
++				<a href="<%=luci.dispatcher.build_url("admin", "services", "openvpn", "advanced", self.instance, c)%>"><%=translate(c)%></a>
+ 			<% end %>
+ 			<% if next(self.categories, i) then %>|<% end %>
+ 		<% end %>
+ 	<% end %>
+-</fieldset>
++</div>
+--- a/feeds/luci/applications/luci-app-openvpn/root/etc/config/openvpn_recipes
++++ b/feeds/luci/applications/luci-app-openvpn/root/etc/config/openvpn_recipes
+@@ -2,101 +2,93 @@
+ # Routed point-to-point server
+ #
+ config openvpn_recipe server_tun_ptp
+-	option _description		"Simple server configuration for a routed point-to-point VPN"
+-	option _role			"server"
+-	option dev			"tun"
+-	option ifconfig			"10.0.0.1 10.0.0.2"
+-	option secret			"shared-secret.key"
+-	option keepalive		"10 60"
+-	option comp_lzo			"yes"
+-	option verb			"3"
+-        option mssfix			"1420"
+-
++	option _description	'Simple server configuration for a routed point-to-point VPN'
++	option _role		'server'
++	option dev		'tun'
++	option ifconfig		'10.0.0.1 10.0.0.2'
++	option secret		'shared-secret.key'
++	option keepalive	'10 60'
++	option verb		'3'
++	option mssfix		'1420'
+ #
+ # Routed point-to-point client
+ #
+ config openvpn_recipe client_tun_ptp
+-	option _description		"Simple client configuration for a routed point-to-point VPN"
+-	option _role			"client"
+-	option dev			"tun"
+-	list   remote			"vpnserver.example.org"
+-	option ifconfig			"10.0.0.2 10.0.0.1"
+-	option secret			"shared-secret.key"
+-	option nobind			"1"
+-	option comp_lzo			"yes"
+-	option verb			"3"
++	option _description	'Simple client configuration for a routed point-to-point VPN'
++	option _role		'client'
++	option dev		'tun'
++	list remote		'vpnserver.example.org'
++	option ifconfig		'10.0.0.2 10.0.0.1'
++	option secret		'shared-secret.key'
++	option nobind		'1'
++	option verb		'3'
+ 
+ #
+ # Routed multi-client server
+ #
+ config openvpn_recipe server_tun
+-	option _description		"Server configuration for a routed multi-client VPN"
+-	option _role			"server"
+-	option dev			"tun"
+-	option server			"10.0.100.0 255.255.255.0"
+-	option ca			"ca.crt"
+-	option cert			"server.crt"
+-	option key 			"server.key"
+-	option dh 			"dh1024.pem"
+-	option keepalive		"10 60"
+-	option comp_lzo			"yes"
+-	option verb			"3"
+-        option mssfix			"1420"
++	option _description	'Server configuration for a routed multi-client VPN'
++	option _role		'server'
++	option dev		'tun'
++	option server		'10.0.100.0 255.255.255.0'
++	option ca		'ca.crt'
++	option cert		'server.crt'
++	option key 		'server.key'
++	option dh 		'dh1024.pem'
++	option keepalive	'10 60'
++	option verb		'3'
++	option mssfix		'1420'
+ 
+ #
+ # Routed client
+ #
+ config openvpn_recipe client_tun
+-	option _description		"Client configuration for a routed multi-client VPN"
+-	option _role			"client"
+-	option client			"1"
+-	option dev			"tun"
+-	list   remote			"vpnserver.example.org"
+-	option pkcs12			"my_client.p12"
+-	option remote_cert_tls		"server"
+-	option comp_lzo			"yes"
+-	option nobind			"1"
+-	option persist_key		"1"
+-	option persist_tun		"1"
+-	option verb			"3"
+-	option reneg_sec		"0"
+-	option float			"1"
++	option _description	'Client configuration for a routed multi-client VPN'
++	option _role		'client'
++	option client		'1'
++	option dev		'tun'
++	list remote		'vpnserver.example.org'
++	option pkcs12		'my_client.p12'
++	option remote_cert_tls	'server'
++	option nobind		'1'
++	option persist_key	'1'
++	option persist_tun	'1'
++	option verb		'3'
++	option reneg_sec	'0'
++	option float		'1'
+ 
+ #
+ # Multi-client ethernet bridge server
+ #
+ config openvpn_recipe server_tap_bridge
+-	option _description		"Server configuration for an ethernet bridge VPN"
+-	option _role			"server"
+-	option dev			"tap"
+-	option server_bridge		"192.168.1.1 255.255.255.0 192.168.1.128 192.168.1.254"
+-	option ca			"ca.crt"
+-	option cert			"server.crt"
+-	option key 			"server.key"
+-	option dh 			"dh1024.pem"
+-	option keepalive		"10 60"
+-	option comp_lzo			"yes"
+-	option verb			"3"
+-        option mssfix			"1420"
++	option _description	'Server configuration for an ethernet bridge VPN'
++	option _role		'server'
++	option dev		'tap'
++	option server_bridge	'192.168.1.1 255.255.255.0 192.168.1.128 192.168.1.254'
++	option ca		'ca.crt'
++	option cert		'server.crt'
++	option key 		'server.key'
++	option dh 		'dh1024.pem'
++	option keepalive	'10 60'
++	option verb		'3'
++	option mssfix		'1420'
+ 
+ #
+ # Ethernet bridge client
+ #
+ config openvpn_recipe client_tap_bridge
+-	option _description		"Client configuration for an ethernet bridge VPN"
+-	option _role			"client"
+-	option client			"1"
+-	option dev 			"tap"
+-	list   remote			"vpnserver.example.org"
+-	option ca 			"ca.crt"
+-	option cert			"my_client.crt"
+-	option key 			"my_client.key"
+-	option dh 			"dh1024.pem"
+-	option remote_cert_tls		"server"
+-	option comp_lzo			"yes"
+-	option nobind			"1"
+-	option persist_key		"1"
+-	option verb			"3"
+-	option reneg_sec		"0"
+-	option float			"1"
+-
++	option _description	'Client configuration for an ethernet bridge VPN'
++	option _role		'client'
++	option client		'1'
++	option dev 		'tap'
++	list remote		'vpnserver.example.org'
++	option ca 		'ca.crt'
++	option cert		'my_client.crt'
++	option key 		'my_client.key'
++	option dh 		'dh1024.pem'
++	option remote_cert_tls	'server'
++	option nobind		'1'
++	option persist_key	'1'
++	option verb		'3'
++	option reneg_sec	'0'
++	option float		'1'
+--- a/feeds/luci/applications/luci-app-openvpn/luasrc/view/openvpn/cbi-select-input-add.htm
++++ b/feeds/luci/applications/luci-app-openvpn/luasrc/view/openvpn/cbi-select-input-add.htm
+@@ -1,11 +1,101 @@
+-<div class="cbi-section-create">
+-	<% if self.invalid_cts then -%><div class="cbi-section-error"><% end %>
+-	<input type="text" class="cbi-section-create-name" name="cbi.cts.<%=self.config%>.<%=self.sectiontype%>.text" />
+-	<select class="cbi-section-create-name" name="cbi.cts.<%=self.config%>.<%=self.sectiontype%>.select">
+-	<%- for k, v in luci.util.kspairs(self.add_select_options) do %>
+-		<option value="<%=k%>"><%=luci.util.pcdata(v)%></option>
+-	<% end -%>
+-	</select>
+-	<input class="cbi-button cbi-button-add" type="submit" value="<%:Add%>" title="<%:Add%>" />
+-	<% if self.invalid_cts then %><br /><%:Invalid%></div><% end %>
++
++<script type="text/javascript">
++//<![CDATA[
++	function vpn_add()
++	{
++		var vpn_name     = div_add.querySelector("#instance_name1").value.replace(/[^\x00-\x7F]|[\s!@#$%^&*()\-+=\[\]{};':"\\|,<>\/?]/g,'');
++		var vpn_template = div_add.querySelector("#instance_template").value;
++		var form         = document.getElementsByName('cbi')[0];
++		if (!vpn_name || !vpn_name.length)
++		{
++			return info_message(vpn_output, "<%=pcdata(translate("The 'Name' field must not be empty!"))%>", 2000);
++		}
++		document.getElementById("instance_name1").value = vpn_name;
++		if (document.getElementById("cbi-openvpn-" + vpn_name) != null)
++		{
++			return info_message(vpn_output, "<%=pcdata(translate("Instance with that name already exists!"))%>", 2000);
++		}
++		if (!vpn_template || !vpn_template.length)
++		{
++			return info_message(vpn_output, "<%=pcdata(translate("Please select a valid VPN template!"))%>", 2000);
++		}
++		if (form)
++		{
++			form.submit();
++		}
++	}
++	function vpn_upload()
++	{
++		var vpn_name = div_upload.querySelector("#instance_name2").value.replace(/[^\x00-\x7F]|[\s!@#$%^&*()\-+=\[\]{};':"\\|,<>\/?]/g,'');
++		var vpn_file = document.getElementById("ovpn_file").value;
++		var form     = document.getElementsByName('cbi')[0];
++		if (!vpn_name || !vpn_name.length)
++		{
++			return info_message(vpn_output, "<%=pcdata(translate("The 'Name' field must not be empty!"))%>", 2000);
++		}
++		document.getElementById("instance_name2").value = vpn_name;
++		if (document.getElementById("cbi-openvpn-" + vpn_name) != null)
++		{
++			return info_message(vpn_output, "<%=pcdata(translate("Instance with that name already exists!"))%>", 2000);
++		}
++		if (!vpn_file || !vpn_file.length)
++		{
++			return info_message(vpn_output, "<%=pcdata(translate("Please select a valid OVPN config file to upload!"))%>", 2000);
++		}
++		if (form)
++		{
++			form.enctype = 'multipart/form-data';
++			form.action  = '<%=luci.dispatcher.build_url('admin/services/openvpn/upload')%>';
++			form.submit();
++		}
++	}
++	function info_message(output, msg, timeout)
++	{
++		timeout = timeout || 0;
++		output.innerHTML = '<em>' + msg + '</em>';
++		if (timeout > 0)
++		{
++			setTimeout(function(){ output.innerHTML=""}, timeout);
++		}
++	}
++//]]>
++</script>
++
++<%+openvpn/ovpn_css%>
++
++<div class="cbi-section-node">
++	<div class="table cbi-section-table">
++		<h4><%:Template based configuration%></h4>
++		<div class="tr cbi-section-table-row" id="div_add">
++			<div class="td left">
++				<input type="text" maxlength="20" placeholder="Instance name" name="cbi.cts.<%=self.config%>.<%=self.sectiontype%>.text" id="instance_name1" />
++			</div>
++			<div class="td left">
++				<select id="instance_template" name="cbi.cts.<%=self.config%>.<%=self.sectiontype%>.select">
++					<option value="" selected="selected" disabled="disabled"><%:Select template ...%></option>
++					<%- for k, v in luci.util.kspairs(self.add_select_options) do %>
++						<option value="<%=k%>"><%=luci.util.pcdata(v)%></option>
++					<% end -%>
++				</select>
++			</div>
++			<div class="td left">
++				<input class="cbi-button cbi-button-add" type="submit" onclick="vpn_add(); return false;" value="<%:Add%>" title="<%:Add template based configuration%>" /><br />
++			</div>
++		</div>
++		<h4><%:OVPN configuration file upload%></h4>
++		<div class="tr cbi-section-table-row" id="div_upload">
++			<div class="td left">
++				<input type="text" maxlength="20" placeholder="Instance name" name="instance_name2" id="instance_name2" />
++			</div>
++			<div class="td left">
++				<input type="file" name="ovpn_file" id="ovpn_file" accept="application/x-openvpn-profile,.ovpn" />
++			</div>
++			<div class="td left">
++				<input class="cbi-button cbi-button-add" type="submit" onclick="vpn_upload(); return false;" value="<%:Upload%>" title="<%:Upload ovpn file%>" />
++			</div>
++		</div>
++	</div>
++	<div class="vpn-output">
++		<span id="vpn_output"></span>
++	</div>
+ </div>
+--- /dev/null
++++ b/feeds/luci/applications/luci-app-openvpn/luasrc/view/openvpn/ovpn_css.htm
+@@ -0,0 +1,38 @@
++<style type="text/css">
++	h4
++	{
++		white-space: nowrap;
++		border-bottom: 0px;
++		margin: 10px 5px 5px 5px;
++	}
++	.tr
++	{
++		border: 0px;
++		text-align: left;
++	}
++	.vpn-output
++	{
++		box-shadow: none;
++		margin: 10px 5px 5px 5px;
++		color: #a22;
++	}
++	textarea
++	{
++		border: 1px solid #cccccc;
++		padding: 5px;
++		font-size: 12px;
++		font-family: monospace;
++		resize: none;
++		white-space: pre;
++		overflow-wrap: normal;
++		overflow-x: scroll;
++	}
++	a
++	{
++		line-height: 1.5;
++	}
++	hr
++	{
++		margin: 0.5em 0;
++	}
++</style>
+
