@@ -1,6 +1,6 @@
 --- a/dma.c
 +++ b/dma.c
-@@ -356,7 +356,7 @@
+@@ -358,7 +358,7 @@
  }
  
  static int
@@ -9,10 +9,10 @@
  {
  	dma_addr_t addr;
  	void *buf;
-@@ -364,13 +364,19 @@
+@@ -365,13 +365,19 @@
+ 	int frames = 0;
  	int len = SKB_WITH_OVERHEAD(q->buf_size);
  	int offset = q->buf_offset;
- 	int idx;
 +	void *(*alloc)(unsigned int fragsz);
 +	
 +	if (napi)
