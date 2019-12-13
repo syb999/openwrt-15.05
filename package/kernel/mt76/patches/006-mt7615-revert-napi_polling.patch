@@ -28,7 +28,7 @@
  		mt76_queue_tx_cleanup(dev, queue_map[i], false);
  
 -	mt7615_mac_sta_poll(dev);
-+	mt76_txq_schedule_all(&dev->mt76);
++	mt76_txq_schedule_all(&dev->mphy);
  
 -	tasklet_schedule(&dev->mt76.tx_tasklet);
 -

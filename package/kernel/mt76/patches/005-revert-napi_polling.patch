@@ -51,7 +51,7 @@
  
 -	if (napi_complete_done(napi, 0))
 -		mt7603_irq_enable(dev, MT_INT_TX_DONE_ALL);
-+	mt76_txq_schedule_all(&dev->mt76);
++	mt76_txq_schedule_all(&dev->mphy);
  
 -	for (i = MT_TXQ_MCU; i >= 0; i--)
 -		mt76_queue_tx_cleanup(dev, i, false);
@@ -113,7 +113,7 @@
 -	mt76x02_mac_poll_tx_status(dev, false);
  	mt76x02_process_tx_status_fifo(dev);
  
- 	mt76_txq_schedule_all(&dev->mt76);
+ 	mt76_txq_schedule_all(&dev->mphy);
 -}
  
 -static int mt76x02_poll_tx(struct napi_struct *napi, int budget)
@@ -135,7 +135,7 @@
 +	mt76x02_mac_poll_tx_status(dev, false);
  
 -	tasklet_schedule(&dev->mt76.tx_tasklet);
-+	mt76_txq_schedule_all(&dev->mt76);
++	mt76_txq_schedule_all(&dev->mphy);
  
 -	return 0;
 +	mt76x02_irq_enable(dev, MT_INT_TX_DONE_ALL);
