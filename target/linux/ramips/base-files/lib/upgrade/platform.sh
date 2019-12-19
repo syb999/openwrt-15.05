@@ -139,15 +139,9 @@ platform_check_image() {
 	psg1208 |\
 	psg1218 |\
 	ghl |\
+	jdcloud-1 |\
 	youku-yk1)
 		[ "$magic" != "27051956" ] && {
-			echo "Invalid image type."
-			return 1
-		}
-		return 0
-		;;
-	jdcloud-1)
-		[ "$magic" != "27983872" ] && {
 			echo "Invalid image type."
 			return 1
 		}

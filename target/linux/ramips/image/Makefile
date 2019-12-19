@@ -967,7 +967,7 @@ endef
 
 define Device/jdcloud-1
   DTS := JDC-1
-  IMAGE_SIZE := 27328k
+  IMAGE_SIZE := $(ralink_default_fw_size_32M)
 endef
 
 #
