@@ -7,6 +7,7 @@
 
 define Profile/RE6500
 	NAME:=Linksys RE6500
+	PACKAGES:=kmod-mt7603 kmod-mt76x2
 endef
 
 define Profile/RE6500/Description

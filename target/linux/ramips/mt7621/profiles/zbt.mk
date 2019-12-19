@@ -10,7 +10,7 @@ define Profile/ZBT-WG2626
 	PACKAGES:=\
 		kmod-usb-core kmod-usb3 kmod-sdhci-mt7620 \
 		kmod-ledtrig-usbdev kmod-ata-core kmod-ata-ahci \
-		kmod-usb3-mt7621
+		kmod-usb3-mt7621 kmod-mt7603 kmod-mt76x2
 endef
 
 define Profile/ZBT-WG2626/Description
