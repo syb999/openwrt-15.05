@@ -966,7 +966,7 @@ define Device/ghl
 endef
 
 define Device/jdcloud-1
-  DTS := JDC-1
+  DTS := JDCloud-1
   IMAGE_SIZE := $(ralink_default_fw_size_32M)
 endef
 
