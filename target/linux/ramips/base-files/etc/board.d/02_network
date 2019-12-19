@@ -283,6 +283,13 @@ ramips_setup_interfaces()
 		ucidef_add_switch_vlan "switch0" "2" "4 6t"
 		;;
 
+	jdcloud-1)
+		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
+		ucidef_add_switch "switch0" "1" "1"
+		ucidef_add_switch_vlan "switch0" "1" "1 2 6t"
+		ucidef_add_switch_vlan "switch0" "2" "0 6t"
+		;;
+
 	d105 | \
 	na930 | \
 	omni-emb-hpm|\
@@ -380,6 +387,11 @@ ramips_setup_macs()
 	ghl)
 		lan_mac=$(mtd_get_mac_binary factory 57344)
 		wan_mac=$(macaddr_add "$lan_mac" 1)
+		;;
+
+	jdcloud-1)
+		lan_mac=$(mtd_get_mac_binary factory 4)
+		wan_mac=$(mtd_get_mac_binary factory 28)
 		;;
 
 	psg1208 | \

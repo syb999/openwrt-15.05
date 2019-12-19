@@ -430,6 +430,9 @@ ramips_board_detect() {
 	*"GHL-R-001")
 		name="ghl"
 		;;
+	*"JDCloud-1")
+		name="jdcloud-1"
+		;;
 	*"Mediatek MT7621 evaluation board")
 		name="mt7621"
 		;;

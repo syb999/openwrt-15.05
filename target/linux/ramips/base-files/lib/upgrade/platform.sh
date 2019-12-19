@@ -146,6 +146,13 @@ platform_check_image() {
 		}
 		return 0
 		;;
+	jdcloud-1)
+		[ "$magic" != "27983872" ] && {
+			echo "Invalid image type."
+			return 1
+		}
+		return 0
+		;;
 	wsr-1166)
 		[ "$magic" != "48445230" ] && {
 			echo "Invalid image type."
