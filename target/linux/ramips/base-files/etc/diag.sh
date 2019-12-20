@@ -264,6 +264,9 @@ get_status_led() {
 	psg1218)
 		status_led="psg1218:blue:status"
 		;;
+	jdcloud-1)
+		status_led="jdcloud:blue:sysb"
+		;;
 	zbt-wg2626)
 		status_led="zbt-wg2626:green:status"
 		;;
