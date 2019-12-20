@@ -102,21 +102,21 @@
  struct mt76_sw_queue {
 --- a/mac80211.c
 +++ b/mac80211.c
-@@ -506,9 +506,6 @@
- 	survey->filled |= dev->drv->survey_flags;
- 	if (chan == phy->main_chan) {
+@@ -624,7 +624,7 @@
  		survey->filled |= SURVEY_INFO_IN_USE;
--
--		if (dev->drv->drv_flags & MT_DRV_SW_RX_AIRTIME)
+ 
+ 		if (dev->drv->drv_flags & MT_DRV_SW_RX_AIRTIME)
 -			survey->filled |= SURVEY_INFO_TIME_BSS_RX;
++			survey->filled |= SURVEY_INFO_TIME_RX;
  	}
  
  	survey->time_busy = div_u64(state->cc_busy, 1000);
-@@ -513,7 +510,6 @@
- 	survey->time = div_u64(state->cc_active, 1000);
+@@ -633,7 +633,7 @@
+ 	survey->noise = state->noise;
  
  	spin_lock_bh(&dev->cc_lock);
 -	survey->time_bss_rx = div_u64(state->cc_bss_rx, 1000);
++	survey->time_rx = div_u64(state->cc_rx, 1000);
  	survey->time_tx = div_u64(state->cc_tx, 1000);
  	spin_unlock_bh(&dev->cc_lock);
  
