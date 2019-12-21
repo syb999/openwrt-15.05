@@ -8,7 +8,22 @@ sudo apt-get install build-essential asciidoc binutils bzip2 gawk gettext git su
 sudo apt-get install libc6:i386 libgcc1:i386 libstdc++5:i386 libstdc++6:i386
 
 ./scripts/feeds update -a
+
 ./scripts/feeds install -a
+
+patch -p1 < 01-rssi-luci.patch
+
+patch -p1 < 02-80211rw-luci.patch
+
+patch -p1 < 03-igmp-luci.patch
+
+patch -p1 < 04-fix-wget.patch
+
+patch -p1 < 05-mtd-backup-luci.patch
+
+patch -p1 < 06-openvpn-luci.patch
+
+patch -p1 < 07-dnscachesize-luci.patch
 
 make menuconfig
 
