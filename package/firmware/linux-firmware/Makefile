@@ -8,18 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=linux-firmware
-PKG_SOURCE_VERSION:=52442afee9907bc32a058f22bb3295d040677c26
-PKG_VERSION:=2016-01-25-$(PKG_SOURCE_VERSION)
+PKG_VERSION:=20191215
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=@KERNEL/linux/kernel/firmware
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_SOURCE_VERSION)
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
-PKG_SOURCE_URL:=git://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git
-PKG_MIRROR_MD5SUM:=ca4d289ad9380471cae376fc7dd3660a
+PKG_MD5SUM:=918e4f463fd7650a88655e484a5ffbd4
 
-PKG_MAINTAINER:=Felix Fietkau <nbd@openwrt.org>
+PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
 
 SCAN_DEPS = *.mk
 
