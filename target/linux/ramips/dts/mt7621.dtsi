@@ -3,6 +3,10 @@
 	#size-cells = <1>;
 	compatible = "mediatek,mtk7621-soc";
 
+	aliases {
+		serial0 = &uartlite;
+	};
+
 	cpus {
 		cpu@0 {
 			compatible = "mips,mips1004Kc";
@@ -72,7 +76,7 @@
 			reg = <0x300 0x100>;
 		};
 
-		uartlite@c00 {
+		uartlite: uartlite@c00  {
 			compatible = "ns16550a";
 			reg = <0xc00 0x100>;
 
