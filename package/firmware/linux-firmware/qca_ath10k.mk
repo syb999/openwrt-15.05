@@ -43,7 +43,7 @@ define Package/ath10k-firmware-qca9888/install
 		$(PKG_BUILD_DIR)/ath10k/QCA9888/hw2.0/firmware-5.bin \
 		$(1)/lib/firmware/ath10k/QCA9888/hw2.0/firmware-5.bin
 endef
-$(eval $(call BuildPackage,ath10k-firmware-qca9888))
+#$(eval $(call BuildPackage,ath10k-firmware-qca9888))
 
 Package/ath10k-firmware-qca988x = $(call Package/firmware-default,ath10k qca988x firmware)
 define Package/ath10k-firmware-qca988x/install
