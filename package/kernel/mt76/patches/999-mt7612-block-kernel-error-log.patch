@@ -1,0 +1,12 @@
+--- a/mt76x02_mac.c
++++ b/mt76x02_mac.c
+@@ -839,9 +839,6 @@
+ 		}
+ 	}
+ 
+-	if (WARN_ON_ONCE(len > skb->len))
+-		return -EINVAL;
+-
+ 	pskb_trim(skb, len);
+ 
+ 	status->chains = BIT(0);
