@@ -18,12 +18,3 @@ Subject: [PATCH 41/57] mtd: fix cfi cmdset 0002 erase status check
  			break;
  
  		if (time_after(jiffies, timeo)) {
-@@ -2383,7 +2383,7 @@ static int __xipram do_erase_oneblock(st
- 			chip->erase_suspended = 0;
- 		}
- 
--		if (chip_ready(map, adr)) {
-+		if (chip_good(map, adr, map_word_ff(map))) {
- 			xip_enable(map, chip, adr);
- 			break;
- 		}
