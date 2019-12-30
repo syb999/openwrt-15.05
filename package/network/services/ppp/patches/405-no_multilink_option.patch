@@ -5,11 +5,11 @@ the multilink specific code. The motivation is to allow "nomp" even if pppd
 does not support multilink, so that controlling programs can unconditionally
 pass it to pppd regardless of the compile time features.
 
-Signed-off-by: Jo-Philipp Wich <jo@mein.io>
+Signed-off-by: Jo-Philipp Wich <jow@openwrt.org>
 
 --- a/pppd/options.c
 +++ b/pppd/options.c
-@@ -350,13 +350,14 @@ option_t general_options[] = {
+@@ -336,13 +336,14 @@ option_t general_options[] = {
        "Enable multilink operation", OPT_PRIOSUB | OPT_ALIAS | 1 },
      { "nomultilink", o_bool, &multilink,
        "Disable multilink operation", OPT_PRIOSUB | 0 },

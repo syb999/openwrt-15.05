@@ -3,11 +3,11 @@ pppd: Remove the "record" option
 On many embedded systems there is not enough space to record PPP session
 information to the permanent storage, therfore remove this option.
 
-Signed-off-by: Jo-Philipp Wich <jo@mein.io>
+Signed-off-by: Jo-Philipp Wich <jow@openwrt.org>
 
 --- a/pppd/pppd.h
 +++ b/pppd/pppd.h
-@@ -326,7 +326,6 @@ extern int	holdoff;	/* Dead time before
+@@ -317,7 +317,6 @@ extern int	holdoff;	/* Dead time before
  extern bool	holdoff_specified; /* true if user gave a holdoff value */
  extern bool	notty;		/* Stdin/out is not a tty */
  extern char	*pty_socket;	/* Socket to connect to pty */

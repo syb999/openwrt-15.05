@@ -3,7 +3,7 @@ pppd: tune Linux config defaults for OpenWrt
 This patch adjusts a number defaults to properly match the OpenWrt environment.
 It is not intended for upstream.
 
-Signed-off-by: Jo-Philipp Wich <jo@mein.io>
+Signed-off-by: Jo-Philipp Wich <jow@openwrt.org>
 
 --- a/pppd/Makefile.linux
 +++ b/pppd/Makefile.linux
@@ -23,9 +23,9 @@ Signed-off-by: Jo-Philipp Wich <jo@mein.io>
 -USE_TDB=y
 +#USE_TDB=y
  
- # Uncomment the next line to enable Type=notify services in systemd
- # If enabled, and the user sets the up_sdnotify option, then
-@@ -85,7 +85,7 @@ MAXOCTETS=y
+ HAS_SHADOW=y
+ #USE_PAM=y
+@@ -80,7 +80,7 @@ MAXOCTETS=y
  
  INCLUDE_DIRS= -I../include
  
@@ -34,7 +34,7 @@ Signed-off-by: Jo-Philipp Wich <jo@mein.io>
  
  CFLAGS= $(COPTS) $(COMPILE_FLAGS) $(INCLUDE_DIRS) '-DDESTDIR="@DESTDIR@"'
  
-@@ -125,10 +125,10 @@ CFLAGS   += -DHAS_SHADOW
+@@ -120,10 +120,10 @@ CFLAGS   += -DHAS_SHADOW
  #LIBS     += -lshadow $(LIBS)
  endif
  

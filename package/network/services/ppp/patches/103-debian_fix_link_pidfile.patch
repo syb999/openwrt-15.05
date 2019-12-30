@@ -7,11 +7,11 @@ linkpidfile[0] but this is only filled in when create_linkpidfile() is called.
 This patch changes to code to allways uncondiationally call
 create_linkpidfile(), it originated from the Debian project.
 
-Signed-off-by: Jo-Philipp Wich <jo@mein.io>
+Signed-off-by: Jo-Philipp Wich <jow@openwrt.org>
 
 --- a/pppd/main.c
 +++ b/pppd/main.c
-@@ -768,8 +768,7 @@ detach()
+@@ -773,8 +773,7 @@ detach()
  	/* update pid files if they have been written already */
  	if (pidfilename[0])
  	    create_pidfile(pid);
