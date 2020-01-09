@@ -1,0 +1,2 @@
+Makefile:15: /home/syb/656/openwrt-15.05/feeds/luci/luci.mk: No such file or directory
+make[2]: *** No rule to make target '/home/syb/656/openwrt-15.05/feeds/luci/luci.mk'.  Stop.
