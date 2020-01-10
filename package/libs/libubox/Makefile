@@ -1,14 +1,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libubox
-PKG_VERSION:=2018-07-25
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
+PKG_VERSION:=2019-12-28
+PKG_RELEASE=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://git.openwrt.org/project/libubox.git
+PKG_SOURCE_URL=https://git.openwrt.org/project/libubox.git
+PKG_MD5SUM:=8a1a48a9ea91e0fb63646335618871a4
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_SOURCE_VERSION:=c83a84afbef2b24f960ddeda0b5e2ab01fba6981
+PKG_SOURCE_VERSION:=cd75136b1342e1e9dabf921be13240c6653640ed
 CMAKE_INSTALL:=1
 
 PKG_LICENSE:=ISC
@@ -17,7 +18,7 @@ PKG_LICENSE_FILES:=
 PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
 
 PKG_BUILD_DEPENDS:=lua
-HOST_BUILD_DEPENDS:=libjson-c/host
+HOST_BUILD_DEPENDS:=libjson-c
 HOST_BUILD_PREFIX:=$(STAGING_DIR_HOST)
 
 include $(INCLUDE_DIR)/package.mk
@@ -28,7 +29,7 @@ define Package/libubox
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Basic utility library
-  ABI_VERSION:=$(PKG_VERSION)
+  ABI_VERSION:=20191228
   DEPENDS:=
 endef
 
