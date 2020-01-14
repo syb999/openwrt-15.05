@@ -25,6 +25,8 @@ patch -p1 < 06-openvpn-luci.patch
 
 patch -p1 < 07-dnscachesize-luci.patch
 
+patch -p1 < 08-libssh2.patch
+
 make menuconfig
 
 make V=99
