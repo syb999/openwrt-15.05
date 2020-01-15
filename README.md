@@ -27,6 +27,8 @@ patch -p1 < 07-dnscachesize-luci.patch
 
 patch -p1 < 08-libssh2.patch
 
+patch -p1 < 09-asterisk1.8.patch
+
 make menuconfig
 
 make V=99
