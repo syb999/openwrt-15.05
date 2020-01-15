@@ -1,0 +1,48 @@
+--- /dev/null
++++ b/feeds/telephony/net/asterisk-1.8.x/patches/999-support-openssl1.1.1.patch
+@@ -0,0 +1,45 @@
++--- a/main/tcptls.c
+++++ b/main/tcptls.c
++@@ -398,11 +398,6 @@
++ 					SSL_get_error(stream->ssl, res));
++ 			}
++ 
++-			if (!stream->ssl->server) {
++-				/* For client threads, ensure that the error stack is cleared */
++-				ERR_remove_state(0);
++-			}
++-
++ 			SSL_free(stream->ssl);
++ 			stream->ssl = NULL;
++ 		}
++@@ -762,21 +757,28 @@
++ 	}
++ 
++ 	if (client) {
++-#ifndef OPENSSL_NO_SSL2
+++#if !defined(OPENSSL_NO_SSL2) && (OPENSSL_VERSION_NUMBER < 0x10100000L)
++ 		if (ast_test_flag(&cfg->flags, AST_SSL_SSLV2_CLIENT)) {
++ 			ast_log(LOG_WARNING, "Usage of SSLv2 is discouraged due to known vulnerabilities. Please use 'tlsv1' or leave the TLS method unspecified!\n");
++ 			cfg->ssl_ctx = SSL_CTX_new(SSLv2_client_method());
++ 		} else
++ #endif
+++#if !defined(OPENSSL_NO_SSL3_METHOD) && !(defined(OPENSSL_API_COMPAT) && (OPENSSL_API_COMPAT >= 0x10100000L))
++ 		if (ast_test_flag(&cfg->flags, AST_SSL_SSLV3_CLIENT)) {
++ 			ast_log(LOG_WARNING, "Usage of SSLv3 is discouraged due to known vulnerabilities. Please use 'tlsv1' or leave the TLS method unspecified!\n");
++ 			cfg->ssl_ctx = SSL_CTX_new(SSLv3_client_method());
++-		} else if (ast_test_flag(&cfg->flags, AST_SSL_TLSV1_CLIENT)) {
+++		} else
+++#endif
+++#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+++		cfg->ssl_ctx = SSL_CTX_new(TLS_client_method());
+++#else
+++		if (ast_test_flag(&cfg->flags, AST_SSL_TLSV1_CLIENT)) {
++ 			cfg->ssl_ctx = SSL_CTX_new(TLSv1_client_method());
++ 		} else {
++ 			disable_ssl = 1;
++ 			cfg->ssl_ctx = SSL_CTX_new(SSLv23_client_method());
++ 		}
+++#endif
++ 	} else {
++ 		disable_ssl = 1;
++ 		cfg->ssl_ctx = SSL_CTX_new(SSLv23_server_method());
