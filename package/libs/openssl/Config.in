@@ -64,7 +64,7 @@ config OPENSSL_NO_DEPRECATED
 
 config OPENSSL_WITH_ERROR_MESSAGES
 	bool
-	default y if !SMALL_FLASH && !LOW_MEMORY_FOOTPRINT
+	default n
 	prompt "Include error messages"
 	help
 		This option aids debugging, but increases package size and
