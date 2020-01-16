@@ -29,6 +29,8 @@ patch -p1 < 08-libssh2.patch
 
 patch -p1 < 09-asterisk1.8.patch
 
+patch -p1 < 10-asterisk11.patch
+
 make menuconfig
 
 make V=99
