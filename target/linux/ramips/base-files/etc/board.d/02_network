@@ -150,12 +150,18 @@ ramips_setup_interfaces()
 	youku-yk1|\
 	psg1208|\
 	psg1218|\
-	hc5962|\
 	zbt-we1326|\
 	zbt-wg2626)
 		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
 		ucidef_add_switch "switch0" "1" "1"
 		ucidef_add_switch_vlan "switch0" "1" "0 1 2 3 6t"
+		ucidef_add_switch_vlan "switch0" "2" "4 6t"
+		;;
+
+	hc5962)
+		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
+		ucidef_add_switch "switch0" "1" "1"
+		ucidef_add_switch_vlan "switch0" "1" "1 2 3 6t"
 		ucidef_add_switch_vlan "switch0" "2" "4 6t"
 		;;
 
@@ -406,8 +412,7 @@ ramips_setup_macs()
 		;;
 
 	hc5962)
-		lan_mac=`mtd_get_mac_ascii bdinfo "Vfac_mac "`
-		[ -n "$lan_mac" ] || lan_mac=$(cat /sys/class/net/eth0/address)
+		lan_mac=$(mtd_get_mac_binary factory 57344)
 		wan_mac=$(macaddr_add "$lan_mac" 1)
 		;;
 
