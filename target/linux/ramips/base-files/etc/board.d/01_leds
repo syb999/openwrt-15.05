@@ -189,8 +189,8 @@ case $board in
 		ucidef_set_led_default "sys" "sys" "pbr-m1:green:sys" "1"
 		;;
 	hc5962)
-		ucidef_set_led_default "system" "system" "hc5962:white:system" "1"
-		ucidef_set_led_netdev "status" "status" "hc5962:red:wifi" "wlan0"
+		ucidef_set_led_default "system" "system" "hc5962:red:system" "1"
+		ucidef_set_led_netdev "status" "status" "hc5962:white:wifi" "wlan0"
 		;;
 	sl-r7205)
 		set_wifi_led "rt2800pci-phy0::radio"

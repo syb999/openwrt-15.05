@@ -90,13 +90,13 @@
 	gpio-leds {
 		compatible = "gpio-leds";
 
-		system {
-			label = "hc5962:white:system";
+		wifi {
+			label = "hc5962:white:wifi";
 			gpios = <&gpio0 6 1>;
 		};	
 		
-		wifi {
-			label = "hc5962:red:wifi";
+		system {
+			label = "hc5962:red:system";
 			gpios = <&gpio0 7 1>;
 		};
 	};
