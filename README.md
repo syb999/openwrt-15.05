@@ -33,6 +33,8 @@ patch -p1 < 10-asterisk11.patch
 
 patch -p1 < 11-ipv6-pd-support.patch
 
+patch -p1 < 12-minidlna-dsd.patch
+
 make menuconfig
 
 make V=99
