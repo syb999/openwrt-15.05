@@ -4,7 +4,7 @@ comment "Build Options"
 
 config OPENSSL_OPTIMIZE_SPEED
 	bool
-	default y if x86_64 || i386
+	default y
 	prompt "Enable optimization for speed instead of size"
 	select OPENSSL_WITH_ASM
 	help
@@ -64,7 +64,7 @@ config OPENSSL_NO_DEPRECATED
 
 config OPENSSL_WITH_ERROR_MESSAGES
 	bool
-	default n
+	default y
 	prompt "Include error messages"
 	help
 		This option aids debugging, but increases package size and
