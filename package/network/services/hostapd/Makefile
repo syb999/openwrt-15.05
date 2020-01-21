@@ -7,13 +7,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hostapd
-PKG_VERSION:=2019-08-08
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://w1.fi/hostap.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_DATE:=2019-08-08
 PKG_SOURCE_VERSION:=ca8c2bd28ad53f431d6ee60ef754e98cfdb4c17b
 PKG_MIRROR_HASH:=9d9f1c60afa5324ee17219bd3ec61c1a6fa4043b4187da9bb44e59025d3ed31d
 
@@ -210,7 +208,6 @@ define Package/wpad
 $(call Package/wpad/Default,$(1))
   TITLE+= (full)
   VARIANT:=wpad-full-internal
-  DEPENDS+=+libopenssl
 endef
 
 define Package/wpad/description
@@ -250,7 +247,6 @@ define Package/wpad-mini
 $(call Package/wpad/Default,$(1))
   TITLE+= (WPA-PSK only)
   VARIANT:=wpad-mini
-  DEPENDS+=+libopenssl
 endef
 
 define Package/wpad-mini/description
