@@ -11,9 +11,9 @@ sudo apt-get install libc6:i386 libgcc1:i386 libstdc++5:i386 libstdc++6:i386
 
 ./scripts/feeds install -a
 
-patch -p1 < 01-rssi-luci.patch
+patch -p1 < 01-80211rw-luci.patch
 
-patch -p1 < 02-80211rw-luci.patch
+patch -p1 < 02-80211kv-luci.patch
 
 patch -p1 < 03-igmp-luci.patch
 
