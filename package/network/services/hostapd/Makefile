@@ -146,6 +146,7 @@ define Package/hostapd
 $(call Package/hostapd/Default,$(1))
   TITLE+= (full)
   VARIANT:=full-internal
+  DEPENDS+=+libopenssl
 endef
 
 define Package/hostapd/description
@@ -175,6 +176,7 @@ define Package/hostapd-basic
 $(call Package/hostapd/Default,$(1))
   TITLE+= (WPA-PSK, 11r and 11w)
   VARIANT:=basic
+  DEPENDS+=+libopenssl
 endef
 
 define Package/hostapd-basic/description
@@ -185,6 +187,7 @@ define Package/hostapd-mini
 $(call Package/hostapd/Default,$(1))
   TITLE+= (WPA-PSK only)
   VARIANT:=mini
+  DEPENDS+=+libopenssl
 endef
 
 define Package/hostapd-mini/description
