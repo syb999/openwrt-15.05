@@ -14,7 +14,7 @@ Signed-off-by: Hauke Mehrtens <hauke@hauke-m.de>
 @@ -3,6 +3,10 @@
  #include_next <linux/pci.h>
  #include <linux/version.h>
-
+ 
 +#if LINUX_VERSION_IS_LESS(5,4,0)
 +#include <linux/pci-aspm.h>
 +#endif

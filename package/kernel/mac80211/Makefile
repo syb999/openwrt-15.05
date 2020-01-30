@@ -10,10 +10,10 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=mac80211
 
-PKG_VERSION:=4.19.85-1
+PKG_VERSION:=4.19.98-1
 PKG_RELEASE:=1
-PKG_SOURCE_URL:=@KERNEL/linux/kernel/projects/backports/stable/v4.19.85/
-PKG_MD5SUM:=d8f3c6084474be64e5c7dec3fd85cf3d
+PKG_SOURCE_URL:=@KERNEL/linux/kernel/projects/backports/stable/v4.19.98/
+PKG_MD5SUM:=70b5b4681777b7429fe284769195f11b
 
 PKG_SOURCE:=backports-$(PKG_VERSION).tar.xz
 PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/backports-$(PKG_VERSION)
@@ -868,7 +868,7 @@ endef
 
 define KernelPackage/iwlwifi
   $(call KernelPackage/mac80211/Default)
-  DEPENDS:= +kmod-mac80211 @PCI_SUPPORT +@DRIVER_11N_SUPPORT +@DRIVER_11AC_SUPPORT @!LINUX_3_18
+  DEPENDS:= +kmod-mac80211 @PCI_SUPPORT +@DRIVER_11N_SUPPORT +@DRIVER_11AC_SUPPORT
   TITLE:=Intel AGN Wireless support
   FILES:= \
 	$(PKG_BUILD_DIR)/drivers/net/wireless/intel/iwlwifi/iwlwifi.ko \
@@ -1004,7 +1004,7 @@ endef
 define KernelPackage/libipw
   $(call KernelPackage/mac80211/Default)
   TITLE:=libipw for ipw2100 and ipw2200
-  DEPENDS:=@PCI_SUPPORT +kmod-crypto-michael-mic +kmod-crypto-ecb +kmod-lib80211 +kmod-cfg80211 +@DRIVER_WEXT_SUPPORT @!BIG_ENDIAN @!LINUX_3_18
+  DEPENDS:=@PCI_SUPPORT +kmod-crypto-michael-mic +kmod-crypto-ecb +kmod-lib80211 +kmod-cfg80211 +@DRIVER_WEXT_SUPPORT @!BIG_ENDIAN
   FILES:=$(PKG_BUILD_DIR)/drivers/net/wireless/intel/ipw2x00/libipw.ko
   AUTOLOAD:=$(call AutoProbe,libipw)
 endef
@@ -1072,7 +1072,7 @@ endef
 
 define KernelPackage/libertas-usb
   $(call KernelPackage/mac80211/Default)
-  DEPENDS+= @USB_SUPPORT +kmod-cfg80211 +kmod-usb-core +kmod-lib80211 +@DRIVER_WEXT_SUPPORT +libertas-usb-firmware @!LINUX_3_18
+  DEPENDS+= @USB_SUPPORT +kmod-cfg80211 +kmod-usb-core +kmod-lib80211 +@DRIVER_WEXT_SUPPORT +libertas-usb-firmware
   TITLE:=Marvell 88W8015 Wireless Driver
   FILES:= \
 	$(PKG_BUILD_DIR)/drivers/net/wireless/marvell/libertas/libertas.ko \
@@ -1082,7 +1082,7 @@ endef
 
 define KernelPackage/libertas-sdio
   $(call KernelPackage/mac80211/Default)
-  DEPENDS+= +kmod-cfg80211 +kmod-lib80211 +kmod-mmc +@DRIVER_WEXT_SUPPORT @!TARGET_uml +libertas-sdio-firmware @!LINUX_3_18
+  DEPENDS+= +kmod-cfg80211 +kmod-lib80211 +kmod-mmc +@DRIVER_WEXT_SUPPORT @!TARGET_uml +libertas-sdio-firmware
   TITLE:=Marvell 88W8686 Wireless Driver
   FILES:= \
 	$(PKG_BUILD_DIR)/drivers/net/wireless/marvell/libertas/libertas.ko \
@@ -1093,7 +1093,7 @@ endef
 define KernelPackage/libertas-spi
   $(call KernelPackage/mac80211/Default)
   SUBMENU:=Wireless Drivers
-  DEPENDS+= +kmod-cfg80211 +kmod-lib80211 +@DRIVER_WEXT_SUPPORT @!TARGET_uml +libertas-spi-firmware @!LINUX_3_18
+  DEPENDS+= +kmod-cfg80211 +kmod-lib80211 +@DRIVER_WEXT_SUPPORT @!TARGET_uml +libertas-spi-firmware
   KCONFIG := \
 	CONFIG_SPI=y \
 	CONFIG_SPI_MASTER=y
