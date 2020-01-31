@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=iproute2
-PKG_VERSION:=4.0.0
-PKG_RELEASE:=1
+PKG_VERSION:=4.4.0
+PKG_RELEASE:=9
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@KERNEL/linux/utils/net/iproute2/
-PKG_MD5SUM:=3adc263ade4ee76c35032e8f50b54108
+PKG_SOURCE_URL:=@KERNEL/linux/utils/net/iproute2
+PKG_MD5SUM:=d762653ec3e1ab0d4a9689e169ca184f
 PKG_BUILD_PARALLEL:=1
 PKG_LICENSE:=GPL-2.0
 
@@ -30,6 +30,7 @@ define Package/iproute2/Default
   MAINTAINER:=Russell Senior <russell@personaltelco.net>
   DEPENDS:= +libnl-tiny
   VARIANT:=$(1)
+  PROVIDES:=$(3)
 endef
 
 define Package/ip
@@ -37,15 +38,7 @@ $(call Package/iproute2/Default,tiny,Minimal)
   CONFLICTS:=ip-full
 endef
 
-Package/ip-full=$(call Package/iproute2/Default,full,Full)
-
-define Package/ip/conffiles
-/etc/iproute2/rt_tables
-endef
-
-define Package/ip-$(BUILD_VARIANT)/conffiles
-$(Package/ip/conffiles)
-endef
+Package/ip-full:=$(call Package/iproute2/Default,full,Full)
 
 define Package/tc
 $(call Package/iproute2/Default)
@@ -66,6 +59,11 @@ endef
 define Package/ss
 $(call Package/iproute2/Default)
   TITLE:=Socket statistics utility
+endef
+
+define Package/nstat
+$(call Package/iproute2/Default)
+  TITLE:=Network statistics utility
 endef
 
 ifeq ($(BUILD_VARIANT),tiny)
@@ -111,14 +109,13 @@ define Build/InstallDev
 endef
 
 define Package/ip/install
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_DIR) $(1)/etc/iproute2
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/etc/iproute2/rt_tables $(1)/etc/iproute2
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ip/ip $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ip/ip $(1)/usr/bin/
 endef
 
-define Package/ip-$(BUILD_VARIANT)/install
-	$(Package/ip/install)
+define Package/ip-full/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ip/ip $(1)/usr/sbin/
 endef
 
 define Package/tc/install
@@ -143,9 +140,15 @@ define Package/ss/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/misc/ss $(1)/usr/sbin/
 endef
 
+define Package/nstat/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/misc/nstat $(1)/usr/sbin/
+endef
+
 $(eval $(call BuildPackage,ip))
 $(eval $(call BuildPackage,ip-full))
 $(eval $(call BuildPackage,tc))
 $(eval $(call BuildPackage,genl))
 $(eval $(call BuildPackage,ip-bridge))
 $(eval $(call BuildPackage,ss))
+$(eval $(call BuildPackage,nstat))
