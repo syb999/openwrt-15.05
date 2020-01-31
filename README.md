@@ -35,6 +35,8 @@ patch -p1 < 11-ipv6-pd-support.patch
 
 patch -p1 < 12-minidlna-dsd.patch
 
+patch -p1 < 13-libuv.patch
+
 make menuconfig
 
 make V=99
