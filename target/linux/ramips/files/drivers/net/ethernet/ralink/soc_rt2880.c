@@ -1,5 +1,4 @@
-/*
- *   This program is free software; you can redistribute it and/or modify
+/*   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation; version 2 of the License
  *
@@ -8,32 +7,30 @@
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *   GNU General Public License for more details.
  *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, write to the Free Software
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
- *
- *   Copyright (C) 2009-2013 John Crispin <blogic@openwrt.org>
+ *   Copyright (C) 2009-2015 John Crispin <blogic@openwrt.org>
+ *   Copyright (C) 2009-2015 Felix Fietkau <nbd@nbd.name>
+ *   Copyright (C) 2013-2015 Michael Lee <igvtee@gmail.com>
  */
 
 #include <linux/module.h>
 
 #include <asm/mach-ralink/ralink_regs.h>
 
-#include "ralink_soc_eth.h"
+#include "mtk_eth_soc.h"
 #include "mdio_rt2880.h"
 
 #define RT2880_RESET_FE			BIT(18)
 
 static void rt2880_init_data(struct fe_soc_data *data,
-		struct net_device *netdev)
+			     struct net_device *netdev)
 {
 	struct fe_priv *priv = netdev_priv(netdev);
 
 	priv->flags = FE_FLAG_PADDING_64B | FE_FLAG_PADDING_BUG |
-		FE_FLAG_JUMBO_FRAME;
+		FE_FLAG_JUMBO_FRAME | FE_FLAG_CALIBRATE_CLK;
 	netdev->hw_features = NETIF_F_SG | NETIF_F_HW_VLAN_CTAG_TX;
-	/* maybe have hardware bug. */
-	//netdev->hw_features |= NETIF_F_IP_CSUM | NETIF_F_RXCSUM;
+	/* this should work according to the datasheet but actually does not*/
+	/* netdev->hw_features |= NETIF_F_IP_CSUM | NETIF_F_RXCSUM; */
 }
 
 void rt2880_fe_reset(void)

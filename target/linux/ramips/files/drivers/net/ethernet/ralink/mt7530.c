@@ -249,7 +249,7 @@ mt7530_find_mapping(struct device_node *np)
 	const char *map;
 	int i;
 
-	if (of_property_read_string(np, "ralink,port-map", &map))
+	if (of_property_read_string(np, "mediatek,portmap", &map))
 		return NULL;
 
 	for (i = 0; i < ARRAY_SIZE(mt7530_defaults); i++)

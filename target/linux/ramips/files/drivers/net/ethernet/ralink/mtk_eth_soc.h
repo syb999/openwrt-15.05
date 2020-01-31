@@ -1,5 +1,4 @@
-/*
- *   This program is free software; you can redistribute it and/or modify
+/*   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation; version 2 of the License
  *
@@ -8,12 +7,9 @@
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *   GNU General Public License for more details.
  *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, write to the Free Software
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
- *
- *   based on Ralink SDK3.3
- *   Copyright (C) 2009-2013 John Crispin <blogic@openwrt.org>
+ *   Copyright (C) 2009-2015 John Crispin <blogic@openwrt.org>
+ *   Copyright (C) 2009-2015 Felix Fietkau <nbd@nbd.name>
+ *   Copyright (C) 2013-2015 Michael Lee <igvtee@gmail.com>
  */
 
 #ifndef FE_ETH_H
@@ -26,11 +22,6 @@
 #include <linux/phy.h>
 #include <linux/ethtool.h>
 #include <linux/version.h>
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3,15,0)
-#define u64_stats_fetch_retry_irq u64_stats_fetch_retry_bh
-#define u64_stats_fetch_begin_irq u64_stats_fetch_begin_bh
-#endif
 
 enum fe_reg {
 	FE_REG_PDMA_GLO_CFG = 0,
@@ -54,21 +45,22 @@ enum fe_reg {
 };
 
 enum fe_work_flag {
-        FE_FLAG_RESET_PENDING,
-        FE_FLAG_MAX
+	FE_FLAG_RESET_PENDING,
+	FE_FLAG_MAX
 };
 
-#define FE_DRV_VERSION		"0.1.2"
+#define MTK_FE_DRV_VERSION		"0.1.2"
 
 /* power of 2 to let NEXT_TX_DESP_IDX work */
-#define NUM_DMA_DESC		(1 << 7)
+#define NUM_DMA_DESC		BIT(10)
 #define MAX_DMA_DESC		0xfff
 
 #define FE_DELAY_EN_INT		0x80
 #define FE_DELAY_MAX_INT	0x04
 #define FE_DELAY_MAX_TOUT	0x04
 #define FE_DELAY_TIME		20
-#define FE_DELAY_CHAN		(((FE_DELAY_EN_INT | FE_DELAY_MAX_INT) << 8) | FE_DELAY_MAX_TOUT)
+#define FE_DELAY_CHAN		(((FE_DELAY_EN_INT | FE_DELAY_MAX_INT) << 8) | \
+				 FE_DELAY_MAX_TOUT)
 #define FE_DELAY_INIT		((FE_DELAY_CHAN << 16) | FE_DELAY_CHAN)
 #define FE_PSE_FQFC_CFG_INIT	0x80504000
 #define FE_PSE_FQFC_CFG_256Q	0xff908000
@@ -225,21 +217,21 @@ enum fe_work_flag {
 #define FE_RX_CALC_IDX1		(FE_PDMA_OFFSET + 0x68)
 #define FE_RX_DRX_IDX1		(FE_PDMA_OFFSET + 0x6C)
 
-#define RT5350_SDM_CFG		(RT5350_SDM_OFFSET + 0x00)  //Switch DMA configuration
-#define RT5350_SDM_RRING	(RT5350_SDM_OFFSET + 0x04)  //Switch DMA Rx Ring
-#define RT5350_SDM_TRING	(RT5350_SDM_OFFSET + 0x08)  //Switch DMA Tx Ring
-#define RT5350_SDM_MAC_ADRL	(RT5350_SDM_OFFSET + 0x0C)  //Switch MAC address LSB
-#define RT5350_SDM_MAC_ADRH	(RT5350_SDM_OFFSET + 0x10)  //Switch MAC Address MSB
-#define RT5350_SDM_TPCNT	(RT5350_SDM_OFFSET + 0x100) //Switch DMA Tx packet count
-#define RT5350_SDM_TBCNT	(RT5350_SDM_OFFSET + 0x104) //Switch DMA Tx byte count
-#define RT5350_SDM_RPCNT	(RT5350_SDM_OFFSET + 0x108) //Switch DMA rx packet count
-#define RT5350_SDM_RBCNT	(RT5350_SDM_OFFSET + 0x10C) //Switch DMA rx byte count
-#define RT5350_SDM_CS_ERR	(RT5350_SDM_OFFSET + 0x110) //Switch DMA rx checksum error count
+/* Switch DMA configuration */
+#define RT5350_SDM_CFG		(RT5350_SDM_OFFSET + 0x00)
+#define RT5350_SDM_RRING	(RT5350_SDM_OFFSET + 0x04)
+#define RT5350_SDM_TRING	(RT5350_SDM_OFFSET + 0x08)
+#define RT5350_SDM_MAC_ADRL	(RT5350_SDM_OFFSET + 0x0C)
+#define RT5350_SDM_MAC_ADRH	(RT5350_SDM_OFFSET + 0x10)
+#define RT5350_SDM_TPCNT	(RT5350_SDM_OFFSET + 0x100)
+#define RT5350_SDM_TBCNT	(RT5350_SDM_OFFSET + 0x104)
+#define RT5350_SDM_RPCNT	(RT5350_SDM_OFFSET + 0x108)
+#define RT5350_SDM_RBCNT	(RT5350_SDM_OFFSET + 0x10C)
+#define RT5350_SDM_CS_ERR	(RT5350_SDM_OFFSET + 0x110)
 
 #define RT5350_SDM_ICS_EN	BIT(16)
 #define RT5350_SDM_TCS_EN	BIT(17)
 #define RT5350_SDM_UCS_EN	BIT(18)
-
 
 /* MDIO_CFG register bits */
 #define FE_MDIO_CFG_AUTO_POLL_EN	BIT(29)
@@ -310,7 +302,8 @@ enum fe_work_flag {
 /* rxd2 */
 #define RX_DMA_DONE		BIT(31)
 #define RX_DMA_LSO		BIT(30)
-#define RX_DMA_PLEN0(_x)	(((_x) >> 16) & 0x3fff)
+#define RX_DMA_PLEN0(_x)	(((_x) & 0x3fff) << 16)
+#define RX_DMA_GET_PLEN0(_x)	(((_x) >> 16) & 0x3fff)
 #define RX_DMA_TAG		BIT(15)
 /* rxd3 */
 #define RX_DMA_TPID(_x)		(((_x) >> 16) & 0xffff)
@@ -329,7 +322,7 @@ struct fe_rx_dma {
 #define TX_DMA_PLEN0_MASK	(TX_DMA_BUF_LEN << 16)
 #define TX_DMA_PLEN0(_x)	(((_x) & TX_DMA_BUF_LEN) << 16)
 #define TX_DMA_PLEN1(_x)	((_x) & TX_DMA_BUF_LEN)
-#define TX_DMA_GET_PLEN0(_x)    (((_x) >> 16 ) & TX_DMA_BUF_LEN)
+#define TX_DMA_GET_PLEN0(_x)    (((_x) >> 16) & TX_DMA_BUF_LEN)
 #define TX_DMA_GET_PLEN1(_x)    ((_x) & TX_DMA_BUF_LEN)
 #define TX_DMA_LS1		BIT(14)
 #define TX_DMA_LS0		BIT(30)
@@ -365,6 +358,9 @@ struct fe_tx_dma {
 struct fe_priv;
 
 struct fe_phy {
+	/* make sure that phy operations are atomic */
+	spinlock_t		lock;
+
 	struct phy_device	*phy[8];
 	struct device_node	*phy_node[8];
 	const __be32		*phy_fixed[8];
@@ -372,16 +368,13 @@ struct fe_phy {
 	int			speed[8];
 	int			tx_fc[8];
 	int			rx_fc[8];
-	spinlock_t		lock;
-
 	int (*connect)(struct fe_priv *priv);
 	void (*disconnect)(struct fe_priv *priv);
 	void (*start)(struct fe_priv *priv);
 	void (*stop)(struct fe_priv *priv);
 };
 
-struct fe_soc_data
-{
+struct fe_soc_data {
 	const u16 *reg_table;
 
 	void (*init_data)(struct fe_soc_data *data, struct net_device *netdev);
@@ -395,7 +388,8 @@ struct fe_soc_data
 	int (*has_carrier)(struct fe_priv *priv);
 	int (*mdio_init)(struct fe_priv *priv);
 	void (*mdio_cleanup)(struct fe_priv *priv);
-	int (*mdio_write)(struct mii_bus *bus, int phy_addr, int phy_reg, u16 val);
+	int (*mdio_write)(struct mii_bus *bus, int phy_addr, int phy_reg,
+			  u16 val);
 	int (*mdio_read)(struct mii_bus *bus, int phy_addr, int phy_reg);
 	void (*mdio_adjust_link)(struct fe_priv *priv, int port);
 
@@ -412,8 +406,9 @@ struct fe_soc_data
 #define FE_FLAG_JUMBO_FRAME		BIT(2)
 #define FE_FLAG_RX_2B_OFFSET		BIT(3)
 #define FE_FLAG_RX_SG_DMA		BIT(4)
-#define FE_FLAG_RX_VLAN_CTAG		BIT(5)
 #define FE_FLAG_NAPI_WEIGHT		BIT(6)
+#define FE_FLAG_CALIBRATE_CLK		BIT(7)
+#define FE_FLAG_HAS_SWITCH		BIT(8)
 
 #define FE_STAT_REG_DECLARE		\
 	_FE(tx_bytes)			\
@@ -429,57 +424,58 @@ struct fe_soc_data
 	_FE(rx_checksum_errors)		\
 	_FE(rx_flow_control_packets)
 
-struct fe_hw_stats
-{
+struct fe_hw_stats {
+	/* make sure that stats operations are atomic */
 	spinlock_t stats_lock;
+
 	struct u64_stats_sync syncp;
 #define _FE(x) u64 x;
-FE_STAT_REG_DECLARE
+	FE_STAT_REG_DECLARE
 #undef _FE
 };
 
-enum fe_tx_flags {
-	FE_TX_FLAGS_SINGLE0	= 0x01,
-	FE_TX_FLAGS_PAGE0	= 0x02,
-	FE_TX_FLAGS_PAGE1	= 0x04,
-};
-
-struct fe_tx_buf
-{
+struct fe_tx_buf {
 	struct sk_buff *skb;
-	u32 flags;
 	DEFINE_DMA_UNMAP_ADDR(dma_addr0);
-	DEFINE_DMA_UNMAP_LEN(dma_len0);
 	DEFINE_DMA_UNMAP_ADDR(dma_addr1);
-	DEFINE_DMA_UNMAP_LEN(dma_len1);
+	u16 dma_len0;
+	u16 dma_len1;
 };
 
-struct fe_tx_ring
-{
+struct fe_tx_ring {
 	struct fe_tx_dma *tx_dma;
 	struct fe_tx_buf *tx_buf;
 	dma_addr_t tx_phys;
 	u16 tx_ring_size;
 	u16 tx_free_idx;
+	u16 tx_next_idx;
+	u16 tx_thresh;
 };
 
-struct fe_priv
-{
+struct fe_rx_ring {
+	struct fe_rx_dma *rx_dma;
+	u8 **rx_data;
+	dma_addr_t rx_phys;
+	u16 rx_ring_size;
+	u16 frag_size;
+	u16 rx_buf_size;
+	u16 rx_calc_idx;
+};
+
+struct fe_priv {
+	/* make sure that register operations are atomic */
 	spinlock_t			page_lock;
 
 	struct fe_soc_data		*soc;
 	struct net_device		*netdev;
+	struct device_node		*switch_np;
 	u32				msg_enable;
 	u32				flags;
 
-	struct device			*device;
+	struct device			*dev;
 	unsigned long			sysclk;
 
-	u16				frag_size;
-	u16				rx_buf_size;
-	struct fe_rx_dma		*rx_dma;
-	u8				**rx_data;
-	dma_addr_t			rx_phys;
+	struct fe_rx_ring		rx_ring;
 	struct napi_struct		rx_napi;
 
 	struct fe_tx_ring               tx_ring;
@@ -495,12 +491,17 @@ struct fe_priv
 	unsigned long			vlan_map;
 	struct work_struct		pending_work;
 	DECLARE_BITMAP(pending_flags, FE_FLAG_MAX);
-	u16				rx_ring_size;
+
+	struct reset_control		*rst_ppe;
+	struct mtk_foe_entry		*foe_table;
+	dma_addr_t			foe_table_phys;
+	struct flow_offload __rcu	**foe_flow_table;
 };
 
 extern const struct of_device_id of_fe_match[];
 
 void fe_w32(u32 val, unsigned reg);
+void fe_m32(struct fe_priv *priv, u32 clear, u32 set, unsigned reg);
 u32 fe_r32(unsigned reg);
 
 int fe_set_clock_cycle(struct fe_priv *priv);
@@ -516,5 +517,8 @@ static inline void *priv_netdev(struct fe_priv *priv)
 {
 	return (char *)priv - ALIGN(sizeof(struct net_device), NETDEV_ALIGN);
 }
+
+int mtk_ppe_probe(struct fe_priv *eth);
+void mtk_ppe_remove(struct fe_priv *eth);
 
 #endif /* FE_ETH_H */

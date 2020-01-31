@@ -1,5 +1,4 @@
-/*
- *   This program is free software; you can redistribute it and/or modify
+/*   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation; version 2 of the License
  *
@@ -8,11 +7,9 @@
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *   GNU General Public License for more details.
  *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, write to the Free Software
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
- *
- *   Copyright (C) 2009-2013 John Crispin <blogic@openwrt.org>
+ *   Copyright (C) 2009-2015 John Crispin <blogic@openwrt.org>
+ *   Copyright (C) 2009-2015 Felix Fietkau <nbd@nbd.name>
+ *   Copyright (C) 2013-2015 Michael Lee <igvtee@gmail.com>
  */
 
 #ifndef _RALINK_ESW_RT3052_H__
@@ -20,13 +17,13 @@
 
 #ifdef CONFIG_NET_RALINK_ESW_RT3052
 
-int __init rtesw_init(void);
-void rtesw_exit(void);
+int __init mtk_switch_init(void);
+void mtk_switch_exit(void);
 
 #else
 
-static inline int __init rtesw_init(void) { return 0; }
-static inline void rtesw_exit(void) { }
+static inline int __init mtk_switch_init(void) { return 0; }
+static inline void mtk_switch_exit(void) { }
 
 #endif
 #endif
