@@ -251,20 +251,22 @@
 		reset-names = "host", "device";
 	};
 
-	ethernet@10100000 {
+	ethernet: ethernet@10100000 {
 		compatible = "ralink,rt5350-eth";
-		reg = <0x10100000 10000>;
+		reg = <0x10100000 0x10000>;
 
 		resets = <&rstctrl 21 &rstctrl 23>;
 		reset-names = "fe", "esw";
 
 		interrupt-parent = <&cpuintc>;
 		interrupts = <5>;
+
+		mediatek,switch = <&esw>;
 	};
 
-	esw@10110000 {
-		compatible = "ralink,rt3050-esw";
-		reg = <0x10110000 8000>;
+	esw: esw@10110000 {
+		compatible = "ralink,rt5350-esw", "ralink,rt3050-esw";
+		reg = <0x10110000 0x8000>;
 
 		resets = <&rstctrl 23>;
 		reset-names = "esw";
@@ -273,9 +275,9 @@
 		interrupts = <17>;
 	};
 
-	wmac@10180000 {
+	wmac: wmac@10180000 {
 		compatible = "ralink,rt5350-wmac", "ralink,rt2880-wmac";
-		reg = <0x10180000 40000>;
+		reg = <0x10180000 0x40000>;
 
 		interrupt-parent = <&cpuintc>;
 		interrupts = <6>;
