@@ -240,6 +240,7 @@ define Package/wpad-basic
 $(call Package/wpad/Default,$(1))
   TITLE+= (WPA-PSK, 11r and 11w)
   VARIANT:=wpad-basic
+  DEPENDS+=+libopenssl
 endef
 
 define Package/wpad-basic/description
