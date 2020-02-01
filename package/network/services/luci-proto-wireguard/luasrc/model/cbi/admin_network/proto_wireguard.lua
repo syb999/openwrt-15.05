@@ -5,7 +5,7 @@
 local map, section, net = ...
 local ifname = net:get_interface():name()
 local private_key, listen_port
-local metric, mtu, preshared_key, description
+local metric, mtu, preshared_key
 local peers, public_key, allowed_ips, endpoint, persistent_keepalive
 
 
@@ -19,7 +19,7 @@ private_key = section:taboption(
   translate("Required. Base64-encoded private key for this interface.")
 )
 private_key.password = true
-private_key.datatype = "rangelength(44,44)"
+private_key.datatype = "rangelength(44, 44)"
 private_key.optional = false
 
 
@@ -31,7 +31,7 @@ listen_port = section:taboption(
   translate("Optional. UDP port used for outgoing and incoming packets.")
 )
 listen_port.datatype = "port"
-listen_port.placeholder = translate("random")
+listen_port.placeholder = "51820"
 listen_port.optional = true
 
 addresses = section:taboption(
@@ -66,20 +66,22 @@ mtu = section:taboption(
   translate("MTU"),
   translate("Optional. Maximum Transmission Unit of tunnel interface.")
 )
-mtu.datatype = "range(1280,1420)"
-mtu.placeholder = "1420"
+mtu.datatype = "range(1280,1423)"
+mtu.placeholder = "1423"
 mtu.optional = true
 
-fwmark = section:taboption(
+
+preshared_key = section:taboption(
   "advanced",
   Value,
-  "fwmark",
-  translate("Firewall Mark"),
-  translate("Optional. 32-bit mark for outgoing encrypted packets. " ..
-            "Enter value in hex, starting with <code>0x</code>.")
+  "preshared_key",
+  translate("Preshared Key"),
+  translate("Optional. Adds in an additional layer of symmetric-key " ..
+            "cryptography for post-quantum resistance.")
 )
-fwmark.datatype = "hex(4)"
-fwmark.optional = true
+preshared_key.password = true
+preshared_key.datatype = "rangelength(44, 44)"
+preshared_key.optional = true
 
 
 -- peers -----------------------------------------------------------------------
@@ -89,44 +91,21 @@ peers = map:section(
   "wireguard_" .. ifname,
   translate("Peers"),
   translate("Further information about WireGuard interfaces and peers " ..
-            "at <a href=\"http://wireguard.com\">wireguard.com</a>.")
+            "at <a href=\"http://wireguard.io\">wireguard.io</a>.")
 )
 peers.template = "cbi/tsection"
 peers.anonymous = true
 peers.addremove = true
 
 
-description = peers:option(
-  Value,
-  "description",
-  translate("Description"),
-  translate("Optional. Description of peer."))
-description.placeholder = "My Peer"
-description.datatype = "string"
-description.optional = true
-
-
 public_key = peers:option(
   Value,
   "public_key",
   translate("Public Key"),
-  translate("Required. Base64-encoded public key of peer.")
+  translate("Required. Public key of peer.")
 )
-public_key.datatype = "rangelength(44,44)"
+public_key.datatype = "rangelength(44, 44)"
 public_key.optional = false
-
-
-preshared_key = peers:option(
-  Value,
-  "preshared_key",
-  translate("Preshared Key"),
-  translate("Optional. Base64-encoded preshared key. " ..
-            "Adds in an additional layer of symmetric-key " ..
-            "cryptography for post-quantum resistance.")
-)
-preshared_key.password = true
-preshared_key.datatype = "rangelength(44,44)"
-preshared_key.optional = true
 
 
 allowed_ips = peers:option(
@@ -175,5 +154,5 @@ persistent_keepalive = peers:option(
   translate("Optional. Seconds between keep alive messages. " ..
             "Default is 0 (disabled). Recommended value if " ..
             "this device is behind a NAT is 25."))
-persistent_keepalive.datatype = "range(0,65535)"
+persistent_keepalive.datatype = "range(0, 65535)"
 persistent_keepalive.placeholder = "0"
