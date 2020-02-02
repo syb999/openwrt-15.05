@@ -280,13 +280,6 @@
 			};
 		};
 
-		spi_cs1_pins: spi_cs1 {
-			spi_cs1 {
-				ralink,group = "spi cs1";
-				ralink,function = "spi cs1";
-			};
-		};
-
 		i2c_pins: i2c {
 			i2c {
 				ralink,group = "i2c";

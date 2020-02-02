@@ -49,16 +49,20 @@
 		};
 	};
 
-	gpio-keys-polled {
+	keys {
 		compatible = "gpio-keys-polled";
-		#address-cells = <1>;
-		#size-cells = <0>;
-		poll-interval = <20>
+		poll-interval = <20>;
 
 		reset {
 			label = "reset";
 			gpios = <&gpio1 6 1>;
 			linux,code = <0x198>;
+		};
+
+		rfkill {
+			label = "rfkill";
+			gpios = <&gpio1 5 1>;
+			linux,code = <247>;
 		};
 	};
 
@@ -108,6 +112,7 @@
 					reg = <0x7f0000 0x10000>;
 				};
 			};
+		};
 
 		i2c@900 {
 			status = "okay";
