@@ -640,7 +640,7 @@ endif
 # MT7688 Profiles
 #
 
-ifeq ($(SUBTARGET),mt7628)
+ifeq ($(SUBTARGET),mt7688)
 include mt7688.mk
 endif
 
