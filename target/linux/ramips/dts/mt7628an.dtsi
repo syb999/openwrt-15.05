@@ -19,22 +19,22 @@
 		#interrupt-cells = <1>;
 	};
 
-	palmbus@10000000 {
+	palmbus: palmbus@10000000 {
 		compatible = "palmbus";
 		reg = <0x10000000 0x200000>;
-                ranges = <0x0 0x10000000 0x1FFFFF>;
+		ranges = <0x0 0x10000000 0x1FFFFF>;
 
 		#address-cells = <1>;
 		#size-cells = <1>;
 
-		sysc@0 {
-			compatible = "ralink,mt7620a-sysc";
+		sysc: sysc@0 {
+			compatible = "ralink,mt7620a-sysc", "syscon";
 			reg = <0x0 0x100>;
 		};
 
-		watchdog@120 {
-			compatible = "ralink,mt7628an-wdt", "mtk,mt7621-wdt";
-			reg = <0x120 0x10>;
+		watchdog: watchdog@100 {
+			compatible = "ralink,mt7628an-wdt", "mediatek,mt7621-wdt";
+			reg = <0x100 0x30>;
 
 			resets = <&rstctrl 8>;
 			reset-names = "wdt";
@@ -104,8 +104,8 @@
 			};
 		};
 
-		i2c@900 {
-			compatible = "mediatek,mt7628-i2c";
+		i2c: i2c@900 {
+			compatible = "mediatek,mt7621-i2c";
 			reg = <0x900 0x100>;
 
 			resets = <&rstctrl 16>;
@@ -120,8 +120,8 @@
 			pinctrl-0 = <&i2c_pins>;
 		};
 
-		i2s@a00 {
-			compatible = "ralink,mt7620a-i2s";
+		i2s: i2s@a00 {
+			compatible = "mediatek,mt7628-i2s";
 			reg = <0xa00 0x100>;
 
 			resets = <&rstctrl 17>;
@@ -130,14 +130,17 @@
 			interrupt-parent = <&intc>;
 			interrupts = <10>;
 
-			dmas = <&gdma 2>,
-				<&gdma 3>;
+			txdma-req = <2>;
+			rxdma-req = <3>;
+
+			dmas = <&gdma 4>,
+				<&gdma 6>;
 			dma-names = "tx", "rx";
 
 			status = "disabled";
 		};
 
-		spi@b00 {
+		spi0: spi@b00 {
 			compatible = "ralink,mt7621-spi";
 			reg = <0xb00 0x100>;
 
@@ -145,7 +148,7 @@
 			reset-names = "spi";
 
 			#address-cells = <1>;
-			#size-cells = <1>;
+			#size-cells = <0>;
 
 			pinctrl-names = "default";
 			pinctrl-0 = <&spi_pins>;
@@ -153,7 +156,7 @@
 			status = "disabled";
 		};
 
-		uartlite@c00 {
+		uartlite: uartlite@c00 {
 			compatible = "ns16550a";
 			reg = <0xc00 0x100>;
 
@@ -171,7 +174,7 @@
 			pinctrl-0 = <&uart0_pins>;
 		};
 
-		uart1@d00 {
+		uart1: uart1@d00 {
 			compatible = "ns16550a";
 			reg = <0xd00 0x100>;
 
@@ -191,7 +194,7 @@
 			status = "disabled";
 		};
 
-		uart2@e00 {
+		uart2: uart2@e00 {
 			compatible = "ns16550a";
 			reg = <0xe00 0x100>;
 
@@ -211,7 +214,7 @@
 			status = "disabled";
 		};
 
-		pwm@5000 {
+		pwm: pwm@5000 {
 			compatible = "mediatek,mt7628-pwm";
 			reg = <0x5000 0x1000>;
 
@@ -224,7 +227,7 @@
 			status = "disabled";
 		};
 
-		pcm@2000 {
+		pcm: pcm@2000 {
 			compatible = "ralink,mt7620a-pcm";
 			reg = <0x2000 0x800>;
 
@@ -238,7 +241,7 @@
 		};
 
 		gdma: gdma@2800 {
-			compatible = "ralink,mt7620a-gdma", "ralink,rt2880-gdma";
+			compatible = "ralink,rt3883-gdma";
 			reg = <0x2800 0x800>;
 
 			resets = <&rstctrl 14>;
@@ -255,16 +258,25 @@
 		};
 	};
 
-	pinctrl {
+	pinctrl: pinctrl {
 		compatible = "ralink,rt2880-pinmux";
 		pinctrl-names = "default";
 		pinctrl-0 = <&state_default>;
+
 		state_default: pinctrl0 {
 		};
-		spi_pins: spi {
-			spi {
+
+		spi_pins: spi_pins {
+			spi_pins {
 				ralink,group = "spi";
 				ralink,function = "spi";
+			};
+		};
+
+		spi_cs1_pins: spi_cs1 {
+			spi_cs1 {
+				ralink,group = "spi cs1";
+				ralink,function = "spi cs1";
 			};
 		};
 
@@ -330,11 +342,23 @@
 				ralink,function = "pcm";
 			};
 		};
+
+		refclk_pins: refclk {
+			refclk {
+				ralink,group = "refclk";
+				ralink,function = "refclk";
+			};
+		};
 	};
 
 	rstctrl: rstctrl {
 		compatible = "ralink,mt7620a-reset", "ralink,rt2880-reset";
 		#reset-cells = <1>;
+	};
+
+	clkctrl: clkctrl {
+		compatible = "ralink,rt2880-clock";
+		#clock-cells = <1>;
 	};
 
 	usbphy: usbphy@10120000 {
@@ -346,7 +370,7 @@
 		reset-names = "host", "device";
 	};
 
-	sdhci@10130000 {
+	sdhci: sdhci@10130000 {
 		compatible = "ralink,mt7620-sdhci";
 		reg = <0x10130000 4000>;
 
@@ -359,7 +383,7 @@
 		status = "disabled";
 	};
 
-	ehci@101c0000 {
+	ehci: ehci@101c0000 {
 		compatible = "ralink,rt3xxx-ehci";
 		reg = <0x101c0000 0x1000>;
 

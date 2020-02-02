@@ -312,6 +312,11 @@ case $board in
 		ucidef_set_led_netdev "internet" "internet" "ghl:blue:internet" "eth0.2"
 		set_usb_led "ghl:blue:usb"
 		;;
+	tplink,c20-v4)
+		ucidef_set_led_switch "lan" "lan" "$boardname:green:lan" "switch0" "0x1e"
+		ucidef_set_led_switch "wan" "wan" "$boardname:green:wan" "switch0" "0x01"
+		ucidef_set_led_netdev "wlan2g" "wlan2g" "$boardname:green:wlan2g" "wlan0"
+		;;
 esac
 
 board_config_flush

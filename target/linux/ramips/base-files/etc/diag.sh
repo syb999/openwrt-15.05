@@ -273,6 +273,9 @@ get_status_led() {
 	zte-q7)
 		status_led="zte:red:status"
 		;;
+	tplink,c20-v4)
+		status_led="$boardname:green:power"
+		;;
 	esac
 }
 

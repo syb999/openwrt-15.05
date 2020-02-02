@@ -37,7 +37,7 @@ define Device/Default
   KERNEL_DEPENDS = $$(wildcard ../dts/$$(DTS).dts)
   KERNEL := $(KERNEL_DTB) | uImage lzma
   IMAGES := sysupgrade.bin
-  IMAGE_SIZE := $(ralink_default_fw_size_8M)
+  IMAGE_SIZE := $(ralink_default_fw_size_16M)
   IMAGE/sysupgrade.bin := append-kernel | append-rootfs | pad-rootfs | check-size $$$$(IMAGE_SIZE)
 endef
 
@@ -632,30 +632,18 @@ endef
 # MT7628 Profiles
 #
 
-Image/Build/Profile/MT7628=$(call BuildFirmware/Default4M/$(1),$(1),mt7628,MT7628)
-
 ifeq ($(SUBTARGET),mt7628)
-define Image/Build/Profile/Default
-	$(call Image/Build/Profile/MT7628,$(1))
-endef
+include mt7628.mk
 endif
-
 
 #
 # MT7688 Profiles
 #
 
-Image/Build/Profile/MT7688=$(call BuildFirmware/Default4M/$(1),$(1),mt7628,MT7628)
-Image/Build/Profile/LinkIt7688=$(call BuildFirmware/Default32M/$(1),$(1),LinkIt7688,LINKIT7688)
-
-ifeq ($(SUBTARGET),mt7628)
-define Image/Build/Profile/Default
-	$(call Image/Build/Profile/MT7688,$(1))
-	$(call Image/Build/Profile/LinkIt7688,$(1))
-endef
+ifeq ($(SUBTARGET),mt7688)
+include mt7688.mk
 endif
 
-ifndef TARGET_DEVICES
 #
 # Generic Targets - only needed for legacy image building code
 #

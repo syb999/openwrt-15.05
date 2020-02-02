@@ -193,6 +193,7 @@ ramips_setup_interfaces()
 	f5d8235-v2 | \
 	hg255d | \
 	rt-n14u | \
+	tplink,c20-v4|\
 	fwr200-v2 | \
 	wrtnode | \
 	wt3020 | \
