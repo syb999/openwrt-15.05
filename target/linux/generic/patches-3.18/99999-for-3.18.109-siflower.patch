@@ -19,13 +19,7 @@
  	},
  #endif
  #ifdef CONFIG_NET_SCHED
-@@ -366,15 +364,14 @@
- 		.mode		= 0644,
- 		.proc_handler	= proc_dointvec
- 	},
- 	{
- 		.procname	= "max_skb_frags",
- 		.data		= &sysctl_max_skb_frags,
+@@ -372,7 +370,6 @@
  		.maxlen		= sizeof(int),
  		.mode		= 0644,
  		.proc_handler	= proc_dointvec_minmax,
@@ -33,8 +27,6 @@
  		.extra2		= &max_skb_frags,
  	},
  	{ }
- };
- 
 @@ -395,6 +392,8 @@
  {
  	struct ctl_table *tbl;
