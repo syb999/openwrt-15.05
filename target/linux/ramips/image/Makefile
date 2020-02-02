@@ -640,10 +640,11 @@ endif
 # MT7688 Profiles
 #
 
-ifeq ($(SUBTARGET),mt7688)
+ifeq ($(SUBTARGET),mt7628)
 include mt7688.mk
 endif
 
+ifndef TARGET_DEVICES
 #
 # Generic Targets - only needed for legacy image building code
 #
