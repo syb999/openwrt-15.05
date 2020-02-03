@@ -7,6 +7,8 @@
 
 include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
+include $(INCLUDE_DIR)/version.mk
+include $(INCLUDE_DIR)/feeds.mk
 
 PKG_NAME:=opkg
 PKG_RELEASE:=1
@@ -25,7 +27,7 @@ PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 
 # Extend depends from version.mk
 PKG_CONFIG_DEPENDS += \
-	CONFIG_SIGNATURE_CHECK \
+	CONFIG_SIGNED_PACKAGES \
 	CONFIG_TARGET_INIT_PATH
 
 PKG_BUILD_PARALLEL:=1
@@ -88,8 +90,8 @@ define Package/opkg/install
 	$(INSTALL_DATA) ./files/opkg$(2).conf $(1)/etc/opkg.conf
 	$(INSTALL_BIN) ./files/20_migrate-feeds $(1)/etc/uci-defaults/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/opkg-cl $(1)/bin/opkg
-  ifneq ($(CONFIG_SIGNATURE_CHECK),)
-	echo "option check_signature" >> $(1)/etc/opkg.conf
+  ifneq ($(CONFIG_SIGNED_PACKAGES),)
+	echo "option check_signature 1" >> $(1)/etc/opkg.conf
   endif
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) ./files/opkg-key $(1)/usr/sbin/
