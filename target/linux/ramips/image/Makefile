@@ -531,7 +531,7 @@ endif
 #
 
 ifeq ($(SUBTARGET),mt7621)
-  TARGET_DEVICES := pbr-m1 newifi-d1 newifi-d2 zbt-we1326 ghl jdcloud-1
+  TARGET_DEVICES := pbr-m1 newifi-d1 newifi-d2 zbt-we1326 ghl jdcloud-1 re6500
 endif
 
 define Device/mt7621
@@ -545,6 +545,7 @@ endef
 
 define Device/re6500
   DTS := RE6500
+  IMAGE_SIZE := $(ralink_default_fw_size_8M)
 endef
 
 define Device/wsr-1166
