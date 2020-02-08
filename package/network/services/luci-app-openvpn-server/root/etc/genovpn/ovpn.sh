@@ -8,6 +8,8 @@ client
 dev tun
 proto tcp-client
 remote $ddns $port
+comp-lzo
+auth-nocache
 resolv-retry infinite
 nobind
 persist-key
