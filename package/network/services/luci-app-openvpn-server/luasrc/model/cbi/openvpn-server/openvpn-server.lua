@@ -22,7 +22,6 @@ dev.rmempty = false
 dev.description = translate("use tun/tap device node(default tun)")
 
 tun_ipv6 = s:taboption("basic", Value, "tun_ipv6", translate("tun_ipv6"))
-tun_ipv6.datatype = "string"
 tun_ipv6:depends({dev="tun"})
 tun_ipv6.datatype = "range(0,1)"
 tun_ipv6.default = "0"
