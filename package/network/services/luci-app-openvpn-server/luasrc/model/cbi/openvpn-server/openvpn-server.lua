@@ -15,6 +15,19 @@ port = s:taboption("basic", Value, "port", translate("Port"))
 port.datatype = "range(1,65535)"
 port.default = "1194"
 
+dev = s:taboption("basic", Value, "dev", translate("device node"))
+dev.datatype = "string"
+dev.default = "tun"
+dev.rmempty = false
+dev.description = translate("use tun/tap device node(default tun)")
+
+tun_ipv6 = s:taboption("basic", Value, "tun_ipv6", translate("tun_ipv6"))
+tun_ipv6.datatype = "string"
+tun_ipv6:depends({dev="tun"})
+tun_ipv6.datatype = "range(0,1)"
+tun_ipv6.default = "0"
+tun_ipv6.description = translate("Make tun device IPv6 capable(设置:1 为起用)")
+
 ddns = s:taboption("basic", Value, "ddns", translate("WAN DDNS or IP"))
 ddns.datatype = "string"
 ddns.default = "exmple.com"
@@ -43,7 +56,7 @@ auth_user_pass_verify.description = translate("默认设置:/etc/openvpn/server/
 
 script_security = s:taboption("basic",Value,"script_security", translate("script_security配合帐号密码验证使用"))
 script_security.datatype = "range(1,3)"
-script_security.default ="3"
+script_security.default = "3"
 script_security.description = translate("默认设置:3,留空禁用")
 
 duplicate_cn = s:taboption("basic",Flag,"duplicate_cn", translate("duplicate_cn"))
@@ -63,8 +76,48 @@ o.inputtitle = translate("Download .ovpn file")
 o.description = translate("如果使用单独帐号密码验证,一定要记得删除key和cert内容")
 o.inputstyle = "reload"
 o.write = function()
-  luci.sys.call("sh /etc/genovpn.sh 2>&1 >/dev/null")
+  luci.sys.call("sh /etc/genovpn/ovpn.sh 2>&1 >/dev/null")
 	Download()
+end
+
+local osimple
+osimple = s:taboption("basic", Button,"simple-certificate",translate("OpenVPN Client simple config file"))
+osimple.inputtitle = translate("Download .ovpn file")
+osimple.description = translate("下载简化配置文件，不包含ca cert key内容")
+osimple.inputstyle = "reload"
+osimple.write = function()
+  luci.sys.call("sh /etc/genovpn/simple.sh 2>&1 >/dev/null")
+	Downloadsimple()
+end
+
+local aca
+aca = s:taboption("basic", Button,"ca certificate",translate("OpenVPN Client ca file"))
+aca.inputtitle = translate("Download ca file")
+aca.description = translate("单独下载ca证书")
+aca.inputstyle = "reload"
+aca.write = function()
+  luci.sys.call("sh /etc/genovpn/ca.sh 2>&1 >/dev/null")
+	Downloadca()
+end
+
+local bcert
+bcert = s:taboption("basic", Button,"cert certificate",translate("OpenVPN Client cert file"))
+bcert.inputtitle = translate("Download cert file")
+bcert.description = translate("单独下载cert证书")
+bcert.inputstyle = "reload"
+bcert.write = function()
+  luci.sys.call("sh /etc/genovpn/cert.sh 2>&1 >/dev/null")
+	Downloadcert()
+end
+
+local ckey
+ckey = s:taboption("basic", Button,"key",translate("OpenVPN Client key file"))
+ckey.inputtitle = translate("Download key file")
+ckey.description = translate("单独下载key文件")
+bcert.inputstyle = "reload"
+ckey.write = function()
+  luci.sys.call("sh /etc/genovpn/key.sh 2>&1 >/dev/null")
+	Downloadkey()
 end
 
 s:tab("code",  translate("客户端代码"))
@@ -117,6 +170,74 @@ function Download()
 	local t,e
 	t=nixio.open("/tmp/my.ovpn","r")
 	luci.http.header('Content-Disposition','attachment; filename="my.ovpn"')
+	luci.http.prepare_content("application/octet-stream")
+	while true do
+		e=t:read(nixio.const.buffersize)
+		if(not e)or(#e==0)then
+			break
+		else
+			luci.http.write(e)
+		end
+	end
+	t:close()
+	luci.http.close()
+end
+
+function Downloadsimple()
+	local t,e
+	t=nixio.open("/tmp/my-simple.ovpn","r")
+	luci.http.header('Content-Disposition','attachment; filename="my-simple.ovpn"')
+	luci.http.prepare_content("application/octet-stream")
+	while true do
+		e=t:read(nixio.const.buffersize)
+		if(not e)or(#e==0)then
+			break
+		else
+			luci.http.write(e)
+		end
+	end
+	t:close()
+	luci.http.close()
+end
+
+function Downloadca()
+	local t,e
+	t=nixio.open("/tmp/ca.crt","r")
+	luci.http.header('Content-Disposition','attachment; filename="ca.crt"')
+	luci.http.prepare_content("application/octet-stream")
+	while true do
+		e=t:read(nixio.const.buffersize)
+		if(not e)or(#e==0)then
+			break
+		else
+			luci.http.write(e)
+		end
+	end
+	t:close()
+	luci.http.close()
+end
+
+function Downloadcert()
+	local t,e
+	t=nixio.open("/tmp/cert.crt","r")
+	luci.http.header('Content-Disposition','attachment; filename="cert.crt"')
+	luci.http.prepare_content("application/octet-stream")
+	while true do
+		e=t:read(nixio.const.buffersize)
+		if(not e)or(#e==0)then
+			break
+		else
+			luci.http.write(e)
+		end
+	end
+	t:close()
+	luci.http.close()
+end
+
+function Downloadkey()
+	local t,e
+	t=nixio.open("/tmp/client.key","r")
+	luci.http.header('Content-Disposition','attachment; filename="client.key"')
 	luci.http.prepare_content("application/octet-stream")
 	while true do
 		e=t:read(nixio.const.buffersize)

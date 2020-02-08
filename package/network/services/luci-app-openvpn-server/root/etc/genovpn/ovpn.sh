@@ -12,7 +12,7 @@ resolv-retry infinite
 nobind
 persist-key
 persist-tun
-verb 3"
+verb 3
 EOF
 echo '<ca>' >> /tmp/my.ovpn
 cat /etc/openvpn/ca.crt >> /tmp/my.ovpn
