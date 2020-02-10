@@ -1,0 +1,27 @@
+--- /dev/null
++++ b/feeds/packages/libs/gnutls/patches/001-fix-get_supported_curve.patch
+@@ -0,0 +1,24 @@
++--- a/lib/nettle/pk.c
+++++ b/lib/nettle/pk.c
++@@ -750,16 +750,16 @@
++ 	switch (curve) {
++ #ifdef ENABLE_NON_SUITEB_CURVES
++ 	case GNUTLS_ECC_CURVE_SECP192R1:
++-		return &nettle_secp_192r1;
+++		return nettle_get_secp_192r1();
++ 	case GNUTLS_ECC_CURVE_SECP224R1:
++-		return &nettle_secp_224r1;
+++		return nettle_get_secp_224r1();
++ #endif
++ 	case GNUTLS_ECC_CURVE_SECP256R1:
++-		return &nettle_secp_256r1;
+++		return nettle_get_secp_256r1();
++ 	case GNUTLS_ECC_CURVE_SECP384R1:
++-		return &nettle_secp_384r1;
+++		return nettle_get_secp_384r1();
++ 	case GNUTLS_ECC_CURVE_SECP521R1:
++-		return &nettle_secp_521r1;
+++		return nettle_get_secp_521r1();
++ 	default:
++ 		return NULL;
++ 	}

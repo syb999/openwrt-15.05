@@ -37,6 +37,8 @@ patch -p1 < 12-minidlna-dsd.patch
 
 patch -p1 < 13-libuv.patch
 
+patch -p1 < 14-gnutls.patch
+
 make menuconfig
 
 make V=99
