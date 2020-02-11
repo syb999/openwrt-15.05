@@ -16,20 +16,17 @@ msgstr "端口"
 msgid "WAN DDNS or IP"
 msgstr "WAN口的 DDNS域名 或者 IP"
 
-
 msgid "Client Network"
 msgstr "客户端网段"
 
 msgid "VPN Client Network IP with subnet"
 msgstr "客户端分配的网段地址（默认为 10.9.9.0 255.255.255.0）"
 
-
 msgid "Client Settings"
 msgstr "客户端推送配置"
 
 msgid "OpenVPN Client config file"
 msgstr "OpenVPN 客户端配置文件"
-
 
 msgid "Download .ovpn file"
 msgstr "一键下载 .ovpn 文件"
@@ -49,15 +46,15 @@ msgstr "根据路由的实际LAN IP 修改 route 192.168.1.0 255.255.255.0 和 d
 msgid "OpenVPN status"
 msgstr "OpenVPN 服务器运行状态"
 
-msgid "duplicate_cn"
+msgid "Allow multiple clients to access at the same time"
 msgstr "同一时刻允许多个客户端接入"
 
-msgid "username_as_common_name"
+msgid "The same account can be used when multiple users log in at the same time"
 msgstr "多用户同时登陆时可用同一账户"
 
 msgid "redirect-gateway def1 bypass-dhcp"
 msgstr "所有客户端的默认网关都将重定向到VPN"
 
-
-
+msgid "Make tun device IPv6 capable"
+msgstr "使tun设备支持IPv6"
 

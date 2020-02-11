@@ -21,26 +21,14 @@ dev.default = "tun"
 dev.rmempty = false
 dev.description = translate("use tun/tap device node(default tun)")
 
-tun_ipv6 = s:taboption("basic", Value, "tun_ipv6", translate("tun_ipv6"))
+tun_ipv6 = s:taboption("basic",Flag,"tun_ipv6", translate("tun_ipv6"))
 tun_ipv6:depends({dev="tun"})
-tun_ipv6.datatype = "range(0,1)"
-tun_ipv6.default = "0"
-tun_ipv6.description = translate("Make tun device IPv6 capable(设置:1 为起用)")
+tun_ipv6.description = translate("Make tun device IPv6 capable")
 
 ddns = s:taboption("basic", Value, "ddns", translate("WAN DDNS or IP"))
 ddns.datatype = "string"
 ddns.default = "exmple.com"
 ddns.rmempty = false
-
-persist_key = s:taboption("basic", Value, "persist_key", translate("persist_key"))
-persist_key.datatype = "range(0,1)"
-persist_key.default = "1"
-persist_key.description = translate("重新启动vpn，不重新读取key(设置:1 为起用)")
-
-persist_tun = s:taboption("basic", Value, "persist_tun", translate("persist_tun"))
-persist_tun.datatype = "range(0,1)"
-persist_tun.default = "1"
-persist_tun.description = translate("重新启动vpn,一直保持tun或tap设备的连接(设置:1 为起用)")
 
 max_clients = s:taboption("basic", Value, "max_clients", translate("max_clients"))
 max_clients.datatype = "range(1,999)"
@@ -73,8 +61,21 @@ script_security.datatype = "range(1,3)"
 script_security.default = "3"
 script_security.description = translate("默认设置:3,留空禁用")
 
+persist_key = s:taboption("basic",Flag,"persist_key", translate("persist_key"))
+persist_key.description = translate("重新启动vpn，不重新读取key")
+
+persist_tun = s:taboption("basic",Flag,"persist_tun", translate("persist_tun"))
+persist_tun.description = translate("重新启动vpn,仍保持tun或tap设备的连接")
+
+client_to_client = s:taboption("basic",Flag,"client_to_client", translate("client_to_client"))
+client_to_client.description = translate("允许客户端相互访问")
+
 duplicate_cn = s:taboption("basic",Flag,"duplicate_cn", translate("duplicate_cn"))
+duplicate_cn.description = translate("Allow multiple clients to access at the same time")
+
 username_as_common_name = s:taboption("basic",Flag,"username_as_common_name", translate("username_as_common_name"))
+username_as_common_name.description = translate("The same account can be used when multiple users log in at the same time")
+
 client_cert_not_required = s:taboption("basic",Flag,"client_cert_not_required", translate("client_cert_not_required"))
 client_cert_not_required.description = translate("打开后客户端则不需要cert和key,不打开则需要cert和key以及帐号密码双重验证")
 
@@ -83,100 +84,14 @@ list.title = translate("Client Settings")
 list.datatype = "string"
 list.description = translate("Set route 192.168.1.0 255.255.255.0 and dhcp-option DNS 192.168.1.1 base on your router")
 
-listrb = s:taboption("basic", DynamicList, "push")
-listrb.title = translate("Client Settings")
-listrb.datatype = "string"
-listrb.default = "redirect-gateway def1 bypass-dhcp"
-listrb.description = translate("所有客户端的默认网关都将重定向到VPN")
-
-ca = s:taboption("basic",Value,"ca.crt", translate("ca.crt"))
-ca.datatype = "string"
-ca.default ="/etc/openvpn/ca.crt"
-ca.description = translate("默认设置:/etc/openvpn/ca.crt,建议使用OPENVPN CERT按键自动更新证书")
-
-dh = s:taboption("basic",Value,"dh.pem", translate("dh.pem"))
-dh.datatype = "string"
-dh.default ="/etc/openvpn/dh.pem"
-dh.description = translate("默认设置:/etc/openvpn/dh.pem,建议使用OPENVPN CERT按键自动更新文件")
-
-cert = s:taboption("basic",Value,"server.crt", translate("server.crt"))
-cert.datatype = "string"
-cert.default ="/etc/openvpn/server.crt"
-cert.description = translate("默认设置:/etc/openvpn/server.crt,建议使用OPENVPN CERT按键自动更新证书")
-
-key = s:taboption("basic",Value,"server.key", translate("server.key"))
-key.datatype = "string"
-key.default ="/etc/openvpn/server.key"
-key.description = translate("默认设置:/etc/openvpn/server.key,建议使用OPENVPN CERT按键自动更新证书")
-
 local o
 o = s:taboption("basic", Button,"certificate",translate("OpenVPN Client config file"))
 o.inputtitle = translate("Download .ovpn file")
 o.description = translate("如果使用单独帐号密码验证,一定要记得删除key和cert内容")
 o.inputstyle = "reload"
 o.write = function()
-  luci.sys.call("sh /etc/genovpn/ovpn.sh 2>&1 >/dev/null")
+  luci.sys.call("sh /etc/genovpn.sh 2>&1 >/dev/null")
 	Download()
-end
-
-local osimple
-osimple = s:taboption("basic", Button,"simple-certificate",translate("OpenVPN Client simple config file"))
-osimple.inputtitle = translate("Download .ovpn file")
-osimple.description = translate("下载简化配置文件，不包含ca cert key内容")
-osimple.inputstyle = "reload"
-osimple.write = function()
-  luci.sys.call("sh /etc/genovpn/simple.sh 2>&1 >/dev/null")
-	Downloadsimple()
-end
-
-local aca
-aca = s:taboption("basic", Button,"ca certificate",translate("OpenVPN Client ca file"))
-aca.inputtitle = translate("Download ca file")
-aca.description = translate("单独下载ca.crt证书")
-aca.inputstyle = "reload"
-aca.write = function()
-  luci.sys.call("sh /etc/genovpn/ca.sh 2>&1 >/dev/null")
-	Downloadca()
-end
-
-local bcert
-bcert = s:taboption("basic", Button,"cert certificate",translate("OpenVPN Client cert file"))
-bcert.inputtitle = translate("Download cert file")
-bcert.description = translate("单独下载client.crt证书")
-bcert.inputstyle = "reload"
-bcert.write = function()
-  luci.sys.call("sh /etc/genovpn/cert.sh 2>&1 >/dev/null")
-	Downloadcert()
-end
-
-local ckey
-ckey = s:taboption("basic", Button,"key",translate("OpenVPN Client key file"))
-ckey.inputtitle = translate("Download key file")
-ckey.description = translate("单独下载client.key文件")
-bcert.inputstyle = "reload"
-ckey.write = function()
-  luci.sys.call("sh /etc/genovpn/key.sh 2>&1 >/dev/null")
-	Downloadkey()
-end
-
-local ddh
-ddh = s:taboption("basic", Button,"dh",translate("OpenVPN Client dh file"))
-ddh.inputtitle = translate("Download dh file")
-ddh.description = translate("单独下载dh.pem文件")
-ddh.inputstyle = "reload"
-ddh.write = function()
-  luci.sys.call("sh /etc/genovpn/dh.sh 2>&1 >/dev/null")
-	Downloaddh()
-end
-
-local epass
-epass = s:taboption("basic", Button,"user_password",translate("OpenVPN Client user_password file"))
-epass.inputtitle = translate("Download userpass file")
-epass.description = translate("单独下载userpass文件,请按照默认格式自行修改服务器设置的用户名密码")
-epass.inputstyle = "reload"
-epass.write = function()
-  luci.sys.call("sh /etc/genovpn/pass.sh 2>&1 >/dev/null")
-	Downloadpass()
 end
 
 s:tab("code",  translate("客户端代码"))
@@ -229,108 +144,6 @@ function Download()
 	local t,e
 	t=nixio.open("/tmp/my.ovpn","r")
 	luci.http.header('Content-Disposition','attachment; filename="my.ovpn"')
-	luci.http.prepare_content("application/octet-stream")
-	while true do
-		e=t:read(nixio.const.buffersize)
-		if(not e)or(#e==0)then
-			break
-		else
-			luci.http.write(e)
-		end
-	end
-	t:close()
-	luci.http.close()
-end
-
-function Downloadsimple()
-	local t,e
-	t=nixio.open("/tmp/my-simple.ovpn","r")
-	luci.http.header('Content-Disposition','attachment; filename="my-simple.ovpn"')
-	luci.http.prepare_content("application/octet-stream")
-	while true do
-		e=t:read(nixio.const.buffersize)
-		if(not e)or(#e==0)then
-			break
-		else
-			luci.http.write(e)
-		end
-	end
-	t:close()
-	luci.http.close()
-end
-
-function Downloadca()
-	local t,e
-	t=nixio.open("/tmp/ca.crt","r")
-	luci.http.header('Content-Disposition','attachment; filename="ca.crt"')
-	luci.http.prepare_content("application/octet-stream")
-	while true do
-		e=t:read(nixio.const.buffersize)
-		if(not e)or(#e==0)then
-			break
-		else
-			luci.http.write(e)
-		end
-	end
-	t:close()
-	luci.http.close()
-end
-
-function Downloadcert()
-	local t,e
-	t=nixio.open("/tmp/client.crt","r")
-	luci.http.header('Content-Disposition','attachment; filename="client.crt"')
-	luci.http.prepare_content("application/octet-stream")
-	while true do
-		e=t:read(nixio.const.buffersize)
-		if(not e)or(#e==0)then
-			break
-		else
-			luci.http.write(e)
-		end
-	end
-	t:close()
-	luci.http.close()
-end
-
-function Downloadkey()
-	local t,e
-	t=nixio.open("/tmp/client.key","r")
-	luci.http.header('Content-Disposition','attachment; filename="client.key"')
-	luci.http.prepare_content("application/octet-stream")
-	while true do
-		e=t:read(nixio.const.buffersize)
-		if(not e)or(#e==0)then
-			break
-		else
-			luci.http.write(e)
-		end
-	end
-	t:close()
-	luci.http.close()
-end
-
-function Downloaddh()
-	local t,e
-	t=nixio.open("/tmp/dh.pem","r")
-	luci.http.header('Content-Disposition','attachment; filename="dh.pem"')
-	luci.http.prepare_content("application/octet-stream")
-	while true do
-		e=t:read(nixio.const.buffersize)
-		if(not e)or(#e==0)then
-			break
-		else
-			luci.http.write(e)
-		end
-	end
-	t:close()
-	luci.http.close()
-end
-
-function Downloadpass()
-	local t,e
-	t=nixio.open("/tmp/userpass.txt","r")
-	luci.http.header('Content-Disposition','attachment; filename="userpass.txt"')
 	luci.http.prepare_content("application/octet-stream")
 	while true do
 		e=t:read(nixio.const.buffersize)
