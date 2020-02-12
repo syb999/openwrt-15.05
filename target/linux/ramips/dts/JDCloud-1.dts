@@ -111,21 +111,10 @@
 	gpio-leds {
 		compatible = "gpio-leds";
 
-		sysr {
-			label = "jdcloud:red:sysr";
-			gpios = <&gpio0 6 1>;
-		};
-
-		sysg {
-			label = "jdcloud:green:sysg";
+		ledgreen {
+			label = "jdcloud:green:ledgreen";
 			gpios = <&gpio0 8 1>;
 		};
-
-		sysb {
-			label = "jdcloud:blue:sysb";
-			gpios = <&gpio0 12 1>;
-		};
-
 	};
 
 
