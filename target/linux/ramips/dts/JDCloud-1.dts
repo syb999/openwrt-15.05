@@ -111,9 +111,9 @@
 	gpio-leds {
 		compatible = "gpio-leds";
 
-		ledgreen {
-			label = "jdcloud:green:ledgreen";
-			gpios = <&gpio0 8 1>;
+		led {
+			label = "jdcloud:blue:led";
+			gpios = <&gpio0 12 1>;
 		};
 	};
 
