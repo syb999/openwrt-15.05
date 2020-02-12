@@ -51,7 +51,7 @@ define KernelPackage/mt76-core
   TITLE:=MediaTek MT76xx wireless driver
   FILES:=\
 	$(PKG_BUILD_DIR)/mt76.ko
-  AUTOLOAD:=$(call AutoLoad,50,mac80211 mt76)
+  AUTOLOAD:=$(call AutoLoad,54,mac80211 mt76)
 endef
 
 define KernelPackage/mt76-usb
@@ -90,7 +90,7 @@ define KernelPackage/mt76x0e
   DEPENDS+=@PCI_SUPPORT +kmod-mt76x0-common
   FILES:=\
 	$(PKG_BUILD_DIR)/mt76x0/mt76x0e.ko
-  AUTOLOAD:=$(call AutoLoad,51,mt76x0e)
+  AUTOLOAD:=$(call AutoLoad,55,mt76x0e)
 endef
 
 define KernelPackage/mt76x0u
@@ -99,7 +99,7 @@ define KernelPackage/mt76x0u
   DEPENDS+=+kmod-mt76x0-common +kmod-mt76x02-usb
   FILES:=\
 	$(PKG_BUILD_DIR)/mt76x0/mt76x0u.ko
-  AUTOLOAD:=$(call AutoLoad,51,mt76x0u)
+  AUTOLOAD:=$(call AutoLoad,55,mt76x0u)
 endef
 
 define KernelPackage/mt76x2-common
@@ -115,7 +115,7 @@ define KernelPackage/mt76x2u
   DEPENDS+=+kmod-mt76x2-common +kmod-mt76x02-usb
   FILES:=\
 	$(PKG_BUILD_DIR)/mt76x2/mt76x2u.ko
-  AUTOLOAD:=$(call AutoLoad,51,mt76x2u)
+  AUTOLOAD:=$(call AutoLoad,55,mt76x2u)
 endef
 
 define KernelPackage/mt76x2
@@ -124,7 +124,7 @@ define KernelPackage/mt76x2
   DEPENDS+=@PCI_SUPPORT +kmod-mt76x2-common
   FILES:=\
 	$(PKG_BUILD_DIR)/mt76x2/mt76x2e.ko
-  AUTOLOAD:=$(call AutoLoad,51,mt76x2e)
+  AUTOLOAD:=$(call AutoLoad,55,mt76x2e)
 endef
 
 define KernelPackage/mt7603
@@ -133,7 +133,7 @@ define KernelPackage/mt7603
   DEPENDS+=@PCI_SUPPORT +kmod-mt76-core
   FILES:=\
 	$(PKG_BUILD_DIR)/mt7603/mt7603e.ko
-  AUTOLOAD:=$(call AutoLoad,52,mt7603e)
+  AUTOLOAD:=$(call AutoLoad,55,mt7603e)
 endef
 
 define KernelPackage/mt7615e
@@ -142,7 +142,7 @@ define KernelPackage/mt7615e
   DEPENDS+=@PCI_SUPPORT +kmod-mt76-core
   FILES:=\
 	$(PKG_BUILD_DIR)/mt7615/mt7615e.ko
-  AUTOLOAD:=$(call AutoLoad,53,mt7615e)
+  AUTOLOAD:=$(call AutoLoad,55,mt7615e)
 endef
 
 NOSTDINC_FLAGS = \
