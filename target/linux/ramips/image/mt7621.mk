@@ -78,7 +78,7 @@ define Device/ghl
   DTS := GHL
   IMAGE_SIZE := $(ralink_default_fw_size_32M)
 endef
-TARGET_DEVICES += zbt-we1326
+TARGET_DEVICES += ghl
 
 define Device/jdcloud-1
   DTS := JDCloud-1
