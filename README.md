@@ -39,6 +39,8 @@ patch -p1 < 13-libuv.patch
 
 patch -p1 < 14-gnutls.patch
 
+patch -p1 < 15-luci-recognize-alias-interfaces.patch
+
 make menuconfig
 
 make V=99
