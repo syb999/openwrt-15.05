@@ -41,6 +41,8 @@ patch -p1 < 14-gnutls.patch
 
 patch -p1 < 15-luci-recognize-alias-interfaces.patch
 
+patch -p1 < 16-luci-hexstring-datatype.patch
+
 make menuconfig
 
 make V=99

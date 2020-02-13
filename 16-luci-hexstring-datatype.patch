@@ -1,0 +1,16 @@
+--- a/feeds/luci/modules/luci-base/luasrc/cbi/datatypes.lua
++++ b/feeds/luci/modules/luci-base/luasrc/cbi/datatypes.lua
+@@ -204,6 +204,13 @@
+ 	end
+ end
+ 
++function hexstring(val)
++        if val then
++                return (val:match("^[a-fA-F0-9]+$") ~= nil)
++        end
++        return false
++end
++
+ function string(val)
+ 	return true		-- Everything qualifies as valid string
+ end
