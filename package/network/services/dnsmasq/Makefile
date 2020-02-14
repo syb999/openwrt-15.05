@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2016 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,11 +8,10 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dnsmasq
-PKG_UPSTREAM_VERSION:=2.80
-PKG_VERSION:=$(subst test,~~test,$(subst rc,~rc,$(PKG_UPSTREAM_VERSION)))
-PKG_RELEASE:=15
+PKG_VERSION:=2.80
+PKG_RELEASE:=16
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_UPSTREAM_VERSION).tar.xz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://thekelleys.org.uk/dnsmasq
 PKG_MD5SUM:=e040e72e6f377a784493c36f9e788502
 
@@ -20,7 +19,7 @@ PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:thekelleys:dnsmasq
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_UPSTREAM_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -42,7 +41,6 @@ define Package/dnsmasq/Default
   TITLE:=DNS and DHCP server
   URL:=http://www.thekelleys.org.uk/dnsmasq/
   DEPENDS:=+libubus
-  USERID:=dnsmasq=453:dnsmasq=453
 endef
 
 define Package/dnsmasq
@@ -53,9 +51,8 @@ endef
 define Package/dnsmasq-dhcpv6
 $(call Package/dnsmasq/Default)
   TITLE += (with DHCPv6 support)
-  DEPENDS+=@IPV6
+  DEPENDS:=@IPV6 +kmod-ipv6
   VARIANT:=dhcpv6
-  PROVIDES:=dnsmasq
 endef
 
 define Package/dnsmasq-full
@@ -65,7 +62,6 @@ $(call Package/dnsmasq/Default)
 	+PACKAGE_dnsmasq_full_ipset:kmod-ipt-ipset \
 	+PACKAGE_dnsmasq_full_conntrack:libnetfilter-conntrack
   VARIANT:=full
-  PROVIDES:=dnsmasq
 endef
 
 define Package/dnsmasq/description
@@ -170,14 +166,11 @@ define Package/dnsmasq/install
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/neigh
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/ntp
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/tftp
-	$(INSTALL_CONF) ./files/dnsmasqsec.hotplug $(1)/etc/hotplug.d/ntp/25-dnsmasqsec
 	$(INSTALL_DIR) $(1)/usr/share/dnsmasq
-	$(INSTALL_CONF) ./files/dhcpbogushostname.conf $(1)/usr/share/dnsmasq/
-	$(INSTALL_CONF) ./files/rfc6761.conf $(1)/usr/share/dnsmasq/
 	$(INSTALL_DIR) $(1)/usr/lib/dnsmasq
-	$(INSTALL_BIN) ./files/dhcp-script.sh $(1)/usr/lib/dnsmasq/dhcp-script.sh
 	$(INSTALL_DIR) $(1)/usr/share/acl.d
-	$(INSTALL_DATA) ./files/dnsmasq_acl.json $(1)/usr/share/acl.d/
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
+	$(INSTALL_DATA) ./files/dnsmasq.hotplug $(1)/etc/hotplug.d/iface/25-dnsmasq
 endef
 
 Package/dnsmasq-dhcpv6/install = $(Package/dnsmasq/install)
@@ -186,7 +179,7 @@ define Package/dnsmasq-full/install
 $(call Package/dnsmasq/install,$(1))
 ifneq ($(CONFIG_PACKAGE_dnsmasq_full_dnssec),)
 	$(INSTALL_DIR) $(1)/usr/share/dnsmasq
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/trust-anchors.conf $(1)/usr/share/dnsmasq
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/trust-anchors.conf $(1)/usr/share/dnsmasq
 endif
 endef
 
