@@ -15,7 +15,7 @@ define Profile/Caiman
 	kmod-gpio-button-hotplug kmod-hwmon-tmp421 \
 	kmod-leds-pca963x \
 	kmod-ledtrig-usbdev kmod-mwlwifi wpad-mini \
-	swconfig
+	swconfig mwlwifi-firmware-88w8864
 endef
 
 define Profile/Caiman/Description
@@ -35,7 +35,7 @@ define Profile/Cobra
 	kmod-gpio-button-hotplug kmod-hwmon-tmp421 \
 	kmod-leds-pca963x \
 	kmod-ledtrig-usbdev kmod-mwlwifi wpad-mini \
-	swconfig
+	swconfig mwlwifi-firmware-88w8864
 endef
 
 define Profile/Cobra/Description
@@ -55,7 +55,7 @@ define Profile/Mamba
 	kmod-gpio-button-hotplug kmod-hwmon-tmp421 \
 	kmod-hwmon-pwmfan kmod-leds-tlc59116 \
 	kmod-ledtrig-usbdev kmod-mwlwifi wpad-mini \
-	swconfig
+	swconfig mwlwifi-firmware-88w8864
 endef
 
 define Profile/Mamba/Description
@@ -75,7 +75,7 @@ define Profile/Shelby
 	kmod-gpio-button-hotplug kmod-hwmon-tmp421 \
 	kmod-leds-pca963x \
 	kmod-ledtrig-usbdev kmod-mwlwifi wpad-mini \
-	swconfig
+	swconfig mwlwifi-firmware-88w8864
 endef
 
 define Profile/Shelby/Description
@@ -86,7 +86,9 @@ $(eval $(call Profile,Shelby))
 
 define Profile/Rango
   NAME:=Linksys WRT3200ACM (Rango)
-  PACKAGES:= kmod-mwlwifi wpad-mini swconfig
+  PACKAGES:= \
+	kmod-mwlwifi wpad-mini swconfig \
+	kmod-btmrvl kmod-mwifiex-sdio mwlwifi-firmware-88w8964
 endef
 
 define Profile/Rango/Description
