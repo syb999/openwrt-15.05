@@ -52,7 +52,10 @@ define KernelPackage/mt76-core
   HIDDEN:=1
   FILES:=\
 	$(PKG_BUILD_DIR)/mt76.ko
-  AUTOLOAD:=$(call AutoLoad,50,mac80211 mt76)
+  AUTOLOAD:=$(call AutoProbe, \
+	mac80211 \
+	mt76 \
+  )
 endef
 
 define KernelPackage/mt76-usb
@@ -128,7 +131,7 @@ define KernelPackage/mt76x2
   DEPENDS+=@PCI_SUPPORT +kmod-mt76x2-common
   FILES:=\
 	$(PKG_BUILD_DIR)/mt76x2/mt76x2e.ko
-  AUTOLOAD:=$(call AutoLoad,51,mt76x2e)
+  AUTOLOAD:=$(call AutoProbe,mt76x2e)
 endef
 
 define KernelPackage/mt7603
@@ -137,7 +140,7 @@ define KernelPackage/mt7603
   DEPENDS+=@PCI_SUPPORT +kmod-mt76-core
   FILES:=\
 	$(PKG_BUILD_DIR)/mt7603/mt7603e.ko
-  AUTOLOAD:=$(call AutoLoad,52,mt7603e)
+  AUTOLOAD:=$(call AutoProbe,mt7603e)
 endef
 
 define KernelPackage/mt7615e
