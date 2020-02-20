@@ -11,38 +11,6 @@ sudo apt-get install libc6:i386 libgcc1:i386 libstdc++5:i386 libstdc++6:i386
 
 ./scripts/feeds install -a
 
-patch -p1 < 01-80211rw-luci.patch
-
-patch -p1 < 02-80211kv-luci.patch
-
-patch -p1 < 03-igmp-luci.patch
-
-patch -p1 < 04-fix-wget.patch
-
-patch -p1 < 05-mtd-backup-luci.patch
-
-patch -p1 < 06-openvpn-luci.patch
-
-patch -p1 < 07-dnscachesize-luci.patch
-
-patch -p1 < 08-libssh2.patch
-
-patch -p1 < 09-asterisk1.8.patch
-
-patch -p1 < 10-asterisk11.patch
-
-patch -p1 < 11-ipv6-pd-support.patch
-
-patch -p1 < 12-minidlna-dsd.patch
-
-patch -p1 < 13-libuv.patch
-
-patch -p1 < 14-gnutls.patch
-
-patch -p1 < 15-luci-recognize-alias-interfaces.patch
-
-patch -p1 < 16-luci-hexstring-datatype.patch
-
 make menuconfig
 
 make V=99
