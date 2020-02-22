@@ -19,6 +19,7 @@
 #     netdev: bound network device (detects ifindex changes)
 #     limits: resource limits (passed to the process)
 #     user info: array with 1 values $username
+#     pidfile: file name to write pid into
 #
 #   No space separation is done for arrays/tables - use one function argument per command line argument
 #
@@ -28,9 +29,13 @@
 # procd_kill(service, [instance]):
 #   Kill a service instance (or all instances)
 #
+# procd_send_signal(service, [instance], [signal])
+#   Send a signal to a service instance (or all instances)
+#
 
 . $IPKG_INSTROOT/usr/share/libubox/jshn.sh
 
+PROCD_RELOAD_DELAY=1000
 _PROCD_SERVICE=
 
 _procd_call() {
@@ -71,8 +76,10 @@ _procd_open_service() {
 
 _procd_close_service() {
 	json_close_object
+	_procd_open_trigger
 	service_triggers
-	_procd_ubus_call set
+	_procd_close_trigger
+	_procd_ubus_call ${1:-set}
 }
 
 _procd_add_array_data() {
@@ -116,17 +123,30 @@ _procd_open_instance() {
 }
 
 _procd_open_trigger() {
+	let '_procd_trigger_open = _procd_trigger_open + 1'
+	[ "$_procd_trigger_open" -gt 1 ] && return
 	json_add_array "triggers"
 }
 
+_procd_close_trigger() {
+	let '_procd_trigger_open = _procd_trigger_open - 1'
+	[ "$_procd_trigger_open" -lt 1 ] || return
+	json_close_array
+}
+
 _procd_open_validate() {
+	json_select ..
 	json_add_array "validate"
+}
+
+_procd_close_validate() {
+	json_close_array
+	json_select triggers
 }
 
 _procd_add_jail() {
 	json_add_object "jail"
 	json_add_string name "$1"
-	json_add_string root "/tmp/.jail/$1"
 
 	shift
 	
@@ -136,6 +156,7 @@ _procd_add_jail() {
 		ubus)	json_add_boolean "ubus" "1";;
 		procfs)	json_add_boolean "procfs" "1";;
 		sysfs)	json_add_boolean "sysfs" "1";;
+		ronly)	json_add_boolean "ronly" "1";;
 		esac
 	done
 	json_add_object "mount"
@@ -195,13 +216,21 @@ _procd_set_param() {
 		nice)
 			json_add_int "$type" "$1"
 		;;
-		user|seccomp)
+		reload_signal)
+			json_add_int "$type" $(kill -l "$1")
+		;;
+		pidfile|user|seccomp|capabilities)
 			json_add_string "$type" "$1"
 		;;
-		stdout|stderr)
+		stdout|stderr|no_new_privs)
 			json_add_boolean "$type" "$1"
 		;;
 	esac
+}
+
+_procd_add_timeout() {
+	[ "$PROCD_RELOAD_DELAY" -gt 0 ] && json_add_int "" "$PROCD_RELOAD_DELAY"
+	return 0
 }
 
 _procd_add_interface_trigger() {
@@ -222,6 +251,7 @@ _procd_add_interface_trigger() {
 	json_close_array
 
 	json_close_array
+	_procd_add_timeout
 	json_close_array
 }
 
@@ -252,7 +282,7 @@ _procd_add_config_trigger() {
 	json_close_array
 
 	json_close_array
-
+	_procd_add_timeout
 	json_close_array
 }
 
@@ -316,15 +346,18 @@ _procd_append_param() {
 }
 
 _procd_close_instance() {
+	local respawn_vals
+	_json_no_warning=1
+	if json_select respawn ; then
+		json_get_values respawn_vals
+		if [ -z "$respawn_vals" ]; then
+			local respawn_retry=$(uci_get system.@service[0].respawn_retry)
+			_procd_add_array_data 3600 5 ${respawn_retry:-5}
+		fi
+		json_select ..
+	fi
+
 	json_close_object
-}
-
-_procd_close_trigger() {
-	json_close_array
-}
-
-_procd_close_validate() {
-	json_close_array
 }
 
 _procd_add_instance() {
@@ -341,6 +374,18 @@ _procd_kill() {
 	[ -n "$service" ] && json_add_string name "$service"
 	[ -n "$instance" ] && json_add_string instance "$instance"
 	_procd_ubus_call delete
+}
+
+_procd_send_signal() {
+	local service="$1"
+	local instance="$2"
+	local signal="$3"
+
+	json_init
+	json_add_string name "$service"
+	[ -n "$instance" -a "$instance" != "*" ] && json_add_string instance "$instance"
+	[ -n "$signal" ] && json_add_int signal "$signal"
+	_procd_ubus_call signal
 }
 
 procd_open_data() {
@@ -427,4 +472,5 @@ _procd_wrapper \
 	procd_append_param \
 	procd_add_validation \
 	procd_set_config_changed \
-	procd_kill
+	procd_kill \
+	procd_send_signal
