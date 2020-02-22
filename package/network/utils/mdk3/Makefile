@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/mdk3
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libpthread
+  DEPENDS:=+libpthread +airmon-ng
   TITLE:= MDK3
   URL:=http://homepages.tu-darmstadt.de/~p_larbig/wlan/
   SUBMENU:=wireless
