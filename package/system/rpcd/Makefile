@@ -8,20 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rpcd
-PKG_VERSION:=2016-06-30
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL=$(OPENWRT_GIT)/project/rpcd.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)
-PKG_SOURCE_VERSION:=23417e94d25570e6d62542bac46edd51e8e0243a
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
+PKG_SOURCE_URL=http://git.openwrt.org/project/rpcd.git
+PKG_SOURCE_DATE:=2019-11-10
+PKG_SOURCE_VERSION:=77ad0de09247b9bdce50f4cecf3e5beb5636f57f
+PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
+PKG_MIRROR_HASH:=d36caff85bebbf7fb1b512359243bdbb7d9b16140e0d631afae9de2c3b8e4dff
 
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -36,12 +34,12 @@ define Package/rpcd/default
   SECTION:=utils
   CATEGORY:=Base system
   TITLE:=OpenWrt ubus RPC backend server
-  DEPENDS:=+libubus +libubox +libblobmsg-json
+  DEPENDS:=+libubus +libubox
 endef
 
 define Package/rpcd
   $(Package/rpcd/default)
-  DEPENDS+= +libuci +libblobmsg-json
+  DEPENDS+= +libuci +libblobmsg-json +libjson-c
 endef
 
 define Package/rpcd/description
@@ -52,6 +50,8 @@ endef
 define Package/rpcd/conffiles
 /etc/config/rpcd
 endef
+
+TARGET_LDFLAGS += -lcrypt
 
 define Package/rpcd/install
 	$(INSTALL_DIR) $(1)/etc/init.d
