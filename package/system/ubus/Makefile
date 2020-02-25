@@ -1,15 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ubus
-PKG_VERSION:=2018-10-06
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=http://git.openwrt.org/project/ubus.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=221ce7e7ff1bd1a0c9995fa9d32f58e865f7207f
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_MD5SUM:=
+PKG_SOURCE_URL=http://git.openwrt.org/project/ubus.git
+PKG_SOURCE_DATE:=2019-12-27
+PKG_SOURCE_VERSION:=041c9d1c052bb4936fd03240f7d0dd64aedda972
+PKG_MIRROR_HASH:=7febbe78dd178d8d7ccacff54c00fb2d19a53624005920db8cd85236f54f8324
 CMAKE_INSTALL:=1
 
 PKG_LICENSE:=LGPL-2.1
@@ -37,15 +35,15 @@ endef
 define Package/libubus
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libubox +libblobmsg-json
-  ABI_VERSION:=20170705
+  DEPENDS:=+libubox
+  ABI_VERSION:=20191227
   TITLE:=OpenWrt RPC client library
 endef
 
 define Package/libubus-lua
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libubus +liblua +libblobmsg-json
+  DEPENDS:=+libubus +liblua
   TITLE:=Lua binding for the OpenWrt RPC client
 endef
 
