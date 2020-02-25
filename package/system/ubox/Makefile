@@ -1,20 +1,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ubox
-PKG_VERSION:=2015-11-22
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://nbd.name/luci2/ubox.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=c086167a0154745c677f8730a336ea9cf7d71031
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_SOURCE_URL=http://git.openwrt.org/project/ubox.git
+PKG_SOURCE_DATE:=2019-06-16
+PKG_SOURCE_VERSION:=4df34a4d0d5183135217fc8280faae8e697147bc
+PKG_MIRROR_HASH:=a4064a1aa29cf612735b0da180f5bdee62304e907f57730482cad97b04f2b189
 CMAKE_INSTALL:=1
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=
 
-PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>
+PKG_MAINTAINER:=John Crispin <john@phrozen.org>
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -28,6 +27,12 @@ define Package/ubox
   TITLE:=OpenWrt system helper toolbox
 endef
 
+define Package/getrandom
+  SECTION:=base
+  CATEGORY:=Base system
+  TITLE:=OpenWrt getrandom system helper
+endef
+
 define Package/logd
   SECTION:=base
   CATEGORY:=Base system
@@ -35,17 +40,22 @@ define Package/logd
   TITLE:=OpenWrt system log implementation
 endef
 
+define Package/getrandom/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/getrandom $(1)/usr/bin/
+endef
+
 define Package/ubox/install
-	$(INSTALL_DIR) $(1)/sbin $(1)/usr/sbin $(1)/lib/
+	$(INSTALL_DIR) $(1)/sbin $(1)/usr/sbin $(1)/lib $(1)/usr/bin
 
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/{kmodloader,validate_data} $(1)/sbin/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libvalidate.so $(1)/lib
 
-	$(LN) ../../sbin/kmodloader $(1)/usr/sbin/rmmod
-	$(LN) ../../sbin/kmodloader $(1)/usr/sbin/insmod
-	$(LN) ../../sbin/kmodloader $(1)/usr/sbin/lsmod
-	$(LN) ../../sbin/kmodloader $(1)/usr/sbin/modinfo
-	$(LN) ../../sbin/kmodloader $(1)/usr/sbin/modprobe
+	$(LN) kmodloader $(1)/sbin/rmmod
+	$(LN) kmodloader $(1)/sbin/insmod
+	$(LN) kmodloader $(1)/sbin/lsmod
+	$(LN) kmodloader $(1)/sbin/modinfo
+	$(LN) kmodloader $(1)/sbin/modprobe
 endef
 
 define Package/logd/install
@@ -56,4 +66,5 @@ define Package/logd/install
 endef
 
 $(eval $(call BuildPackage,ubox))
+$(eval $(call BuildPackage,getrandom))
 $(eval $(call BuildPackage,logd))
