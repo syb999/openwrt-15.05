@@ -89,6 +89,10 @@ config PROCD_ZRAM_TMPFS
 	bool
 	default n
 	prompt "Mount /tmp using zram."
+
+config PACKAGE_procd-ujail
+	tristate
+	default y
 endmenu
 endef
 
@@ -105,7 +109,7 @@ ifeq ($(CONFIG_PROCD_ZRAM_TMPFS),y)
   CMAKE_OPTIONS += -DZRAM_TMPFS=1
 endif
 
-ifdef CONFIG_PACKAGE_procd-ujail
+ifeq ($(CONFIG_PACKAGE_procd-ujail),y)
   CMAKE_OPTIONS += -DJAIL_SUPPORT=1
 endif
 
