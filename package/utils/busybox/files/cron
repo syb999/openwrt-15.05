@@ -11,10 +11,10 @@ validate_cron_section() {
 		'cronloglevel:uinteger'
 }
 
-start_service () {
+start_service() {
 	[ -z "$(ls /etc/crontabs/)" ] && return 1
 
-	loglevel=$(uci_get "system.@system[0].cronloglevel")
+	loglevel="$(uci_get "system.@system[0].cronloglevel")"
 
 	[ -z "${loglevel}" ] || {
 		/sbin/validate_data uinteger "${loglevel}" 2>/dev/null
@@ -28,11 +28,13 @@ start_service () {
 	ln -s /etc/crontabs /var/spool/cron/ 2>/dev/null
 
 	procd_open_instance
-	procd_set_param command "$PROG" -f -c /etc/crontabs -l ${loglevel:-5}
+	procd_set_param command "$PROG" -f -c /etc/crontabs -l "${loglevel:-5}"
+	for crontab in /etc/crontabs/*; do
+		 procd_set_param file "$crontab"
+	done
 	procd_close_instance
 }
 
-service_triggers()
-{
+service_triggers() {
 	procd_add_validation validate_cron_section
 }
