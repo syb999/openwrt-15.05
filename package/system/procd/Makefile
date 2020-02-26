@@ -11,16 +11,18 @@ PKG_NAME:=procd
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL=http://git.openwrt.org/project/procd.git
-PKG_MIRROR_HASH:=fe1329f2320f70249727763739da50555e8b02665ecfc8adb15fb25cd954de5b
-PKG_SOURCE_DATE:=2020-01-24
-PKG_SOURCE_VERSION:=31e4b2dfdbd74f7451abf876dd5d9a674af7adfd
+PKG_SOURCE_URL=$(LEDE_GIT)/project/procd.git
+PKG_SOURCE_DATE:=2017-08-08
+PKG_SOURCE_VERSION:=66be6a23d71fcc068d6b813f0e0be2f8f0b6aa88
+PKG_MIRROR_HASH:=286dcc8855f1dc403895bc9252f617c14be6f7f6ec36f13d4f4de7c4a715f08c
 CMAKE_INSTALL:=1
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=
 
 PKG_MAINTAINER:=John Crispin <john@phrozen.org>
+
+PKG_FLAGS:=nonshared
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_TARGET_INIT_PATH CONFIG_KERNEL_SECCOMP \
@@ -37,15 +39,11 @@ endif
 CMAKE_OPTIONS += -DEARLY_PATH="$(TARGET_INIT_PATH)"
 TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-lrt)
 
-TARGET_CFLAGS += -flto
-TARGET_LDFLAGS += -flto
-
 define Package/procd
   SECTION:=base
   CATEGORY:=Base system
-  DEPENDS:=+ubusd +ubus +libjson-script +ubox +USE_GLIBC:librt +libubox +libubus +NAND_SUPPORT:procd-nand +libblobmsg-json +libjson-c
+  DEPENDS:=+ubusd +ubus +libjson-script +ubox +USE_GLIBC:librt +libubox +libubus +NAND_SUPPORT:procd-nand
   TITLE:=OpenWrt system process manager
-  USERID:=:dialout=20 :audio=29
 endef
 
 define Package/procd-ujail
@@ -58,7 +56,7 @@ endef
 define Package/procd-seccomp
   SECTION:=base
   CATEGORY:=Base system
-  DEPENDS:=@(arm||armeb||mips||mipsel||i386||powerpc||x86_64) @!TARGET_uml @KERNEL_SECCOMP +libubox +libblobmsg-json
+  DEPENDS:=@arm||@armeb||@mips||@mipsel||@i386||@x86_64 @!TARGET_uml @KERNEL_SECCOMP +libubox +libblobmsg-json
   TITLE:=OpenWrt process seccomp helper + utrace
 endef
 
@@ -89,10 +87,6 @@ config PROCD_ZRAM_TMPFS
 	bool
 	default n
 	prompt "Mount /tmp using zram."
-
-config PACKAGE_procd-ujail
-	tristate
-	default y
 endmenu
 endef
 
@@ -109,20 +103,21 @@ ifeq ($(CONFIG_PROCD_ZRAM_TMPFS),y)
   CMAKE_OPTIONS += -DZRAM_TMPFS=1
 endif
 
-ifeq ($(CONFIG_PACKAGE_procd-ujail),y)
+ifdef CONFIG_PACKAGE_procd-ujail
   CMAKE_OPTIONS += -DJAIL_SUPPORT=1
 endif
 
-SECCOMP=$(if $(CONFIG_PACKAGE_procd-seccomp),1,0)
-CMAKE_OPTIONS += -DSECCOMP_SUPPORT=$(SECCOMP) -DUTRACE_SUPPORT=$(SECCOMP)
+ifdef CONFIG_PACKAGE_procd-seccomp
+  CMAKE_OPTIONS += -DSECCOMP_SUPPORT=1 -DUTRACE_SUPPORT=1
+endif
 
 define Package/procd/install
 	$(INSTALL_DIR) $(1)/sbin $(1)/etc $(1)/lib/functions
 
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/{init,procd,askfirst,udevtrigger,upgraded} $(1)/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/{init,procd,askfirst,udevtrigger} $(1)/sbin/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libsetlbf.so $(1)/lib
 	$(INSTALL_BIN) ./files/reload_config $(1)/sbin/
-	$(INSTALL_CONF) ./files/hotplug*.json $(1)/etc/
+	$(INSTALL_DATA) ./files/hotplug*.json $(1)/etc/
 	$(INSTALL_DATA) ./files/procd.sh $(1)/lib/functions/
 endef
 
@@ -135,7 +130,6 @@ define Package/procd-seccomp/install
 	$(INSTALL_DIR) $(1)/sbin $(1)/lib
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libpreload-seccomp.so $(1)/lib
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/utrace $(1)/sbin/
-	$(LN) utrace $(1)/sbin/seccomp-trace
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libpreload-trace.so $(1)/lib
 endef
 
