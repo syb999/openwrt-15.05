@@ -26,6 +26,11 @@ merge=$(subst $(space),,$(1))
 confvar=$(call merge,$(foreach v,$(1),$(if $($(v)),y,n)))
 strip_last=$(patsubst %.$(lastword $(subst .,$(space),$(1))),%,$(1))
 
+paren_left = (
+paren_right = )
+chars_lower = a b c d e f g h i j k l m n o p q r s t u v w x y z
+chars_upper = A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
+
 define sep
 
 endef
@@ -36,6 +41,12 @@ define newline
 endef
 
 version_abbrev = $(if $(if $(CHECK),,$(DUMP)),$(1),$(shell printf '%.8s' $(1)))
+
+__tr_list = $(join $(join $(1),$(foreach char,$(1),$(comma))),$(2))
+__tr_head_stripped = $(subst $(space),,$(foreach cv,$(call __tr_list,$(1),$(2)),$$$(paren_left)subst$(cv)$(comma)))
+__tr_head = $(subst $(paren_left)subst,$(paren_left)subst$(space),$(__tr_head_stripped))
+__tr_tail = $(subst $(space),,$(foreach cv,$(1),$(paren_right)))
+__tr_template = $(__tr_head)$$(1)$(__tr_tail)
 
 _SINGLE=export MAKEFLAGS=$(space);
 CFLAGS:=
