@@ -457,6 +457,9 @@ ramips_board_detect() {
 	*"Phicomm PSG1218")
 		name="psg1218"
 		;;
+	*"TPLINK WDR5640 v1")
+		name="wdr5640v1"
+		;;
 	*"HiWiFi HC5962")
 		name="hc5962"
 		;;

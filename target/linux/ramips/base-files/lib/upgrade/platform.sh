@@ -138,6 +138,7 @@ platform_check_image() {
 	zbt-we1326 |\
 	psg1208 |\
 	psg1218 |\
+	wdr5640v1 |\
 	ghl |\
 	jdcloud-1 |\
 	youku-yk1)
