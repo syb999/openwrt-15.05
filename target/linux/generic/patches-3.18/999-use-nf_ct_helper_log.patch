@@ -1,0 +1,47 @@
+From bea588b0281fa3d2ddf365039d1dfddddcbe9aa2 Mon Sep 17 00:00:00 2001
+From: Taehee Yoo <ap420073@gmail.com>
+Date: Mon, 8 Jan 2018 00:10:21 +0900
+Subject: netfilter: nf_nat_snmp_basic: use nf_ct_helper_log
+
+Use nf_ct_helper_log to write log message.
+
+Signed-off-by: Taehee Yoo <ap420073@gmail.com>
+Signed-off-by: Pablo Neira Ayuso <pablo@netfilter.org>
+---
+ net/ipv4/netfilter/nf_nat_snmp_basic.c | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/net/ipv4/netfilter/nf_nat_snmp_basic.c b/net/ipv4/netfilter/nf_nat_snmp_basic.c
+index c8ac57f..7f7d847 100644
+--- a/net/ipv4/netfilter/nf_nat_snmp_basic.c
++++ b/net/ipv4/netfilter/nf_nat_snmp_basic.c
+@@ -1109,7 +1109,7 @@ static int snmp_translate(struct nf_conn *ct, int dir, struct sk_buff *skb)
+ 
+ 	if (!snmp_parse_mangle((unsigned char *)udph + sizeof(struct udphdr),
+ 			       paylen, &map, &udph->check)) {
+-		net_warn_ratelimited("bsalg: parser failed\n");
++		nf_ct_helper_log(skb, ct, "parser failed\n");
+ 		return NF_DROP;
+ 	}
+ 	return NF_ACCEPT;
+@@ -1143,13 +1143,14 @@ static int help(struct sk_buff *skb, unsigned int protoff,
+ 	 * can mess around with the payload.
+ 	 */
+ 	if (ntohs(udph->len) != skb->len - (iph->ihl << 2)) {
+-		net_warn_ratelimited("SNMP: dropping malformed packet src=%pI4 dst=%pI4\n",
+-				     &iph->saddr, &iph->daddr);
+-		 return NF_DROP;
++		nf_ct_helper_log(skb, ct, "dropping malformed packet\n");
++		return NF_DROP;
+ 	}
+ 
+-	if (!skb_make_writable(skb, skb->len))
++	if (!skb_make_writable(skb, skb->len)) {
++		nf_ct_helper_log(skb, ct, "cannot mangle packet");
+ 		return NF_DROP;
++	}
+ 
+ 	spin_lock_bh(&snmp_lock);
+ 	ret = snmp_translate(ct, dir, skb);
+-- 
+cgit v1.1
