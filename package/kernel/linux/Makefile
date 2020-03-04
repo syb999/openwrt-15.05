@@ -49,6 +49,7 @@ define Package/kernel
   TITLE:=Virtual kernel package
   VERSION:=$(LINUX_VERSION)-$(LINUX_RELEASE)-$(LINUX_VERMAGIC)
   URL:=http://www.kernel.org/
+  PROVIDES:=$(if $(CONFIG_IPV6),kmod-ipv6)
 endef
 
 define Package/kernel/install
