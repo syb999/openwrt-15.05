@@ -12,7 +12,7 @@ PKG_VERSION:=2018-10-10-$(PKG_SOURCE_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=d366b80d41309531c0c98b26625f23e318f33e31
-PKG_MIRROR_HASH:=6285b9f9aa5a541b8258750f36955a6b307903a87cedd842b73dbfdd2bef8986
+PKG_MD5SUM:=b48ba821df05364e8f02e141f7e1461c
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
@@ -144,7 +144,7 @@ $(eval $(call Download,ath10k-firmware-qca4019-ct-htt))
 QCA9888_FIRMWARE_FILE_CT:=firmware-5-ct-full-community-11.bin-lede.001
 define Download/ath10k-firmware-qca9888-ct
   $(call Download/ct-firmware,QCA9888,ath10k-9888-10-4)
-#  HASH:=8d4415a77745259bbac4fc821c85f4001e58e49d9797a2e23585c44a03505678
+  MD5SUM:=9a11e3c4a015055cfd0dee329d34d65e
 endef
 $(eval $(call Download,ath10k-firmware-qca9888-ct))
 
