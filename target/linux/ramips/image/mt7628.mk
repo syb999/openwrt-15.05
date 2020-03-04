@@ -23,3 +23,9 @@ define Device/wdr5640v1
 endef
 TARGET_DEVICES += wdr5640v1
 
+define Device/360p2
+  DTS := 360P2
+  IMAGE_SIZE := $(ralink_default_fw_size_16M)
+endef
+TARGET_DEVICES += 360p2
+

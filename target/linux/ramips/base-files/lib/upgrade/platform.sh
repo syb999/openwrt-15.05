@@ -140,6 +140,7 @@ platform_check_image() {
 	psg1218 |\
 	wdr5620v1 |\
 	wdr5640v1 |\
+	360p2 |\
 	ghl |\
 	jdcloud-1 |\
 	youku-yk1)
