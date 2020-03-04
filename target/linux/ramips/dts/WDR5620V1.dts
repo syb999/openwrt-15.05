@@ -1,0 +1,107 @@
+/dts-v1/;
+
+/include/ "mt7628an.dtsi"
+
+/ {
+	compatible = "tplink,WDR5620 v1", "mediatek,mt7628an-soc";
+	model = "TPLINK WDR5620 v1";
+
+	chosen {
+		bootargs = "console=ttyS0,115200";
+	};
+
+	memory@0 {
+		device_type = "memory";
+		reg = <0x0 0x4000000>;
+	};
+
+	pinctrl {
+		state_default: pinctrl0 {
+			gpio {
+				ralink,group = "gpio";
+				ralink,function = "gpio";
+			};
+		};
+	};
+
+	gpio-keys-polled {
+		compatible = "gpio-keys-polled";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		poll-interval = <20>;
+
+		reset {
+			label = "reset";
+			gpios = <&gpio1 6 1>;
+			linux,code = <0x198>;
+		};
+	};
+
+	ethernet@10100000 {
+		status = "okay";
+		mtd-mac-address = <&factory 0x4>;
+		ralink,portmap = "llllw";
+	};
+
+	esw@10110000 {
+		status = "okay";
+		ralink,portmap = <0x2f>;
+	};
+
+	wmac@10300000 {
+		status = "okay";
+		ralink,mtd-eeprom = <&factory 0>;
+	};
+
+	palmbus@10000000 {
+		spi@b00 {
+			status = "okay";
+
+			m25p80@0 {
+				#address-cells = <1>;
+				#size-cells = <1>;
+				compatible = "jedec,spi-nor";
+				reg = <0 0>;
+				linux,modalias = "m25p80";
+				spi-max-frequency = <10000000>;
+				m25p,chunked-io = <32>;
+
+				partition@0 {
+					label = "u-boot";
+					reg = <0x0 0x30000>;
+					read-only;
+				};
+
+				partition@30000 {
+					label = "u-boot-env";
+					reg = <0x30000 0x10000>;
+					read-only;
+				};
+
+				factory: partition@40000 {
+					label = "factory";
+					reg = <0x40000 0x10000>;
+					read-only;
+				};
+
+				partition@50000 {
+					label = "firmware";
+					reg = <0x50000 0x7b0000>;
+				};
+			};
+		};
+	};
+
+	pcie@10140000 {
+		status = "okay";
+
+		pcie@0,0 {
+			mt76@0,0 {
+				reg = <0x0000 0 0 0 0>;
+				device_type = "pci";
+				mediatek,mtd-eeprom = <&factory 0x8000>;
+				mediatek,5ghz = <0>;
+			};
+		};
+	};
+};

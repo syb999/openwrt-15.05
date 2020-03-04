@@ -11,6 +11,11 @@ define Device/mt7628
 endef
 TARGET_DEVICES += mt7628
 
+define Device/wdr5620v1
+  DTS := WDR5620V1
+  IMAGE_SIZE := $(ralink_default_fw_size_8M)
+endef
+TARGET_DEVICES += wdr5620v1
 
 define Device/wdr5640v1
   DTS := WDR5640V1
