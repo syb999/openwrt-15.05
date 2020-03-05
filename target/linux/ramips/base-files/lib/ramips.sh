@@ -457,6 +457,9 @@ ramips_board_detect() {
 	*"Phicomm PSG1218")
 		name="psg1218"
 		;;
+	*"MERCURY MAC1200R v2")
+		name="mac1200rv2"
+		;;
 	*"TPLINK WDR5620 v1")
 		name="wdr5620v1"
 		;;
