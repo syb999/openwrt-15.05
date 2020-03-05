@@ -129,14 +129,14 @@ $(eval $(call Download,ath10k-firmware-qca9984-ct-htt))
 QCA4019_FIRMWARE_FILE_CT:=firmware-5-ct-full-community-11.bin-lede.001
 define Download/ath10k-firmware-qca4019-ct
   $(call Download/ct-firmware,QCA4019,ath10k-4019-10-4)
-#  HASH:=3daa439104806b1796c90e65bcafb18164358f0bd9e4d444302f7caf1c220dad
+  MD5SUM:=6e548d4cd632eaa63b1f66a6e674fbc0
 endef
 $(eval $(call Download,ath10k-firmware-qca4019-ct))
 
 QCA4019_FIRMWARE_FILE_CT_HTT:=firmware-5-ct-full-htt-mgt-community-11.bin-lede.001
 define Download/ath10k-firmware-qca4019-ct-htt
   $(call Download/ct-firmware-htt,QCA4019,ath10k-4019-10-4)
-#  HASH:=eaf64c2942dac4d4718c5f7178be0676aee86b0293443d7b414e3f88290e2d15
+  MD5SUM:=4a9a96bfffbbb4cb407af2366611d3d0
 endef
 $(eval $(call Download,ath10k-firmware-qca4019-ct-htt))
 
@@ -151,7 +151,7 @@ $(eval $(call Download,ath10k-firmware-qca9888-ct))
 QCA9888_FIRMWARE_FILE_CT_HTT:=firmware-5-ct-full-htt-mgt-community-11.bin-lede.001
 define Download/ath10k-firmware-qca9888-ct-htt
   $(call Download/ct-firmware-htt,QCA9888,ath10k-9888-10-4)
-#  HASH:=2a1bf2c7b4122469c40d70c48f155a53bd5d30a2900c01fe5ff896abc67acc9c
+  MD5SUM:=ca6b2ac3a492567032be3fd12e6f7102
 endef
 $(eval $(call Download,ath10k-firmware-qca9888-ct-htt))
 
@@ -391,7 +391,7 @@ define Download/qca99x0-board
   URL:=https://source.codeaurora.org/quic/qsdk/oss/firmware/ath10k-firmware/plain/ath10k/QCA99X0/hw2.0
   URL_FILE:=board-2.bin?id=$(QCA99X0_BOARD_REV)
   FILE:=$(QCA99X0_BOARD_FILE)
-  HASH:=03711ac21e60ef59d3815e235eb721c0c22851b5410299411085aa6f2af45401
+  MD5SUM:=a2b3c653c2363a5641200051d6333d0a
 endef
 $(eval $(call Download,qca99x0-board))
 
