@@ -130,6 +130,7 @@ platform_check_image() {
 	y1s |\
 	daishuyun |\
 	zbt-wa05 |\
+	zbt-we1226 |\
 	zbt-wg2626 |\
 	zte-q7 |\
 	hc5962 |\

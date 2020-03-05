@@ -11,6 +11,12 @@ define Device/mt7628
 endef
 TARGET_DEVICES += mt7628
 
+define Device/zbt-we1226
+  DTS := ZBT-WE1226
+  IMAGE_SIZE := $(ralink_default_fw_size_8M)
+endef
+TARGET_DEVICES += zbt-we1226
+
 define Device/mac1200rv2
   DTS := MAC1200RV2
   IMAGE_SIZE := $(ralink_default_fw_size_8M)

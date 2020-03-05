@@ -267,6 +267,9 @@ get_status_led() {
 	jdcloud-1)
 		status_led="jdcloud:green:sysg"
 		;;
+	zbt-we1226)
+		status_led="zbt-we1226:green:wlan"
+		;;
 	zbt-wg2626)
 		status_led="zbt-wg2626:green:status"
 		;;
