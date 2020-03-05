@@ -35,6 +35,12 @@ define Device/wdr5640v1
 endef
 TARGET_DEVICES += wdr5640v1
 
+define Device/miwifi-nano
+  DTS := MIWIFI-NANO
+  IMAGE_SIZE := $(ralink_default_fw_size_16M)
+endef
+TARGET_DEVICES += miwifi-nano
+
 define Device/360p2
   DTS := 360P2
   IMAGE_SIZE := $(ralink_default_fw_size_16M)

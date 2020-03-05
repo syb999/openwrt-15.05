@@ -126,6 +126,7 @@ platform_check_image() {
 	x5 |\
 	x8 |\
 	xiaomi-miwifi-mini |\
+	miwifi-nano |\
 	y1 |\
 	y1s |\
 	daishuyun |\

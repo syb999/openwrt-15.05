@@ -403,6 +403,9 @@ ramips_board_detect() {
 	*"Xiaomi MiWiFi Mini")
 		name="xiaomi-miwifi-mini"
 		;;
+	*"MiWiFi Nano")
+		name="miwifi-nano"
+		;;
 	*"Sercomm NA930")
 		name="na930"
 		;;
