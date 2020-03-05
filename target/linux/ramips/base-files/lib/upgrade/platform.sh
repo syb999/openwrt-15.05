@@ -56,6 +56,7 @@ platform_check_image() {
 	freestation5 | \
 	firewrt |\
 	pbr-m1 |\
+	hc5661a | \
 	hg255d | \
 	hlk-rm04 | \
 	ht-tm02 | \

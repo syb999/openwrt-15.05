@@ -47,3 +47,9 @@ define Device/360p2
 endef
 TARGET_DEVICES += 360p2
 
+define Device/hc5661a
+  DTS := HC5661A
+  IMAGE_SIZE := $(ralink_default_fw_size_16M)
+endef
+TARGET_DEVICES += hc5661a
+

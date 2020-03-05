@@ -101,6 +101,9 @@ get_status_led() {
 	m4)
 		status_led="m4:blue:status"
 		;;
+	hc5661a)
+		status_led="hc5661a:blue:system"
+		;;
 	mlw221|\
 	mlwg2)
 		status_led="kingston:blue:system"
