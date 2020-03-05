@@ -27,7 +27,8 @@ mac1200rv2 | \
 wdr5620v1 | \
 wdr5640v1 | \
 360p2 | \
-br6425)
+br6425 | \
+miwifi-nano)
 	ubootenv_add_uci_config "/dev/mtd1" "0x0" "0x1000" "0x10000"
 	;;
 esac
