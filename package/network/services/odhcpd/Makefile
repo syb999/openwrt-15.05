@@ -16,6 +16,7 @@ PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=git://github.com/sbyx/odhcpd.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=6292fcd5c2b73cdc3cbc8942672cf7a4173354b1
+PKG_MD5SUM:=0f9a2600b4507cafc4a1c7ae0f2b5e5d
 
 PKG_MAINTAINER:=Steven Barth <steven@midlink.org>
 
