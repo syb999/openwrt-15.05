@@ -472,6 +472,9 @@ ramips_board_detect() {
 	*"360 P2")
 		name="360p2"
 		;;
+	*"HC5611")
+		name="hc5611"
+		;;
 	*"HC5661A")
 		name="hc5661a"
 		;;
