@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2013 OpenWrt.org
+# Copyright (C) 2011-2020 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,20 +7,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=upx
-PKG_VERSION:=3.09
+PKG_VERSION:=3.95
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-src.tar.bz2
-PKG_SOURCE_URL:=@SF/upx
-PKG_MD5SUM:=1253da46eac54a217eb73e2d44818e53
-PKG_CAT:=bzcat
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-src.tar.xz
+PKG_SOURCE_URL:=https://github.com/upx/upx/releases/download/v$(PKG_VERSION)
+PKG_MD5SUM:=fa95336d9ddcaac3b494a1b6ae9d3557
 
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)-$(PKG_VERSION)-src
 
 include $(INCLUDE_DIR)/host-build.mk
 
 define Host/Compile
-	rm -f $(HOST_BUILD_DIR)/src/.depend
-	$(MAKE) UPX_LZMADIR="$(BUILD_DIR_HOST)/lzma-4.65" -C $(HOST_BUILD_DIR)/src \
+	UPX_UCLDIR=$(STAGING_DIR_HOST) \
+	$(MAKE) -C $(HOST_BUILD_DIR)/src \
 		CXXFLAGS_WERROR="" LDFLAGS="$(HOST_LDFLAGS)" \
 		CXX="$(HOSTCXX)"
 endef
