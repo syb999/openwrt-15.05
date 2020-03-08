@@ -1,0 +1,151 @@
+This patch splits the netdev_alloc_frag function up so that it can be used
+on one of two page frag pools instead of being fixed on the
+netdev_alloc_cache.  By doing this we can add a NAPI specific function
+__napi_alloc_frag that accesses a pool that is only used from softirq
+context.  The advantage to this is that we do not need to call
+local_irq_save/restore which can be a significant savings.
+
+I also took the opportunity to refactor the core bits that were placed in
+__alloc_page_frag.  First I updated the allocation to do either a 32K
+allocation or an order 0 page.  Then I also rewrote the logic to work from
+the end of the page to the start.  By doing this the size value doesn't
+have to be used unless we have run out of space for page fragments.
+Finally I cleaned up the atomic bits so that we just do an
+atomic_sub_return and if that returns 0 then we set the page->_count via an
+atomic_set.  This way we can remove the extra conditional for the
+atomic_read since it would have led to an atomic_inc in the case of success
+anyway.
+
+Signed-off-by: Alexander Duyck <alexander.h.duyck@...hat.com>
+
+--- a/include/linux/skbuff.h
++++ b/include/linux/skbuff.h
+@@ -2193,6 +2193,8 @@
+ 	return __netdev_alloc_skb_ip_align(dev, length, GFP_ATOMIC);
+ }
+ 
++void *napi_alloc_frag(unsigned int fragsz);
++
+ /**
+  *	__skb_alloc_pages - allocate pages for ps-rx on a skb and preserve pfmemalloc data
+  *	@gfp_mask: alloc_pages_node mask. Set __GFP_NOMEMALLOC if not for network packet RX
+--- a/net/core/skbuff.c
++++ b/net/core/skbuff.c
+@@ -356,60 +356,61 @@
+ 	unsigned int		pagecnt_bias;
+ };
+ static DEFINE_PER_CPU(struct netdev_alloc_cache, netdev_alloc_cache);
++static DEFINE_PER_CPU(struct netdev_alloc_cache, napi_alloc_cache);
+ 
+-static void *__netdev_alloc_frag(unsigned int fragsz, gfp_t gfp_mask)
++static void *__alloc_page_frag(struct netdev_alloc_cache __percpu *cache,
++			       unsigned int fragsz, gfp_t gfp_mask)
+ {
+-	struct netdev_alloc_cache *nc;
+-	void *data = NULL;
+-	int order;
+-	unsigned long flags;
++	struct netdev_alloc_cache *nc = this_cpu_ptr(cache);
+ 
+-	local_irq_save(flags);
+-	nc = this_cpu_ptr(&netdev_alloc_cache);
+ 	if (unlikely(!nc->frag.page)) {
+ refill:
+-		for (order = NETDEV_FRAG_PAGE_MAX_ORDER; ;) {
+-			gfp_t gfp = gfp_mask;
+-
+-			if (order)
+-				gfp |= __GFP_COMP | __GFP_NOWARN |
+-				       __GFP_NOMEMALLOC;
+-			nc->frag.page = alloc_pages(gfp, order);
+-			if (likely(nc->frag.page))
+-				break;
+-			if (--order < 0)
+-				goto end;
++		nc->frag.size = NETDEV_FRAG_PAGE_MAX_SIZE;
++		nc->frag.page = alloc_pages_node(NUMA_NO_NODE,
++						 gfp_mask |
++						 __GFP_COMP |
++						 __GFP_NOWARN |
++						 __GFP_NOMEMALLOC,
++						 NETDEV_FRAG_PAGE_MAX_ORDER);
++		if (unlikely(!nc->frag.page)) {
++			nc->frag.size = PAGE_SIZE;
++			nc->frag.page = alloc_pages_node(NUMA_NO_NODE,
++							 gfp_mask, 0);
++			if (unlikely(!nc->frag.page))
++				return NULL;
+ 		}
+-		nc->frag.size = PAGE_SIZE << order;
++
+ 		/* Even if we own the page, we do not use atomic_set().
+ 		 * This would break get_page_unless_zero() users.
+ 		 */
+-		atomic_add(NETDEV_PAGECNT_MAX_BIAS - 1,
+-			   &nc->frag.page->_count);
++		atomic_add(NETDEV_PAGECNT_MAX_BIAS - 1, &nc->frag.page->_count);
+ 		nc->pagecnt_bias = NETDEV_PAGECNT_MAX_BIAS;
+-		nc->frag.offset = 0;
++		nc->frag.offset = nc->frag.size;
+ 	}
+ 
+-	if (nc->frag.offset + fragsz > nc->frag.size) {
+-		if (atomic_read(&nc->frag.page->_count) != nc->pagecnt_bias) {
+-			if (!atomic_sub_and_test(nc->pagecnt_bias,
+-						 &nc->frag.page->_count))
+-				goto refill;
+-			/* OK, page count is 0, we can safely set it */
+-			atomic_set(&nc->frag.page->_count,
+-				   NETDEV_PAGECNT_MAX_BIAS);
+-		} else {
+-			atomic_add(NETDEV_PAGECNT_MAX_BIAS - nc->pagecnt_bias,
+-				   &nc->frag.page->_count);
+-		}
++	if (nc->frag.offset < fragsz) {
++		if (atomic_sub_return(nc->pagecnt_bias, &nc->frag.page->_count))
++			goto refill;
++
++		/* OK, page count is 0, we can safely set it */
++		atomic_set(&nc->frag.page->_count, NETDEV_PAGECNT_MAX_BIAS);
+ 		nc->pagecnt_bias = NETDEV_PAGECNT_MAX_BIAS;
+-		nc->frag.offset = 0;
++		nc->frag.offset = nc->frag.size;
+ 	}
+ 
+-	data = page_address(nc->frag.page) + nc->frag.offset;
+-	nc->frag.offset += fragsz;
++	nc->frag.offset -= fragsz;
+ 	nc->pagecnt_bias--;
+-end:
++
++	return page_address(nc->frag.page) + nc->frag.offset;
++}
++
++static void *__netdev_alloc_frag(unsigned int fragsz, gfp_t gfp_mask)
++{
++	unsigned long flags;
++	void *data;
++
++	local_irq_save(flags);
++	data = __alloc_page_frag(&netdev_alloc_cache, fragsz, gfp_mask);
+ 	local_irq_restore(flags);
+ 	return data;
+ }
+@@ -427,6 +428,17 @@
+ }
+ EXPORT_SYMBOL(netdev_alloc_frag);
+ 
++static void *__napi_alloc_frag(unsigned int fragsz, gfp_t gfp_mask)
++{
++	return __alloc_page_frag(&napi_alloc_cache, fragsz, gfp_mask);
++}
++
++void *napi_alloc_frag(unsigned int fragsz)
++{
++	return __napi_alloc_frag(fragsz, GFP_ATOMIC | __GFP_COLD);
++}
++EXPORT_SYMBOL(napi_alloc_frag);
++
+ /**
+  *	__netdev_alloc_skb - allocate an skbuff for rx on a specific device
+  *	@dev: network device to receive on
