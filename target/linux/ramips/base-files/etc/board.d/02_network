@@ -126,6 +126,12 @@ ramips_setup_interfaces()
 		ucidef_add_switch_vlan "switch0" "1" "0 1 2 3 9t"
 		ucidef_add_switch_vlan "switch0" "2" "4 9t"
 		;;
+		
+	hc5611)
+		ucidef_set_interfaces_lan_wan "eth0.1"
+		ucidef_add_switch "switch0" "1" "1"
+		ucidef_add_switch_vlan "switch0" "1" "3 6t"
+		;;
 
 	3g-6200n | \
 	ai-br100 | \
@@ -437,6 +443,7 @@ ramips_setup_macs()
 		wan_mac=$(macaddr_add "$lan_mac" 2)
 		;;
 
+	hc5611 | \
 	hc5661a)
 		lan_mac=`mtd_get_mac_ascii bdinfo "Vfac_mac "`
 		[ -n "$lan_mac" ] || lan_mac=$(cat /sys/class/net/eth0/address)

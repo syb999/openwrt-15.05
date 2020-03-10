@@ -57,6 +57,7 @@ platform_check_image() {
 	firewrt |\
 	pbr-m1 |\
 	hc5661a | \
+	hc5611 | \
 	hg255d | \
 	hlk-rm04 | \
 	ht-tm02 | \

@@ -101,6 +101,9 @@ get_status_led() {
 	m4)
 		status_led="m4:blue:status"
 		;;
+	hc5611)
+		status_led="$boardname:blue:system"
+		;;
 	hc5661a)
 		status_led="hc5661a:blue:system"
 		;;
