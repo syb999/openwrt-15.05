@@ -32,18 +32,20 @@ define Package/udp2raw-tunnel
 	CATEGORY:=Network
 	TITLE:=Tunnel which turns UDP Traffic into Encrypted FakeTCP/UDP/ICMP Traffic
 	URL:=https://github.com/wangyu-/udp2raw-tunnel
+	DEPENDS:= +libstdcpp +libpthread +librt
 endef
 
 define Package/udp2raw-tunnel/description
 	udp2raw-tunnel is a tunnel which turns UDP Traffic into Encrypted FakeTCP/UDP/ICMP Traffic by using Raw Socket.
 endef
 
-MAKE_FLAGS += cross2
+MAKE_FLAGS += cross
 
 define Build/Configure
 	$(call Build/Configure/Default)
 	$(SED) 's/cc_cross[[:space:]]*=.*/cc_cross=$(TARGET_CXX)/' \
 		-e 's/\\".*shell git rev-parse HEAD.*\\"/\\"$(PKG_SOURCE_VERSION)\\"/' \
+		-e 's/-O3/-Os/' \
 		$(PKG_BUILD_DIR)/makefile
 endef
 
