@@ -33,6 +33,7 @@ ddns.rmempty = false
 max_clients = s:taboption("basic", Value, "max_clients", translate("max_clients"))
 max_clients.datatype = "range(1,999)"
 max_clients.default = "88"
+max_clients.rmempty = false
 max_clients.description = translate("最大客户端数")
 
 localnet = s:taboption("basic", Value, "server", translate("Client Network"))
@@ -54,11 +55,13 @@ comp_lzo.description = translate("yes,no,adaptive")
 auth_user_pass_verify = s:taboption("basic",Value,"auth_user_pass_verify", translate("帐号密码验证"))
 auth_user_pass_verify.datatype = "string"
 auth_user_pass_verify.default ="/etc/openvpn/server/checkpsw.sh via-env"
+auth_user_pass_verify.rmempty = true
 auth_user_pass_verify.description = translate("默认设置:/etc/openvpn/server/checkpsw.sh via-env,留空禁用")
 
 script_security = s:taboption("basic",Value,"script_security", translate("script_security配合帐号密码验证使用"))
 script_security.datatype = "range(1,3)"
 script_security.default = "3"
+script_security.rmempty = true
 script_security.description = translate("默认设置:3,留空禁用")
 
 persist_key = s:taboption("basic",Flag,"persist_key", translate("persist_key"))
