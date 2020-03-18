@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=udp2raw-tunnel
-PKG_VERSION:=20180428.0
+PKG_VERSION:=20190407.0
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/wangyu-/udp2raw-tunnel.git
-PKG_SOURCE_VERSION:=2c2d897bc2140dbe77cea99f92942425632088e6
+PKG_SOURCE_VERSION:=7d481d26b98917868d8a77ca4427eea225c56e26
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.xz
 
@@ -39,19 +39,46 @@ define Package/udp2raw-tunnel/description
 	udp2raw-tunnel is a tunnel which turns UDP Traffic into Encrypted FakeTCP/UDP/ICMP Traffic by using Raw Socket.
 endef
 
-MAKE_FLAGS += cross
+ifeq ($(ARCH),x86_64)
+	PKG_ARCH_UDP2RAW:=amd64
+endif
+ifeq ($(ARCH),mipsel)
+	PKG_ARCH_UDP2RAW:=mipsle
+endif
+ifeq ($(ARCH),mips)
+	PKG_ARCH_UDP2RAW:=mipsbe
+endif
+ifeq ($(ARCH),i386)
+	PKG_ARCH_UDP2RAW:=x86
+endif
+ifeq ($(ARCH),arm)
+	PKG_ARCH_UDP2RAW:=arm
+endif
+ifeq ($(BOARD),bcm53xx)
+	PKG_ARCH_UDP2RAW:=arm
+endif
+ifeq ($(BOARD),kirkwood)
+	PKG_ARCH_UDP2RAW:=arm
+endif
+ifeq ($(ARCH),aarch64)
+	PKG_ARCH_UDP2RAW:=arm64
+endif
+
+ifndef PKG_ARCH_UDP2RAW
+	PKG_ARCH_UDP2RAW:=cross
+endif
+
+MAKE_FLAGS += $(PKG_ARCH_UDP2RAW)
 
 define Build/Configure
 	$(call Build/Configure/Default)
-	$(SED) 's/cc_cross[[:space:]]*=.*/cc_cross=$(TARGET_CXX)/' \
-		-e 's/\\".*shell git rev-parse HEAD.*\\"/\\"$(PKG_SOURCE_VERSION)\\"/' \
-		-e 's/-O3/-Os/' \
-		$(PKG_BUILD_DIR)/makefile
+	rm -f $(PKG_BUILD_DIR)/makefile
+	$(CP) udp2raw_makefile $(PKG_BUILD_DIR)/makefile
 endef
 
 define Package/udp2raw-tunnel/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/udp2raw_cross $(1)/usr/bin/udp2raw
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/udp2raw $(1)/usr/bin/udp2raw
 endef
 
 $(eval $(call BuildPackage,udp2raw-tunnel))
