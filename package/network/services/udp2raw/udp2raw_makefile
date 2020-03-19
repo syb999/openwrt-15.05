@@ -4,7 +4,7 @@ FLAGS= -std=c++11 -Wall -Wextra -Wno-unused-variable -Wno-unused-parameter -Wno-
 
 EXTRA_FLAGS= -Os -ffunction-sections -fdata-sections -Wl,--gc-sections,--as-needed,--no-undefined,--no-allow-shlib-undefined
 # gcc version >= 4.7
-#EXTRA_FLAGS+= -flto
+EXTRA_FLAGS+= -flto
 
 cc_cross=$(CXX)
 
