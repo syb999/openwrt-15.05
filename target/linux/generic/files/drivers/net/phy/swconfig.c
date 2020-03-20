@@ -25,6 +25,7 @@
 #include <linux/switch.h>
 #include <linux/of.h>
 #include <linux/version.h>
+#include <uapi/linux/mii.h>
 
 #define SWCONFIG_DEVNAME	"switch%d"
 
@@ -301,13 +302,7 @@ static void swconfig_defaults_init(struct switch_dev *dev)
 }
 
 
-static struct genl_family switch_fam = {
-	.id = GENL_ID_GENERATE,
-	.name = "switch",
-	.hdrsize = 0,
-	.version = 1,
-	.maxattr = SWITCH_ATTR_MAX,
-};
+static struct genl_family switch_fam;
 
 static const struct nla_policy switch_policy[SWITCH_ATTR_MAX+1] = {
 	[SWITCH_ATTR_ID] = { .type = NLA_U32 },
@@ -982,6 +977,19 @@ static struct genl_ops swconfig_ops[] = {
 	}
 };
 
+static struct genl_family switch_fam = {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
+	.id = GENL_ID_GENERATE,
+#endif
+	.name = "switch",
+	.hdrsize = 0,
+	.version = 1,
+	.maxattr = SWITCH_ATTR_MAX,
+	.module = THIS_MODULE,
+	.ops = swconfig_ops,
+	.n_ops = ARRAY_SIZE(swconfig_ops),
+};
+
 #ifdef CONFIG_OF
 void
 of_switch_load_portmap(struct switch_dev *dev)
@@ -1108,6 +1116,59 @@ unregister_switch(struct switch_dev *dev)
 }
 EXPORT_SYMBOL_GPL(unregister_switch);
 
+int
+switch_generic_set_link(struct switch_dev *dev, int port,
+			struct switch_port_link *link)
+{
+	/* PHY reset can take up to 0.5s according to spec */
+	int timeout = 500;
+	u16 bmcr = BMCR_RESET;
+
+	if (WARN_ON(!dev->ops->phy_write16) ||
+		WARN_ON(!dev->ops->phy_read16))
+		return -ENOTSUPP;
+
+	/* Generic implementation */
+	if (link->aneg) {
+		dev->ops->phy_write16(dev, port, MII_BMCR, 0x0000);
+		dev->ops->phy_write16(dev, port, MII_BMCR, BMCR_RESET |
+					BMCR_ANENABLE | BMCR_ANRESTART);
+	} else {
+
+		if (link->duplex)
+			bmcr |= BMCR_FULLDPLX;
+
+		switch (link->speed) {
+		case SWITCH_PORT_SPEED_10:
+			break;
+		case SWITCH_PORT_SPEED_100:
+			bmcr |= BMCR_SPEED100;
+			break;
+		case SWITCH_PORT_SPEED_1000:
+			bmcr |= BMCR_SPEED1000;
+			break;
+		default:
+			return -ENOTSUPP;
+		}
+
+		dev->ops->phy_write16(dev, port, MII_BMCR, bmcr);
+	}
+
+	/* Poll until reset bit get cleared */
+	do{
+		usleep_range(1000, 2000);
+		dev->ops->phy_read16(dev, port, MII_BMCR, &bmcr);
+		timeout--;
+	} while (timeout > 0 || bmcr & BMCR_RESET);
+
+	if (!timeout) {
+		pr_warn("switch: %s: Port %d PHY failed to reset\n",
+			dev->name, port);
+		return -ENAVAIL;
+	}
+
+	return 0;
+}
 
 static int __init
 swconfig_init(void)
