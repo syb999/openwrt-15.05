@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=swconfig
-PKG_RELEASE:=10
+PKG_RELEASE:=12
 
-PKG_MAINTAINER:=Felix Fietkau <nbd@openwrt.org>
+PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
 PKG_LICENSE:=GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk
@@ -22,6 +22,9 @@ define Package/swconfig
   DEPENDS:=+libuci +libnl-tiny
   TITLE:=Switch configuration utility
 endef
+
+TARGET_CFLAGS += -flto
+TARGET_LDFLAGS += -flto=jobserver
 
 TARGET_CPPFLAGS := \
 	-D_GNU_SOURCE \
@@ -39,8 +42,9 @@ define Build/Compile
 	CFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS)" \
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		$(TARGET_CONFIGURE_OPTS) \
-		LIBS="$(TARGET_LDFLAGS) -lnl-tiny -lm -luci"
+		LIBS="$(TARGET_LDFLAGS) -lnl-tiny -lm -luci -lubox"
 endef
+
 
 define Package/swconfig/install
 	$(INSTALL_DIR) $(1)/sbin $(1)/lib/network
