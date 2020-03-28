@@ -1,7 +1,7 @@
 /*
  * uci.c: UCI binding for the switch configuration utility
  *
- * Copyright (C) 2009 Felix Fietkau <nbd@nbd.name>
+ * Copyright (C) 2009 Felix Fietkau <nbd@openwrt.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -59,7 +59,7 @@ static bool swlib_match_name(struct switch_dev *dev, const char *name)
 		strcmp(name, dev->alias) == 0);
 }
 
-static void
+static int
 swlib_map_settings(struct switch_dev *dev, int type, int port_vlan, struct uci_section *s)
 {
 	struct swlib_setting *setting;
@@ -165,7 +165,7 @@ found:
 		s = uci_to_section(e);
 
 		if (!strcmp(s->type, "switch_port")) {
-			char *devn = NULL, *port = NULL, *port_err = NULL;
+			char *devn, *port, *port_err = NULL;
 			int port_n;
 
 			uci_foreach_element(&s->options, os) {
@@ -190,7 +190,7 @@ found:
 
 			swlib_map_settings(dev, SWLIB_ATTR_GROUP_PORT, port_n, s);
 		} else if (!strcmp(s->type, "switch_vlan")) {
-			char *devn = NULL, *vlan = NULL, *vlan_err = NULL;
+			char *devn, *vlan, *vlan_err = NULL;
 			int vlan_n;
 
 			uci_foreach_element(&s->options, os) {
