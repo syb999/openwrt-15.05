@@ -15,7 +15,6 @@ override MAKE:=$(_SINGLE)$(SUBMAKE)
 override NO_TRACE_MAKE:=$(_SINGLE)$(NO_TRACE_MAKE)
 
 KDIR=$(KERNEL_BUILD_DIR)
-KDIR_TMP=$(KDIR)/tmp
 DTS_DIR:=$(LINUX_DIR)/arch/$(ARCH)/boot/dts/
 
 IMG_PREFIX:=openwrt-$(if $(CONFIG_VERSION_FILENAMES),$(VERSION_NUMBER)-)$(BOARD)$(if $(SUBTARGET),-$(SUBTARGET))
@@ -281,6 +280,15 @@ define Build/uImage
 		-C $(1) -a $(KERNEL_LOADADDR) -e $(if $(KERNEL_ENTRY),$(KERNEL_ENTRY),$(KERNEL_LOADADDR)) \
 		-n '$(call toupper,$(LINUX_KARCH)) OpenWrt Linux-$(LINUX_VERSION)' -d $@ $@.new
 	@mv $@.new $@
+endef
+
+define Build/netgear-chk
+	$(STAGING_DIR_HOST)/bin/mkchkimg \
+		-o $@.new \
+		-k $@ \
+		-b $(NETGEAR_BOARD_ID) \
+		-r $(NETGEAR_REGION)
+	mv $@.new $@
 endef
 
 define Build/lzma
