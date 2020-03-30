@@ -16,7 +16,7 @@ override NO_TRACE_MAKE:=$(_SINGLE)$(NO_TRACE_MAKE)
 
 KDIR=$(KERNEL_BUILD_DIR)
 KDIR_TMP=$(KDIR)/tmp
-DTS_DIR:=$(LINUX_DIR)/arch/$(ARCH)/boot/dts/
+DTS_DIR:=$(LINUX_DIR)/arch/$(LINUX_KARCH)/boot/dts
 
 IMG_PREFIX:=openwrt-$(if $(CONFIG_VERSION_FILENAMES),$(VERSION_NUMBER)-)$(BOARD)$(if $(SUBTARGET),-$(SUBTARGET))
 
@@ -135,6 +135,22 @@ define Image/BuildKernel/MkFIT
 		-D $(1) -o $(KDIR)/fit-$(1).its -k $(2) $(if $(3),-d $(3)) -C $(4) -a $(5) -e $(6) \
 		-A $(ARCH) -v $(LINUX_VERSION)
 	PATH=$(LINUX_DIR)/scripts/dtc:$(PATH) mkimage -f $(KDIR)/fit-$(1).its $(KDIR)/fit-$(1)$(7).itb
+endef
+
+# $(1) source dts file
+# $(2) target dtb file
+# $(3) extra CPP flags
+# $(4) extra DTC flags
+define Image/BuildDTB
+	$(CPP) -nostdinc -x assembler-with-cpp \
+		-I$(DTS_DIR) \
+		-I$(DTS_DIR)/include \
+		-undef -D__DTS__ $(3) \
+		-o $(2).tmp $(1)
+	$(LINUX_DIR)/scripts/dtc/dtc -O dtb \
+		-i$(dir $(1)) $(4) \
+		-o $(2) $(2).tmp
+	$(RM) $(2).tmp
 endef
 
 define Image/mkfs/jffs2/sub
