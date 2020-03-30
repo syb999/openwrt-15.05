@@ -20,6 +20,7 @@ DTS_DIR:=$(LINUX_DIR)/arch/$(LINUX_KARCH)/boot/dts
 
 sanitize = $(call tolower,$(subst _,-,$(1)))
 
+SUBTARGET ?= default
 DIST_SANITIZED:=$(call sanitize,$(VERSION_DIST))
 EXTRA_NAME_SANITIZED=$(call sanitize,$(EXTRA_IMAGE_NAME))
 
@@ -448,6 +449,7 @@ endef
 
 define Device/Init
   PROFILES := $(PROFILE)
+  SUBTARGETS := $(SUBTARGET)
   DEVICE_NAME := $(1)
   DEVICE_TITLE :=
   DEVICE_PACKAGES :=
@@ -483,7 +485,7 @@ define Device/Export
 endef
 
 define Device/Check
-  _TARGET = $$(if $$(filter $(PROFILE),$$(PROFILES)),install,install-disabled)
+  _TARGET = $$(if $$(and $$(filter $(SUBTARGET),$$(SUBTARGETS)),$$(filter $(PROFILE),$$(PROFILES))),install,install-disabled)
   _COMPILE_TARGET = $$(if $(if $(IB),,$(CONFIG_IB)$$(filter $(PROFILE),$$(PROFILES))),compile,compile-disabled)
 endef
 
@@ -572,7 +574,7 @@ $(DEVICE_DESCRIPTION)
 endef
 
 define Device/Dump
-$$(eval $$(if $$(DEVICE_TITLE),$$(info $$(call Device/DumpInfo,$(1)))))
+$$(eval $$(if $$(DEVICE_PROFILE_CHECK),$$(info $$(call Device/DumpInfo,$(1)))))
 endef
 
 define Device
