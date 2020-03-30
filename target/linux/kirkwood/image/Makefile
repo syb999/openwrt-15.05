@@ -14,6 +14,9 @@ DEVICE_VARS += KERNEL_SIZE
 KERNEL_LOADADDR:=0x8000
 TARGET_DEVICES = linksys-audi linksys-viper
 
+UBI_OPTS := -m 2048 -p 128KiB -s 512
+UBIFS_OPTS := -m 2048 -e 126KiB -c 4096
+
 define Device/Default
   KERNEL_DEPENDS = $$(wildcard $(DTS_DIR)/$$(DEVICE_DTS).dts)
   KERNEL := kernel-bin | append-dtb | uImage none
@@ -140,6 +143,9 @@ define Image/Build/ubi
 	$(CP) $(KDIR)/root.ubi $(BIN_DIR)/$(IMG_PREFIX)-$(PROFILE_SANITIZED)-rootfs.ubi
  endif
 endef
+
+IOMEGA_IX2_200_UBIFS_OPTS := -m 512 -e 15872 -c 2048
+IOMEGA_IX2_200_UBI_OPTS := -m 512 -p 16384 -s 256
 
 Image/BuildKernel/Template/Generic=$(call Image/BuildKernel/Template)
 Image/InstallKernel/Template/Generic=$(call Image/InstallKernel/Template)
