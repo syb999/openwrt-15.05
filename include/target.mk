@@ -56,19 +56,21 @@ DEFAULT_PACKAGES += $(DEFAULT_PACKAGES.$(DEVICE_TYPE))
 filter_packages = $(filter-out -% $(patsubst -%,%,$(filter -%,$(1))),$(1))
 extra_packages = $(if $(filter wpad-mini wpad nas,$(1)),iwinfo)
 
-define Profile/Default
+define ProfileDefault
   NAME:=
+  PRIORITY:=
   PACKAGES:=
 endef
 
 ifndef Profile
 define Profile
-  $(eval $(call Profile/Default))
+  $(eval $(call ProfileDefault))
   $(eval $(call Profile/$(1)))
   dumpinfo : $(call shexport,Profile/$(1)/Config)
   dumpinfo : $(call shexport,Profile/$(1)/Description)
   DUMPINFO += \
 	echo "Target-Profile: $(1)"; \
+	$(if $(PRIORITY), echo "Target-Profile-Priority: $(PRIORITY)"; ) \
 	echo "Target-Profile-Name: $(NAME)"; \
 	echo "Target-Profile-Packages: $(PACKAGES) $(call extra_packages,$(DEFAULT_PACKAGES) $(PACKAGES))"; \
 	if [ -f ./config/profile-$(1) ]; then \
