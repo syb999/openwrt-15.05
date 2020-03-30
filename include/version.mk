@@ -20,6 +20,8 @@ PKG_CONFIG_DEPENDS += \
 qstrip_escape=$(subst ','\'',$(call qstrip,$(1)))
 #'
 
+sanitize = $(call tolower,$(subst _,-,$(subst $(space),-,$(1))))
+
 VERSION_NUMBER:=$(call qstrip_escape,$(CONFIG_VERSION_NUMBER))
 VERSION_NUMBER:=$(if $(VERSION_NUMBER),$(VERSION_NUMBER),15.05.1)
 
@@ -34,6 +36,7 @@ VERSION_REPO:=$(if $(VERSION_REPO),$(VERSION_REPO),http://downloads.openwrt.org/
 
 VERSION_DIST:=$(call qstrip_escape,$(CONFIG_VERSION_DIST))
 VERSION_DIST:=$(if $(VERSION_DIST),$(VERSION_DIST),OpenWrt)
+VERSION_DIST_SANITIZED:=$(call sanitize,$(VERSION_DIST))
 
 VERSION_MANUFACTURER:=$(call qstrip_escape,$(CONFIG_VERSION_MANUFACTURER))
 VERSION_MANUFACTURER:=$(if $(VERSION_MANUFACTURER),$(VERSION_MANUFACTURER),OpenWrt)
