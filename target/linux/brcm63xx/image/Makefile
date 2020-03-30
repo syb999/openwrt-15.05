@@ -454,7 +454,7 @@ define bcm63xxCfeZyxel
     CFE_EXTRAS := $(6)
   endef
   TARGET_DEVICES += $(2)
-endef)
+endef
 
 # $(1) = profile
 # $(2) = image name
