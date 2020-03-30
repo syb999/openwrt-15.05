@@ -78,7 +78,7 @@ include $(INCLUDE_DIR)/target.mk
 
 USER_PROFILE ?= $(firstword $(PROFILE_NAMES))
 PROFILE_LIST = $(foreach p,$(PROFILE_NAMES), \
-	echo '$(p):'; $(if $($(p)_NAME),echo '    $($(p)_NAME)'; ) echo '    Packages: $($(p)_PACKAGES)'; \
+	echo '$(patsubst DEVICE_%,%,$(p)):'; $(if $($(p)_NAME),echo '    $($(p)_NAME)'; ) echo '    Packages: $($(p)_PACKAGES)'; \
 )
 
 .profiles.mk: .targetinfo
@@ -181,9 +181,11 @@ clean:
 info:
 	(unset PROFILE FILES PACKAGES MAKEFLAGS; $(MAKE) -s _call_info)
 
+PROFILE_FILTER = $(filter DEVICE_$(PROFILE) $(PROFILE),$(PROFILE_NAMES))
+
 image:
 ifneq ($(PROFILE),)
-  ifeq ($(filter $(PROFILE),$(PROFILE_NAMES)),)
+  ifeq ($(PROFILE_FILTER),)
 	@echo 'Profile "$(PROFILE)" does not exist!'
 	@echo 'Use "make info" to get a list of available profile names.'
 	@exit 1
@@ -191,7 +193,7 @@ ifneq ($(PROFILE),)
 endif
 	(unset PROFILE FILES PACKAGES MAKEFLAGS; \
 	$(MAKE) _call_image \
-		$(if $(PROFILE),USER_PROFILE="$(PROFILE)") \
+		$(if $(PROFILE),USER_PROFILE="$(PROFILE_FILTER)") \
 		$(if $(FILES),USER_FILES="$(FILES)") \
 		$(if $(PACKAGES),USER_PACKAGES="$(PACKAGES)") \
 		$(if $(BIN_DIR),BIN_DIR="$(BIN_DIR)"))
