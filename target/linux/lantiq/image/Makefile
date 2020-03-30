@@ -12,7 +12,6 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/image.mk
 
 JFFS2_BLOCKSIZE = 64k 128k 256k
-KDIR_TMP:=$(KDIR)/tmp
 
 LOADER_MAKE := $(NO_TRACE_MAKE) -C lzma-loader KDIR=$(KDIR)
 
