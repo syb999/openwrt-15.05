@@ -33,11 +33,6 @@ define Build/Compile
 endef
 
 ### Kernel scripts ###
-define Build/append-dtb
-	$(call Image/BuildDTB,../dts/$(DEVICE_DTS).dts,$@.dtb)
-	cat $@.dtb >> $@
-endef
-
 define Build/hcs-initramfs
 	$(STAGING_DIR_HOST)/bin/hcsmakeimage --magic_bytes=$(HCS_MAGIC_BYTES) \
 		--rev_maj=$(HCS_REV_MAJ) --rev_min=$(HCS_REV_MIN) --input_file=$@ \
@@ -173,11 +168,13 @@ endef
 # Shared device definition: applies to every defined device
 define Device/Default
   PROFILES = Default $$(DEVICE_PROFILE)
-  KERNEL_INITRAMFS_IMAGE = $$(KERNEL_INITRAMFS_PREFIX).elf
+  KERNEL_DEPENDS = $$(wildcard ../dts/$$(DEVICE_DTS).dts)
+  KERNEL_INITRAMFS_SUFFIX := .elf
   DEVICE_PROFILE :=
   DEVICE_DTS :=
+  DEVICE_DTS_DIR := ../dts
 endef
-DEVICE_VARS += DEVICE_PROFILE DEVICE_DTS
+DEVICE_VARS += DEVICE_DTS DEVICE_DTS_DIR DEVICE_DTS_DIR
 
 # BCM33xx HCS devices: only generates ramdisks (unsupported bin images)
 define Device/bcm33xxHcsRamdisk

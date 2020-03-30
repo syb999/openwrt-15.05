@@ -44,10 +44,6 @@ define Device/linksys-viper
   IMAGE/factory.bin := append-kernel $$$$(KERNEL_SIZE) | append-ubi
 endef
 
-define Build/append-dtb
-	cat $(DTS_DIR)/$(DEVICE_DTS).dtb >> $@
-endef
-
 define Image/BuildKernel/Template
 
 	$(CP) $(KDIR)/zImage $(BIN_DIR)/$(IMG_PREFIX)-zImage
