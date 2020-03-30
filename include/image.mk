@@ -28,6 +28,7 @@ override MAKE:=$(_SINGLE)$(SUBMAKE)
 override NO_TRACE_MAKE:=$(_SINGLE)$(NO_TRACE_MAKE)
 
 param_get = $(patsubst $(1)=%,%,$(filter $(1)=%,$(2)))
+param_get_default = $(firstword $(call param_get,$(1),$(2)) $(3))
 param_mangle = $(subst $(space),_,$(strip $(1)))
 param_unmangle = $(subst _,$(space),$(1))
 
