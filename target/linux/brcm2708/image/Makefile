@@ -43,12 +43,12 @@ define Build/boot-img
 	mcopy -i $@.boot $(KDIR)/fixup_cd.dat ::
 	mcopy -i $@.boot cmdline.txt ::
 	mcopy -i $@.boot $@.config ::config.txt
-	mcopy -i $@.boot $(word 1,$^) ::kernel.img
+	mcopy -i $@.boot $(IMAGE_KERNEL) ::kernel.img
 	mcopy -i $@.boot $@.dtb ::$(DEVICE_DTS).dtb
 endef
 
 define Build/sdcard-img
-	./gen_rpi_sdcard_img.sh $@ $@.boot $(word 2,$^) \
+	./gen_rpi_sdcard_img.sh $@ $@.boot $(IMAGE_ROOTFS) \
 		$(CONFIG_BRCM2708_SD_BOOT_PARTSIZE) $(CONFIG_TARGET_ROOTFS_PARTSIZE)
 	$(call Image/gzip,$@)
   endif

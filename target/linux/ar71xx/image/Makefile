@@ -44,7 +44,7 @@ endef
 define Build/mktplinkfw
 	-$(STAGING_DIR_HOST)/bin/mktplinkfw \
 		-H $(TPLINK_HWID) -W $(TPLINK_HWREV) -F $(TPLINK_FLASHLAYOUT) -N OpenWrt -V $(REVISION) \
-		-k $(word 1,$^) \
+		-k $(IMAGE_KERNEL) \
 		-r $@ \
 		-o $@.new \
 		-j -X 0x40000 \

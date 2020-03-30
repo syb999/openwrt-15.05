@@ -32,7 +32,7 @@ define Build/trx-serial
 	$(STAGING_DIR_HOST)/bin/trx \
 		-o $@ \
 		-m 33554432 \
-		-f $(word 1,$^) -a 1024 \
+		-f $(IMAGE_KERNEL) -a 1024 \
 		-f $(KDIR)/root.squashfs -a 0x10000 -A $(KDIR)/fs_mark
 endef
 
@@ -44,7 +44,7 @@ define Build/trx-nand
 	$(STAGING_DIR_HOST)/bin/trx \
 		-o $@ \
 		-m 33554432 \
-		-f $(word 1,$^) -a 0x20000 -b 0x400000 \
+		-f $(IMAGE_KERNEL) -a 0x20000 -b 0x400000 \
 		-f $(KDIR)/root-block-0x20000-min-0x800.ubi \
 		-A $(KDIR)/ubi_mark -a 0x20000
 endef
@@ -61,7 +61,7 @@ define Build/seama-nand
 		entity $@.entity \
 		-m "dev=/dev/mtdblock/7" \
 		-m "type=firmware" \
-		-f $(word 1,$^) \
+		-f $(IMAGE_KERNEL) \
 		-b 0x400000 \
 		-f $(KDIR)/root-block-0x20000-min-0x800.ubi \
 		-f $(KDIR)/ubi_mark
