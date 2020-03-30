@@ -561,12 +561,12 @@ sub gen_package_source() {
 	}
 }
 
-sub gen_package_feeds() {
+sub gen_package_subdirs() {
 	parse_package_metadata($ARGV[0]) or exit 1;
 	foreach my $name (sort {uc($a) cmp uc($b)} keys %package) {
 		my $pkg = $package{$name};
-		if ($pkg->{name} && $pkg->{feed}) {
-			print "Package/$name/feed = $pkg->{feed}\n";
+		if ($pkg->{name} && $pkg->{package_subdir}) {
+			print "Package/$name/subdir = $pkg->{package_subdir}\n";
 		}
 	}
 }

@@ -86,7 +86,7 @@ prepare-tmpinfo: FORCE
 		f=tmp/.$${type}info; t=tmp/.config-$${type}.in; \
 		[ "$$t" -nt "$$f" ] || ./scripts/$${type}-metadata.pl $(_ignore) config "$$f" > "$$t" || { rm -f "$$t"; echo "Failed to build $$t"; false; break; }; \
 	done
-	[ tmp/.config-feeds.in -nt tmp/.packagefeeds ] || ./scripts/feeds feed_config > tmp/.config-feeds.in
+	[ tmp/.config-feeds.in -nt tmp/.packagesubdirs ] || ./scripts/feeds feed_config > tmp/.config-feeds.in
 	./scripts/package-metadata.pl mk tmp/.packageinfo > tmp/.packagedeps || { rm -f tmp/.packagedeps; false; }
 	./scripts/package-metadata.pl subdirs tmp/.packageinfo > tmp/.packagesubdirs || { rm -f tmp/.packagesubdirs; false; }
 	touch $(TOPDIR)/tmp/.build
