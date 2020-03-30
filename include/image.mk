@@ -284,7 +284,7 @@ define Image/Checksum
 endef
 
 define BuildImage/mkfs
-  install: mkfs-$(1)
+  install-images: mkfs-$(1)
   .PHONY: mkfs-$(1)
   mkfs-$(1): kernel_prepare
 	$(Image/mkfs/$(1))
@@ -302,7 +302,6 @@ define Device/InitProfile
 endef
 
 define Device/Init
-  PROFILES := $(PROFILE)
   DEVICE_NAME := $(1)
   DEVICE_TITLE :=
   DEVICE_PACKAGES :=
@@ -314,12 +313,12 @@ define Device/Init
 
   IMAGE_PREFIX := $(IMG_PREFIX)-$(1)
   IMAGE_NAME = $$(IMAGE_PREFIX)-$$(1)-$$(2)
-  KERNEL_PREFIX = $(1)
+  KERNEL_PREFIX = $$(IMAGE_PREFIX)
   KERNEL_SUFFIX := -kernel.bin
   KERNEL_INITRAMFS_SUFFIX = $$(KERNEL_SUFFIX)
   KERNEL_IMAGE = $$(KERNEL_PREFIX)$$(KERNEL_SUFFIX)
   KERNEL_INITRAMFS_PREFIX = $$(IMAGE_PREFIX)-initramfs
-  KERNEL_INITRAMFS_IMAGE = $$(KERNEL_INITRAMFS_PREFIX)$$(KERNEL_SUFFIX)
+  KERNEL_INITRAMFS_IMAGE = $$(KERNEL_INITRAMFS_PREFIX)$$(KERNEL_INITRAMFS_SUFFIX)
   KERNEL_INITRAMFS_NAME = $$(KERNEL_NAME)-initramfs
   KERNEL_INSTALL :=
   KERNEL_NAME := vmlinux
@@ -334,11 +333,15 @@ define Device/Init
   VID_HDR_OFFSET :=
   UBINIZE_OPTS := -E 5
 
+  DEVICE_DTS :=
+  DEVICE_DTS_DIR :=
+
   FILESYSTEMS := $(TARGET_FILESYSTEMS)
 endef
 
 DEFAULT_DEVICE_VARS := \
   DEVICE_NAME KERNEL KERNEL_INITRAMFS KERNEL_INITRAMFS_IMAGE \
+  DEVICE_DTS DEVICE_DTS_DIR \
   UBOOTENV_IN_UBI KERNEL_IN_UBI \
   BLOCKSIZE PAGESIZE SUBPAGESIZE VID_HDR_OFFSET \
   UBINIZE_OPTS
@@ -348,7 +351,7 @@ define Device/ExportVar
 
 endef
 define Device/Export
-  $(foreach var,$(DEVICE_VARS) DEVICE_NAME KERNEL KERNEL_INITRAMFS KERNEL_INITRAMFS_IMAGE,$(call Device/ExportVar,$(1),$(var)))
+  $(foreach var,$(DEVICE_VARS) $(DEFAULT_DEVICE_VARS),$(call Device/ExportVar,$(1),$(var))))
   $(1) : FILESYSTEM:=$(2)
 endef
 
@@ -360,7 +363,7 @@ endif
 
 define Device/Check
   _PROFILE_SET = $$(strip $$(foreach profile,$$(PROFILES) DEVICE_$(1),$$(call DEVICE_CHECK_PROFILE,$$(profile))))
-  _TARGET := $$(if $$(_PROFILE_SET),install,install-disabled)
+  _TARGET := $$(if $$(_PROFILE_SET),install-images,install-disabled)
   ifndef IB
     _COMPILE_TARGET := $$(if $(CONFIG_IB)$$(_PROFILE_SET),compile,compile-disabled)
   endif
@@ -369,7 +372,7 @@ endef
 ifndef IB
 define Device/Build/initramfs
   $(call Device/Export,$(KDIR)/tmp/$$(KERNEL_INITRAMFS_IMAGE),$(1))
-  $$(_TARGET): $(BIN_DIR)/$$(KERNEL_INITRAMFS_IMAGE)
+  $$(_TARGET): $$(if $$(KERNEL_INITRAMFS),$(BIN_DIR)/$$(KERNEL_INITRAMFS_IMAGE))
 
   $(KDIR)/$$(KERNEL_INITRAMFS_NAME):: image_prepare
   $(BIN_DIR)/$$(KERNEL_INITRAMFS_IMAGE): $(KDIR)/tmp/$$(KERNEL_INITRAMFS_IMAGE)
@@ -512,10 +515,12 @@ define BuildImage
   prepare:
   compile:
   clean:
+  legacy-images-prepare:
+  legacy-images:
   image_prepare:
 
   ifeq ($(IB),)
-    .PHONY: download prepare compile clean image_prepare mkfs_prepare kernel_prepare install
+    .PHONY: download prepare compile clean image_prepare mkfs_prepare kernel_prepare install install-images
     compile:
 		$(call Build/Compile)
 
@@ -525,6 +530,10 @@ define BuildImage
     image_prepare: compile
 		mkdir -p $(BIN_DIR) $(KDIR)/tmp
 		$(call Image/Prepare)
+
+    legacy-images-prepare-make: image_prepare
+		$(MAKE) legacy-images-prepare
+
   else
     image_prepare:
 		mkdir -p $(BIN_DIR) $(KDIR)/tmp
@@ -539,13 +548,19 @@ define BuildImage
 	$(call Image/InstallKernel)
 
   $(foreach device,$(TARGET_DEVICES),$(call Device,$(device)))
+  $(foreach device,$(LEGACY_DEVICES),$(call LegacyDevice,$(device)))
   $(foreach fs,$(TARGET_FILESYSTEMS) $(fs-subtypes-y),$(call BuildImage/mkfs,$(fs)))
 
-  install: kernel_prepare
+  install-images: kernel_prepare
 	$(foreach fs,$(TARGET_FILESYSTEMS),
 		$(call Image/Build,$(fs))
 	)
 	$(call Image/mkfs/ubifs)
+
+  legacy-images-make: install-images
+	$(MAKE) legacy-images
+
+  install: install-images
 	$(call Image/Checksum,md5sum --binary,md5sums)
 	$(call Image/Checksum,openssl dgst -sha256,sha256sums)
 

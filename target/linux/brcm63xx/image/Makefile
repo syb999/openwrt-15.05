@@ -170,11 +170,8 @@ define Device/Default
   PROFILES = Default $$(DEVICE_PROFILE)
   KERNEL_DEPENDS = $$(wildcard ../dts/$$(DEVICE_DTS).dts)
   KERNEL_INITRAMFS_SUFFIX := .elf
-  DEVICE_PROFILE :=
-  DEVICE_DTS :=
   DEVICE_DTS_DIR := ../dts
 endef
-DEVICE_VARS += DEVICE_DTS DEVICE_DTS_DIR DEVICE_DTS_DIR
 
 # BCM33xx HCS devices: only generates ramdisks (unsupported bin images)
 define Device/bcm33xxHcsRamdisk

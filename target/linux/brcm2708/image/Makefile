@@ -61,10 +61,7 @@ define Device/Default
   KERNEL := kernel-bin
   IMAGES := sdcard.bin
   IMAGE/sdcard.bin := build-dtb | gen-cfg | boot-img | sdcard-img
-  DEVICE_PROFILE :=
-  DEVICE_DTS :=
 endef
-DEVICE_VARS += DEVICE_PROFILE DEVICE_DTS
 
 # $(1) = profile
 # $(2) = image name
