@@ -43,12 +43,12 @@ define Build/boot-img
 	mcopy -i $@.boot $(KDIR)/fixup_cd.dat ::
 	mcopy -i $@.boot cmdline.txt ::
 	mcopy -i $@.boot $@.config ::config.txt
-	mcopy -i $@.boot $(IMAGE_KERNEL) ::kernel.img
+	mcopy -i $@.boot $(word 1,$^) ::kernel.img
 	mcopy -i $@.boot $@.dtb ::$(DEVICE_DTS).dtb
 endef
 
 define Build/sdcard-img
-	./gen_rpi_sdcard_img.sh $@ $@.boot $(IMAGE_ROOTFS) \
+	./gen_rpi_sdcard_img.sh $@ $@.boot $(word 2,$^) \
 		$(CONFIG_BRCM2708_SD_BOOT_PARTSIZE) $(CONFIG_TARGET_ROOTFS_PARTSIZE)
 	$(call Image/gzip,$@)
   endif
@@ -61,7 +61,10 @@ define Device/Default
   KERNEL := kernel-bin
   IMAGES := sdcard.bin
   IMAGE/sdcard.bin := build-dtb | gen-cfg | boot-img | sdcard-img
+  DEVICE_PROFILE :=
+  DEVICE_DTS :=
 endef
+DEVICE_VARS += DEVICE_PROFILE DEVICE_DTS
 
 # $(1) = profile
 # $(2) = image name

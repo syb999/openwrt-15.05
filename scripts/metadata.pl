@@ -253,6 +253,7 @@ EOF
 
 	print <<EOF;
 endchoice
+
 choice
 	prompt "Subtarget" if HAS_SUBTARGETS
 EOF
@@ -263,6 +264,7 @@ EOF
 EOF
 	}
 	print <<EOF;
+
 EOF
 	foreach my $target (@target) {
 		next unless $target->{subtarget};
@@ -271,18 +273,27 @@ EOF
 
 print <<EOF;
 endchoice
+
 choice
 	prompt "Target Profile"
+
 EOF
 
 	foreach my $target (@target) {
 		my $profiles = $target->{profiles};
-		foreach my $profile (@{$target->{profiles}}) {
+		$target->{sort} and @$profiles = sort {
+			$a->{priority} <=> $b->{priority} or
+			$a->{name} cmp $b->{name};
+		} @$profiles;
+
+		foreach my $profile (@$profiles) {
 			print <<EOF;
 config TARGET_$target->{conf}_$profile->{id}
 	bool "$profile->{name}"
 	depends on TARGET_$target->{conf}
+$profile->{config}
 EOF
+			$profile->{kconfig} and print "\tselect PROFILE_KCONFIG\n";
 			my @pkglist = merge_package_lists($target->{packages}, $profile->{packages});
 			foreach my $pkg (@pkglist) {
 				print "\tselect DEFAULT_$pkg\n";
@@ -301,24 +312,16 @@ EOF
 
 	print <<EOF;
 endchoice
+
 config HAS_SUBTARGETS
 	bool
+
 config TARGET_BOARD
 	string
+
 EOF
 	foreach my $target (@target) {
 		$target->{subtarget} or	print "\t\tdefault \"".$target->{board}."\" if TARGET_".$target->{conf}."\n";
-	}
-	print <<EOF;
-config TARGET_SUBTARGET
-	string
-	default "generic" if !HAS_SUBTARGETS
-EOF
-
-	foreach my $target (@target) {
-		foreach my $subtarget (@{$target->{subtargets}}) {
-			print "\t\tdefault \"$subtarget\" if TARGET_".$target->{conf}."_$subtarget\n";
-		}
 	}
 	print <<EOF;
 config TARGET_PROFILE
@@ -332,6 +335,7 @@ EOF
 	}
 
 	print <<EOF;
+
 config TARGET_ARCH_PACKAGES
 	string
 	
@@ -341,6 +345,7 @@ EOF
 		print "\t\tdefault \"".($target->{arch_packages} || $target->{board})."\" if TARGET_".$target->{conf}."\n";
 	}
 	print <<EOF;
+
 config DEFAULT_TARGET_OPTIMIZATION
 	string
 EOF
@@ -350,6 +355,7 @@ EOF
 	}
 	print "\tdefault \"-Os -pipe -funit-at-a-time\"\n";
 	print <<EOF;
+
 config CPU_TYPE
 	string
 EOF
@@ -365,8 +371,10 @@ EOF
 		next if $kver{$v};
 		$kver{$v} = 1;
 		print <<EOF;
+
 config LINUX_$v
 	bool
+
 EOF
 	}
 	foreach my $def (sort keys %defaults) {
@@ -878,25 +886,10 @@ sub gen_version_filtered_list() {
 	}
 }
 
-sub gen_profile_mk() {
-	my $file = shift @ARGV;
-	my $target = shift @ARGV;
-	my @targets = parse_target_metadata($file);
-	foreach my $cur (@targets) {
-		next unless $cur->{id} eq $target;
-		print "PROFILE_NAMES = ".join(" ", map { $_->{id} } @{$cur->{profiles}})."\n";
-		foreach my $profile (@{$cur->{profiles}}) {
-			print $profile->{id}.'_NAME:='.$profile->{name}."\n";
-			print $profile->{id}.'_PACKAGES:='.join(' ', @{$profile->{packages}})."\n";
-		}
-	}
-}
-
 sub parse_command() {
 	my $cmd = shift @ARGV;
 	for ($cmd) {
 		/^target_config$/ and return gen_target_config();
-		/^profile_mk$/ and return gen_profile_mk();
 		/^package_mk$/ and return gen_package_mk();
 		/^package_config$/ and return gen_package_config();
 		/^kconfig/ and return gen_kconfig_overrides();
@@ -909,7 +902,6 @@ sub parse_command() {
 	print <<EOF
 Available Commands:
 	$0 target_config [file] 		Target metadata in Kconfig format
-	$0 profile_mk [file] [target]		Profile metadata in makefile format
 	$0 package_mk [file]			Package metadata in makefile format
 	$0 package_config [file] 		Package metadata in Kconfig format
 	$0 kconfig [file] [config] [patchver]	Kernel config overrides

@@ -50,8 +50,8 @@ define Build/trx
 	$(STAGING_DIR_HOST)/bin/trx \
 		-o $@ \
 		-m $(IMAGE_SIZE) \
-		-f $(IMAGE_KERNEL) \
-		-a 4 -f $(IMAGE_ROOTFS)
+		-f $(word 1,$^) \
+		-a 4 -f $(word 2,$^)
 endef
 
 define Build/seama

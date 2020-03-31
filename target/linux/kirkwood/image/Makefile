@@ -10,21 +10,14 @@ NAND_BLOCKSIZE := 2048-128k
 include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/image.mk
 
-DEVICE_VARS += KERNEL_SIZE
+DEVICE_VARS += DEVICE_DTS KERNEL_SIZE PAGESIZE BLOCKSIZE SUBPAGESIZE
 KERNEL_LOADADDR:=0x8000
 TARGET_DEVICES = linksys-audi linksys-viper
-
-UBI_OPTS := -m 2048 -p 128KiB -s 512
-UBIFS_OPTS := -m 2048 -e 126KiB -c 4096
 
 define Device/Default
   KERNEL_DEPENDS = $$(wildcard $(DTS_DIR)/$$(DEVICE_DTS).dts)
   KERNEL := kernel-bin | append-dtb | uImage none
   KERNEL_NAME := zImage
-  SUBPAGESIZE := 512
-  BLOCKSIZE := 128KiB
-  IMAGES := sysupgrade.tar
-  IMAGE/sysupgrade.tar := sysupgrade-tar
 endef
 
 define Device/linksys-audi
@@ -36,7 +29,7 @@ define Device/linksys-audi
   FILESYSTEMS := squashfs
   PROFILES := Generic AUDI
   IMAGES := factory.bin sysupgrade.tar
-  IMAGE/factory.bin := append-kernel | pad-to $$$$(KERNEL_SIZE) | append-ubi
+  IMAGE/factory.bin := append-kernel $$$$(KERNEL_SIZE) | append-ubi
 endef
 
 define Device/linksys-viper
@@ -48,7 +41,11 @@ define Device/linksys-viper
   FILESYSTEMS := squashfs
   PROFILES := Generic VIPER
   IMAGES := factory.bin sysupgrade.tar
-  IMAGE/factory.bin := append-kernel | pad-to $$$$(KERNEL_SIZE) | append-ubi
+  IMAGE/factory.bin := append-kernel $$$$(KERNEL_SIZE) | append-ubi
+endef
+
+define Build/append-dtb
+	cat $(DTS_DIR)/$(DEVICE_DTS).dtb >> $@
 endef
 
 define Image/BuildKernel/Template
@@ -143,9 +140,6 @@ define Image/Build/ubi
 	$(CP) $(KDIR)/root.ubi $(BIN_DIR)/$(IMG_PREFIX)-$(PROFILE_SANITIZED)-rootfs.ubi
  endif
 endef
-
-IOMEGA_IX2_200_UBIFS_OPTS := -m 512 -e 15872 -c 2048
-IOMEGA_IX2_200_UBI_OPTS := -m 512 -p 16384 -s 256
 
 Image/BuildKernel/Template/Generic=$(call Image/BuildKernel/Template)
 Image/InstallKernel/Template/Generic=$(call Image/InstallKernel/Template)

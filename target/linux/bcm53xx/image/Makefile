@@ -8,6 +8,8 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/image.mk
 
 define Image/Prepare
+	$(CP) $(DTS_DIR)/*.dtb $(KDIR)/
+
 	rm -f $(KDIR)/fs_mark
 	echo -ne '\xde\xad\xc0\xde' > $(KDIR)/fs_mark
 	$(call prepare_generic_squashfs,$(KDIR)/fs_mark)
@@ -17,6 +19,10 @@ define Image/Prepare
 	echo -ne '\xde\xad\xc0\xde' > $(KDIR)/ubi_mark
 
 	$(CP) ./ubinize.cfg $(KDIR)
+endef
+
+define Build/append-dtb
+	cat $(KDIR)/$(DT).dtb >> $@
 endef
 
 define Build/lzma-d16
@@ -32,7 +38,7 @@ define Build/trx-serial
 	$(STAGING_DIR_HOST)/bin/trx \
 		-o $@ \
 		-m 33554432 \
-		-f $(IMAGE_KERNEL) -a 1024 \
+		-f $(word 1,$^) -a 1024 \
 		-f $(KDIR)/root.squashfs -a 0x10000 -A $(KDIR)/fs_mark
 endef
 
@@ -44,7 +50,7 @@ define Build/trx-nand
 	$(STAGING_DIR_HOST)/bin/trx \
 		-o $@ \
 		-m 33554432 \
-		-f $(IMAGE_KERNEL) -a 0x20000 -b 0x400000 \
+		-f $(word 1,$^) -a 0x20000 -b 0x400000 \
 		-f $(KDIR)/root-block-0x20000-min-0x800.ubi \
 		-A $(KDIR)/ubi_mark -a 0x20000
 endef
@@ -61,7 +67,7 @@ define Build/seama-nand
 		entity $@.entity \
 		-m "dev=/dev/mtdblock/7" \
 		-m "type=firmware" \
-		-f $(IMAGE_KERNEL) \
+		-f $(word 1,$^) \
 		-b 0x400000 \
 		-f $(KDIR)/root-block-0x20000-min-0x800.ubi \
 		-f $(KDIR)/ubi_mark
@@ -72,14 +78,13 @@ define Build/seama-nand
 		-i $@.entity
 endef
 
-DEVICE_VARS += PRODUCTID SIGNATURE NETGEAR_BOARD_ID NETGEAR
+DEVICE_VARS += DT PRODUCTID SIGNATURE BOARD_ID REGION
 
 define Device/Default
   # .dtb files are prefixed by SoC type, e.g. bcm4708- which is not included in device/image names
   # extract the full dtb name based on the device info
-  DEVICE_DTS := $(patsubst %.dtb,%,$(notdir $(wildcard $(if $(IB),$(KDIR),$(DTS_DIR))/*-$(1).dtb)))
+  DT := $(patsubst %.dtb,%,$(notdir $(wildcard $(if $(IB),$(KDIR),$(DTS_DIR))/*-$(1).dtb)))
   KERNEL := kernel-bin | append-dtb | lzma-d16
-  KERNEL_DEPENDS = $$(wildcard $(DTS_DIR)/$$(DEVICE_DTS).dts)
   FILESYSTEMS := squashfs
   KERNEL_NAME := zImage
   IMAGE_NAME = $$(IMAGE_PREFIX)-$$(1).$$(2)

@@ -215,11 +215,11 @@ $(call KernelPackage/$(1)/config)
 				if grep -q "$$$$$$$${mod##$(LINUX_DIR)/}" "$(LINUX_DIR)/modules.builtin"; then \
 					echo "NOTICE: module '$$$$$$$$mod' is built-in."; \
 				else \
-					echo "WARNING: module '$$$$$$$$mod' missing and modules.builtin not available, assuming built-in." >&2; \
+					echo "ERROR: module '$$$$$$$$mod' is missing." >&2; \
+					exit 1; \
 				fi; \
 			else \
-				echo "ERROR: module '$$$$$$$$mod' is missing." >&2; \
-				exit 1; \
+				echo "WARNING: module '$$$$$$$$mod' missing and modules.builtin not available, assuming built-in." >&2; \
 			fi; \
 		  done;
 		  $(call ModuleAutoLoad,$(1),$$(1),$(AUTOLOAD))
