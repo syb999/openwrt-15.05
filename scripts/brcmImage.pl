@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/perl
 #
 #    Copyright (C) 2009	Henk Vergonet <Henk.Vergonet@gmail.com>
 #

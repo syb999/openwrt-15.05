@@ -44,7 +44,6 @@ Building images:
 	make image FILES="<path>" # include extra files from <path>
 	make image BIN_DIR="<path>" # alternative output directory for the images
 
-	make image EXTRA_IMAGE_NAME="<string>" # Add this to the output image filename (sanitized)
 endef
 $(eval $(call shexport,Helptext))
 
@@ -122,7 +121,7 @@ package_index: FORCE
 	@echo Building package index...
 	@mkdir -p $(TMP_DIR) $(TARGET_DIR)/tmp
 	(cd $(PACKAGE_DIR); $(SCRIPT_DIR)/ipkg-make-index.sh . > Packages && \
-		gzip -9nc Packages > Packages.gz \
+		gzip -9c Packages > Packages.gz \
 	) >/dev/null 2>/dev/null
 	$(OPKG) update || true
 
@@ -158,7 +157,7 @@ package_postinst: FORCE
 build_image: FORCE
 	@echo
 	@echo Building images...
-	$(NO_TRACE_MAKE) -C target/linux/$(BOARD)/image install TARGET_BUILD=1 IB=1 EXTRA_IMAGE_NAME="$(EXTRA_IMAGE_NAME)" \
+	$(NO_TRACE_MAKE) -C target/linux/$(BOARD)/image install TARGET_BUILD=1 IB=1 \
 		$(if $(USER_PROFILE),PROFILE="$(USER_PROFILE)")
 
 clean:

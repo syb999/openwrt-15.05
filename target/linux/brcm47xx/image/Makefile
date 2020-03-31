@@ -106,6 +106,15 @@ define Build/motorola-bin
 	mv $@.new $@
 endef
 
+define Build/netgear-chk
+	$(STAGING_DIR_HOST)/bin/mkchkimg \
+		-o $@.new \
+		-k $@ \
+		-b $(BOARD_ID) \
+		-r $(REGION)
+	mv $@.new $@
+endef
+
 define Build/prepend-with-elf
 	mv $@ $@.old
 	dd if=$(KDIR)/loader.elf of=$@ bs=131072 conv=sync

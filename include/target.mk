@@ -56,21 +56,19 @@ DEFAULT_PACKAGES += $(DEFAULT_PACKAGES.$(DEVICE_TYPE))
 filter_packages = $(filter-out -% $(patsubst -%,%,$(filter -%,$(1))),$(1))
 extra_packages = $(if $(filter wpad-mini wpad nas,$(1)),iwinfo)
 
-define ProfileDefault
+define Profile/Default
   NAME:=
-  PRIORITY:=
   PACKAGES:=
 endef
 
 ifndef Profile
 define Profile
-  $(eval $(call ProfileDefault))
+  $(eval $(call Profile/Default))
   $(eval $(call Profile/$(1)))
   dumpinfo : $(call shexport,Profile/$(1)/Config)
   dumpinfo : $(call shexport,Profile/$(1)/Description)
   DUMPINFO += \
 	echo "Target-Profile: $(1)"; \
-	$(if $(PRIORITY), echo "Target-Profile-Priority: $(PRIORITY)"; ) \
 	echo "Target-Profile-Name: $(NAME)"; \
 	echo "Target-Profile-Packages: $(PACKAGES) $(call extra_packages,$(DEFAULT_PACKAGES) $(PACKAGES))"; \
 	if [ -f ./config/profile-$(1) ]; then \
@@ -83,6 +81,9 @@ define Profile
 	echo "$$$$$$$$$(call shvar,Profile/$(1)/Description)"; \
 	echo "@@"; \
 	echo;
+  ifeq ($(CONFIG_TARGET_$(call target_conf,$(BOARD)_$(if $(SUBTARGET),$(SUBTARGET)_))$(1)),y)
+    PROFILE=$(1)
+  endif
 endef
 endif
 
@@ -97,10 +98,10 @@ else
   endef
 endif
 
-PROFILE?=$(call qstrip,$(CONFIG_TARGET_PROFILE))
-
 ifeq ($(TARGET_BUILD),1)
-  ifneq ($(DUMP),)
+  $(eval $(call IncludeProfiles))
+else
+  ifeq ($(DUMP),)
     $(eval $(call IncludeProfiles))
   endif
 endif
@@ -211,11 +212,9 @@ ifeq ($(DUMP),1)
     CPU_CFLAGS_mips32 = -mips32 -mtune=mips32
     CPU_CFLAGS_mips32r2 = -mips32r2 -mtune=mips32r2
     CPU_CFLAGS_mips64 = -mips64 -mtune=mips64 -mabi=64
-    CPU_CFLAGS_24kc = -mips32r2 -mtune=24kc
     CPU_CFLAGS_24kec = -mips32r2 -mtune=24kec
     CPU_CFLAGS_34kc = -mips32r2 -mtune=34kc
     CPU_CFLAGS_74kc = -mips32r2 -mtune=74kc
-    CPU_CFLAGS_1004kc = -mips32r2 -mtune=1004kc
     CPU_CFLAGS_octeon = -march=octeon -mabi=64
     CPU_CFLAGS_dsp = -mdsp
     CPU_CFLAGS_dsp2 = -mdspr2
@@ -236,7 +235,6 @@ ifeq ($(DUMP),1)
     CPU_CFLAGS_cortex-a8 = -march=armv7-a -mtune=cortex-a8
     CPU_CFLAGS_cortex-a9 = -march=armv7-a -mtune=cortex-a9
     CPU_CFLAGS_cortex-a15 = -march=armv7-a -mtune=cortex-a15
-    CPU_CFLAGS_cortex-a53 = -march=armv8-a -mtune=cortex-a53
     CPU_CFLAGS_fa526 = -march=armv4 -mtune=fa526
     CPU_CFLAGS_mpcore = -march=armv6k -mtune=mpcore
     CPU_CFLAGS_xscale = -march=armv5te -mtune=xscale
@@ -244,7 +242,6 @@ ifeq ($(DUMP),1)
       CPU_CFLAGS_neon = -mfpu=neon
       CPU_CFLAGS_vfp = -mfpu=vfp
       CPU_CFLAGS_vfpv3 = -mfpu=vfpv3-d16
-      CPU_CFLAGS_neon-vfpv4 = -mfpu=neon-vfpv4
     endif
   endif
   ifeq ($(ARCH),powerpc)
@@ -262,11 +259,6 @@ ifeq ($(DUMP),1)
     CPU_CFLAGS_armv8-a = -mcpu=armv8-a
   endif
   DEFAULT_CFLAGS=$(strip $(CPU_CFLAGS) $(CPU_CFLAGS_$(CPU_TYPE)) $(CPU_CFLAGS_$(CPU_SUBTYPE)))
-endif
-
-CUR_SUBTARGET:=$(SUBTARGET)
-ifeq ($(SUBTARGETS),)
-  CUR_SUBTARGET := default
 endif
 
 define BuildTargets/DumpCurrent
@@ -292,7 +284,6 @@ define BuildTargets/DumpCurrent
 	 echo '@@'; \
 	 echo 'Default-Packages: $(DEFAULT_PACKAGES) $(call extra_packages,$(DEFAULT_PACKAGES))'; \
 	 $(DUMPINFO)
-	$(if $(CUR_SUBTARGET),$(SUBMAKE) -r --no-print-directory -C image -s DUMP=1 SUBTARGET=$(CUR_SUBTARGET))
 	$(if $(SUBTARGET),,@$(foreach SUBTARGET,$(SUBTARGETS),$(SUBMAKE) -s DUMP=1 SUBTARGET=$(SUBTARGET); ))
 endef
 

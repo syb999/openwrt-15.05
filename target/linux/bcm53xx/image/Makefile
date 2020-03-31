@@ -61,6 +61,12 @@ define Build/asus-trx
 	mv $@.new $@
 endef
 
+define Build/netgear-chk
+	$(STAGING_DIR_HOST)/bin/mkchkimg \
+		-o $@.new -k $@ -b $(BOARD_ID) -r $(REGION)
+	mv $@.new $@
+endef
+
 define Build/seama-nand
 	# Seama entity
 	$(STAGING_DIR_HOST)/bin/oseama \

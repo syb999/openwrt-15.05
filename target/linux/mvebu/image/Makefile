@@ -11,6 +11,9 @@ LOADADDR:=0x00008000
 
 JFFS2_BLOCKSIZE = 128k
 
+KDIR_TMP:=$(KDIR)/tmp
+
+
 define Image/Build/DTB
 	cp $(KDIR)/zImage$(2) $(KDIR)/zImage$(2)-$(1);
 	cat $(DTS_DIR)/$(1).dtb >> $(KDIR)/zImage$(2)-$(1);
