@@ -18,6 +18,10 @@ define Device/Default
   KERNEL_DEPENDS = $$(wildcard $(DTS_DIR)/$$(DEVICE_DTS).dts)
   KERNEL := kernel-bin | append-dtb | uImage none
   KERNEL_NAME := zImage
+  SUBPAGESIZE := 512
+  BLOCKSIZE := 128KiB
+  IMAGES := sysupgrade.tar
+  IMAGE/sysupgrade.tar := sysupgrade-tar
 endef
 
 define Device/linksys-audi

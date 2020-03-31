@@ -20,7 +20,7 @@ DTS_DIR:=$(LINUX_DIR)/arch/$(LINUX_KARCH)/boot/dts
 
 EXTRA_NAME_SANITIZED=$(call sanitize,$(EXTRA_IMAGE_NAME))
 
-MG_PREFIX:=openwrt-$(if $(CONFIG_VERSION_FILENAMES),$(VERSION_NUMBER)-)$(BOARD)$(if $(SUBTARGET),-$(SUBTARGET))
+IMG_PREFIX:=openwrt-$(if $(CONFIG_VERSION_FILENAMES),$(VERSION_NUMBER)-)$(BOARD)$(if $(SUBTARGET),-$(SUBTARGET))
 
 MKFS_DEVTABLE_OPT := -D $(INCLUDE_DIR)/device_table.txt
 
@@ -275,13 +275,6 @@ define Image/mkfs/prepare
 	$(call Image/mkfs/prepare/default)
 endef
 
-
-define Image/Checksum
-	( cd ${BIN_DIR} ; \
-		$(FIND) -maxdepth 1 -type f \! -name 'md5sums'  -printf "%P\n" | sort | xargs $1 > $2 \
-	)
-endef
-
 define BuildImage/mkfs
   install: mkfs-$(1)
   .PHONY: mkfs-$(1)
@@ -453,8 +446,8 @@ define Build/check-size
 	}
 endef
 
-define Build/sysupgrade-nand
-	sh $(TOPDIR)/scripts/sysupgrade-nand.sh \
+define Build/sysupgrade-tar
+	sh $(TOPDIR)/scripts/sysupgrade-tar.sh \
 		--board $(if $(BOARD_NAME),$(BOARD_NAME),$(DEVICE_NAME)) \
 		--kernel $(word 1,$^) \
 		--rootfs $(word 2,$^) \
@@ -654,7 +647,5 @@ define BuildImage
 		$(call Image/Build,$(fs))
 	)
 	$(call Image/mkfs/ubifs)
-	$(call Image/Checksum,md5sum --binary,md5sums)
-	$(call Image/Checksum,openssl dgst -sha256,sha256sums)
 
 endef
