@@ -332,6 +332,14 @@ define Build/tplink-safeloader
 		$(if $(findstring sysupgrade,$(word 1,$(1))),-S) && mv $@.new $@ || rm -f $@
 endef
 
+define Build/install-dtb
+	$(foreach dts,$(DEVICE_DTS), \
+		$(CP) \
+			$(DTS_DIR)/$(dts).dtb \
+			$(BIN_DIR)/$(IMG_PREFIX)-$(dts).dtb; \
+	)
+endef
+
 define Build/fit
 	$(TOPDIR)/scripts/mkits.sh \
 		-D $(DEVICE_NAME) -o $@.its -k $@ \
