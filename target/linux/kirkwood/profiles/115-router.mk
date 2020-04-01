@@ -9,7 +9,7 @@ define Profile/AUDI
   NAME:=Linksys EA3500 (Audi)
   PACKAGES:= \
 	kmod-mwl8k kmod-usb2 kmod-usb-storage \
-	swconfig wpad-mini
+	swconfig wpad-mini kmod-switch-mvsw61xx
 endef
 
 define Profile/AUDI/Description
@@ -22,7 +22,7 @@ define Profile/VIPER
   NAME:=Linksys E4200v2 / EA4500 (Viper)
   PACKAGES:= \
 	kmod-mwl8k kmod-usb2 kmod-usb-storage \
-	swconfig wpad-mini
+	swconfig wpad-mini kmod-switch-mvsw61xx
 endef
 
 define Profile/VIPER/Description
