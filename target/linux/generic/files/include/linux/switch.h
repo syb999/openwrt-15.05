@@ -1,7 +1,7 @@
 /*
  * switch.h: Switch configuration API
  *
- * Copyright (C) 2008 Felix Fietkau <nbd@nbd.name>
+ * Copyright (C) 2008 Felix Fietkau <nbd@openwrt.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -59,8 +59,8 @@ struct switch_port_link {
 };
 
 struct switch_port_stats {
-	unsigned long long tx_bytes;
-	unsigned long long rx_bytes;
+	unsigned long tx_bytes;
+	unsigned long rx_bytes;
 };
 
 /**
@@ -115,12 +115,12 @@ struct switch_dev {
 	const char *alias;
 	struct net_device *netdev;
 
-	unsigned int ports;
-	unsigned int vlans;
-	unsigned int cpu_port;
+	int ports;
+	int vlans;
+	int cpu_port;
 
 	/* the following fields are internal for swconfig */
-	unsigned int id;
+	int id;
 	struct list_head dev_list;
 	unsigned long def_global, def_port, def_vlan;
 
@@ -148,8 +148,8 @@ struct switch_portmap {
 
 struct switch_val {
 	const struct switch_attr *attr;
-	unsigned int port_vlan;
-	unsigned int len;
+	int port_vlan;
+	int len;
 	union {
 		const char *s;
 		u32 i;
