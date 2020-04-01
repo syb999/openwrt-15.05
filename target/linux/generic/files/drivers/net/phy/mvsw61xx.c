@@ -4,7 +4,7 @@
  * Copyright (c) 2014 Claudio Leite <leitec@staticky.com>
  * Copyright (c) 2014 Nikita Nazarenko <nnazarenko@radiofid.com>
  *
- * Based on code (c) 2008 Felix Fietkau <nbd@nbd.name>
+ * Based on code (c) 2008 Felix Fietkau <nbd@openwrt.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License v2 as published by the
@@ -145,52 +145,6 @@ mvsw61xx_wait_mask_s(struct switch_dev *dev, int addr,
 	} while (--i > 0);
 
 	return -ETIMEDOUT;
-}
-
-static int
-mvsw61xx_mdio_read(struct switch_dev *dev, int addr, int reg)
-{
-	sw16(dev, MV_GLOBAL2REG(SMI_OP),
-	     MV_INDIRECT_READ | (addr << MV_INDIRECT_ADDR_S) | reg);
-
-	if (mvsw61xx_wait_mask_s(dev,  MV_GLOBAL2REG(SMI_OP),
-				 MV_INDIRECT_INPROGRESS, 0) < 0)
-		return -ETIMEDOUT;
-
-	return sr16(dev, MV_GLOBAL2REG(SMI_DATA));
-}
-
-static int
-mvsw61xx_mdio_write(struct switch_dev *dev, int addr, int reg, u16 val)
-{
-	sw16(dev, MV_GLOBAL2REG(SMI_DATA), val);
-
-	sw16(dev, MV_GLOBAL2REG(SMI_OP),
-	     MV_INDIRECT_WRITE | (addr << MV_INDIRECT_ADDR_S) | reg);
-
-	return mvsw61xx_wait_mask_s(dev,  MV_GLOBAL2REG(SMI_OP),
-				    MV_INDIRECT_INPROGRESS, 0) < 0;
-}
-
-static int
-mvsw61xx_mdio_page_read(struct switch_dev *dev, int port, int page, int reg)
-{
-	int ret;
-
-	mvsw61xx_mdio_write(dev, port, MII_MV_PAGE, page);
-	ret = mvsw61xx_mdio_read(dev, port, reg);
-	mvsw61xx_mdio_write(dev, port, MII_MV_PAGE, 0);
-
-	return ret;
-}
-
-static void
-mvsw61xx_mdio_page_write(struct switch_dev *dev, int port, int page, int reg,
-			 u16 val)
-{
-	mvsw61xx_mdio_write(dev, port, MII_MV_PAGE, page);
-	mvsw61xx_mdio_write(dev, port, reg, val);
-	mvsw61xx_mdio_write(dev, port, MII_MV_PAGE, 0);
 }
 
 static int
@@ -454,86 +408,6 @@ static int mvsw61xx_set_enable_vlan(struct switch_dev *dev,
 	return 0;
 }
 
-static int mvsw61xx_get_mirror_rx_enable(struct switch_dev *dev,
-		const struct switch_attr *attr, struct switch_val *val)
-{
-	struct mvsw61xx_state *state = get_state(dev);
-
-	val->value.i = state->mirror_rx;
-
-	return 0;
-}
-
-static int mvsw61xx_set_mirror_rx_enable(struct switch_dev *dev,
-		const struct switch_attr *attr, struct switch_val *val)
-{
-	struct mvsw61xx_state *state = get_state(dev);
-
-	state->mirror_rx = val->value.i;
-
-	return 0;
-}
-
-static int mvsw61xx_get_mirror_tx_enable(struct switch_dev *dev,
-		const struct switch_attr *attr, struct switch_val *val)
-{
-	struct mvsw61xx_state *state = get_state(dev);
-
-	val->value.i = state->mirror_tx;
-
-	return 0;
-}
-
-static int mvsw61xx_set_mirror_tx_enable(struct switch_dev *dev,
-		const struct switch_attr *attr, struct switch_val *val)
-{
-	struct mvsw61xx_state *state = get_state(dev);
-
-	state->mirror_tx = val->value.i;
-
-	return 0;
-}
-
-static int mvsw61xx_get_mirror_monitor_port(struct switch_dev *dev,
-		const struct switch_attr *attr, struct switch_val *val)
-{
-	struct mvsw61xx_state *state = get_state(dev);
-
-	val->value.i = state->monitor_port;
-
-	return 0;
-}
-
-static int mvsw61xx_set_mirror_monitor_port(struct switch_dev *dev,
-		const struct switch_attr *attr, struct switch_val *val)
-{
-	struct mvsw61xx_state *state = get_state(dev);
-
-	state->monitor_port = val->value.i;
-
-	return 0;
-}
-
-static int mvsw61xx_get_mirror_source_port(struct switch_dev *dev,
-		const struct switch_attr *attr, struct switch_val *val)
-{
-	struct mvsw61xx_state *state = get_state(dev);
-
-	val->value.i = state->source_port;
-
-	return 0;
-}
-
-static int mvsw61xx_set_mirror_source_port(struct switch_dev *dev,
-		const struct switch_attr *attr, struct switch_val *val)
-{
-	struct mvsw61xx_state *state = get_state(dev);
-
-	state->source_port = val->value.i;
-
-	return 0;
-}
-
 static int mvsw61xx_vtu_program(struct switch_dev *dev)
 {
 	struct mvsw61xx_state *state = get_state(dev);
@@ -684,40 +558,6 @@ static int mvsw61xx_update_state(struct switch_dev *dev)
 
 	mvsw61xx_vtu_program(dev);
 
-	/* port mirroring */
-	/* reset all mirror registers */
-	for (i = 0; i < dev->ports; i++) {
-		reg = sr16(dev, MV_PORTREG(CONTROL2, i));
-		reg &= ~(MV_MIRROR_RX_SRC_MASK | MV_MIRROR_TX_SRC_MASK);
-		sw16(dev, MV_PORTREG(CONTROL2, i), reg);
-	}
-	reg = sr16(dev, MV_GLOBALREG(MONITOR_CTRL));
-	reg |= MV_MIRROR_RX_DEST_MASK | MV_MIRROR_TX_DEST_MASK;
-	sw16(dev, MV_GLOBALREG(MONITOR_CTRL), reg);
-
-	/* now enable mirroring if necessary */
-	if (state->mirror_rx) {
-		/* set ingress monitor source */
-		reg = sr16(dev, MV_PORTREG(CONTROL2, state->source_port)) & ~MV_MIRROR_RX_SRC_MASK;
-		reg |= state->mirror_rx << MV_MIRROR_RX_SRC_SHIFT;
-		sw16(dev, MV_PORTREG(CONTROL2, state->source_port), reg);
-		/* set ingress monitor destination */
-		reg = sr16(dev, MV_GLOBALREG(MONITOR_CTRL)) & ~MV_MIRROR_RX_DEST_MASK;
-		reg |= state->monitor_port << MV_MIRROR_RX_DEST_SHIFT;
-		sw16(dev, MV_GLOBALREG(MONITOR_CTRL), reg);
-	}
-
-	if (state->mirror_tx) {
-		/* set egress monitor source */
-		reg = sr16(dev, MV_PORTREG(CONTROL2, state->source_port)) & ~MV_MIRROR_TX_SRC_MASK;
-		reg |= state->mirror_tx << MV_MIRROR_TX_SRC_SHIFT;
-		sw16(dev, MV_PORTREG(CONTROL2, state->source_port), reg);
-		/* set egress monitor destination */
-		reg = sr16(dev, MV_GLOBALREG(MONITOR_CTRL)) & ~MV_MIRROR_TX_DEST_MASK;
-		reg |= state->monitor_port << MV_MIRROR_TX_DEST_SHIFT;
-		sw16(dev, MV_GLOBALREG(MONITOR_CTRL), reg);
-	}
-
 	return 0;
 }
 
@@ -726,20 +566,7 @@ static int mvsw61xx_apply(struct switch_dev *dev)
 	return mvsw61xx_update_state(dev);
 }
 
-static void mvsw61xx_enable_serdes(struct switch_dev *dev)
-{
-	int bmcr = mvsw61xx_mdio_page_read(dev, MV_REG_FIBER_SERDES,
-					   MV_PAGE_FIBER_SERDES, MII_BMCR);
-	if (bmcr < 0)
-		return;
-
-	if (bmcr & BMCR_PDOWN)
-		mvsw61xx_mdio_page_write(dev, MV_REG_FIBER_SERDES,
-					 MV_PAGE_FIBER_SERDES, MII_BMCR,
-					 bmcr & ~BMCR_PDOWN);
-}
-
-static int _mvsw61xx_reset(struct switch_dev *dev, bool full)
+static int mvsw61xx_reset(struct switch_dev *dev)
 {
 	struct mvsw61xx_state *state = get_state(dev);
 	int i;
@@ -772,29 +599,6 @@ static int _mvsw61xx_reset(struct switch_dev *dev, bool full)
 
 		/* Set port association vector */
 		sw16(dev, MV_PORTREG(ASSOC, i), (1 << i));
-
-		/* power up phys */
-		if (full && i < 5) {
-			mvsw61xx_mdio_write(dev, i, MII_MV_SPEC_CTRL,
-					    MV_SPEC_MDI_CROSS_AUTO |
-					    MV_SPEC_ENERGY_DETECT |
-					    MV_SPEC_DOWNSHIFT_COUNTER);
-			mvsw61xx_mdio_write(dev, i, MII_BMCR, BMCR_RESET |
-					    BMCR_ANENABLE | BMCR_FULLDPLX |
-					    BMCR_SPEED1000);
-		}
-
-		/* enable SerDes if necessary */
-		if (full && i >= 5 && state->model == MV_IDENT_VALUE_6176) {
-			u16 sts = sr16(dev, MV_PORTREG(STATUS, i));
-			u16 mode = sts & MV_PORT_STATUS_CMODE_MASK;
-
-			if (mode == MV_PORT_STATUS_CMODE_100BASE_X ||
-			    mode == MV_PORT_STATUS_CMODE_1000BASE_X ||
-			    mode == MV_PORT_STATUS_CMODE_SGMII) {
-				mvsw61xx_enable_serdes(dev);
-			}
-		}
 	}
 
 	for (i = 0; i < dev->vlans; i++) {
@@ -806,11 +610,6 @@ static int _mvsw61xx_reset(struct switch_dev *dev, bool full)
 	}
 
 	state->vlan_enabled = 0;
-
-	state->mirror_rx = false;
-	state->mirror_tx = false;
-	state->source_port = 0;
-	state->monitor_port = 0;
 
 	mvsw61xx_update_state(dev);
 
@@ -824,10 +623,9 @@ static int _mvsw61xx_reset(struct switch_dev *dev, bool full)
 	return 0;
 }
 
-static int mvsw61xx_reset(struct switch_dev *dev)
-{
-	return _mvsw61xx_reset(dev, false);
-}
+enum {
+	MVSW61XX_ENABLE_VLAN,
+};
 
 enum {
 	MVSW61XX_VLAN_PORT_BASED,
@@ -840,44 +638,13 @@ enum {
 };
 
 static const struct switch_attr mvsw61xx_global[] = {
-	{
+	[MVSW61XX_ENABLE_VLAN] = {
+		.id = MVSW61XX_ENABLE_VLAN,
 		.type = SWITCH_TYPE_INT,
 		.name = "enable_vlan",
 		.description = "Enable 802.1q VLAN support",
 		.get = mvsw61xx_get_enable_vlan,
 		.set = mvsw61xx_set_enable_vlan,
-	},
-	{
-		.type = SWITCH_TYPE_INT,
-		.name = "enable_mirror_rx",
-		.description = "Enable mirroring of RX packets",
-		.set = mvsw61xx_set_mirror_rx_enable,
-		.get = mvsw61xx_get_mirror_rx_enable,
-		.max = 1
-	},
-	{
-		.type = SWITCH_TYPE_INT,
-		.name = "enable_mirror_tx",
-		.description = "Enable mirroring of TX packets",
-		.set = mvsw61xx_set_mirror_tx_enable,
-		.get = mvsw61xx_get_mirror_tx_enable,
-		.max = 1
-	},
-	{
-		.type = SWITCH_TYPE_INT,
-		.name = "mirror_monitor_port",
-		.description = "Mirror monitor port",
-		.set = mvsw61xx_set_mirror_monitor_port,
-		.get = mvsw61xx_get_mirror_monitor_port,
-		.max = MV_PORTS - 1
-	},
-	{
-		.type = SWITCH_TYPE_INT,
-		.name = "mirror_source_port",
-		.description = "Mirror source port",
-		.set = mvsw61xx_set_mirror_source_port,
-		.get = mvsw61xx_get_mirror_source_port,
-		.max = MV_PORTS - 1
 	},
 };
 
@@ -997,9 +764,6 @@ static int mvsw61xx_probe(struct platform_device *pdev)
 	case MV_IDENT_VALUE_6176:
 		model_str = MV_IDENT_STR_6176;
 		break;
-	case MV_IDENT_VALUE_6352:
-		model_str = MV_IDENT_STR_6352;
-		break;
 	default:
 		dev_err(&pdev->dev, "No compatible switch found at 0x%02x\n",
 				state->base_addr);
@@ -1034,8 +798,6 @@ static int mvsw61xx_probe(struct platform_device *pdev)
 	state->dev.ops = &mvsw61xx_ops;
 	state->dev.alias = dev_name(&pdev->dev);
 
-	_mvsw61xx_reset(&state->dev, true);
-
 	err = register_switch(&state->dev, NULL);
 	if (err < 0)
 		goto out_err;
@@ -1065,7 +827,6 @@ static const struct of_device_id mvsw61xx_match[] = {
 	{ .compatible = "marvell,88e6171" },
 	{ .compatible = "marvell,88e6172" },
 	{ .compatible = "marvell,88e6176" },
-	{ .compatible = "marvell,88e6352" },
 	{ }
 };
 MODULE_DEVICE_TABLE(of, mvsw61xx_match);
