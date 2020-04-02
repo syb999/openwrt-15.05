@@ -69,6 +69,8 @@ endef
 
 EXTRA_CFLAGS+=-DSFE_SUPPORT_IPV6
 
+TARGET_CFLAGS := $(filter-out -O%,$(TARGET_CFLAGS)) -O3
+
 define Build/Compile
 	$(MAKE) -C "$(LINUX_DIR)" \
 		CROSS_COMPILE="$(TARGET_CROSS)" \
@@ -87,4 +89,4 @@ endef
 endif
 
 $(eval $(call KernelPackage,shortcut-fe))
-$(eval $(call KernelPackage,shortcut-fe-cm))
+#$(eval $(call KernelPackage,shortcut-fe-cm))

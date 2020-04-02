@@ -64,6 +64,8 @@ endef
 
 SFE_MAKE_OPTS:=SFE_SUPPORT_IPV6=y
 
+TARGET_CFLAGS := $(filter-out -O%,$(TARGET_CFLAGS)) -O3
+
 define Build/Compile/kmod
 	$(MAKE) -C "$(LINUX_DIR)" $(strip $(SFE_MAKE_OPTS)) \
 		CONFIG_FAST_CLASSIFIER=m \
@@ -100,5 +102,5 @@ define Package/fast-classifier-example/install
 endef
 
 $(eval $(call KernelPackage,$(PKG_NAME)))
-$(eval $(call KernelPackage,$(PKG_NAME)-noload))
-$(eval $(call BuildPackage,fast-classifier-example))
+#$(eval $(call KernelPackage,$(PKG_NAME)-noload))
+#$(eval $(call BuildPackage,fast-classifier-example))
