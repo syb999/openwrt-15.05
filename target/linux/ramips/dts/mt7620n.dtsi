@@ -204,12 +204,21 @@
 		pinctrl-0 = <&state_default>;
 		state_default: pinctrl0 {
 		};
+
+		ephy_pins: ephy {
+			ephy {
+				ralink,group = "ephy";
+				ralink,function = "ephy";
+			};
+		};
+
 		spi_pins: spi {
 			spi {
 				ralink,group = "spi";
 				ralink,function = "spi";
 			};
 		};
+
 		uartlite_pins: uartlite {
 			uart {
 				ralink,group = "uartlite";
