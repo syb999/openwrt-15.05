@@ -6,31 +6,28 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zerotier
-PKG_VERSION:=1.1.14
-PKG_RELEASE:=4
+PKG_VERSION:=1.4.6
+PKG_RELEASE:=3
 
-PKG_LICENSE:=GPL-3.0
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/zerotier/ZeroTierOne/tar.gz/$(PKG_VERSION)?
+PKG_MD5SUM:=0860b44a0a4ed59926fccf74a778bd96
+PKG_BUILD_DIR:=$(BUILD_DIR)/ZeroTierOne-$(PKG_VERSION)
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/zerotier/ZeroTierOne
-PKG_SOURCE_SUBDIR:=ZeroTierOne-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=ae491c277e6f35d1acbdcbf700e2b834957295ae
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_MD5SUM:=1bbe867ac5d5b6e177181300c5c7e4df
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
+PKG_MAINTAINER:=Moritz Warning <moritzwarning@web.de>
+PKG_LICENSE:=BSL 1.1
+PKG_LICENSE_FILES:=LICENSE.txt
 
-PKG_BUILD_DEPENDS:=uclibcxx
 PKG_BUILD_PARALLEL:=1
 include $(INCLUDE_DIR)/package.mk
 
 define Package/zerotier
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libpthread +kmod-tun +ip-full +ZEROTIER_ENABLE_NETWORK_CONTROLLER:libsqlite3 +ZEROTIER_USE_MINIUPNPC:libminiupnpc +ZEROTIER_USE_MINIUPNPC:libnatpmp
+  DEPENDS:=+libpthread +libstdcpp +kmod-tun +ip-full +libminiupnpc +libnatpmp
   TITLE:=Create flat virtual Ethernet networks of almost unlimited size
   URL:=https://www.zerotier.com
   SUBMENU:=VPN
-  MAINTAINER:=Moritz Warning <moritzwarning@web.de>
 endef
 
 define Package/zerotier/description
@@ -41,30 +38,26 @@ define Package/zerotier/config
 	source "$(SOURCE)/Config.in"
 endef
 
-ifeq ($(CONFIG_ZEROTIER_ENABLE_NETWORK_CONTROLLER),y)
-MAKE_FLAGS += ZT_ENABLE_NETWORK_CONTROLLER=1
-MAKE_FLAGS += LDLIBS+=" -lsqlite3 "
-endif
-
-ifeq ($(CONFIG_ZEROTIER_USE_MINIUPNPC),y)
-MAKE_FLAGS += ZT_USE_MINIUPNPC=1
-endif
-
 ifeq ($(CONFIG_ZEROTIER_ENABLE_DEBUG),y)
-TARGET_CXXFLAGS += -DZT_TRACE -ggdb3
+MAKE_FLAGS += ZT_DEBUG=1
 endif
 
 MAKE_FLAGS += \
 	DEFS="" \
-	LDFLAGS+=" -L$(STAGING_DIR)/usr/lib/uClibc++ -pthread " \
-	LDLIBS+=" -fno-builtin -nodefaultlibs -Wl,-Bstatic -luClibc++ -Wl,-Bdynamic -lpthread -lm -lc -lsupc++ -lc -lgcc -lgcc_eh -lgcc_s " \
-	CXXFLAGS+=" -fno-builtin -nostdinc++ -I$(STAGING_DIR)/usr/include/uClibc++ -DGCC_HASCLASSVISIBILITY -Wall -fPIE -fvisibility=hidden "
 
 define Build/Compile
 	$(call Build/Compile/Default,one)
 ifeq ($(CONFIG_ZEROTIER_ENABLE_SELFTEST),y)
 	$(call Build/Compile/Default,selftest)
 endif
+endef
+
+# Make binary smaller
+TARGET_CFLAGS += -ffunction-sections -fdata-sections
+TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+
+define Package/zerotier/conffiles
+/etc/config/zerotier
 endef
 
 define Package/zerotier/install
@@ -77,10 +70,7 @@ ifeq ($(CONFIG_ZEROTIER_ENABLE_SELFTEST),y)
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/zerotier-selftest $(1)/usr/bin/
 endif
 
-	$(INSTALL_DIR) $(1)/etc/init.d/
-	$(INSTALL_BIN) files/zerotier.init $(1)/etc/init.d/zerotier
-	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_CONF) files/zerotier.config $(1)/etc/config/zerotier
+	$(CP) ./files/* $(1)/
 endef
 
 $(eval $(call BuildPackage,zerotier))
