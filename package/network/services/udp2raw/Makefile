@@ -28,30 +28,51 @@ PKG_BUILD_PARALLEL:=1
 include $(INCLUDE_DIR)/package.mk
 
 define Package/udp2raw-tunnel
-	SECTION:=net
-	CATEGORY:=Network
-	TITLE:=Tunnel which turns UDP Traffic into Encrypted FakeTCP/UDP/ICMP Traffic
-	URL:=https://github.com/wangyu-/udp2raw-tunnel
-	DEPENDS:= +libstdcpp +libpthread +librt
+  SECTION:=net
+  CATEGORY:=Network
+  TITLE:=Tunnel which turns UDP Traffic into Encrypted FakeTCP/UDP/ICMP Traffic
+  URL:=https://github.com/wangyu-/udp2raw-tunnel
+  DEPENDS:= +libstdcpp +libpthread +librt
 endef
 
 define Package/udp2raw-tunnel/description
-	udp2raw-tunnel is a tunnel which turns UDP Traffic into Encrypted FakeTCP/UDP/ICMP Traffic by using Raw Socket.
+  udp2raw-tunnel is a tunnel which turns UDP Traffic into Encrypted FakeTCP/UDP/ICMP Traffic by using Raw Socket.
 endef
 
-MAKE_FLAGS += cross
+ifeq ($(ARCH),x86_64)
+  PKG_ARCH_UDP2RAW:=x64
+endif
+ifeq ($(ARCH),mipsel)
+  PKG_ARCH_UDP2RAW:=mips
+endif
+ifeq ($(ARCH),mips)
+  PKG_ARCH_UDP2RAW:=mips_be
+endif
+ifeq ($(ARCH),i386)
+  PKG_ARCH_UDP2RAW:=x86
+endif
+ifeq ($(ARCH),arm)
+  PKG_ARCH_UDP2RAW:=arm
+endif
+ifeq ($(BOARD),bcm53xx)
+  PKG_ARCH_UDP2RAW:=arm
+endif
+ifeq ($(BOARD),kirkwood)
+  PKG_ARCH_UDP2RAW:=arm
+endif
+ifeq ($(ARCH),aarch64)
+  PKG_ARCH_UDP2RAW:=arm64
+endif
 
-define Build/Configure
-	$(call Build/Configure/Default)
-	$(SED) 's/cc_cross[[:space:]]*=.*/cc_cross=$(TARGET_CXX)/' \
-		-e 's/\\".*shell git rev-parse HEAD.*\\"/\\"$(PKG_SOURCE_VERSION)\\"/' \
-		-e 's/-O3/-Os/' \
-		$(PKG_BUILD_DIR)/makefile
-endef
+ifndef PKG_ARCH_UDP2RAW
+  PKG_ARCH_UDP2RAW:=cross
+endif
+
+MAKE_FLAGS += $(PKG_ARCH_UDP2RAW)
 
 define Package/udp2raw-tunnel/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/udp2raw_cross $(1)/usr/bin/udp2raw
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/udp2raw $(1)/usr/bin/udp2raw
 endef
 
 $(eval $(call BuildPackage,udp2raw-tunnel))
