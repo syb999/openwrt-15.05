@@ -1,4 +1,6 @@
 #!/bin/sh
+. /lib/netifd/mac80211.sh
+
 append DRIVERS "mac80211"
 
 lookup_phy() {
@@ -9,12 +11,8 @@ lookup_phy() {
 	local devpath
 	config_get devpath "$device" path
 	[ -n "$devpath" ] && {
-		for _phy in /sys/devices/$devpath/ieee80211/phy*; do
-			[ -e "$_phy" ] && {
-				phy="${_phy##*/}"
-				return
-			}
-		done
+		phy="$(mac80211_path_to_phy "$devpath")"
+		[ -n "$phy" ] && return
 	}
 
 	local macaddr="$(config_get "$device" macaddr | tr 'A-Z' 'a-z')"
@@ -97,16 +95,8 @@ detect_mac80211() {
 
 		[ -n $htmode ] && append ht_capab "	option htmode	$htmode" "$N"
 
-		if [ -x /usr/bin/readlink -a -h /sys/class/ieee80211/${dev} ]; then
-			path="$(readlink -f /sys/class/ieee80211/${dev}/device)"
-		else
-			path=""
-		fi
+		path="$(mac80211_phy_to_path "$dev")"
 		if [ -n "$path" ]; then
-			path="${path##/sys/devices/}"
-			case "$path" in
-				platform*/pci*) path="${path##platform/}";;
-			esac
 			dev_id="	option path	'$path'"
 		else
 			dev_id="	option macaddr	$(cat /sys/class/ieee80211/${dev}/macaddress)"
