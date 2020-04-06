@@ -33,7 +33,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/mdk4
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libpthread +libpcap +libpcre \
+  DEPENDS:=+libpthread +libpcap +libpcre +airmon-ng \
 		+CONFIG_MDK4_libnl:libnl \
 		+CONFIG_MDK4_libnl-genl:libnl-genl +CONFIG_MDK4_libnl-genl:libnl-core
   TITLE:=mdk4
