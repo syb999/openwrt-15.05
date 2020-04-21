@@ -358,6 +358,19 @@
 		#clock-cells = <1>;
 	};
 
+	crypto: crypto@10004000 {
+		compatible = "mediatek,mtk-aes";
+		reg = <0x10004000 0x1000>;
+
+		interrupt-parent = <&intc>;
+		interrupts = <13>;
+
+		resets = <&rstctrl 29>;
+		reset-names = "cryp";
+		clocks = <&clkctrl 29>;
+		clock-names = "cryp";
+	};
+
 	usbphy: usbphy@10120000 {
 		compatible = "ralink,mt7628an-usbphy", "ralink,mt7620a-usbphy";
 		reg = <0x10120000 1000>;
