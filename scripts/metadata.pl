@@ -281,6 +281,10 @@ EOF
 
 	foreach my $target (@target) {
 		my $profiles = $target->{profiles};
+		$target->{sort} and @$profiles = sort {
+			$a->{priority} <=> $b->{priority} or
+			$a->{name} cmp $b->{name};
+		} @$profiles;
 
 		foreach my $profile (@$profiles) {
 			print <<EOF;
@@ -320,6 +324,18 @@ EOF
 		$target->{subtarget} or	print "\t\tdefault \"".$target->{board}."\" if TARGET_".$target->{conf}."\n";
 	}
 	print <<EOF;
+config TARGET_PROFILE
+	string
+EOF
+	foreach my $target (@target) {
+		my $profiles = $target->{profiles};
+		foreach my $profile (@$profiles) {
+			print "\tdefault \"$profile->{id}\" if TARGET_$target->{conf}_$profile->{id}\n";
+		}
+	}
+
+	print <<EOF;
+
 config TARGET_ARCH_PACKAGES
 	string
 	
