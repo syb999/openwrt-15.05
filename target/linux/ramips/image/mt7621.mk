@@ -19,7 +19,7 @@ TARGET_DEVICES += re6500
 
 define Device/wsr-1166
   DTS := WSR-1166
-  IMAGE/sysupgrade.bin := trx | pad-rootfs
+  IMAGE/sysupgrade.bin := trx | pad-rootfs | append-metadata
 endef
 
 define Device/dir-860l-b1

@@ -38,7 +38,9 @@ define Device/Default
   KERNEL := $(KERNEL_DTB) | uImage lzma
   IMAGES := sysupgrade.bin
   IMAGE_SIZE := $(ralink_default_fw_size_16M)
-  IMAGE/sysupgrade.bin := append-kernel | append-rootfs | pad-rootfs | check-size $$$$(IMAGE_SIZE)
+  SUPPORTED_DEVICES = $(1)
+  sysupgrade_bin := append-kernel | append-rootfs | pad-rootfs
+  IMAGE/sysupgrade.bin := append-kernel | append-rootfs | pad-rootfs | append-metadata | check-size $$$$(IMAGE_SIZE)
 endef
 
 define Build/patch-dtb
@@ -551,6 +553,22 @@ define Device/hc5962
   FILESYSTEMS := squashfs
   IMAGE/sysupgrade.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(ralink_default_fw_size_32M)
 endef
+
+define Device/redmi-router-ac2100
+  DTS := REDMI-ROUTER-AC2100
+  BLOCKSIZE := 128KiB
+  IMAGES := sysupgrade.bin
+  PAGESIZE := 2048
+  KERNEL_SIZE := 4096k
+  IMAGE_SIZE := 124416k
+  UBINIZE_OPTS := -E 5
+  FILESYSTEMS := squashfs
+  IMAGES += kernel1.bin rootfs0.bin
+  IMAGE/kernel1.bin := append-kernel
+  IMAGE/rootfs0.bin := append-ubi | check-size $$$$(IMAGE_SIZE)
+  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
+endef
+TARGET_DEVICES += redmi-router-ac2100
 
 #
 # MT7628 Profiles
