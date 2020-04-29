@@ -232,6 +232,9 @@ case $board in
 		ucidef_set_led_default "power" "power" "linksys:white:power" "1"
 		ucidef_set_led_default "wifi" "wifi" "linksys:orange:wifi" "1"
 		;;
+	redmi-router-ac2100)
+		ucidef_set_led_netdev "wan" "wan" "rm2100:white:wan" "wan"
+		;;
 	rt-n14u)
 		ucidef_set_led_default "power" "power" "asus:blue:power" "1"
 		ucidef_set_led_netdev "lan" "lan" "asus:blue:lan" eth0.1
