@@ -9,7 +9,7 @@ define Profile/HC5962
 	NAME:=HiWiFi HC5962
 	PACKAGES:=\
 		kmod-usb-core kmod-usb3 kmod-usb-hid \
-		kmod-ledtrig-netdev
+		kmod-ledtrig-netdev kmod-mt7603 kmod-mt76x2 wpad-mini
 endef
 
 define Profile/HC5962/Description

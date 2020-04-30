@@ -8,7 +8,7 @@
 define Profile/REDMI-ROUTER-AC2100
 	NAME:=Xiaomi Redmi Router AC2100
 	PACKAGES:=\
-		kmod-mt7603 kmod-mt7615e uboot-envtools
+		kmod-mt7603 kmod-mt7615e uboot-envtools wpad-mini
 endef
 
 define Profile/REDMI-ROUTER-AC2100/Description

@@ -541,7 +541,7 @@ endif
 #
 
 ifeq ($(SUBTARGET),mt7621-nand)
-  TARGET_DEVICES += hc5962
+  TARGET_DEVICES +=
 endif
 
 define Device/hc5962
@@ -553,6 +553,7 @@ define Device/hc5962
   FILESYSTEMS := squashfs
   IMAGE/sysupgrade.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(ralink_default_fw_size_32M)
 endef
+TARGET_DEVICES += hc5962
 
 define Device/redmi-router-ac2100
   DTS := REDMI-ROUTER-AC2100
