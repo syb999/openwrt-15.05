@@ -119,7 +119,7 @@
 			gpios = <&gpio0 10 1>;
 		};
 
-		wan_white {
+		wan {
 			label = "rm2100:white:wan";
 			gpios = <&gpio0 12 1>;
 		};
