@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mt76
-PKG_VERSION:=2020-04-28
+PKG_VERSION:=2020-04-10
 PKG_RELEASE=1
 
 PKG_LICENSE:=GPLv2
@@ -10,9 +10,9 @@ PKG_LICENSE_FILES:=
 PKG_SOURCE_URL:=https://github.com/openwrt/mt76
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=5f3ccc7226272198c21ec934d9072a56b0953f47
+PKG_SOURCE_VERSION:=03daa60ca69c40bf3e87c70221da57465634440f
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.xz
-PKG_MD5SUM:=166ac375f1cc2503485151fb4c36881a
+PKG_MD5SUM:=c80973864ebb08938cd003fcf3406e62
 
 PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
 PKG_BUILD_PARALLEL:=1
@@ -143,18 +143,10 @@ define KernelPackage/mt7603
   AUTOLOAD:=$(call AutoProbe,mt7603e)
 endef
 
-define KernelPackage/mt7615-common
-  $(KernelPackage/mt76-default)
-  TITLE:=MediaTek MT7615e wireless driver common code
-  DEPENDS+=+kmod-mt76-core
-  HIDDEN:=1
-  FILES:=$(PKG_BUILD_DIR)/mt7615/mt7615-common.ko
-endef
-
 define KernelPackage/mt7615e
   $(KernelPackage/mt76-default)
   TITLE:=MediaTek MT7615 wireless driver
-  DEPENDS+=@PCI_SUPPORT +kmod-mt7615-common
+  DEPENDS+=@PCI_SUPPORT +kmod-mt76-core
   FILES:=\
 	$(PKG_BUILD_DIR)/mt7615/mt7615e.ko
   AUTOLOAD:=$(call AutoProbe,mt7615e)
@@ -202,9 +194,6 @@ ifdef CONFIG_PACKAGE_kmod-mt76x2u
 endif
 ifdef CONFIG_PACKAGE_kmod-mt7603
   PKG_MAKE_FLAGS += CONFIG_MT7603E=m
-endif
-ifdef CONFIG_PACKAGE_kmod-mt7615-common
-  PKG_MAKE_FLAGS +=CONFIG_MT7615_COMMON=m
 endif
 ifdef CONFIG_PACKAGE_kmod-mt7615e
   PKG_MAKE_FLAGS += CONFIG_MT7615E=m
@@ -267,10 +256,6 @@ define KernelPackage/mt7603/install
 		$(1)/lib/firmware
 endef
 
-define KernelPackage/mt7615-common/install
-	true
-endef
-
 define KernelPackage/mt7615e/install
 	$(INSTALL_DIR) $(1)/lib/firmware/mediatek
 	cp \
@@ -295,5 +280,4 @@ $(eval $(call KernelPackage,mt76x2u))
 $(eval $(call KernelPackage,mt76x2))
 $(eval $(call KernelPackage,mt7603))
 $(eval $(call KernelPackage,mt7615e))
-$(eval $(call KernelPackage,mt7615-common))
 $(eval $(call KernelPackage,mt76))
