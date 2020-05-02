@@ -5,6 +5,7 @@
 . /lib/ramips.sh
 
 PART_NAME=firmware
+REQUIRE_IMAGE_METADATA=1
 RAMFS_COPY_DATA=/lib/ramips.sh
 
 platform_check_image() {

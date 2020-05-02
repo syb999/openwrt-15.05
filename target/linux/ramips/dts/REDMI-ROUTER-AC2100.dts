@@ -109,8 +109,8 @@
 			gpios = <&gpio0 6 1>;
 		};
 
-		led_status_white: status_white {
-			label = "rm2100:white:status";
+		system {
+			label = "rm2100:white:system";
 			gpios = <&gpio0 8 1>;
 		};
 
