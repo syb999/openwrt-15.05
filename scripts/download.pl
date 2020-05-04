@@ -210,6 +210,7 @@ foreach my $mirror (@ARGV) {
 	}
 }
 
+unshift @mirrors, 'https://sources.cdn.openwrt.org';
 #push @mirrors, 'http://mirror1.openwrt.org';
 push @mirrors, 'http://mirror2.openwrt.org/sources';
 push @mirrors, 'http://downloads.openwrt.org/sources';
