@@ -82,17 +82,6 @@ endef
 
 $(eval $(call Profile,LETV))
 
-define Profile/CSAC
-	NAME:=CSAC
-	PACKAGES:=kmod-ath10k ath10k-firmware-qca9888-ct
-endef
-
-define Profile/CSAC/Description
-	Package set optimized for the CSAC board.
-endef
-
-$(eval $(call Profile,CSAC))
-
 define Profile/AP81
 	NAME:=Atheros AP81 reference board
 	PACKAGES:=kmod-usb-core kmod-usb2
