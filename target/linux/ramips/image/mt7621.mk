@@ -75,7 +75,7 @@ endef
 TARGET_DEVICES += zbt-we1326
 
 define Device/ghl
-  DTS := GHL
+  DTS := GHL-R-001
   IMAGE_SIZE := $(ralink_default_fw_size_32M)
 endef
 TARGET_DEVICES += ghl
