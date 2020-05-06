@@ -7,7 +7,7 @@
 
 define Profile/K2T
         NAME:=K2T
-        PACKAGES:=kmod-ath10k ath10k-firmware-qca9888-ct
+        PACKAGES:=-kmod-ath10k-ct kmod-ath10k-ct-smallbuffers ath10k-firmware-qca9888-ct
 endef
 
 define Profile/K2T/Description
