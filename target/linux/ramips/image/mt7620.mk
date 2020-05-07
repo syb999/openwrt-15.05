@@ -33,6 +33,7 @@ define Device/psg1208
   DTS := PSG1208
   IMAGE_SIZE := $(ralink_default_fw_size_8M)
   DEVICE_TITLE := Phicomm PSG1208
+  DEVICE_PACKAGES := kmod-mt76x2
 endef
 TARGET_DEVICES += psg1208
 
@@ -40,6 +41,7 @@ define Device/psg1218
   DTS := PSG1218
   IMAGE_SIZE := $(ralink_default_fw_size_8M)
   DEVICE_TITLE := Phicomm PSG1218
+  DEVICE_PACKAGES := kmod-mt76x2
 endef
 TARGET_DEVICES += psg1218
 
@@ -48,6 +50,8 @@ define Device/y1
   DTS := Y1
   IMAGE_SIZE := $(ralink_default_fw_size_16M)
   DEVICE_TITLE := Newifi Y1
+  DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci kmod-usb-ledtrig-usbport \
+		     kmod-mt76x2
 endef
 TARGET_DEVICES += y1
 
@@ -55,6 +59,8 @@ define Device/y1s
   DTS := Y1S
   IMAGE_SIZE := $(ralink_default_fw_size_16M)
   DEVICE_TITLE := Lenovo Y1S
+  DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci kmod-usb-ledtrig-usbport \
+		     kmod-mt76x2
 endef
 TARGET_DEVICES += y1s
 
@@ -70,7 +76,8 @@ define Device/daishuyun
   DTS := DAISHUYUN
   IMAGE_SIZE := $(ralink_default_fw_size_32M)
   DEVICE_TITLE := DAISHUYUN
-  DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci kmod-sdhci-mt7620 kmod-usb-ledtrig-usbport
+  DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci kmod-sdhci-mt7620 kmod-usb-ledtrig-usbport \
+		     kmod-mt76x2
 endef
 TARGET_DEVICES += daishuyun
 
@@ -84,7 +91,8 @@ define Device/xiaomi-miwifi-mini
   DTS := XIAOMI-MIWIFI-MINI
   IMAGE_SIZE := $(ralink_default_fw_size_16M)
   DEVICE_TITLE := XIAOMI MIWIFI MINI
-  DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci
+  DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci kmod-usb-ledtrig-usbport \
+		     kmod-mt76x2
 endef
 TARGET_DEVICES += xiaomi-miwifi-mini
 
