@@ -146,11 +146,6 @@
 				ralink,group = "i2c", "jtag", "uart2", "uart3";
 				ralink,function = "gpio";
 			};
-
-			pa {
-				ralink,group = "pa";
-				ralink,function = "pa";
-			};
 		};
 	};
 
