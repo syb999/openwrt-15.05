@@ -367,6 +367,7 @@ define Device/hg255d
   DTS := HG255D
   IMAGE_SIZE := $(ralink_default_fw_size_16M)
   DEVICE_TITLE := HuaWei HG255D
+  DEVICE_PACKAGES := kmod-leds-gpio wpad-mini kmod-usb-dwc2 kmod-usb-core
 endef
 TARGET_DEVICES += hg255d
 

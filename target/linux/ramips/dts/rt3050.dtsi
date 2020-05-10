@@ -144,6 +144,22 @@
 			status = "disabled";
 		};
 
+		i2c@900 {
+			compatible = "ralink,rt2880-i2c";
+			reg = <0x900 0x100>;
+
+			resets = <&rstctrl 16>;
+			reset-names = "i2c";
+
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			status = "disabled";
+
+			pinctrl-names = "default";
+			pinctrl-0 = <&i2c_pins>;
+		};
+
 		spi@b00 {
 			compatible = "ralink,rt3050-spi", "ralink,rt2880-spi";
 			reg = <0xb00 0x100>;
@@ -191,12 +207,27 @@
 			};
 		};
 
+		i2c_pins: i2c {
+			i2c {
+				ralink,group = "i2c";
+				ralink,function = "i2c";
+			};
+		};
+
 		spi_pins: spi {
 			spi {
 				ralink,group = "spi";
 				ralink,function = "spi";
 			};
 		};
+
+		rgmii_pins: rgmii {
+			rgmii {
+				ralink,group = "rgmii";
+				ralink,function = "rgmii";
+			};
+		};
+
 		uartlite_pins: uartlite {
 			uart {
 				ralink,group = "uartlite";

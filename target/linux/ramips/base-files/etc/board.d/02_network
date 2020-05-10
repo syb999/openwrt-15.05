@@ -152,7 +152,6 @@ ramips_setup_interfaces()
 	wsr-1166 | \
 	wt1520 | \
 	hc5661a | \
-	xiaomi-miwifi-mini |\
 	miwifi-nano |\
 	y1|\
 	youku-yk1|\
@@ -163,6 +162,13 @@ ramips_setup_interfaces()
 		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
 		ucidef_add_switch "switch0" "1" "1"
 		ucidef_add_switch_vlan "switch0" "1" "0 1 2 3 6t"
+		ucidef_add_switch_vlan "switch0" "2" "4 6t"
+		;;
+
+	xiaomi-miwifi-mini)
+		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
+		ucidef_add_switch "switch0" "1" "1"
+		ucidef_add_switch_vlan "switch0" "1" "0 1 6t"
 		ucidef_add_switch_vlan "switch0" "2" "4 6t"
 		;;
 
@@ -421,6 +427,11 @@ ramips_setup_macs()
 		lan_mac=$(cat /sys/class/net/eth0/address)
 		lan_mac=$(macaddr_setbit_la "$lan_mac")
 		wan_mac=$(macaddr_add "$lan_mac" 1)
+		;;
+
+	xiaomi-miwifi-mini)
+		lan_mac=$(cat /sys/class/net/eth0/address)
+		wan_mac=$(macaddr_add "$lan_mac" -1)
 		;;
 
 	fwr200-v2 | \
