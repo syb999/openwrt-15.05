@@ -86,3 +86,14 @@
  	return (struct sfq_skb_cb *)qdisc_skb_cb(skb)->data;
  }
  
+--- a/include/net/codel.h
++++ b/include/net/codel.h
+@@ -94,7 +94,7 @@
+ 
+ static struct codel_skb_cb *get_codel_cb(const struct sk_buff *skb)
+ {
+-	qdisc_cb_private_validate(skb, sizeof(struct codel_skb_cb));
++	sizeof(skb->cb);
+ 	return (struct codel_skb_cb *)qdisc_skb_cb(skb)->data;
+ }
+ 
