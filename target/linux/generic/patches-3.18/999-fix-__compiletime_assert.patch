@@ -16,3 +16,73 @@
  
  #define _compiletime_assert(condition, msg, prefix, suffix) \
  	__compiletime_assert(condition, msg, prefix, suffix)
+--- a/include/net/sch_generic.h
++++ b/include/net/sch_generic.h
+@@ -254,17 +254,9 @@
+ 	u16			slave_dev_queue_mapping;
+ 	u16			_pad;
+ #define QDISC_CB_PRIV_LEN 20
+-	unsigned char		data[QDISC_CB_PRIV_LEN];
++	long		data[QDISC_CB_PRIV_LEN];
+ };
+ 
+-static inline void qdisc_cb_private_validate(const struct sk_buff *skb, int sz)
+-{
+-	struct qdisc_skb_cb *qcb;
+-
+-	BUILD_BUG_ON(sizeof(skb->cb) < offsetof(struct qdisc_skb_cb, data) + sz);
+-	BUILD_BUG_ON(sizeof(qcb->data) < sz);
+-}
+-
+ static inline int qdisc_qlen(const struct Qdisc *q)
+ {
+ 	return q->q.qlen;
+--- a/net/sched/sch_choke.c
++++ b/net/sched/sch_choke.c
+@@ -147,7 +147,8 @@
+ 
+ static inline struct choke_skb_cb *choke_skb_cb(const struct sk_buff *skb)
+ {
+-	qdisc_cb_private_validate(skb, sizeof(struct choke_skb_cb));
++	BUILD_BUG_ON(sizeof(skb->cb) <
++		sizeof(struct qdisc_skb_cb) + sizeof(struct choke_skb_cb));
+ 	return (struct choke_skb_cb *)qdisc_skb_cb(skb)->data;
+ }
+ 
+--- a/net/sched/sch_netem.c
++++ b/net/sched/sch_netem.c
+@@ -170,8 +170,8 @@
+ 
+ static inline struct netem_skb_cb *netem_skb_cb(struct sk_buff *skb)
+ {
+-	/* we assume we can use skb next/prev/tstamp as storage for rb_node */
+-	qdisc_cb_private_validate(skb, sizeof(struct netem_skb_cb));
++	BUILD_BUG_ON(sizeof(skb->cb) <
++		sizeof(struct qdisc_skb_cb) + sizeof(struct netem_skb_cb));
+ 	return (struct netem_skb_cb *)qdisc_skb_cb(skb)->data;
+ }
+ 
+--- a/net/sched/sch_sfb.c
++++ b/net/sched/sch_sfb.c
+@@ -94,7 +94,8 @@
+ 
+ static inline struct sfb_skb_cb *sfb_skb_cb(const struct sk_buff *skb)
+ {
+-	qdisc_cb_private_validate(skb, sizeof(struct sfb_skb_cb));
++	BUILD_BUG_ON(sizeof(skb->cb) <
++		sizeof(struct qdisc_skb_cb) + sizeof(struct sfb_skb_cb));
+ 	return (struct sfb_skb_cb *)qdisc_skb_cb(skb)->data;
+ }
+ 
+--- a/net/sched/sch_sfq.c
++++ b/net/sched/sch_sfq.c
+@@ -166,7 +166,8 @@
+ 
+ static inline struct sfq_skb_cb *sfq_skb_cb(const struct sk_buff *skb)
+ {
+-	qdisc_cb_private_validate(skb, sizeof(struct sfq_skb_cb));
++	BUILD_BUG_ON(sizeof(skb->cb) <
++		sizeof(struct qdisc_skb_cb) + sizeof(struct sfq_skb_cb));
+ 	return (struct sfq_skb_cb *)qdisc_skb_cb(skb)->data;
+ }
+ 
