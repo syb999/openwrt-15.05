@@ -28,7 +28,18 @@
  		mtxq->aggr = false;
 --- a/mt7915/mcu.c
 +++ b/mt7915/mcu.c
-@@ -1396,7 +1396,7 @@
+@@ -367,10 +367,6 @@
+ 
+ 	mutex_lock(&mdev->mcu.mutex);
+ 
+-	ret = __mt7915_mcu_msg_send(dev, skb, cmd, &seq);
+-	if (ret)
+-		goto out;
+-
+ 	if (wait_resp)
+ 		ret = mt7915_mcu_wait_response(dev, cmd, seq);
+ 
+@@ -1396,7 +1392,7 @@
  	he->t_frame_dur =
  		HE_MAC(CAP1_TF_MAC_PAD_DUR_MASK, elem->mac_cap_info[1]);
  	he->max_ampdu_exp =
