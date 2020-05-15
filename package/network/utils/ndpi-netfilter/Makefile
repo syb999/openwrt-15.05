@@ -21,7 +21,6 @@ PKG_SOURCE_VERSION:=$(PKG_REV)
 
 PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
-include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/iptables-mod-ndpi

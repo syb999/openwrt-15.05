@@ -1,0 +1,10 @@
+--- a/ndpi-netfilter/src/main.c
++++ b/ndpi-netfilter/src/main.c
+@@ -667,7 +667,6 @@
+ 	ct_ndpi->flinfo.b[rev] += len;
+ 	ct_ndpi->flinfo.p[rev] ++;
+ 	ct_ndpi->flinfo.time_end = m_time;
+-	xchg(&ct_ndpi->flow_info,1);
+ }
+ 		
+ 
