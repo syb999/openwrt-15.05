@@ -153,7 +153,6 @@ ramips_setup_interfaces()
 	wt1520 | \
 	hc5661a | \
 	miwifi-nano |\
-	y1|\
 	youku-yk1|\
 	psg1208|\
 	psg1218|\
@@ -165,6 +164,7 @@ ramips_setup_interfaces()
 		ucidef_add_switch_vlan "switch0" "2" "4 6t"
 		;;
 
+	y1|\
 	xiaomi-miwifi-mini)
 		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
 		ucidef_add_switch "switch0" "1" "1"
