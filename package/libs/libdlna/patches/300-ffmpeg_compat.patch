@@ -16,6 +16,24 @@
      {
        video_stream = i;
        continue;
+@@ -287,7 +287,7 @@ dlna_guess_media_profile (dlna_t *dlna,
+     return NULL;
+   }
+ 
+-  if (av_find_stream_info (ctx) < 0)
++  if (avformat_find_stream_info (ctx, NULL) < 0)
+   {
+     if (dlna->verbosity)
+       fprintf (stderr, "can't find stream info\n");
+@@ -334,7 +334,7 @@ dlna_guess_media_profile (dlna_t *dlna,
+     p = p->next;
+   }
+ 
+-  av_close_input_file (ctx);
++  avformat_close_input (&ctx);
+   free (codecs);
+   return profile;
+ }
 --- a/src/profiles.h
 +++ b/src/profiles.h
 @@ -25,6 +25,14 @@
