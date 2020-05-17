@@ -25,7 +25,7 @@ define Package/gmediarender
   CATEGORY:=Multimedia
   TITLE:=gmediarender
   URL:=https://github.com/mill1000/gmrender-resurrect
-  DEPENDS:= +gstreamer1 +glib2 +libupn
+  DEPENDS:= +gstreamer1 +glib2 +libupnp
 endef
 
 define Package/gmrender/description
