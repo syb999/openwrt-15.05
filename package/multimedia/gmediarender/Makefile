@@ -1,16 +1,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gmediarender
-PKG_VERSION:=2020-01-10
+PKG_VERSION:=0.0.7
 PKG_RELEASE:=1
 PKG_MAINTAINER:=h.zeller@acm.org
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/mill1000/gmrender-resurrect.git
-PKG_SOURCE_VERSION:=26d8f7edf5336bc30f7334c6ad459bf7f4f90ff2
+PKG_SOURCE_URL:=https://github.com/hzeller/gmrender-resurrect.git
+PKG_MIRROR_HASH:=01150d750b0cdd4ef9b221be031871f5386bd984031135fea3eff071b5f1f202
+PKG_SOURCE_VERSION:=a836de4fd198bead9e05b5561073a71e84bb957d
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_MD5SUM:=aa2196ab855b47bd874769d592d7f876
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -24,7 +24,7 @@ define Package/gmediarender
   SECTION:=multimedia
   CATEGORY:=Multimedia
   TITLE:=gmediarender
-  URL:=https://github.com/mill1000/gmrender-resurrect
+  URL:=https://github.com/hzeller/gmrender-resurrect
   DEPENDS:= +gstreamer1 +glib2 +libupnp
 endef
 
