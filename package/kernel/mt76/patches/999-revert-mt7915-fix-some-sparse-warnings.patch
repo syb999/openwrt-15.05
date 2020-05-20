@@ -1,0 +1,48 @@
+--- a/mt7915/mcu.c
++++ b/mt7915/mcu.c
+@@ -220,7 +220,7 @@
+ {
+ 	struct mt7915_mcu_txd *mcu_txd;
+ 	u8 seq, pkt_fmt, qidx;
+-	enum mt76_txq_id txq;
++	enum mt7915_txq_id txq;
+ 	__le32 *txd;
+ 	u32 val;
+ 
+@@ -811,7 +811,8 @@
+ 	struct mt7915_he_obss_narrow_bw_ru_data *data = _data;
+ 	const struct element *elem;
+ 
+-	elem = ieee80211_bss_get_elem(bss, WLAN_EID_EXT_CAPABILITY);
++	elem = cfg80211_find_elem(WLAN_EID_EXT_CAPABILITY, bss->ies->data,
++				  bss->ies->len);
+ 
+ 	if (!elem || elem->datalen < 10 ||
+ 	    !(elem->data[10] &
+@@ -1949,7 +1950,7 @@
+ 
+ 		ra->supp_ht_mcs = *(__le32 *)ra->ht_mcs;
+ 		ra->supp_mode |= MODE_HT;
+-		mcs = hweight32(le32_to_cpu(ra->supp_ht_mcs)) - 1;
++		mcs = hweight32(ra->supp_ht_mcs) - 1;
+ 		ra->af = sta->ht_cap.ampdu_factor;
+ 		ra->ht_gf = !!(sta->ht_cap.cap & IEEE80211_HT_CAP_GRN_FLD);
+ 
+@@ -1967,7 +1968,7 @@
+ 	}
+ 
+ 	if (sta->vht_cap.vht_supported) {
+-		u16 mcs_map = le16_to_cpu(sta->vht_cap.vht_mcs.rx_mcs_map);
++		__le16 mcs_map = sta->vht_cap.vht_mcs.rx_mcs_map;
+ 		u16 vht_mcs;
+ 		u8 af, mcs_prev;
+ 
+@@ -2394,7 +2395,7 @@
+ 	};
+ 	int attr;
+ 
+-	if (req.addr == cpu_to_le32(MCU_PATCH_ADDRESS))
++	if (req.addr == MCU_PATCH_ADDRESS)
+ 		attr = -MCU_CMD_PATCH_START_REQ;
+ 	else
+ 		attr = -MCU_CMD_TARGET_ADDRESS_LEN_REQ;
