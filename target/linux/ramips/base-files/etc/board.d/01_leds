@@ -321,7 +321,7 @@ case $board in
 		set_usb_led "youku-yk1:blue:usb"
 		ucidef_set_led_netdev "wan" "WAN" "youku-yk1:blue:wan" "eth0.2" "tx rx"
 		;;
-	ghl)
+	ghl-r-001)
 		ucidef_set_led_netdev "internet" "internet" "ghl:blue:internet" "eth0.2"
 		set_usb_led "ghl:blue:usb"
 		;;

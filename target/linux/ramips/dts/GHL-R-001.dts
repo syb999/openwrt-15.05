@@ -3,7 +3,7 @@
 /include/ "mt7621.dtsi"
 
 / {
-	compatible = "ghl", "mediatek,mt7621-soc";
+	compatible = "ghl-r-001", "mediatek,mt7621-soc";
 	model = "GHL-R-001";
 
 	memory@0 {

@@ -434,7 +434,7 @@ ramips_board_detect() {
 		name="daishuyun"
 		;;
 	*"GHL-R-001")
-		name="ghl"
+		name="ghl-r-001"
 		;;
 	*"JDCloud-1")
 		name="jdcloud-1"

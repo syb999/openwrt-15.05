@@ -74,11 +74,11 @@ define Device/zbt-we1326
 endef
 TARGET_DEVICES += zbt-we1326
 
-define Device/ghl
+define Device/ghl-r-001
   DTS := GHL-R-001
   IMAGE_SIZE := $(ralink_default_fw_size_32M)
 endef
-TARGET_DEVICES += ghl
+TARGET_DEVICES += ghl-r-001
 
 define Device/jdcloud-1
   DTS := JDCloud-1
