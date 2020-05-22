@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mt76
-PKG_VERSION:=2020-05-20
+PKG_VERSION:=2020-04-10
 PKG_RELEASE=1
 
 PKG_LICENSE:=GPLv2
@@ -10,9 +10,9 @@ PKG_LICENSE_FILES:=
 PKG_SOURCE_URL:=https://github.com/openwrt/mt76
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=7b2d166559041c560fb849afff24e700921fb027
+PKG_SOURCE_VERSION:=03daa60ca69c40bf3e87c70221da57465634440f
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.xz
-PKG_MD5SUM:=77b9ea2f277309328d484de3294a0dc9
+PKG_MD5SUM:=c80973864ebb08938cd003fcf3406e62
 
 PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
 PKG_BUILD_PARALLEL:=1
@@ -148,18 +148,8 @@ define KernelPackage/mt7615e
   TITLE:=MediaTek MT7615 wireless driver
   DEPENDS+=@PCI_SUPPORT +kmod-mt76-core
   FILES:=\
-	$(PKG_BUILD_DIR)/mt7615/mt7615-common.ko \
 	$(PKG_BUILD_DIR)/mt7615/mt7615e.ko
   AUTOLOAD:=$(call AutoProbe,mt7615e)
-endef
-
-define KernelPackage/mt7915e
-  $(KernelPackage/mt76-default)
-  TITLE:=MediaTek MT7915 wireless driver
-  DEPENDS+=@PCI_SUPPORT +kmod-mt76-core
-  FILES:=\
-	$(PKG_BUILD_DIR)/mt7915/mt7915e.ko
-  AUTOLOAD:=$(call AutoProbe,mt7915e)
 endef
 
 NOSTDINC_FLAGS = \
@@ -206,17 +196,12 @@ ifdef CONFIG_PACKAGE_kmod-mt7603
   PKG_MAKE_FLAGS += CONFIG_MT7603E=m
 endif
 ifdef CONFIG_PACKAGE_kmod-mt7615e
-  PKG_MAKE_FLAGS += CONFIG_MT7615_COMMON=m
   PKG_MAKE_FLAGS += CONFIG_MT7615E=m
   ifdef CONFIG_TARGET_mediatek_mt7622
     PKG_MAKE_FLAGS += CONFIG_MT7622_WMAC=y
     NOSTDINC_FLAGS += -DCONFIG_MT7622_WMAC
   endif
 endif
-ifdef CONFIG_PACKAGE_kmod-mt7915e
-  PKG_MAKE_FLAGS += CONFIG_MT7915E=m
-endif
-
 
 define Build/Compile
 	+$(MAKE) $(PKG_JOBS) -C "$(LINUX_DIR)" \
@@ -283,15 +268,6 @@ define KernelPackage/mt7615e/install
 		$(1)/lib/firmware/mediatek
 endef
 
-define KernelPackage/mt7915e/install
-	$(INSTALL_DIR) $(1)/lib/firmware/mediatek
-	cp \
-		$(PKG_BUILD_DIR)/firmware/mt7915_rom_patch.bin \
-		$(PKG_BUILD_DIR)/firmware/mt7915_wa.bin \
-		$(PKG_BUILD_DIR)/firmware/mt7915_wm.bin \
-		$(1)/lib/firmware/mediatek
-endef
-
 $(eval $(call KernelPackage,mt76-core))
 $(eval $(call KernelPackage,mt76-usb))
 $(eval $(call KernelPackage,mt76x02-usb))
@@ -304,5 +280,4 @@ $(eval $(call KernelPackage,mt76x2u))
 $(eval $(call KernelPackage,mt76x2))
 $(eval $(call KernelPackage,mt7603))
 $(eval $(call KernelPackage,mt7615e))
-$(eval $(call KernelPackage,mt7915e))
 $(eval $(call KernelPackage,mt76))
