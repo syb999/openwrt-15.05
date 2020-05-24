@@ -71,6 +71,17 @@
 			};
 		};
 
+		systick: systick@d00 {
+			compatible = "ralink,mt7621-systick", "ralink,cevt-systick";
+			reg = <0xd00 0x10>;
+
+			resets = <&rstctrl 28>;
+			reset-names = "intc";
+
+			interrupt-parent = <&gic>;
+			interrupts = <5>;
+		};
+
 		memc@5000 {
 			compatible = "mtk,mt7621-memc";
 			reg = <0x300 0x100>;
