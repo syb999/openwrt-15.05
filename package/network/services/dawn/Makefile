@@ -27,7 +27,7 @@ define Package/dawn
   CATEGORY:=Network
   TITLE:=Decentralized wifi controller
   URL:=https://github.com/berlin-open-wireless-lab/DAWN.git
-  DEPENDS:=$(DRV_DEPENDS) +libubus +libubox +libblobmsg-json +libuci +libgcrypt +libiwinfo +umdns
+  DEPENDS:=$(DRV_DEPENDS) +libubus +libubox +libblobmsg-json +libuci +libgcrypt +libiwinfo +umdns +libpthread
 endef
 
 define Package/dawn/description
