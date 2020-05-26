@@ -42,7 +42,6 @@ define KernelPackage/ath10k-ct/config
 
        config ATH10K-CT_LEDS
                bool "Enable LED support"
-               default y
                depends on PACKAGE_kmod-ath10k-ct || PACKAGE_kmod-ath10k-ct-smallbuffers
 endef
 
