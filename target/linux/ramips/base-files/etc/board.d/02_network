@@ -426,7 +426,7 @@ ramips_setup_macs()
 	y1s)
 		lan_mac=$(cat /sys/class/net/eth0/address)
 		lan_mac=$(macaddr_setbit_la "$lan_mac")
-		wan_mac=$(macaddr_add "$lan_mac" 1)
+		wan_mac=$(macaddr_add "$lan_mac" -1)
 		;;
 
 	xiaomi-miwifi-mini)
@@ -437,7 +437,7 @@ ramips_setup_macs()
 	fwr200-v2 | \
 	daishuyun)
 		lan_mac=$(mtd_get_mac_binary factory 4)
-		wan_mac=$(macaddr_add "$lan_mac" 1)
+		wan_mac=$(macaddr_add "$lan_mac" -1)
 		;;
 
 	ghl-r-001)
@@ -458,7 +458,7 @@ ramips_setup_macs()
 
 	newifi-d1)
 		lan_mac=$(cat /sys/class/net/eth0/address)
-		wan_mac=$(macaddr_add "$lan_mac" 2)
+		wan_mac=$(macaddr_add "$lan_mac" -1)
 		;;
 
 	hc5611 | \
@@ -470,7 +470,7 @@ ramips_setup_macs()
 
 	hc5962)
 		lan_mac=$(mtd_get_mac_binary factory 57344)
-		wan_mac=$(macaddr_add "$lan_mac" 1)
+		wan_mac=$(macaddr_add "$lan_mac" -1)
 		;;
 
 	ht-tm02)
