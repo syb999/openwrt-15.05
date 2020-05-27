@@ -564,10 +564,11 @@ define Device/redmi-router-ac2100
   IMAGE_SIZE := 124416k
   UBINIZE_OPTS := -E 5
   FILESYSTEMS := squashfs
-  IMAGES += kernel1.bin rootfs0.bin
+  IMAGES += kernel1.bin rootfs0.bin factory.bin
   IMAGE/kernel1.bin := append-kernel
   IMAGE/rootfs0.bin := append-ubi | check-size $$$$(IMAGE_SIZE)
 #  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
+  IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
 endef
 TARGET_DEVICES += redmi-router-ac2100
 
