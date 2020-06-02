@@ -71,6 +71,7 @@ define KernelPackage/mt76x02-usb
   $(KernelPackage/mt76-default)
   TITLE:=MediaTek MT76x0/MT76x2 USB wireless driver common code
   DEPENDS+=+kmod-mt76-usb +kmod-mt76x02-common
+  HIDDEN:=1
   FILES:=$(PKG_BUILD_DIR)/mt76x02-usb.ko
 endef
 
@@ -251,7 +252,7 @@ define KernelPackage/mt7603/install
 		$(PKG_BUILD_DIR)/firmware/mt7628_e2.bin \
 		,\
 		$(PKG_BUILD_DIR)/firmware/mt7603_e1.bin \
-		$(PKG_BUILD_DIR)/firmware/mt7603_e1.bin \
+		$(PKG_BUILD_DIR)/firmware/mt7603_e2.bin \
 		) \
 		$(1)/lib/firmware
 endef
