@@ -275,14 +275,37 @@
 		pinctrl-0 = <&sdhci_pins>;
 	};
 
-	xhci@1E1C0000 {
-		status = "disabled";
+	xhci: xhci@1E1C0000 {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		status = "okay";
 
-		compatible = "xhci-platform";
-		reg = <0x1E1C0000 4000>;
+		compatible = "mediatek,mt8173-xhci";
+		reg = <0x1e1c0000 0x1000
+		       0x1e1d0700 0x0100>;
+		reg-names = "mac", "ippc";
 
 		interrupt-parent = <&gic>;
 		interrupts = <22>;
+
+		/*
+		 * Port 1 of both hubs is one usb slot and referenced here.
+		 * The binding doesn't allow to address individual hubs.
+		 * hub 1 - port 1 is ehci and ohci, hub 2 - port 1 is xhci.
+		 */
+		xhci_ehci_port1: port@1 {
+			reg = <1>;
+			#trigger-source-cells = <0>;
+		};
+
+		/*
+		 * Only the second usb hub has a second port. That port serves
+		 * ehci and ohci.
+		 */
+		ehci_port2: port@2 {
+			reg = <2>;
+			#trigger-source-cells = <0>;
+		};
 	};
 
 	gic: gic@1fbc0000 {
