@@ -89,6 +89,203 @@ define KernelPackage/mac80211/Default
   MAINTAINER:=Felix Fietkau <nbd@nbd.name>
 endef
 
+
+config_package=$(if $(CONFIG_PACKAGE_kmod-$(1)),m)
+
+config-y:= \
+	WLAN \
+	NL80211_TESTMODE \
+	CFG80211_WEXT \
+	CFG80211_CERTIFICATION_ONUS \
+	MAC80211_RC_MINSTREL \
+	MAC80211_RC_MINSTREL_HT \
+	MAC80211_RC_MINSTREL_VHT \
+	MAC80211_RC_DEFAULT_MINSTREL \
+	WLAN_VENDOR_ADMTEK \
+	WLAN_VENDOR_ATH \
+	WLAN_VENDOR_ATMEL \
+	WLAN_VENDOR_BROADCOM \
+	WLAN_VENDOR_CISCO \
+	WLAN_VENDOR_INTEL \
+	WLAN_VENDOR_INTERSIL \
+	WLAN_VENDOR_MARVELL \
+	WLAN_VENDOR_MEDIATEK \
+	WLAN_VENDOR_RALINK \
+	WLAN_VENDOR_REALTEK \
+	WLAN_VENDOR_RSI \
+	WLAN_VENDOR_ST \
+	WLAN_VENDOR_TI \
+	WLAN_VENDOR_ZYDAS \
+
+config-$(call config_package,cfg80211) += CFG80211
+
+config-$(call config_package,mac80211) += MAC80211
+config-$(CONFIG_PACKAGE_MAC80211_MESH) += MAC80211_MESH
+ifdef CONFIG_PACKAGE_MAC80211_DEBUGFS
+  config-y += \
+	CFG80211_DEBUGFS \
+	MAC80211_DEBUGFS \
+	ATH9K_DEBUGFS \
+	ATH9K_HTC_DEBUGFS \
+	ATH10K_DEBUGFS \
+	CARL9170_DEBUGFS \
+	ATH5K_DEBUG \
+	ATH6KL_DEBUG
+endif
+
+ifdef CONFIG_PACKAGE_MAC80211_TRACING
+  config-y += \
+	ATH10K_TRACING \
+	ATH6KL_TRACING \
+	ATH_TRACEPOINTS \
+	WIL6210_TRACING \
+	ATH5K_TRACER \
+	IWLWIFI_DEVICE_TRACING
+endif
+
+config-$(call config_package,lib80211) += LIB80211 LIB80211_CRYPT_WEP LIB80211_CRYPT_CCMP LIB80211_CRYPT_TKIP
+
+config-$(call config_package,airo) += AIRO
+
+config-$(call config_package,ath) += ATH_CARDS ATH_COMMON ATH_REG_DYNAMIC_USER_REG_HINTS
+config-$(CONFIG_PACKAGE_ATH_DEBUG) += ATH_DEBUG ATH10K_DEBUG ATH9K_STATION_STATISTICS
+config-$(CONFIG_PACKAGE_ATH_DFS) += ATH9K_DFS_CERTIFIED ATH10K_DFS_CERTIFIED
+config-$(CONFIG_PACKAGE_ATH_SPECTRAL) += ATH9K_COMMON_SPECTRAL ATH10K_SPECTRAL
+config-$(CONFIG_PACKAGE_ATH_DYNACK) += ATH9K_DYNACK
+config-$(call config_package,ath9k) += ATH9K
+config-$(call config_package,ath9k-common) += ATH9K_COMMON
+config-$(CONFIG_TARGET_ar71xx) += ATH9K_AHB
+config-$(CONFIG_TARGET_ath79) += ATH9K_AHB
+config-$(CONFIG_TARGET_ipq40xx) += ATH10K_AHB
+config-$(CONFIG_PCI) += ATH9K_PCI
+config-$(CONFIG_ATH_USER_REGD) += ATH_USER_REGD
+config-$(CONFIG_ATH9K_SUPPORT_PCOEM) += ATH9K_PCOEM
+config-$(CONFIG_ATH9K_TX99) += ATH9K_TX99
+config-$(CONFIG_ATH9K_UBNTHSR) += ATH9K_UBNTHSR
+config-$(CONFIG_ATH10K_LEDS) += ATH10K_LEDS
+config-$(CONFIG_ATH10K_THERMAL) += ATH10K_THERMAL
+
+config-$(call config_package,ath9k-htc) += ATH9K_HTC
+config-$(call config_package,ath10k) += ATH10K ATH10K_PCI
+
+config-$(call config_package,ath5k) += ATH5K
+ifdef CONFIG_TARGET_ath25
+  config-y += ATH5K_AHB
+else
+  config-y += ATH5K_PCI
+endif
+
+config-$(call config_package,ath6kl) += ATH6KL
+config-$(call config_package,ath6kl-sdio) += ATH6KL_SDIO
+config-$(call config_package,ath6kl-usb) += ATH6KL_USB
+
+config-$(call config_package,carl9170) += CARL9170
+
+config-$(call config_package,b43) += B43
+config-$(CONFIG_PACKAGE_B43_BUSES_BCMA_AND_SSB) += B43_BUSES_BCMA_AND_SSB
+config-$(CONFIG_PACKAGE_B43_BUSES_BCMA) += B43_BUSES_BCMA
+config-$(CONFIG_PACKAGE_B43_BUSES_SSB) += B43_BUSES_SSB
+config-$(CONFIG_PACKAGE_B43_PHY_G) += B43_PHY_G
+config-$(CONFIG_PACKAGE_B43_PHY_N) += B43_PHY_N
+config-$(CONFIG_PACKAGE_B43_PHY_LP) += B43_PHY_LP
+config-$(CONFIG_PACKAGE_B43_PHY_HT) += B43_PHY_HT
+config-$(CONFIG_PACKAGE_B43_PIO) += B43_PIO
+config-$(CONFIG_PACKAGE_B43_DEBUG) += B43_DEBUG
+
+config-$(call config_package,b43legacy) += B43LEGACY
+config-y += B43LEGACY_DMA_MODE
+
+config-$(call config_package,brcmutil) += BRCMUTIL
+config-$(call config_package,brcmsmac) += BRCMSMAC
+config-$(call config_package,brcmfmac) += BRCMFMAC
+config-$(CONFIG_BRCMFMAC_SDIO) += BRCMFMAC_SDIO
+config-$(CONFIG_BRCMFMAC_USB) += BRCMFMAC_USB
+config-$(CONFIG_BRCMFMAC_PCIE) += BRCMFMAC_PCIE
+config-$(CONFIG_PACKAGE_BRCM80211_DEBUG) += BRCMDBG
+
+config-$(call config_package,mac80211-hwsim) += MAC80211_HWSIM
+config-$(call config_package,mt7601u) += MT7601U
+config-y += WL_MEDIATEK
+
+config-$(call config_package,rt2x00-lib) += RT2X00 RT2X00_LIB
+config-$(call config_package,rt2x00-pci) += RT2X00_LIB_PCI
+config-$(call config_package,rt2x00-mmio) += RT2X00_LIB_MMIO
+config-$(call config_package,rt2x00-usb) += RT2X00_LIB_USB
+config-$(CONFIG_PACKAGE_RT2X00_LIB_DEBUGFS) += RT2X00_LIB_DEBUGFS
+config-$(CONFIG_PACKAGE_RT2X00_DEBUG) += RT2X00_DEBUG
+
+config-$(call config_package,rt2400-pci) += RT2400PCI
+config-$(call config_package,rt2500-pci) += RT2500PCI
+config-$(call config_package,rt2500-usb) += RT2500USB
+config-$(call config_package,rt61-pci) += RT61PCI
+config-$(call config_package,rt73-usb) += RT73USB
+
+config-$(call config_package,rt2800-lib) += RT2800_LIB
+
+config-$(call config_package,rt2800-soc) += RT2800SOC
+config-$(call config_package,rt2800-pci) += RT2800PCI
+config-y += RT2800PCI_RT33XX RT2800PCI_RT35XX RT2800PCI_RT53XX RT2800PCI_RT3290
+
+config-$(call config_package,rt2800-usb) += RT2800USB
+config-y += RT2800USB_RT33XX RT2800USB_RT35XX RT2800USB_RT3573 RT2800USB_RT53XX RT2800USB_RT55XX RT2800USB_UNKNOWN
+
+config-$(call config_package,iwl-legacy) += IWLEGACY
+config-$(call config_package,iwl3945) += IWL3945
+config-$(call config_package,iwl4965) += IWL4965
+config-$(call config_package,iwlwifi) += IWLWIFI IWLDVM IWLMVM
+config-$(CONFIG_PACKAGE_IWLWIFI_DEBUG)+= IWLWIFI_DEBUG
+config-$(CONFIG_PACKAGE_IWLWIFI_DEBUGFS)+= IWLWIFI_DEBUGFS
+
+config-$(call config_package,libipw) += LIBIPW
+config-$(call config_package,ipw2100) += IPW2100
+config-$(call config_package,ipw2200) += IPW2200
+
+config-$(call config_package,p54-common) += P54_COMMON
+config-$(call config_package,p54-pci) += P54_PCI
+config-$(call config_package,p54-usb) += P54_USB
+config-$(call config_package,p54-spi) += P54_SPI
+
+config-$(call config_package,hermes) += HERMES
+config-$(call config_package,hermes-pci) += PCI_HERMES
+config-$(call config_package,hermes-plx) += PLX_HERMES
+config-$(call config_package,hermes-pcmcia) += PCMCIA_HERMES
+config-y += HERMES_PRISM
+
+config-$(call config_package,adm8211) += ADM8211
+config-$(call config_package,libertas-sdio) += LIBERTAS LIBERTAS_SDIO
+config-$(call config_package,libertas-usb) += LIBERTAS LIBERTAS_USB
+config-$(call config_package,libertas-spi) += LIBERTAS LIBERTAS_SPI
+config-$(call config_package,mwl8k) += MWL8K
+config-$(call config_package,mwifiex-pcie) += MWIFIEX MWIFIEX_PCIE
+config-$(call config_package,mwifiex-sdio) += MWIFIEX MWIFIEX_SDIO
+config-$(call config_package,rtl8180) += RTL8180
+config-$(call config_package,rtl8187) += RTL8187
+config-$(call config_package,wlcore) += WLCORE WLCORE_SDIO
+config-$(call config_package,wl12xx) += WL12XX
+config-$(call config_package,wl18xx) += WL18XX
+config-y += WL_TI WILINK_PLATFORM_DATA
+config-$(call config_package,zd1211rw) += ZD1211RW
+config-$(call config_package,rsi91x) += RSI_91X
+config-$(call config_package,rsi91x-usb) += RSI_USB
+config-$(call config_package,rsi91x-sdio) += RSI_SDIO
+
+config-$(call config_package,rtlwifi) += RTL_CARDS RTLWIFI
+config-$(call config_package,rtlwifi-pci) += RTLWIFI_PCI
+config-$(call config_package,rtlwifi-btcoexist) += RTLBTCOEXIST
+config-$(call config_package,rtlwifi-usb) += RTLWIFI_USB
+config-$(call config_package,rtl8192c-common) += RTL8192C_COMMON
+config-$(call config_package,rtl8192ce) += RTL8192CE
+config-$(call config_package,rtl8192se) += RTL8192SE
+config-$(call config_package,rtl8192de) += RTL8192DE
+config-$(call config_package,rtl8192cu) += RTL8192CU
+config-$(call config_package,rtl8821ae) += RTL8821AE
+config-$(CONFIG_PACKAGE_RTLWIFI_DEBUG) += RTLWIFI_DEBUG
+
+config-$(call config_package,rtl8xxxu) += RTL8XXXU
+config-y += RTL8XXXU_UNTESTED
+
+config-$(CONFIG_LEDS_TRIGGERS) += MAC80211_LEDS B43_LEDS B43LEGACY_LEDS
+
 define KernelPackage/cfg80211
   $(call KernelPackage/mac80211/Default)
   TITLE:=cfg80211 - wireless configuration API
@@ -1582,203 +1779,6 @@ define KernelPackage/zd1211rw
 endef
 
 
-
-config_package=$(if $(CONFIG_PACKAGE_kmod-$(1)),m)
-
-config-y:= \
-	WLAN \
-	NL80211_TESTMODE \
-	CFG80211_WEXT \
-	CFG80211_CERTIFICATION_ONUS \
-	MAC80211_RC_MINSTREL \
-	MAC80211_RC_MINSTREL_HT \
-	MAC80211_RC_MINSTREL_VHT \
-	MAC80211_RC_DEFAULT_MINSTREL \
-	WLAN_VENDOR_ADMTEK \
-	WLAN_VENDOR_ATH \
-	WLAN_VENDOR_ATMEL \
-	WLAN_VENDOR_BROADCOM \
-	WLAN_VENDOR_CISCO \
-	WLAN_VENDOR_INTEL \
-	WLAN_VENDOR_INTERSIL \
-	WLAN_VENDOR_MARVELL \
-	WLAN_VENDOR_MEDIATEK \
-	WLAN_VENDOR_RALINK \
-	WLAN_VENDOR_REALTEK \
-	WLAN_VENDOR_RSI \
-	WLAN_VENDOR_ST \
-	WLAN_VENDOR_TI \
-	WLAN_VENDOR_ZYDAS \
-
-config-$(call config_package,cfg80211) += CFG80211
-
-config-$(call config_package,mac80211) += MAC80211
-config-$(CONFIG_PACKAGE_MAC80211_MESH) += MAC80211_MESH
-ifdef CONFIG_PACKAGE_MAC80211_DEBUGFS
-  config-y += \
-	CFG80211_DEBUGFS \
-	MAC80211_DEBUGFS \
-	ATH9K_DEBUGFS \
-	ATH9K_HTC_DEBUGFS \
-	ATH10K_DEBUGFS \
-	CARL9170_DEBUGFS \
-	ATH5K_DEBUG \
-	ATH6KL_DEBUG
-endif
-
-ifdef CONFIG_PACKAGE_MAC80211_TRACING
-  config-y += \
-	ATH10K_TRACING \
-	ATH6KL_TRACING \
-	ATH_TRACEPOINTS \
-	WIL6210_TRACING \
-	ATH5K_TRACER \
-	IWLWIFI_DEVICE_TRACING
-endif
-
-config-$(call config_package,lib80211) += LIB80211 LIB80211_CRYPT_WEP LIB80211_CRYPT_CCMP LIB80211_CRYPT_TKIP
-
-config-$(call config_package,airo) += AIRO
-
-config-$(call config_package,ath) += ATH_CARDS ATH_COMMON ATH_REG_DYNAMIC_USER_REG_HINTS
-config-$(CONFIG_PACKAGE_ATH_DEBUG) += ATH_DEBUG ATH10K_DEBUG ATH9K_STATION_STATISTICS
-config-$(CONFIG_PACKAGE_ATH_DFS) += ATH9K_DFS_CERTIFIED ATH10K_DFS_CERTIFIED
-config-$(CONFIG_PACKAGE_ATH_SPECTRAL) += ATH9K_COMMON_SPECTRAL ATH10K_SPECTRAL
-config-$(CONFIG_PACKAGE_ATH_DYNACK) += ATH9K_DYNACK
-config-$(call config_package,ath9k) += ATH9K
-config-$(call config_package,ath9k-common) += ATH9K_COMMON
-config-$(CONFIG_TARGET_ar71xx) += ATH9K_AHB
-config-$(CONFIG_TARGET_ath79) += ATH9K_AHB
-config-$(CONFIG_TARGET_ipq40xx) += ATH10K_AHB
-config-$(CONFIG_PCI) += ATH9K_PCI
-config-$(CONFIG_ATH_USER_REGD) += ATH_USER_REGD
-config-$(CONFIG_ATH9K_SUPPORT_PCOEM) += ATH9K_PCOEM
-config-$(CONFIG_ATH9K_TX99) += ATH9K_TX99
-config-$(CONFIG_ATH9K_UBNTHSR) += ATH9K_UBNTHSR
-config-$(CONFIG_ATH10K_LEDS) += ATH10K_LEDS
-config-$(CONFIG_ATH10K_THERMAL) += ATH10K_THERMAL
-
-config-$(call config_package,ath9k-htc) += ATH9K_HTC
-config-$(call config_package,ath10k) += ATH10K ATH10K_PCI
-
-config-$(call config_package,ath5k) += ATH5K
-ifdef CONFIG_TARGET_ath25
-  config-y += ATH5K_AHB
-else
-  config-y += ATH5K_PCI
-endif
-
-config-$(call config_package,ath6kl) += ATH6KL
-config-$(call config_package,ath6kl-sdio) += ATH6KL_SDIO
-config-$(call config_package,ath6kl-usb) += ATH6KL_USB
-
-config-$(call config_package,carl9170) += CARL9170
-
-config-$(call config_package,b43) += B43
-config-$(CONFIG_PACKAGE_B43_BUSES_BCMA_AND_SSB) += B43_BUSES_BCMA_AND_SSB
-config-$(CONFIG_PACKAGE_B43_BUSES_BCMA) += B43_BUSES_BCMA
-config-$(CONFIG_PACKAGE_B43_BUSES_SSB) += B43_BUSES_SSB
-config-$(CONFIG_PACKAGE_B43_PHY_G) += B43_PHY_G
-config-$(CONFIG_PACKAGE_B43_PHY_N) += B43_PHY_N
-config-$(CONFIG_PACKAGE_B43_PHY_LP) += B43_PHY_LP
-config-$(CONFIG_PACKAGE_B43_PHY_HT) += B43_PHY_HT
-config-$(CONFIG_PACKAGE_B43_PIO) += B43_PIO
-config-$(CONFIG_PACKAGE_B43_DEBUG) += B43_DEBUG
-
-config-$(call config_package,b43legacy) += B43LEGACY
-config-y += B43LEGACY_DMA_MODE
-
-config-$(call config_package,brcmutil) += BRCMUTIL
-config-$(call config_package,brcmsmac) += BRCMSMAC
-config-$(call config_package,brcmfmac) += BRCMFMAC
-config-$(CONFIG_BRCMFMAC_SDIO) += BRCMFMAC_SDIO
-config-$(CONFIG_BRCMFMAC_USB) += BRCMFMAC_USB
-config-$(CONFIG_BRCMFMAC_PCIE) += BRCMFMAC_PCIE
-config-$(CONFIG_PACKAGE_BRCM80211_DEBUG) += BRCMDBG
-
-config-$(call config_package,mac80211-hwsim) += MAC80211_HWSIM
-config-$(call config_package,mt7601u) += MT7601U
-config-y += WL_MEDIATEK
-
-config-$(call config_package,rt2x00-lib) += RT2X00 RT2X00_LIB
-config-$(call config_package,rt2x00-pci) += RT2X00_LIB_PCI
-config-$(call config_package,rt2x00-mmio) += RT2X00_LIB_MMIO
-config-$(call config_package,rt2x00-usb) += RT2X00_LIB_USB
-config-$(CONFIG_PACKAGE_RT2X00_LIB_DEBUGFS) += RT2X00_LIB_DEBUGFS
-config-$(CONFIG_PACKAGE_RT2X00_DEBUG) += RT2X00_DEBUG
-
-config-$(call config_package,rt2400-pci) += RT2400PCI
-config-$(call config_package,rt2500-pci) += RT2500PCI
-config-$(call config_package,rt2500-usb) += RT2500USB
-config-$(call config_package,rt61-pci) += RT61PCI
-config-$(call config_package,rt73-usb) += RT73USB
-
-config-$(call config_package,rt2800-lib) += RT2800_LIB
-
-config-$(call config_package,rt2800-soc) += RT2800SOC
-config-$(call config_package,rt2800-pci) += RT2800PCI
-config-y += RT2800PCI_RT33XX RT2800PCI_RT35XX RT2800PCI_RT53XX RT2800PCI_RT3290
-
-config-$(call config_package,rt2800-usb) += RT2800USB
-config-y += RT2800USB_RT33XX RT2800USB_RT35XX RT2800USB_RT3573 RT2800USB_RT53XX RT2800USB_RT55XX RT2800USB_UNKNOWN
-
-config-$(call config_package,iwl-legacy) += IWLEGACY
-config-$(call config_package,iwl3945) += IWL3945
-config-$(call config_package,iwl4965) += IWL4965
-config-$(call config_package,iwlwifi) += IWLWIFI IWLDVM IWLMVM
-config-$(CONFIG_PACKAGE_IWLWIFI_DEBUG)+= IWLWIFI_DEBUG
-config-$(CONFIG_PACKAGE_IWLWIFI_DEBUGFS)+= IWLWIFI_DEBUGFS
-
-config-$(call config_package,libipw) += LIBIPW
-config-$(call config_package,ipw2100) += IPW2100
-config-$(call config_package,ipw2200) += IPW2200
-
-config-$(call config_package,p54-common) += P54_COMMON
-config-$(call config_package,p54-pci) += P54_PCI
-config-$(call config_package,p54-usb) += P54_USB
-config-$(call config_package,p54-spi) += P54_SPI
-
-config-$(call config_package,hermes) += HERMES
-config-$(call config_package,hermes-pci) += PCI_HERMES
-config-$(call config_package,hermes-plx) += PLX_HERMES
-config-$(call config_package,hermes-pcmcia) += PCMCIA_HERMES
-config-y += HERMES_PRISM
-
-config-$(call config_package,adm8211) += ADM8211
-config-$(call config_package,libertas-sdio) += LIBERTAS LIBERTAS_SDIO
-config-$(call config_package,libertas-usb) += LIBERTAS LIBERTAS_USB
-config-$(call config_package,libertas-spi) += LIBERTAS LIBERTAS_SPI
-config-$(call config_package,mwl8k) += MWL8K
-config-$(call config_package,mwifiex-pcie) += MWIFIEX MWIFIEX_PCIE
-config-$(call config_package,mwifiex-sdio) += MWIFIEX MWIFIEX_SDIO
-config-$(call config_package,rtl8180) += RTL8180
-config-$(call config_package,rtl8187) += RTL8187
-config-$(call config_package,wlcore) += WLCORE WLCORE_SDIO
-config-$(call config_package,wl12xx) += WL12XX
-config-$(call config_package,wl18xx) += WL18XX
-config-y += WL_TI WILINK_PLATFORM_DATA
-config-$(call config_package,zd1211rw) += ZD1211RW
-config-$(call config_package,rsi91x) += RSI_91X
-config-$(call config_package,rsi91x-usb) += RSI_USB
-config-$(call config_package,rsi91x-sdio) += RSI_SDIO
-
-config-$(call config_package,rtlwifi) += RTL_CARDS RTLWIFI
-config-$(call config_package,rtlwifi-pci) += RTLWIFI_PCI
-config-$(call config_package,rtlwifi-btcoexist) += RTLBTCOEXIST
-config-$(call config_package,rtlwifi-usb) += RTLWIFI_USB
-config-$(call config_package,rtl8192c-common) += RTL8192C_COMMON
-config-$(call config_package,rtl8192ce) += RTL8192CE
-config-$(call config_package,rtl8192se) += RTL8192SE
-config-$(call config_package,rtl8192de) += RTL8192DE
-config-$(call config_package,rtl8192cu) += RTL8192CU
-config-$(call config_package,rtl8821ae) += RTL8821AE
-config-$(CONFIG_PACKAGE_RTLWIFI_DEBUG) += RTLWIFI_DEBUG
-
-config-$(call config_package,rtl8xxxu) += RTL8XXXU
-config-y += RTL8XXXU_UNTESTED
-
-config-$(CONFIG_LEDS_TRIGGERS) += MAC80211_LEDS B43_LEDS B43LEGACY_LEDS
-
 MAKE_OPTS:= -C "$(PKG_BUILD_DIR)" \
 	CROSS_COMPILE="$(KERNEL_CROSS)" \
 	ARCH="$(LINUX_KARCH)" \
@@ -1978,7 +1978,7 @@ $(eval $(call KernelPackage,ipw2100))
 $(eval $(call KernelPackage,ipw2200))
 $(eval $(call KernelPackage,mac80211))
 $(eval $(call KernelPackage,mac80211-hwsim))
-#$(eval $(call KernelPackage,mt7601u))
+$(eval $(call KernelPackage,mt7601u))
 $(eval $(call KernelPackage,mwl8k))
 $(eval $(call KernelPackage,mwifiex-pcie))
 $(eval $(call KernelPackage,mwifiex-sdio))
