@@ -1,0 +1,10 @@
+#!/bin/sh /etc/rc.common
+# Fix the bug that wireless sometimes doesn't start after power on. 
+# System log: netifd:hostapd Illegal instruction (core dumped).
+# Platform: ramips.
+
+START=60
+
+start() {
+	/sbin/wifi
+}
