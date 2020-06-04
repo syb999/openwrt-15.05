@@ -52,10 +52,6 @@ define KernelPackage/mt76-core
   HIDDEN:=1
   FILES:=\
 	$(PKG_BUILD_DIR)/mt76.ko
-  AUTOLOAD:=$(call AutoProbe, \
-	mac80211 \
-	mt76 \
-  )
 endef
 
 define KernelPackage/mt76-usb
