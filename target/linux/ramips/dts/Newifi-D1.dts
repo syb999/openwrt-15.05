@@ -90,10 +90,6 @@
 		mtd-mac-address = <&factory 0xe000>;
 	};
 
-	xhci@1e1c0000 {
-		status = "okay";
-	};
-
 	pinctrl {
 		state_default: pinctrl0 {
 			gpio {
@@ -111,7 +107,7 @@
 			gpios = <&gpio0 14 1>;
 		};
 
-		statys-blue {
+		status-blue {
 			label = "newifi-d1:blue:status";
 			gpios = <&gpio0 16 1>;
 		};
