@@ -1925,8 +1925,10 @@ define KernelPackage/cfg80211/install
 	$(INSTALL_BIN) ./files/lib/netifd/wireless/mac80211.sh $(1)/lib/netifd/wireless
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/ieee80211
 	$(INSTALL_DATA) ./files/mac80211.hotplug $(1)/etc/hotplug.d/ieee80211/10-wifi-detect
+ifdef CONFIG_TARGET_ramips
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/wifistart.init $(1)/etc/init.d/wifistart
+endif
 endef
 
 define KernelPackage/ipw2100/install
