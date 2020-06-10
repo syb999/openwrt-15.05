@@ -1,0 +1,18 @@
+--- a/arch/mips/kernel/cps-vec.S
++++ b/arch/mips/kernel/cps-vec.S
+@@ -229,7 +229,6 @@
+ 	 nop
+ 
+ 	.set	push
+-	.set	mips32r2
+ 	.set	mt
+ 
+ 	/* Only allow 1 TC per VPE to execute... */
+@@ -346,7 +345,6 @@
+ 	 nop
+ 
+ 	.set	push
+-	.set	mips32r2
+ 	.set	mt
+ 
+ 1:	/* Enter VPE configuration state */
