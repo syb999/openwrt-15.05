@@ -1,0 +1,11 @@
+--- a/drivers/irqchip/irq-mips-gic.c
++++ b/drivers/irqchip/irq-mips-gic.c
+@@ -309,7 +309,7 @@
+ 
+ 	cpumask_and(&tmp, cpumask, cpu_online_mask);
+ 	if (cpus_empty(tmp))
+-		return -1;
++		return -EINVAL;
+ 
+ 	/* Assumption : cpumask refers to a single CPU */
+ 	spin_lock_irqsave(&gic_lock, flags);
