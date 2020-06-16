@@ -12,11 +12,11 @@ fix mt7615e: probe of 0000:02:00.0 failed with error -89 in chaos_calmer
  	ret = pci_set_dma_mask(pdev, DMA_BIT_MASK(32));
  	if (ret)
  		return ret;
-@@ -52,7 +48,6 @@
- 	struct mt7615_dev *dev = container_of(mdev, struct mt7615_dev, mt76);
+@@ -60,7 +60,6 @@
  
  	mt7615_unregister_device(dev);
+ 	devm_free_irq(&pdev->dev, pdev->irq, dev);
 -	pci_free_irq_vectors(pdev);
  }
  
- struct pci_driver mt7615_pci_driver = {
+ #ifdef CONFIG_PM
