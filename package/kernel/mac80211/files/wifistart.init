@@ -3,7 +3,7 @@
 # System log: netifd:hostapd Illegal instruction (core dumped).
 # Platform: ramips.
 
-START=50
+START=60
 
 start() {
 	/sbin/wifi
