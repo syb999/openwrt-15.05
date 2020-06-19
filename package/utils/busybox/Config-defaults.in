@@ -2542,7 +2542,7 @@ config BUSYBOX_DEFAULT_FEATURE_TUNCTL_UG
 	default n
 config BUSYBOX_DEFAULT_VCONFIG
 	bool
-	default n
+	default y
 config BUSYBOX_DEFAULT_WGET
 	bool
 	default n
