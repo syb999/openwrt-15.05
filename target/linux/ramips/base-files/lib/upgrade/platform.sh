@@ -210,6 +210,7 @@ platform_do_upgrade() {
 	local board=$(ramips_board_name)
 
 	case "$board" in
+	mi-router-ac2100|\
 	redmi-router-ac2100|\
 	hc5962)
 		nand_do_upgrade "$ARGV"

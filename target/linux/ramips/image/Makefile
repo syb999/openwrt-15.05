@@ -555,20 +555,34 @@ define Device/hc5962
 endef
 TARGET_DEVICES += hc5962
 
+define Device/mi-router-ac2100
+  DTS := MI-ROUTER-AC2100
+  BLOCKSIZE := 128KiB
+  PAGESIZE := 2048
+  KERNEL_SIZE := 4096k
+  IMAGE_SIZE := 120320k
+  UBINIZE_OPTS := -E 5
+  FILESYSTEMS := squashfs
+  IMAGES += kernel1.bin rootfs0.bin
+  IMAGE/kernel1.bin := append-kernel
+  IMAGE/rootfs0.bin := append-ubi | check-size $$$$(IMAGE_SIZE)
+  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
+endef
+TARGET_DEVICES += mi-router-ac2100
+
 define Device/redmi-router-ac2100
   DTS := REDMI-ROUTER-AC2100
   BLOCKSIZE := 128KiB
-  IMAGES := sysupgrade.bin
   PAGESIZE := 2048
   KERNEL_SIZE := 4096k
-  IMAGE_SIZE := 124416k
+  IMAGE_SIZE := 120320k
   UBINIZE_OPTS := -E 5
   FILESYSTEMS := squashfs
   IMAGES += kernel1.bin rootfs0.bin factory.bin
   IMAGE/kernel1.bin := append-kernel
   IMAGE/rootfs0.bin := append-ubi | check-size $$$$(IMAGE_SIZE)
-#  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
-  IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
+  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
+  IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(ralink_default_fw_size_32M)
 endef
 TARGET_DEVICES += redmi-router-ac2100
 

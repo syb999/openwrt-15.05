@@ -1,0 +1,149 @@
+/dts-v1/;
+
+/include/ "mt7621.dtsi"
+
+/ {
+	compatible = "xiaomi,mi-router-ac2100", "mediatek,mt7621-soc";
+	model = "Xiaomi Mi Router AC2100";
+
+	palmbus@1E000000 {
+		spi@b00 {
+			status="disabled";
+		};
+	};
+
+	chosen {
+		bootargs = "console=ttyS0,115200";
+	};
+
+	nand@1e003000 {
+		status = "okay";
+
+		partition@0 {
+			label = "Bootloader";
+			reg = <0x0 0x80000>;
+		};
+
+		partition@80000 {
+			label = "Config";
+			reg = <0x80000 0x40000>;
+		};
+
+		partition@c0000 {
+			label = "Bdata";
+			reg = <0xc0000 0x40000>;
+			read-only;
+		};
+
+		factory: partition@100000 {
+			label = "factory";
+			reg = <0x100000 0x40000>;
+			read-only;
+		};
+
+		partition@140000 {
+			label = "crash";
+			reg = <0x140000 0x40000>;
+		};
+
+		partition@180000 {
+			label = "crash_syslog";
+			reg = <0x180000 0x40000>;
+		};
+
+		partition@1c0000 {
+			label = "reserved0";
+			reg = <0x1c0000 0x40000>;
+			read-only;
+		};
+
+		/* We keep stock xiaomi firmware (kernel0) here */
+		partition@200000 {
+			label = "kernel_stock";
+			reg = <0x200000 0x400000>;
+		};
+
+		partition@600000 {
+			label = "kernel";
+			reg = <0x600000 0x400000>;
+		};
+
+		partition@a00000 {
+			label = "ubi";
+			reg = <0xa00000 0x7580000>;
+		};
+	};
+
+	pcie@1e140000 {
+		status = "okay";
+
+		pcie0 {
+			mt76@0,0 {
+				reg = <0x0000 0 0 0 0>;
+				device_type = "pci";
+				mediatek,mtd-eeprom = <&factory 0x8000>;
+				mediatek,5ghz = <0>;
+			};
+		};
+
+		pcie1 {
+			mt76@1,0 {
+				reg = <0x0000 0 0 0 0>;
+				device_type = "pci";
+				mediatek,mtd-eeprom = <&factory 0x0000>;
+				mediatek,2ghz = <0>;
+			};
+		};
+	};
+
+	ethernet@1e100000 {
+		mtd-mac-address = <&factory 0xe000>;
+	};	
+
+	gpio-leds {
+		compatible = "gpio-leds";
+
+		wan_yellow {
+			label = "mi-router-ac2100:yellow:wan";
+			gpios = <&gpio0 6 1>;
+		};
+
+		wan_blue {
+			label = "mi-router-ac2100:blue:wan";
+			gpios = <&gpio0 8 1>;
+		};
+
+		led_status_yellow: status_yellow {
+			label = "mi-router-ac2100:yellow:status";
+			gpios = <&gpio0 10 1>;
+		};
+
+		led_status_blue: status_blue {
+			label = "mi-router-ac2100:blue:status";
+			gpios = <&gpio0 12 1>;
+		};
+	};
+
+	gpio-keys-polled {
+		compatible = "gpio-keys-polled";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		poll-interval = <20>;
+
+		reset {
+			label = "reset";
+			gpios = <&gpio0 18 1>;
+			linux,code = <0x198>;
+		};
+	};
+
+	pinctrl {
+		state_default: pinctrl0 {
+			gpio {
+				ralink,group = "uart2", "uart3", "wdt";
+				ralink,function = "gpio";
+			};
+		};
+	};
+
+};
