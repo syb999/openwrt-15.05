@@ -394,6 +394,9 @@ ramips_board_detect() {
 	*"Xiaomi Redmi Router AC2100")
 		name="redmi-router-ac2100"
 		;;
+	*"XiaoYu XY-C5")
+		name="xiaoyu-xy-c5"
+		;;
 	*"HG255D")
 		name="hg255d"
 		;;

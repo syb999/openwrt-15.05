@@ -273,6 +273,9 @@ get_status_led() {
 	jdcloud-1)
 		status_led="jdcloud:green:sysg"
 		;;
+	xiaoyu-xy-c5)
+		status_led="xiaoyu-xy-c5:green:system"
+		;;
 	zbt-we1226)
 		status_led="zbt-we1226:green:wlan"
 		;;

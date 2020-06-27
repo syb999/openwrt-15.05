@@ -86,3 +86,8 @@ define Device/jdcloud-1
 endef
 TARGET_DEVICES += jdcloud-1
 
+define Device/xiaoyu-xy-c5
+  DTS := XIAOYU-XY-C5
+  IMAGE_SIZE := $(ralink_default_fw_size_32M)
+endef
+TARGET_DEVICES += xiaoyu-xy-c5
