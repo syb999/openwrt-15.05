@@ -1,0 +1,35 @@
+--- a/mt7615/eeprom.c
++++ b/mt7615/eeprom.c
+@@ -125,6 +125,9 @@  mt7615_eeprom_parse_hw_band_cap(struct mt7615_dev *dev)
+ 	case MT_EE_2GHZ:
+ 		dev->mt76.cap.has_2ghz = true;
+ 		break;
++	case MT_EE_DBDC:
++		dev->mt76.phy2 = &dev->mphy;
++		/* fall through */
+ 	default:
+ 		dev->mt76.cap.has_2ghz = true;
+ 		dev->mt76.cap.has_5ghz = true;
+--- a/mt7615/init.c
++++ b/mt7615/init.c
+@@ -384,7 +384,7 @@  int mt7615_register_ext_phy(struct mt7615_dev *dev)
+ 	if (test_bit(MT76_STATE_RUNNING, &dev->mphy.state))
+ 		return -EINVAL;
+ 
+-	if (phy)
++	if (phy && phy != &dev->phy)
+ 		return 0;
+ 
+ 	mt7615_cap_dbdc_enable(dev);
+--- a/mt7615/pci_init.c
++++ b/mt7615/pci_init.c
+@@ -25,6 +25,9 @@  static void mt7615_init_work(struct work_struct *work)
+ 	mt7615_phy_init(dev);
+ 	mt7615_mcu_del_wtbl_all(dev);
+ 	mt7615_check_offload_capability(dev);
++
++	if (dev->mt76.phy2)
++		mt7615_register_ext_phy(dev);
+ }
+ 
+ static int mt7615_init_hardware(struct mt7615_dev *dev)
