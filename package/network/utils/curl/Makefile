@@ -8,20 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=curl
-PKG_VERSION:=7.40.0
-PKG_RELEASE:=4
+PKG_VERSION:=7.71.1
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://curl.haxx.se/download/ \
-	http://www.mirrorspace.org/curl/ \
-	ftp://ftp.sunet.se/pub/www/utilities/curl/ \
-	ftp://ftp.planetmirror.com/pub/curl/ \
-	http://www.mirrormonster.com/curl/download/ \
-	http://curl.mirrors.cyberservers.net/download/
-PKG_MD5SUM:=8d30594212e65657a5c32030f0998fa9
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=https://dl.uxnr.de/mirror/curl/ \
+	https://curl.mirror.anstey.ca/ \
+	https://curl.askapache.com/download/ \
+	https://curl.haxx.se/download/
+PKG_MD5SUM:=b54b386057846ce3edd3584b19741569
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:haxx:libcurl
 
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
@@ -29,14 +28,13 @@ PKG_BUILD_PARALLEL:=1
 PKG_CONFIG_DEPENDS:= \
   CONFIG_IPV6 \
   \
-  CONFIG_LIBCURL_AXTLS \
-  CONFIG_LIBCURL_CYASSL \
+  CONFIG_LIBCURL_WOLFSSL \
   CONFIG_LIBCURL_GNUTLS \
   CONFIG_LIBCURL_OPENSSL \
-  CONFIG_LIBCURL_POLARSSL \
+  CONFIG_LIBCURL_MBEDTLS \
   CONFIG_LIBCURL_NOSSL \
   \
-  CONFIG_LIBCURL_LIBIDN \
+  CONFIG_LIBCURL_LIBIDN2 \
   CONFIG_LIBCURL_SSH2 \
   CONFIG_LIBCURL_ZLIB \
   \
@@ -56,6 +54,7 @@ PKG_CONFIG_DEPENDS:= \
   CONFIG_LIBCURL_SMTP \
   CONFIG_LIBCURL_TELNET \
   CONFIG_LIBCURL_TFTP \
+  CONFIG_LIBCURL_NGHTTP2 \
   \
   CONFIG_LIBCURL_COOKIES \
   CONFIG_LIBCURL_CRYPTO_AUTH \
@@ -64,7 +63,12 @@ PKG_CONFIG_DEPENDS:= \
   CONFIG_LIBCURL_THREADED_RESOLVER \
   CONFIG_LIBCURL_TLS_SRP \
   CONFIG_LIBCURL_UNIX_SOCKETS \
-  CONFIG_LIBCURL_VERBOSE
+  CONFIG_LIBCURL_VERBOSE \
+  CONFIG_LIBCURL_NTLM \
+  $(if $(CONFIG_LIBCURL_OPENSSL), \
+	CONFIG_OPENSSL_ENGINE \
+	CONFIG_OPENSSL_WITH_COMPRESSION \
+	CONFIG_OPENSSL_WITH_NPN)
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -86,18 +90,21 @@ define Package/libcurl
   $(call Package/curl/Default)
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+LIBCURL_POLARSSL:libpolarssl +LIBCURL_CYASSL:libcyassl +LIBCURL_AXTLS:libaxtls +LIBCURL_OPENSSL:libopenssl +LIBCURL_GNUTLS:libgnutls 
-  DEPENDS += +LIBCURL_ZLIB:zlib +LIBCURL_THREADED_RESOLVER:libpthread +LIBCURL_LDAP:libopenldap +LIBCURL_LIBIDN:libidn +LIBCURL_SSH2:libssh2
+  DEPENDS:= +LIBCURL_WOLFSSL:libwolfssl +LIBCURL_OPENSSL:libopenssl +LIBCURL_GNUTLS:libgnutls +LIBCURL_MBEDTLS:libmbedtls
+  DEPENDS += +LIBCURL_ZLIB:zlib +LIBCURL_THREADED_RESOLVER:libpthread +LIBCURL_LDAP:libopenldap +LIBCURL_LIBIDN2:libidn2
+  DEPENDS += +LIBCURL_SSH2:libssh2 +LIBCURL_NGHTTP2:libnghttp2 +ca-bundle
   TITLE:=A client-side URL transfer library
   MENU:=1
+  ABI_VERSION:=4
 endef
-
 
 define Package/libcurl/config
   source "$(SOURCE)/Config.in"
 endef
 
-TARGET_CFLAGS += $(FPIC)
+TARGET_CFLAGS += $(FPIC) -ffunction-sections -fdata-sections
+TARGET_CPPFLAGS += $(if $(CONFIG_LIBCURL_NTLM),,-DCURL_DISABLE_NTLM)
+TARGET_LDFLAGS += -Wl,--gc-sections
 
 CONFIGURE_ARGS += \
 	--disable-debug \
@@ -105,22 +112,25 @@ CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--disable-manual \
-	--without-ca-bundle \
 	--without-nss \
 	--without-libmetalink \
 	--without-librtmp \
+	--without-libidn \
+	--without-ca-path \
+	--without-libpsl \
+	--with-ca-bundle=/etc/ssl/certs/ca-certificates.crt \
 	\
 	$(call autoconf_bool,CONFIG_IPV6,ipv6) \
 	\
-	$(if $(CONFIG_LIBCURL_AXTLS),--with-axtls="$(STAGING_DIR)/usr" --without-ca-path,--without-axtls) \
-	$(if $(CONFIG_LIBCURL_CYASSL),--with-cyassl="$(STAGING_DIR)/usr" --without-ca-path,--without-cyassl) \
-	$(if $(CONFIG_LIBCURL_GNUTLS),--with-gnutls="$(STAGING_DIR)/usr" --without-ca-path,--without-gnutls) \
-	$(if $(CONFIG_LIBCURL_OPENSSL),--with-ssl="$(STAGING_DIR)/usr" --with-ca-path=/etc/ssl/certs,--without-ssl) \
-	$(if $(CONFIG_LIBCURL_POLARSSL),--with-polarssl="$(STAGING_DIR)/usr" --with-ca-path=/etc/ssl/certs,--without-polarssl) \
+	$(if $(CONFIG_LIBCURL_WOLFSSL),--with-wolfssl="$(STAGING_DIR)/usr",--without-wolfssl) \
+	$(if $(CONFIG_LIBCURL_GNUTLS),--with-gnutls="$(STAGING_DIR)/usr",--without-gnutls) \
+	$(if $(CONFIG_LIBCURL_OPENSSL),--with-ssl="$(STAGING_DIR)/usr",--without-ssl) \
+	$(if $(CONFIG_LIBCURL_MBEDTLS),--with-mbedtls="$(STAGING_DIR)/usr",--without-mbedtls) \
 	\
-	$(if $(CONFIG_LIBCURL_LIBIDN),--with-libidn="$(STAGING_DIR)/usr",--without-libidn) \
+	$(if $(CONFIG_LIBCURL_LIBIDN2),--with-libidn2="$(STAGING_DIR)/usr",--without-libidn2) \
 	$(if $(CONFIG_LIBCURL_SSH2),--with-libssh2="$(STAGING_DIR)/usr",--without-libssh2) \
 	$(if $(CONFIG_LIBCURL_ZLIB),--with-zlib="$(STAGING_DIR)/usr",--without-zlib) \
+	$(if $(CONFIG_LIBCURL_NGHTTP2),--with-nghttp2="$(STAGING_DIR)/usr",--without-nghttp2) \
 	\
 	$(call autoconf_bool,CONFIG_LIBCURL_DICT,dict) \
 	$(call autoconf_bool,CONFIG_LIBCURL_FILE,file) \
