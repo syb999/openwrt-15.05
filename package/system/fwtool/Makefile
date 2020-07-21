@@ -41,8 +41,8 @@ endef
 define Package/fwtool/install
 	$(INSTALL_DIR) $(STAGING_DIR_HOST)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/fwtool $(STAGING_DIR_HOST)/usr/bin/
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_BUILD_DIR)/fwtool $(1)/usr/bin/
+#	$(INSTALL_DIR) $(1)/usr/bin
+#	$(CP) $(PKG_BUILD_DIR)/fwtool $(1)/usr/bin/
 endef
 
 $(eval $(call HostBuild))
