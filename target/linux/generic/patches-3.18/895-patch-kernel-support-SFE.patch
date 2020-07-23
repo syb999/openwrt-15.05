@@ -159,7 +159,7 @@
 +	 * go to any taps (by definition we're trying to bypass them).
 +	 */
 +	if (!skb->fast_forwarded) {
-+		if (!list_empty(&dev->ptype_all)
++		if (!list_empty(&ptype_all))
 +			dev_queue_xmit_nit(skb, dev);
 +	}
  
