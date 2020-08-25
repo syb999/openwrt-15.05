@@ -45,7 +45,7 @@ diff -u mt76-2f1318a/mac80211.c mt76-87a6942/mac80211.c
 -	if (ret)
 -		return ret;
 -
--	WARN_ON(mt76_worker_setup(hw, &dev->tx_worker, mt76_tx_worker, "tx"));
+-	WARN_ON(mt76_worker_setup(hw, &dev->tx_worker, NULL, "tx"));
 -	sched_setscheduler(dev->tx_worker.task, SCHED_FIFO, &sparam);
 -
 -	return 0;
