@@ -10,10 +10,12 @@
  struct mt76_dev;
  struct mt76_phy;
  struct mt76_wcid;
-@@ -103,9 +100,10 @@ struct mt76_queue_entry {
+@@ -103,11 +100,12 @@ struct mt76_queue_entry {
  		struct urb *urb;
  		int buf_sz;
  	};
+ 	u32 dma_addr[2];
+ 	u16 dma_len[2];
 -	u16 wcid;
 +	enum mt76_txq_id qid;
  	bool skip_buf0:1;
@@ -288,7 +290,7 @@ index 8ed18c9..e41037a 100644
  	skb = mt76_txq_dequeue(phy, mtxq, false);
  	if (!skb)
  		return 0;
-@@ -489,34 +435,55 @@ mt76_txq_send_burst(struct mt76_phy *phy, struct mt76_sw_queue *sq,
+@@ -489,37 +435,56 @@ mt76_txq_send_burst(struct mt76_phy *phy, struct mt76_sw_queue *sq,
  	if (!(wcid->tx_info & MT_WCID_TX_INFO_SET))
  		ieee80211_get_tx_rates(txq->vif, txq->sta, skb,
  				       info->control.rates, 1);
@@ -306,9 +308,12 @@ index 8ed18c9..e41037a 100644
  
  	do {
 -		if (test_bit(MT76_STATE_PM, &phy->state) ||
--		    test_bit(MT76_RESET, &phy->state) || stop)
+-		    test_bit(MT76_RESET, &phy->state))
 -			return -EBUSY;
 +		bool cur_ampdu;
+ 
+-		if (stop)
+-			break;
  
 -		if (q->queued + MT_TXQ_FREE_THR >= q->ndesc)
 +		if (probe)
@@ -355,7 +360,7 @@ index 8ed18c9..e41037a 100644
  
  	dev->queue_ops->kick(dev, hwq);
  
-@@ -536,15 +503,15 @@ mt76_txq_schedule_list(struct mt76_phy *phy, enum mt76_txq_id qid)
+@@ -536,15 +504,15 @@ mt76_txq_schedule_list(struct mt76_phy *phy, enum mt76_txq_id qid)
  
  	spin_lock_bh(&hwq->lock);
  	while (1) {
@@ -374,7 +379,7 @@ index 8ed18c9..e41037a 100644
  		txq = ieee80211_next_txq(phy->hw, qid);
  		if (!txq)
  			break;
-@@ -578,11 +545,16 @@ mt76_txq_schedule_list(struct mt76_phy *phy, enum mt76_txq_id qid)
+@@ -578,11 +546,16 @@ mt76_txq_schedule_list(struct mt76_phy *phy, enum mt76_txq_id qid)
  
  void mt76_txq_schedule(struct mt76_phy *phy, enum mt76_txq_id qid)
  {
@@ -391,7 +396,7 @@ index 8ed18c9..e41037a 100644
  	rcu_read_lock();
  
  	do {
-@@ -729,12 +701,21 @@ EXPORT_SYMBOL_GPL(mt76_skb_adjust_pad);
+@@ -729,12 +702,21 @@ EXPORT_SYMBOL_GPL(mt76_skb_adjust_pad);
  void mt76_queue_tx_complete(struct mt76_dev *dev, struct mt76_queue *q,
  			    struct mt76_queue_entry *e)
  {
