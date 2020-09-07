@@ -5,9 +5,11 @@ START=99
 APP=gmediarender
 SERVICE_WRITE_PID=1
 SERVICE_DAEMONIZE=1
- 
+suffix="$(uci get system.@system[0].hostname)"
+dlnaname=${APP}-${suffix}
+
 start() {
-        service_start /usr/bin/$APP
+        service_start /usr/bin/$APP -f ${dlnaname}
 }
  
 stop() {
