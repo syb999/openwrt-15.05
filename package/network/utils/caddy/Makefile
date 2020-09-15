@@ -7,14 +7,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=caddy
-PKG_VERSION:=1.0
-PKG_RELEASE:=1
+PKG_VERSION:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/caddyserver/caddy.git
 PKG_SOURCE_VERSION:=240de5a5dd20caba4560b9463d532dc629aaab4c
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=64bb27baff82cd81ccdc13e2624c6938bd48aee8886b55981ff48ddbdf4203eb
+PKG_MD5SUM:=5184ff1ebade8ec13b19318940d43279
 
 PKG_MAINTAINER:=SYB
 
@@ -56,6 +56,10 @@ endef
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/bin/caddy
 	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/caddy $(1)/usr/bin/caddy
+	$(INSTALL_DIR) $(1)/etc/caddy
+	$(INSTALL_CONF) ./files/caddy.conf $(1)/etc/caddy/caddy.conf
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/caddy.init $(1)/etc/init.d/caddy
 endef
 
 $(eval $(call GoBinPackage,$(PKG_NAME)))

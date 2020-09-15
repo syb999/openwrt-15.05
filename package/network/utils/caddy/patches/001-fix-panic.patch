@@ -1,0 +1,24 @@
+--- a/go.mod
++++ b/go.mod
+@@ -12,7 +12,7 @@
+ 	github.com/jimstudt/http-authentication v0.0.0-20140401203705-3eca13d6893a
+ 	github.com/klauspost/cpuid v1.2.0
+ 	github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348 // indirect
+-	github.com/lucas-clemente/quic-go v0.13.1
++	github.com/lucas-clemente/quic-go v0.18.0
+ 	github.com/mholt/certmagic v0.8.3
+ 	github.com/naoina/go-stringutil v0.1.0 // indirect
+ 	github.com/naoina/toml v0.1.1
+--- a/go.sum
++++ b/go.sum
+@@ -163,8 +163,8 @@
+ github.com/labbsr0x/goh v1.0.1/go.mod h1:8K2UhVoaWXcCU7Lxoa2omWnC8gyW8px7/lmO61c027w=
+ github.com/linode/linodego v0.10.0/go.mod h1:cziNP7pbvE3mXIPneHj0oRY8L1WtGEIKlZ8LANE4eXA=
+ github.com/liquidweb/liquidweb-go v1.6.0/go.mod h1:UDcVnAMDkZxpw4Y7NOHkqoeiGacVLEIG/i5J9cyixzQ=
+-github.com/lucas-clemente/quic-go v0.13.1 h1:CxtJTXQIh2aboCPk0M6vf530XOov6DZjVBiSE3nSj8s=
+-github.com/lucas-clemente/quic-go v0.13.1/go.mod h1:Vn3/Fb0/77b02SGhQk36KzOUmXgVpFfizUfW5WMaqyU=
++github.com/lucas-clemente/quic-go v0.18.0 h1:JhQDdqxdwdmGdKsKgXi1+coHRoGhvU6z0rNzOJqZ/4o=
++github.com/lucas-clemente/quic-go v0.18.0/go.mod h1:yXttHsSNxQi8AWijC/vLP+OJczXqzHSOcJrM5ITUlCg=
+ github.com/marten-seemann/chacha20 v0.2.0 h1:f40vqzzx+3GdOmzQoItkLX5WLvHgPgyYqFFIO5Gh4hQ=
+ github.com/marten-seemann/chacha20 v0.2.0/go.mod h1:HSdjFau7GzYRj+ahFNwsO3ouVJr1HFkWoEwNDb4TMtE=
+ github.com/marten-seemann/qpack v0.1.0 h1:/0M7lkda/6mus9B8u34Asqm8ZhHAAt9Ho0vniNuVSVg=
