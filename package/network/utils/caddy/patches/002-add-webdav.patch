@@ -1,0 +1,10 @@
+--- a/caddy/caddymain/run.go
++++ b/caddy/caddymain/run.go
+@@ -40,6 +40,7 @@
+ 
+ 	_ "github.com/caddyserver/caddy/caddyhttp" // plug in the HTTP server type
+ 	// This is where other plugins get plugged in (imported)
++	_ "github.com/hacdias/caddy-webdav"
+ )
+ 
+ func init() {
