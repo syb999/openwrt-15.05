@@ -11,6 +11,6 @@ route {
 	webdav /webdav/* {
 		prefix /webdav
 	}
-	file_server
+	file_server browse
 }
 }
