@@ -1,0 +1,10 @@
+--- a/cmd/caddy/main.go
++++ b/cmd/caddy/main.go
+@@ -31,6 +31,7 @@
+ 
+ 	// plug in Caddy modules here
+ 	_ "github.com/caddyserver/caddy/v2/modules/standard"
++	_ "github.com/mholt/caddy-webdav"
+ )
+ 
+ func main() {
