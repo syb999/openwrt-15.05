@@ -1,0 +1,6 @@
+:8080
+{
+basicauth {
+admin JDJhJDEwJFRKOUM1eVZKbkg4LzA0OWMvRElsbi5sSmx1TFpXcExaNmV2ajRFUGkvSUkuYTY5S05JOUlt
+}
+}
