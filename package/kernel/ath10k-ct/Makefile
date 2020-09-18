@@ -8,11 +8,11 @@ PKG_LICENSE_FILES:=
 
 PKG_SOURCE_URL:=https://github.com/greearb/ath10k-ct.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE:=2020-06-30
-PKG_SOURCE_VERSION:=edfbf9161ab75e4831981284ab2d5b1b9fb6ef72
-PKG_MIRROR_HASH:=98b7f88baea7314144fa8f8d141ad0dbbf2816f9606b0a89afb396761b558d14
+PKG_SOURCE_DATE:=2020-09-17
+PKG_SOURCE_VERSION:=76280f692492fb9ddd506bddffab76efd2a57312
+PKG_MIRROR_HASH:=cbd9aae35ef32df0b44e22c1c3e0e9848dcac22a936fc9d4f9a05cb19ccf46d2
 
-# Build the 5.4 ath10k-ct driver version.  Other option is "-4.19".
+# Build the 4.19 ath10k-ct driver version.
 # Probably this should match as closely as
 # possible to whatever mac80211 backports version is being used.
 CT_KVER="-4.19"
@@ -36,13 +36,6 @@ define KernelPackage/ath10k-ct
   AUTOLOAD:=$(call AutoProbe,ath10k_pci)
   PROVIDES:=kmod-ath10k
   VARIANT:=regular
-endef
-
-define KernelPackage/ath10k-ct/config
-
-       config ATH10K-CT_LEDS
-               bool "Enable LED support"
-               depends on PACKAGE_kmod-ath10k-ct || PACKAGE_kmod-ath10k-ct-smallbuffers
 endef
 
 define KernelPackage/ath10k-ct-smallbuffers
@@ -92,11 +85,6 @@ endif
 ifdef CONFIG_PACKAGE_ATH_SPECTRAL
   CT_MAKEDEFS += CONFIG_ATH10K_SPECTRAL=y
   NOSTDINC_FLAGS += -DCONFIG_ATH10K_SPECTRAL
-endif
-
-ifeq ($(CONFIG_ATH10K-CT_LEDS),y)
-  CT_MAKEDEFS += CONFIG_ATH10K_LEDS=y
-  NOSTDINC_FLAGS += -DCONFIG_ATH10K_LEDS
 endif
 
 ifeq ($(BUILD_VARIANT),smallbuffers)
