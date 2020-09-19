@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=caddy
 PKG_VERSION:=1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/caddyserver/caddy.git
@@ -56,8 +56,10 @@ endef
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/bin/caddy
 	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/caddy $(1)/usr/bin/caddy
+	$(INSTALL_DIR) $(1)/bin
+	ln -s /usr/bin/caddy/caddy $(1)/bin/caddy
 	$(INSTALL_DIR) $(1)/etc/caddy
-	$(INSTALL_CONF) ./files/caddy.conf $(1)/etc/caddy/caddy.conf
+	$(INSTALL_CONF) ./files/caddy.conf $(1)/etc/caddy/Caddyfile
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/caddy.init $(1)/etc/init.d/caddy
 endef
