@@ -59,7 +59,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/bin
 	ln -s /usr/bin/caddy/caddy $(1)/bin/caddy
 	$(INSTALL_DIR) $(1)/etc/caddy
-	$(INSTALL_CONF) ./files/caddy.conf $(1)/etc/caddy/Caddyfile
+	$(INSTALL_CONF) ./files/Caddyfile $(1)/etc/caddy/Caddyfile
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/caddy.init $(1)/etc/init.d/caddy
 endef
