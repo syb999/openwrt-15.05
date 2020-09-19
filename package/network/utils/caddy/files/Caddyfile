@@ -3,8 +3,8 @@
 gzip
 basicauth / admin password
 webdav /webdav {
-scope /mnt/sda1
+scope /mnt
 }
-root /mnt/sda1
+root /mnt
 browse
 }
