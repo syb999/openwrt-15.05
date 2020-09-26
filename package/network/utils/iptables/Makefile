@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2013 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,30 +9,27 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=iptables
-PKG_VERSION:=1.4.21
+PKG_VERSION:=1.6.2
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://www.netfilter.org/projects/iptables/files \
-	ftp://ftp.be.netfilter.org/pub/netfilter/iptables/ \
-	ftp://ftp.de.netfilter.org/pub/netfilter/iptables/ \
-	ftp://ftp.no.netfilter.org/pub/netfilter/iptables/
-PKG_MD5SUM:=536d048c8e8eeebcd9757d0863ebb0c0
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://git.netfilter.org/iptables
+PKG_SOURCE_VERSION:=c16bdec15137b241586310d0e61bc88cc3726004
+PKG_MD5SUM:=ce11fa0cb9188765987e7adc39e21ee1
 
 PKG_FIXUP:=autoreconf
+PKG_FLAGS:=nonshared
+
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_LICENSE:=GPL-2.0
-
-ifneq ($(CONFIG_EXTERNAL_KERNEL_TREE),"")
-PATCH_DIR:=
-endif
+PKG_CPE_ID:=cpe:/a:netfilter_core_team:iptables
 
 include $(INCLUDE_DIR)/package.mk
 ifeq ($(DUMP),)
   -include $(LINUX_DIR)/.config
   include $(INCLUDE_DIR)/netfilter.mk
-  STAMP_CONFIGURED:=$(strip $(STAMP_CONFIGURED))_$(shell $(SH_FUNC) grep 'NETFILTER' $(LINUX_DIR)/.config | md5s)
+  STAMP_CONFIGURED:=$(strip $(STAMP_CONFIGURED))_$(shell grep 'NETFILTER' $(LINUX_DIR)/.config | mkhash md5)
 endif
 
 
@@ -53,6 +50,20 @@ $(call Package/iptables/Default)
   TITLE:=IP firewall administration tool
   MENU:=1
   DEPENDS+= +kmod-ipt-core +libip4tc +IPV6:libip6tc +libxtables
+endef
+
+define Package/iptables/config
+  config IPTABLES_CONNLABEL
+	bool "Enable Connlabel support"
+	default n
+	help
+		This enable connlabel support in iptables.
+
+  config IPTABLES_NFTABLES
+	bool "Enable Nftables support"
+	default n
+	help
+		This enable nftables support in iptables.
 endef
 
 define Package/iptables/description
@@ -114,6 +125,20 @@ Extra iptables extensions for connection tracking.
 
 endef
 
+define Package/iptables-mod-conntrack-label
+$(call Package/iptables/Module, +kmod-ipt-conntrack-label @IPTABLES_CONNLABEL)
+  TITLE:=Connection tracking labeling extension
+  DEFAULT:=y if IPTABLES_CONNLABEL
+endef
+
+define Package/iptables-mod-conntrack-label/description
+Match and set label(s) on connection tracking entries
+
+ Matches:
+  - connlabel
+
+endef
+
 define Package/iptables-mod-filter
 $(call Package/iptables/Module, +kmod-ipt-filter)
   TITLE:=Content inspection extensions
@@ -125,6 +150,7 @@ Includes support for:
 
  Matches:
   - string
+  - bpf
 
 endef
 
@@ -207,6 +233,20 @@ define Package/iptables-mod-nflog/description
 
 endef
 
+define Package/iptables-mod-trace
+$(call Package/iptables/Module, +kmod-ipt-debug)
+  TITLE:=Netfilter TRACE target
+endef
+
+define Package/iptables-mod-trace/description
+ iptables extension for TRACE target
+
+ Includes:
+  - libxt_TRACE
+
+endef
+
+
 define Package/iptables-mod-nfqueue
 $(call Package/iptables/Module, +kmod-nfnetlink-queue +kmod-ipt-nfqueue)
   TITLE:=Netfilter NFQUEUE target
@@ -230,6 +270,19 @@ iptables extensions for hashlimit matching
 
  Matches:
   - hashlimit
+
+endef
+
+define Package/iptables-mod-rpfilter
+$(call Package/iptables/Module, +kmod-ipt-rpfilter)
+  TITLE:=rpfilter iptables extension
+endef
+
+define Package/iptables-mod-rpfilter/description
+iptables extensions for reverse path filter test on a packet
+
+ Matches:
+  - rpfilter
 
 endef
 
@@ -298,10 +351,18 @@ Other extra iptables extensions.
   - addrtype
   - condition
   - owner
-  - physdev (if ebtables is enabled)
   - pkttype
   - quota
 
+endef
+
+define Package/iptables-mod-physdev
+$(call Package/iptables/Module, +kmod-ipt-physdev)
+  TITLE:=physdev iptables extension
+endef
+
+define Package/iptables-mod-physdev/description
+The iptables physdev match.
 endef
 
 define Package/iptables-mod-led
@@ -359,6 +420,15 @@ U32 iptables extensions.
 
 endef
 
+define Package/iptables-mod-checksum
+$(call Package/iptables/Module, +kmod-ipt-checksum)
+  TITLE:=IP CHECKSUM target extension
+endef
+
+define Package/iptables-mod-checksum/description
+iptables extension for the CHECKSUM calculation target
+endef
+
 define Package/ip6tables
 $(call Package/iptables/Default)
   DEPENDS:=@IPV6 +kmod-ip6tables +iptables
@@ -393,6 +463,7 @@ $(call Package/iptables/Default)
   SECTION:=libs
   CATEGORY:=Libraries
   DEPENDS:=+libip4tc +libip6tc +libxtables
+  ABI_VERSION:=$(PKG_VERSION)
   TITLE:=IPv4/IPv6 firewall - shared libiptc library (compatibility stub)
 endef
 
@@ -401,6 +472,7 @@ $(call Package/iptables/Default)
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=IPv4 firewall - shared libiptc library
+  ABI_VERSION:=$(PKG_VERSION)
   DEPENDS:=+libxtables
 endef
 
@@ -409,6 +481,7 @@ $(call Package/iptables/Default)
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=IPv6 firewall - shared libiptc library
+  ABI_VERSION:=$(PKG_VERSION)
   DEPENDS:=+libxtables
 endef
 
@@ -417,6 +490,10 @@ define Package/libxtables
  SECTION:=libs
  CATEGORY:=Libraries
  TITLE:=IPv4/IPv6 firewall - shared xtables library
+ ABI_VERSION:=$(PKG_VERSION)
+ DEPENDS:= \
+	+IPTABLES_CONNLABEL:libnetfilter-conntrack \
+	+IPTABLES_NFTABLES:libnftnl
 endef
 
 TARGET_CPPFLAGS := \
@@ -435,10 +512,13 @@ TARGET_LDFLAGS += \
 
 CONFIGURE_ARGS += \
 	--enable-shared \
+	--enable-static \
 	--enable-devel \
 	--with-kernel="$(LINUX_DIR)/user_headers" \
 	--with-xtlibdir=/usr/lib/iptables \
-	--enable-static \
+	--with-xt-lock-name=/var/run/xtables.lock \
+	$(if $(CONFIG_IPTABLES_CONNLABEL),,--disable-connlabel) \
+	$(if $(CONFIG_IPTABLES_NFTABLES),,--disable-nftables) \
 	$(if $(CONFIG_IPV6),,--disable-ipv6)
 
 MAKE_FLAGS := \
@@ -447,6 +527,20 @@ MAKE_FLAGS := \
 	KERNEL_DIR="$(LINUX_DIR)/user_headers/" PREFIX=/usr \
 	KBUILD_OUTPUT="$(LINUX_DIR)" \
 	BUILTIN_MODULES="$(patsubst ip6t_%,%,$(patsubst ipt_%,%,$(patsubst xt_%,%,$(IPT_BUILTIN) $(IPT_CONNTRACK-m) $(IPT_NAT-m))))"
+
+ifneq ($(wildcard $(PKG_BUILD_DIR)/.config_*),$(subst .configured_,.config_,$(STAMP_CONFIGURED)))
+  define Build/Configure/rebuild
+	$(FIND) $(PKG_BUILD_DIR) -name \*.o -or -name \*.\?o -or -name \*.a | $(XARGS) rm -f
+	rm -f $(PKG_BUILD_DIR)/.config_*
+	rm -f $(PKG_BUILD_DIR)/.configured_*
+	touch $(subst .configured_,.config_,$(STAMP_CONFIGURED))
+  endef
+endif
+
+define Build/Configure
+$(Build/Configure/rebuild)
+$(Build/Configure/Default)
+endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
@@ -523,7 +617,9 @@ endef
 
 $(eval $(call BuildPackage,iptables))
 $(eval $(call BuildPlugin,iptables-mod-conntrack-extra,$(IPT_CONNTRACK_EXTRA-m)))
+$(eval $(call BuildPlugin,iptables-mod-conntrack-label,$(IPT_CONNTRACK_LABEL-m)))
 $(eval $(call BuildPlugin,iptables-mod-extra,$(IPT_EXTRA-m)))
+$(eval $(call BuildPlugin,iptables-mod-physdev,$(IPT_PHYSDEV-m)))
 $(eval $(call BuildPlugin,iptables-mod-filter,$(IPT_FILTER-m)))
 $(eval $(call BuildPlugin,iptables-mod-ipopt,$(IPT_IPOPT-m)))
 $(eval $(call BuildPlugin,iptables-mod-ipsec,$(IPT_IPSEC-m)))
@@ -533,12 +629,15 @@ $(eval $(call BuildPlugin,iptables-mod-cluster,$(IPT_CLUSTER-m)))
 $(eval $(call BuildPlugin,iptables-mod-clusterip,$(IPT_CLUSTERIP-m)))
 $(eval $(call BuildPlugin,iptables-mod-ulog,$(IPT_ULOG-m)))
 $(eval $(call BuildPlugin,iptables-mod-hashlimit,$(IPT_HASHLIMIT-m)))
+$(eval $(call BuildPlugin,iptables-mod-rpfilter,$(IPT_RPFILTER-m)))
 $(eval $(call BuildPlugin,iptables-mod-led,$(IPT_LED-m)))
 $(eval $(call BuildPlugin,iptables-mod-tproxy,$(IPT_TPROXY-m)))
 $(eval $(call BuildPlugin,iptables-mod-tee,$(IPT_TEE-m)))
 $(eval $(call BuildPlugin,iptables-mod-u32,$(IPT_U32-m)))
 $(eval $(call BuildPlugin,iptables-mod-nflog,$(IPT_NFLOG-m)))
+$(eval $(call BuildPlugin,iptables-mod-trace,$(IPT_DEBUG-m)))
 $(eval $(call BuildPlugin,iptables-mod-nfqueue,$(IPT_NFQUEUE-m)))
+$(eval $(call BuildPlugin,iptables-mod-checksum,$(IPT_CHECKSUM-m)))
 $(eval $(call BuildPackage,ip6tables))
 $(eval $(call BuildPlugin,ip6tables-extra,$(IPT_IPV6_EXTRA-m)))
 $(eval $(call BuildPlugin,ip6tables-mod-nat,$(IPT_NAT6-m)))
