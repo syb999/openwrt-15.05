@@ -7,7 +7,7 @@
   *
   * Backport functionality introduced in Linux 4.3.
   *
-@@ -9,170 +8,9 @@
+@@ -9,174 +8,13 @@
   * published by the Free Software Foundation.
   */
  
@@ -17,7 +17,10 @@
  #include <linux/printk.h>
 -#include <linux/thermal.h>
 -#include <linux/slab.h>
--
+ #include <linux/property.h>
+ #include <linux/etherdevice.h>
+ #include <linux/of.h>
+ 
 -#ifdef CONFIG_THERMAL
 -#if LINUX_VERSION_IS_GEQ(3,8,0)
 -struct backport_thermal_ops_wrapper {
@@ -175,14 +178,14 @@
 -
 -#endif /* >= 3.8.0 */
 -#endif /* CONFIG_THERMAL */
- 
+-
  static void seq_set_overflow(struct seq_file *m)
  {
-@@ -217,29 +57,3 @@ void seq_hex_dump(struct seq_file *m, const char *prefix_str, int prefix_type,
- 	}
+ 	m->count = m->size;
+@@ -221,32 +61,6 @@
  }
  EXPORT_SYMBOL_GPL(seq_hex_dump);
--
+ 
 -ssize_t strscpy(char *dest, const char *src, size_t count)
 -{
 -	long res = 0;
@@ -208,3 +211,7 @@
 -	return -E2BIG;
 -}
 -EXPORT_SYMBOL_GPL(strscpy);
+-
+ static void *device_get_mac_addr(struct device *dev,
+ 				 const char *name, char *addr,
+ 				 int alen)
