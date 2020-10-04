@@ -3,12 +3,18 @@
 
 START=40
 
-start() {                            
-	echo "this file has been obseleted. please call \"/sbin/block mount\" directly"
+boot() {
 	/sbin/block mount
 }
 
-stop() {                            
-	echo "this file has been obseleted. please call \"/sbin/block umount\" directly"
+start() {
+	return 0
+}
+
+restart() {
+	return 0
+}
+
+stop() {
 	/sbin/block umount
 }
