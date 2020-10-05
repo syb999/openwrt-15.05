@@ -113,15 +113,6 @@
  	};
  	struct tid_ampdu_rx *tid_agg_rx;
  
-@@ -4260,7 +4261,7 @@
- 
- 	lockdep_assert_held(&local->sta_mtx);
- 
--	list_for_each_entry(sta, &local->sta_list, list) {
-+	list_for_each_entry_rcu(sta, &local->sta_list, list) {
- 		if (sdata != sta->sdata &&
- 		    (!sta->sdata->bss || sta->sdata->bss != sdata->bss))
- 			continue;
 @@ -4468,8 +4469,8 @@
  	/* deliver to local stack */
  	skb->protocol = eth_type_trans(skb, fast_rx->dev);
@@ -229,12 +220,61 @@
  EXPORT_SYMBOL(ieee80211_rx_napi);
  
  /* This is a version of the rx handler that can be called from hard irq
+--- a/include/net/mac80211.h
++++ b/include/net/mac80211.h
+@@ -1092,14 +1092,12 @@
+  * @info: Basic tx status information
+  * @skb: Packet skb (can be NULL if not provided by the driver)
+  * @rate: The TX rate that was used when sending the packet
+- * @free_list: list where processed skbs are stored to be free'd by the driver
+  */
+ struct ieee80211_tx_status {
+ 	struct ieee80211_sta *sta;
+ 	struct ieee80211_tx_info *info;
+ 	struct sk_buff *skb;
+ 	struct rate_info *rate;
+-	struct list_head *free_list;
+ };
+ 
+ /**
+@@ -4395,31 +4393,6 @@
+ void ieee80211_restart_hw(struct ieee80211_hw *hw);
+ 
+ /**
+- * ieee80211_rx_list - receive frame and store processed skbs in a list
+- *
+- * Use this function to hand received frames to mac80211. The receive
+- * buffer in @skb must start with an IEEE 802.11 header. In case of a
+- * paged @skb is used, the driver is recommended to put the ieee80211
+- * header of the frame on the linear part of the @skb to avoid memory
+- * allocation and/or memcpy by the stack.
+- *
+- * This function may not be called in IRQ context. Calls to this function
+- * for a single hardware must be synchronized against each other. Calls to
+- * this function, ieee80211_rx_ni() and ieee80211_rx_irqsafe() may not be
+- * mixed for a single hardware. Must not run concurrently with
+- * ieee80211_tx_status() or ieee80211_tx_status_ni().
+- *
+- * This function must be called with BHs disabled and RCU read lock
+- *
+- * @hw: the hardware this frame came in on
+- * @sta: the station the frame was received from, or %NULL
+- * @skb: the buffer to receive, owned by mac80211 after this call
+- * @list: the destination list
+- */
+-void ieee80211_rx_list(struct ieee80211_hw *hw, struct ieee80211_sta *sta,
+-		       struct sk_buff *skb, struct list_head *list);
+-
+-/**
+  * ieee80211_rx_napi - receive frame from NAPI context
+  *
+  * Use this function to hand received frames to mac80211. The receive
 --- a/net/mac80211/status.c
 +++ b/net/mac80211/status.c
-@@ -1050,9 +1050,7 @@
+@@ -1050,9 +1050,6 @@
  	 */
  	if (!local->monitors && (!send_to_cooked || !local->cooked_mntrs)) {
- 		if (status->free_list)
+-		if (status->free_list)
 -			list_add_tail(&skb->list, status->free_list);
 -		else
 -			dev_kfree_skb(skb);
@@ -242,7 +282,7 @@
  		return;
  	}
  
-@@ -1193,10 +1191,7 @@
+@@ -1193,10 +1190,7 @@
  		return;
  
  	ieee80211_report_used_skb(local, skb, false);
