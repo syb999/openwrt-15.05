@@ -1,12 +1,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=UnblockNeteaseMusic
-PKG_VERSION:=0.2.0
+PKG_VERSION:=0.2.7
 PKG_RELEASE:=1
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/cnsilvan/UnblockNeteaseMusic/tar.gz/$(PKG_VERSION)?
+PKG_SOURCE_URL:=https://github.com/cnsilvan/UnblockNeteaseMusic
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=935a28125fc7eafaa8273a77352e6262b18efd5e
 PKG_HASH:=skip
 PKG_MAINTAINER:=Silvan <cnsilvan@gmail.com>
 
