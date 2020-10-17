@@ -302,7 +302,7 @@ hostapd_set_bss_options() {
 
 	wireless_vif_parse_encryption
 
-	local bss_conf bss_md5sum
+	local bss_conf
 	local wep_rekey wpa_group_rekey wpa_pair_rekey wpa_master_rekey wpa_key_mgmt
 
 	json_get_vars \
@@ -687,9 +687,6 @@ hostapd_set_bss_options() {
 			append bss_conf "vlan_file=$vlan_file" "$N"
 		}
 	}
-
-	bss_md5sum=$(echo $bss_conf | md5sum | cut -d" " -f1)
-	append bss_conf "config_id=$bss_md5sum" "$N"
 
 	append "$var" "$bss_conf" "$N"
 	return 0
@@ -1108,29 +1105,27 @@ EOF
 }
 
 wpa_supplicant_run() {
-	local ifname="$1"
-	local hostapd_ctrl="$2"
+	local ifname="$1"; shift
 
 	_wpa_supplicant_common "$ifname"
 
-	ubus wait_for wpa_supplicant
-	ubus call wpa_supplicant config_add "{ \
-		\"driver\": \"${_w_driver:-wext}\", \"ctrl\": \"$_rpath\", \
-		\"iface\": \"$ifname\", \"config\": \"$_config\" \
-		${network_bridge:+, \"bridge\": \"$network_bridge\"} \
-		${hostapd_ctrl:+, \"hostapd_ctrl\": \"$hostapd_ctrl\"} \
-		}"
+	/usr/sbin/wpa_supplicant -B -s \
+		${network_bridge:+-b $network_bridge} \
+		-P "/var/run/wpa_supplicant-${ifname}.pid" \
+		-D ${_w_driver:-wext} \
+		-i "$ifname" \
+		-c "$_config" \
+		-C "$_rpath" \
+		"$@"
 
 	ret="$?"
+	wireless_add_process "$(cat "/var/run/wpa_supplicant-${ifname}.pid")" /usr/sbin/wpa_supplicant 1
 
 	[ "$ret" != 0 ] && wireless_setup_vif_failed WPA_SUPPLICANT_FAILED
-
-	local supplicant_pid=$(ubus call service list '{"name": "wpad"}' | jsonfilter -l 1 -e "@['wpad'].instances['supplicant'].pid")
-	wireless_add_process "$supplicant_pid" "/usr/sbin/wpa_supplicant" 1
 
 	return $ret
 }
 
 hostapd_common_cleanup() {
-	killall meshd-nl80211
+	killall hostapd wpa_supplicant meshd-nl80211
 }
