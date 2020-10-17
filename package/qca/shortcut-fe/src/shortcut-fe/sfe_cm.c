@@ -29,8 +29,11 @@
 #include <net/netfilter/nf_conntrack_helper.h>
 #include <net/netfilter/nf_conntrack_zones.h>
 #include <net/netfilter/nf_conntrack_core.h>
+#include <net/netfilter/nf_conntrack_timeout.h>
 #include <linux/netfilter/xt_dscp.h>
 #include <linux/if_bridge.h>
+#include <net/pkt_sched.h>
+#include <linux/prefetch.h>
 
 #include "sfe.h"
 #include "sfe_cm.h"
@@ -134,6 +137,16 @@ static int sfe_cm_recv(struct sk_buff *skb)
 
 	dev = skb->dev;
 
+#ifdef CONFIG_NET_CLS_ACT
+	/*
+	 * If ingress Qdisc configured, and packet not processed by ingress Qdisc yet
+	 * We can not accelerate this packet.
+	 */
+	if (dev->ingress_queue && !(skb->tc_verd & TC_NCLS)) {
+		return 0;
+	}
+#endif
+
 	/*
 	 * We're only interested in IPv4 and IPv6 packets.
 	 */
@@ -199,7 +212,7 @@ static int sfe_cm_recv(struct sk_buff *skb)
  * structure, obtain the hardware address.  This means this function also
  * works if the neighbours are routers too.
  */
-static bool sfe_cm_find_dev_and_mac_addr(sfe_ip_addr_t *addr, struct net_device **dev, u8 *mac_addr, int is_v4)
+static bool sfe_cm_find_dev_and_mac_addr(struct sk_buff *skb, sfe_ip_addr_t *addr, struct net_device **dev, u8 *mac_addr, int is_v4)
 {
 	struct neighbour *neigh;
 	struct rtable *rt;
@@ -285,11 +298,14 @@ static unsigned int sfe_cm_post_routing(struct sk_buff *skb, int is_v4)
 	struct net_device *dev;
 	struct net_device *src_dev;
 	struct net_device *dest_dev;
+	struct net_device *src_dev_tmp;
+	struct net_device *dest_dev_tmp;
 	struct net_device *src_br_dev = NULL;
 	struct net_device *dest_br_dev = NULL;
 	struct nf_conntrack_tuple orig_tuple;
 	struct nf_conntrack_tuple reply_tuple;
 	SFE_NF_CONN_ACCT(acct);
+	struct sk_buff *tmp_skb = NULL;
 
 	/*
 	 * Don't process broadcast or multicast packets.
@@ -509,6 +525,21 @@ static unsigned int sfe_cm_post_routing(struct sk_buff *skb, int is_v4)
 		sic.dest_port = orig_tuple.dst.u.udp.port;
 		sic.src_port_xlate = reply_tuple.dst.u.udp.port;
 		sic.dest_port_xlate = reply_tuple.src.u.udp.port;
+
+		/*
+		 * Somehow, SFE is not playing nice with IPSec traffic.
+		 * Do not accelerate for now.
+		 */
+		if (ntohs(sic.dest_port) == 4500 || ntohs(sic.dest_port) == 500) {
+			if (likely(is_v4))
+				DEBUG_TRACE("IPsec bypass: %pI4:%d(%pI4:%d) to %pI4:%d(%pI4:%d)\n",
+					&sic.src_ip.ip, ntohs(sic.src_port), &sic.src_ip_xlate.ip, ntohs(sic.src_port_xlate),
+					&sic.dest_ip.ip, ntohs(sic.dest_port), &sic.dest_ip_xlate.ip, ntohs(sic.dest_port_xlate));
+			else
+				DEBUG_TRACE("IPsec bypass: %pI6:%d to %pI6:%d\n",
+					&sic.src_ip.ip6, ntohs(sic.src_port), &sic.dest_ip.ip6, ntohs(sic.dest_port));
+			return NF_ACCEPT;
+		}
 		break;
 
 	default:
@@ -552,29 +583,45 @@ static unsigned int sfe_cm_post_routing(struct sk_buff *skb, int is_v4)
 	 * Get the net device and MAC addresses that correspond to the various source and
 	 * destination host addresses.
 	 */
-	if (!sfe_cm_find_dev_and_mac_addr(&sic.src_ip, &src_dev, sic.src_mac, is_v4)) {
+	if (!sfe_cm_find_dev_and_mac_addr(NULL, &sic.src_ip, &src_dev_tmp, sic.src_mac, is_v4)) {
 		sfe_cm_incr_exceptions(SFE_CM_EXCEPTION_NO_SRC_DEV);
 		return NF_ACCEPT;
 	}
+	src_dev = src_dev_tmp;
 
-	if (!sfe_cm_find_dev_and_mac_addr(&sic.src_ip_xlate, &dev, sic.src_mac_xlate, is_v4)) {
+	if (!sfe_cm_find_dev_and_mac_addr(NULL, &sic.src_ip_xlate, &dev, sic.src_mac_xlate, is_v4)) {
 		sfe_cm_incr_exceptions(SFE_CM_EXCEPTION_NO_SRC_XLATE_DEV);
 		goto done1;
 	}
-
 	dev_put(dev);
 
-	if (!sfe_cm_find_dev_and_mac_addr(&sic.dest_ip, &dev, sic.dest_mac, is_v4)) {
+	if (unlikely(!is_v4))
+		tmp_skb = skb;
+
+	if (!sfe_cm_find_dev_and_mac_addr(tmp_skb, &sic.dest_ip, &dev, sic.dest_mac, is_v4)) {
 		sfe_cm_incr_exceptions(SFE_CM_EXCEPTION_NO_DEST_DEV);
 		goto done1;
 	}
-
 	dev_put(dev);
 
-	if (!sfe_cm_find_dev_and_mac_addr(&sic.dest_ip_xlate, &dest_dev, sic.dest_mac_xlate, is_v4)) {
+	/*
+	 * This is a hack to work-around the issue where dest_ip & dest_ip_xlate differs, i.e. reverse NAT, which
+	 * interferes with UDP port forwarding in DD-WRT.  Not sure why TCP is OK, since both UDP and TCP lookup
+	 * destination interface are the same.  For now, we fall back to the original behaviour of the destination
+	 * interface lookup if we detect that we're handling post-routed reverse NAT traffic.
+	 *
+	 * TODO: to improve the way destination interface is looked up.
+	 */
+	if (likely(sfe_addr_equal(&sic.dest_ip_xlate, &sic.dest_ip, is_v4)))
+		tmp_skb = skb;
+	else
+		tmp_skb = NULL;
+
+	if (!sfe_cm_find_dev_and_mac_addr(tmp_skb, &sic.dest_ip_xlate, &dest_dev_tmp, sic.dest_mac_xlate, is_v4)) {
 		sfe_cm_incr_exceptions(SFE_CM_EXCEPTION_NO_DEST_XLATE_DEV);
 		goto done1;
 	}
+	dest_dev = dest_dev_tmp;
 
 	/*
 	 * Our devices may actually be part of a bridge interface.  If that's
@@ -587,7 +634,6 @@ static unsigned int sfe_cm_post_routing(struct sk_buff *skb, int is_v4)
 			DEBUG_TRACE("no bridge found for: %s\n", src_dev->name);
 			goto done2;
 		}
-
 		src_dev = src_br_dev;
 	}
 
@@ -598,7 +644,6 @@ static unsigned int sfe_cm_post_routing(struct sk_buff *skb, int is_v4)
 			DEBUG_TRACE("no bridge found for: %s\n", dest_dev->name);
 			goto done3;
 		}
-
 		dest_dev = dest_br_dev;
 	}
 
@@ -620,17 +665,14 @@ static unsigned int sfe_cm_post_routing(struct sk_buff *skb, int is_v4)
 	if (dest_br_dev) {
 		dev_put(dest_br_dev);
 	}
-
 done3:
 	if (src_br_dev) {
 		dev_put(src_br_dev);
 	}
-
 done2:
-	dev_put(dest_dev);
-
+	dev_put(dest_dev_tmp);
 done1:
-	dev_put(src_dev);
+	dev_put(src_dev_tmp);
 
 	return NF_ACCEPT;
 }
@@ -846,6 +888,37 @@ static void sfe_cm_sync_rule(struct sfe_connection_sync *sis)
 		}
 		spin_unlock_bh(&ct->lock);
 		break;
+	case IPPROTO_UDP:
+		/*
+		 * In Linux connection track, UDP flow has two timeout values:
+		 * /proc/sys/net/netfilter/nf_conntrack_udp_timeout:
+		 * 	this is for uni-direction UDP flow, normally its value is 60 seconds
+		 * /proc/sys/net/netfilter/nf_conntrack_udp_timeout_stream:
+		 * 	this is for bi-direction UDP flow, normally its value is 180 seconds
+		 *
+		 * Linux will update timer of UDP flow to stream timeout once it seen packets
+		 * in reply direction. But if flow is accelerated by NSS or SFE, Linux won't
+		 * see any packets. So we have to do the same thing in our stats sync message.
+		 */
+		if (!test_bit(IPS_ASSURED_BIT, &ct->status) && acct) {
+			u64 reply_pkts = atomic64_read(&SFE_ACCT_COUNTER(acct)[IP_CT_DIR_REPLY].packets);
+
+			if (reply_pkts != 0) {
+				struct nf_conntrack_l4proto *l4proto;
+				unsigned int *timeouts;
+
+				set_bit(IPS_SEEN_REPLY_BIT, &ct->status);
+				set_bit(IPS_ASSURED_BIT, &ct->status);
+
+				l4proto = __nf_ct_l4proto_find((sis->is_v6 ? AF_INET6 : AF_INET), IPPROTO_UDP);
+				timeouts = nf_ct_timeout_lookup(&init_net, ct, l4proto);
+
+				spin_lock_bh(&ct->lock);
+				ct->timeout.expires = jiffies + timeouts[UDP_CT_REPLIED];
+				spin_unlock_bh(&ct->lock);
+			}
+		}
+		break;
 	}
 
 	/*
@@ -861,13 +934,9 @@ static int sfe_cm_device_event(struct notifier_block *this, unsigned long event,
 {
 	struct net_device *dev = SFE_DEV_EVENT_PTR(ptr);
 
-	switch (event) {
-	case NETDEV_DOWN:
-		if (dev) {
-			sfe_ipv4_destroy_all_rules_for_dev(dev);
-			sfe_ipv6_destroy_all_rules_for_dev(dev);
-		}
-		break;
+	if (dev && (event == NETDEV_DOWN)) {
+		sfe_ipv4_destroy_all_rules_for_dev(dev);
+		sfe_ipv6_destroy_all_rules_for_dev(dev);
 	}
 
 	return NOTIFY_DONE;
@@ -879,7 +948,12 @@ static int sfe_cm_device_event(struct notifier_block *this, unsigned long event,
 static int sfe_cm_inet_event(struct notifier_block *this, unsigned long event, void *ptr)
 {
 	struct net_device *dev = ((struct in_ifaddr *)ptr)->ifa_dev->dev;
-	return sfe_propagate_dev_event(sfe_cm_device_event, this, event, dev);
+
+	if (dev && (event == NETDEV_DOWN)) {
+		sfe_ipv4_destroy_all_rules_for_dev(dev);
+	}
+
+	return NOTIFY_DONE;
 }
 
 /*
@@ -888,7 +962,12 @@ static int sfe_cm_inet_event(struct notifier_block *this, unsigned long event, v
 static int sfe_cm_inet6_event(struct notifier_block *this, unsigned long event, void *ptr)
 {
 	struct net_device *dev = ((struct inet6_ifaddr *)ptr)->idev->dev;
-	return sfe_propagate_dev_event(sfe_cm_device_event, this, event, dev);
+
+	if (dev && (event == NETDEV_DOWN)) {
+		sfe_ipv6_destroy_all_rules_for_dev(dev);
+	}
+
+	return NOTIFY_DONE;
 }
 
 /*
@@ -998,6 +1077,7 @@ static int __init sfe_cm_init(void)
 	size_t i, j;
 
 	DEBUG_INFO("SFE CM init\n");
+	printk(KERN_ALERT "sfe-cm (PBR safe v2.1.6b): starting up\n");
 
 	/*
 	 * Create sys/sfe_cm
@@ -1037,15 +1117,21 @@ static int __init sfe_cm_init(void)
 		goto exit3;
 	}
 
-#ifdef CONFIG_NF_CONNTRACK_EVENTS
 	/*
 	 * Register a notifier hook to get fast notifications of expired connections.
+	 * Note: In CONFIG_NF_CONNTRACK_CHAIN_EVENTS enabled case, nf_conntrack_register_notifier()
+	 * function always returns 0.
 	 */
+#ifdef CONFIG_NF_CONNTRACK_EVENTS
+#ifdef CONFIG_NF_CONNTRACK_CHAIN_EVENTS
+	(void)nf_conntrack_register_notifier(&init_net, &sfe_cm_conntrack_notifier);
+#else
 	result = nf_conntrack_register_notifier(&init_net, &sfe_cm_conntrack_notifier);
 	if (result < 0) {
 		DEBUG_ERROR("can't register nf notifier hook: %d\n", result);
 		goto exit4;
 	}
+#endif
 #endif
 
 	spin_lock_init(&sc->lock);
@@ -1055,11 +1141,15 @@ static int __init sfe_cm_init(void)
 	 */
 	sfe_ipv4_register_sync_rule_callback(sfe_cm_sync_rule);
 	sfe_ipv6_register_sync_rule_callback(sfe_cm_sync_rule);
+
+	printk(KERN_ALERT "sfe-cm: registered\n");
 	return 0;
 
 #ifdef CONFIG_NF_CONNTRACK_EVENTS
+#ifndef CONFIG_NF_CONNTRACK_CHAIN_EVENTS
 exit4:
 	nf_unregister_hooks(sfe_cm_ops_post_routing, ARRAY_SIZE(sfe_cm_ops_post_routing));
+#endif
 #endif
 exit3:
 	unregister_inet6addr_notifier(&sc->inet6_notifier);

@@ -15,8 +15,6 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=shortcut-fe
-PKG_SOURCE_PROTO:=git
-PKG_BRANCH:=master
 PKG_RELEASE:=1
 
 include $(INCLUDE_DIR)/local-development.mk
@@ -28,7 +26,6 @@ endif
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=$(PKG_REV)
-
 include $(INCLUDE_DIR)/package.mk
 
 define KernelPackage/shortcut-fe
@@ -38,7 +35,8 @@ define KernelPackage/shortcut-fe
   DEPENDS:=
   TITLE:=Kernel driver for SFE
   FILES:=$(PKG_BUILD_DIR)/shortcut-fe/shortcut-fe.ko $(PKG_BUILD_DIR)/shortcut-fe/shortcut-fe-ipv6.ko
-  KCONFIG:=CONFIG_NF_CONNTRACK_EVENTS=y
+  KCONFIG:=CONFIG_NF_CONNTRACK_EVENTS=y \
+	   CONFIG_XFRM=y
   AUTOLOAD:=$(call AutoLoad,09,shortcut-fe shortcut-fe-ipv6)
 endef
 
@@ -57,19 +55,19 @@ define KernelPackage/shortcut-fe-cm
   SECTION:=kernel
   CATEGORY:=Kernel modules
   SUBMENU:=Network Support
-  DEPENDS:=+kmod-ipv6 +kmod-ipt-conntrack +kmod-shortcut-fe
+  DEPENDS:=@IPV6 +kmod-ipt-conntrack +kmod-shortcut-fe
   TITLE:=Kernel driver for SFE
   FILES:=$(PKG_BUILD_DIR)/shortcut-fe/shortcut-fe-cm.ko
-  KCONFIG:=CONFIG_NF_CONNTRACK_CHAIN_EVENTS=y
+  KCONFIG:=CONFIG_NF_CONNTRACK_CHAIN_EVENTS=y \
+	   CONFIG_XFRM=y
 endef
 
 define KernelPackage/shortcut-fe-cm/Description
 Simple connection manager for the Shortcut forwarding engine.
 endef
 
-EXTRA_CFLAGS+=-DSFE_SUPPORT_IPV6
-
 TARGET_CFLAGS := $(filter-out -O%,$(TARGET_CFLAGS)) -O3
+EXTRA_CFLAGS+=-DSFE_SUPPORT_IPV6
 
 define Build/Compile
 	$(MAKE) -C "$(LINUX_DIR)" \
