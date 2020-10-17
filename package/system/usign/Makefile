@@ -1,14 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=usign
-PKG_VERSION:=2015-05-08
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://git.openwrt.org/project/usign.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=cf8dcdb8a4e874c77f3e9a8e9b643e8c17b19131
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_SOURCE_URL=git://git.openwrt.org/project/usign.git
+PKG_SOURCE_DATE:=2019-08-06
+PKG_SOURCE_VERSION:=5a52b379902471cef495687547c7b568142f66d2
+PKG_MIRROR_HASH:=9779f6d6718a7f7cd3e28aa7feefc9b3f4b0c7a85cb58ff18afbeb6b4372177a
 CMAKE_INSTALL:=1
 PKG_CHECK_FORMAT_SECURITY:=1
 PKG_USE_MIPS16:=0
@@ -16,11 +15,13 @@ PKG_USE_MIPS16:=0
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=
 
-PKG_MAINTAINER:=Felix Fietkau <nbd@openwrt.org>
+PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/cmake.mk
+
+HOST_BUILD_PREFIX:=$(STAGING_DIR_HOST)
 
 define Package/usign
   SECTION:=base
@@ -28,6 +29,9 @@ define Package/usign
   DEPENDS:=+libubox
   TITLE:=OpenWrt signature verification utility
 endef
+
+TARGET_CFLAGS += -flto
+TARGET_LDFLAGS += -flto=jobserver
 
 CMAKE_OPTIONS += \
 	-DUSE_LIBUBOX=on
