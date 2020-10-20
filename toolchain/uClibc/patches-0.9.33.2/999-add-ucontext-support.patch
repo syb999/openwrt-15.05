@@ -81,13 +81,6 @@ diff -auNr uClibc-0.9.33.2.orig/extra/Configs/Config.in uClibc-0.9.33.2/extra/Co
  
  choice
  	prompt "Target Processor Type"
---- uClibc-0.9.33.2.orig/extra/Configs/Config.x86_64
-+++ uClibc-0.9.33.2/extra/Configs/Config.x86_64
-@@ -12,3 +12,4 @@
- 	default y
- 	select ARCH_LITTLE_ENDIAN
- 	select ARCH_HAS_MMU
-+	select ARCH_HAS_UCONTEXT
 --- uClibc-0.9.33.2.orig/include/ucontext.h
 +++ uClibc-0.9.33.2/include/ucontext.h
 @@ -11,22 +11,47 @@
@@ -717,20 +710,6 @@ diff -auNr uClibc-0.9.33.2.orig/libc/sysdeps/linux/i386/makecontext.S uClibc-0.9
 +END(__makecontext)
 +
 +weak_alias (__makecontext, makecontext)
-diff -auNr uClibc-0.9.33.2.orig/libc/sysdeps/linux/i386/Makefile.arch uClibc-0.9.33.2/libc/sysdeps/linux/i386/Makefile.arch
---- uClibc-0.9.33.2.orig/libc/sysdeps/linux/i386/Makefile.arch    2012-05-15 15:20:09.000000000 +0800
-+++ uClibc-0.9.33.2/libc/sysdeps/linux/i386/Makefile.arch    2017-07-12 10:56:36.151422861 +0800
-@@ -15,3 +15,10 @@
- ifneq ($(UCLIBC_HAS_THREADS_NATIVE),y)
- SSRC += vfork.S clone.S
- endif
-+
-+
-+ifeq ($(UCLIBC_HAS_CONTEXT_FUNCS),y)
-+CSRC += makecontext.c
-+SSRC += getcontext.S setcontext.S swapcontext.S
-+endif
-+
 diff -auNr uClibc-0.9.33.2.orig/libc/sysdeps/linux/i386/setcontext.S uClibc-0.9.33.2/libc/sysdeps/linux/i386/setcontext.S
 --- uClibc-0.9.33.2.orig/libc/sysdeps/linux/i386/setcontext.S    1970-01-01 08:00:00.000000000 +0800
 +++ uClibc-0.9.33.2/libc/sysdeps/linux/i386/setcontext.S    2017-07-12 10:07:37.907760254 +0800
@@ -2543,21 +2522,6 @@ diff -auNr uClibc-0.9.33.2.orig/libc/sysdeps/linux/x86_64/makecontext.c uClibc-0
 +
 +
 +weak_alias (__makecontext, makecontext)
-diff -auNr uClibc-0.9.33.2.orig/libc/sysdeps/linux/x86_64/Makefile.arch uClibc-0.9.33.2/libc/sysdeps/linux/x86_64/Makefile.arch
---- uClibc-0.9.33.2.orig/libc/sysdeps/linux/x86_64/Makefile.arch    2012-05-15 15:20:09.000000000 +0800
-+++ uClibc-0.9.33.2/libc/sysdeps/linux/x86_64/Makefile.arch    2017-07-12 10:57:32.977050182 +0800
-@@ -14,6 +14,11 @@
- SSRC += vfork.S clone.S
- endif
- 
-+ifeq ($(UCLIBC_HAS_CONTEXT_FUNCS),y)
-+CSRC += makecontext.c
-+SSRC += getcontext.S setcontext.S swapcontext.S
-+endif
-+
- ifeq ($(UCLIBC_LINUX_SPECIFIC),y)
- ARCH_OBJ_FILTEROUT = sched_getcpu.c
- ifeq ($(UCLIBC_HAS_TLS),y)
 diff -auNr uClibc-0.9.33.2.orig/libc/sysdeps/linux/x86_64/setcontext.S uClibc-0.9.33.2/libc/sysdeps/linux/x86_64/setcontext.S
 --- uClibc-0.9.33.2.orig/libc/sysdeps/linux/x86_64/setcontext.S    1970-01-01 08:00:00.000000000 +0800
 +++ uClibc-0.9.33.2/libc/sysdeps/linux/x86_64/setcontext.S    2017-07-12 10:20:46.996828676 +0800
