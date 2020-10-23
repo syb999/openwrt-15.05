@@ -1,0 +1,19 @@
+Source-Makefile: package/kernel/xmurp-ua/Makefile
+Package: kmod-xmurp-ua
+Submenu: Other modules
+Version: <LINUX_VERSION>-33
+Depends: 
+Conflicts: 
+Menu-Depends: 
+Provides: 
+Section: kernel
+Category: Kernel modules
+Title: XMURP UA
+Maintainer: 
+Source: 
+Type: ipkg
+Description:   Modify UA in HTTP for anti-detection of router in XMU.
+
+@@
+
+

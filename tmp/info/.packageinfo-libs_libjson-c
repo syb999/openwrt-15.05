@@ -1,0 +1,22 @@
+Source-Makefile: package/libs/libjson-c/Makefile
+Package: libjson-c
+Version: 0.12.1-3
+Depends: +libc +SSP_SUPPORT:libssp +USE_GLIBC:librt +USE_GLIBC:libpthread 
+Conflicts: 
+Menu-Depends: 
+Provides: 
+Build-Types: host
+Section: libs
+Category: Libraries
+Title: javascript object notation
+Maintainer: Felix Fietkau <nbd@nbd.name>
+Source: json-c-0.12.1-nodoc.tar.gz
+License: MIT
+LicenseFiles: COPYING
+Type: ipkg
+Description:  This package contains a library for javascript object notation backends.
+https://json-c.github.io/json-c/
+Felix Fietkau <nbd@nbd.name>
+@@
+
+

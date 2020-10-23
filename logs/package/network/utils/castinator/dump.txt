@@ -1,0 +1,21 @@
+Makefile:28: /home/syb/656/openwrt-15.05/feeds/packages/lang/golang/golang-package.mk: No such file or directory
+Package: castinator
+Submenu: Web Servers/Proxies
+Version: 2020-01-08-1
+Depends: +libc +SSP_SUPPORT:libssp +USE_GLIBC:librt +USE_GLIBC:libpthread +libpthread
+Conflicts: 
+Menu-Depends: 
+Provides: 
+Build-Depends: golang/host
+Section: net
+Category: Network
+Title: Repeat a UDP unicast/multicast/broadcast to another
+Maintainer: 
+Source: castinator-2020-01-08-d20508779f62208b646729654c6a6119c37dc3b0.tar.gz
+Type: ipkg
+Description: Repeat a UDP unicast/multicast/broadcast to another UDP unicast/multicast/broadcast address
+https://github.com/initialed85/castinator
+
+@@
+
+make[4]: *** No rule to make target '/home/syb/656/openwrt-15.05/feeds/packages/lang/golang/golang-package.mk'.  Stop.

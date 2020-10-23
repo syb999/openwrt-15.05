@@ -1,0 +1,21 @@
+Makefile:30: /home/syb/656/openwrt-15.05/feeds/packages/lang/golang/golang-package.mk: No such file or directory
+Package: caddy
+Submenu: Web Servers/Proxies
+Version: 1-3
+Depends: +libc +SSP_SUPPORT:libssp +USE_GLIBC:librt +USE_GLIBC:libpthread +libpthread
+Conflicts: 
+Menu-Depends: 
+Provides: 
+Build-Depends: golang/host
+Section: net
+Category: Network
+Title: Caddy is an open source web server
+Maintainer: SYB
+Source: caddy-1-240de5a5dd20caba4560b9463d532dc629aaab4c.tar.gz
+Type: ipkg
+Description: Caddy is an extensible server platform that uses TLS by default.
+https://caddyserver.com
+SYB
+@@
+
+make[4]: *** No rule to make target '/home/syb/656/openwrt-15.05/feeds/packages/lang/golang/golang-package.mk'.  Stop.

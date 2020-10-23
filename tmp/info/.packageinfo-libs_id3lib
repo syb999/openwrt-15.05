@@ -1,0 +1,20 @@
+Source-Makefile: package/libs/id3lib/Makefile
+Package: id3lib
+Version: 3.8.3-2
+Depends: +libc +SSP_SUPPORT:libssp +USE_GLIBC:librt +USE_GLIBC:libpthread +zlib +USE_UCLIBCXX:uclibcxx +USE_LIBSTDCXX:libstdcpp
+Conflicts: 
+Menu-Depends: 
+Provides: 
+Build-Depends: libtool libintl libiconv
+Section: libs
+Category: Libraries
+Title: An ID3v1/ID3v2 tag manipulation library
+Maintainer: 
+Source: id3lib-3.8.3.tar.gz
+Type: ipkg
+Description: An ID3v1/ID3v2 tag manipulation library
+http://www.id3lib.org/
+
+@@
+
+

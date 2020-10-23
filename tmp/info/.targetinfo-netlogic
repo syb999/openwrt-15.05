@@ -1,0 +1,53 @@
+Source-Makefile: target/linux/netlogic/Makefile
+Target: netlogic
+Target-Board: netlogic
+Target-Name: Broadcom/Netlogic XLP/XLR
+Target-Path: /home/syb/656/openwrt-15.05
+Target-Arch: mips64
+Target-Arch-Packages: netlogic
+Target-Features: dt ext4 jffs2 pci squashfs usb
+Target-Depends: 
+Target-Optimization: -Os -pipe -mno-branch-likely -mips64 -mtune=mips64 -mabi=64
+CPU-Type: mips64
+Linux-Version: 3.18.140
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+
+@@
+Default-Packages: base-files libc libgcc busybox dropbear mtd uci opkg netifd fstools logd dnsmasq iptables ip6tables ppp ppp-mod-pppoe kmod-nf-nathelper firewall odhcpd odhcp6c kmod-fast-classifier 
+Target: netlogic/xlp
+Target-Board: netlogic
+Target-Name: xlp
+Target-Path: target/linux/netlogic
+Target-Arch: mips64
+Target-Arch-Packages: netlogic
+Target-Features: dt ext4 jffs2 pci squashfs usb
+Target-Depends: 
+Target-Optimization: -Os -pipe -mno-branch-likely
+CPU-Type: xlp
+Linux-Version: 3.18.140
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Broadcom/Netlogic XLP boards.
+@@
+Default-Packages: base-files libc libgcc busybox dropbear mtd uci opkg netifd fstools logd kmod-usb-core kmod-usb2 kmod-usb2-pci kmod-usb3 kmod-usb-net kmod-usb-net-smsc95xx dnsmasq iptables ip6tables ppp ppp-mod-pppoe kmod-nf-nathelper firewall odhcpd odhcp6c kmod-fast-classifier 
+Target: netlogic/xlr
+Target-Board: netlogic
+Target-Name: xlr
+Target-Path: target/linux/netlogic
+Target-Arch: mips64
+Target-Arch-Packages: netlogic
+Target-Features: dt ext4 jffs2 pci squashfs usb
+Target-Depends: 
+Target-Optimization: -Os -pipe -mno-branch-likely
+CPU-Type: xlr
+Linux-Version: 3.18.140
+Linux-Release: 1
+Linux-Kernel-Arch: mips
+Target-Description:
+	Build firmware images for Broadcom/Netlogic XLR boards.
+@@
+Default-Packages: base-files libc libgcc busybox dropbear mtd uci opkg netifd fstools logd dnsmasq iptables ip6tables ppp ppp-mod-pppoe kmod-nf-nathelper firewall odhcpd odhcp6c kmod-fast-classifier 
+

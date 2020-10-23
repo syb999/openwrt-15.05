@@ -1,0 +1,18 @@
+Source-Makefile: package/network/utils/dhcpdiscover/Makefile
+Package: dhcpdiscover
+Version: 1
+Depends: +libc +SSP_SUPPORT:libssp +USE_GLIBC:librt +USE_GLIBC:libpthread 
+Conflicts: 
+Menu-Depends: 
+Provides: 
+Section: net
+Category: Network
+Title: dhcpdiscover
+Maintainer: 
+Source: 
+Type: ipkg
+Description:  Brings some information about the existing DHCP servers of the network
+
+@@
+
+

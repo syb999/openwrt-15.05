@@ -1,0 +1,71 @@
+Source-Makefile: package/system/rpcd/Makefile
+Package: rpcd
+Version: 2019-11-10-77ad0de09247b9bdce50f4cecf3e5beb5636f57f-1
+Depends: +libc +SSP_SUPPORT:libssp +USE_GLIBC:librt +USE_GLIBC:libpthread +libubus +libubox +libuci +libblobmsg-json +libjson-c
+Conflicts: 
+Menu-Depends: 
+Provides: 
+Section: utils
+Category: Base system
+Title: OpenWrt ubus RPC backend server
+Maintainer: Jo-Philipp Wich <jo@mein.io>
+Source: rpcd-2019-11-10-77ad0de09247b9bdce50f4cecf3e5beb5636f57f.tar.xz
+License: ISC
+Type: ipkg
+Description:  This package provides the UBUS RPC backend server to expose various
+ functionality to frontend programs via JSON-RPC.
+Jo-Philipp Wich <jo@mein.io>
+@@
+
+Package: rpcd-mod-file
+Version: 2019-11-10-77ad0de09247b9bdce50f4cecf3e5beb5636f57f-1
+Depends: +libc +SSP_SUPPORT:libssp +USE_GLIBC:librt +USE_GLIBC:libpthread +libubus +libubox rpcd
+Conflicts: 
+Menu-Depends: 
+Provides: 
+Section: utils
+Category: Base system
+Title: OpenWrt ubus RPC backend server (file plugin)
+Maintainer: Jo-Philipp Wich <jo@mein.io>
+Source: rpcd-2019-11-10-77ad0de09247b9bdce50f4cecf3e5beb5636f57f.tar.xz
+License: ISC
+Type: ipkg
+Description:     Provides ubus calls for file and directory operations.
+Jo-Philipp Wich <jo@mein.io>
+@@
+
+Package: rpcd-mod-rpcsys
+Version: 2019-11-10-77ad0de09247b9bdce50f4cecf3e5beb5636f57f-1
+Depends: +libc +SSP_SUPPORT:libssp +USE_GLIBC:librt +USE_GLIBC:libpthread +libubus +libubox rpcd
+Conflicts: 
+Menu-Depends: 
+Provides: 
+Section: utils
+Category: Base system
+Title: OpenWrt ubus RPC backend server (rpcsys plugin)
+Maintainer: Jo-Philipp Wich <jo@mein.io>
+Source: rpcd-2019-11-10-77ad0de09247b9bdce50f4cecf3e5beb5636f57f.tar.xz
+License: ISC
+Type: ipkg
+Description:     Provides ubus calls for sysupgrade and password changing.
+Jo-Philipp Wich <jo@mein.io>
+@@
+
+Package: rpcd-mod-iwinfo
+Version: 2019-11-10-77ad0de09247b9bdce50f4cecf3e5beb5636f57f-1
+Depends: +libc +SSP_SUPPORT:libssp +USE_GLIBC:librt +USE_GLIBC:libpthread +libubus +libubox rpcd +libiwinfo
+Conflicts: 
+Menu-Depends: 
+Provides: 
+Section: utils
+Category: Base system
+Title: OpenWrt ubus RPC backend server (iwinfo plugin)
+Maintainer: Jo-Philipp Wich <jo@mein.io>
+Source: rpcd-2019-11-10-77ad0de09247b9bdce50f4cecf3e5beb5636f57f.tar.xz
+License: ISC
+Type: ipkg
+Description:     Provides ubus calls for accessing iwinfo data.
+Jo-Philipp Wich <jo@mein.io>
+@@
+
+

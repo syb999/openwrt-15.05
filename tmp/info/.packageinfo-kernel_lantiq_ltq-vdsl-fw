@@ -1,0 +1,18 @@
+Source-Makefile: package/kernel/lantiq/ltq-vdsl-fw/Makefile
+Package: ltq-vdsl-vr9-fw-installer
+Version: 1-1
+Depends: +libc +SSP_SUPPORT:libssp +USE_GLIBC:librt +USE_GLIBC:libpthread @TARGET_lantiq_xrx200 +kmod-ltq-vdsl-vr9
+Conflicts: 
+Menu-Depends: 
+Provides: 
+Section: net
+Category: Network
+Title: Firmware installer
+Maintainer: John Crispin <blogic@openwrt.org>
+Source: 
+Type: ipkg
+Description: Firmware installer
+John Crispin <blogic@openwrt.org>
+@@
+
+

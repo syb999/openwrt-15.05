@@ -1,0 +1,20 @@
+Source-Makefile: package/qca/fast-classifier/Makefile
+Package: kmod-fast-classifier
+Submenu: Network Support
+Version: <LINUX_VERSION>+gf7c70b7-1
+Depends: @IPV6 +kmod-ipt-conntrack +kmod-shortcut-fe +kmod-ipt-conntrack-extra
+Conflicts: 
+Menu-Depends: 
+Provides: fast-classifier
+Section: kernel
+Category: Kernel modules
+Title: Kernel driver for FAST Classifier
+Maintainer: 
+Source: fast-classifier-gf7c70b7.tar.gz
+Type: ipkg
+Kernel-Config: CONFIG_NF_CONNTRACK_CHAIN_EVENTS=y
+Description: FAST Classifier talks to SFE to make decisions about offloading connections
+
+@@
+
+

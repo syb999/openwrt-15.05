@@ -1,0 +1,21 @@
+Source-Makefile: package/base-files/Makefile
+Package: base-files
+Version: 157.2-unknown
+Depends: +libc +SSP_SUPPORT:libssp +USE_GLIBC:librt +USE_GLIBC:libpthread +netifd +procd +jsonfilter +SIGNED_PACKAGES:usign +fstools +fwtool
+Conflicts: 
+Menu-Depends: 
+Provides: 
+Build-Depends: opkg/host usign/host
+Section: base
+Category: Base system
+Title: Base filesystem for OpenWrt
+Maintainer: 
+Source: 
+License: GPL-2.0
+Type: ipkg
+Description:  This package contains a base filesystem and system scripts for OpenWrt.
+http://openwrt.org/
+
+@@
+
+

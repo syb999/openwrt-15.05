@@ -1,0 +1,20 @@
+Source-Makefile: package/system/mountd/Makefile
+Package: mountd
+Version: 2015-11-22-8476a03b25d457e99f59e6372b8d9faebe2266f8
+Depends: +libc +SSP_SUPPORT:libssp +USE_GLIBC:librt +USE_GLIBC:libpthread @USB_SUPPORT +uci +kmod-usb-storage +kmod-fs-autofs4
+Conflicts: 
+Menu-Depends: 
+Provides: 
+Section: utils
+Category: Utilities
+Title: OpenWrt automount daemon
+Maintainer: John Crispin <blogic@openwrt.org>
+Source: mountd-2015-11-22-8476a03b25d457e99f59e6372b8d9faebe2266f8.tar.gz
+License: GPL-2.0
+Type: ipkg
+Description:   openwrt automount daemon
+http://www.openwrt.org
+John Crispin <blogic@openwrt.org>
+@@
+
+

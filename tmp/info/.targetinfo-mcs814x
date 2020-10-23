@@ -1,0 +1,47 @@
+Source-Makefile: target/linux/mcs814x/Makefile
+Target: mcs814x
+Target-Board: mcs814x
+Target-Name: Moschip MCS814x
+Target-Path: /home/syb/656/openwrt-15.05
+Target-Arch: arm
+Target-Arch-Packages: mcs814x
+Target-Features: dt gpio low_mem squashfs usb
+Target-Depends: 
+Target-Optimization: -Os -pipe -march=armv5te -mtune=arm926ej-s
+CPU-Type: arm926ej-s
+Linux-Version: 3.18.140
+Linux-Release: 1
+Linux-Kernel-Arch: arm
+Target-Description:
+
+@@
+Default-Packages: base-files libc libgcc busybox dropbear mtd uci opkg netifd fstools logd kmod-usb-core kmod-usb2 kmod-usb-ohci kmod-usb-storage kmod-fs-vfat kmod-nls-cp437 kmod-nls-iso8859-1 kmod-nls-iso8859-15 kmod-nls-utf8 kmod-mcs814x-wdt kmod-ledtrig-usbdev 
+Target-Profile: Generic
+Target-Profile-Name: Generic profile
+Target-Profile-Packages:  
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+   Default profile for Moschip MCS814x targets
+@@
+
+Target-Profile: dLAN_USB_Extender
+Target-Profile-Name: Devolo dLAN USB Extender
+Target-Profile-Packages: kmod-usb-serial kmod-usb-serial-ftdi 
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+	Package set specifically tuned for the Devolo dLAN USB Extender device.
+
+	Binary packages are required to enable the power line portion of the
+	device, these packages can be found in the following package feed:
+
+	src-git dlan https://github.com/ffainelli/dlan-usb-extender-3rd-party.git
+
+	Instructions are available here:
+	http://ffainelli.github.io/dlan-usb-extender-3rd-party/
+@@
+
+

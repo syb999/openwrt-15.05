@@ -1,0 +1,20 @@
+Source-Makefile: package/utils/sexpect/Makefile
+Package: sexpect
+Version: 2020-04-16-1
+Depends: +libc +SSP_SUPPORT:libssp +USE_GLIBC:librt +USE_GLIBC:libpthread +librt
+Conflicts: 
+Menu-Depends: 
+Provides: 
+Section: utils
+Category: Utilities
+Title: Expect for Shells (sh, bash, zsh, ksh, ...)
+Maintainer: 
+Source: sexpect-2020-04-16.tar.xz
+License: GPL-3.0
+Type: ipkg
+Description:   sexpect is another implementation of Expect.
+https://github.com/clarkwang/sexpect
+
+@@
+
+

@@ -1,0 +1,21 @@
+Makefile:32: /home/syb/656/openwrt-15.05/feeds/packages/lang/golang/golang-package.mk: No such file or directory
+Package: caddy2
+Submenu: Web Servers/Proxies
+Version: 2.1.1-2
+Depends: +libc +SSP_SUPPORT:libssp +USE_GLIBC:librt +USE_GLIBC:libpthread +libpthread
+Conflicts: 
+Menu-Depends: 
+Provides: 
+Build-Depends: golang/host
+Section: net
+Category: Network
+Title: Caddy2 is an open source web server
+Maintainer: SYB
+Source: caddy2-2.1.1-d7dbf8552562edcfb53ab2024d8ceccc33823021.tar.gz
+Type: ipkg
+Description: Still the only web server to use TLS automatically and by default. Deploy and scale HTTPS effortlessly with Caddy2.
+https://caddyserver.com
+SYB
+@@
+
+make[4]: *** No rule to make target '/home/syb/656/openwrt-15.05/feeds/packages/lang/golang/golang-package.mk'.  Stop.

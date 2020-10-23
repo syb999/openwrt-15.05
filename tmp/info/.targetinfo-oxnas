@@ -1,0 +1,61 @@
+Source-Makefile: target/linux/oxnas/Makefile
+Target: oxnas
+Target-Board: oxnas
+Target-Name: PLXTECH/Oxford NAS782x/OX82x
+Target-Path: /home/syb/656/openwrt-15.05
+Target-Arch: arm
+Target-Arch-Packages: oxnas
+Target-Features: dt gpio nand pci pcie ramdisk rtc squashfs ubifs usb
+Target-Depends: 
+Target-Optimization: -Os -pipe -march=armv6k -mtune=mpcore
+CPU-Type: mpcore
+Linux-Version: 3.18.140
+Linux-Release: 1
+Linux-Kernel-Arch: arm
+Target-Description:
+
+@@
+Default-Packages: base-files libc libgcc busybox dropbear mtd uci opkg netifd fstools logd block-mount fdisk lsblk mdadm kmod-ata-core kmod-ata-oxnas-sata kmod-button-hotplug kmod-input-gpio-keys-polled kmod-leds-gpio kmod-usb2-oxnas uboot-envtools uboot-oxnas-ox820 
+Target-Profile: POGOPLUG_PRO
+Target-Profile-Name: PogoPlug Pro
+Target-Profile-Packages:  
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+ Profile with built-in ox820 PogoPlug Pro device-tree
+ (board with miniPCIe slot)
+@@
+
+Target-Profile: POGOPLUG_V3
+Target-Profile-Name: PogoPlug V3
+Target-Profile-Packages:  
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+ Profile with built-in ox820 PogoPlug V3 device-tree
+ (board without miniPCIe slot)
+@@
+
+Target-Profile: STG212
+Target-Profile-Name: MitraStar STG-212
+Target-Profile-Packages:  
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+ Profile with built-in ox820 STG-212 device-tree
+@@
+
+Target-Profile: KD20
+Target-Profile-Name: Shuttle KD20
+Target-Profile-Packages: kmod-usb3 kmod-usb-storage kmod-i2c-gpio kmod-rtc-pcf8563 kmod-gpio-beeper kmod-hwmon-core kmod-hwmon-gpiofan 
+Target-Profile-Config: 
+
+@@
+Target-Profile-Description:
+ Profile with built-in ox820 KD20 device-tree
+@@
+
+

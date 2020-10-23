@@ -1,0 +1,19 @@
+Source-Makefile: package/network/utils/udpbroadcastrelay/Makefile
+Package: udpbroadcastrelay
+Version: 2020-03-03-2cfba2bc933e9c3ff6f6889808551face8960a58-1
+Depends: +libc +SSP_SUPPORT:libssp +USE_GLIBC:librt +USE_GLIBC:libpthread 
+Conflicts: 
+Menu-Depends: 
+Provides: 
+Section: net
+Category: Network
+Title: UDP Broadcast Relay for Linux / FreeBSD / pfSense / OPNsense
+Maintainer: 
+Source: udpbroadcastrelay-2020-03-03-2cfba2bc933e9c3ff6f6889808551face8960a58.tar.xz
+Type: ipkg
+Description: UDP Broadcast Relay for Linux / FreeBSD / pfSense / OPNsense
+https://github.com/marjohn56/udpbroadcastrelay
+
+@@
+
+

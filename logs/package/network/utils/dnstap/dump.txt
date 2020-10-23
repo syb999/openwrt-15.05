@@ -1,0 +1,23 @@
+Makefile:30: /home/syb/656/openwrt-15.05/feeds/packages/lang/golang/golang-package.mk: No such file or directory
+Package: dnstap
+Version: 0.2.1-1
+Depends: +libc +SSP_SUPPORT:libssp +USE_GLIBC:librt +USE_GLIBC:libpthread +libpthread
+Conflicts: 
+Menu-Depends: 
+Provides: 
+Build-Depends: golang/host 
+Section: net
+Category: Network
+Title: dnstap command-line tool 
+Maintainer: Jan Pavlinec <jan.pavlinec@nic.cz>
+Source: golang-dnstap-0.2.1.tar.gz
+License: Apache-2.0
+LicenseFiles: LICENSE
+Type: ipkg
+Description:   The dnstap command-line tool can read, write, and decode
+  dnstap data from a running name server or a previously-saved file.
+https://dnstap.info
+Jan Pavlinec <jan.pavlinec@nic.cz>
+@@
+
+make[4]: *** No rule to make target '/home/syb/656/openwrt-15.05/feeds/packages/lang/golang/golang-package.mk'.  Stop.

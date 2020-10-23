@@ -1,0 +1,22 @@
+Source-Makefile: package/kernel/mt7628-aes/Makefile
+Package: kmod-crypto-hw-mtk-aes
+Submenu: Cryptographic API modules
+Version: <LINUX_VERSION>-1.2
+Depends: @TARGET_ramips_mt7628 +kmod-crypto-core
+Conflicts: 
+Menu-Depends: 
+Provides: 
+Section: kernel
+Category: Kernel modules
+Title: Kernel driver for Mediatek MT76x8 aes engine.
+Maintainer: 
+Source: 
+Type: ipkg
+Description: Kernel driver for Mediatek MT76x8 aes engine.
+
+@@
+Config:
+	select CRYPTO_HW
+@@
+
+
