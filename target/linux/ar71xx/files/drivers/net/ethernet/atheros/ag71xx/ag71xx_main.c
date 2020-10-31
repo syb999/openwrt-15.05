@@ -438,9 +438,12 @@ static void ag71xx_hw_stop(struct ag71xx *ag)
 static void ag71xx_hw_setup(struct ag71xx *ag)
 {
 	struct ag71xx_platform_data *pdata = ag71xx_get_pdata(ag);
+	u32 init = MAC_CFG1_INIT;
 
 	/* setup MAC configuration registers */
-	ag71xx_wr(ag, AG71XX_REG_MAC_CFG1, MAC_CFG1_INIT);
+	if (pdata->builtin_switch)
+		init |= MAC_CFG1_TFC | MAC_CFG1_RFC;
+	ag71xx_wr(ag, AG71XX_REG_MAC_CFG1, init);
 
 	ag71xx_sb(ag, AG71XX_REG_MAC_CFG2,
 		  MAC_CFG2_PAD_CRC_EN | MAC_CFG2_LEN_CHECK);
@@ -509,6 +512,8 @@ static void ag71xx_fast_reset(struct ag71xx *ag)
 	mii_reg = ag71xx_rr(ag, AG71XX_REG_MII_CFG);
 	rx_ds = ag71xx_rr(ag, AG71XX_REG_RX_DESC);
 
+	ag71xx_tx_packets(ag, true);
+
 	ath79_device_reset_set(reset_mask);
 	udelay(10);
 	ath79_device_reset_clear(reset_mask);
@@ -516,7 +521,6 @@ static void ag71xx_fast_reset(struct ag71xx *ag)
 
 	ag71xx_dma_reset(ag);
 	ag71xx_hw_setup(ag);
-	ag71xx_tx_packets(ag, true);
 	ag->tx_ring.curr = 0;
 	ag->tx_ring.dirty = 0;
 	netdev_reset_queue(ag->dev);
@@ -610,6 +614,22 @@ __ag71xx_link_adjust(struct ag71xx *ag, bool update)
 	ag71xx_wr(ag, AG71XX_REG_MAC_CFG2, cfg2);
 	ag71xx_wr(ag, AG71XX_REG_FIFO_CFG5, fifo5);
 	ag71xx_wr(ag, AG71XX_REG_MAC_IFCTL, ifctl);
+
+	if (pdata->disable_inline_checksum_engine) {
+		/*
+		 * The rx ring buffer can stall on small packets on QCA953x and
+		 * QCA956x. Disabling the inline checksum engine fixes the stall.
+		 * The wr, rr functions cannot be used since this hidden register
+		 * is outside of the normal ag71xx register block.
+		 */
+		void __iomem *dam = ioremap_nocache(0xb90001bc, 0x4);
+		if (dam) {
+			__raw_writel(__raw_readl(dam) & ~BIT(27), dam);
+			(void)__raw_readl(dam);
+			iounmap(dam);
+		}
+	}
+
 	ag71xx_hw_start(ag);
 
 	netif_carrier_on(ag->dev);
@@ -797,6 +817,8 @@ static netdev_tx_t ag71xx_hard_start_xmit(struct sk_buff *skb,
 	ring->buf[i].timestamp = jiffies;
 
 	netdev_sent_queue(dev, skb->len);
+
+	skb_tx_timestamp(skb);
 
 	desc->ctrl &= ~DESC_EMPTY;
 	ring->curr += n;
