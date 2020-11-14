@@ -1,0 +1,42 @@
+--- a/drivers/net/wireless/intel/iwlwifi/mvm/tx.c
++++ b/drivers/net/wireless/intel/iwlwifi/mvm/tx.c
+@@ -829,7 +829,6 @@
+ 	unsigned int tcp_payload_len;
+ 	unsigned int mss = skb_shinfo(skb)->gso_size;
+ 	bool ipv4 = (skb->protocol == htons(ETH_P_IP));
+-	bool qos = ieee80211_is_data_qos(hdr->frame_control);
+ 	u16 ip_base_id = ipv4 ? ntohs(ip_hdr(skb)->id) : 0;
+ 
+ 	skb_shinfo(skb)->gso_size = num_subframes * mss;
+@@ -842,7 +841,10 @@
+ 	else if (next)
+ 		consume_skb(skb);
+ 
+-	skb_list_walk_safe(next, tmp, next) {
++	while (next) {
++		tmp = next;
++		next = tmp->next;
++
+ 		memcpy(tmp->cb, cb, sizeof(tmp->cb));
+ 		/*
+ 		 * Compute the length of all the data added for the A-MSDU.
+@@ -860,7 +862,7 @@
+ 		if (tcp_payload_len > mss) {
+ 			skb_shinfo(tmp)->gso_size = mss;
+ 		} else {
+-			if (qos) {
++			if (ieee80211_is_data_qos(hdr->frame_control)) {
+ 				u8 *qc;
+ 
+ 				if (ipv4)
+@@ -872,7 +874,9 @@
+ 			skb_shinfo(tmp)->gso_size = 0;
+ 		}
+ 
+-		skb_mark_not_on_list(tmp);
++		tmp->prev = NULL;
++		tmp->next = NULL;
++
+ 		__skb_queue_tail(mpdus_skb, tmp);
+ 		i++;
+ 	}

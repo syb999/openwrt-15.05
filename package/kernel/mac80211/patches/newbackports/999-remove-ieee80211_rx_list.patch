@@ -1,0 +1,305 @@
+--- a/net/mac80211/ieee80211_i.h
++++ b/net/mac80211/ieee80211_i.h
+@@ -218,7 +218,7 @@
+ };
+ 
+ struct ieee80211_rx_data {
+-	struct list_head *list;
++	struct napi_struct *napi;
+ 	struct sk_buff *skb;
+ 	struct ieee80211_local *local;
+ 	struct ieee80211_sub_if_data *sdata;
+--- a/backport-include/linux/netdevice.h
++++ b/backport-include/linux/netdevice.h
+@@ -372,18 +372,6 @@
+ 	macro_dispatcher(netdev_upper_dev_link, __VA_ARGS__)(__VA_ARGS__)
+ #endif
+ 
+-#if LINUX_VERSION_IS_LESS(4,19,0)
+-static inline void netif_receive_skb_list(struct list_head *head)
+-{
+-	struct sk_buff *skb, *next;
+-
+-	list_for_each_entry_safe(skb, next, head, list) {
+-		skb_list_del_init(skb);
+-		netif_receive_skb(skb);
+-	}
+-}
+-#endif
+-
+ #if LINUX_VERSION_IS_LESS(5,0,0)
+ static inline int backport_dev_open(struct net_device *dev, struct netlink_ext_ack *extack)
+ {
+--- a/backport-include/linux/skbuff.h
++++ b/backport-include/linux/skbuff.h
+@@ -378,19 +378,6 @@
+ {
+ 	return list_->next;
+ }
+-
+-#if !LINUX_VERSION_IN_RANGE(4,19,10, 4,20,0)
+-static inline void skb_mark_not_on_list(struct sk_buff *skb)
+-{
+-	skb->next = NULL;
+-}
+-
+-static inline void skb_list_del_init(struct sk_buff *skb)
+-{
+-	__list_del_entry(&skb->list);
+-	skb_mark_not_on_list(skb);
+-}
+-#endif /* 4.19.10 <= x < 4.20 */
+ #endif
+ 
+ #if LINUX_VERSION_IS_LESS(4,11,0)
+@@ -419,10 +406,4 @@
+ }
+ #endif
+ 
+-#ifndef skb_list_walk_safe
+-#define skb_list_walk_safe(first, skb, next_skb)				\
+-	for ((skb) = (first), (next_skb) = (skb) ? (skb)->next : NULL; (skb); 	\
+-	     (skb) = (next_skb), (next_skb) = (skb) ? (skb)->next : NULL)
+-#endif
+-
+ #endif /* __BACKPORT_SKBUFF_H */
+--- a/net/mac80211/tx.c
++++ b/net/mac80211/tx.c
+@@ -3981,18 +3981,18 @@
+ 		}
+ 	}
+ 
+-	skb_list_walk_safe(skb, skb, next) {
+-		skb_mark_not_on_list(skb);
++	next = skb;
++	while (next) {
++		skb = next;
++		next = skb->next;
+ 
+-		if (skb->protocol == sdata->control_port_protocol)
+-			ctrl_flags |= IEEE80211_TX_CTRL_SKIP_MPATH_LOOKUP;
++		skb->prev = NULL;
++		skb->next = NULL;
+ 
+ 		skb = ieee80211_build_hdr(sdata, skb, info_flags,
+-					  sta, ctrl_flags, cookie);
+-		if (IS_ERR(skb)) {
+-			kfree_skb_list(next);
++					  sta, ctrl_flags, cookie);
++		if (IS_ERR(skb))
+ 			goto out;
+-		}
+ 
+ 		ieee80211_tx_stats(dev, skb->len);
+ 
+--- a/net/mac80211/rx.c
++++ b/net/mac80211/rx.c
+@@ -2574,8 +2574,8 @@
+ 		memset(skb->cb, 0, sizeof(skb->cb));
+ 
+ 		/* deliver to local stack */
+-		if (rx->list)
+-			list_add_tail(&skb->list, rx->list);
++		if (rx->napi)
++			napi_gro_receive(rx->napi, skb);
+ 		else
+ 			netif_receive_skb(skb);
+ 	}
+@@ -3865,6 +3865,7 @@
+ 		/* This is OK -- must be QoS data frame */
+ 		.security_idx = tid,
+ 		.seqno_idx = tid,
++		.napi = NULL, /* must be NULL to not have races */
+ 	};
+ 	struct tid_ampdu_rx *tid_agg_rx;
+ 
+@@ -4260,7 +4261,7 @@
+ 
+ 	lockdep_assert_held(&local->sta_mtx);
+ 
+-	list_for_each_entry(sta, &local->sta_list, list) {
++	list_for_each_entry_rcu(sta, &local->sta_list, list) {
+ 		if (sdata != sta->sdata &&
+ 		    (!sta->sdata->bss || sta->sdata->bss != sdata->bss))
+ 			continue;
+@@ -4468,8 +4469,8 @@
+ 	/* deliver to local stack */
+ 	skb->protocol = eth_type_trans(skb, fast_rx->dev);
+ 	memset(skb->cb, 0, sizeof(skb->cb));
+-	if (rx->list)
+-		list_add_tail(&skb->list, rx->list);
++	if (rx->napi)
++		napi_gro_receive(rx->napi, skb);
+ 	else
+ 		netif_receive_skb(skb);
+ 
+@@ -4536,7 +4537,7 @@
+ static void __ieee80211_rx_handle_packet(struct ieee80211_hw *hw,
+ 					 struct ieee80211_sta *pubsta,
+ 					 struct sk_buff *skb,
+-					 struct list_head *list)
++					 struct napi_struct *napi)
+ {
+ 	struct ieee80211_local *local = hw_to_local(hw);
+ 	struct ieee80211_sub_if_data *sdata;
+@@ -4551,7 +4552,7 @@
+ 	memset(&rx, 0, sizeof(rx));
+ 	rx.skb = skb;
+ 	rx.local = local;
+-	rx.list = list;
++	rx.napi = napi;
+ 
+ 	if (ieee80211_is_data(fc) || ieee80211_is_mgmt(fc))
+ 		I802_DEBUG_INC(local->dot11ReceivedFragmentCount);
+@@ -4659,8 +4660,8 @@
+  * This is the receive path handler. It is called by a low level driver when an
+  * 802.11 MPDU is received from the hardware.
+  */
+-void ieee80211_rx_list(struct ieee80211_hw *hw, struct ieee80211_sta *pubsta,
+-		       struct sk_buff *skb, struct list_head *list)
++void ieee80211_rx_napi(struct ieee80211_hw *hw, struct ieee80211_sta *pubsta,
++		       struct sk_buff *skb, struct napi_struct *napi)
+ {
+ 	struct ieee80211_local *local = hw_to_local(hw);
+ 	struct ieee80211_rate *rate = NULL;
+@@ -4752,53 +4753,36 @@
+ 	status->rx_flags = 0;
+ 
+ 	/*
++	 * key references and virtual interfaces are protected using RCU
++	 * and this requires that we are in a read-side RCU section during
++	 * receive processing
++	 */
++	rcu_read_lock();
++
++	/*
+ 	 * Frames with failed FCS/PLCP checksum are not returned,
+ 	 * all other frames are returned without radiotap header
+ 	 * if it was previously present.
+ 	 * Also, frames with less than 16 bytes are dropped.
+ 	 */
+ 	skb = ieee80211_rx_monitor(local, skb, rate);
+-	if (!skb)
++	if (!skb) {
++		rcu_read_unlock();
+ 		return;
++	}
+ 
+ 	ieee80211_tpt_led_trig_rx(local,
+ 			((struct ieee80211_hdr *)skb->data)->frame_control,
+ 			skb->len);
+ 
+-	__ieee80211_rx_handle_packet(hw, pubsta, skb, list);
++	__ieee80211_rx_handle_packet(hw, pubsta, skb, napi);
++
++	rcu_read_unlock();
+ 
+ 	return;
+  drop:
+ 	kfree_skb(skb);
+ }
+-EXPORT_SYMBOL(ieee80211_rx_list);
+-
+-void ieee80211_rx_napi(struct ieee80211_hw *hw, struct ieee80211_sta *pubsta,
+-		       struct sk_buff *skb, struct napi_struct *napi)
+-{
+-	struct sk_buff *tmp;
+-	LIST_HEAD(list);
+-
+-
+-	/*
+-	 * key references and virtual interfaces are protected using RCU
+-	 * and this requires that we are in a read-side RCU section during
+-	 * receive processing
+-	 */
+-	rcu_read_lock();
+-	ieee80211_rx_list(hw, pubsta, skb, &list);
+-	rcu_read_unlock();
+-
+-	if (!napi) {
+-		netif_receive_skb_list(&list);
+-		return;
+-	}
+-
+-	list_for_each_entry_safe(skb, tmp, &list, list) {
+-		skb_list_del_init(skb);
+-		napi_gro_receive(napi, skb);
+-	}
+-}
+ EXPORT_SYMBOL(ieee80211_rx_napi);
+ 
+ /* This is a version of the rx handler that can be called from hard irq
+--- a/include/net/mac80211.h
++++ b/include/net/mac80211.h
+@@ -1092,14 +1092,12 @@
+  * @info: Basic tx status information
+  * @skb: Packet skb (can be NULL if not provided by the driver)
+  * @rate: The TX rate that was used when sending the packet
+- * @free_list: list where processed skbs are stored to be free'd by the driver
+  */
+ struct ieee80211_tx_status {
+ 	struct ieee80211_sta *sta;
+ 	struct ieee80211_tx_info *info;
+ 	struct sk_buff *skb;
+ 	struct rate_info *rate;
+-	struct list_head *free_list;
+ };
+
+ /**
+@@ -4395,31 +4393,6 @@
+ void ieee80211_restart_hw(struct ieee80211_hw *hw);
+
+ /**
+- * ieee80211_rx_list - receive frame and store processed skbs in a list
+- *
+- * Use this function to hand received frames to mac80211. The receive
+- * buffer in @skb must start with an IEEE 802.11 header. In case of a
+- * paged @skb is used, the driver is recommended to put the ieee80211
+- * header of the frame on the linear part of the @skb to avoid memory
+- * allocation and/or memcpy by the stack.
+- *
+- * This function may not be called in IRQ context. Calls to this function
+- * for a single hardware must be synchronized against each other. Calls to
+- * this function, ieee80211_rx_ni() and ieee80211_rx_irqsafe() may not be
+- * mixed for a single hardware. Must not run concurrently with
+- * ieee80211_tx_status() or ieee80211_tx_status_ni().
+- *
+- * This function must be called with BHs disabled and RCU read lock
+- *
+- * @hw: the hardware this frame came in on
+- * @sta: the station the frame was received from, or %NULL
+- * @skb: the buffer to receive, owned by mac80211 after this call
+- * @list: the destination list
+- */
+-void ieee80211_rx_list(struct ieee80211_hw *hw, struct ieee80211_sta *sta,
+-		       struct sk_buff *skb, struct list_head *list);
+-
+-/**
+  * ieee80211_rx_napi - receive frame from NAPI context
+  *
+  * Use this function to hand received frames to mac80211. The receive
+--- a/net/mac80211/status.c
++++ b/net/mac80211/status.c
+@@ -1050,9 +1050,6 @@
+ 	 */
+ 	if (!local->monitors && (!send_to_cooked || !local->cooked_mntrs)) {
+-		if (status->free_list)
+-			list_add_tail(&skb->list, status->free_list);
+-		else
+-			dev_kfree_skb(skb);
++		dev_kfree_skb(skb);
+ 		return;
+ 	}
+ 
+@@ -1193,10 +1190,7 @@
+ 		return;
+ 
+ 	ieee80211_report_used_skb(local, skb, false);
+-	if (status->free_list)
+-		list_add_tail(&skb->list, status->free_list);
+-	else
+-		dev_kfree_skb(skb);
++	dev_kfree_skb(skb);
+ }
+ EXPORT_SYMBOL(ieee80211_tx_status_ext);
+ 
