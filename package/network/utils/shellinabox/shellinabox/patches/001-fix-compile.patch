@@ -1,0 +1,14 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -149,11 +149,6 @@
+ if test "x$enable_utmp" != xno; then
+   AC_CHECK_HEADERS([utmp.h utmpx.h])
+ 
+-  dnl Even if utmpx.h exists, not all systems have support for updwtmpx()
+-  AC_TRY_LINK([#include <utmp.h>],
+-              [updwtmp(0, 0);],
+-              [AC_DEFINE(HAVE_UPDWTMP, 1,
+-                         Define to 1 if you have support for updwtmp)])
+   AC_TRY_LINK([#include <utmpx.h>],
+               [updwtmpx(0, 0);],
+               [AC_DEFINE(HAVE_UPDWTMPX, 1,
