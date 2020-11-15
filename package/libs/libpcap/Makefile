@@ -92,6 +92,7 @@ endef
 define Package/libpcap/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpcap.so* $(1)/usr/lib/
+	ln -s /usr/lib/libpcap.so.1 $(1)/lib/libpcap.so.1.3
 endef
 
 $(eval $(call BuildPackage,libpcap))
