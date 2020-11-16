@@ -8,14 +8,3 @@
  #include <net/mac80211.h>
  #include "util.h"
  #include "testmode.h"
---- a/mac80211.c
-+++ b/mac80211.c
-@@ -2,7 +2,7 @@
- /*
-  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
-  */
--#include <uapi/linux/sched/types.h>
-+#include <linux/sched.h>
- #include <linux/of.h>
- #include "mt76.h"
- 
