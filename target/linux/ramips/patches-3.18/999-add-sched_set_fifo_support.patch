@@ -1,0 +1,79 @@
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -2231,6 +2231,9 @@
+ 			      const struct sched_param *);
+ extern int sched_setscheduler_nocheck(struct task_struct *, int,
+ 				      const struct sched_param *);
++extern int sched_set_fifo(struct task_struct *p);
++extern int sched_set_fifo_low(struct task_struct *p);
++extern int sched_set_normal(struct task_struct *p, int nice);
+ extern int sched_setattr(struct task_struct *,
+ 			 const struct sched_attr *);
+ extern struct task_struct *idle_task(int cpu);
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -3719,6 +3719,11 @@
+ }
+ EXPORT_SYMBOL_GPL(sched_setattr);
+ 
++int sched_setattr_nocheck(struct task_struct *p, const struct sched_attr *attr)
++{
++	return __sched_setscheduler(p, attr, false);
++ }
++
+ /**
+  * sched_setscheduler_nocheck - change the scheduling policy and/or RT priority of a thread from kernelspace.
+  * @p: the task in question.
+@@ -3737,6 +3742,52 @@
+ {
+ 	return _sched_setscheduler(p, policy, param, false);
+ }
++EXPORT_SYMBOL_GPL(sched_setscheduler_nocheck);
++
++/*
++ * SCHED_FIFO is a broken scheduler model; that is, it is fundamentally
++ * incapable of resource management, which is the one thing an OS really should
++ * be doing.
++ *
++ * This is of course the reason it is limited to privileged users only.
++ *
++ * Worse still; it is fundamentally impossible to compose static priority
++ * workloads. You cannot take two correctly working static prio workloads
++ * and smash them together and still expect them to work.
++ *
++ * For this reason 'all' FIFO tasks the kernel creates are basically at:
++ *
++ * MAX_RT_PRIO / 2
++ *
++ * The administrator _MUST_ configure the system, the kernel simply doesn't
++ * know enough information to make a sensible choice.
++ */
++int sched_set_fifo(struct task_struct *p)
++{
++ struct sched_param sp = { .sched_priority = MAX_RT_PRIO / 2 };
++ return sched_setscheduler_nocheck(p, SCHED_FIFO, &sp);
++}
++EXPORT_SYMBOL_GPL(sched_set_fifo);
++
++/*
++ * For when you don't much care about FIFO, but want to be above SCHED_NORMAL.
++ */
++int sched_set_fifo_low(struct task_struct *p)
++{
++ struct sched_param sp = { .sched_priority = 1 };
++ return sched_setscheduler_nocheck(p, SCHED_FIFO, &sp);
++}
++EXPORT_SYMBOL_GPL(sched_set_fifo_low);
++
++int sched_set_normal(struct task_struct *p, int nice)
++{
++ struct sched_attr attr = {
++ .sched_policy = SCHED_NORMAL,
++ .sched_nice = nice,
++ };
++ return sched_setattr_nocheck(p, &attr);
++}
++EXPORT_SYMBOL_GPL(sched_set_normal);
+ 
+ static int
+ do_sched_setscheduler(pid_t pid, int policy, struct sched_param __user *param)
