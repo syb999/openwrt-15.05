@@ -1,0 +1,101 @@
+
+ https://github.com/torvalds/linux/commit/56b174256b6936ec4c1ed8f3407109ac6929d3ca
+
+--- a/include/linux/skbuff.h
++++ b/include/linux/skbuff.h
+@@ -20,6 +20,7 @@
+ #include <linux/time.h>
+ #include <linux/bug.h>
+ #include <linux/cache.h>
++#include <linux/rbtree.h>
+ 
+ #include <linux/atomic.h>
+ #include <asm/types.h>
+@@ -442,6 +443,7 @@
+  *	@next: Next buffer in list
+  *	@prev: Previous buffer in list
+  *	@tstamp: Time we arrived/left
++ *	@rbnode: RB tree node, alternative to next/prev for netem/tcp
+  *	@sk: Socket we are owned by
+  *	@dev: Device we arrived on/are leaving by
+  *	@cb: Control buffer. Free for use by every layer. Put private vars here
+@@ -507,15 +509,20 @@
+  */
+ 
+ struct sk_buff {
+-	/* These two members must be first. */
+-	struct sk_buff		*next;
+-	struct sk_buff		*prev;
+-
+ 	union {
+-		ktime_t		tstamp;
+-		struct skb_mstamp skb_mstamp;
++		struct {
++			/* These two members must be first. */
++			struct sk_buff		*next;
++			struct sk_buff		*prev;
++
++			union {
++				ktime_t		tstamp;
++				struct skb_mstamp skb_mstamp;
++			};
++		};
++		struct rb_node	rbnode; /* used in netem & tcp stack */
++		struct list_head	list;
+ 	};
+-
+ 	struct sock		*sk;
+ 	struct net_device	*dev;
+ 
+--- a/net/sched/sch_netem.c
++++ b/net/sched/sch_netem.c
+@@ -139,33 +139,19 @@
+ 
+ /* Time stamp put into socket buffer control block
+  * Only valid when skbs are in our internal t(ime)fifo queue.
++ *
++ * As skb->rbnode uses same storage than skb->next, skb->prev and skb->tstamp,
++ * and skb->next & skb->prev are scratch space for a qdisc,
++ * we save skb->tstamp value in skb->cb[] before destroying it.
+  */
+ struct netem_skb_cb {
+ 	psched_time_t	time_to_send;
+ 	ktime_t		tstamp_save;
+ };
+ 
+-/* Because space in skb->cb[] is tight, netem overloads skb->next/prev/tstamp
+- * to hold a rb_node structure.
+- *
+- * If struct sk_buff layout is changed, the following checks will complain.
+- */
+-static struct rb_node *netem_rb_node(struct sk_buff *skb)
+-{
+-	BUILD_BUG_ON(offsetof(struct sk_buff, next) != 0);
+-	BUILD_BUG_ON(offsetof(struct sk_buff, prev) !=
+-		     offsetof(struct sk_buff, next) + sizeof(skb->next));
+-	BUILD_BUG_ON(offsetof(struct sk_buff, tstamp) !=
+-		     offsetof(struct sk_buff, prev) + sizeof(skb->prev));
+-	BUILD_BUG_ON(sizeof(struct rb_node) > sizeof(skb->next) +
+-					      sizeof(skb->prev) +
+-					      sizeof(skb->tstamp));
+-	return (struct rb_node *)&skb->next;
+-}
+-
+ static struct sk_buff *netem_rb_to_skb(struct rb_node *rb)
+ {
+-	return (struct sk_buff *)rb;
++	return container_of(rb, struct sk_buff, rbnode);
+ }
+ 
+ static inline struct netem_skb_cb *netem_skb_cb(struct sk_buff *skb)
+@@ -403,8 +389,8 @@
+ 		else
+ 			p = &parent->rb_left;
+ 	}
+-	rb_link_node(netem_rb_node(nskb), parent, p);
+-	rb_insert_color(netem_rb_node(nskb), &q->t_root);
++	rb_link_node(&nskb->rbnode, parent, p);
++	rb_insert_color(&nskb->rbnode, &q->t_root);
+ 	sch->q.qlen++;
+ }
+ 
