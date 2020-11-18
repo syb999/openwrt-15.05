@@ -22,6 +22,7 @@
 #include <linux/phy.h>
 #include <linux/ethtool.h>
 #include <linux/version.h>
+#include "gfp.h"
 
 enum fe_reg {
 	FE_REG_PDMA_GLO_CFG = 0,
@@ -453,6 +454,7 @@ struct fe_tx_ring {
 };
 
 struct fe_rx_ring {
+	struct page_frag_cache frag_cache;
 	struct fe_rx_dma *rx_dma;
 	u8 **rx_data;
 	dma_addr_t rx_phys;
