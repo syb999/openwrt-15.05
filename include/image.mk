@@ -248,9 +248,10 @@ define Image/mkfs/cpiogz
 endef
 
 define Image/mkfs/targz
-	$(TAR) -cp --numeric-owner --owner=0 --group=0 --sort=name \
+	$(TAR) -czpf $(BIN_DIR)/$(IMG_PREFIX)$(if $(PROFILE_SANITIZED),-$(PROFILE_SANITIZED))-rootfs.tar.gz \
+		--numeric-owner --owner=0 --group=0 --sort=name \
 		$(if $(SOURCE_DATE_EPOCH),--mtime="@$(SOURCE_DATE_EPOCH)") \
-		-C $(TARGET_DIR)/ . | gzip -9n > $(BIN_DIR)/$(IMG_PREFIX)$(if $(PROFILE_SANITIZED),-$(PROFILE_SANITIZED))-rootfs.tar.gz
+		-C $(TARGET_DIR)/ .
 endef
 
 E2SIZE=$(shell echo $$(($(CONFIG_TARGET_ROOTFS_PARTSIZE)*1024*1024)))
