@@ -18,8 +18,6 @@ KDIR=$(KERNEL_BUILD_DIR)
 KDIR_TMP=$(KDIR)/tmp
 DTS_DIR:=$(LINUX_DIR)/arch/$(LINUX_KARCH)/boot/dts
 
-EXTRA_NAME_SANITIZED=$(call sanitize,$(EXTRA_IMAGE_NAME))
-
 define toupper
 $(shell echo $(1) | tr '[:lower:]' '[:upper:]')
 endef
@@ -33,8 +31,9 @@ $(shell echo $(call tolower,$(1)) | sed 's/_/-/g')
 endef
 
 DIST_SANITIZED:=$(call sanitize,$(VERSION_DIST))
+EXTRA_NAME_SANITIZED=$(call sanitize,$(EXTRA_IMAGE_NAME))
 
-IMG_PREFIX:=$(DIST_SANITIZED)-$(if $(CONFIG_VERSION_FILENAMES),$(VERSION_NUMBER)-)$(BOARD)$(if $(SUBTARGET),-$(SUBTARGET))
+IMG_PREFIX:=$(DIST_SANITIZED)-$(if $(CONFIG_VERSION_FILENAMES),$(VERSION_NUMBER)-)$(if $(EXTRA_NAME_SANITIZED),$(EXTRA_NAME_SANITIZED)-)$(BOARD)$(if $(SUBTARGET),-$(SUBTARGET))
 
 MKFS_DEVTABLE_OPT := -D $(INCLUDE_DIR)/device_table.txt
 
