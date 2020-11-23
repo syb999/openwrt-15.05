@@ -102,6 +102,7 @@ define Build/append-ubi
 		$@.tmp \
 		-p $(BLOCKSIZE) -m $(PAGESIZE) \
 		$(if $(SUBPAGESIZE),-s $(SUBPAGESIZE)) \
+		$(if $(VID_HDR_OFFSET),-O $(VID_HDR_OFFSET)) \
 		$(UBINIZE_OPTS)
 	cat $@.tmp >> $@
 	rm $@.tmp
