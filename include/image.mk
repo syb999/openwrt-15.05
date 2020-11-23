@@ -329,6 +329,9 @@ define Device/Init
   SUBPAGESIZE :=
   UBINIZE_OPTS := -E 5
 
+  DEVICE_DTS :=
+  DEVICE_DTS_DIR :=
+
   FILESYSTEMS := $(TARGET_FILESYSTEMS)
 endef
 
