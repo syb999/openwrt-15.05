@@ -53,6 +53,7 @@ help: FORCE
 
 # override variables from rules.mk
 PACKAGE_DIR:=$(TOPDIR)/packages
+LISTS_DIR:=$(subst $(space),/,$(patsubst %,..,$(subst /,$(space),$(TARGET_DIR))))$(DL_DIR)
 OPKG:= \
   IPKG_NO_SCRIPT=1 \
   IPKG_TMP="$(TMP_DIR)/ipkgtmp" \
@@ -65,25 +66,37 @@ OPKG:= \
 	--force-overwrite \
 	--force-postinstall \
 	--cache $(DL_DIR) \
+	--lists-dir $(LISTS_DIR) \
 	--offline-root $(TARGET_DIR) \
 	--add-dest root:/ \
 	--add-arch all:100 \
 	--add-arch $(ARCH_PACKAGES):200
 
-define Profile
-  $(eval $(call Profile/Default))
-  $(eval $(call Profile/$(1)))
-  ifeq ($(USER_PROFILE),)
-    USER_PROFILE:=$(1)
-  endif
-  $(1)_NAME:=$(NAME)
-  $(1)_PACKAGES:=$(PACKAGES)
-  PROFILE_NAMES += $(1)
-  PROFILE_LIST += \
-  	echo '$(1):'; [ -z '$(NAME)' ] || echo '	$(NAME)'; echo '	Packages: $(PACKAGES)';
-endef
-
 include $(INCLUDE_DIR)/target.mk
+-include .profiles.mk
+
+USER_PROFILE ?= $(firstword $(PROFILE_NAMES))
+PROFILE_LIST = $(foreach p,$(PROFILE_NAMES), \
+	echo '$(p):'; $(if $($(p)_NAME),echo '    $($(p)_NAME)'; ) echo '    Packages: $($(p)_PACKAGES)'; \
+)
+
+.profiles.mk: .targetinfo
+	$(SCRIPT_DIR)/target-metadata.pl profile_mk $< '$(BOARD)$(if $(SUBTARGET),/$(SUBTARGET))' > $@
+
+staging_dir/host/.prereq-build: include/prereq-build.mk
+	mkdir -p tmp
+	rm -f tmp/.host.mk
+	@$(_SINGLE)$(NO_TRACE_MAKE) -j1 -r -s -f $(TOPDIR)/include/prereq-build.mk prereq 2>/dev/null || { \
+		echo "Prerequisite check failed. Use FORCE=1 to override."; \
+		false; \
+	}
+  ifneq ($(realpath $(TOPDIR)/include/prepare.mk),)
+	@$(_SINGLE)$(NO_TRACE_MAKE) -j1 -r -s -f $(TOPDIR)/include/prepare.mk prepare 2>/dev/null || { \
+		echo "Preparation failed."; \
+		false; \
+	}
+  endif
+	touch $@
 
 _call_info: FORCE
 	echo 'Current Target: "$(BOARD)$(if $(SUBTARGET), ($(BOARDNAME)))"'
@@ -91,12 +104,12 @@ _call_info: FORCE
 	echo 'Available Profiles:'
 	echo; $(PROFILE_LIST)
 
-BUILD_PACKAGES:=$(sort $(DEFAULT_PACKAGES) $(USER_PACKAGES) $($(USER_PROFILE)_PACKAGES) kernel)
+BUILD_PACKAGES:=$(USER_PACKAGES) $(sort $(DEFAULT_PACKAGES) $($(USER_PROFILE)_PACKAGES) kernel)
 # "-pkgname" in the package list means remove "pkgname" from the package list
 BUILD_PACKAGES:=$(filter-out $(filter -%,$(BUILD_PACKAGES)) $(patsubst -%,%,$(filter -%,$(BUILD_PACKAGES))),$(BUILD_PACKAGES))
 PACKAGES:=
 
-_call_image:
+_call_image: staging_dir/host/.prereq-build
 	echo 'Building images for $(BOARD)$(if $($(USER_PROFILE)_NAME), - $($(USER_PROFILE)_NAME))'
 	echo 'Packages: $(BUILD_PACKAGES)'
 	echo
