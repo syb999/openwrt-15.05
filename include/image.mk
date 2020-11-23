@@ -85,6 +85,14 @@ define add_jffs2_mark
 	echo -ne '\xde\xad\xc0\xde' >> $(1)
 endef
 
+define tolower
+$(shell echo $(1) | tr '[:upper:]' '[:lower:]')
+endef
+
+define sanitize
+$(shell echo $(call tolower,$(1)) | sed 's/_/-/g')
+endef
+
 PROFILE_SANITIZED := $(call sanitize,$(PROFILE))
 
 define split_args
