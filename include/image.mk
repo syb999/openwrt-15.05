@@ -454,6 +454,14 @@ define Build/sysupgrade-tar
 		$@
 endef
 
+define Build/combined-image
+	-sh $(TOPDIR)/scripts/combined-image.sh \
+		"$(word 1,$^)" \
+		"$@" \
+		"$@.new"
+	@mv $@.new $@
+endef
+
 define Device/Init
   PROFILES := $(PROFILE)
   DEVICE_NAME := $(1)
