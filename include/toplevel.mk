@@ -97,7 +97,8 @@ scripts/config/conf:
 	@$(_SINGLE)$(SUBMAKE) -s -C scripts/config conf CC="$(HOSTCC_WRAPPER)"
 
 config: scripts/config/conf prepare-tmpinfo FORCE
-	$< Config.in
+	[ -L .config ] && export KCONFIG_OVERWRITECONFIG=1; \
+		$< Config.in
 
 config-clean: FORCE
 	$(_SINGLE)$(NO_TRACE_MAKE) -C scripts/config clean
@@ -105,7 +106,8 @@ config-clean: FORCE
 defconfig: scripts/config/conf prepare-tmpinfo FORCE
 	touch .config
 	@if [ ! -s .config -a -e $(HOME)/.openwrt/defconfig ]; then cp $(HOME)/.openwrt/defconfig .config; fi
-	$< --defconfig=.config Config.in
+	[ -L .config ] && export KCONFIG_OVERWRITECONFIG=1; \
+		$< --defconfig=.config Config.in
 
 confdefault-y=allyes
 confdefault-m=allmod
@@ -113,13 +115,15 @@ confdefault-n=allno
 confdefault:=$(confdefault-$(CONFDEFAULT))
 
 oldconfig: scripts/config/conf prepare-tmpinfo FORCE
-	$< --$(if $(confdefault),$(confdefault),old)config Config.in
+	[ -L .config ] && export KCONFIG_OVERWRITECONFIG=1; \
+		$< --$(if $(confdefault),$(confdefault),old)config Config.in
 
 menuconfig: scripts/config/mconf prepare-tmpinfo FORCE
 	if [ \! -e .config -a -e $(HOME)/.openwrt/defconfig ]; then \
 		cp $(HOME)/.openwrt/defconfig .config; \
 	fi
-	[ -L .config ] && export KCONFIG_OVERWRITECONFIG=1; $< Config.in
+	[ -L .config ] && export KCONFIG_OVERWRITECONFIG=1; \
+		$< Config.in
 
 prepare_kernel_conf: .config FORCE
 
