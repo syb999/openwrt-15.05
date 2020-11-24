@@ -2,7 +2,7 @@ package metadata;
 use base 'Exporter';
 use strict;
 use warnings;
-our @EXPORT = qw(%package %srcpackage %category %subdir %preconfig %features %overrides clear_packages parse_package_metadata parse_target_metadata get_multiline);
+our @EXPORT = qw(%package %srcpackage %category %subdir %preconfig %features %overrides clear_packages parse_package_metadata parse_target_metadata get_multiline @ignore);
 
 our %package;
 our %preconfig;
@@ -11,6 +11,7 @@ our %category;
 our %subdir;
 our %features;
 our %overrides;
+our @ignore;
 
 sub get_multiline {
 	my $fh = shift;
@@ -87,6 +88,7 @@ sub parse_target_metadata($) {
 				priority => 999,
 				packages => []
 			};
+			$1 =~ /^DEVICE_/ and $target->{has_devices} = 1;
 			push @{$target->{profiles}}, $profile;
 		};
 		/^Target-Profile-Name:\s*(.+)\s*$/ and do {
@@ -135,6 +137,7 @@ sub parse_package_metadata($) {
 	my $subdir;
 	my $src;
 	my $override;
+	my %ignore = map { $_ => 1 } @ignore;
 
 	open FILE, "<$file" or do {
 		warn "Cannot open '$file': $!\n";
@@ -157,6 +160,7 @@ sub parse_package_metadata($) {
 			$overrides{$src} = 1;
 		};
 		next unless $src;
+		next if $ignore{$src};
 		/^Package:\s*(.+?)\s*$/ and do {
 			undef $feature;
 			$pkg = {};
