@@ -246,7 +246,7 @@ $(call KernelPackage/$(1)/config)
 
 endef
 
-version_filter=$(if $(findstring @,$(1)),$(shell $(SCRIPT_DIR)/package-metadata.pl version_filter $(KERNEL_PATCHVER) $(1)),$(1))
+version_filter=$(if $(findstring @,$(1)),$(shell $(SCRIPT_DIR)/metadata.pl version_filter $(KERNEL_PATCHVER) $(1)),$(1))
 
 define AutoLoad
   add_module "$(1)" "$(call version_filter,$(2))" "$(3)";

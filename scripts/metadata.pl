@@ -3,7 +3,6 @@ use FindBin;
 use lib "$FindBin::Bin";
 use strict;
 use metadata;
-use Getopt::Long;
 
 my %board;
 
@@ -97,6 +96,293 @@ sub gen_kconfig_overrides() {
 	}
 }
 
+sub merge_package_lists($$) {
+	my $list1 = shift;
+	my $list2 = shift;
+	my @l = ();
+	my %pkgs;
+
+	foreach my $pkg (@$list1, @$list2) {
+		$pkgs{$pkg} = 1;
+	}
+	foreach my $pkg (keys %pkgs) {
+		push @l, $pkg unless ($pkg =~ /^-/ or $pkgs{"-$pkg"});
+	}
+	return sort(@l);
+}
+
+sub target_config_features(@) {
+	my $ret;
+
+	while ($_ = shift @_) {
+		/arm_v(\w+)/ and $ret .= "\tselect arm_v$1\n";
+		/broken/ and $ret .= "\tdepends on BROKEN\n";
+		/audio/ and $ret .= "\tselect AUDIO_SUPPORT\n";
+		/display/ and $ret .= "\tselect DISPLAY_SUPPORT\n";
+		/dt/ and $ret .= "\tselect USES_DEVICETREE\n";
+		/gpio/ and $ret .= "\tselect GPIO_SUPPORT\n";
+		/pci/ and $ret .= "\tselect PCI_SUPPORT\n";
+		/pcie/ and $ret .= "\tselect PCIE_SUPPORT\n";
+		/usb/ and $ret .= "\tselect USB_SUPPORT\n";
+		/usbgadget/ and $ret .= "\tselect USB_GADGET_SUPPORT\n";
+		/pcmcia/ and $ret .= "\tselect PCMCIA_SUPPORT\n";
+		/rtc/ and $ret .= "\tselect RTC_SUPPORT\n";
+		/squashfs/ and $ret .= "\tselect USES_SQUASHFS\n";
+		/jffs2$/ and $ret .= "\tselect USES_JFFS2\n";
+		/jffs2_nand/ and $ret .= "\tselect USES_JFFS2_NAND\n";
+		/ext4/ and $ret .= "\tselect USES_EXT4\n";
+		/targz/ and $ret .= "\tselect USES_TARGZ\n";
+		/cpiogz/ and $ret .= "\tselect USES_CPIOGZ\n";
+		/ubifs/ and $ret .= "\tselect USES_UBIFS\n";
+		/fpu/ and $ret .= "\tselect HAS_FPU\n";
+		/spe_fpu/ and $ret .= "\tselect HAS_SPE_FPU\n";
+		/ramdisk/ and $ret .= "\tselect USES_INITRAMFS\n";
+		/powerpc64/ and $ret .= "\tselect powerpc64\n";
+		/nommu/ and $ret .= "\tselect NOMMU\n";
+		/mips16/ and $ret .= "\tselect HAS_MIPS16\n";
+		/rfkill/ and $ret .= "\tselect RFKILL_SUPPORT\n";
+		/low_mem/ and $ret .= "\tselect LOW_MEMORY_FOOTPRINT\n";
+		/nand/ and $ret .= "\tselect NAND_SUPPORT\n";
+	}
+	return $ret;
+}
+
+sub target_name($) {
+	my $target = shift;
+	my $parent = $target->{parent};
+	if ($parent) {
+		return $target->{parent}->{name}." - ".$target->{name};
+	} else {
+		return $target->{name};
+	}
+}
+
+sub kver($) {
+	my $v = shift;
+	$v =~ tr/\./_/;
+	if (substr($v,0,2) eq "2_") {
+		$v =~ /(\d+_\d+_\d+)(_\d+)?/ and $v = $1;
+	} else {
+		$v =~ /(\d+_\d+)(_\d+)?/ and $v = $1;
+	}
+	return $v;
+}
+
+sub print_target($) {
+	my $target = shift;
+	my $features = target_config_features(@{$target->{features}});
+	my $help = $target->{desc};
+	my $confstr;
+
+	chomp $features;
+	$features .= "\n";
+	if ($help =~ /\w+/) {
+		$help =~ s/^\s*/\t  /mg;
+		$help = "\thelp\n$help";
+	} else {
+		undef $help;
+	}
+
+	my $v = kver($target->{version});
+	if (@{$target->{subtargets}} == 0) {
+	$confstr = <<EOF;
+config TARGET_$target->{conf}
+	bool "$target->{name}"
+	select LINUX_$v
+EOF
+	}
+	else {
+		$confstr = <<EOF;
+config TARGET_$target->{conf}
+	bool "$target->{name}"
+EOF
+	}
+	if ($target->{subtarget}) {
+		$confstr .= "\tdepends on TARGET_$target->{boardconf}\n";
+	}
+	if (@{$target->{subtargets}} > 0) {
+		$confstr .= "\tselect HAS_SUBTARGETS\n";
+		grep { /broken/ } @{$target->{features}} and $confstr .= "\tdepends on BROKEN\n";
+	} else {
+		$confstr .= $features;
+		if ($target->{arch} =~ /\w/) {
+			$confstr .= "\tselect $target->{arch}\n";
+		}
+	}
+
+	foreach my $dep (@{$target->{depends}}) {
+		my $mode = "depends on";
+		my $flags;
+		my $name;
+
+		$dep =~ /^([@\+\-]+)(.+)$/;
+		$flags = $1;
+		$name = $2;
+
+		next if $name =~ /:/;
+		$flags =~ /-/ and $mode = "deselect";
+		$flags =~ /\+/ and $mode = "select";
+		$flags =~ /@/ and $confstr .= "\t$mode $name\n";
+	}
+	$confstr .= "$help\n\n";
+	print $confstr;
+}
+
+sub gen_target_config() {
+	my $file = shift @ARGV;
+	my @target = parse_target_metadata($file);
+	my %defaults;
+
+	my @target_sort = sort {
+		target_name($a) cmp target_name($b);
+	} @target;
+
+
+	print <<EOF;
+choice
+	prompt "Target System"
+	default TARGET_ar71xx
+	reset if !DEVEL
+	
+EOF
+
+	foreach my $target (@target_sort) {
+		next if $target->{subtarget};
+		print_target($target);
+	}
+
+	print <<EOF;
+endchoice
+
+choice
+	prompt "Subtarget" if HAS_SUBTARGETS
+EOF
+	foreach my $target (@target) {
+		next unless $target->{def_subtarget};
+		print <<EOF;
+	default TARGET_$target->{conf}_$target->{def_subtarget} if TARGET_$target->{conf}
+EOF
+	}
+	print <<EOF;
+
+EOF
+	foreach my $target (@target) {
+		next unless $target->{subtarget};
+		print_target($target);
+	}
+
+print <<EOF;
+endchoice
+
+choice
+	prompt "Target Profile"
+
+EOF
+
+	foreach my $target (@target) {
+		my $profiles = $target->{profiles};
+		$target->{sort} and @$profiles = sort {
+			$a->{priority} <=> $b->{priority} or
+			$a->{name} cmp $b->{name};
+		} @$profiles;
+
+		foreach my $profile (@$profiles) {
+			print <<EOF;
+config TARGET_$target->{conf}_$profile->{id}
+	bool "$profile->{name}"
+	depends on TARGET_$target->{conf}
+$profile->{config}
+EOF
+			$profile->{kconfig} and print "\tselect PROFILE_KCONFIG\n";
+			my @pkglist = merge_package_lists($target->{packages}, $profile->{packages});
+			foreach my $pkg (@pkglist) {
+				print "\tselect DEFAULT_$pkg\n";
+				$defaults{$pkg} = 1;
+			}
+			my $help = $profile->{desc};
+			if ($help =~ /\w+/) {
+				$help =~ s/^\s*/\t  /mg;
+				$help = "\thelp\n$help";
+			} else {
+				undef $help;
+			}
+			print "$help\n";
+		}
+	}
+
+	print <<EOF;
+endchoice
+
+config HAS_SUBTARGETS
+	bool
+
+config TARGET_BOARD
+	string
+
+EOF
+	foreach my $target (@target) {
+		$target->{subtarget} or	print "\t\tdefault \"".$target->{board}."\" if TARGET_".$target->{conf}."\n";
+	}
+	print <<EOF;
+config TARGET_PROFILE
+	string
+EOF
+	foreach my $target (@target) {
+		my $profiles = $target->{profiles};
+		foreach my $profile (@$profiles) {
+			print "\tdefault \"$profile->{id}\" if TARGET_$target->{conf}_$profile->{id}\n";
+		}
+	}
+
+	print <<EOF;
+
+config TARGET_ARCH_PACKAGES
+	string
+	
+EOF
+	foreach my $target (@target) {
+		next if @{$target->{subtargets}} > 0;
+		print "\t\tdefault \"".($target->{arch_packages} || $target->{board})."\" if TARGET_".$target->{conf}."\n";
+	}
+	print <<EOF;
+
+config DEFAULT_TARGET_OPTIMIZATION
+	string
+EOF
+	foreach my $target (@target) {
+		next if @{$target->{subtargets}} > 0;
+		print "\tdefault \"".$target->{cflags}."\" if TARGET_".$target->{conf}."\n";
+	}
+	print "\tdefault \"-Os -pipe -funit-at-a-time\"\n";
+	print <<EOF;
+
+config CPU_TYPE
+	string
+EOF
+	foreach my $target (@target) {
+		next if @{$target->{subtargets}} > 0;
+		print "\tdefault \"".$target->{cputype}."\" if TARGET_".$target->{conf}."\n";
+	}
+	print "\tdefault \"\"\n";
+
+	my %kver;
+	foreach my $target (@target) {
+		my $v = kver($target->{version});
+		next if $kver{$v};
+		$kver{$v} = 1;
+		print <<EOF;
+
+config LINUX_$v
+	bool
+
+EOF
+	}
+	foreach my $def (sort keys %defaults) {
+		print "\tconfig DEFAULT_".$def."\n";
+		print "\t\tbool\n\n";
+	}
+}
+
 my %dep_check;
 sub __find_package_dep($$) {
 	my $pkg = shift;
@@ -174,55 +460,27 @@ sub mconf_depends {
 			$depend = $2;
 		}
 		next if $package{$depend} and $package{$depend}->{buildonly};
-		if ($flags =~ /\+/) {
-			if ($vdep = $package{$depend}->{vdepends}) {
-				my @vdeps;
-				$depend = undef;
-
-				foreach my $v (@$vdep) {
-					if ($package{$v} && $package{$v}->{variant_default}) {
-						$depend = $v;
-					} else {
-						push @vdeps, $v;
-					}
-				}
-
-				if (!$depend) {
-					$depend = shift @vdeps;
-				}
-
-				if (@vdeps > 1) {
-					$condition = ($condition ? "$condition && " : '') . '!('.join("||", map { "PACKAGE_".$_ } @vdeps).')';
-				} elsif (@vdeps > 0) {
-					$condition = ($condition ? "$condition && " : '') . '!PACKAGE_'.$vdeps[0];
-				}
-			}
-
-			# Menuconfig will not treat 'select FOO' as a real dependency
-			# thus if FOO depends on other config options, these dependencies
-			# will not be checked. To fix this, we simply emit all of FOO's
-			# depends here as well.
-			$package{$depend} and push @t_depends, [ $package{$depend}->{depends}, $condition ];
-
-			$m = "select";
-			next if $only_dep;
-
-			$flags =~ /@/ or $depend = "PACKAGE_$depend";
+		if ($vdep = $package{$depend}->{vdepends}) {
+			$depend = join("||", map { "PACKAGE_".$_ } @$vdep);
 		} else {
-			if ($vdep = $package{$depend}->{vdepends}) {
-				$depend = join("||", map { "PACKAGE_".$_ } @$vdep);
-			} else {
-				$flags =~ /@/ or $depend = "PACKAGE_$depend";
-			}
-		}
+			$flags =~ /\+/ and do {
+				# Menuconfig will not treat 'select FOO' as a real dependency
+				# thus if FOO depends on other config options, these dependencies
+				# will not be checked. To fix this, we simply emit all of FOO's
+				# depends here as well.
+				$package{$depend} and push @t_depends, [ $package{$depend}->{depends}, $condition ];
 
-		if ($condition) {
-			if ($m =~ /select/) {
-				next if $depend eq $condition;
-				$depend = "$depend if $condition";
-			} else {
-				next if $dep->{"$depend if $condition"};
-				$depend = "!($condition) || $depend" unless $dep->{$condition} eq 'select';
+				$m = "select";
+				next if $only_dep;
+			};
+			$flags =~ /@/ or $depend = "PACKAGE_$depend";
+			if ($condition) {
+				if ($m =~ /select/) {
+					next if $depend eq $condition;
+					$depend = "$depend if $condition";
+				} else {
+					$depend = "!($condition) || $depend" unless $dep->{$condition} eq 'select';
+				}
 			}
 		}
 		$dep->{$depend} =~ /select/ or $dep->{$depend} = $m;
@@ -290,7 +548,6 @@ sub print_package_config_category($) {
 			print "menu \"$menu\"\n";
 		}
 		foreach my $pkg (@pkgs) {
-			next if $pkg->{ignore};
 			my $title = $pkg->{name};
 			my $c = (72 - length($pkg->{name}) - length($pkg->{title}));
 			if ($c > 0) {
@@ -304,14 +561,11 @@ sub print_package_config_category($) {
 			print "\t\t".($pkg->{tristate} ? 'tristate' : 'bool')." $title\n";
 			print "\t\tdefault y if DEFAULT_".$pkg->{name}."\n";
 			unless ($pkg->{hidden}) {
-				my @def = ("ALL");
-				if (!exists($pkg->{repository})) {
-					push @def, "ALL_NONSHARED";
-				}
 				if ($pkg->{name} =~ /^kmod-/) {
-					push @def, "ALL_KMODS";
+					$pkg->{default} ||= "m if ALL_KMODS";
+				} else {
+					$pkg->{default} ||= "m if ALL";
 				}
-				$pkg->{default} ||= "m if " . join("||", @def);
 			}
 			if ($pkg->{default}) {
 				foreach my $default (split /\s*,\s*/, $pkg->{default}) {
@@ -366,7 +620,7 @@ sub print_package_overrides() {
 	keys %overrides > 0 or return;
 	print "\tconfig OVERRIDE_PKGS\n";
 	print "\t\tstring\n";
-	print "\t\tdefault \"".join(" ", sort keys %overrides)."\"\n\n";
+	print "\t\tdefault \"".join(" ", keys %overrides)."\"\n\n";
 }
 
 sub gen_package_config() {
@@ -460,27 +714,20 @@ sub gen_package_mk() {
 			next unless $pkg->{"builddepends/$type"};
 			foreach my $dep (@{$pkg->{"builddepends/$type"}}) {
 				my $suffix = "";
-				my $deptype = "";
 				my $condition;
 
 				if ($dep =~ /^(.+):(.+)/) {
 					$condition = $1;
 					$dep = $2;
 				}
-				if ($dep =~ /^(.+)\/(.+)/) {
+				if ($dep =~ /^(.+)(\/.+)/) {
 					$dep = $1;
-					$deptype = $2;
-					$suffix = "/$2";
+					$suffix = $2;
 				}
 
 				my $idx = "";
 				my $pkg_dep = $package{$dep};
 				if (defined($pkg_dep) && defined($pkg_dep->{src})) {
-					unless (!$deptype || grep { $_ eq $deptype } @{$pkg_dep->{buildtypes}}) {
-						warn sprintf "WARNING: Makefile '%s' has a %s build dependency on '%s/%s' but '%s' does not implement a '%s' build type\n",
-							$pkg->{makefile}, $type, $pkg_dep->{src}, $deptype, $pkg_dep->{makefile}, $deptype;
-						next;
-					}
 					$idx = $pkg_dep->{subdir}.$pkg_dep->{src};
 				} elsif (defined($srcpackage{$dep})) {
 					$idx = $subdir{$dep}.$dep;
@@ -506,16 +753,14 @@ sub gen_package_mk() {
 			my $condition;
 			my $prefix = "";
 			my $suffix = "";
-			my $deptype = "";
 
 			if ($deps =~ /^(.+):(.+)/) {
 				$condition = $1;
 				$deps = $2;
 			}
-			if ($deps =~ /^(.+)\/(.+)/) {
+			if ($deps =~ /^(.+)(\/.+)/) {
 				$deps = $1;
-				$deptype = $2;
-				$suffix = "/$2";
+				$suffix = $2;
 			}
 
 			my $pkg_dep = $package{$deps};
@@ -530,17 +775,7 @@ sub gen_package_mk() {
 			foreach my $dep (@deps) {
 				$pkg_dep = $package{$deps};
 				if (defined $pkg_dep->{src}) {
-					unless (!$deptype || grep { $_ eq $deptype } @{$pkg_dep->{buildtypes}}) {
-						warn sprintf "WARNING: Makefile '%s' has a build dependency on '%s/%s' but '%s' does not implement a '%s' build type\n",
-							$pkg->{makefile}, $pkg_dep->{src}, $deptype, $pkg_dep->{makefile}, $deptype;
-						next;
-					}
-					unless ($pkg->{src} ne $pkg_dep->{sec}.$suffix) {
-						warn sprintf "WARNING: Makefile '%s' has a build dependency on itself\n",
-							$pkg->{makefile};
-						next;
-					}
-					$idx = $pkg_dep->{subdir}.$pkg_dep->{src};
+					($pkg->{src} ne $pkg_dep->{src}.$suffix) and $idx = $pkg_dep->{subdir}.$pkg_dep->{src};
 				} elsif (defined($srcpackage{$dep})) {
 					$idx = $subdir{$dep}.$dep;
 				}
@@ -592,7 +827,7 @@ ifndef DUMP_TARGET_DB
 	( \\
 $cmds \\
 	) > \$@
-
+	
 ifneq (\$(IMAGEOPT)\$(CONFIG_IMAGEOPT),)
   package/preconfig: \$(TARGET_DIR)/etc/uci-defaults/$preconfig
 endif
@@ -613,12 +848,12 @@ sub gen_package_source() {
 	}
 }
 
-sub gen_package_subdirs() {
+sub gen_package_feeds() {
 	parse_package_metadata($ARGV[0]) or exit 1;
 	foreach my $name (sort {uc($a) cmp uc($b)} keys %package) {
 		my $pkg = $package{$name};
-		if ($pkg->{name} && $pkg->{repository}) {
-			print "Package/$name/subdir = $pkg->{repository}\n";
+		if ($pkg->{name} && $pkg->{feed}) {
+			print "Package/$name/feed = $pkg->{feed}\n";
 		}
 	}
 }
@@ -652,31 +887,30 @@ sub gen_version_filtered_list() {
 }
 
 sub parse_command() {
-	GetOptions("ignore=s", \@ignore);
 	my $cmd = shift @ARGV;
 	for ($cmd) {
-		/^mk$/ and return gen_package_mk();
-		/^config$/ and return gen_package_config();
+		/^target_config$/ and return gen_target_config();
+		/^package_mk$/ and return gen_package_mk();
+		/^package_config$/ and return gen_package_config();
 		/^kconfig/ and return gen_kconfig_overrides();
-		/^source$/ and return gen_package_source();
-		/^subdirs$/ and return gen_package_subdirs();
-		/^license$/ and return gen_package_license(0);
-		/^licensefull$/ and return gen_package_license(1);
+		/^package_source$/ and return gen_package_source();
+		/^package_feeds$/ and return gen_package_feeds();
+		/^package_license$/ and return gen_package_license(0);
+		/^package_licensefull$/ and return gen_package_license(1);
 		/^version_filter$/ and return gen_version_filtered_list();
 	}
-	die <<EOF
+	print <<EOF
 Available Commands:
-	$0 mk [file]				Package metadata in makefile format
-	$0 config [file] 			Package metadata in Kconfig format
+	$0 target_config [file] 		Target metadata in Kconfig format
+	$0 package_mk [file]			Package metadata in makefile format
+	$0 package_config [file] 		Package metadata in Kconfig format
 	$0 kconfig [file] [config] [patchver]	Kernel config overrides
-	$0 source [file] 			Package source file information
-	$0 subdirs [file]			Package subdir information in makefile format
-	$0 license [file] 			Package license information
-	$0 licensefull [file] 			Package license information (full list)
+	$0 package_source [file] 		Package source file information
+	$0 package_feeds [file]			Package feed information in makefile format
+	$0 package_license [file] 		Package license information
+	$0 package_licensefull [file] 		Package license information (full list)
 	$0 version_filter [patchver] [list...]	Filter list of version tagged strings
 
-Options:
-	--ignore <name>				Ignore the source package <name>
 EOF
 }
 

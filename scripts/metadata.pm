@@ -2,7 +2,7 @@ package metadata;
 use base 'Exporter';
 use strict;
 use warnings;
-our @EXPORT = qw(%package %srcpackage %category %subdir %preconfig %features %overrides clear_packages parse_package_metadata parse_target_metadata get_multiline @ignore);
+our @EXPORT = qw(%package %srcpackage %category %subdir %preconfig %features %overrides clear_packages parse_package_metadata parse_target_metadata get_multiline);
 
 our %package;
 our %preconfig;
@@ -11,7 +11,6 @@ our %category;
 our %subdir;
 our %features;
 our %overrides;
-our @ignore;
 
 sub get_multiline {
 	my $fh = shift;
@@ -68,6 +67,7 @@ sub parse_target_metadata($) {
 			}
 		};
 		/^Target-Name:\s*(.+)\s*$/ and $target->{name} = $1;
+		/^Target-Path:\s*(.+)\s*$/ and $target->{path} = $1;
 		/^Target-Arch:\s*(.+)\s*$/ and $target->{arch} = $1;
 		/^Target-Arch-Packages:\s*(.+)\s*$/ and $target->{arch_packages} = $1;
 		/^Target-Features:\s*(.+)\s*$/ and $target->{features} = [ split(/\s+/, $1) ];
@@ -87,14 +87,13 @@ sub parse_target_metadata($) {
 				priority => 999,
 				packages => []
 			};
-			$1 =~ /^DEVICE_/ and $target->{has_devices} = 1;
 			push @{$target->{profiles}}, $profile;
 		};
-		/^Target-Profile-Name:\s*(.+)\s*$/ and $profile->{name} = $1;
-		/^Target-Profile-Priority:\s*(\d+)\s*$/ and do {
-			$profile->{priority} = $1;
+		/^Target-Profile-Name:\s*(.+)\s*$/ and do {
 			$target->{sort} = 1;
+			$profile->{name} = $1;
 		};
+		/^Target-Profile-Priority:\s*(\d+)\s*$/ and $profile->{priority} = $1;
 		/^Target-Profile-Packages:\s*(.*)\s*$/ and $profile->{packages} = [ split(/\s+/, $1) ];
 		/^Target-Profile-Description:\s*(.*)\s*/ and $profile->{desc} = get_multiline(*FILE);
 		/^Target-Profile-Config:/ and $profile->{config} = get_multiline(*FILE, "\t");
@@ -136,7 +135,6 @@ sub parse_package_metadata($) {
 	my $subdir;
 	my $src;
 	my $override;
-	my %ignore = map { $_ => 1 } @ignore;
 
 	open FILE, "<$file" or do {
 		warn "Cannot open '$file': $!\n";
@@ -159,7 +157,6 @@ sub parse_package_metadata($) {
 			$overrides{$src} = 1;
 		};
 		next unless $src;
-		next if $ignore{$src};
 		/^Package:\s*(.+?)\s*$/ and do {
 			undef $feature;
 			$pkg = {};
@@ -227,7 +224,7 @@ sub parse_package_metadata($) {
 		/^Build-Depends: \s*(.+)\s*$/ and $pkg->{builddepends} = [ split /\s+/, $1 ];
 		/^Build-Depends\/(\w+): \s*(.+)\s*$/ and $pkg->{"builddepends/$1"} = [ split /\s+/, $2 ];
 		/^Build-Types:\s*(.+)\s*$/ and $pkg->{buildtypes} = [ split /\s+/, $1 ];
-		/^Repository:\s*(.+?)\s*$/ and $pkg->{repository} = $1;
+		/^Feed:\s*(.+?)\s*$/ and $pkg->{feed} = $1;
 		/^Category: \s*(.+)\s*$/ and do {
 			$pkg->{category} = $1;
 			defined $category{$1} or $category{$1} = {};
