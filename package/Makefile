@@ -68,28 +68,19 @@ ifndef CONFIG_OPKGSMIME_PASSPHRASE
   endif
 endif
 
-PACKAGE_SUBDIRS=.
-ifneq ($(CONFIG_PER_FEED_REPO),)
-  ifneq ($(CONFIG_PER_FEED_REPO_ADD_DISABLED),)
-    PACKAGE_SUBDIRS=base kernel $(FEEDS_AVAILABLE)
-  else
-    PACKAGE_SUBDIRS=base kernel $(FEEDS_ENABLED)
-  endif
-endif
-
 $(curdir)/index: FORCE
 	@echo Generating package index...
 	@for d in $(PACKAGE_SUBDIRS); do ( \
-		mkdir -p $(PACKAGE_DIR)/$$d; \
-		cd $(PACKAGE_DIR)/$$d || continue; \
+		mkdir -p $$d; \
+		cd $$d || continue; \
 		$(SCRIPT_DIR)/ipkg-make-index.sh . 2>&1 > Packages && \
 			gzip -9nc Packages > Packages.gz; \
 	); done
 ifdef CONFIG_SIGNED_PACKAGES
 	@echo Signing package index...
 	@for d in $(PACKAGE_SUBDIRS); do ( \
-		[ -d $(PACKAGE_DIR)/$$d ] && \
-			cd $(PACKAGE_DIR)/$$d || continue; \
+		[ -d $$d ] && \
+			cd $$d || continue; \
 		$(STAGING_DIR_HOST)/bin/usign -S -m Packages -s $(BUILD_KEY); \
 	); done
 else
@@ -101,8 +92,8 @@ ifeq ($(call qstrip,$(CONFIG_OPKGSMIME_CERT)),)
 else
 	@echo Signing package index...
 	@for d in $(PACKAGE_SUBDIRS); do ( \
-		[ -d $(PACKAGE_DIR)/$$d ] && \
-			cd $(PACKAGE_DIR)/$$d || continue; \
+		[ -d $$d ] && \
+			cd $$d || continue; \
 		openssl smime -binary -in Packages.gz \
 			-out Packages.sig -outform PEM -sign \
 			-signer $(CONFIG_OPKGSMIME_CERT) \

@@ -12,6 +12,16 @@ FEEDS_INSTALLED:=$(notdir $(wildcard $(TOPDIR)/package/feeds/*))
 FEEDS_ENABLED:=$(foreach feed,$(FEEDS_INSTALLED),$(if $(CONFIG_FEED_$(feed)),$(feed)))
 FEEDS_DISABLED:=$(filter-out $(FEEDS_ENABLED),$(FEEDS_AVAILABLE))
 
+PACKAGE_SUBDIRS=$(PACKAGE_DIR)
+ifneq ($(CONFIG_PER_FEED_REPO),)
+	PACKAGE_SUBDIRS += $(OUTPUT_DIR)/packages/$(ARCH_PACKAGES)/base
+	ifneq ($(CONFIG_PER_FEED_REPO_ADD_DISABLED),)
+		PACKAGE_SUBDIRS += $(foreach FEED,$(FEEDS_AVAILABLE),$(OUTPUT_DIR)/packages/$(ARCH_PACKAGES)/$(FEED))
+	else
+		PACKAGE_SUBDIRS += $(foreach FEED,$(FEEDS_ENABLED),$(OUTPUT_DIR)/packages/$(ARCH_PACKAGES)/$(FEED))
+	endif
+endif
+
 PKG_CONFIG_DEPENDS += \
 	CONFIG_PER_FEED_REPO \
 	CONFIG_PER_FEED_REPO_ADD_DISABLED \
@@ -19,9 +29,13 @@ PKG_CONFIG_DEPENDS += \
 	$(foreach feed,$(FEEDS_INSTALLED),CONFIG_FEED_$(feed))
 
 # 1: package name
+# 2: flags
+# 3: section
 define FeedPackageDir
 $(strip $(if $(CONFIG_PER_FEED_REPO), \
-  $(abspath $(PACKAGE_DIR)/$(if $(Package/$(1)/subdir),$(Package/$(1)/subdir),base)), \
+  $(if $(Package/$(1)/subdir), \
+    $(abspath $(OUTPUT_DIR)/packages/$(ARCH_PACKAGES)/$(Package/$(1)/subdir)), \
+    $(PACKAGE_DIR)), \
   $(PACKAGE_DIR)))
 endef
 
