@@ -143,10 +143,18 @@ define Build/combined-image
 	@mv $@.new $@
 endef
 
+define Build/sysupgrade-tar
+	sh $(TOPDIR)/scripts/sysupgrade-tar.sh \
+		--board $(if $(BOARD_NAME),$(BOARD_NAME),$(DEVICE_NAME)) \
+		--kernel $(call param_get_default,kernel,$(1),$(word 1,$^)) \
+		--rootfs $(call param_get_default,rootfs,$(1),$(word 2,$^)) \
+		$@
+endef
+
 define Build/sysupgrade-nand
 	sh $(TOPDIR)/scripts/sysupgrade-nand.sh \
 		--board $(if $(BOARD_NAME),$(BOARD_NAME),$(DEVICE_NAME)) \
-		--kernel $(word 1,$^) \
-		--rootfs $(word 2,$^) \
+		--kernel $(call param_get_default,kernel,$(1),$(word 1,$^)) \
+		--rootfs $(call param_get_default,rootfs,$(1),$(word 2,$^)) \
 		$@
 endef
