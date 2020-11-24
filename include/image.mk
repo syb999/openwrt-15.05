@@ -285,15 +285,16 @@ mkfs_cur_target_dir = $(call mkfs_target_dir,pkg=$(target_params))
 
 opkg_target = \
 	$(call opkg,$(mkfs_cur_target_dir)) \
-		-f $(mkfs_cur_target_dir).conf
+		-f $(mkfs_cur_target_dir).conf \
+		-l $(mkfs_cur_target_dir).tmp
 
 target-dir-%: FORCE
 	rm -rf $(mkfs_cur_target_dir) $(mkfs_cur_target_dir).opkg
-	$(CP) $(TARGET_DIR_ORIG) $(mkfs_cur_target_dir)
+	$(CP) $(TARGET_DIR) $(mkfs_cur_target_dir)
 	-mv $(mkfs_cur_target_dir)/etc/opkg $(mkfs_cur_target_dir).opkg
 	echo 'src default file://$(PACKAGE_DIR_ALL)' > $(mkfs_cur_target_dir).conf
 	$(if $(mkfs_packages_remove), \
-		-$(call opkg,$(mkfs_cur_target_dir)) remove \
+		$(call opkg,$(mkfs_cur_target_dir)) remove \
 			$(mkfs_packages_remove))
 	$(if $(call opkg_package_files,$(mkfs_packages_add)), \
 		$(opkg_target) update && \
@@ -301,7 +302,9 @@ target-dir-%: FORCE
 			$(call opkg_package_files,$(mkfs_packages_add)))
 	$(call prepare_rootfs,$(mkfs_cur_target_dir))
 	-mv $(mkfs_cur_target_dir).opkg $(mkfs_cur_target_dir)/etc/opkg
-	rm -f $(mkfs_cur_target_dir).conf
+	rm -rf \
+		$(mkfs_cur_target_dir).conf \
+		$(mkfs_cur_target_dir).tmp
 
 $(KDIR)/root.%: kernel_prepare
 	$(call Image/mkfs/$(word 1,$(target_params)),$(target_params))

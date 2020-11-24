@@ -43,19 +43,16 @@ $(curdir)/cleanup: $(TMP_DIR)/.build
 
 $(curdir)/install: $(TMP_DIR)/.build $(curdir)/system/opkg/host/install
 	- find $(STAGING_DIR_ROOT) -type d | $(XARGS) chmod 0755
-	rm -rf $(TARGET_DIR) $(TARGET_DIR_ORIG)
+	rm -rf $(TARGET_DIR)
 	[ -d $(TARGET_DIR)/tmp ] || mkdir -p $(TARGET_DIR)/tmp
-	$(call opkg,$(TARGET_DIR)) install \
-		$(call opkg_package_files,$(shell cat $(PACKAGE_INSTALL_FILES) 2>/dev/null))
+	@$(FIND) `sed -e 's|.*|$(PACKAGE_DIR)$(if $(CONFIG_PER_FEED_REPO),/*)/&_*.ipk|' $(PACKAGE_INSTALL_FILES)` | sort -u | $(OPKG) install
 	@for file in $(PACKAGE_INSTALL_FILES); do \
 		[ -s $$file.flags ] || continue; \
 		for flag in `cat $$file.flags`; do \
-			$(call opkg,$(TARGET_DIR)) flag $$flag `cat $$file`; \
+			$(OPKG) flag $$flag < $$file; \
 		done; \
 	done || true
 	@-$(MAKE) package/preconfig
-
-	$(CP) $(TARGET_DIR) $(TARGET_DIR_ORIG)
 
 	$(call prepare_rootfs,$(TARGET_DIR))
 
