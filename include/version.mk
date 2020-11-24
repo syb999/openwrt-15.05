@@ -7,6 +7,7 @@
 
 # Substituted by SDK, do not remove
 # REVISION:=x
+# SOURCE_DATE_EPOCH:=x
 
 PKG_CONFIG_DEPENDS += \
 	CONFIG_VERSION_NUMBER \
