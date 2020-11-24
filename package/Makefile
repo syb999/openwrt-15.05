@@ -45,11 +45,16 @@ $(curdir)/install: $(TMP_DIR)/.build
 	- find $(STAGING_DIR_ROOT) -type d | $(XARGS) chmod 0755
 	rm -rf $(TARGET_DIR)
 	[ -d $(TARGET_DIR)/tmp ] || mkdir -p $(TARGET_DIR)/tmp
-	@$(FIND) `sed -e 's|.*|$(PACKAGE_DIR)$(if $(CONFIG_PER_FEED_REPO),/*)/&_*.ipk|' $(PACKAGE_INSTALL_FILES)` | sort -u | $(OPKG) install
+	$(call opkg,$(TARGET_DIR)) install \
+		$(wildcard \
+		  $(foreach dir,$(PACKAGE_SUBDIRS), \
+		    $(foreach pkg, \
+		      $(shell cat $(PACKAGE_INSTALL_FILES) 2>/dev/null), \
+		      $(dir)/$(pkg)_*.ipk)))
 	@for file in $(PACKAGE_INSTALL_FILES); do \
 		[ -s $$file.flags ] || continue; \
 		for flag in `cat $$file.flags`; do \
-			$(OPKG) flag $$flag < $$file; \
+			$(call opkg,$(TARGET_DIR)) flag $$flag `cat $$file`; \
 		done; \
 	done || true
 	@-$(MAKE) package/preconfig
