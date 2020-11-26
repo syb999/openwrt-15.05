@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=linux-firmware
-PKG_VERSION:=20200316
+PKG_VERSION:=20201118
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_VERSION:=8eb0b281511d6455ca9151e52f694dc982193251
-PKG_MD5SUM:=504f497ffd7c9f04ce916e445bed6a90
+PKG_MD5SUM:=a46651c69f304dc340c9d95ee360c370
 
 PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
 
