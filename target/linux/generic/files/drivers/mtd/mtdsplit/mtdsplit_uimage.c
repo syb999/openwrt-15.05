@@ -95,7 +95,6 @@ static int __mtdsplit_parse_uimage(struct mtd_info *master,
 	size_t rootfs_size = 0;
 	int uimage_part, rf_part;
 	int ret;
-	enum mtdsplit_part_type type;
 
 	nr_parts = 2;
 	parts = kzalloc(nr_parts * sizeof(*parts), GFP_KERNEL);
@@ -126,7 +125,7 @@ static int __mtdsplit_parse_uimage(struct mtd_info *master,
 		}
 		header = (struct uimage_header *)(buf + ret);
 
-		uimage_size = sizeof(*header) + be32_to_cpu(header->ih_size) + ret;
+		uimage_size = sizeof(*header) + be32_to_cpu(header->ih_size);
 		if ((offset + uimage_size) > master->size) {
 			pr_debug("uImage exceeds MTD device \"%s\"\n",
 				 master->name);
@@ -148,8 +147,10 @@ static int __mtdsplit_parse_uimage(struct mtd_info *master,
 		rf_part = 1;
 
 		/* find the roots after the uImage */
-		ret = mtd_find_rootfs_from(master, uimage_offset + uimage_size,
-					   master->size, &rootfs_offset, &type);
+		ret = mtd_find_rootfs_from(master,
+					   uimage_offset + uimage_size,
+					   master->size,
+					   &rootfs_offset);
 		if (ret) {
 			pr_debug("no rootfs after uImage in \"%s\"\n",
 				 master->name);
@@ -163,7 +164,7 @@ static int __mtdsplit_parse_uimage(struct mtd_info *master,
 		uimage_part = 1;
 
 		/* check rootfs presence at offset 0 */
-		ret = mtd_check_rootfs_magic(master, 0, &type);
+		ret = mtd_check_rootfs_magic(master, 0);
 		if (ret) {
 			pr_debug("no rootfs before uImage in \"%s\"\n",
 				 master->name);
@@ -184,10 +185,7 @@ static int __mtdsplit_parse_uimage(struct mtd_info *master,
 	parts[uimage_part].offset = uimage_offset;
 	parts[uimage_part].size = uimage_size;
 
-	if (type == MTDSPLIT_PART_TYPE_UBI)
-		parts[rf_part].name = UBI_PART_NAME;
-	else
-		parts[rf_part].name = ROOTFS_PART_NAME;
+	parts[rf_part].name = ROOTFS_PART_NAME;
 	parts[rf_part].offset = rootfs_offset;
 	parts[rf_part].size = rootfs_size;
 
@@ -246,7 +244,6 @@ static struct mtd_part_parser uimage_generic_parser = {
 	.type = MTD_PARSER_TYPE_FIRMWARE,
 };
 
-#define FW_MAGIC_WNR2000V1	0x32303031
 #define FW_MAGIC_WNR2000V3	0x32303033
 #define FW_MAGIC_WNR2000V4	0x32303034
 #define FW_MAGIC_WNR2200	0x32323030
@@ -266,7 +263,6 @@ static ssize_t uimage_verify_wndr3700(u_char *buf, size_t len)
 	case FW_MAGIC_WNR612V2:
 	case FW_MAGIC_WNR1000V2:
 	case FW_MAGIC_WNR1000V2_VC:
-	case FW_MAGIC_WNR2000V1:
 	case FW_MAGIC_WNR2000V3:
 	case FW_MAGIC_WNR2200:
 	case FW_MAGIC_WNDR3700:
@@ -312,21 +308,27 @@ static struct mtd_part_parser uimage_netgear_parser = {
 
 static ssize_t uimage_find_edimax(u_char *buf, size_t len)
 {
-	u32 *magic;
+	struct uimage_header *header;
 
-	if (len < FW_EDIMAX_OFFSET + sizeof(struct uimage_header)) {
+	if (len < FW_EDIMAX_OFFSET + sizeof(*header)) {
 		pr_err("Buffer too small for checking Edimax header\n");
 		return -ENOSPC;
 	}
 
-	magic = (u32 *)buf;
-	if (be32_to_cpu(*magic) != FW_MAGIC_EDIMAX)
+	header = (struct uimage_header *)(buf + FW_EDIMAX_OFFSET);
+
+	switch be32_to_cpu(header->ih_magic) {
+	case FW_MAGIC_EDIMAX:
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	if (header->ih_os != IH_OS_LINUX ||
+	    header->ih_type != IH_TYPE_FILESYSTEM)
 		return -EINVAL;
 
-	if (!uimage_verify_default(buf + FW_EDIMAX_OFFSET, len))
-		return FW_EDIMAX_OFFSET;
-
-	return -EINVAL;
+	return FW_EDIMAX_OFFSET;
 }
 
 static int
