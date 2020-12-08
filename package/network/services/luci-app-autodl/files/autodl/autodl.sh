@@ -6,6 +6,7 @@ autodlgetpath=$(cat /tmp/autodl.path)
 
 if [ ! -d "/autodl/videos" ]; then
   mkdir /autodl
+  chmod 777 /autodl
   ln -s $autodlgetpath /autodl
 fi
 

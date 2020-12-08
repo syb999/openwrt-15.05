@@ -35,7 +35,6 @@ def getVideo_urllib(url_m3u8, path, videoName):
         else:
             if not url_ts.startswith('http'):
                 url_ts = url_m3u8.replace(url_m3u8.split('/')[-1], url_ts)
-        print(url_ts)
         getDown_urllib(url_ts, tempName_ts)
         if num == 0:
             shutil.move(tempName_ts, tempName_video)
