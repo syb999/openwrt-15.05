@@ -44,7 +44,7 @@ def getVideo_urllib(url_m3u8, path, videoName):
         res = os.system(cmd)
         if res == 0:
             os.system(f'rm {tempName_ts}')
-            if num == 356:
+            if num == 3000:
                 break
             num += 1
             continue
