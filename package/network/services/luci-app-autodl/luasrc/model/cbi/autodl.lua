@@ -9,22 +9,22 @@ s:tab("basic", translate("Basic Setting"))
 url=s:taboption("basic", Value, "url", translate("Video URL"))
 url.rmempty = true
 url.datatype = "string"
-url.description = translate("下载视频的网页地址")
+url.description = translate("URL for downloading videos")
 
-path=s:taboption("basic", Value, "path", translate("Directory"))
+path=s:taboption("basic", Value, "path", translate("Download directory"))
 path.datatype = "string"
 path.default = "/mnt/sda3/videos"
 path.rmempty = false
-path.description = translate("保存视频的地址")
+path.description = translate("Please enter a valid directory")
 
-url1=s:taboption("basic", Button, "url1", translate("同步下载地址(同步后先保存&应用)"))
+url1=s:taboption("basic", Button, "url1", translate("Sync download address (save & app after sync)"))
 url1.inputstyle = "apply"
 
 
 s:tab("autodl1", translate("Download form https://www.dy10000.com"))
-au = s:taboption("autodl1", Button, "_autodl1", translate("download"))
-au.inputstyle = "apply"
-function au.write(self, section)
+au1 = s:taboption("autodl1", Button, "_autodl1", translate("One-click download"))
+au1.inputstyle = "apply"
+function au1.write(self, section)
     luci.util.exec("uci get autodl.@autodl[0].url > /tmp/autodl.url")
     luci.util.exec("sleep 1")
     luci.util.exec("uci get autodl.@autodl[0].path > /tmp/autodl.path")
@@ -33,9 +33,9 @@ function au.write(self, section)
 end
 
 s:tab("autodl2", translate("Download form https://www.xgys.net"))
-au = s:taboption("autodl2", Button, "_autodl2", translate("download"))
-au.inputstyle = "apply"
-function au.write(self, section)
+au2 = s:taboption("autodl2", Button, "_autodl2", translate("One-click download"))
+au2.inputstyle = "apply"
+function au2.write(self, section)
     luci.util.exec("uci get autodl.@autodl[0].url > /tmp/autodl.url")
     luci.util.exec("sleep 1")
     luci.util.exec("uci get autodl.@autodl[0].path > /tmp/autodl.path")

@@ -1,0 +1,27 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Assistant for automatic download m3u8 videos"
+msgstr "m3u8视频自动下载助手"
+
+msgid "Basic Setting"
+msgstr "基本设置"
+
+msgid "Video URL"
+msgstr "视频 URL"
+
+msgid "URL for downloading videos"
+msgstr "下载视频的网页地址"
+
+msgid "Download directory"
+msgstr "下载目录"
+
+msgid "Please enter a valid directory"
+msgstr "请输入有效的目录"
+
+msgid "Sync download address (save & app after sync)"
+msgstr "同步下载地址(同步后先保存&应用)"
+
+msgid "One-click download"
+msgstr "一键下载"
+
