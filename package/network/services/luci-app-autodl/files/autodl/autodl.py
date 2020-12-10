@@ -26,7 +26,7 @@ def getVideo_urllib(url_m3u8, path, videoName):
     print('begin run ~~\n')
     urlData = getUrlData(url_m3u8)
     num = 0
-    tempName_video = os.path.join(path, f'{videoName}.xts')
+    tempName_video = os.path.join(path, f'{videoName}.ts')
     for line in urlData:
         url_ts = line.decode('utf-8')
         tempName_ts = os.path.join(path, f'{num}.ts')
@@ -55,7 +55,7 @@ def getVideo_urllib(url_m3u8, path, videoName):
     print(f'{videoName}.ts finish down!')
  
 if __name__ == '__main__':
-    url_m3u8 = input("请输入下载地址:")
+    url_m3u8 = input("Please input the download URL:")
     path = r'/autodl/videos'
     videoName = url_m3u8.split('/')[-2]
     getVideo_urllib(url_m3u8, path, videoName)
