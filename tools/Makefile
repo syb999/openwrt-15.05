@@ -32,7 +32,8 @@ tools-$(CONFIG_TARGET_orion_generic) += wrt350nv2-builder upslug2
 tools-y += ucl upx
 tools-$(CONFIG_TARGET_x86) += qemu
 tools-$(CONFIG_TARGET_mxs) += elftosb
-tools-$(CONFIG_TARGET_brcm2708)$(CONFIG_TARGET_sunxi)$(CONFIG_TARGET_mxs) += mtools dosfstools
+# tools-$(CONFIG_TARGET_brcm2708)$(CONFIG_TARGET_sunxi)$(CONFIG_TARGET_mxs) += mtools dosfstools
+tools-y += mtools dosfstools libressl
 tools-$(CONFIG_TARGET_ar71xx) += lzma-old squashfs
 tools-y += lzma squashfs4
 tools-$(BUILD_B43_TOOLS) += b43-tools
@@ -40,7 +41,7 @@ tools-$(BUILD_PPL_CLOOG) += ppl cloog
 tools-$(CONFIG_USE_SPARSE) += sparse
 
 # builddir dependencies
-$(curdir)/upx/compile := $(curdir)/upx/compile
+$(curdir)/upx/compile := $(curdir)/upx/install
 $(curdir)/bison/compile := $(curdir)/flex/install
 $(curdir)/flex/compile := $(curdir)/libtool/install
 $(curdir)/pkg-config/compile := $(curdir)/sed/install
@@ -72,6 +73,9 @@ $(curdir)/bc/compile := $(curdir)/bison/install
 $(curdir)/findutils/compile := $(curdir)/bison/install
 $(curdir)/gengetopt/compile := $(curdir)/libtool/install
 $(curdir)/patchelf/compile := $(curdir)/libtool/install
+$(curdir)/dosfstools/compile := $(curdir)/autoconf/install $(curdir)/automake/install
+$(curdir)/libressl/compile := $(curdir)/pkg-config/install
+$(curdir)/cmake/compile += $(curdir)/libressl/install
 
 ifneq ($(CONFIG_CCACHE)$(CONFIG_SDK),)
 $(foreach tool, $(filter-out patch,$(tools-y)), $(eval $(curdir)/$(tool)/compile += $(curdir)/ccache/install))
