@@ -15,7 +15,7 @@ PKG_SOURCE_URL=http://git.openwrt.org/project/rpcd.git
 PKG_SOURCE_DATE:=2019-11-10
 PKG_SOURCE_VERSION:=77ad0de09247b9bdce50f4cecf3e5beb5636f57f
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
-PKG_MIRROR_HASH:=d36caff85bebbf7fb1b512359243bdbb7d9b16140e0d631afae9de2c3b8e4dff
+PKG_MD5SUM:=5e38cb98750eb9bd6bfab4cecf52e0ab
 
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=
