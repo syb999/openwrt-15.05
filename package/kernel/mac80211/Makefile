@@ -26,7 +26,7 @@ PKG_DRIVERS = \
 	airo \
 	ath ath5k ath6kl ath6kl-sdio ath6kl-usb ath9k ath9k-common ath9k-htc ath10k \
 	b43 b43legacy \
-	carl9170 \
+	carl9170 wil6210 \
 	hermes hermes-pci hermes-pcmcia hermes-plx\
 	iwl-legacy iwl3945 iwl4965 iwlwifi \
 	lib80211 \
@@ -130,7 +130,8 @@ ifdef CONFIG_PACKAGE_MAC80211_DEBUGFS
 	ATH10K_DEBUGFS \
 	CARL9170_DEBUGFS \
 	ATH5K_DEBUG \
-	ATH6KL_DEBUG
+	ATH6KL_DEBUG \
+	WIL6210_DEBUGFS
 endif
 
 ifdef CONFIG_PACKAGE_MAC80211_TRACING
@@ -140,7 +141,8 @@ ifdef CONFIG_PACKAGE_MAC80211_TRACING
 	ATH_TRACEPOINTS \
 	WIL6210_TRACING \
 	ATH5K_TRACER \
-	IWLWIFI_DEVICE_TRACING
+	IWLWIFI_DEVICE_TRACING \
+	WIL6210_TRACING
 endif
 
 config-$(call config_package,lib80211) += LIB80211 LIB80211_CRYPT_WEP LIB80211_CRYPT_CCMP LIB80211_CRYPT_TKIP
@@ -180,6 +182,8 @@ config-$(call config_package,ath6kl-sdio) += ATH6KL_SDIO
 config-$(call config_package,ath6kl-usb) += ATH6KL_USB
 
 config-$(call config_package,carl9170) += CARL9170
+
+config-$(call config_package,wil6210) += WIL6210
 
 config-$(call config_package,b43) += B43
 config-$(CONFIG_PACKAGE_B43_BUSES_BCMA_AND_SSB) += B43_BUSES_BCMA_AND_SSB
@@ -1015,6 +1019,13 @@ define KernelPackage/carl9170
   AUTOLOAD:=$(call AutoProbe,carl9170)
 endef
 
+define KernelPackage/wil6210
+  $(call KernelPackage/mac80211/Default)
+  TITLE:=QCA/Wilocity 60g WiFi card wil6210 support
+  DEPENDS+= @PCI_SUPPORT +kmod-mac80211 +wil6210-firmware
+  FILES:=$(PKG_BUILD_DIR)/drivers/net/wireless/ath/wil6210/wil6210.ko
+  AUTOLOAD:=$(call AutoProbe,wil6210)
+endef
 
 define KernelPackage/hermes
   $(call KernelPackage/mac80211/Default)
@@ -1964,6 +1975,7 @@ $(eval $(call KernelPackage,brcmsmac))
 $(eval $(call KernelPackage,brcmfmac))
 $(eval $(call KernelPackage,brcmutil))
 $(eval $(call KernelPackage,carl9170))
+$(eval $(call KernelPackage,wil6210))
 $(eval $(call KernelPackage,cfg80211))
 $(eval $(call KernelPackage,hermes))
 $(eval $(call KernelPackage,hermes-pci))
