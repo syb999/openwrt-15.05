@@ -7,14 +7,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libiwinfo
-PKG_VERSION:=2020-06-03
+PKG_VERSION:=2021-01-05
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL=https://git.openwrt.org/project/iwinfo.git
+PKG_SOURCE_URL:=https://git.openwrt.org/project/iwinfo.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=2faa20e5e9d107b97e393a4eb458370e80b4d720
-PKG_MD5SUM:=4d37a4c1affdfb71c1b3687b7d32ee7f
+PKG_SOURCE_VERSION:=8bfd8d88001e0d239d741c954c2421052b858fc1
+PKG_MD5SUM:=363cab080b5fbd21d2422fe0005ebc51
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=GPL-2.0
@@ -35,7 +35,7 @@ define Package/libiwinfo
   CATEGORY:=Libraries
   TITLE:=Generalized Wireless Information Library (iwinfo)
   DEPENDS:=+PACKAGE_kmod-cfg80211:libnl-tiny +libuci +libubus
-  ABI_VERSION:=20200105
+  ABI_VERSION:=20210105
 endef
 
 define Package/libiwinfo/description
