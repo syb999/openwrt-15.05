@@ -11,7 +11,7 @@ include $(INCLUDE_DIR)/kernel.mk
 PKG_NAME:=mac80211
 
 PKG_VERSION:=5.4.56-1
-PKG_RELEASE:=3
+PKG_RELEASE:=2
 PKG_SOURCE_URL:=@KERNEL/linux/kernel/projects/backports/stable/v5.4.56/
 PKG_MD5SUM:=4c2d17e9ae670a6e508413ebad1d2e06
 
