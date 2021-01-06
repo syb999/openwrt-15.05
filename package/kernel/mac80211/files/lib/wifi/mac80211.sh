@@ -93,6 +93,12 @@ detect_mac80211() {
 			htmode="VHT80"
 		}
 
+		iw phy "$dev" info | grep -q '\* 5.... MHz \[' && {
+			mode_band="ad"
+			channel=$(iw phy "$dev" info | grep '\* 5.... MHz \[' | grep '(disabled)' -v -m 1 | sed 's/[^[]*\[\|\|\].*//g')
+			iw phy "$dev" info | grep -q 'Capabilities:' && htmode="HT20"
+		}
+
 		[ -n $htmode ] && append ht_capab "	option htmode	$htmode" "$N"
 
 		path="$(mac80211_phy_to_path "$dev")"
