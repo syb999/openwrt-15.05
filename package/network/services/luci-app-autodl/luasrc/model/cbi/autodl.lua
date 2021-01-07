@@ -17,6 +17,12 @@ path.default = "/mnt/sda3/videos"
 path.rmempty = false
 path.description = translate("Please enter a valid directory")
 
+num=s:taboption("basic", Value, "num", translate("Number of Videos"))
+num.datatype = "string"
+num.default = "1"
+num.rmempty = false
+num.description = translate("Please enter a valid number")
+
 url1=s:taboption("basic", Button, "url1", translate("Sync download address (save & app after sync)"))
 url1.inputstyle = "apply"
 
@@ -27,8 +33,12 @@ au1.inputstyle = "apply"
 function au1.write(self, section)
     luci.util.exec("uci get autodl.@autodl[0].url > /tmp/autodl.url")
     luci.util.exec("sleep 1")
+    luci.util.exec("uci get autodl.@autodl[0].url > /tmp/autodl.url.bk")
+    luci.util.exec("sleep 1")
     luci.util.exec("uci get autodl.@autodl[0].path > /tmp/autodl.path")
-    luci.util.exec("sleep 2")
+    luci.util.exec("sleep 1")
+    luci.util.exec("uci get autodl.@autodl[0].num > /tmp/autodl.num")
+    luci.util.exec("sleep 1")
     luci.util.exec("/usr/autodl/autodl1.sh &")
 end
 
@@ -38,8 +48,12 @@ au2.inputstyle = "apply"
 function au2.write(self, section)
     luci.util.exec("uci get autodl.@autodl[0].url > /tmp/autodl.url")
     luci.util.exec("sleep 1")
+    luci.util.exec("uci get autodl.@autodl[0].url > /tmp/autodl.url.bk")
+    luci.util.exec("sleep 1")
     luci.util.exec("uci get autodl.@autodl[0].path > /tmp/autodl.path")
-    luci.util.exec("sleep 2")
+    luci.util.exec("sleep 1")
+    luci.util.exec("uci get autodl.@autodl[0].num > /tmp/autodl.num")
+    luci.util.exec("sleep 1")
     luci.util.exec("/usr/autodl/autodl2.sh &")
 end
 

@@ -2,7 +2,12 @@
 
 autodlgeturl=$(cat /tmp/autodl.url)
 autodlgetpath=$(cat /tmp/autodl.path)
+autodlgetnum=$(cat /tmp/autodl.num)
 
+avdnum0=$(uci get autodl.@autodl[0].url)
+avdnum1=$(echo $avdnum0 | cut -d '-' -f 3 | cut -d '.' -f 1)
+
+autodlcount=1
 
 if [ ! -d "/autodl/videos" ]; then
   mkdir /autodl
@@ -10,20 +15,47 @@ if [ ! -d "/autodl/videos" ]; then
   ln -s $autodlgetpath /autodl
 fi
 
-
-
-curl $autodlgeturl | grep m3u8 > /tmp/autodldmdm.1
+curl $autodlgeturl | grep vod_name > /tmp/autodldmdm.0
 sleep 3
-aurl=$(cat /tmp/autodldmdm.1)
-echo ${aurl#*\"url\":\"} | sed 's/\\//g' > /tmp/autodldmdm.2
-a2url=$(cat /tmp/autodldmdm.2)
-echo ${a2url%\"\,\"url_next*} > /tmp/autodldmdm.3
-a3url=$(cat /tmp/autodldmdm.3)
-curl $a3url > /tmp/autodldmdm.4
-sleep 3
-a4url=$(tail -n 1 /tmp/autodldmdm.4)
-echo $a3url | sed 's/index.m3u8/1000k\/hls\/&/' > /tmp/autodldmdm.5
-a5url=$(echo $a3url | sed 's/index.m3u8/1000k\/hls\/&/')
+avdname0=$(cat /tmp/autodldmdm.0)
+echo ${avdname0%\', vod_url*} > /tmp/autodldmdm.0
+avdname1=$(cat /tmp/autodldmdm.0)
+echo ${avdname1#*\= \'} > /tmp/autodldmdm.0
+avdname2=$(cat /tmp/autodldmdm.0)
 
-echo -en "$a5url\n" | python3 /usr/autodl/autodl.py
+function autodlvd(){
+	aurl=$(cat /tmp/autodldmdm.1)
+	echo ${aurl#*\"url\":\"} | sed 's/\\//g' > /tmp/autodldmdm.1
+	a2url=$(cat /tmp/autodldmdm.1)
+	echo ${a2url%\"\,\"url_next*} > /tmp/autodldmdm.1
+	a3url=$(cat /tmp/autodldmdm.1)
+	curl $a3url > /tmp/autodldmdm.2
+	sleep 3
+	a4url=$(tail -n 1 /tmp/autodldmdm.2)
+	echo $a3url | sed 's/index.m3u8/1000k\/hls\/&/' > /tmp/autodldmdm.1
+	a5url=$(echo $a3url | sed 's/index.m3u8/1000k\/hls\/&/')
+	echo -en "$a5url\n" | python3 /usr/autodl/autodl.py
+	autodlcount=$(echo `expr $autodlcount + 1`)
+	avdnumnew=$(echo `expr $avdnum1 + 1`)
+	echo $autodlgeturl | sed "s/${avdnum1}.html/${avdnumnew}.html/" > /tmp/autodl.url
+}
 
+while [ $avdnum1 -le $autodlgetnum ]
+do
+	autodlgeturl=$(cat /tmp/autodl.url)
+	curl $autodlgeturl | grep m3u8 > /tmp/autodldmdm.1
+	sleep 3
+	if [ $avdnum1 -le 9 ];then
+		autodlvd
+		avdnum2=0$avdnum1
+		mv /autodl/videos/hls.ts /autodl/videos/$avdname2第$avdnum2集.ts
+	else
+		autodlvd
+		mv /autodl/videos/hls.ts /autodl/videos/$avdname2第$avdnum1集.ts
+	fi
+	avdnum1=$(echo `expr $avdnum1 + 1`)
+done
+
+rm /tmp/autodldmdm.*
+rm /tmp/autodl.url
+mv /tmp/autodl.url.bk /tmp/autodl.url
