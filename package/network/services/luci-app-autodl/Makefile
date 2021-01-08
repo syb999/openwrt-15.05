@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-autodl
-PKG_VERSION:=0.7
-PKG_RELEASE:=20210107
+PKG_VERSION:=0.8
+PKG_RELEASE:=20210108
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -12,7 +12,7 @@ define Package/luci-app-autodl
 	SUBMENU:=3. Applications
 	TITLE:=LuCI Support for auto download m3u8 video
 	PKGARCH:=all
-	DEPENDS:=+python3-light +python3-requests +python3-logging +python3-urllib +python3-openssl
+	DEPENDS:=+curl +wget
 endef
 
 define Build/Prepare

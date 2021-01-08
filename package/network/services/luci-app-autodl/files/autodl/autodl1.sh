@@ -34,7 +34,22 @@ function autodlvd(){
 	a4url=$(tail -n 1 /tmp/autodldmdm.2)
 	echo $a3url | sed 's/index.m3u8/1000k\/hls\/&/' > /tmp/autodldmdm.1
 	a5url=$(echo $a3url | sed 's/index.m3u8/1000k\/hls\/&/')
-	echo -en "$a5url\n" | python3 /usr/autodl/autodl.py
+	a6url=$(echo $a5url | sed "s/index.m3u8//")
+	curl $a5url | grep .ts > /tmp/autodltmp.index.m3u8
+
+	autodlm3u8=/tmp/autodltmp.index.m3u8
+
+	while read LINE
+	do
+		autodltssuffix=$(echo $LINE)
+		autodltsprefix=$(echo $a6url)
+		autodltsprefixurl=$autodltsprefix
+		tmpautodlts="${autodltsprefixurl}${autodltssuffix}"
+		wget -q -c $tmpautodlts
+		cat $autodltssuffix >> $autodlgetpath/hls.ts
+		rm $autodltssuffix
+	done < $autodlm3u8
+
 	autodlcount=$(echo `expr $autodlcount + 1`)
 	avdnumnew=$(echo `expr $avdnum1 + 1`)
 	echo $autodlgeturl | sed "s/${avdnum1}.html/${avdnumnew}.html/" > /tmp/autodl.url
