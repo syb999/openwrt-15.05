@@ -15,7 +15,7 @@ if [ ! -d "/autodl/videos" ]; then
   ln -s $autodlgetpath /autodl
 fi
 
-curl $autodlgeturl | grep vod_name > /tmp/autodldmdm.0
+curl --connect-timeout 10 -m 20 $autodlgeturl | grep vod_name > /tmp/autodldmdm.0
 sleep 3
 avdname0=$(cat /tmp/autodldmdm.0)
 echo ${avdname0%\', vod_url*} > /tmp/autodldmdm.0
@@ -29,13 +29,13 @@ function autodlvd(){
 	a2url=$(cat /tmp/autodldmdm.1)
 	echo ${a2url%\"\,\"url_next*} > /tmp/autodldmdm.1
 	a3url=$(cat /tmp/autodldmdm.1)
-	curl $a3url > /tmp/autodldmdm.2
+	curl --connect-timeout 10 -m 20 $a3url > /tmp/autodldmdm.2
 	sleep 3
 	a4url=$(tail -n 1 /tmp/autodldmdm.2)
 	echo $a3url | sed 's/index.m3u8/1000k\/hls\/&/' > /tmp/autodldmdm.1
 	a5url=$(echo $a3url | sed 's/index.m3u8/1000k\/hls\/&/')
 	a6url=$(echo $a5url | sed "s/index.m3u8//")
-	curl $a5url | grep .ts > /tmp/autodltmp.index.m3u8
+	curl --connect-timeout 10 -m 20 $a5url | grep .ts > /tmp/autodltmp.index.m3u8
 
 	autodlm3u8=/tmp/autodltmp.index.m3u8
 
@@ -45,7 +45,7 @@ function autodlvd(){
 		autodltsprefix=$(echo $a6url)
 		autodltsprefixurl=$autodltsprefix
 		tmpautodlts="${autodltsprefixurl}${autodltssuffix}"
-		wget -q -c $tmpautodlts
+		wget-ssl -q -c $tmpautodlts
 		cat $autodltssuffix >> $autodlgetpath/hls.ts
 		rm $autodltssuffix
 	done < $autodlm3u8
@@ -58,7 +58,7 @@ function autodlvd(){
 while [ $avdnum1 -le $autodlgetnum ]
 do
 	autodlgeturl=$(cat /tmp/autodl.url)
-	curl $autodlgeturl | grep m3u8 > /tmp/autodldmdm.1
+	curl --connect-timeout 10 -m 20 $autodlgeturl | grep m3u8 > /tmp/autodldmdm.1
 	sleep 3
 	if [ $avdnum1 -le 9 ];then
 		autodlvd
