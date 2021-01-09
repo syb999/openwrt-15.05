@@ -67,7 +67,7 @@ end
 
 au1t = s:taboption("autodl1", Button, "_autodl1t", translate("One-click ts to mp4"))
 au1t.inputstyle = "apply"
-au1t.description = translate("ffmpeg needs to be installed.")
+au1t.description = translate("ffmpeg needs to be installed")
 function au1t.write(self, section)
     luci.util.exec("/usr/autodl/tstomp4.sh &")
 end
@@ -89,7 +89,7 @@ end
 
 au2t = s:taboption("autodl2", Button, "_autodl2t", translate("One-click ts to mp4"))
 au2t.inputstyle = "apply"
-au2t.description = translate("ffmpeg needs to be installed.")
+au2t.description = translate("ffmpeg needs to be installed")
 function au2t.write(self, section)
     luci.util.exec("/usr/autodl/tstomp4.sh &")
 end
@@ -98,6 +98,7 @@ end
 s:tab("audioxmly", translate("Download Audio form https://www.ximalaya.com/"))
 au3 = s:taboption("audioxmly", Button, "_audioxmly", translate("One-click download"))
 au3.inputstyle = "apply"
+au3.description = translate("One-click download Audios")
 function au3.write(self, section)
     luci.util.exec("uci get autodl.@autodl[0].xmlyurl > /tmp/tmp.XM.url")
     luci.util.exec("sleep 1")
