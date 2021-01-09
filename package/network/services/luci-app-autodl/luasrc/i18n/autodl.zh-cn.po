@@ -28,6 +28,12 @@ msgstr "一键下载"
 msgid "Number of Videos"
 msgstr "下载视频的集数"
 
-msgid "Please enter a valid directory"
+msgid "Please enter a valid number"
 msgstr "请输入有效的集数"
+
+msgid "One-click ts to mp4"
+msgstr "一键转换成MP4"
+
+msgid "ffmpeg needs to be installed"
+msgstr "需要已安装好ffmpeg"
 

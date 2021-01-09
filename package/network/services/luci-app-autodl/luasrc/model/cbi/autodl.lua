@@ -42,6 +42,14 @@ function au1.write(self, section)
     luci.util.exec("/usr/autodl/autodl1.sh &")
 end
 
+au1t = s:taboption("autodl1", Button, "_autodl1t", translate("One-click ts to mp4"))
+au1t.inputstyle = "apply"
+au1t.description = translate("ffmpeg needs to be installed")
+function au1t.write(self, section)
+    luci.util.exec("/usr/autodl/tstomp4.sh &")
+end
+
+
 s:tab("autodl2", translate("Download form https://www.xgys.net"))
 au2 = s:taboption("autodl2", Button, "_autodl2", translate("One-click download"))
 au2.inputstyle = "apply"
@@ -55,6 +63,13 @@ function au2.write(self, section)
     luci.util.exec("uci get autodl.@autodl[0].num > /tmp/autodl.num")
     luci.util.exec("sleep 1")
     luci.util.exec("/usr/autodl/autodl2.sh &")
+end
+
+au2t = s:taboption("autodl2", Button, "_autodl2t", translate("One-click ts to mp4"))
+au2t.inputstyle = "apply"
+au2t.description = translate("ffmpeg needs to be installed")
+function au2t.write(self, section)
+    luci.util.exec("/usr/autodl/tstomp4.sh &")
 end
 
 return m
