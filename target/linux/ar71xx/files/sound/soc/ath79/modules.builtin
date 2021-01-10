@@ -1,0 +1,4 @@
+kernel/sound/soc/ath79/snd-soc-ath79-pcm.ko
+kernel/sound/soc/ath79/snd-soc-ath79-i2s.ko
+kernel/sound/soc/ath79/snd-soc-ath79-codec.ko
+kernel/sound/soc/ath79/snd-soc-ap123-ak4430.ko
