@@ -38,10 +38,10 @@ msgid "ffmpeg needs to be installed"
 msgstr "需要已安装好ffmpeg"
 
 msgid "Audios URL"
-msgstr "需要已安装好ffmpeg"
+msgstr "音频节目URL"
 
 msgid "URL for downloading https://www.ximalaya.com Audios"
-msgstr "需要已安装好ffmpeg"
+msgstr "喜马拉雅音频节目的URL页面地址"
 
 msgid "Audios Name"
 msgstr "音频节目名"
@@ -52,8 +52,8 @@ msgstr "喜马拉雅的音频节目"
 msgid "Please enter a lastest number"
 msgstr "最新的节目集数"
 
-msgid "Usually one URL contains 30 resources"
-msgstr "通常一个URL包含30个音频资源"
+msgid "Usually one URL contains 30 new resources"
+msgstr "通常一个URL包含30个新的音频资源"
 
 msgid "Download Audios directory"
 msgstr "音频下载目录"

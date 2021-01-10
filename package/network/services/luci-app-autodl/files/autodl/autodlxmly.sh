@@ -1,9 +1,14 @@
 #!/bin/sh
 
+rm /tmp/tmpXM.*
+
 paudiourl=$(cat /tmp/tmp.XM.url)
 paudioname=$(cat /tmp/tmp.XM.name)
-paudionum=$(cat /tmp/tmp.XM.num)
+paudionum=99
+rpaudionum=99
 paudiopath=$(cat /tmp/tmp.XM.path)
+tmpcounthead=1
+
 
 urlprefix="https://www.ximalaya.com/revision/play/v1/audio?id="
 urlsuffix="&ptype=1"
@@ -14,10 +19,11 @@ if [ ! -d "/autodl/audios" ]; then
   ln -s $paudiopath /autodl
 fi
 
-cd /$paudiopath
+cd /
+cd $paudiopath
 
-curl -H ""user-agent": "Mozilla/5.0"" $paudiourl > /tmp/tmpXM.xmlyhttp
-
+curl --connect-timeout 10 -m 20 -H ""user-agent": "Mozilla/5.0"" $paudiourl > /tmp/tmpXM.xmlyhttp
+sleep 2
 xmlyhttp=$(cat /tmp/tmpXM.xmlyhttp)  
 
 for i in `echo "$xmlyhttp" | sed 's/</\n/g'`
@@ -43,25 +49,36 @@ do
 	adurlprefix=$urlprefix
 	adurlsuffix=$urlsuffix
 	tmpgetaudiourl="${adurlprefix}${xmlytrackId}${adurlsuffix}"
-	curl -v $tmpgetaudiourl > /tmp/tmpXM.xmlyhttp6
+	curl --connect-timeout 10 -m 20 -v $tmpgetaudiourl > /tmp/tmpXM.xmlyhttp6
+	sleep 1
 	tmpaudio=$(cat /tmp/tmpXM.xmlyhttp6)
 	echo ${tmpaudio#*src\":\"} > /tmp/tmpXM.xmlyhttp7
 	tmpaudio=$(cat /tmp/tmpXM.xmlyhttp7)
 	echo ${tmpaudio%\",\"albumIsSample*} > /tmp/tmpXM.xmlyhttp7
 	audiofile=$(cat /tmp/tmpXM.xmlyhttp7)
-	if [ $paudionum -le 9 ];then
-		wget-ssl -q -c $audiofile -O $paudioname0$paudionum.m4a
-		sleep 3
-		paudionum=$(echo `expr $paudionum - 1`)
-	else
-		wget-ssl -q -c $audiofile -O $paudioname$paudionum.m4a
-		sleep 3
-		paudionum=$(echo `expr $paudionum - 1`)
-	fi
+	wget-ssl -q -c $audiofile -O $paudionum.m4a
+	sleep 3
+	paudionum=$(echo `expr $paudionum - 1`)
 done
 
-mkdir $paudioname
-mv *.m4a $paudioname
+cat /tmp/tmpXM.xmlyhttp3 | grep '^[0-9]' | cut -d ',' -f 1 > /tmp/tmpXM.xmlyhttp1num
+sed '1!G;h;$!d' /tmp/tmpXM.xmlyhttp1num > /tmp/tmpXM.xmlyhttp2num
 
-rm /tmp/tmpXM.*
+ls -al | grep "^-" > /tmp/tmpXM.filelist
+
+cat /tmp/tmpXM.filelist | while read LINE
+do
+	xmlyfilename=$(echo $LINE)
+	xtmpcounthead=$tmpcounthead
+	xmlyturenum=$(tail -n $xtmpcounthead /tmp/tmpXM.xmlyhttp2num | head -n 1)
+	mv -f /autodl/audios/$rpaudionum.m4a /autodl/audios/$paudioname$xmlyturenum.m4a
+	tmpcounthead=$(echo `expr $tmpcounthead + 1`)
+	rpaudionum=$(echo `expr $rpaudionum - 1`)
+done
+
+if [ ! -d "/autodl/audios/$paudioname" ]; then
+mkdir $paudioname
+fi
+
+mv -f *.m4a $paudioname
 
