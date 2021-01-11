@@ -58,3 +58,18 @@ msgstr "通常一个URL包含30个新的音频资源"
 msgid "Download Audios directory"
 msgstr "音频下载目录"
 
+msgid "Audios URL page default sort method"
+msgstr "Audios URL页默认排序方法"
+
+msgid "Sequence"
+msgstr "排列顺序"
+
+msgid "Reverse"
+msgstr "倒序"
+
+msgid "Positive"
+msgstr "正序"
+
+msgid "Audios download"
+msgstr "音频下载"
+
