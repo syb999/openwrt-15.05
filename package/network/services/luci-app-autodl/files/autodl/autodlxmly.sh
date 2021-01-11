@@ -60,7 +60,8 @@ do
 	paudionum=$(echo `expr $paudionum - 1`)
 done
 
-cat /tmp/tmpXM.xmlyhttp3 | grep '^[0-9]' | cut -d ',' -f 1 > /tmp/tmpXM.xmlyhttp1num
+cat /tmp/tmpXM.xmlyhttp3 | grep trackId > /tmp/tmpXM.xmlyhttp0num
+cat /tmp/tmpXM.xmlyhttp0num | grep '^[0-9]' | cut -d ',' -f 1 > /tmp/tmpXM.xmlyhttp1num
 sed '1!G;h;$!d' /tmp/tmpXM.xmlyhttp1num > /tmp/tmpXM.xmlyhttp2num
 
 ls -al | grep "^-" > /tmp/tmpXM.filelist
