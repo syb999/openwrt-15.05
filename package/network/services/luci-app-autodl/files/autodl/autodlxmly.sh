@@ -3,7 +3,6 @@
 rm /tmp/tmpXM.*
 
 paudiourl=$(cat /tmp/tmp.XM.url)
-paudioseq=$(cat /tmp/tmp.XM.seq)
 paudioname=$(cat /tmp/tmp.XM.name)
 paudionum=99
 rpaudionum=99
@@ -39,13 +38,9 @@ do
     echo $i >> /tmp/tmpXM.xmlyhttp3
 done
 
-cat /tmp/tmpXM.xmlyhttp3 | grep '^[0-9]' | cut -d ',' -f 2 | cut -d ':' -f 2 > /tmp/tmpXM.xmlyhttp4
-if [ "$paudioseq" = "positive" ];then
-	cat /tmp/tmpXM.xmlyhttp4 > /tmp/tmpXM.xmlyhttp5d
-else
-	sort -u /tmp/tmpXM.xmlyhttp4 > /tmp/tmpXM.xmlyhttp5
-	sed '1!G;h;$!d' /tmp/tmpXM.xmlyhttp5 > /tmp/tmpXM.xmlyhttp5d
-fi
+cat /tmp/tmpXM.xmlyhttp3 | grep trackId > /tmp/tmpXM.xmlyhttp4
+cat /tmp/tmpXM.xmlyhttp4 | grep '^[0-9]' | cut -d ',' -f 2 | cut -d ':' -f 2 > /tmp/tmpXM.xmlyhttp5
+cat /tmp/tmpXM.xmlyhttp5 > /tmp/tmpXM.xmlyhttp5d
 
 cat /tmp/tmpXM.xmlyhttp5d | while read LINE
 do
@@ -76,8 +71,18 @@ do
 	xtmpcounthead=$tmpcounthead
 	xmlyturenum=$(tail -n $xtmpcounthead /tmp/tmpXM.xmlyhttp2num | head -n 1)
 	if [ $xmlyturenum -le 9 ];then
-		nxmlyturenum=0$xmlyturenum
+		nxmlyturenum=000$xmlyturenum
 		mv -f /autodl/audios/$rpaudionum.m4a /autodl/audios/$paudioname$nxmlyturenum.m4a
+		tmpcounthead=$(echo `expr $tmpcounthead + 1`)
+		rpaudionum=$(echo `expr $rpaudionum - 1`)
+	elif [ $xmlyturenum -le 99 ];then
+		nnxmlyturenum=00$xmlyturenum
+		mv -f /autodl/audios/$rpaudionum.m4a /autodl/audios/$paudioname$nnxmlyturenum.m4a
+		tmpcounthead=$(echo `expr $tmpcounthead + 1`)
+		rpaudionum=$(echo `expr $rpaudionum - 1`)
+	elif [ $xmlyturenum -le 999 ];then
+		nnnxmlyturenum=0$xmlyturenum
+		mv -f /autodl/audios/$rpaudionum.m4a /autodl/audios/$paudioname$nnnxmlyturenum.m4a
 		tmpcounthead=$(echo `expr $tmpcounthead + 1`)
 		rpaudionum=$(echo `expr $rpaudionum - 1`)
 	else

@@ -28,13 +28,6 @@ xmlyurl.rmempty = true
 xmlyurl.datatype = "string"
 xmlyurl.description = translate("URL for downloading https://www.ximalaya.com Audios")
 
-xmlyseq=s:taboption("basic", ListValue, "xmlyseq", translate("Sequence"), translate("Audios URL page default sort method"))
-xmlyseq.placeholder = "reverse"
-xmlyseq:value("reverse", translate("Reverse"))
-xmlyseq:value("positive", translate("Positive"))
-xmlyseq.default     = "reverse"
-xmlyseq.rempty      = false
-
 xmlyname=s:taboption("basic", Value, "xmlyname", translate("Audios Name"))
 xmlyname.datatype = "string"
 xmlyname.placeholder = "story"
@@ -103,8 +96,6 @@ au3.inputstyle = "apply"
 au3.description = translate("Audios download")
 function au3.write(self, section)
     luci.util.exec("uci get autodl.@autodl[0].xmlyurl > /tmp/tmp.XM.url")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autodl.@autodl[0].xmlyseq > /tmp/tmp.XM.seq")
     luci.util.exec("sleep 1")
     luci.util.exec("uci get autodl.@autodl[0].xmlyname > /tmp/tmp.XM.name")
     luci.util.exec("sleep 1")
