@@ -71,9 +71,17 @@ do
 	xmlyfilename=$(echo $LINE)
 	xtmpcounthead=$tmpcounthead
 	xmlyturenum=$(tail -n $xtmpcounthead /tmp/tmpXM.xmlyhttp2num | head -n 1)
-	mv -f /autodl/audios/$rpaudionum.m4a /autodl/audios/$paudioname$xmlyturenum.m4a
-	tmpcounthead=$(echo `expr $tmpcounthead + 1`)
-	rpaudionum=$(echo `expr $rpaudionum - 1`)
+	if [ $xmlyturenum -le 9 ];then
+		nxmlyturenum=0$xmlyturenum
+		mv -f /autodl/audios/$rpaudionum.m4a /autodl/audios/$paudioname$nxmlyturenum.m4a
+		tmpcounthead=$(echo `expr $tmpcounthead + 1`)
+		rpaudionum=$(echo `expr $rpaudionum - 1`)
+	else
+		mv -f /autodl/audios/$rpaudionum.m4a /autodl/audios/$paudioname$xmlyturenum.m4a
+		tmpcounthead=$(echo `expr $tmpcounthead + 1`)
+		rpaudionum=$(echo `expr $rpaudionum - 1`)
+	fi
+
 done
 
 if [ ! -d "/autodl/audios/$paudioname" ]; then

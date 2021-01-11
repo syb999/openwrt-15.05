@@ -91,6 +91,7 @@ end
 s:tab("audioxmly", translate("Download Audio form https://www.ximalaya.com/"))
 au3 = s:taboption("audioxmly", Button, "_audioxmly", translate("One-click download"))
 au3.inputstyle = "apply"
+au3.description = translate("Audios download")
 function au3.write(self, section)
     luci.util.exec("uci get autodl.@autodl[0].xmlyurl > /tmp/tmp.XM.url")
     luci.util.exec("sleep 1")
