@@ -12,14 +12,17 @@ tmpcounthead=1
 urlprefix="https://www.ximalaya.com/revision/play/v1/audio?id="
 urlsuffix="&ptype=1"
 
-if [ ! -d "/autodl/audios" ]; then
-  mkdir /autodl
-  chmod 777 /autodl
-  ln -s $paudiopath /autodl
+if [ ! -d "/autodl" ]; then
+	mkdir /autodl
+	chmod 777 /autodl
+	if [ ! -d "/autodl/$paudiopath" ];then
+		ln -s $paudiopath /autodl
+	fi
+elif [ ! -d "/autodl/$paudiopath" ];then
+		ln -s $paudiopath /autodl
 fi
 
-cd /
-cd $paudiopath
+cd /$paudiopath
 
 curl --connect-timeout 10 -m 20 -H ""user-agent": "Mozilla/5.0"" $paudiourl > /tmp/tmpXM.xmlyhttp
 sleep 2
@@ -73,27 +76,27 @@ do
 	xmlyturenum=$(tail -n $xtmpcounthead /tmp/tmpXM.xmlyhttp2num | head -n 1)
 	if [ $xmlyturenum -le 9 ];then
 		nxmlyturenum=000$xmlyturenum
-		mv -f /autodl/audios/$rpaudionum.m4a /autodl/audios/$paudioname$nxmlyturenum.m4a
+		mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nxmlyturenum.m4a
 		tmpcounthead=$(echo `expr $tmpcounthead + 1`)
 		rpaudionum=$(echo `expr $rpaudionum - 1`)
 	elif [ $xmlyturenum -le 99 ];then
 		nnxmlyturenum=00$xmlyturenum
-		mv -f /autodl/audios/$rpaudionum.m4a /autodl/audios/$paudioname$nnxmlyturenum.m4a
+		mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nnxmlyturenum.m4a
 		tmpcounthead=$(echo `expr $tmpcounthead + 1`)
 		rpaudionum=$(echo `expr $rpaudionum - 1`)
 	elif [ $xmlyturenum -le 999 ];then
 		nnnxmlyturenum=0$xmlyturenum
-		mv -f /autodl/audios/$rpaudionum.m4a /autodl/audios/$paudioname$nnnxmlyturenum.m4a
+		mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nnnxmlyturenum.m4a
 		tmpcounthead=$(echo `expr $tmpcounthead + 1`)
 		rpaudionum=$(echo `expr $rpaudionum - 1`)
 	else
-		mv -f /autodl/audios/$rpaudionum.m4a /autodl/audios/$paudioname$xmlyturenum.m4a
+		mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$xmlyturenum.m4a
 		tmpcounthead=$(echo `expr $tmpcounthead + 1`)
 		rpaudionum=$(echo `expr $rpaudionum - 1`)
 	fi
 done
 
-if [ ! -d "/autodl/audios/$paudioname" ]; then
+if [ ! -d "/$paudiopath/$paudioname" ]; then
 mkdir $paudioname
 fi
 
