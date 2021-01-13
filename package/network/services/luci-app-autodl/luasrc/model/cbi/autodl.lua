@@ -104,5 +104,12 @@ function au3.write(self, section)
     luci.util.exec("/usr/autodl/autodlxmly.sh &")
 end
 
+au3t = s:taboption("audioxmly", Button, "_autodl3t", translate("One-click m4a to mp3"))
+au3t.inputstyle = "apply"
+au3t.description = translate("ffmpeg needs to be installed.")
+function au3t.write(self, section)
+    luci.util.exec("/usr/autodl/m4atomp3.sh &")
+end
+
 return m
 
