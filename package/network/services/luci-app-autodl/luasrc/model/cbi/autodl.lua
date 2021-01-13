@@ -111,5 +111,12 @@ function au3t.write(self, section)
     luci.util.exec("/usr/autodl/m4atomp3.sh &")
 end
 
+au3play = s:taboption("audioxmly", Button, "_autodl3play", translate("One-click Play audios"))
+au3play.inputstyle = "apply"
+au3play.description = translate("USB sound card is needed and mpg123 package has been installed.")
+function au3play.write(self, section)
+    luci.util.exec("/usr/autodl/playmp3.sh &")
+end
+
 return m
 

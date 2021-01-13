@@ -1,9 +1,5 @@
 #!/bin/sh
 
-rm /tmp/autodldmdm.*
-rm /tmp/autodl.url
-mv -f /tmp/autodl.url.bk /tmp/autodl.url
-
 autodlgeturl=$(cat /tmp/autodl.url)
 autodlgetpath=$(cat /tmp/autodl.path)
 autodlgetnum=$(cat /tmp/autodl.num)
@@ -41,8 +37,9 @@ function autodlvd(){
 	curl --connect-timeout 10 -m 20 $a3url > /tmp/autodldmdm.2
 	sleep 3
 	a4url=$(tail -n 1 /tmp/autodldmdm.2)
-	echo $a3url | sed 's/index.m3u8/1000k\/hls\/&/' > /tmp/autodldmdm.1
-	a5url=$(echo $a3url | sed 's/index.m3u8/1000k\/hls\/&/')
+	a4urlp1=$(echo $a4url | cut -d '/' -f 1 )
+	echo $a3url | sed "s/index.m3u8/$a4urlp1\/hls\/&/" > /tmp/autodldmdm.3
+	a5url=$(cat /tmp/autodldmdm.3)
 	a6url=$(echo $a5url | sed "s/index.m3u8//")
 	curl --connect-timeout 10 -m 20 $a5url | grep .ts > /tmp/autodltmp.index.m3u8
 
@@ -71,8 +68,12 @@ do
 	sleep 3
 	if [ $avdnum1 -le 9 ];then
 		autodlvd
-		avdnum2=0$avdnumx1
+		avdnum2=00$avdnumx1
 		mv /autodl/videos/hls.ts /autodl/videos/$avdname2第$avdnum2集.ts
+	elif [ $avdnum1 -le 99 ];then
+		autodlvd
+		avdnum3=0$avdnumx1
+		mv /autodl/videos/hls.ts /autodl/videos/$avdname2第$avdnum3集.ts
 	else
 		autodlvd
 		mv /autodl/videos/hls.ts /autodl/videos/$avdname2第$avdnumx1集.ts
@@ -80,4 +81,8 @@ do
 	avdnum1=$(echo `expr $avdnum1 + 1`)
 	avdnumx1=$(echo `expr $avdnumx1 + 1`)
 done
+
+rm /tmp/autodldmdm.*
+rm /tmp/autodl.url
+mv -f /tmp/autodl.url.bk /tmp/autodl.url
 
