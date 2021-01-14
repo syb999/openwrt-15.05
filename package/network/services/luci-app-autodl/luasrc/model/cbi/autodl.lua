@@ -41,6 +41,31 @@ xmlypath.default = "/mnt/sda3/audios"
 xmlypath.rmempty = false
 xmlypath.description = translate("Please enter a valid directory")
 
+docinurl=s:taboption("basic", Value, "docinurl", translate("docin.com doc URL"))
+docinurl.rmempty = true
+docinurl.datatype = "string"
+docinurl.description = translate("URL for downloading https://docin.com documents")
+
+docinpage=s:taboption("basic", Value, "docinpage", translate("Document total pages"))
+docinpage.datatype = "string"
+docinpage.placeholder = "1"
+docinpage.default = "1"
+docinpage.rmempty = false
+docinpage.description = translate("Documents from https://docin.com")
+
+docinname=s:taboption("basic", Value, "docinname", translate("Document Name"))
+docinname.datatype = "string"
+docinname.placeholder = "story"
+docinname.default = "story"
+docinname.rmempty = false
+docinname.description = translate("Documents from https://docin.com")
+
+docinpath=s:taboption("basic", Value, "docinpath", translate("Download documents directory"))
+docinpath.datatype = "string"
+docinpath.default = "/mnt/sda3/docs"
+docinpath.rmempty = false
+docinpath.description = translate("Please enter a valid directory")
+
 ---url1=s:taboption("basic", Button, "url1", translate("Sync download address (save & app after sync)"))
 ---url1.inputstyle = "apply"
 
@@ -116,6 +141,22 @@ au3play.inputstyle = "apply"
 au3play.description = translate("USB sound card is needed and mpg123 package has been installed.")
 function au3play.write(self, section)
     luci.util.exec("/usr/autodl/playmp3.sh &")
+end
+
+s:tab("autodldocin", translate("Download from https://www.docin.com/"))
+au4 = s:taboption("autodldocin", Button, "_autodldocin", translate("One-click download"))
+au4.inputstyle = "apply"
+au4.description = translate("docin.com documentation download")
+function au4.write(self, section)
+    luci.util.exec("uci get autodl.@autodl[0].docinurl > /tmp/autodldocin.url")
+    luci.util.exec("sleep 1")
+    luci.util.exec("uci get autodl.@autodl[0].docinpage > /tmp/autodldocin.page")
+    luci.util.exec("sleep 1")
+    luci.util.exec("uci get autodl.@autodl[0].docinname > /tmp/autodldocin.name")
+    luci.util.exec("sleep 1")
+    luci.util.exec("uci get autodl.@autodl[0].docinpath > /tmp/autodldocin.path")
+    luci.util.exec("sleep 1")
+    luci.util.exec("/usr/autodl/docin.sh &")
 end
 
 return m
