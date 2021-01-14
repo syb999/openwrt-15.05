@@ -45,7 +45,7 @@ xmlypath.description = translate("Please enter a valid directory")
 ---url1.inputstyle = "apply"
 
 
-s:tab("autodl1", translate("Download form https://www.dy10000.com"))
+s:tab("autodl1", translate("Download from https://www.dy10000.com"))
 au1 = s:taboption("autodl1", Button, "_autodl1", translate("One-click download"))
 au1.inputstyle = "apply"
 function au1.write(self, section)
@@ -67,7 +67,7 @@ function au1t.write(self, section)
     luci.util.exec("/usr/autodl/tstomp4.sh &")
 end
 
-s:tab("autodl2", translate("Download form https://www.xgys.net"))
+s:tab("autodl2", translate("Download from https://www.xgys.net"))
 au2 = s:taboption("autodl2", Button, "_autodl2", translate("One-click download"))
 au2.inputstyle = "apply"
 function au2.write(self, section)
@@ -90,7 +90,7 @@ function au2t.write(self, section)
 end
 
 
-s:tab("audioxmly", translate("Download Audio form https://www.ximalaya.com/"))
+s:tab("audioxmly", translate("Download Audio from https://www.ximalaya.com/"))
 au3 = s:taboption("audioxmly", Button, "_audioxmly", translate("One-click download"))
 au3.inputstyle = "apply"
 au3.description = translate("Audios download")

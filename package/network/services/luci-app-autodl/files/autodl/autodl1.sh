@@ -1,9 +1,5 @@
 #!/bin/sh
 
-rm /tmp/autodldmdm.*
-rm /tmp/autodl.url
-mv -f /tmp/autodl.url.bk /tmp/autodl.url
-
 autodlgeturl=$(cat /tmp/autodl.url)
 autodlgetpath=$(cat /tmp/autodl.path)
 autodlgetnum=$(cat /tmp/autodl.num)
@@ -13,14 +9,17 @@ avdnum1=$(echo $avdnum0 | cut -d '-' -f 3 | cut -d '.' -f 1)
 
 autodlcount=1
 
-if [ ! -d "/autodl/videos" ]; then
-  mkdir /autodl
-  chmod 777 /autodl
-  ln -s $autodlgetpath /autodl
+if [ ! -d "/autodl" ]; then
+	mkdir /autodl
+	chmod 777 /autodl
+	if [ ! -d "/autodl/$autodlgetpath" ];then
+		ln -s $autodlgetpath /autodl
+	fi
+elif [ ! -d "/autodl/$autodlgetpath" ];then
+		ln -s $autodlgetpath /autodl
 fi
 
-cd /
-cd $autodlgetpath
+cd /$autodlgetpath
 
 curl --connect-timeout 10 -m 20 $autodlgeturl | grep vod_name > /tmp/autodldmdm.0
 sleep 3
@@ -77,4 +76,8 @@ do
 	fi
 	avdnum1=$(echo `expr $avdnum1 + 1`)
 done
+
+rm /tmp/autodldmdm.*
+rm /tmp/autodl.url
+mv -f /tmp/autodl.url.bk /tmp/autodl.url
 

@@ -9,14 +9,17 @@ avdnum1=$(echo $avdnum0 | cut -d '-' -f 3 | cut -d '.' -f 1)
 
 autodlcount=1
 
-if [ ! -d "/autodl/videos" ]; then
-  mkdir /autodl
-  chmod 777 /autodl
-  ln -s $autodlgetpath /autodl
+if [ ! -d "/autodl" ]; then
+	mkdir /autodl
+	chmod 777 /autodl
+	if [ ! -d "/autodl/$autodlgetpath" ];then
+		ln -s $autodlgetpath /autodl
+	fi
+elif [ ! -d "/autodl/$autodlgetpath" ];then
+		ln -s $autodlgetpath /autodl
 fi
 
-cd /
-cd $autodlgetpath
+cd /$autodlgetpath
 
 curl --connect-timeout 10 -m 20 $autodlgeturl | grep data-name > /tmp/autodldmdm.0
 sleep 3
@@ -66,11 +69,11 @@ do
 	autodlgeturl=$(cat /tmp/autodl.url)
 	curl --connect-timeout 10 -m 20 $autodlgeturl | grep m3u8 > /tmp/autodldmdm.1
 	sleep 3
-	if [ $avdnum1 -le 9 ];then
+	if [ $avdnum1 -lt 9 ];then
 		autodlvd
 		avdnum2=00$avdnumx1
 		mv /autodl/videos/hls.ts /autodl/videos/$avdname2第$avdnum2集.ts
-	elif [ $avdnum1 -le 99 ];then
+	elif [ $avdnum1 -lt 99 ];then
 		autodlvd
 		avdnum3=0$avdnumx1
 		mv /autodl/videos/hls.ts /autodl/videos/$avdname2第$avdnum3集.ts
