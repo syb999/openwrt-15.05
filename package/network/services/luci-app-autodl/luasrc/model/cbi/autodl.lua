@@ -4,7 +4,7 @@ s = m:section(TypedSection, "autodl", "", translate("Assistant for automatic dow
 s.anonymous = true
 s.addremove = false
 
-s:tab("basic", translate("Basic Setting"))
+s:tab("basic", translate("Basic Setting for Video"))
 
 url=s:taboption("basic", Value, "url", translate("Video URL"))
 url.rmempty = true
@@ -23,44 +23,48 @@ num.default = "1"
 num.rmempty = false
 num.description = translate("Please enter a valid number")
 
-xmlyurl=s:taboption("basic", Value, "xmlyurl", translate("Audios URL"))
+s:tab("basic2", translate("Basic Setting for Audio"))
+
+xmlyurl=s:taboption("basic2", Value, "xmlyurl", translate("Audios URL"))
 xmlyurl.rmempty = true
 xmlyurl.datatype = "string"
 xmlyurl.description = translate("URL for downloading https://www.ximalaya.com Audios")
 
-xmlyname=s:taboption("basic", Value, "xmlyname", translate("Audios Name"))
+xmlyname=s:taboption("basic2", Value, "xmlyname", translate("Audios Name"))
 xmlyname.datatype = "string"
 xmlyname.placeholder = "story"
 xmlyname.default = "story"
 xmlyname.rmempty = false
 xmlyname.description = translate("Audios from https://www.ximalaya.com")
 
-xmlypath=s:taboption("basic", Value, "xmlypath", translate("Download Audios directory"))
+xmlypath=s:taboption("basic2", Value, "xmlypath", translate("Download Audios directory"))
 xmlypath.datatype = "string"
 xmlypath.default = "/mnt/sda3/audios"
 xmlypath.rmempty = false
 xmlypath.description = translate("Please enter a valid directory")
 
-docinurl=s:taboption("basic", Value, "docinurl", translate("docin.com doc URL"))
+s:tab("basic3", translate("Basic Setting for docin"))
+
+docinurl=s:taboption("basic3", Value, "docinurl", translate("docin.com doc URL"))
 docinurl.rmempty = true
 docinurl.datatype = "string"
 docinurl.description = translate("URL for downloading https://docin.com documents")
 
-docinpage=s:taboption("basic", Value, "docinpage", translate("Document total pages"))
+docinpage=s:taboption("basic3", Value, "docinpage", translate("Document total pages"))
 docinpage.datatype = "string"
 docinpage.placeholder = "1"
 docinpage.default = "1"
 docinpage.rmempty = false
 docinpage.description = translate("Documents from https://docin.com")
 
-docinname=s:taboption("basic", Value, "docinname", translate("Document Name"))
+docinname=s:taboption("basic3", Value, "docinname", translate("Document Name"))
 docinname.datatype = "string"
 docinname.placeholder = "story"
 docinname.default = "story"
 docinname.rmempty = false
 docinname.description = translate("Documents from https://docin.com")
 
-docinpath=s:taboption("basic", Value, "docinpath", translate("Download documents directory"))
+docinpath=s:taboption("basic3", Value, "docinpath", translate("Download documents directory"))
 docinpath.datatype = "string"
 docinpath.default = "/mnt/sda3/docs"
 docinpath.rmempty = false
@@ -149,7 +153,11 @@ function au3next.write(self, section)
     luci.util.exec("/usr/autodl/playnext.sh &")
 end
 
-
+au3stop = s:taboption("audioxmly", Button, "_autodl3stop", translate("Stop  play mp3"))
+au3stop.inputstyle = "apply"
+function au3stop.write(self, section)
+    luci.util.exec("/usr/autodl/stopmp3.sh &")
+end
 
 s:tab("autodldocin", translate("Download from https://www.docin.com/"))
 au4 = s:taboption("autodldocin", Button, "_autodldocin", translate("One-click download"))
