@@ -4,8 +4,14 @@ msgstr "Content-Type: text/plain; charset=UTF-8\n"
 msgid "Assistant for automatic download m3u8 videos"
 msgstr "m3u8视频自动下载助手"
 
-msgid "Basic Setting"
-msgstr "基本设置"
+msgid "Basic Setting for Video"
+msgstr "视频基本设置"
+
+msgid "Basic Setting for Audio"
+msgstr "音频基本设置"
+
+msgid "Basic Setting for docin"
+msgstr "docin.com基本设置"
 
 msgid "Video URL"
 msgstr "视频 URL"
@@ -25,8 +31,8 @@ msgstr "同步下载地址(同步后先保存&应用)"
 msgid "One-click download"
 msgstr "一键下载"
 
-msgid "Number of Videos"
-msgstr "下载视频的集数"
+msgid "Total number of video files"
+msgstr "该节目的总集数"
 
 msgid "Please enter a valid number"
 msgstr "请输入有效的集数"
@@ -60,4 +66,22 @@ msgstr "音频下载目录"
 
 msgid "Audios download"
 msgstr "音频下载"
+
+msgid "One-click Play mp3"
+msgstr "一键播放当前mp3节目"
+
+msgid "USB sound card is needed and mpg123 package has been installed"
+msgstr "需要USB声卡，并已安装mpg123软件包"
+
+msgid "Play Next mp3"
+msgstr "播放下一首mp3"
+
+msgid "Stop play mp3"
+msgstr "停止播放mp3"
+
+msgid "One-click download documents"
+msgstr "一键下载文档(图片格式)"
+
+msgid "docin.com documents download"
+msgstr "豆丁网文档下载"
 

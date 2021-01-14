@@ -17,7 +17,7 @@ path.default = "/mnt/sda3/videos"
 path.rmempty = false
 path.description = translate("Please enter a valid directory")
 
-num=s:taboption("basic", Value, "num", translate("Number of Videos"))
+num=s:taboption("basic", Value, "num", translate("Total number of video files"))
 num.datatype = "string"
 num.default = "1"
 num.rmempty = false
@@ -142,7 +142,7 @@ end
 
 au3play = s:taboption("audioxmly", Button, "_autodl3play", translate("One-click Play mp3"))
 au3play.inputstyle = "apply"
-au3play.description = translate("USB sound card is needed and mpg123 package has been installed.")
+au3play.description = translate("USB sound card is needed and mpg123 package has been installed")
 function au3play.write(self, section)
     luci.util.exec("/usr/autodl/playmp3.sh &")
 end
@@ -153,16 +153,16 @@ function au3next.write(self, section)
     luci.util.exec("/usr/autodl/playnext.sh &")
 end
 
-au3stop = s:taboption("audioxmly", Button, "_autodl3stop", translate("Stop  play mp3"))
+au3stop = s:taboption("audioxmly", Button, "_autodl3stop", translate("Stop play mp3"))
 au3stop.inputstyle = "apply"
 function au3stop.write(self, section)
     luci.util.exec("/usr/autodl/stopmp3.sh &")
 end
 
 s:tab("autodldocin", translate("Download from https://www.docin.com/"))
-au4 = s:taboption("autodldocin", Button, "_autodldocin", translate("One-click download"))
+au4 = s:taboption("autodldocin", Button, "_autodldocin", translate("One-click download documents"))
 au4.inputstyle = "apply"
-au4.description = translate("docin.com documentation download")
+au4.description = translate("docin.com documents download")
 function au4.write(self, section)
     luci.util.exec("uci get autodl.@autodl[0].docinurl > /tmp/autodldocin.url")
     luci.util.exec("sleep 1")
