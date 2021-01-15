@@ -34,6 +34,12 @@ msgstr "一键下载"
 msgid "Download Videos directory"
 msgstr "视频下载目录"
 
+msgid "Videos Name"
+msgstr "视频名称"
+
+msgid "Videos from dy10000.com or xgys.net"
+msgstr "当前从dy10000.com和xgys.net下载的视频名称"
+
 msgid "Total number of video files"
 msgstr "该节目的总集数"
 
@@ -108,4 +114,7 @@ msgstr "文档名称"
 
 msgid "Download documents directory"
 msgstr "文档下载目录"
+
+msgid "Documents from https://docin.com"
+msgstr "获取自豆丁网的文档"
 

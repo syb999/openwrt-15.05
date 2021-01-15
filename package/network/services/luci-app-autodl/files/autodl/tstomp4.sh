@@ -1,12 +1,17 @@
 #!/bin/sh
 
+tspath=$(uci get autodl.@autodl[0].path > /tmp/autodl.path)
+tsname=$(uci get autodl.@autodl[0].name > /tmp/autodl.name)
+
+autodlgetpath=$(cat /tmp/autodl.path)
+autodlgetname=$(cat /tmp/autodl.name)
+
 testffmpeg=$(opkg list-installed | grep ffmpeg)
 
 if [ ! "$testffmpeg" ];then
 	echo "No ffmpeg. Stop script."
 else
-	cd /
-	cd /autodl/videos
+	cd /$autodlgetpath/$autodlgetname
 
 	temp_v="0"
 	for fileName in `find . -name "*.ts" | sort`
@@ -25,3 +30,4 @@ else
 
 	rm *.ts
 fi
+
