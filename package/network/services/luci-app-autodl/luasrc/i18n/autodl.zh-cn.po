@@ -31,6 +31,9 @@ msgstr "同步下载地址(同步后先保存&应用)"
 msgid "One-click download"
 msgstr "一键下载"
 
+msgid "Download Videos directory"
+msgstr "视频下载目录"
+
 msgid "Total number of video files"
 msgstr "该节目的总集数"
 
@@ -67,6 +70,9 @@ msgstr "音频下载目录"
 msgid "Audios download"
 msgstr "音频下载"
 
+msgid "One-click m4a to mp3"
+msgstr "一键m4a转mp3"
+
 msgid "One-click Play mp3"
 msgstr "一键播放当前mp3节目"
 
@@ -79,9 +85,27 @@ msgstr "播放下一首mp3"
 msgid "Stop play mp3"
 msgstr "停止播放mp3"
 
+msgid "Volume Up"
+msgstr "调高音量"
+
+msgid "Volume Down"
+msgstr "调低音量"
+
 msgid "One-click download documents"
 msgstr "一键下载文档(图片格式)"
 
 msgid "docin.com documents download"
 msgstr "豆丁网文档下载"
+
+msgid "docin.com doc URL"
+msgstr "豆丁网文档URL"
+
+msgid "Document total pages"
+msgstr "该文档总页数"
+
+msgid "Document Name"
+msgstr "文档名称"
+
+msgid "Download documents directory"
+msgstr "文档下载目录"
 

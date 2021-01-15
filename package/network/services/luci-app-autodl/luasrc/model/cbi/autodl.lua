@@ -91,7 +91,7 @@ end
 
 au1t = s:taboption("autodl1", Button, "_autodl1t", translate("One-click ts to mp4"))
 au1t.inputstyle = "apply"
-au1t.description = translate("ffmpeg needs to be installed.")
+au1t.description = translate("ffmpeg needs to be installed")
 function au1t.write(self, section)
     luci.util.exec("/usr/autodl/tstomp4.sh &")
 end
@@ -113,7 +113,7 @@ end
 
 au2t = s:taboption("autodl2", Button, "_autodl2t", translate("One-click ts to mp4"))
 au2t.inputstyle = "apply"
-au2t.description = translate("ffmpeg needs to be installed.")
+au2t.description = translate("ffmpeg needs to be installed")
 function au2t.write(self, section)
     luci.util.exec("/usr/autodl/tstomp4.sh &")
 end
@@ -135,7 +135,7 @@ end
 
 au3t = s:taboption("audioxmly", Button, "_autodl3t", translate("One-click m4a to mp3"))
 au3t.inputstyle = "apply"
-au3t.description = translate("ffmpeg needs to be installed.")
+au3t.description = translate("ffmpeg needs to be installed")
 function au3t.write(self, section)
     luci.util.exec("/usr/autodl/m4atomp3.sh &")
 end
@@ -157,6 +157,18 @@ au3stop = s:taboption("audioxmly", Button, "_autodl3stop", translate("Stop play 
 au3stop.inputstyle = "apply"
 function au3stop.write(self, section)
     luci.util.exec("/usr/autodl/stopmp3.sh &")
+end
+
+au3vup = s:taboption("audioxmly", Button, "_autodl3vup", translate("Volume Up"))
+au3vup.inputstyle = "apply"
+function au3vup.write(self, section)
+    luci.util.exec("/usr/autodl/volumeup.sh &")
+end
+
+au3vdown = s:taboption("audioxmly", Button, "_autodl3vdown", translate("Volume Down"))
+au3vdown.inputstyle = "apply"
+function au3vdown.write(self, section)
+    luci.util.exec("/usr/autodl/volumedown.sh &")
 end
 
 s:tab("autodldocin", translate("Download from https://www.docin.com/"))

@@ -13,19 +13,19 @@ if [ ! "$testffmpeg" ];then
 else
 	cd /$paudiopath/$paudioname
 
-	temp_v="0"
-	for fileName in `find . -name "*.m4a" | sort`
+	temp_a="0"
+	for fileNamea in `find . -name "*.m4a" | sort`
 	do 
-		tempName=${fileName#*./}
-		mp3ffmpeg=$(echo $tempName)
+		tempNamea=${fileNamea#*./}
+		mp3ffmpeg=$(echo $tempNamea)
 		ffmpeg -v quiet -i $mp3ffmpeg -acodec libmp3lame $mp3ffmpeg.mp3
-		temp_v=$tempName
+		temp_a=$tempNamea
 	done
 
-	for tmfile in `ls | grep .mp3`
+	for tmfilea in `ls | grep .mp3`
 	do
-		newfile=$(echo $tmfile | sed 's/.m4a//g')
-		mv $tmfile $newfile
+		newfilea=$(echo $tmfilea | sed 's/.m4a//g')
+		mv $tmfilea $newfilea
 	done
 
 	rm *.m4a

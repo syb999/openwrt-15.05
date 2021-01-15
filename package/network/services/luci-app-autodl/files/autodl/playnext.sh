@@ -1,9 +1,8 @@
 #!/bin/sh
 
-ps | grep mpg123 | grep -v grep > /tmp/tmpmpg123.tmp
-cat /tmp/tmpmpg123.tmp | cut -d ' ' -f 1 > /tmp/tmpmpg123.tmp2
+pidof mpg123 > /tmp/tmpmpg123.tmp
 
-runmpg123=$(cat /tmp/tmpmpg123.tmp2)
+runmpg123=$(cat /tmp/tmpmpg123.tmp)
 kill $runmpg123
 
 rm /tmp/tmpmpg123.*
