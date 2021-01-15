@@ -15,11 +15,15 @@ if [ ! -d "/autodl" ]; then
 	if [ ! -d "/autodl/$autodlgetpath" ];then
 		ln -s $autodlgetpath /autodl
 	fi
+else
+	if [ ! -d "/autodl/$autodlgetpath" ];then
+		ln -s $autodlgetpath /autodl
+	fi
 fi
 
 cd /$autodlgetpath
 
-curl -s --connect-timeout 10 -m 20 $autodlgeturl | grep data-name > /tmp/autodldmdm.0
+curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 $autodlgeturl | grep data-name > /tmp/autodldmdm.0
 sleep 3
 avdname0=$(cat /tmp/autodldmdm.0)
 echo ${avdname0%\" data-link*} > /tmp/autodldmdm.0
@@ -35,14 +39,14 @@ function autodlvd(){
 	a2url=$(cat /tmp/autodldmdm.1)
 	echo ${a2url%\"\;var pn*} > /tmp/autodldmdm.1
 	a3url=$(cat /tmp/autodldmdm.1)
-	curl -s --connect-timeout 10 -m 20 $a3url > /tmp/autodldmdm.2
+	curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 $a3url > /tmp/autodldmdm.2
 	sleep 3
 	a4url=$(tail -n 1 /tmp/autodldmdm.2)
 	a4urlp1=$(echo $a4url | cut -d '/' -f 1 )
 	echo $a3url | sed "s/index.m3u8/$a4urlp1\/hls\/&/" > /tmp/autodldmdm.3
 	a5url=$(cat /tmp/autodldmdm.3)
 	a6url=$(echo $a5url | sed "s/index.m3u8//")
-	curl -s --connect-timeout 10 -m 20 $a5url | grep .ts > /tmp/autodltmp.index.m3u8
+	curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 $a5url | grep .ts > /tmp/autodltmp.index.m3u8
 
 	autodlm3u8=/tmp/autodltmp.index.m3u8
 
@@ -65,19 +69,19 @@ function autodlvd(){
 while [ $avdnum1 -lt $autodlgetnum ]
 do
 	autodlgeturl=$(cat /tmp/autodl.url)
-	curl -s --connect-timeout 10 -m 20 $autodlgeturl | grep m3u8 > /tmp/autodldmdm.1
+	curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 $autodlgeturl | grep m3u8 > /tmp/autodldmdm.1
 	sleep 3
 	if [ $avdnum1 -lt 9 ];then
 		autodlvd
 		avdnum2=00$avdnumx1
-		mv /autodl/videos/hls.ts /autodl/videos/$avdname2第$avdnum2集.ts
+		mv -f /autodl/videos/hls.ts /autodl/videos/$avdname2第$avdnum2集.ts
 	elif [ $avdnum1 -lt 99 ];then
 		autodlvd
 		avdnum3=0$avdnumx1
-		mv /autodl/videos/hls.ts /autodl/videos/$avdname2第$avdnum3集.ts
+		mv -f /autodl/videos/hls.ts /autodl/videos/$avdname2第$avdnum3集.ts
 	else
 		autodlvd
-		mv /autodl/videos/hls.ts /autodl/videos/$avdname2第$avdnumx1集.ts
+		mv -f /autodl/videos/hls.ts /autodl/videos/$avdname2第$avdnumx1集.ts
 	fi
 	avdnum1=$(echo `expr $avdnum1 + 1`)
 	avdnumx1=$(echo `expr $avdnumx1 + 1`)

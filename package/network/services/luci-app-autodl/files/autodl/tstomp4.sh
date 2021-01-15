@@ -13,7 +13,7 @@ else
 	do 
 		tempName=${fileName#*./}
 		mp4ffmpeg=$(echo $tempName)
-		ffmpeg -i $mp4ffmpeg -vcodec copy $mp4ffmpeg.mp4
+		ffmpeg -v quiet -i $mp4ffmpeg -vcodec copy $mp4ffmpeg.mp4
 		temp_v=$tempName
 	done
 
