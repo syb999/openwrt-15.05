@@ -24,7 +24,7 @@ fi
 
 cd /$paudiopath
 
-curl --connect-timeout 10 -m 20 -H ""user-agent": "Mozilla/5.0"" $paudiourl > /tmp/tmpXM.xmlyhttp
+curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -H ""user-agent": "Mozilla/5.0"" $paudiourl > /tmp/tmpXM.xmlyhttp
 sleep 2
 xmlyhttp=$(cat /tmp/tmpXM.xmlyhttp)  
 
@@ -51,7 +51,7 @@ do
 	adurlprefix=$urlprefix
 	adurlsuffix=$urlsuffix
 	tmpgetaudiourl="${adurlprefix}${xmlytrackId}${adurlsuffix}"
-	curl --connect-timeout 10 -m 20 -v $tmpgetaudiourl > /tmp/tmpXM.xmlyhttp6
+	curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -v $tmpgetaudiourl > /tmp/tmpXM.xmlyhttp6
 	sleep 1
 	tmpaudio=$(cat /tmp/tmpXM.xmlyhttp6)
 	echo ${tmpaudio#*src\":\"} > /tmp/tmpXM.xmlyhttp7

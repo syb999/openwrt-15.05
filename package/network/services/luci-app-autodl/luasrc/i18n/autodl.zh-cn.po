@@ -82,6 +82,12 @@ msgstr "一键m4a转mp3"
 msgid "One-click Play mp3"
 msgstr "一键播放当前mp3节目"
 
+msgid "One-click Play mp3(Positive)"
+msgstr "一键播放当前mp3节目(正序)"
+
+msgid "One-click Play mp3(Reverse)"
+msgstr "一键播放当前mp3节目(倒序)"
+
 msgid "USB sound card is needed and mpg123 package has been installed"
 msgstr "需要USB声卡，并已安装mpg123软件包"
 

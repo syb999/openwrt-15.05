@@ -150,11 +150,24 @@ function au3t.write(self, section)
     luci.util.exec("/usr/autodl/m4atomp3.sh &")
 end
 
-au3play = s:taboption("audioxmly", Button, "_autodl3play", translate("One-click Play mp3"))
+au3play = s:taboption("audioxmly", Button, "_autodl3play", translate("One-click Play mp3(Positive)"))
 au3play.inputstyle = "apply"
 au3play.description = translate("USB sound card is needed and mpg123 package has been installed")
 function au3play.write(self, section)
     luci.util.exec("/usr/autodl/playmp3.sh &")
+end
+
+au3stop = s:taboption("audioxmly", Button, "_autodl3stop", translate("Stop play mp3"))
+au3stop.inputstyle = "apply"
+function au3stop.write(self, section)
+    luci.util.exec("/usr/autodl/stopmp3.sh &")
+end
+
+au3playlastest = s:taboption("audioxmly", Button, "_autodl3playlastest", translate("One-click Play mp3(Reverse)"))
+au3playlastest.inputstyle = "apply"
+au3playlastest.description = translate("USB sound card is needed and mpg123 package has been installed")
+function au3playlastest.write(self, section)
+    luci.util.exec("/usr/autodl/playmp3lastest.sh &")
 end
 
 au3next = s:taboption("audioxmly", Button, "_autodl3next", translate("Play Next mp3"))
@@ -163,11 +176,6 @@ function au3next.write(self, section)
     luci.util.exec("/usr/autodl/playnext.sh &")
 end
 
-au3stop = s:taboption("audioxmly", Button, "_autodl3stop", translate("Stop play mp3"))
-au3stop.inputstyle = "apply"
-function au3stop.write(self, section)
-    luci.util.exec("/usr/autodl/stopmp3.sh &")
-end
 
 au3vup = s:taboption("audioxmly", Button, "_autodl3vup", translate("Volume Up"))
 au3vup.inputstyle = "apply"
