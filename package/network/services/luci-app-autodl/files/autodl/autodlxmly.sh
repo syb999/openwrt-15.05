@@ -1,7 +1,5 @@
 #!/bin/sh
 
-rm /tmp/tmpXM.*
-
 paudiourl=$(cat /tmp/tmp.XM.url)
 paudioname=$(cat /tmp/tmp.XM.name)
 paudionum=99
@@ -101,4 +99,6 @@ mkdir $paudioname
 fi
 
 mv -f *.m4a $paudioname
+
+rm /tmp/tmpXM.*
 

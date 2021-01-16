@@ -2,6 +2,7 @@
 
 autodlgeturl=$(cat /tmp/autodl.url)
 autodlgetpath=$(cat /tmp/autodl.path)
+autodlgetname=$(cat /tmp/autodl.name)
 autodlgetnum=$(cat /tmp/autodl.num)
 
 avdnum0=$(uci get autodl.@autodl[0].url)
@@ -86,6 +87,12 @@ do
 	avdnum1=$(echo `expr $avdnum1 + 1`)
 	avdnumx1=$(echo `expr $avdnumx1 + 1`)
 done
+
+if [ ! -d "/$autodlgetpath/$autodlgetname" ]; then
+mkdir $autodlgetname
+fi
+
+mv -f *.ts $autodlgetname
 
 rm /tmp/autodldmdm.*
 rm /tmp/autodl.url

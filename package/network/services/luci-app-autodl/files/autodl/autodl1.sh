@@ -2,6 +2,7 @@
 
 autodlgeturl=$(cat /tmp/autodl.url)
 autodlgetpath=$(cat /tmp/autodl.path)
+autodlgetname=$(cat /tmp/autodl.name)
 autodlgetnum=$(cat /tmp/autodl.num)
 
 avdnum0=$(uci get autodl.@autodl[0].url)
@@ -70,14 +71,24 @@ do
 	sleep 3
 	if [ $avdnum1 -le 9 ];then
 		autodlvd
-		avdnum2=0$avdnum1
+		avdnum2=00$avdnum1
 		mv -f /autodl/videos/hls.ts /autodl/videos/$avdname2第$avdnum2集.ts
+	elif [ $avdnum1 -le 99 ];then
+		autodlvd
+		avdnum3=0$avdnum1
+		mv -f /autodl/videos/hls.ts /autodl/videos/$avdname2第$avdnum3集.ts
 	else
 		autodlvd
 		mv -f /autodl/videos/hls.ts /autodl/videos/$avdname2第$avdnum1集.ts
 	fi
 	avdnum1=$(echo `expr $avdnum1 + 1`)
 done
+
+if [ ! -d "/$autodlgetpath/$autodlgetname" ]; then
+mkdir $autodlgetname
+fi
+
+mv -f *.ts $autodlgetname
 
 rm /tmp/autodldmdm.*
 rm /tmp/autodl.url

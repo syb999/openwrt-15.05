@@ -25,7 +25,7 @@ docgeturlsuffix="&sid="
 echo $docinurl | cut -d '-' -f 2 > /tmp/tmp.docin.file0
 cat /tmp/tmp.docin.file0 | cut -d '.' -f 1 > /tmp/tmp.docin.file1
 
-curl -s -H ""user-agent": "Mozilla/5.0"" $docinurl > /tmp/tmp.docin.docinurl
+curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -H ""user-agent": "Mozilla/5.0"" $docinurl > /tmp/tmp.docin.docinurl
 cat /tmp/tmp.docin.docinurl | grep flash_param_hzq > /tmp/tmp.docin.sid0
 cat /tmp/tmp.docin.sid0 | cut -d '"' -f 2 > /tmp/tmp.docin.sid1
 
@@ -35,7 +35,7 @@ do
 	docinfile=$(cat /tmp/tmp.docin.file1)
 	docinsid=$(cat /tmp/tmp.docin.sid1)
 	docinautodlpng="${docgeturlprefix}${docinfile}${docgeturlmiddle}${docindlpage}${docgeturlsuffix}${docinsid}"
-	curl -s --connect-timeout 10 -m 20 --output - $docinautodlpng > docin.png
+	curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 --output - $docinautodlpng > docin.png
 	if [ $docintotalpage -le 9 ];then
 		mv docin.png $docindlpage.png
 	elif [ $docintotalpage -le 99 ];then
