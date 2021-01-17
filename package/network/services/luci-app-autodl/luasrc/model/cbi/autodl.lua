@@ -140,14 +140,14 @@ function au3.write(self, section)
     luci.util.exec("sleep 1")
     luci.util.exec("uci get autodl.@autodl[0].xmlypath > /tmp/tmp.XM.path")
     luci.util.exec("sleep 1")
-    luci.util.exec("/usr/autodl/autodlxmly.sh &")
+    luci.util.exec("nohup /usr/autodl/autodlxmly.sh >/dev/null 2>&1 &")
 end
 
 au3t = s:taboption("audioxmly", Button, "_autodl3t", translate("One-click m4a to mp3"))
 au3t.inputstyle = "apply"
 au3t.description = translate("ffmpeg needs to be installed")
 function au3t.write(self, section)
-    luci.util.exec("/usr/autodl/m4atomp3.sh &")
+    luci.util.exec("nohup /usr/autodl/m4atomp3.sh >/dev/null 2>&1 &")
 end
 
 au3play = s:taboption("audioxmly", Button, "_autodl3play", translate("One-click Play mp3(Positive)"))
