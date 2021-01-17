@@ -11,6 +11,15 @@ testffmpeg=$(opkg list-installed | grep ffmpeg)
 if [ ! "$testffmpeg" ];then
 	echo "No ffmpeg. Stop script."
 else
+	ffmpeg -encoders | grep mp3 > /tmp/tmpfind.libmp3lame
+	xfindlibmp3lame=$(cat /tmp/tmpfind.libmp3lame)
+fi
+
+if [ ! "$testffmpeg" ];then
+	echo "No ffmpeg. Stop script."
+elif [ "$xfindlibmp3lame" = "" ];then
+	echo "No libmp3lame. Stop script."
+else
 	cd /$paudiopath/$paudioname
 
 	temp_a="0"
@@ -29,5 +38,6 @@ else
 	done
 
 	rm *.m4a
+	rm /tmp/tmpfind.libmp3lame
 fi
 
