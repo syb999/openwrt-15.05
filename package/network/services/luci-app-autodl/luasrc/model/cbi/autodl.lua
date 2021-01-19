@@ -130,18 +130,18 @@ end
 
 
 s:tab("audioxmly", translate("Download Audio from https://www.ximalaya.com/"))
-au3 = s:taboption("audioxmly", Button, "_audioxmly", translate("One-click download"))
-au3.inputstyle = "apply"
-au3.description = translate("Audios download")
-function au3.write(self, section)
-    luci.util.exec("uci get autodl.@autodl[0].xmlyurl > /tmp/tmp.XM.url")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autodl.@autodl[0].xmlyname > /tmp/tmp.XM.name")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autodl.@autodl[0].xmlypath > /tmp/tmp.XM.path")
-    luci.util.exec("sleep 1")
-    luci.util.exec("nohup /usr/autodl/autodlxmly.sh >/dev/null 2>&1 &")
-end
+--au3 = s:taboption("audioxmly", Button, "_audioxmly", translate("One-click download"))
+--au3.inputstyle = "apply"
+--au3.description = translate("Audios download")
+--function au3.write(self, section)
+--    luci.util.exec("uci get autodl.@autodl[0].xmlyurl > /tmp/tmp.XM.url")
+--    luci.util.exec("sleep 1")
+--    luci.util.exec("uci get autodl.@autodl[0].xmlyname > /tmp/tmp.XM.name")
+--    luci.util.exec("sleep 1")
+--    luci.util.exec("uci get autodl.@autodl[0].xmlypath > /tmp/tmp.XM.path")
+--    luci.util.exec("sleep 1")
+--    luci.util.exec("nohup /usr/autodl/autodlxmly.sh >/dev/null 2>&1 &")
+--end
 
 au3t = s:taboption("audioxmly", Button, "_autodl3t", translate("One-click m4a to mp3"))
 au3t.inputstyle = "apply"
