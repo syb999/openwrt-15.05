@@ -1,6 +1,6 @@
 #!/bin/sh
 
-xmgetspkdev=$(amixer | grep 'Simple mixer control' | grep -e 'Speaker' -e 'PCM' -e 'PCM' -e 'Master' | cut -d "'" -f 2)
+xmgetspkdev=$(amixer | grep 'Simple mixer control' | grep -e 'Speaker' -e 'PCM' -e 'Master' | cut -d "'" -f 2)
 getcurrentvolume=$(amixer get $xmgetspkdev | tail -n 1 | cut -d ' ' -f 6)
 if [ "$xmgetspkdev" == "Speaker" ];then
 	volumestep=3
