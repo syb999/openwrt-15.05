@@ -179,14 +179,16 @@ end
 
 au3vup = s:taboption("audioxmly", Button, "_autodl3vup", translate("Volume Up"))
 au3vup.inputstyle = "apply"
+au3vup.description = translate("alsa-utils needs to be installed")
 function au3vup.write(self, section)
-    luci.util.exec("/usr/autodl/volumeup.sh &")
+    luci.util.exec("nohup /usr/autodl/volumeup.sh >/dev/null 2>&1 &")
 end
 
 au3vdown = s:taboption("audioxmly", Button, "_autodl3vdown", translate("Volume Down"))
 au3vdown.inputstyle = "apply"
+au3vdown.description = translate("alsa-utils needs to be installed")
 function au3vdown.write(self, section)
-    luci.util.exec("/usr/autodl/volumedown.sh &")
+    luci.util.exec("nohup /usr/autodl/volumedown.sh >/dev/null 2>&1 &")
 end
 
 s:tab("autodldocin", translate("Download from https://www.docin.com/"))

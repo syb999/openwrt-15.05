@@ -103,6 +103,9 @@ msgstr "调高音量"
 msgid "Volume Down"
 msgstr "调低音量"
 
+msgid "alsa-utils needs to be installed"
+msgstr "需要已安装好alsa-utils"
+
 msgid "One-click download documents"
 msgstr "一键下载文档(图片格式)"
 
@@ -123,4 +126,7 @@ msgstr "文档下载目录"
 
 msgid "Documents from https://docin.com"
 msgstr "获取自豆丁网的文档"
+
+msgid "URL for downloading https://docin.com documents"
+msgstr "豆丁网文档的URL页面地址"
 
