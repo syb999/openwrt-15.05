@@ -30,5 +30,5 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 +
 +	return MINSTREL_TRUNC(100 * ((prob_avg * 1000000) / nsecs));
  }
-
+ 
  /*
