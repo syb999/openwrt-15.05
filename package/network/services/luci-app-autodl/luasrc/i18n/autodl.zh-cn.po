@@ -76,6 +76,12 @@ msgstr "音频下载目录"
 msgid "Audios download"
 msgstr "音频下载"
 
+msgid "One-click download freeVIP"
+msgstr "一键下载新品限免节目"
+
+msgid "node needs to be installed"
+msgstr "需要已安装好node"
+
 msgid "One-click m4a to mp3"
 msgstr "一键m4a转mp3"
 

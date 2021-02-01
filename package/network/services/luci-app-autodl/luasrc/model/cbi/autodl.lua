@@ -143,6 +143,19 @@ function au3.write(self, section)
     luci.util.exec("nohup /usr/autodl/autodlxmly.sh >/dev/null 2>&1 &")
 end
 
+au3v = s:taboption("audioxmly", Button, "_audioau3v", translate("One-click download freeVIP"))
+au3v.inputstyle = "apply"
+au3v.description = translate("node needs to be installed")
+function au3v.write(self, section)
+    luci.util.exec("uci get autodl.@autodl[0].xmlyurl > /tmp/tmp.XM.url")
+    luci.util.exec("sleep 1")
+    luci.util.exec("uci get autodl.@autodl[0].xmlyname > /tmp/tmp.XM.name")
+    luci.util.exec("sleep 1")
+    luci.util.exec("uci get autodl.@autodl[0].xmlypath > /tmp/tmp.XM.path")
+    luci.util.exec("sleep 1")
+    luci.util.exec("nohup /usr/autodl/autodlxmlyVIP.sh >/dev/null 2>&1 &")
+end
+
 au3t = s:taboption("audioxmly", Button, "_autodl3t", translate("One-click m4a to mp3"))
 au3t.inputstyle = "apply"
 au3t.description = translate("ffmpeg needs to be installed")
