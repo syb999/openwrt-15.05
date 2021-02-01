@@ -967,7 +967,6 @@ void __init ath79_register_eth(unsigned int id)
 			pdata->speed = SPEED_1000;
 			pdata->duplex = DUPLEX_FULL;
 			pdata->switch_data = &ath79_switch_data;
-			pdata->builtin_switch = 1;
 
 			ath79_switch_data.phy_poll_mask |= BIT(4);
 		}
@@ -1026,7 +1025,6 @@ void __init ath79_register_eth(unsigned int id)
 			pdata->has_gbit = 1;
 			pdata->duplex = DUPLEX_FULL;
 			pdata->switch_data = &ath79_switch_data;
-			pdata->builtin_switch = 1;
 
 			ath79_switch_data.phy_poll_mask |= BIT(4);
 		}
@@ -1058,7 +1056,6 @@ void __init ath79_register_eth(unsigned int id)
 			pdata->set_speed = ath79_set_speed_dummy;
 
 			pdata->switch_data = &ath79_switch_data;
-			pdata->builtin_switch = 1;
 
 			/* reset the built-in switch */
 			ath79_device_reset_set(AR934X_RESET_ETH_SWITCH);
@@ -1096,7 +1093,6 @@ void __init ath79_register_eth(unsigned int id)
 			pdata->speed = SPEED_1000;
 			pdata->duplex = DUPLEX_FULL;
 			pdata->switch_data = &ath79_switch_data;
-			pdata->builtin_switch = 1;
 
 			ath79_switch_data.phy_poll_mask |= BIT(4);
 		}
@@ -1123,7 +1119,6 @@ void __init ath79_register_eth(unsigned int id)
 			pdata->reset_bit = QCA955X_RESET_GE1_MAC |
 					   QCA955X_RESET_GE1_MDIO;
 			pdata->set_speed = qca955x_set_speed_sgmii;
-			pdata->builtin_switch = 1;
 		}
 
 		pdata->ddr_flush = ath79_ddr_no_flush;
@@ -1157,7 +1152,7 @@ void __init ath79_register_eth(unsigned int id)
 			if (pdata->phy_if_mode == PHY_INTERFACE_MODE_SGMII)
 				pdata->set_speed = qca956x_set_speed_sgmii;
 			else
-				pdata->set_speed = ar934x_set_speed_ge0;
+				pdata->set_speed = ath79_set_speed_ge0;
 
 			pdata->disable_inline_checksum_engine = 1;
 		} else {
@@ -1170,7 +1165,6 @@ void __init ath79_register_eth(unsigned int id)
 
 			pdata->speed = SPEED_1000;
 			pdata->duplex = DUPLEX_FULL;
-			pdata->builtin_switch = 1;
 
 			/* reset the built-in switch */
 			ath79_device_reset_set(AR934X_RESET_ETH_SWITCH);

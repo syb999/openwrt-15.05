@@ -36,7 +36,6 @@ struct ag71xx_platform_data {
 	u8		is_ar7240:1;
 	u8		is_ar724x:1;
 	u8		has_ar8216:1;
-	u8		builtin_switch:1;
 	u8		disable_inline_checksum_engine:1;
 
 	struct ag71xx_switch_platform_data *switch_data;
