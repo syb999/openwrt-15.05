@@ -64,6 +64,18 @@ msgstr "音频节目名"
 msgid "Audios from https://www.ximalaya.com"
 msgstr "喜马拉雅的音频节目"
 
+msgid "Wanna get VIP audios"
+msgstr "想要获取VIP音频"
+
+msgid "You must have VIP accout"
+msgstr "你必须有VIP账户"
+
+msgid "The value with Account Cookie name:1&_token"
+msgstr "帐户Cookie名称为1&_token的值"
+
+msgid "Using The Cookie of VIP account to get VIP audios"
+msgstr "使用VIP账号Cookie获取VIP音频"
+
 msgid "Please enter a lastest number"
 msgstr "最新的节目集数"
 
@@ -76,8 +88,23 @@ msgstr "音频下载目录"
 msgid "Audios download"
 msgstr "音频下载"
 
+msgid "Get list"
+msgstr "获取节目表"
+
+msgid "Show current audio list"
+msgstr "开启当前节目列表"
+
+msgid "Select Audio number"
+msgstr "指定集数"
+
+msgid "Get list first"
+msgstr "需要先获取节目表"
+
+msgid "Select Audio"
+msgstr "选择音频"
+
 msgid "One-click download freeVIP"
-msgstr "一键下载新品限免节目"
+msgstr "一键下载新品限免节目或VIP节目"
 
 msgid "node needs to be installed"
 msgstr "需要已安装好node"
@@ -86,7 +113,10 @@ msgid "One-click m4a to mp3"
 msgstr "一键m4a转mp3"
 
 msgid "One-click Play mp3"
-msgstr "一键播放当前mp3节目"
+msgstr "一键播放mp3节目"
+
+msgid "One-click Play selected mp3"
+msgstr "一键播放被选择的mp3节目"
 
 msgid "One-click Play mp3(Positive)"
 msgstr "一键播放当前mp3节目(正序)"

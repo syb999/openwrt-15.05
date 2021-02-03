@@ -43,11 +43,51 @@ xmlyname.default = "story"
 xmlyname.rmempty = false
 xmlyname.description = translate("Audios from https://www.ximalaya.com")
 
+xmlycvip = s:taboption("basic2", Flag, "wanna_get_VIP_audios", translate("Wanna get VIP audios"))
+xmlycvip.description = translate("You must have VIP accout")
+
+xmlycookie=s:taboption("basic2", Value, "xmlycookie", translate("The value with Account Cookie name:1&_token"))
+xmlycookie:depends("wanna_get_VIP_audios", "1")
+xmlycookie.datatype = "string"
+xmlycookie.default = ""
+xmlycookie.description = translate("Using The Cookie of VIP account to get VIP audios")
+
 xmlypath=s:taboption("basic2", Value, "xmlypath", translate("Download Audios directory"))
 xmlypath.datatype = "string"
 xmlypath.default = "/mnt/sda3/audios"
 xmlypath.rmempty = false
 xmlypath.description = translate("Please enter a valid directory")
+
+xmlygetlist = s:taboption("basic2", Button, "xmlygetlist", translate("Get list"))
+xmlygetlist.inputstyle = "apply"
+xmlygetlist.description = translate("Show current audio list")
+function xmlygetlist.write(self, section)
+    luci.util.exec("/usr/autodl/xmlygetlist.sh &")
+end
+
+xmlyopennum = s:taboption("basic2", Flag, "select_audio_numbers", translate("Select Audio number"))
+xmlyopennum.description = translate("Get list first")
+
+xmlysenum = s:taboption("basic2", ListValue, "audio_num", translate("Select Audio"))
+xmlysenum:depends("select_audio_numbers", "1")
+xmlysenum.default = "null"
+
+local xmlyplaynumf = { }
+local xmlyfload = io.open("/tmp/tmp.Audioxm.list", "r")
+
+if xmlyfload then
+	local listnumb
+	repeat
+		listnumb = xmlyfload:read("*l")
+		local s = listnumb
+		if s then xmlyplaynumf[#xmlyplaynumf+1] = s end
+	until not listnumb
+	xmlyfload:close()
+end
+
+for _, v in luci.util.vspairs(xmlyplaynumf) do
+    xmlysenum:value(v)
+end
 
 s:tab("basic3", translate("Basic Setting for docin"))
 
@@ -151,6 +191,8 @@ function au3v.write(self, section)
     luci.util.exec("sleep 1")
     luci.util.exec("uci get autodl.@autodl[0].xmlyname > /tmp/tmp.XM.name")
     luci.util.exec("sleep 1")
+    luci.util.exec("uci get autodl.@autodl[0].xmlycookie > /tmp/tmp.XM.cookie")
+    luci.util.exec("sleep 1")
     luci.util.exec("uci get autodl.@autodl[0].xmlypath > /tmp/tmp.XM.path")
     luci.util.exec("sleep 1")
     luci.util.exec("nohup /usr/autodl/autodlxmlyVIP.sh >/dev/null 2>&1 &")
@@ -163,11 +205,18 @@ function au3t.write(self, section)
     luci.util.exec("nohup /usr/autodl/m4atomp3.sh >/dev/null 2>&1 &")
 end
 
+au3selectedplay = s:taboption("audioxmly", Button, "_autodl3selectedplay", translate("One-click Play selected mp3"))
+au3selectedplay.inputstyle = "apply"
+au3selectedplay.description = translate("USB sound card is needed and mpg123 package has been installed")
+function au3selectedplay.write(self, section)
+    luci.util.exec("/usr/autodl/playselectedmp3a.sh &")
+end
+
 au3play = s:taboption("audioxmly", Button, "_autodl3play", translate("One-click Play mp3(Positive)"))
 au3play.inputstyle = "apply"
 au3play.description = translate("USB sound card is needed and mpg123 package has been installed")
 function au3play.write(self, section)
-    luci.util.exec("/usr/autodl/playmp3.sh &")
+    luci.util.exec("/usr/autodl/playmp3a.sh &")
 end
 
 au3stop = s:taboption("audioxmly", Button, "_autodl3stop", translate("Stop play mp3"))
@@ -180,7 +229,7 @@ au3playlastest = s:taboption("audioxmly", Button, "_autodl3playlastest", transla
 au3playlastest.inputstyle = "apply"
 au3playlastest.description = translate("USB sound card is needed and mpg123 package has been installed")
 function au3playlastest.write(self, section)
-    luci.util.exec("/usr/autodl/playmp3lastest.sh &")
+    luci.util.exec("/usr/autodl/playlastestmp3a.sh &")
 end
 
 au3next = s:taboption("audioxmly", Button, "_autodl3next", translate("Play Next mp3"))

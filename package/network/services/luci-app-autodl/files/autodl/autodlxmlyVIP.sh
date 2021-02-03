@@ -5,6 +5,7 @@ rm /tmp/tmp.XMV.*
 
 paudiourl=$(cat /tmp/tmp.XM.url)
 paudioname=$(cat /tmp/tmp.XM.name)
+paudiocookie=$(cat /tmp/tmp.XM.cookie)
 paudionum=99
 rpaudionum=99
 paudiopath=$(cat /tmp/tmp.XM.path)
@@ -53,7 +54,14 @@ do
 	adurlprefix=$urlprefix
 	adurlsuffix=$urlsuffix
 	tmpgetaudiourl="${adurlprefix}${xmlytrackId}${adurlsuffix}"
-	curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -H ""user-agent": "Mozilla/5.0"" -v $tmpgetaudiourl > /tmp/tmpXMVIP.xmlyhttp6
+
+	if [ ! "$paudiocookie" ];then
+		curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -H ""user-agent": "Mozilla/5.0"" -v $tmpgetaudiourl > /tmp/tmpXMVIP.xmlyhttp6
+	else
+		xmlycookieprefix="1&_token="
+		xmlycookie="${xmlycookieprefix}${paudiocookie}"
+		curl -b "$xmlycookie" -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -H ""user-agent": "Mozilla/5.0"" -v $tmpgetaudiourl > /tmp/tmpXMVIP.xmlyhttp6
+	fi
 
 	xmlyfindcode=$(cat /tmp/tmpXMVIP.xmlyhttp6)
 	echo ${xmlyfindcode#*ep\":\"} > /tmp/tmpXMVIP.xmlyep1
