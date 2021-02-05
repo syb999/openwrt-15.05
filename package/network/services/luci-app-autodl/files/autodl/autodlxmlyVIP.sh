@@ -11,8 +11,11 @@ rpaudionum=99
 paudiopath=$(cat /tmp/tmp.XM.path)
 tmpcounthead=1
 
+
+curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 http://www.ximalaya.com/revision/time > /tmp/tmp.XM.xmtimestamp
+xmtimestamp=$(cat /tmp/tmp.XM.xmtimestamp)
 urlprefix="https://mpay.ximalaya.com/mobile/track/pay/"
-urlsuffix="/?device=pc"
+urlsuffix="/ts-${xmtimestamp}/?device=pc"
 
 if [ ! -d "/autodl" ]; then
 	mkdir /autodl
@@ -56,11 +59,14 @@ do
 	tmpgetaudiourl="${adurlprefix}${xmlytrackId}${adurlsuffix}"
 
 	if [ ! "$paudiocookie" ];then
-		curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -H ""user-agent": "Mozilla/5.0"" -v $tmpgetaudiourl > /tmp/tmpXMVIP.xmlyhttp6
+		curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -H ""user-agent": "Mozilla/5.0\(Android 8.1.0\)"" -v $tmpgetaudiourl > /tmp/tmpXMVIP.xmlyhttp6
 	else
 		xmlycookieprefix="1&_token="
 		xmlycookie="${xmlycookieprefix}${paudiocookie}"
-		curl -b "$xmlycookie" -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -H ""user-agent": "Mozilla/5.0"" -v $tmpgetaudiourl > /tmp/tmpXMVIP.xmlyhttp6
+		curl -b "$xmlycookie" -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -H ""user-agent": "Mozilla/5.0\(Android 8.1.0\)"" -v $tmpgetaudiourl > /tmp/tmpXMVIP.xmlyhttp6
+		randtime=$(head -n 64 /dev/urandom | tr -dc "5678" | head -c2)
+		rsleeptime=$(echo `expr $randtime + 108`)
+		sleep $rsleeptime
 	fi
 
 	xmlyfindcode=$(cat /tmp/tmpXMVIP.xmlyhttp6)
