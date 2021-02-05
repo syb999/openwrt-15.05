@@ -3,7 +3,12 @@
 xmgetspkdev=$(amixer | grep 'Simple mixer control' | grep -e 'Speaker' -e 'PCM' -e 'Master' | cut -d "'" -f 2)
 getcurrentvolume=$(amixer get $xmgetspkdev | tail -n 1 | cut -d ' ' -f 6)
 if [ "$xmgetspkdev" == "Speaker" ];then
-	volumestep=3
+	getmaxvolume=$(amixer get Speaker | head -n 4 | tail -n 1 | cut -d '-' -f 2 | cut -d ' ' -f 2)
+	if [ $getmaxvolume -lt 100 ];then
+		volumestep=3
+	else
+		volumestep=12
+	fi
 elif [ "$xmgetspkdev" == "PCM" ];then
 	volumestep=8
 else
