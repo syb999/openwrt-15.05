@@ -13,6 +13,9 @@ msgstr "音频基本设置"
 msgid "Basic Setting for docin"
 msgstr "docin.com基本设置"
 
+msgid "Videos Download Page"
+msgstr "视频下载页面"
+
 msgid "Video URL"
 msgstr "视频 URL"
 

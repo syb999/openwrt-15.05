@@ -119,10 +119,10 @@ docinpath.description = translate("Please enter a valid directory")
 ---url1=s:taboption("basic", Button, "url1", translate("Sync download address (save & app after sync)"))
 ---url1.inputstyle = "apply"
 
-
-s:tab("autodl1", translate("Download from https://www.dy10000.com"))
+s:tab("autodl1", translate("Videos Download Page"))
 au1 = s:taboption("autodl1", Button, "_autodl1", translate("One-click download"))
 au1.inputstyle = "apply"
+au1.description = translate("Download from https://www.dy10000.com")
 function au1.write(self, section)
     luci.util.exec("uci get autodl.@autodl[0].url > /tmp/autodl.url")
     luci.util.exec("sleep 1")
@@ -137,16 +137,9 @@ function au1.write(self, section)
     luci.util.exec("/usr/autodl/autodl1.sh &")
 end
 
-au1t = s:taboption("autodl1", Button, "_autodl1t", translate("One-click ts to mp4"))
-au1t.inputstyle = "apply"
-au1t.description = translate("ffmpeg needs to be installed")
-function au1t.write(self, section)
-    luci.util.exec("/usr/autodl/tstomp4.sh &")
-end
-
-s:tab("autodl2", translate("Download from https://www.xgys.net"))
-au2 = s:taboption("autodl2", Button, "_autodl2", translate("One-click download"))
+au2 = s:taboption("autodl1", Button, "_autodl2", translate("One-click download"))
 au2.inputstyle = "apply"
+au2.description = translate("Download from https://www.xgys.net")
 function au2.write(self, section)
     luci.util.exec("uci get autodl.@autodl[0].url > /tmp/autodl.url")
     luci.util.exec("sleep 1")
@@ -161,15 +154,31 @@ function au2.write(self, section)
     luci.util.exec("/usr/autodl/autodl2.sh &")
 end
 
-au2t = s:taboption("autodl2", Button, "_autodl2t", translate("One-click ts to mp4"))
-au2t.inputstyle = "apply"
-au2t.description = translate("ffmpeg needs to be installed")
-function au2t.write(self, section)
+au5 = s:taboption("autodl1", Button, "_autodl5", translate("One-click download"))
+au5.inputstyle = "apply"
+au5.description = translate("Download from https://www.gclxx.com")
+function au5.write(self, section)
+    luci.util.exec("uci get autodl.@autodl[0].url > /tmp/autodl.url")
+    luci.util.exec("sleep 1")
+    luci.util.exec("uci get autodl.@autodl[0].url > /tmp/autodl.url.bk")
+    luci.util.exec("sleep 1")
+    luci.util.exec("uci get autodl.@autodl[0].path > /tmp/autodl.path")
+    luci.util.exec("sleep 1")
+    luci.util.exec("uci get autodl.@autodl[0].name > /tmp/autodl.name")
+    luci.util.exec("sleep 1")
+    luci.util.exec("uci get autodl.@autodl[0].num > /tmp/autodl.num")
+    luci.util.exec("sleep 1")
+    luci.util.exec("/usr/autodl/autodl5.sh &")
+end
+
+au1t = s:taboption("autodl1", Button, "_autodl1t", translate("One-click ts to mp4"))
+au1t.inputstyle = "apply"
+au1t.description = translate("ffmpeg needs to be installed")
+function au1t.write(self, section)
     luci.util.exec("/usr/autodl/tstomp4.sh &")
 end
 
-
-s:tab("audioxmly", translate("Download Audio from https://www.ximalaya.com/"))
+s:tab("audioxmly", translate("Download Audio from https://www.ximalaya.com"))
 au3 = s:taboption("audioxmly", Button, "_audioxmly", translate("One-click download"))
 au3.inputstyle = "apply"
 au3.description = translate("Audios download")
@@ -238,7 +247,6 @@ function au3next.write(self, section)
     luci.util.exec("/usr/autodl/playnext.sh &")
 end
 
-
 au3vup = s:taboption("audioxmly", Button, "_autodl3vup", translate("Volume Up"))
 au3vup.inputstyle = "apply"
 au3vup.description = translate("alsa-utils needs to be installed")
@@ -253,7 +261,7 @@ function au3vdown.write(self, section)
     luci.util.exec("nohup /usr/autodl/volumedown.sh >/dev/null 2>&1 &")
 end
 
-s:tab("autodldocin", translate("Download from https://www.docin.com/"))
+s:tab("autodldocin", translate("Download from https://www.docin.com"))
 au4 = s:taboption("autodldocin", Button, "_autodldocin", translate("One-click download documents"))
 au4.inputstyle = "apply"
 au4.description = translate("docin.com documents download")

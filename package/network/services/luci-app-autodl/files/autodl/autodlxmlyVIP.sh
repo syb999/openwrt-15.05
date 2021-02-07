@@ -59,13 +59,13 @@ do
 	tmpgetaudiourl="${adurlprefix}${xmlytrackId}${adurlsuffix}"
 
 	if [ ! "$paudiocookie" ];then
-		curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -H ""user-agent": "Mozilla/5.0\(Android 8.1.0\)"" -v $tmpgetaudiourl > /tmp/tmpXMVIP.xmlyhttp6
+		curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -H ""user-agent": "Mozilla/5.0\ \(Linux\;\ Android\ 10\)"" -v $tmpgetaudiourl > /tmp/tmpXMVIP.xmlyhttp6
 	else
 		xmlycookieprefix="1&_token="
 		xmlycookie="${xmlycookieprefix}${paudiocookie}"
-		curl -b "$xmlycookie" -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -H ""user-agent": "Mozilla/5.0\(Android 8.1.0\)"" -v $tmpgetaudiourl > /tmp/tmpXMVIP.xmlyhttp6
-		randtime=$(head -n 64 /dev/urandom | tr -dc "5678" | head -c2)
-		rsleeptime=$(echo `expr $randtime + 108`)
+		curl -b "$xmlycookie" -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -H ""user-agent": "Mozilla/5.0\ \(Linux\;\ Android\ 10\)"" -v $tmpgetaudiourl > /tmp/tmpXMVIP.xmlyhttp6
+		randtime=$(head -n 64 /dev/urandom | tr -dc "6789" | head -c2)
+		rsleeptime=$(echo `expr $randtime + 256`)
 		sleep $rsleeptime
 	fi
 
@@ -138,7 +138,7 @@ cat /tmp/tmp.XMV.xmlyhttp3 | grep trackId > /tmp/tmp.XMV.xmlyhttp0num
 cat /tmp/tmp.XMV.xmlyhttp0num | grep '^[0-9]' | cut -d ',' -f 1 > /tmp/tmp.XMV.xmlyhttp1num
 sed '1!G;h;$!d' /tmp/tmp.XMV.xmlyhttp1num > /tmp/tmp.XMV.xmlyhttp2num
 
-cat /tmp/tmp.XMV.xmlyhttp0num | grep tag | cut -d ',' -f 5 | cut -d '"' -f 4 | sed -e 's/《//g' | sed -e 's/》//g' | sed -e 's/？//g' | sed -e 's/?//g' | sed -e 's/|//g' | sed -e 's/\\//g' | sed -e 's/\"//g' | sed -e 's/“//g' | sed -e 's/”//g' | sed -e 's/,//g' | sed -e "s/'//g" | sed -e 's/://g' | sed -e "s/[0-9]//g" | sed -e "s/第集//g" | sed -e "s/第章//g" > /tmp/tmp.XMV.xmlynam
+cat /tmp/tmp.XMV.xmlyhttp0num | grep tag | cut -d ',' -f 5 | cut -d '"' -f 4 | sed -e 's/《//g' | sed -e 's/》//g' | sed -e 's/（/-/g' | sed -e 's/）/-/g' |  sed -e 's/？//g' | sed -e 's/?//g' | sed -e 's/|//g' | sed -e 's/\\//g' | sed -e 's/\"//g' | sed -e 's/“//g' | sed -e 's/”//g' | sed -e 's/,//g' | sed -e "s/'//g" | sed -e 's/://g' | sed -e "s/[0-9]//g" | sed -e "s/第集//g" | sed -e "s/第章//g" > /tmp/tmp.XMV.xmlynam
 
 ls -al | grep "^-" > /tmp/tmpXMVIP.filelist
 
