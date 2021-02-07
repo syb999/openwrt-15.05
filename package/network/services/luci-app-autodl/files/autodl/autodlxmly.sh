@@ -82,36 +82,32 @@ cat /tmp/tmpXM.xmlyhttp3 | grep trackId > /tmp/tmpXM.xmlyhttp0num
 cat /tmp/tmpXM.xmlyhttp0num | grep '^[0-9]' | cut -d ',' -f 1 > /tmp/tmpXM.xmlyhttp1num
 sed '1!G;h;$!d' /tmp/tmpXM.xmlyhttp1num > /tmp/tmpXM.xmlyhttp2num
 
-cat /tmp/tmpXM.xmlyhttp0num | grep tag | cut -d ',' -f 5 | cut -d '"' -f 4 | sed -e 's/【//g' | sed -e 's/】//g' | sed -e 's/（//g' | sed -e 's/）//g' | sed -e 's/？//g' | sed -e 's/?//g' | sed -e 's/丨//g' | sed -e 's/|//g' | sed -e 's/\\//g' | sed -e 's/"//g' | sed -e 's/：//g' | sed -e 's/://g' | sed -e 's/！//g' | sed -e 's/~//g' | sed -e 's/“//g' | sed -e 's/”//g' | sed -e 's/，//g' | sed -e 's/,//g' | sed -e "s/'//g" | sed -e "s/[0-9]//g" | sed -e "s/第集//g" > /tmp/tmpXM.xmlyhttpnam
+cat /tmp/tmpXM.xmlyhttp0num | grep tag | cut -d ',' -f 5 | cut -d '"' -f 4 | sed -e 's/《//g' | sed -e 's/》//g' | sed -e 's/？//g' | sed -e 's/?//g' | sed -e 's/|//g' | sed -e 's/\\//g' | sed -e 's/\"//g' | sed -e 's/“//g' | sed -e 's/”//g' | sed -e 's/,//g' | sed -e "s/'//g" | sed -e 's/://g' | sed -e "s/[0-9]//g" | sed -e "s/第集//g" | sed -e "s/第章//g" > /tmp/tmpXM.xmlynam
 
 ls -al | grep "^-" > /tmp/tmpXM.filelist
 
 cat /tmp/tmpXM.filelist | while read LINE
 do
-	xmlyfilename=$(echo $LINE)
 	xtmpcounthead=$tmpcounthead
 	xmlyturenum=$(tail -n $xtmpcounthead /tmp/tmpXM.xmlyhttp2num | head -n 1)
-	xmlyturename=$(head -n $xtmpcounthead /tmp/tmpXM.xmlyhttpnam | tail -n 1 )
+	xmlyturename=$(head -n $xtmpcounthead /tmp/tmpXM.xmlynam | tail -n 1 )
+	if [ "$xmlyturename" = "$paudioname" ];then
+		xmlyturename=""
+	fi
 	if [ $xmlyturenum -le 9 ];then
 		nxmlyturenum=000$xmlyturenum
 		mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nxmlyturenum$xmlyturename.m4a
-		tmpcounthead=$(echo `expr $tmpcounthead + 1`)
-		rpaudionum=$(echo `expr $rpaudionum - 1`)
 	elif [ $xmlyturenum -le 99 ];then
 		nnxmlyturenum=00$xmlyturenum
 		mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nnxmlyturenum$xmlyturename.m4a
-		tmpcounthead=$(echo `expr $tmpcounthead + 1`)
-		rpaudionum=$(echo `expr $rpaudionum - 1`)
 	elif [ $xmlyturenum -le 999 ];then
 		nnnxmlyturenum=0$xmlyturenum
 		mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nnnxmlyturenum$xmlyturename.m4a
-		tmpcounthead=$(echo `expr $tmpcounthead + 1`)
-		rpaudionum=$(echo `expr $rpaudionum - 1`)
 	else
 		mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$xmlyturenum$xmlyturename.m4a
-		tmpcounthead=$(echo `expr $tmpcounthead + 1`)
-		rpaudionum=$(echo `expr $rpaudionum - 1`)
 	fi
+	tmpcounthead=$(echo `expr $tmpcounthead + 1`)
+	rpaudionum=$(echo `expr $rpaudionum - 1`)
 done
 
 if [ ! -d "/$paudiopath/$paudioname" ]; then
