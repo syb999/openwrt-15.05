@@ -52,6 +52,11 @@ xmlycookie.datatype = "string"
 xmlycookie.default = ""
 xmlycookie.description = translate("Using The Cookie of VIP account to get VIP audios")
 
+xmlysleeptime=s:taboption("basic2", Value, "xmlysleeptime", translate("Set delay time"))
+xmlysleeptime:depends("wanna_get_VIP_audios", "1")
+xmlysleeptime.datatype = "uinteger"
+xmlysleeptime.default = "0"
+
 xmlypath=s:taboption("basic2", Value, "xmlypath", translate("Download Audios directory"))
 xmlypath.datatype = "string"
 xmlypath.default = "/mnt/sda3/audios"
@@ -203,6 +208,8 @@ function au3v.write(self, section)
     luci.util.exec("uci get autodl.@autodl[0].xmlycookie > /tmp/tmp.XM.cookie")
     luci.util.exec("sleep 1")
     luci.util.exec("uci get autodl.@autodl[0].xmlypath > /tmp/tmp.XM.path")
+    luci.util.exec("sleep 1")
+    luci.util.exec("uci get autodl.@autodl[0].xmlysleeptime > /tmp/tmp.XM.sleeptime")
     luci.util.exec("sleep 1")
     luci.util.exec("nohup /usr/autodl/autodlxmlyVIP.sh >/dev/null 2>&1 &")
 end

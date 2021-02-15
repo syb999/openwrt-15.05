@@ -9,6 +9,7 @@ paudiocookie=$(cat /tmp/tmp.XM.cookie)
 paudionum=99
 rpaudionum=99
 paudiopath=$(cat /tmp/tmp.XM.path)
+psleeptime=$(cat /tmp/tmp.XM.sleeptime)
 tmpcounthead=1
 
 
@@ -61,12 +62,10 @@ do
 	if [ ! "$paudiocookie" ];then
 		curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -H ""user-agent": "Mozilla/5.0\ \(Linux\;\ Android\ 10\)"" -v $tmpgetaudiourl > /tmp/tmpXMVIP.xmlyhttp6
 	else
+		sleep $psleeptime
 		xmlycookieprefix="1&_token="
 		xmlycookie="${xmlycookieprefix}${paudiocookie}"
-		curl -b "$xmlycookie" -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -H ""user-agent": "Mozilla/5.0\ \(Linux\;\ Android\ 10\)"" -v $tmpgetaudiourl > /tmp/tmpXMVIP.xmlyhttp6
-		randtime=$(head -n 64 /dev/urandom | tr -dc "6789" | head -c2)
-		rsleeptime=$(echo `expr $randtime + 256`)
-		sleep $rsleeptime
+		curl -b "$xmlycookie" -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -H ""user-agent": "Mozilla/5.0"" -v $tmpgetaudiourl > /tmp/tmpXMVIP.xmlyhttp6
 	fi
 
 	xmlyfindcode=$(cat /tmp/tmpXMVIP.xmlyhttp6)

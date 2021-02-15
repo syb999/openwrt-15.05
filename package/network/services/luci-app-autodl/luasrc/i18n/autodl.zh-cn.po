@@ -79,6 +79,9 @@ msgstr "帐户Cookie名称为1&_token的值"
 msgid "Using The Cookie of VIP account to get VIP audios"
 msgstr "使用VIP账号Cookie获取VIP音频"
 
+msgid "Set delay time"
+msgstr "设置下载的延迟时间(默认0秒)"
+
 msgid "Please enter a lastest number"
 msgstr "最新的节目集数"
 
