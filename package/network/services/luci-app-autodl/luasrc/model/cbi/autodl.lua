@@ -176,6 +176,23 @@ function au5.write(self, section)
     luci.util.exec("/usr/autodl/autodl5.sh &")
 end
 
+au6 = s:taboption("autodl1", Button, "_autodl6", translate("One-click download"))
+au6.inputstyle = "apply"
+au6.description = translate("Download from http://gtghy-45.cn")
+function au6.write(self, section)
+    luci.util.exec("uci get autodl.@autodl[0].url > /tmp/autodl.url")
+    luci.util.exec("sleep 1")
+    luci.util.exec("uci get autodl.@autodl[0].url > /tmp/autodl.url.bk")
+    luci.util.exec("sleep 1")
+    luci.util.exec("uci get autodl.@autodl[0].path > /tmp/autodl.path")
+    luci.util.exec("sleep 1")
+    luci.util.exec("uci get autodl.@autodl[0].name > /tmp/autodl.name")
+    luci.util.exec("sleep 1")
+    luci.util.exec("uci get autodl.@autodl[0].num > /tmp/autodl.num")
+    luci.util.exec("sleep 1")
+    luci.util.exec("/usr/autodl/autodl6.sh &")
+end
+
 au1t = s:taboption("autodl1", Button, "_autodl1t", translate("One-click ts to mp4"))
 au1t.inputstyle = "apply"
 au1t.description = translate("ffmpeg needs to be installed")

@@ -54,7 +54,7 @@ function autodlvd(){
 		autodltsprefix=$(echo $a6url)
 		autodltsprefixurl=$autodltsprefix
 		tmpautodlts="${autodltsprefixurl}${autodltssuffix}"
-		wget-ssl -q -c $tmpautodlts
+		wget-ssl --timeout=35 -q -c $tmpautodlts
 		cat $autodltssuffix >> $autodlgetpath/hls.ts
 		rm $autodltssuffix
 	done < $autodlm3u8
@@ -72,14 +72,14 @@ do
 	if [ $avdnum1 -le 9 ];then
 		autodlvd
 		avdnum2=00$avdnum1
-		mv -f /autodl/videos/hls.ts /autodl/videos/$avdname2第$avdnum2集.ts
+		mv -f $autodlgetpath/hls.ts $autodlgetpath/$avdname2第$avdnum2集.ts
 	elif [ $avdnum1 -le 99 ];then
 		autodlvd
 		avdnum3=0$avdnum1
-		mv -f /autodl/videos/hls.ts /autodl/videos/$avdname2第$avdnum3集.ts
+		mv -f $autodlgetpath/hls.ts $autodlgetpath/$avdname2第$avdnum3集.ts
 	else
 		autodlvd
-		mv -f /autodl/videos/hls.ts /autodl/videos/$avdname2第$avdnum1集.ts
+		mv -f $autodlgetpath/hls.ts $autodlgetpath/$avdname2第$avdnum1集.ts
 	fi
 	avdnum1=$(echo `expr $avdnum1 + 1`)
 done
