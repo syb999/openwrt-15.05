@@ -140,6 +140,7 @@ platform_check_image() {
 	hc5962 |\
 	newifi-d1 |\
 	newifi-d2 |\
+	jcg-y2 |\
 	zbt-we1326 |\
 	psg1208 |\
 	psg1218 |\

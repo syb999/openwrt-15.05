@@ -496,6 +496,9 @@ ramips_board_detect() {
 	*"Newifi-D2")
 		name="newifi-d2"
 		;;
+	*"JCG-Y2")
+		name="jcg-y2"
+		;;
 	*"ZBT-WE1326")
 		name="zbt-we1326"
 		;;

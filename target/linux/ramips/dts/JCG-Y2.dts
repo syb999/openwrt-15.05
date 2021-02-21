@@ -3,20 +3,16 @@
 /include/ "mt7621.dtsi"
 
 / {
-	compatible = "jdcloud-1", "mediatek,mt7621-soc";
-	model = "JDCloud-1";
+	compatible = "jcg-y2", "mediatek,mt7621-soc";
+	model = "JCG-Y2";
 
 	memory@0 {
 		device_type = "memory";
-		reg = <0x0 0x1c000000>, <0x20000000 0x4000000>;
+		reg = <0x0 0x10000000>;
 	};
 
 	chosen {
 		bootargs = "console=ttyS0,115200";
-	};
-
-	sdhci@1E130000 {
-		status = "okay";
 	};
 
 	palmbus@1E000000 {
@@ -47,9 +43,8 @@
 
 				partition@50000 {
 					label = "firmware";
-					reg = <0x50000 0x1fb0000>;
+					reg = <0x50000 0xfb0000>;
 				};
-
 			};
 		};
 
@@ -68,20 +63,11 @@
 		status = "okay";
 
 		pcie0 {
-			mt76@0,0 {
+			wifi@0,0 {
+				compatible = "mediatek,mt76";
 				reg = <0x0000 0 0 0 0>;
 				device_type = "pci";
-				mediatek,mtd-eeprom = <&factory 0x0000>;
-				mediatek,2ghz = <0>;
-			};
-		};
-
-		pcie1 {
-			mt76@1,0 {
-				reg = <0x0000 0 0 0 0>;
-				device_type = "pci";
-				mediatek,mtd-eeprom = <&factory 0x8000>;
-				mediatek,5ghz = <0>;
+				mediatek,mtd-eeprom = <&factory 0x0>;
 			};
 		};
 	};
@@ -106,27 +92,16 @@
 	gpio-leds {
 		compatible = "gpio-leds";
 
-		sysr {
-			label = "jdcloud:red:sysr";
-			gpios = <&gpio0 6 1>;
-		};
-
-		sysg {
-			label = "jdcloud:green:sysg";
-			gpios = <&gpio0 8 1>;
-		};
-
-		sysb {
-			label = "jdcloud:blue:sysb";
-			gpios = <&gpio0 12 1>;
+		internet {
+			label = "jcg:blue:internet";
+			gpios = <&gpio0 15 1>;
 		};
 	};
-
 
 	pinctrl {
 		state_default: pinctrl0 {
 			gpio {
-				ralink,group = "uart2", "uart3", "wdt";
+				ralink,group = "jtag", "wdt";
 				ralink,function = "gpio";
 			};
 		};

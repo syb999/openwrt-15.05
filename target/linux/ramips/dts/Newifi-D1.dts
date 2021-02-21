@@ -90,15 +90,6 @@
 		mtd-mac-address = <&factory 0xe000>;
 	};
 
-	pinctrl {
-		state_default: pinctrl0 {
-			gpio {
-				ralink,group = "wdt", "rgmii2", "jtag", "uart2", "uart3", "i2c";
-				ralink,function = "gpio";
-			};
-		};
-	};
-
 	gpio-leds {
 		compatible = "gpio-leds";
 
@@ -123,6 +114,32 @@
 			label = "reset";
 			gpios = <&gpio0 15 1>;
 			linux,code = <0x198>;
+		};
+	};
+
+	gpio_export {
+		compatible = "gpio-export";
+		#size-cells = <0>;
+
+		usb2power {
+			gpio-export,name = "usb2power";
+			gpio-export,output = <1>;
+			gpios = <&gpio0 9 0>;
+		};
+
+		usb3power {
+			gpio-export,name = "usb3power";
+			gpio-export,output = <1>;
+			gpios = <&gpio0 11 0>;
+		};
+	};
+
+	pinctrl {
+		state_default: pinctrl0 {
+			gpio {
+				ralink,group = "wdt", "rgmii2", "jtag", "uart2", "uart3", "i2c";
+				ralink,function = "gpio";
+			};
 		};
 	};
 };

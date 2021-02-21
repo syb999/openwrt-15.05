@@ -156,6 +156,7 @@ ramips_setup_interfaces()
 	youku-yk1|\
 	psg1208|\
 	psg1218|\
+	jcg-y2|\
 	zbt-we1326|\
 	zbt-wg2626)
 		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"

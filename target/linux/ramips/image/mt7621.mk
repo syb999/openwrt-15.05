@@ -74,6 +74,12 @@ define Device/zbt-we1326
 endef
 TARGET_DEVICES += zbt-we1326
 
+define Device/jcg-y2
+  DTS := JCG-Y2
+  IMAGE_SIZE := $(ralink_default_fw_size_16M)
+endef
+TARGET_DEVICES += jcg-y2
+
 define Device/ghl-r-001
   DTS := GHL-R-001
   IMAGE_SIZE := $(ralink_default_fw_size_32M)

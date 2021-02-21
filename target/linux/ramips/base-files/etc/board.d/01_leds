@@ -297,6 +297,9 @@ case $board in
 	daishuyun)
 		ucidef_set_led_default "wifi" "WIFI" "daishuyun:green:wifi" "wlan1"
 		;;
+	jcg-y2)
+		ucidef_set_led_netdev "internet" "internet" "jcg:blue:internet" "eth0.2"
+		;;
 	newifi-d1)
        	ucidef_set_led_netdev "internet" "status-blue" "newifi-d1:blue:status" "eth0.2"
 		;;
