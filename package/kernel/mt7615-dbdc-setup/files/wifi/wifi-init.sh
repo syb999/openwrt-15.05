@@ -10,6 +10,7 @@ wifi_setup_radio()
 		uci set wireless.radio0.macaddr=$getphy0mac
 		uci set wireless.radio1.macaddr=$getphy1mac
 		sed -i 's/START=60/START=70/' /etc/init.d/wifistart
+		sed -i 's/\/sbin\/wifi/sleep\ 10\n\t\/sbin\/wifi/' /etc/init.d/wifistart
 	fi
 }
 
