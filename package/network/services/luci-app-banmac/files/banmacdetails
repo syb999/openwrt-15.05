@@ -1,0 +1,6 @@
+一键禁止指定的MAC地址访问网络。(采用的命令格式为iptables -I FORWARD -m mac --mac-source xx:xx:xx:xx:xx:xx -j DROP)
+点击 One-Click Ban 快速禁止指定客户端。点击 One-Click UnBan 快速解禁。
+这里可以记录MAC地址对应的主机名，方便快速查找。(快速禁止孩子使用ipad看视频)
+
+
+
