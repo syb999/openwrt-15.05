@@ -80,6 +80,12 @@ define Device/jcg-y2
 endef
 TARGET_DEVICES += jcg-y2
 
+define Device/k2p
+  DTS := K2P
+  IMAGE_SIZE := $(ralink_default_fw_size_16M)
+endef
+TARGET_DEVICES += k2p
+
 define Device/ghl-r-001
   DTS := GHL-R-001
   IMAGE_SIZE := $(ralink_default_fw_size_32M)

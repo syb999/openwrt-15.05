@@ -3,20 +3,16 @@
 /include/ "mt7621.dtsi"
 
 / {
-	compatible = "newifi-d1", "mediatek,mt7621-soc";
-	model = "Newifi-D1";
+	compatible = "phicomm,k2p", "mediatek,mt7621-soc";
+	model = "Phicomm K2P";
 
 	memory@0 {
 		device_type = "memory";
-		reg = <0x0 0x10000000>;
+		reg = <0x0 0x8000000>;
 	};
 
 	chosen {
-		bootargs = "console=ttyS0,115200";
-	};
-
-	sdhci@1E130000 {
-		status = "okay";
+		bootargs = "console=ttyS0,57600";
 	};
 
 	palmbus@1E000000 {
@@ -46,10 +42,14 @@
 				};
 
 				partition@50000 {
-					label = "firmware";
-					reg = <0x50000 0x1fb0000>;
+					label = "permanent_config";
+					reg = <0x50000 0x50000>;
 				};
 
+				partition@a0000 {
+					label = "firmware";
+					reg = <0xa0000 0xf60000>;
+				};
 			};
 		};
 
@@ -68,40 +68,17 @@
 		status = "okay";
 
 		pcie0 {
-			mt76@0,0 {
+			wifi@0,0 {
+				compatible = "mediatek,mt76";
 				reg = <0x0000 0 0 0 0>;
 				device_type = "pci";
-				mediatek,mtd-eeprom = <&factory 0x8000>;
-				mediatek,5ghz = <0>;
-			};
-		};
-
-		pcie1 {
-			mt76@1,0 {
-				reg = <0x0000 0 0 0 0>;
-				device_type = "pci";
-				mediatek,mtd-eeprom = <&factory 0x0000>;
-				mediatek,2ghz = <0>;
+				mediatek,mtd-eeprom = <&factory 0x0>;
 			};
 		};
 	};
 
 	ethernet@1e100000 {
-		mtd-mac-address = <&factory 0xe000>;
-	};
-
-	gpio-leds {
-		compatible = "gpio-leds";
-
-		status-red {
-			label = "newifi-d1:red:status";
-			gpios = <&gpio0 14 1>;
-		};
-
-		status-blue {
-			label = "newifi-d1:blue:status";
-			gpios = <&gpio0 16 1>;
-		};
+		mtd-mac-address = <&factory 0xe006>;
 	};
 
 	gpio-keys-polled {
@@ -112,15 +89,34 @@
 
 		reset {
 			label = "reset";
-			gpios = <&gpio0 15 1>;
+			gpios = <&gpio0 3 1>;
 			linux,code = <0x198>;
+		};
+	};
+
+	gpio-leds {
+		compatible = "gpio-leds";
+
+		led_red {
+			label = "k2p:red:status";
+			gpios = <&gpio0 13 0>;
+		};
+
+		led_yellow {
+			label = "k2p:yellow:status";
+			gpios = <&gpio0 14 1>;
+		};
+
+		led_blue {
+			label = "k2p:blue:status";
+			gpios = <&gpio0 15 1>;
 		};
 	};
 
 	pinctrl {
 		state_default: pinctrl0 {
 			gpio {
-				ralink,group = "wdt", "rgmii2", "jtag", "uart2", "uart3", "i2c";
+				ralink,group = "i2c", "jtag";
 				ralink,function = "gpio";
 			};
 		};

@@ -141,6 +141,7 @@ platform_check_image() {
 	newifi-d1 |\
 	newifi-d2 |\
 	jcg-y2 |\
+	k2p|\
 	zbt-we1326 |\
 	psg1208 |\
 	psg1218 |\

@@ -445,6 +445,9 @@ ramips_board_detect() {
 	*"JDCloud-1")
 		name="jdcloud-1"
 		;;
+	*"K2P")
+		name="k2p"
+		;;
 	*"Mediatek MT7621 evaluation board")
 		name="mt7621"
 		;;

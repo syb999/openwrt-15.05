@@ -273,6 +273,9 @@ get_status_led() {
 	jdcloud-1)
 		status_led="jdcloud:green:sysg"
 		;;
+	k2p)
+		status_led="k2p:blue:status"
+		;;
 	xiaoyu-xy-c5)
 		status_led="xiaoyu-xy-c5:green:system"
 		;;
