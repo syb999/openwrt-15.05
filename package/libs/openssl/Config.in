@@ -64,7 +64,7 @@ config OPENSSL_NO_DEPRECATED
 
 config OPENSSL_WITH_ERROR_MESSAGES
 	bool
-	default y
+	default y if !SMALL_FLASH && !LOW_MEMORY_FOOTPRINT
 	prompt "Include error messages"
 	help
 		This option aids debugging, but increases package size and
@@ -292,16 +292,5 @@ config OPENSSL_WITH_ASYNC
 		Enables async-aware applications to be able to use OpenSSL to
 		initiate crypto operations asynchronously. In order to work
 		this will require the presence of an async capable engine.
-
-config OPENSSL_WITH_GOST
-	bool
-	prompt "Prepare library for GOST engine"
-	depends on OPENSSL_ENGINE
-	help
-		This option prepares the library to accept engine support
-		for Russian GOST crypto algorithms.
-		The gost engine is not included in standard openwrt feeds.
-		To build such engine yourself, see:
-		https://github.com/gost-engine/engine
 
 endif
