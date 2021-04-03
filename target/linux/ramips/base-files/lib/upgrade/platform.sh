@@ -149,7 +149,8 @@ platform_check_image() {
 	wdr5620v1 |\
 	wdr5640v1 |\
 	360p2 |\
-	ghl-r-001 |\
+	ghl-r-001-e |\
+	ghl-r-001-f |\
 	jdcloud-1 |\
 	youku-yk1)
 		[ "$magic" != "27051956" ] && {

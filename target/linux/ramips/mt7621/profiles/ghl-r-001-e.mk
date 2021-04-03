@@ -5,13 +5,13 @@
 # See /LICENSE for more information.
 #
 
-define Profile/GHL-R-001
-	NAME:=GHL-R-001
+define Profile/GHL-R-001-E
+	NAME:=GHL-R-001-E
 	PACKAGES:=\
 		kmod-mt7603 kmod-mt76x2 kmod-usb3 kmod-usb-ledtrig-usbport wpad-mini
 endef
 
-define Profile/GHL/Description
- Support for GHL routers
+define Profile/GHL-R-001-E/Description
+ Support for GHL-R-001-E routers
 endef
-$(eval $(call Profile,GHL-R-001))
+$(eval $(call Profile,GHL-R-001-E))

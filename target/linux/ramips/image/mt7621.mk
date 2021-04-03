@@ -86,11 +86,17 @@ define Device/k2p
 endef
 TARGET_DEVICES += k2p
 
-define Device/ghl-r-001
-  DTS := GHL-R-001
+define Device/ghl-r-001-e
+  DTS := GHL-R-001-E
   IMAGE_SIZE := $(ralink_default_fw_size_32M)
 endef
-TARGET_DEVICES += ghl-r-001
+TARGET_DEVICES += ghl-r-001-e
+
+define Device/ghl-r-001-f
+  DTS := GHL-R-001-F
+  IMAGE_SIZE := $(ralink_default_fw_size_32M)
+endef
+TARGET_DEVICES += ghl-r-001-f
 
 define Device/jdcloud-1
   DTS := JDCloud-1

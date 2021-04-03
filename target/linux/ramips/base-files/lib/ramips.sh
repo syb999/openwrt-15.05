@@ -439,8 +439,11 @@ ramips_board_detect() {
 	*"Daishuyun")
 		name="daishuyun"
 		;;
-	*"GHL-R-001")
-		name="ghl-r-001"
+	*"GHL-R-001-E")
+		name="ghl-r-001-e"
+		;;
+	*"GHL-R-001-F")
+		name="ghl-r-001-f"
 		;;
 	*"JDCloud-1")
 		name="jdcloud-1"
