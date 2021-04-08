@@ -109,13 +109,13 @@ do
 	node /usr/autodl/path.js > /tmp/tmpXMVIP.xmlyVIPPATH
 	sleep 3
 
-	cat /tmp/tmpXMVIP.xmlyVIPCODE | head -n 1 | cut -d "'" -f 2 > /tmp/tmpXMVIP.xmlyVIPbuykey
+	cat /tmp/tmpXMVIP.xmlyVIPCODE | cut -d "'" -f 2 > /tmp/tmpXMVIP.xmlyVIPbuykey
 	xmlybuykey=$(cat /tmp/tmpXMVIP.xmlyVIPbuykey)
-	cat /tmp/tmpXMVIP.xmlyVIPCODE | head -n 2 | tail -n 1 | cut -d "'" -f 2 > /tmp/tmpXMVIP.xmlyVIPsign
+	cat /tmp/tmpXMVIP.xmlyVIPCODE | cut -d "'" -f 4 > /tmp/tmpXMVIP.xmlyVIPsign
 	xmlysign=$(cat /tmp/tmpXMVIP.xmlyVIPsign)
-	cat /tmp/tmpXMVIP.xmlyVIPCODE | head -n 3 | tail -n 1 | cut -d "'" -f 2 > /tmp/tmpXMVIP.xmlyVIPtoken
+	cat /tmp/tmpXMVIP.xmlyVIPCODE | cut -d "'" -f 6 > /tmp/tmpXMVIP.xmlyVIPtoken
 	xmlytoken=$(cat /tmp/tmpXMVIP.xmlyVIPtoken)
-	cat /tmp/tmpXMVIP.xmlyVIPCODE | head -n 4 | tail -n 1 | cut -d "'" -f 2 > /tmp/tmpXMVIP.xmlyVIPtimestamp
+	cat /tmp/tmpXMVIP.xmlyVIPCODE | cut -d "'" -f 8 > /tmp/tmpXMVIP.xmlyVIPtimestamp
 	xmlytimestamp=$(cat /tmp/tmpXMVIP.xmlyVIPtimestamp)
 
 	xmlyvipaudioprefix="https://audiopay.cos.tx.xmcdn.com/download/1.0.0"
