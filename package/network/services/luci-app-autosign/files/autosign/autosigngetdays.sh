@@ -1,0 +1,17 @@
+#!/bin/sh
+
+autosigngettianapikeyprefix="key="
+autosigngettianapikey=$(cat /tmp/autosign.tianapikey)
+autosigngettiandateprefix="&type=1&date="
+autosigngettiandate=$(cat /tmp/autosign.tianapidate)
+autosigngettianmode="&mode=1"
+
+tmpgettianapidaytmp="${autosigngettianapikeyprefix}${autosigngettianapikey}${autosigngettiandateprefix}${autosigngettiandate}${autosigngettianmode}"
+
+curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -d "$tmpgettianapidaytmp" http://api.tianapi.com/txapi/jiejiari/index > /tmp/autosign.daytmp
+
+sed -i 's/\"vacation\":/\n/g' /tmp/autosign.daytmp
+cat /tmp/autosign.daytmp | cut -d '"' -f 2 | grep [0-9] | sed 's/|/ /g' | sed -e 's/^/ &/g' | sed -e ":a;N;s/\\n//g;ta" | sed -e 's/^[ \t]*//g' | sed -e 's/-//g' > /tmp/autosign.vacationlist
+readlist=$(cat /tmp/autosign.vacationlist)
+echo "$readlist" > /etc/autosignvacationlist
+

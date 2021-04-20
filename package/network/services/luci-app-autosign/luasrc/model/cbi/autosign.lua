@@ -1,0 +1,92 @@
+m = Map("autosign", translate("AutoSign"))
+
+s = m:section(TypedSection, "autosign", "", translate("Assistant for automatic Sign in."))
+s.anonymous = true
+s.addremove = false
+
+s:tab("autosign", translate("Basic"))
+
+tianapikey=s:taboption("autosign", Value, "tianapikey", translate("API KEY"))
+tianapikey.rmempty = true
+tianapikey.datatype = "string"
+tianapikey.description = translate("tianapi vacation days key(from https://www.tianapi.com/apiview/139)")
+
+tianapidate=s:taboption("autosign", Value, "tianapidate", translate("date"))
+tianapidate.datatype = "string"
+tianapidate.default="2021"
+tianapidate.description = translate("What year's vacation days")
+
+workhour=s:taboption("autosign", Value, "workhour", translate("hour"))
+workhour.datatype = "string"
+workhour.default="7"
+workhour.description = translate("Set the time for work(hour)")
+
+workminute=s:taboption("autosign", Value, "workminute", translate("minute"))
+workminute.datatype = "string"
+workminute.default="59"
+workminute.description = translate("Set the time for work(minute)")
+
+gooffworkhour=s:taboption("autosign", Value, "gooffworkhour", translate("hour"))
+gooffworkhour.datatype = "string"
+gooffworkhour.default="17"
+gooffworkhour.description = translate("Set the time for go off work(hour)")
+
+gooffworkminute=s:taboption("autosign", Value, "gooffworkminute", translate("minute"))
+gooffworkminute.datatype = "string"
+gooffworkminute.default="15"
+gooffworkminute.description = translate("Set the time for go off work(minute)")
+
+workweek=s:taboption("autosign", Value, "workweek", translate("days"))
+workweek.datatype = "string"
+workweek.default="1-5"
+workweek.description = translate("Set weekly sign-in days")
+
+s:tab("vacationlist",  translate("vacation days"))
+
+getvacationlist = s:taboption("vacationlist", Button, "getvacationlist", translate("one-click get vacation list"))
+getvacationlist.inputstyle = "apply"
+function getvacationlist.write(self, section)
+    luci.util.exec("uci get autosign.@autosign[0].tianapikey > /tmp/autosign.tianapikey")
+    luci.util.exec("sleep 1")
+    luci.util.exec("uci get autosign.@autosign[0].tianapidate > /tmp/autosign.tianapidate")
+    luci.util.exec("sleep 1")
+    luci.util.exec("/usr/autosign/autosigngetdays.sh &")
+end
+
+local vddetails = "/etc/autosignvacationlist"
+local VDNXFS = require "nixio.fs"
+o = s:taboption("vacationlist", TextValue, "vddetails")
+o.rows = 3
+o.wrap = "off"
+o.cfgvalue = function(self, section)
+	return VDNXFS.readfile(vddetails) or ""
+end
+o.write = function(self, section, value)
+	VDNXFS.writefile(vddetails, value:gsub("\r\n", "\n"))
+end
+
+
+s:tab("forsignin", translate("Sign in"))
+ocrunsign = s:taboption("forsignin", Button, "ocrunsign", translate("Onc-Click set autosign"))
+ocrunsign.inputstyle = "apply"
+function ocrunsign.write(self, section)
+    luci.util.exec("sleep 1")
+    luci.util.exec("sleep 1")
+    luci.util.exec("/usr/autosign/autosigntocrontab.sh")
+end
+
+local autosignrun = "/usr/autosign/autosignrun.sh"
+local RSNXFS = require "nixio.fs"
+o = s:taboption("forsignin", TextValue, "autosignrun")
+o.rows = 20
+o.wrap = "off"
+o.cfgvalue = function(self, section)
+	return RSNXFS.readfile(autosignrun) or ""
+end
+o.write = function(self, section, value)
+	RSNXFS.writefile(autosignrun, value:gsub("\r\n", "\n"))
+end
+
+
+return m
+
