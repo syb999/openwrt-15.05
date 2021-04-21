@@ -6,13 +6,13 @@ holidaylist=$(cat /etc/autosignvacationlist)
 for i in $holidaylist;
 do
 	if [ $i != $today ]; then
-		echo 1 >> /usr/autosign/dakaswitch;	
+		echo 1 >> /tmp/dakaswitch.tmp;	
 	else
-		echo 0 >> /usr/autosign/dakaswitch;
+		echo 0 >> /tmp/dakaswitch.tmp;
 	fi
 done 
  
-pd=$(cat /usr/autosign/dakaswitch | grep 0)
+pd=$(cat /tmp/dakaswitch.tmp | grep 0)
 
 if [ "$pd" == 0 ]; then
 	logger 今天是休息日，停止打卡!
@@ -22,5 +22,5 @@ else
 	#curl -d "xxx" http://url
 fi
 
-rm /usr/autosign/dakaswitch
+rm /tmp/dakaswitch.tmp
 
