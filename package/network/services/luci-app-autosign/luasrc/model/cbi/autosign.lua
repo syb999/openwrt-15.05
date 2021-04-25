@@ -7,8 +7,8 @@ s.addremove = false
 s:tab("autosign", translate("Basic"))
 
 tianapikey=s:taboption("autosign", Value, "tianapikey", translate("API KEY"))
-tianapikey.rmempty = true
 tianapikey.datatype = "string"
+tianapikey.placeholder = "please enter your api key"
 tianapikey.description = translate("tianapi vacation days key(from https://www.tianapi.com/apiview/139)")
 
 tianapidate=s:taboption("autosign", Value, "tianapidate", translate("date"))
@@ -41,15 +41,16 @@ workweek.datatype = "string"
 workweek.default="1-5"
 workweek.description = translate("Set weekly sign-in days")
 
+workwkd=s:taboption("autosign", Value, "workwkd", translate("weekend days"))
+workwkd.datatype = "string"
+workwkd.default="6,0"
+workwkd.description = translate("Set weekly sign-in weekend days")
+
 s:tab("vacationlist",  translate("vacation days"))
 
 getvacationlist = s:taboption("vacationlist", Button, "getvacationlist", translate("one-click get vacation list"))
 getvacationlist.inputstyle = "apply"
 function getvacationlist.write(self, section)
-    luci.util.exec("uci get autosign.@autosign[0].tianapikey > /tmp/autosign.tianapikey")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autosign.@autosign[0].tianapidate > /tmp/autosign.tianapidate")
-    luci.util.exec("sleep 1")
     luci.util.exec("/usr/autosign/autosigngetdays.sh &")
 end
 
@@ -65,13 +66,29 @@ o.write = function(self, section, value)
 	VDNXFS.writefile(vddetails, value:gsub("\r\n", "\n"))
 end
 
+getworklist = s:taboption("vacationlist", Button, "getworklist", translate("Get weekend work list"))
+getworklist.inputstyle = "apply"
+function getworklist.write(self, section)
+    luci.util.exec("/usr/autosign/autosigngetwkddays.sh &")
+end
+
+local vdwkddetails = "/etc/autosignworklist"
+local VDWKDNXFS = require "nixio.fs"
+o = s:taboption("vacationlist", TextValue, "vdwkddetails")
+o.rows = 3
+o.wrap = "off"
+o.cfgvalue = function(self, section)
+	return VDWKDNXFS.readfile(vdwkddetails) or ""
+end
+o.write = function(self, section, value)
+	VDWKDNXFS.writefile(vdwkddetails, value:gsub("\r\n", "\n"))
+end
+
 
 s:tab("forsignin", translate("Sign in"))
 ocrunsign = s:taboption("forsignin", Button, "ocrunsign", translate("Onc-Click set autosign"))
 ocrunsign.inputstyle = "apply"
 function ocrunsign.write(self, section)
-    luci.util.exec("sleep 1")
-    luci.util.exec("sleep 1")
     luci.util.exec("/usr/autosign/autosigntocrontab.sh")
 end
 

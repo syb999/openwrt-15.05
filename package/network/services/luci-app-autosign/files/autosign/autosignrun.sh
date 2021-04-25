@@ -15,12 +15,11 @@ done
 pd=$(cat /tmp/dakaswitch.tmp | grep 0)
 
 if [ "$pd" == 0 ]; then
-	logger 今天是休息日，停止打卡!
+	logger 今天是$today,是休息日，停止自动打卡!
 else
-	logger 今天是工作日，开始打卡!
-	sleep 7
+	logger 今天是$today,是工作日。开始自动打卡!
+	sleep 3
 	#curl -d "xxx" http://url
 fi
 
 rm /tmp/dakaswitch.tmp
-

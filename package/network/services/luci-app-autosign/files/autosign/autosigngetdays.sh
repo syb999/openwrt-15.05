@@ -1,9 +1,9 @@
 #!/bin/sh
 
 autosigngettianapikeyprefix="key="
-autosigngettianapikey=$(cat /tmp/autosign.tianapikey)
+autosigngettianapikey=$(uci get autosign.@autosign[0].tianapikey)
 autosigngettiandateprefix="&type=1&date="
-autosigngettiandate=$(cat /tmp/autosign.tianapidate)
+autosigngettiandate=$(uci get autosign.@autosign[0].tianapidate)
 autosigngettianmode="&mode=1"
 
 tmpgettianapidaytmp="${autosigngettianapikeyprefix}${autosigngettianapikey}${autosigngettiandateprefix}${autosigngettiandate}${autosigngettianmode}"
@@ -14,4 +14,4 @@ sed -i 's/\"vacation\":/\n/g' /tmp/autosign.daytmp
 cat /tmp/autosign.daytmp | cut -d '"' -f 2 | grep [0-9] | sed 's/|/ /g' | sed -e 's/^/ &/g' | sed -e ":a;N;s/\\n//g;ta" | sed -e 's/^[ \t]*//g' | sed -e 's/-//g' > /tmp/autosign.vacationlist
 readlist=$(cat /tmp/autosign.vacationlist)
 echo "$readlist" > /etc/autosignvacationlist
-
+rm /tmp/autosign.*
