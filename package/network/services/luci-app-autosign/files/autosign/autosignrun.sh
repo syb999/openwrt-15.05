@@ -1,4 +1,5 @@
 #!/bin/sh
+# 一般工作日打卡计划任务
 
 today=$(date +%Y%m%d)
 holidaylist=$(cat /etc/autosignvacationlist)  
@@ -19,7 +20,7 @@ if [ "$pd" == 0 ]; then
 else
 	logger 今天是$today,是工作日。开始自动打卡!
 	sleep 3
-	#curl -d "xxx" http://url
+	#curl -d "xxx" http://url 请修改我
 fi
 
 rm /tmp/dakaswitch.tmp

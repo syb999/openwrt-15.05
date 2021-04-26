@@ -104,6 +104,18 @@ o.write = function(self, section, value)
 	RSNXFS.writefile(autosignrun, value:gsub("\r\n", "\n"))
 end
 
+local autosignwkdrun = "/usr/autosign/autosignwkdrun.sh"
+local RSWKDNXFS = require "nixio.fs"
+o = s:taboption("forsignin", TextValue, "autosignwkdrun")
+o.rows = 20
+o.wrap = "off"
+o.cfgvalue = function(self, section)
+	return RSWKDNXFS.readfile(autosignwkdrun) or ""
+end
+o.write = function(self, section, value)
+	RSWKDNXFS.writefile(autosignwkdrun, value:gsub("\r\n", "\n"))
+end
+
 
 return m
 
