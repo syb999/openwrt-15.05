@@ -1,11 +1,7 @@
 #!/bin/sh
 
-m4apath=$(uci get autodl.@autodl[0].xmlypath > /tmp/tmp.XM.path)
-m4aname=$(uci get autodl.@autodl[0].xmlyname > /tmp/tmp.XM.name)
-
-paudiopath=$(cat /tmp/tmp.XM.path)
-paudioname=$(cat /tmp/tmp.XM.name)
-
+paudiopath=$(uci get autodl.@autodl[0].xmlypath)
+paudioname=$(uci get autodl.@autodl[0].xmlyname)
 testffmpeg=$(opkg list-installed | grep ffmpeg)
 
 if [ ! "$testffmpeg" ];then
@@ -63,4 +59,3 @@ else
 	rm *.m4a
 	rm /tmp/tmpfind.libmp3
 fi
-

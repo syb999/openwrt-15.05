@@ -225,12 +225,6 @@ au3 = s:taboption("audioxmly", Button, "_audioxmly", translate("One-click downlo
 au3.inputstyle = "apply"
 au3.description = translate("Audios download")
 function au3.write(self, section)
-    luci.util.exec("uci get autodl.@autodl[0].xmlyurl > /tmp/tmp.XM.url")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autodl.@autodl[0].xmlyname > /tmp/tmp.XM.name")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autodl.@autodl[0].xmlypath > /tmp/tmp.XM.path")
-    luci.util.exec("sleep 1")
     luci.util.exec("nohup /usr/autodl/autodlxmly.sh >/dev/null 2>&1 &")
 end
 
@@ -238,16 +232,6 @@ au3v = s:taboption("audioxmly", Button, "_audioau3v", translate("One-click downl
 au3v.inputstyle = "apply"
 au3v.description = translate("node needs to be installed")
 function au3v.write(self, section)
-    luci.util.exec("uci get autodl.@autodl[0].xmlyurl > /tmp/tmp.XM.url")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autodl.@autodl[0].xmlyname > /tmp/tmp.XM.name")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autodl.@autodl[0].xmlycookie > /tmp/tmp.XM.cookie")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autodl.@autodl[0].xmlypath > /tmp/tmp.XM.path")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autodl.@autodl[0].xmlysleeptime > /tmp/tmp.XM.sleeptime")
-    luci.util.exec("sleep 1")
     luci.util.exec("nohup /usr/autodl/autodlxmlyVIP.sh >/dev/null 2>&1 &")
 end
 
@@ -334,6 +318,7 @@ function qbj1.write(self, section)
     luci.util.exec("sleep 1")
     luci.util.exec("nohup /usr/autodl/autodlqbj.sh >/dev/null 2>&1 &")
 end
+
 
 return m
 

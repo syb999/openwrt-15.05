@@ -1,20 +1,17 @@
 #!/bin/sh
 
-rm /tmp/tmpXMVIP.*
-rm /tmp/tmp.XMV.*
-
-paudiourl=$(cat /tmp/tmp.XM.url)
-paudioname=$(cat /tmp/tmp.XM.name)
-paudiocookie=$(cat /tmp/tmp.XM.cookie)
+paudiourl=$(uci get autodl.@autodl[0].xmlyurl)
+paudioname=$(uci get autodl.@autodl[0].xmlyname)
+paudiocookie=$(uci get autodl.@autodl[0].xmlycookie)
 paudionum=99
 rpaudionum=99
-paudiopath=$(cat /tmp/tmp.XM.path)
-psleeptime=$(cat /tmp/tmp.XM.sleeptime)
+paudiopath=$(uci get autodl.@autodl[0].xmlypath)
+psleeptime=$(uci get autodl.@autodl[0].xmlysleeptime)
 tmpcounthead=1
 
 
-curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 http://www.ximalaya.com/revision/time > /tmp/tmp.XM.xmtimestamp
-xmtimestamp=$(cat /tmp/tmp.XM.xmtimestamp)
+curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 http://www.ximalaya.com/revision/time > /tmp/tmp.XMV.xmtimestamp
+xmtimestamp=$(cat /tmp/tmp.XMV.xmtimestamp)
 urlprefix="https://mpay.ximalaya.com/mobile/track/pay/"
 urlsuffix="/ts-${xmtimestamp}/?device=pc"
 
@@ -40,7 +37,8 @@ do
 done
 
 cat /tmp/tmp.XMV.xmlyhttp1 | grep isPaid > /tmp/tmp.XMV.xmlyhttp2
-
+cat /tmp/tmp.XMV.xmlyhttp1 | grep showShareBtn > /tmp/tmp.XMV.xmlyhttp2n
+cat /tmp/tmp.XMV.xmlyhttp2n | sed 's/title/\n/g'| grep showLikeBtn | cut -d '"' -f 1 | sed -e 's/\\/＼/g' | sed -e 's/\//／/g' | sed -e 's/</《/g' | sed -e 's/>/》/g' | sed -e 's/:/：/g' | sed -e 's/*//g' | sed -e 's/?/？/g' | sed -e 's/\"/“/g' > /tmp/tmp.XMV.filenamelist
 xmlyhttp2=$(cat /tmp/tmp.XMV.xmlyhttp2)
 for i in `echo "$xmlyhttp2" | sed 's/{\"index\":/\n/g'`
 do  
@@ -150,18 +148,20 @@ do
 	if [ "$xmlyturename" = "$paudioname" ];then
 		xmlyturename=""
 	fi
+	xmlyturenamed=$(cat /tmp/tmp.XMV.filenamelist | head -n 1)
 	if [ $xmlyturenum -le 9 ];then
 		nxmlyturenum=000$xmlyturenum
-		mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nxmlyturenum$xmlyturename.m4a
+		mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nxmlyturenum$xmlyturename$xmlyturenamed.m4a
 	elif [ $xmlyturenum -le 99 ];then
 		nnxmlyturenum=00$xmlyturenum
-		mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nnxmlyturenum$xmlyturename.m4a
+		mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nnxmlyturenum$xmlyturename$xmlyturenamed.m4a
 	elif [ $xmlyturenum -le 999 ];then
 		nnnxmlyturenum=0$xmlyturenum
-		mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nnnxmlyturenum$xmlyturename.m4a
+		mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nnnxmlyturenum$xmlyturename$xmlyturenamed.m4a
 	else
-		mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$xmlyturenum$xmlyturename.m4a
+		mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$xmlyturenum$xmlyturename$xmlyturenamed.m4a
 	fi
+	sed 1d -i /tmp/tmp.XMV.filenamelist
 	tmpcounthead=$(echo `expr $tmpcounthead + 1`)
 	rpaudionum=$(echo `expr $rpaudionum - 1`)
 done
@@ -174,4 +174,3 @@ mv -f *.m4a $paudioname
 
 rm /tmp/tmpXMVIP.*
 rm /tmp/tmp.XMV.*
-

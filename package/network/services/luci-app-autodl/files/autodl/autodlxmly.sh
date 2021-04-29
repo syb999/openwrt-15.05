@@ -1,10 +1,10 @@
 #!/bin/sh
 
-paudiourl=$(cat /tmp/tmp.XM.url)
-paudioname=$(cat /tmp/tmp.XM.name)
+paudiourl=$(uci get autodl.@autodl[0].xmlyurl)
+paudioname=$(uci get autodl.@autodl[0].xmlyname)
 paudionum=99
 rpaudionum=99
-paudiopath=$(cat /tmp/tmp.XM.path)
+paudiopath=$(uci get autodl.@autodl[0].xmlypath)
 tmpcounthead=1
 
 urlprefix="https://www.ximalaya.com/revision/play/v1/audio?id="
@@ -32,7 +32,8 @@ do
 done
 
 cat /tmp/tmpXM.xmlyhttp1 | grep isPaid > /tmp/tmpXM.xmlyhttp2
-
+cat /tmp/tmpXM.xmlyhttp1 | grep showShareBtn > /tmp/tmpXM.xmlyhttp2n
+cat /tmp/tmpXM.xmlyhttp2n | sed 's/title/\n/g'| grep showLikeBtn | cut -d '"' -f 1 | sed -e 's/\\/＼/g' | sed -e 's/\//／/g' | sed -e 's/</《/g' | sed -e 's/>/》/g' | sed -e 's/:/：/g' | sed -e 's/*//g' | sed -e 's/?/？/g' | sed -e 's/\"/“/g' > /tmp/tmpXM.filenamelist
 xmlyhttp2=$(cat /tmp/tmpXM.xmlyhttp2)
 for i in `echo "$xmlyhttp2" | sed 's/{\"index\":/\n/g'`
 do  
@@ -74,8 +75,7 @@ do
 	wget-ssl -q -c $audiofile -O $paudionum.m4a
 	sleep 3
 	paudionum=$(echo `expr $paudionum - 1`)
-	rm /tmp/tmp.XM.md*
-	rm /tmp/tmp.XM.xmtimestamp
+	rm /tmp/tmp.XM.*
 done
 
 cat /tmp/tmpXM.xmlyhttp3 | grep trackId > /tmp/tmpXM.xmlyhttp0num
@@ -94,18 +94,20 @@ do
 	if [ "$xmlyturename" = "$paudioname" ];then
 		xmlyturename=""
 	fi
+	xmlyturenamed=$(cat /tmp/tmpXM.filenamelist | head -n 1)
 	if [ $xmlyturenum -le 9 ];then
 		nxmlyturenum=000$xmlyturenum
-		mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nxmlyturenum$xmlyturename.m4a
+		mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nxmlyturenum$xmlyturename$xmlyturenamed.m4a
 	elif [ $xmlyturenum -le 99 ];then
 		nnxmlyturenum=00$xmlyturenum
-		mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nnxmlyturenum$xmlyturename.m4a
+		mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nnxmlyturenum$xmlyturename$xmlyturenamed.m4a
 	elif [ $xmlyturenum -le 999 ];then
 		nnnxmlyturenum=0$xmlyturenum
-		mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nnnxmlyturenum$xmlyturename.m4a
+		mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nnnxmlyturenum$xmlyturename$xmlyturenamed.m4a
 	else
-		mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$xmlyturenum$xmlyturename.m4a
+		mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$xmlyturenum$xmlyturename$xmlyturenamed.m4a
 	fi
+	sed 1d -i /tmp/tmpXM.filenamelist
 	tmpcounthead=$(echo `expr $tmpcounthead + 1`)
 	rpaudionum=$(echo `expr $rpaudionum - 1`)
 done
@@ -117,4 +119,3 @@ fi
 mv -f *.m4a $paudioname
 
 rm /tmp/tmpXM.*
-

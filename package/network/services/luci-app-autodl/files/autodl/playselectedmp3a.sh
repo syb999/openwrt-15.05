@@ -1,12 +1,8 @@
 #!/bin/sh
 
-uci get autodl.@autodl[0].xmlypath > /tmp/tmp.XM.path
-uci get autodl.@autodl[0].xmlyname > /tmp/tmp.XM.name
-uci get autodl.@autodl[0].audio_num > /tmp/tmp.XM.audio_num
-
-paudiopath=$(cat /tmp/tmp.XM.path)
-paudioname=$(cat /tmp/tmp.XM.name)
-mp3selected=$(cat /tmp/tmp.XM.audio_num)
+paudiopath=$(uci get autodl.@autodl[0].xmlypath)
+paudioname=$(uci get autodl.@autodl[0].xmlyname)
+mp3selected=$(uci get autodl.@autodl[0].audio_num)
 
 cd $paudiopath/$paudioname
 cat /tmp/tmp.Audioxm.list | head -1 > /tmp/tmp.Audioxm.listf
@@ -32,4 +28,3 @@ else
 		mpg123 -q -i $currentmp3
 	done
 fi
-
