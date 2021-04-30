@@ -125,7 +125,12 @@ do
 	xmlyvipaudiosuffixduration="&duration="
 
 	xmlyvipaudiorealurl=${xmlyvipaudioprefix}${xmlyvipaudiopath}${xmlyvipaudiosuffixbuykey}${xmlybuykey}${xmlyvipaudiosuffixsign}${xmlysign}${xmlyvipaudiosuffixtoken}${xmlytoken}${xmlyvipaudiosuffixtimestamp}${xmlytimestamp}${xmlyvipaudiosuffixduration}${xmlynewdurationcode}
-	wget-ssl -q -c $xmlyvipaudiorealurl -O $paudionum.m4a
+	wget-ssl -q -c $(uci get network.lan.ipaddr) -O /tmp/tmpXMVIP.testwget > /dev/null 2>&1
+	if [ -s /tmp/tmpXMVIP.testwget ];then
+		wget-ssl -q -c $xmlyvipaudiorealurl -O $paudionum.m4a
+	else
+		wget -q -c $xmlyvipaudiorealurl -O $paudionum.m4a
+	fi
 	sleep 3
 	paudionum=$(echo `expr $paudionum - 1`)
 	rm /tmp/tmpXMVIP.*

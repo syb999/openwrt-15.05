@@ -47,7 +47,13 @@ function autodlvd(){
 		autodltsprefix=$(echo $a4urlprefix)
 		autodltsprefixurl=$autodltsprefix
 		tmpautodlts="${autodltsprefixurl}${autodltssuffix}"
-		wget-ssl --timeout=35 -q -c $tmpautodlts -O $autodlgetpath/tmphls.ts
+		wget-ssl -q -c $(uci get network.lan.ipaddr) -O /tmp/tmp.autodl.testwget > /dev/null 2>&1
+		if [ -s /tmp/tmp.autodl.testwget ];then
+			wget-ssl --timeout=35 -q -c $tmpautodlts -O $autodlgetpath/tmphls.ts
+		else
+			wget --timeout=35 -q -c $tmpautodlts -O $autodlgetpath/tmphls.ts
+		fi
+		rm /tmp/tmp.autodl.testwget
 		cat tmphls.ts >> $autodlgetpath/hls.ts
 		rm $autodlgetpath/tmphls.ts
 	done < $autodlm3u8
@@ -84,4 +90,3 @@ mv -f *.ts $autodlgetname
 rm /tmp/autodldmdm.*
 rm /tmp/autodl.url
 mv -f /tmp/autodl.url.bk /tmp/autodl.url
-

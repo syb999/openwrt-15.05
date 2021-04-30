@@ -72,7 +72,12 @@ do
 	tmpaudio=$(cat /tmp/tmpXM.xmlyhttp7)
 	echo ${tmpaudio%\",\"albumIsSample*} > /tmp/tmpXM.xmlyhttp7
 	audiofile=$(cat /tmp/tmpXM.xmlyhttp7)
-	wget-ssl -q -c $audiofile -O $paudionum.m4a
+	wget-ssl -q -c $(uci get network.lan.ipaddr) -O /tmp/tmp.XM.testwget > /dev/null 2>&1
+	if [ -s /tmp/tmp.XM.testwget ];then
+		wget-ssl -q -c $audiofile -O $paudionum.m4a
+	else
+		wget -q -c $audiofile -O $paudionum.m4a
+	fi
 	sleep 3
 	paudionum=$(echo `expr $paudionum - 1`)
 	rm /tmp/tmp.XM.*
