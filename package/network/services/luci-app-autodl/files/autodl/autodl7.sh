@@ -10,8 +10,7 @@ autodlgetpath=$(cat /tmp/autodl.path)
 autodlgetname=$(cat /tmp/autodl.name)
 autodlgetnum=$(cat /tmp/autodl.num)
 
-avdnum0=$(uci get autodl.@autodl[0].url)
-avdnum1=$(echo $avdnum0 | cut -d '-' -f 3)
+avdnum1=$(uci get autodl.@autodl[0].url | cut -d '-' -f 3)
 
 autodlcount=1
 aescount=0
@@ -56,24 +55,23 @@ function autodlvd(){
 			if [ -s /tmp/tmp.autodl.testwget ];then
 				wget-ssl --timeout=35 -q -c $autodlts -O $autodlgetpath/aestmphls.ts
 			else
-				wget --timeout=35 -q -c $autodlt s-O $autodlgetpath/aestmphls.ts
+				wget --timeout=35 -q -c $autodlts -O $autodlgetpath/aestmphls.ts
 			fi
-			rm /tmp/tmp.autodl.testwget
+			rm /tmp/tmp.autodl.testwget > /dev/null 2>&1
 			openssl aes-128-cbc -d -in aestmphls.ts -out tmphls.ts -nosalt -iv $(printf '%032x' $aescount) -K $strkey 
 			cat tmphls.ts >> $autodlgetpath/hls.ts
-			rm $autodlgetpath/aestmphls.ts
-			rm $autodlgetpath/tmphls.ts
+			rm $autodlgetpath/aestmphls.ts > /dev/null 2>&1
+			rm $autodlgetpath/tmphls.ts > /dev/null 2>&1
 			aescount=$(expr $aescount + 1)
 		done < $autodlm3u8
 		autodlcount=$(expr $autodlcount + 1)
-		avdnum1=$(echo `expr $avdnum1 + 1`)
 	fi
-	rm /tmp/autodldmdm.2
+	rm /tmp/autodldmdm.2 > /dev/null 2>&1
 	sed 1d -i /tmp/autodldmdm.avdurlfulllist
 }
 
 
-while [ $avdnum1 -le $autodlgetnum ]
+while [ -s /tmp/autodldmdm.avdurlfulllist ]
 do
 	avdname1=$(cat /tmp/autodldmdm.avdurlfulllist | head -n 1 )
 	echo ${avdname1##*https} > /tmp/autodldmdm.11
@@ -85,22 +83,26 @@ do
 	if [ $avdnum1 -le 9 ];then
 		autodlvd
 		avdnum2=00$avdnum1
-		mv -f $autodlgetpath/hls.ts $autodlgetpath/$avdname2第$avdnum2集.ts
+		cp -f $autodlgetpath/hls.ts $autodlgetpath/$autodlgetname第$avdnum2集.ts
 	elif [ $avdnum1 -le 99 ];then
 		autodlvd
 		avdnum3=0$avdnum1
-		mv -f $autodlgetpath/hls.ts $autodlgetpath/$avdname2第$avdnum3集.ts
+		cp -f $autodlgetpath/hls.ts $autodlgetpath/$autodlgetname第$avdnum3集.ts
 	else
 		autodlvd
-		mv -f $autodlgetpath/hls.ts $autodlgetpath/$avdname2第$avdnum1集.ts
+		cp -f $autodlgetpath/hls.ts $autodlgetpath/$autodlgetname第$avdnum1集.ts
 	fi
+	if [ -s $autodlgetpath/hls.ts ];then
+		avdnum1=$(expr $avdnum1 + 1)
+	fi
+	rm $autodlgetpath/hls.ts > /dev/null 2>&1
 done
 
 if [ ! -d "/$autodlgetpath/$autodlgetname" ]; then
-mkdir $autodlgetname
+	mkdir $autodlgetname
 fi
 
 mv -f *.ts $autodlgetname
 
 rm /tmp/autodldmdm.*
-rm /tmp/autodl.url
+rm /tmp/autodl.*
