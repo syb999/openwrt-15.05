@@ -213,7 +213,6 @@ function au6.write(self, section)
     luci.util.exec("/usr/autodl/autodl6.sh &")
 end
 
-s:tab("autodl1", translate("Videos Download Page"))
 au7 = s:taboption("autodl1", Button, "_autodl7", translate("One-click download"))
 au7.inputstyle = "apply"
 au7.description = translate("Download from https://www.ppys5.net (depends openssl)")
@@ -221,7 +220,6 @@ function au7.write(self, section)
     luci.util.exec("/usr/autodl/autodl7.sh &")
 end
 
-s:tab("autodl1", translate("Videos Download Page"))
 au8 = s:taboption("autodl1", Button, "_autodl8", translate("One-click download"))
 au8.inputstyle = "apply"
 au8.description = translate("Download from http://www.jingcai520.com (depends openssl)")
