@@ -221,6 +221,14 @@ function au7.write(self, section)
     luci.util.exec("/usr/autodl/autodl7.sh &")
 end
 
+s:tab("autodl1", translate("Videos Download Page"))
+au8 = s:taboption("autodl1", Button, "_autodl8", translate("One-click download"))
+au8.inputstyle = "apply"
+au8.description = translate("Download from http://www.jingcai520.com (depends openssl)")
+function au8.write(self, section)
+    luci.util.exec("/usr/autodl/autodl8.sh &")
+end
+
 au1t = s:taboption("autodl1", Button, "_autodl1t", translate("One-click ts to mp4"))
 au1t.inputstyle = "apply"
 au1t.description = translate("ffmpeg needs to be installed")

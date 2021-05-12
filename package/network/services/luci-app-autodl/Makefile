@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-autodl
-PKG_VERSION:=1.9.8
-PKG_RELEASE:=20210511
+PKG_VERSION:=1.9.9
+PKG_RELEASE:=20210512
 
 include $(INCLUDE_DIR)/package.mk
 
