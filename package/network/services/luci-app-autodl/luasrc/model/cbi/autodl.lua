@@ -141,6 +141,26 @@ qbjpath.default = "/mnt/sda3/qbj"
 qbjpath.rmempty = false
 qbjpath.description = translate("Please enter a valid directory")
 
+s:tab("basic4", translate("Basic Setting for book"))
+
+bookurl=s:taboption("basic4", Value, "bookurl", translate("Book contents URL"))
+bookurl.rmempty = true
+bookurl.datatype = "string"
+bookurl.description = translate("Book contents URL for downloading http://book.zongheng.com")
+
+bookname=s:taboption("basic4", Value, "bookname", translate("The title of a book"))
+bookname.datatype = "string"
+bookname.placeholder = "story"
+bookname.default = "story"
+bookname.rmempty = false
+bookname.description = translate("Book from https://book.zongheng.com")
+
+bookpath=s:taboption("basic4", Value, "bookpath", translate("Download book directory"))
+bookpath.datatype = "string"
+bookpath.default = "/mnt/sda3/book"
+bookpath.rmempty = false
+bookpath.description = translate("Please enter a valid directory")
+
 ---url1=s:taboption("basic", Button, "url1", translate("Sync download address (save & app after sync)"))
 ---url1.inputstyle = "apply"
 
@@ -331,6 +351,14 @@ function qbj1.write(self, section)
     luci.util.exec("uci get autodl.@autodl[0].qbjpath > /tmp/autodlqbj.path")
     luci.util.exec("sleep 1")
     luci.util.exec("nohup /usr/autodl/autodlqbj.sh >/dev/null 2>&1 &")
+end
+
+s:tab("autodlbook", translate("Download from https://book.zongheng.com"))
+bk1 = s:taboption("autodlbook", Button, "_autodlbook", translate("One-click download book"))
+bk1.inputstyle = "apply"
+bk1.description = translate("Download a book from book.zongheng.com")
+function bk1.write(self, section)
+    luci.util.exec("/usr/autodl/autodlbook1.sh &")
 end
 
 
