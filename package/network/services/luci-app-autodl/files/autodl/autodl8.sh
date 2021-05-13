@@ -70,14 +70,14 @@ do
 	if [ $avdnum1 -le 9 ];then
 		autodlvd
 		avdnum2=00$avdnum1
-		mv -f $autodlgetpath/hls.ts $autodlgetpath/$avdname2第$avdnum2集.ts
+		mv -f $autodlgetpath/hls.ts $autodlgetpath/$autodlgetname第$avdnum2集.ts
 	elif [ $avdnum1 -le 99 ];then
 		autodlvd
 		avdnum3=0$avdnum1
-		mv -f $autodlgetpath/hls.ts $autodlgetpath/$avdname2第$avdnum3集.ts
+		mv -f $autodlgetpath/hls.ts $autodlgetpath/$autodlgetname第$avdnum3集.ts
 	else
 		autodlvd
-		mv -f $autodlgetpath/hls.ts $autodlgetpath/$avdname2第$avdnum1集.ts
+		mv -f $autodlgetpath/hls.ts $autodlgetpath/$autodlgetname第$avdnum1集.ts
 	fi
 	avdnum1=$(echo `expr $avdnum1 + 1`)
 done
