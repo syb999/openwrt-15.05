@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mt76
 PKG_VERSION:=2020-08-22
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILES:=
@@ -173,6 +173,14 @@ define KernelPackage/mt7663-firmware-sta
 	$(PKG_BUILD_DIR)/mt7615/mt7615e.ko
 endef
 
+define KernelPackage/mt7915e
+  $(KernelPackage/mt76-default)
+  TITLE:=MediaTek MT7915e wireless driver
+  DEPENDS+=@PCI_SUPPORT +kmod-mt7615-common +@DRIVER_11AX_SUPPORT
+  FILES:= $(PKG_BUILD_DIR)/mt7915/mt7915e.ko
+  AUTOLOAD:=$(call AutoProbe,mt7915e)
+endef
+
 NOSTDINC_FLAGS = \
 	-I$(PKG_BUILD_DIR) \
 	-I$(STAGING_DIR)/usr/include/mac80211-backport/uapi \
@@ -225,6 +233,9 @@ ifdef CONFIG_PACKAGE_kmod-mt7615e
     PKG_MAKE_FLAGS += CONFIG_MT7622_WMAC=y
     NOSTDINC_FLAGS += -DCONFIG_MT7622_WMAC
   endif
+endif
+ifdef CONFIG_PACKAGE_kmod-mt7915e
+  PKG_MAKE_FLAGS += CONFIG_MT7915E=m
 endif
 
 define Build/Compile
@@ -308,6 +319,15 @@ define KernelPackage/mt7663-firmware-sta/install
 		$(1)/lib/firmware/mediatek
 endef
 
+define KernelPackage/mt7915e/install
+	$(INSTALL_DIR) $(1)/lib/firmware/mediatek
+	cp \
+		$(PKG_BUILD_DIR)/firmware/mt7915_wa.bin \
+		$(PKG_BUILD_DIR)/firmware/mt7915_wm.bin \
+		$(PKG_BUILD_DIR)/firmware/mt7915_rom_patch.bin \
+		$(1)/lib/firmware/mediatek
+endef
+
 $(eval $(call KernelPackage,mt76-core))
 $(eval $(call KernelPackage,mt76-usb))
 $(eval $(call KernelPackage,mt76x02-usb))
@@ -323,4 +343,5 @@ $(eval $(call KernelPackage,mt7615-common))
 $(eval $(call KernelPackage,mt7615e))
 $(eval $(call KernelPackage,mt7663-firmware-ap))
 $(eval $(call KernelPackage,mt7663-firmware-sta))
+$(eval $(call KernelPackage,mt7915e))
 $(eval $(call KernelPackage,mt76))
