@@ -1,0 +1,218 @@
+--- a/agg-rx.c
++++ b/agg-rx.c
+@@ -122,6 +122,7 @@
+ 	struct ieee80211_bar *bar = mt76_skb_get_hdr(skb);
+ 	struct mt76_wcid *wcid = status->wcid;
+ 	struct mt76_rx_tid *tid;
++	u8 tidno = status->qos_ctl & IEEE80211_QOS_CTL_TID_MASK;
+ 	u16 seqno;
+ 
+ 	if (!ieee80211_is_ctl(bar->frame_control))
+@@ -130,9 +131,9 @@
+ 	if (!ieee80211_is_back_req(bar->frame_control))
+ 		return;
+ 
+-	status->tid = le16_to_cpu(bar->control) >> 12;
++	status->qos_ctl = tidno = le16_to_cpu(bar->control) >> 12;
+ 	seqno = IEEE80211_SEQ_TO_SN(le16_to_cpu(bar->start_seq_num));
+-	tid = rcu_dereference(wcid->aggr[status->tid]);
++	tid = rcu_dereference(wcid->aggr[tidno]);
+ 	if (!tid)
+ 		return;
+ 
+@@ -147,12 +148,12 @@
+ void mt76_rx_aggr_reorder(struct sk_buff *skb, struct sk_buff_head *frames)
+ {
+ 	struct mt76_rx_status *status = (struct mt76_rx_status *)skb->cb;
+-	struct ieee80211_hdr *hdr = mt76_skb_get_hdr(skb);
+ 	struct mt76_wcid *wcid = status->wcid;
+ 	struct ieee80211_sta *sta;
+ 	struct mt76_rx_tid *tid;
+ 	bool sn_less;
+ 	u16 seqno, head, size, idx;
++	u8 tidno = status->qos_ctl & IEEE80211_QOS_CTL_TID_MASK;
+ 	u8 ackp;
+ 
+ 	__skb_queue_tail(frames, skb);
+@@ -161,18 +162,18 @@
+ 	if (!sta)
+ 		return;
+ 
+-	if (!status->aggr) {
++	if (!status->aggr && !(status->flag & RX_FLAG_8023)) {
+ 		mt76_rx_aggr_check_ctl(skb, frames);
+ 		return;
+ 	}
+ 
+ 	/* not part of a BA session */
+-	ackp = *ieee80211_get_qos_ctl(hdr) & IEEE80211_QOS_CTL_ACK_POLICY_MASK;
++	ackp = status->qos_ctl & IEEE80211_QOS_CTL_ACK_POLICY_MASK;
+ 	if (ackp != IEEE80211_QOS_CTL_ACK_POLICY_BLOCKACK &&
+ 	    ackp != IEEE80211_QOS_CTL_ACK_POLICY_NORMAL)
+ 		return;
+ 
+-	tid = rcu_dereference(wcid->aggr[status->tid]);
++	tid = rcu_dereference(wcid->aggr[tidno]);
+ 	if (!tid)
+ 		return;
+ 
+--- a/mac80211.c
++++ b/mac80211.c
+@@ -804,6 +804,7 @@
+ 	struct mt76_rx_status *status = (struct mt76_rx_status *)skb->cb;
+ 	struct mt76_wcid *wcid = status->wcid;
+ 	struct ieee80211_hdr *hdr;
++	u8 tidno = status->qos_ctl & IEEE80211_QOS_CTL_TID_MASK;
+ 	int ret;
+ 
+ 	if (!(status->flag & RX_FLAG_DECRYPTED))
+@@ -824,12 +825,12 @@
+ 	}
+ 
+ 	BUILD_BUG_ON(sizeof(status->iv) != sizeof(wcid->rx_key_pn[0]));
+-	ret = memcmp(status->iv, wcid->rx_key_pn[status->tid],
++	ret = memcmp(status->iv, wcid->rx_key_pn[tidno],
+ 		     sizeof(status->iv));
+ 	if (ret <= 0)
+ 		return -EINVAL; /* replay */
+ 
+-	memcpy(wcid->rx_key_pn[status->tid], status->iv, sizeof(status->iv));
++	memcpy(wcid->rx_key_pn[tidno], status->iv, sizeof(status->iv));
+ 
+ 	if (status->flag & RX_FLAG_IV_STRIPPED)
+ 		status->flag |= RX_FLAG_PN_VALIDATED;
+@@ -844,6 +845,7 @@
+ 	struct mt76_wcid *wcid = status->wcid;
+ 	struct ieee80211_sta *sta;
+ 	u32 airtime;
++	u8 tidno = status->qos_ctl & IEEE80211_QOS_CTL_TID_MASK;
+ 
+ 	airtime = mt76_calc_rx_airtime(dev, status, len);
+ 	spin_lock(&dev->cc_lock);
+@@ -854,7 +856,7 @@
+ 		return;
+ 
+ 	sta = container_of((void *)wcid, struct ieee80211_sta, drv_priv);
+-	ieee80211_sta_register_airtime(sta, status->tid, 0, airtime);
++	ieee80211_sta_register_airtime(sta, tidno, 0, airtime);
+ }
+ 
+ static void
+@@ -882,7 +884,6 @@
+ static void
+ mt76_airtime_check(struct mt76_dev *dev, struct sk_buff *skb)
+ {
+-	struct ieee80211_hdr *hdr = mt76_skb_get_hdr(skb);
+ 	struct mt76_rx_status *status = (struct mt76_rx_status *)skb->cb;
+ 	struct mt76_wcid *wcid = status->wcid;
+ 
+@@ -890,6 +891,11 @@
+ 		return;
+ 
+ 	if (!wcid || !wcid->sta) {
++		struct ieee80211_hdr *hdr = mt76_skb_get_hdr(skb);
++
++		if (status->flag & RX_FLAG_8023)
++			return;
++
+ 		if (!ether_addr_equal(hdr->addr1, dev->macaddr))
+ 			return;
+ 
+@@ -923,11 +929,13 @@
+ 	struct ieee80211_sta *sta;
+ 	struct ieee80211_hw *hw;
+ 	struct mt76_wcid *wcid = status->wcid;
++	u8 tidno = status->qos_ctl & IEEE80211_QOS_CTL_TID_MASK;
+ 	bool ps;
+ 	int i;
+ 
+ 	hw = mt76_phy_hw(dev, status->ext_phy);
+-	if (ieee80211_is_pspoll(hdr->frame_control) && !wcid) {
++	if (ieee80211_is_pspoll(hdr->frame_control) && !wcid &&
++	    !(status->flag & RX_FLAG_8023)) {
+ 		sta = ieee80211_find_sta_by_ifaddr(hw, hdr->addr2, NULL);
+ 		if (sta)
+ 			wcid = status->wcid = (struct mt76_wcid *)sta->drv_priv;
+@@ -945,6 +953,9 @@
+ 
+ 	wcid->inactive_count = 0;
+ 
++	if (status->flag & RX_FLAG_8023)
++		return;
++
+ 	if (!test_bit(MT_WCID_FLAG_CHECK_PS, &wcid->flags))
+ 		return;
+ 
+@@ -962,7 +973,7 @@
+ 
+ 	if (ps && (ieee80211_is_data_qos(hdr->frame_control) ||
+ 		   ieee80211_is_qos_nullfunc(hdr->frame_control)))
+-		ieee80211_sta_uapsd_trigger(sta, status->tid);
++		ieee80211_sta_uapsd_trigger(sta, tidno);
+ 
+ 	if (!!test_bit(MT_WCID_FLAG_PS, &wcid->flags) == ps)
+ 		return;
+--- a/mt76.h
++++ b/mt76.h
+@@ -493,7 +493,7 @@
+ 
+ 	u8 ext_phy:1;
+ 	u8 aggr:1;
+-	u8 tid;
++	u8 qos_ctl;
+ 	u16 seqno;
+ 
+ 	u16 freq;
+--- a/mt7603/mac.c
++++ b/mt7603/mac.c
+@@ -649,7 +649,7 @@
+ 
+ 	status->aggr = unicast &&
+ 		       !ieee80211_is_qos_nullfunc(hdr->frame_control);
+-	status->tid = *ieee80211_get_qos_ctl(hdr) & IEEE80211_QOS_CTL_TID_MASK;
++	status->qos_ctl = *ieee80211_get_qos_ctl(hdr);
+ 	status->seqno = IEEE80211_SEQ_TO_SN(le16_to_cpu(hdr->seq_ctrl));
+ 
+ 	return 0;
+--- a/mt7615/mac.c
++++ b/mt7615/mac.c
+@@ -456,7 +456,7 @@
+ 
+ 	status->aggr = unicast &&
+ 		       !ieee80211_is_qos_nullfunc(hdr->frame_control);
+-	status->tid = *ieee80211_get_qos_ctl(hdr) & IEEE80211_QOS_CTL_TID_MASK;
++	status->qos_ctl = *ieee80211_get_qos_ctl(hdr);
+ 	status->seqno = IEEE80211_SEQ_TO_SN(le16_to_cpu(hdr->seq_ctrl));
+ 
+ 	return 0;
+--- a/mt76x02_mac.c
++++ b/mt76x02_mac.c
+@@ -770,6 +770,7 @@
+ 			   void *rxi)
+ {
+ 	struct mt76_rx_status *status = (struct mt76_rx_status *)skb->cb;
++	struct ieee80211_hdr *hdr;
+ 	struct mt76x02_rxwi *rxwi = rxi;
+ 	struct mt76x02_sta *sta;
+ 	u32 rxinfo = le32_to_cpu(rxwi->rxinfo);
+@@ -864,7 +865,8 @@
+ 	status->freq = dev->mphy.chandef.chan->center_freq;
+ 	status->band = dev->mphy.chandef.chan->band;
+ 
+-	status->tid = FIELD_GET(MT_RXWI_TID, tid_sn);
++	hdr = (struct ieee80211_hdr *)skb->data;
++	status->qos_ctl = *ieee80211_get_qos_ctl(hdr);
+ 	status->seqno = FIELD_GET(MT_RXWI_SN, tid_sn);
+ 
+ 	return mt76x02_mac_process_rate(dev, status, rate);
+--- a/mt7915/mac.c
++++ b/mt7915/mac.c
+@@ -575,7 +575,7 @@
+ 
+ 	status->aggr = unicast &&
+ 		       !ieee80211_is_qos_nullfunc(hdr->frame_control);
+-	status->tid = *ieee80211_get_qos_ctl(hdr) & IEEE80211_QOS_CTL_TID_MASK;
++	status->qos_ctl = *ieee80211_get_qos_ctl(hdr);
+ 	status->seqno = IEEE80211_SEQ_TO_SN(le16_to_cpu(hdr->seq_ctrl));
+ 
+ 	return 0;

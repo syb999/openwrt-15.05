@@ -340,7 +340,7 @@
 +EXPORT_SYMBOL_GPL(mt76_calc_tx_airtime);
 --- a/mac80211.c
 +++ b/mac80211.c
-@@ -746,18 +746,10 @@
+@@ -843,19 +843,11 @@
  		    int len)
  {
  	struct mt76_wcid *wcid = status->wcid;
@@ -354,6 +354,7 @@
 -	};
  	struct ieee80211_sta *sta;
  	u32 airtime;
+ 	u8 tidno = status->qos_ctl & IEEE80211_QOS_CTL_TID_MASK;
  
 -	airtime = ieee80211_calc_rx_airtime(dev->hw, &info, len);
 +	airtime = mt76_calc_rx_airtime(dev, status, len);
