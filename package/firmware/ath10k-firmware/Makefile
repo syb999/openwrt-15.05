@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ath10k-firmware
-PKG_SOURCE_DATE:=2019-10-03
-PKG_SOURCE_VERSION:=d622d160e9f552ead68d9ae81b715422892dc2ef
-PKG_MD5SUM:=32f42c8cd44df3adad8a0e0a05e726f6
+PKG_SOURCE_DATE:=2021-05-14
+PKG_SOURCE_VERSION:=b44d86faba7c91115e4e8f020fd8a09ce752c454
+PKG_MD5SUM:=337938ab585cc7baed0b21e4f1ed7bf1
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
@@ -166,14 +166,14 @@ $(Package/ath10k-firmware-default)
   TITLE:=ath10k CT 10.1 firmware for QCA988x devices
   SECTION:=firmware
   CATEGORY:=Firmware
-  PROVIDES:=ath10k-firmware-qca988x
+#PROVIDES:=ath10k-firmware-qca988x
 endef
 define Package/ath10k-firmware-qca988x-ct-htt
 $(Package/ath10k-firmware-default)
   TITLE:=ath10k CT 10.1 htt-mgt fw for QCA988x
   SECTION:=firmware
   CATEGORY:=Firmware
-  PROVIDES:=ath10k-firmware-qca988x
+#PROVIDES:=ath10k-firmware-qca988x
   DEPENDS:=+!PACKAGE_kmod-ath10k-ct-smallbuffers:kmod-ath10k-ct
 endef
 
@@ -423,7 +423,7 @@ define Package/ath10k-firmware-qca9888/install
 		$(PKG_BUILD_DIR)/QCA9888/hw2.0/board-2.bin \
 		$(1)/lib/firmware/ath10k/QCA9888/hw2.0/board-2.bin
 	$(INSTALL_DATA) \
-		$(PKG_BUILD_DIR)/QCA9888/hw2.0/3.5.3/firmware-5.bin_10.4-3.5.3-00053 \
+		$(PKG_BUILD_DIR)/QCA9888/hw2.0/3.9.0.2/firmware-5.bin_10.4-3.9.0.2-00142 \
 		$(1)/lib/firmware/ath10k/QCA9888/hw2.0/firmware-5.bin
 endef
 
