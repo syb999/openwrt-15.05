@@ -51,3 +51,23 @@ define KernelPackage/spi-vsc7385/description
 endef
 
 $(eval $(call KernelPackage,spi-vsc7385))
+
+
+define KernelPackage/sound-ak4430
+  TITLE:=ar71xx I2S Audio Driver
+  DEPENDS:=@TARGET_ar71xx +kmod-sound-core +kmod-sound-soc-core +kmod-regmap
+  FILES:= \
+	$(LINUX_DIR)/sound/soc/ath79/snd-soc-ath79-i2s.ko \
+	$(LINUX_DIR)/sound/soc/ath79/snd-soc-ath79-pcm.ko \
+	$(LINUX_DIR)/sound/soc/ath79/snd-soc-ath79-codec.ko \
+	$(LINUX_DIR)/sound/soc/ath79/snd-soc-ap123-ak4430.ko \
+	$(LINUX_DIR)/sound/soc/codecs/snd-soc-ak4430.ko
+  AUTOLOAD:=$(call AutoLoad,90,snd-soc-ath79-i2s snd-soc-ath79-pcm snd-soc-ath79-codec snd-soc-ap123-ak4430 snd-soc-ak4430)
+  $(call AddDepends/sound)
+endef
+
+define KernelPackage/sound-ak4430/description
+ Audio modules for ar71xx ar934x i2s controller.
+endef
+
+$(eval $(call KernelPackage,sound-ak4430))
