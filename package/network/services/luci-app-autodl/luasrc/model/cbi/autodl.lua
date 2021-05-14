@@ -141,21 +141,21 @@ qbjpath.default = "/mnt/sda3/qbj"
 qbjpath.rmempty = false
 qbjpath.description = translate("Please enter a valid directory")
 
-s:tab("basic4", translate("Basic Setting for book"))
+s:tab("basic5", translate("Basic Setting for book"))
 
-bookurl=s:taboption("basic4", Value, "bookurl", translate("Book contents URL"))
+bookurl=s:taboption("basic5", Value, "bookurl", translate("Book contents URL"))
 bookurl.rmempty = true
 bookurl.datatype = "string"
 bookurl.description = translate("Book contents URL for downloading http://book.zongheng.com")
 
-bookname=s:taboption("basic4", Value, "bookname", translate("The title of a book"))
+bookname=s:taboption("basic5", Value, "bookname", translate("The title of a book"))
 bookname.datatype = "string"
 bookname.placeholder = "story"
 bookname.default = "story"
 bookname.rmempty = false
 bookname.description = translate("Book from https://book.zongheng.com")
 
-bookpath=s:taboption("basic4", Value, "bookpath", translate("Download book directory"))
+bookpath=s:taboption("basic5", Value, "bookpath", translate("Download book directory"))
 bookpath.datatype = "string"
 bookpath.default = "/mnt/sda3/book"
 bookpath.rmempty = false
