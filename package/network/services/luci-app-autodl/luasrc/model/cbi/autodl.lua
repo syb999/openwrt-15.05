@@ -146,14 +146,13 @@ s:tab("basic5", translate("Basic Setting for book"))
 bookurl=s:taboption("basic5", Value, "bookurl", translate("Book contents URL"))
 bookurl.rmempty = true
 bookurl.datatype = "string"
-bookurl.description = translate("Book contents URL for downloading http://book.zongheng.com")
+bookurl.description = translate("Book URL")
 
 bookname=s:taboption("basic5", Value, "bookname", translate("The title of a book"))
 bookname.datatype = "string"
 bookname.placeholder = "story"
 bookname.default = "story"
 bookname.rmempty = false
-bookname.description = translate("Book from https://book.zongheng.com")
 
 bookpath=s:taboption("basic5", Value, "bookpath", translate("Download book directory"))
 bookpath.datatype = "string"
@@ -353,14 +352,20 @@ function qbj1.write(self, section)
     luci.util.exec("nohup /usr/autodl/autodlqbj.sh >/dev/null 2>&1 &")
 end
 
-s:tab("autodlbook", translate("Download from https://book.zongheng.com"))
+s:tab("autodlbook", translate("Books Download Page"))
 bk1 = s:taboption("autodlbook", Button, "_autodlbook", translate("One-click download book"))
 bk1.inputstyle = "apply"
-bk1.description = translate("Download a book from book.zongheng.com")
+bk1.description = translate("Download a book from http://book.zongheng.com")
 function bk1.write(self, section)
     luci.util.exec("/usr/autodl/autodlbook1.sh &")
 end
 
+bk2 = s:taboption("autodlbook", Button, "_autodlbook2", translate("One-click download book"))
+bk2.inputstyle = "apply"
+bk2.description = translate("Download a book from https://www.biquge5200.cc")
+function bk2.write(self, section)
+    luci.util.exec("/usr/autodl/autodlbook2.sh &")
+end
 
 return m
 

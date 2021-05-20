@@ -178,12 +178,24 @@ msgstr "豆丁网文档的URL页面地址"
 msgid "Book contents URL"
 msgstr "小说目录网址"
 
-msgid "Book contents URL for downloading http://book.zongheng.com"
-msgstr "纵横中文网小说目录URL(http://book.zongheng.com)"
+msgid "Book URL"
+msgstr "小说URL"
 
 msgid "The title of a book"
 msgstr "书名"
 
 msgid "One-click download book"
 msgstr "一键下载小说"
+
+msgid "Download book directory"
+msgstr "小说下载目录"
+
+msgid "Books Download Page"
+msgstr "小说下载页面"
+
+msgid "Download a book from http://book.zongheng.com"
+msgstr "从纵横中文网下载小说"
+
+msgid "Download a book from https://www.biquge5200.cc"
+msgstr "从笔趣阁下载小说"
 
