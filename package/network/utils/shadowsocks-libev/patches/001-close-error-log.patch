@@ -1,0 +1,10 @@
+--- a/src/redir.c
++++ b/src/redir.c
+@@ -209,7 +209,6 @@
+             // continue to wait for recv
+             return;
+         } else {
+-            ERROR("server recv");
+             close_and_free_remote(EV_A_ remote);
+             close_and_free_server(EV_A_ server);
+             return;
