@@ -417,7 +417,7 @@ tls_allowInsecure:depends("stream_security", "tls")
 -- [[ Trojan Cert ]]--
 trojan_cert_path = s:option(Value, "trojan_cert_path", translate("Trojan Cert Path"))
 trojan_cert_path.default = ""
-trojan_cert_path:depends({ stream_security = "tls", tls_allowInsecure = false })
+trojan_cert_path:depends("tls_allowInsecure", "false")
 
 trojan_transport = s:option(ListValue, "trojan_transport", translate("Transport"))
 trojan_transport:value("original", "Original")
