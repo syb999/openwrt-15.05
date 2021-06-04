@@ -1,14 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=https-dns-proxy
-PKG_VERSION:=2021-01-17
-PKG_RELEASE:=1
+PKG_VERSION:=2021-05-14
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/aarond10/https_dns_proxy
-PKG_SOURCE_DATE:=2021-01-17
-PKG_SOURCE_VERSION:=37511cc08712d7548978a4f6f1cc457b7594fb96
-PKG_MD5SUM:=c4feb5096adf46e6402e99c8088909ad
+PKG_SOURCE_VERSION:=fa05dcfc46ff6d58999aab1e35bcf1b36b1eb19e
+PKG_MD5SUM:=0b2f14ada3dd73502bcd1465233c48f2
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.net>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -42,7 +41,7 @@ define Package/https-dns-proxy/install
 	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/init.d ${1}/etc/config
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/https_dns_proxy $(1)/usr/sbin/https-dns-proxy
 	$(INSTALL_BIN) ./files/https-dns-proxy.init $(1)/etc/init.d/https-dns-proxy
-	sed -i "s|^\(PKG_VERSION\).*|\1='$(PKG_VERSION)-$(PKG_RELEASE)'|" $(1)/etc/init.d/https-dns-proxy
+	$(SED) "s|^\(PKG_VERSION\).*|\1='$(PKG_VERSION)-$(PKG_RELEASE)'|" $(1)/etc/init.d/https-dns-proxy
 	$(INSTALL_CONF) ./files/https-dns-proxy.config $(1)/etc/config/https-dns-proxy
 endef
 
