@@ -5,13 +5,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dawn
-PKG_SOURCE_DATE:=2020-09-03
+PKG_SOURCE_DATE:=2020-12-31
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/berlin-open-wireless-lab/DAWN.git
-PKG_SOURCE_VERSION:=b639145ce90230e693c41e71624ea0c0798c424d
-PKG_MD5SUM:=130575e5cae7f57f61373ad037b8ef81
+PKG_SOURCE_VERSION:=8ce09d64def9a1ad4bbf57dd3fe724a8a9b93334
+PKG_MD5SUM:=e7aa145ef64cc294cdb47bcef953b38f
 
 PKG_MAINTAINER:=Nick Hainke <vincent@systemli.org>
 PKG_LICENSE:=GPL-2.0-only
@@ -27,7 +27,7 @@ define Package/dawn
   CATEGORY:=Network
   TITLE:=Decentralized wifi controller
   URL:=https://github.com/berlin-open-wireless-lab/DAWN.git
-  DEPENDS:=$(DRV_DEPENDS) +libubus +libubox +libblobmsg-json +libuci +libgcrypt +libiwinfo +umdns +libpthread
+  DEPENDS:=$(DRV_DEPENDS) +libubus +libubox +libblobmsg-json +libuci +libgcrypt +libiwinfo +umdns +libpthread @TARGET_ar71xx
 endef
 
 define Package/dawn/description
