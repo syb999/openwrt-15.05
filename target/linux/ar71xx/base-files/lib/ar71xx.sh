@@ -357,6 +357,9 @@ ar71xx_board_detect() {
 	*"LETV board")
 		name="letv"
 		;;
+	*"LG-A291Q")
+		name="lg-a291q"
+		;;
 	*"Phicomm K2T A1/A2/A3 board")
 		name="k2t"
 		;;

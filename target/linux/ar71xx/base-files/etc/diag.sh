@@ -21,6 +21,9 @@ get_status_led() {
 	letv)
 		status_led="letv:green:status"
 		;;
+	lg-a291q)
+		status_led="lg:green:status"
+		;;
 	k2t)
 		status_led="k2t:yellow:lan"
 		;;

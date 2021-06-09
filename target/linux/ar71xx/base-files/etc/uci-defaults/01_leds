@@ -69,6 +69,12 @@ letv)
 	ucidef_set_led_wlan "wlan2g" "WLAN 2.4 GHz" "letv:green:wlan-2g" "phy0tpt"
 	;;
 
+lg-a291q)
+	ucidef_set_led_netdev "wan" "WAN" "lg:green:wan" "eth1"
+	ucidef_set_led_switch "lan1" "LAN1" "lg:green:lan1" "switch0" "0x10"
+	ucidef_set_led_wlan "wlan2g" "WLAN 2.4 GHz" "lg:green:wlan-2g" "phy0tpt"
+	;;
+
 bullet-m | \
 nanostation-m | \
 rocket-m | \

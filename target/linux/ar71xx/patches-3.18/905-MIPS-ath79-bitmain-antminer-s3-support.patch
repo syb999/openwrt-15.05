@@ -25,8 +25,8 @@
  obj-$(CONFIG_ATH79_MACH_ANTMINER_S1)+= mach-antminer-s1.o
 +obj-$(CONFIG_ATH79_MACH_ANTMINER_S3)+= mach-antminer-s3.o
  obj-$(CONFIG_ATH79_MACH_LETV)		+= mach-letv.o
+ obj-$(CONFIG_ATH79_MACH_LG_A291Q)	+= mach-lg-a291q.o
  obj-$(CONFIG_ATH79_MACH_AP113)		+= mach-ap113.o
- obj-$(CONFIG_ATH79_MACH_AP121)		+= mach-ap121.o
 --- a/arch/mips/ath79/machtypes.h
 +++ b/arch/mips/ath79/machtypes.h
 @@ -23,6 +23,7 @@ enum ath79_mach_type {
@@ -35,5 +35,5 @@
  	ATH79_MACH_ANTMINER_S1,	/* Antminer-S1 */
 +	ATH79_MACH_ANTMINER_S3, /* Antminer-S3 */
  	ATH79_MACH_LETV,		/* LETV board */
+ 	ATH79_MACH_LG_A291Q,		/* LG-A291Q board */
  	ATH79_MACH_AP113,		/* Atheros AP113 reference board */
- 	ATH79_MACH_AP121,		/* Atheros AP121 reference board */

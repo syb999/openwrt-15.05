@@ -1,6 +1,6 @@
 --- a/arch/mips/ath79/machtypes.h
 +++ b/arch/mips/ath79/machtypes.h
-@@ -16,22 +16,205 @@
+@@ -16,22 +16,206 @@
  
  enum ath79_mach_type {
  	ATH79_MACH_GENERIC = 0,
@@ -13,6 +13,7 @@
 +	ATH79_MACH_K2T,			/* Phicomm K2T A1/A2/A3 board */
 +	ATH79_MACH_CSAC,		/* CSAC-III board */
 +	ATH79_MACH_LETV,		/* LETV board */
++	ATH79_MACH_LG_A291Q,		/* LG-A291Q board */
 +	ATH79_MACH_AP113,		/* Atheros AP113 reference board */
  	ATH79_MACH_AP121,		/* Atheros AP121 reference board */
  	ATH79_MACH_AP121_MINI,		/* Atheros AP121-MINI reference board */
@@ -208,7 +209,7 @@
  #endif /* _ATH79_MACHTYPE_H */
 --- a/arch/mips/ath79/Kconfig
 +++ b/arch/mips/ath79/Kconfig
-@@ -2,6 +2,111 @@ if ATH79
+@@ -2,6 +2,120 @@ if ATH79
  
  menu "Atheros AR71XX/AR724X/AR913X machine selection"
  
@@ -219,6 +220,15 @@
 +	select ATH79_DEV_LEDS_GPIO
 +	select ATH79_DEV_M25P80
 +	select ATH79_DEV_USB
++	select ATH79_DEV_WMAC
++	select ATH79_DEV_AP9X_PCI if PCI
++
++config ATH79_MACH_LG_A291Q
++	bool "LG-A291Q"
++	select SOC_QCA953X
++	select ATH79_DEV_GPIO_BUTTONS
++	select ATH79_DEV_LEDS_GPIO
++	select ATH79_DEV_M25P80
 +	select ATH79_DEV_WMAC
 +	select ATH79_DEV_AP9X_PCI if PCI
 +
@@ -320,7 +330,7 @@
  config ATH79_MACH_AP121
  	bool "Atheros AP121 reference board"
  	select SOC_AR933X
-@@ -11,62 +105,1071 @@ config ATH79_MACH_AP121
+@@ -11,62 +114,1071 @@ config ATH79_MACH_AP121
  	select ATH79_DEV_M25P80
  	select ATH79_DEV_USB
  	select ATH79_DEV_WMAC
@@ -1420,7 +1430,7 @@
  
  config ATH79_MACH_UBNT_XM
  	bool "Ubiquiti Networks XM/UniFi boards"
-@@ -83,6 +1186,106 @@ config ATH79_MACH_UBNT_XM
+@@ -83,6 +1195,106 @@ config ATH79_MACH_UBNT_XM
  	  Say 'Y' here if you want your kernel to support the
  	  Ubiquiti Networks XM (rev 1.0) board.
  
@@ -1527,7 +1537,7 @@
  endmenu
  
  config SOC_AR71XX
-@@ -124,7 +1327,10 @@ config ATH79_DEV_DSA
+@@ -124,7 +1336,10 @@ config ATH79_DEV_DSA
  config ATH79_DEV_ETH
  	def_bool n
  
@@ -1539,7 +1549,7 @@
  	def_bool n
  
  config ATH79_DEV_GPIO_BUTTONS
-@@ -154,6 +1360,11 @@ config ATH79_PCI_ATH9K_FIXUP
+@@ -154,6 +1369,11 @@ config ATH79_PCI_ATH9K_FIXUP
  	def_bool n
  
  config ATH79_ROUTERBOOT
@@ -1553,7 +1563,7 @@
  endif
 --- a/arch/mips/ath79/Makefile
 +++ b/arch/mips/ath79/Makefile
-@@ -38,9 +38,133 @@ obj-$(CONFIG_ATH79_ROUTERBOOT)		+= route
+@@ -38,9 +38,134 @@ obj-$(CONFIG_ATH79_ROUTERBOOT)		+= route
  #
  # Machines
  #
@@ -1565,6 +1575,7 @@
 +obj-$(CONFIG_ATH79_MACH_K2T)		+= mach-k2t.o
 +obj-$(CONFIG_ATH79_MACH_CSAC)		+= mach-csac.o
 +obj-$(CONFIG_ATH79_MACH_LETV)		+= mach-letv.o
++obj-$(CONFIG_ATH79_MACH_LG_A291Q)	+= mach-lg-a291q.o
 +obj-$(CONFIG_ATH79_MACH_AP113)		+= mach-ap113.o
  obj-$(CONFIG_ATH79_MACH_AP121)		+= mach-ap121.o
 +obj-$(CONFIG_ATH79_MACH_AP132)		+= mach-ap132.o
