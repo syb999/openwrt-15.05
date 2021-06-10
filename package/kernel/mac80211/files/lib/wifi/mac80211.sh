@@ -1,5 +1,4 @@
 #!/bin/sh
-. /lib/netifd/mac80211.sh
 
 append DRIVERS "mac80211"
 
@@ -11,7 +10,7 @@ lookup_phy() {
 	local devpath
 	config_get devpath "$device" path
 	[ -n "$devpath" ] && {
-		phy="$(mac80211_path_to_phy "$devpath")"
+		phy="$(iwinfo nl80211 phyname "path=$devpath")"
 		[ -n "$phy" ] && return
 	}
 
@@ -101,7 +100,7 @@ detect_mac80211() {
 
 		[ -n $htmode ] && append ht_capab "	option htmode	$htmode" "$N"
 
-		path="$(mac80211_phy_to_path "$dev")"
+		path="$(iwinfo nl80211 path "$dev")"
 		if [ -n "$path" ]; then
 			dev_id="	option path	'$path'"
 		else
