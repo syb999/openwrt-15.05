@@ -1,0 +1,168 @@
+--- a/mt7615/init.c
++++ b/mt7615/init.c
+@@ -12,13 +12,13 @@
+ #include "mac.h"
+ #include "eeprom.h"
+ 
+-void mt7615_phy_init(struct mt7615_dev *dev)
++static void
++mt7615_phy_init(struct mt7615_dev *dev)
+ {
+ 	/* disable rf low power beacon mode */
+ 	mt76_set(dev, MT_WF_PHY_WF2_RFCTRL0(0), MT_WF_PHY_WF2_RFCTRL0_LPBCN_EN);
+ 	mt76_set(dev, MT_WF_PHY_WF2_RFCTRL0(1), MT_WF_PHY_WF2_RFCTRL0_LPBCN_EN);
+ }
+-EXPORT_SYMBOL_GPL(mt7615_phy_init);
+ 
+ static void
+ mt7615_init_mac_chain(struct mt7615_dev *dev, int chain)
+@@ -79,7 +79,8 @@
+ 	}
+ }
+ 
+-void mt7615_mac_init(struct mt7615_dev *dev)
++static void
++mt7615_mac_init(struct mt7615_dev *dev)
+ {
+ 	int i;
+ 
+@@ -128,9 +129,9 @@
+ 		mt7615_init_mac_chain(dev, 1);
+ 	}
+ }
+-EXPORT_SYMBOL_GPL(mt7615_mac_init);
+ 
+-void mt7615_check_offload_capability(struct mt7615_dev *dev)
++static void
++mt7615_check_offload_capability(struct mt7615_dev *dev)
+ {
+ 	struct ieee80211_hw *hw = mt76_hw(dev);
+ 	struct wiphy *wiphy = hw->wiphy;
+@@ -162,7 +163,6 @@
+ 		wiphy->max_sched_scan_reqs = 0;
+ 	}
+ }
+-EXPORT_SYMBOL_GPL(mt7615_check_offload_capability);
+ 
+ bool mt7615_wait_for_mcu_init(struct mt7615_dev *dev)
+ {
+@@ -291,6 +291,16 @@
+ }
+ EXPORT_SYMBOL_GPL(mt7615_init_txpower);
+ 
++void mt7615_init_work(struct mt7615_dev *dev)
++{
++	mt7615_mcu_set_eeprom(dev);
++	mt7615_mac_init(dev);
++	mt7615_phy_init(dev);
++	mt7615_mcu_del_wtbl_all(dev);
++	mt7615_check_offload_capability(dev);
++}
++EXPORT_SYMBOL_GPL(mt7615_init_work);
++
+ static void
+ mt7615_regd_notifier(struct wiphy *wiphy,
+ 		     struct regulatory_request *request)
+--- a/mt7615/mcu.c
++++ b/mt7615/mcu.c
+@@ -2590,7 +2590,6 @@
+ 	return __mt76_mcu_skb_send_msg(&dev->mt76, skb,
+ 				       MCU_EXT_CMD_EFUSE_BUFFER_MODE, true);
+ }
+-EXPORT_SYMBOL_GPL(mt7615_mcu_set_eeprom);
+ 
+ int mt7615_mcu_set_mac_enable(struct mt7615_dev *dev, int band, bool enable)
+ {
+@@ -2732,7 +2731,6 @@
+ 	return __mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD_WTBL_UPDATE,
+ 				   &req, sizeof(req), true);
+ }
+-EXPORT_SYMBOL_GPL(mt7615_mcu_del_wtbl_all);
+ 
+ int mt7615_mcu_rdd_cmd(struct mt7615_dev *dev,
+ 		       enum mt7615_rdd_cmd cmd, u8 index,
+--- a/mt7615/mt7615.h
++++ b/mt7615/mt7615.h
+@@ -421,7 +421,6 @@
+ 		      int irq, const u32 *map);
+ u32 mt7615_reg_map(struct mt7615_dev *dev, u32 addr);
+ 
+-void mt7615_check_offload_capability(struct mt7615_dev *dev);
+ void mt7615_init_device(struct mt7615_dev *dev);
+ int mt7615_register_device(struct mt7615_dev *dev);
+ void mt7615_unregister_device(struct mt7615_dev *dev);
+@@ -535,9 +534,8 @@
+ void mt7615_roc_timer(struct timer_list *timer);
+ void mt7615_init_txpower(struct mt7615_dev *dev,
+ 			 struct ieee80211_supported_band *sband);
+-void mt7615_phy_init(struct mt7615_dev *dev);
+-void mt7615_mac_init(struct mt7615_dev *dev);
+ int mt7615_set_channel(struct mt7615_phy *phy);
++void mt7615_init_work(struct mt7615_dev *dev);
+ 
+ int mt7615_mcu_restart(struct mt76_dev *dev);
+ void mt7615_update_channel(struct mt76_dev *mdev);
+--- a/mt7615/pci_init.c
++++ b/mt7615/pci_init.c
+@@ -12,7 +12,7 @@
+ #include "mac.h"
+ #include "eeprom.h"
+ 
+-static void mt7615_init_work(struct work_struct *work)
++static void mt7615_pci_init_work(struct work_struct *work)
+ {
+ 	struct mt7615_dev *dev = container_of(work, struct mt7615_dev,
+ 					      mcu_work);
+@@ -27,12 +27,7 @@
+ 	if (ret)
+ 		return;
+ 
+-	mt7615_mcu_set_eeprom(dev);
+-	mt7615_mac_init(dev);
+-	mt7615_phy_init(dev);
+-	mt7615_mcu_del_wtbl_all(dev);
+-	mt7615_check_offload_capability(dev);
+-
++	mt7615_init_work(dev);
+ 	if (dev->dbdc_support)
+ 		mt7615_register_ext_phy(dev);
+ }
+@@ -44,7 +39,7 @@
+ 
+ 	mt76_wr(dev, MT_INT_SOURCE_CSR, ~0);
+ 
+-	INIT_WORK(&dev->mcu_work, mt7615_init_work);
++	INIT_WORK(&dev->mcu_work, mt7615_pci_init_work);
+ 	spin_lock_init(&dev->token_lock);
+ 	idr_init(&dev->token);
+ 
+--- a/mt7615/sdio.c
++++ b/mt7615/sdio.c
+@@ -227,11 +227,7 @@
+ 	if (mt7663s_mcu_init(dev))
+ 		return;
+ 
+-	mt7615_mcu_set_eeprom(dev);
+-	mt7615_mac_init(dev);
+-	mt7615_phy_init(dev);
+-	mt7615_mcu_del_wtbl_all(dev);
+-	mt7615_check_offload_capability(dev);
++	mt7615_init_work(dev);
+ }
+ 
+ static int mt7663s_hw_init(struct mt7615_dev *dev, struct sdio_func *func)
+--- a/mt7615/usb.c
++++ b/mt7615/usb.c
+@@ -47,11 +47,7 @@
+ 	if (mt7663u_mcu_init(dev))
+ 		return;
+ 
+-	mt7615_mcu_set_eeprom(dev);
+-	mt7615_mac_init(dev);
+-	mt7615_phy_init(dev);
+-	mt7615_mcu_del_wtbl_all(dev);
+-	mt7615_check_offload_capability(dev);
++	mt7615_init_work(dev);
+ }
+ 
+ static int mt7663u_probe(struct usb_interface *usb_intf,
