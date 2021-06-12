@@ -64,6 +64,15 @@ msgstr "音频节目URL"
 msgid "URL for downloading https://www.ximalaya.com Audios"
 msgstr "喜马拉雅音频节目的URL页面地址"
 
+msgid "Audios URL multi pages"
+msgstr "启用下载音频节目URL多页功能"
+
+msgid "Need to download multiple pages of resources"
+msgstr "需要下载多页资源"
+
+msgid "Number of pages to download"
+msgstr "要下载的页数"
+
 msgid "Audios Name"
 msgstr "音频节目名"
 

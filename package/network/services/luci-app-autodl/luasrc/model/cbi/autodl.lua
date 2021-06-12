@@ -36,6 +36,14 @@ xmlyurl.rmempty = true
 xmlyurl.datatype = "string"
 xmlyurl.description = translate("URL for downloading https://www.ximalaya.com Audios")
 
+xmlymultiurl=s:taboption("basic2", Flag, "xmly_multi_pages", translate("Audios URL multi pages"))
+xmlymultiurl.description = translate("Need to download multiple pages of resources")
+
+xmlygetpages=s:taboption("basic2", Value, "xmlygetpages", translate("Number of pages to download"))
+xmlygetpages:depends("xmly_multi_pages", "1")
+xmlygetpages.datatype = "uinteger"
+xmlygetpages.default = "0"
+
 xmlyname=s:taboption("basic2", Value, "xmlyname", translate("Audios Name"))
 xmlyname.datatype = "string"
 xmlyname.placeholder = "story"
