@@ -102,6 +102,36 @@ for _, v in luci.util.vspairs(xmlyplaynumf) do
     xmlysenum:value(v)
 end
 
+isydl = s:taboption("basic2", Flag, "wanna_get_ishuyin_audios", translate("Wanna get www.ishuyin.com audios"))
+
+isyurl=s:taboption("basic2", Value, "isyurl", translate("Audios URL"))
+isyurl:depends("wanna_get_ishuyin_audios", "1")
+isyurl.rmempty = true
+isyurl.datatype = "string"
+isyurl.description = translate("URL for downloading https://www.ishuyin.com Audios")
+
+isyname=s:taboption("basic2", Value, "isyname", translate("Audios Name"))
+isyname:depends("wanna_get_ishuyin_audios", "1")
+isyname.datatype = "string"
+isyname.placeholder = "story"
+isyname.default = "story"
+isyname.rmempty = true
+isyname.description = translate("Audios from https://www.ishuyin.com")
+
+isypath=s:taboption("basic2", Value, "isypath", translate("Download Audios directory"))
+isypath:depends("wanna_get_ishuyin_audios", "1")
+isypath.datatype = "string"
+isypath.default = "/mnt/sda3/audios"
+isypath.rmempty = true
+isypath.description = translate("Please enter a valid directory")
+
+isynumber=s:taboption("basic2", Value, "isynumber", translate("Download Audios numbers"))
+isynumber:depends("wanna_get_ishuyin_audios", "1")
+isynumber.datatype = "uinteger"
+isynumber.default = "1"
+isynumber.rmempty = true
+isynumber.description = translate("Please enter the total number")
+
 s:tab("basic3", translate("Basic Setting for docin"))
 
 docinurl=s:taboption("basic3", Value, "docinurl", translate("docin.com doc URL"))
@@ -328,6 +358,14 @@ au3vdown.inputstyle = "apply"
 au3vdown.description = translate("alsa-utils needs to be installed")
 function au3vdown.write(self, section)
     luci.util.exec("nohup /usr/autodl/volumedown.sh >/dev/null 2>&1 &")
+end
+
+au3isy = s:taboption("audioxmly", Button, "_audioisy", translate("www.ishuyin.com One-click download"))
+au3isy:depends("wanna_get_ishuyin_audios", "1")
+au3isy.inputstyle = "apply"
+au3isy.description = translate("Audios download from https://www.ishuyin.com")
+function au3isy.write(self, section)
+    luci.util.exec("nohup /usr/autodl/autodlisy.sh >/dev/null 2>&1 &")
 end
 
 s:tab("autodldocin", translate("Download from https://www.docin.com"))

@@ -121,6 +121,15 @@ msgstr "需要先获取节目表"
 msgid "Select Audio"
 msgstr "选择音频"
 
+msgid "Wanna get www.ishuyin.com audios"
+msgstr "开启下载 www.ishuyin.com 音频功能"
+
+msgid "Download Audios numbers"
+msgstr "下载音频集数"
+
+msgid "Please enter the total number"
+msgstr "请输入该节目的总节目数"
+
 msgid "One-click download freeVIP"
 msgstr "一键下载新品限免节目或VIP节目"
 
@@ -156,6 +165,12 @@ msgstr "调高音量"
 
 msgid "Volume Down"
 msgstr "调低音量"
+
+msgid "www.ishuyin.com One-click download"
+msgstr "一键下载ishuyin.com"
+
+msgid "Audios download from https://www.ishuyin.com"
+msgstr "下载ishuyin.com音频"
 
 msgid "alsa-utils needs to be installed"
 msgstr "需要已安装好alsa-utils"
