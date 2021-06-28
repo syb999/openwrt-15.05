@@ -17,7 +17,7 @@ PKG_FILE_DEPENDS:=$(PLATFORM_DIR)/ $(GENERIC_PLATFORM_DIR)/base-files/
 PKG_BUILD_DEPENDS:=opkg/host usign/host
 PKG_LICENSE:=GPL-2.0
 
-PKG_CONFIG_DEPENDS := CONFIG_SIGNED_PACKAGES
+PKG_CONFIG_DEPENDS := CONFIG_SIGNED_PACKAGES CONFIG_NAND_SUPPORT
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -31,7 +31,7 @@ endif
 define Package/base-files
   SECTION:=base
   CATEGORY:=Base system
-  DEPENDS:=+netifd +libc +procd +jsonfilter +SIGNED_PACKAGES:usign +fstools +fwtool
+  DEPENDS:=+netifd +libc +procd +jsonfilter +SIGNED_PACKAGES:usign +NAND_SUPPORT:ubi-utils +fstools +fwtool
   TITLE:=Base filesystem for OpenWrt
   URL:=http://openwrt.org/
   VERSION:=$(PKG_RELEASE)-$(REVISION)
@@ -103,9 +103,16 @@ ifdef CONFIG_SIGNED_PACKAGES
   endef
 endif
 
+ifeq ($(CONFIG_NAND_SUPPORT),)
+  define Package/base-files/nand-support
+       rm -f $(1)/lib/upgrade/nand.sh
+  endef
+endif
+
 define Package/base-files/install
 	$(CP) ./files/* $(1)/
 	$(Package/base-files/install-key)
+	$(Package/base-files/nand-support)
 	if [ -d $(GENERIC_PLATFORM_DIR)/base-files/. ]; then \
 		$(CP) $(GENERIC_PLATFORM_DIR)/base-files/* $(1)/; \
 	fi

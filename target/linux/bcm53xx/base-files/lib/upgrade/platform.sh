@@ -1,3 +1,5 @@
+RAMFS_COPY_BIN='osafeloader oseama'
+
 PART_NAME=firmware
 
 # $(1): file to read magic from

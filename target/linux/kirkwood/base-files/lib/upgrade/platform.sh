@@ -1,5 +1,7 @@
 . /lib/kirkwood.sh
 
+RAMFS_COPY_BIN='fw_printenv fw_setenv'
+
 platform_check_image() {
 	[ "$#" -gt 1 ] && return 1
 	local board="$(kirkwood_board_name)"

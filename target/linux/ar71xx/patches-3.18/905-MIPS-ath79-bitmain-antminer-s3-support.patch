@@ -19,9 +19,9 @@
  	select SOC_AR724X
 --- a/arch/mips/ath79/Makefile
 +++ b/arch/mips/ath79/Makefile
-@@ -44,6 +44,7 @@ obj-$(CONFIG_ATH79_MACH_ALFA_NX)	+= mach
- obj-$(CONFIG_ATH79_MACH_ALL0315N)	+= mach-all0315n.o
+@@ -45,6 +45,7 @@ obj-$(CONFIG_ATH79_MACH_ALFA_NX)	+= mach
  obj-$(CONFIG_ATH79_MACH_CSAC)		+= mach-csac.o
+ obj-$(CONFIG_ATH79_MACH_MI4PRO)	+= mach-mi4pro.o
  obj-$(CONFIG_ATH79_MACH_ANTMINER_S1)+= mach-antminer-s1.o
 +obj-$(CONFIG_ATH79_MACH_ANTMINER_S3)+= mach-antminer-s3.o
  obj-$(CONFIG_ATH79_MACH_LETV)		+= mach-letv.o
@@ -29,9 +29,9 @@
  obj-$(CONFIG_ATH79_MACH_AP113)		+= mach-ap113.o
 --- a/arch/mips/ath79/machtypes.h
 +++ b/arch/mips/ath79/machtypes.h
-@@ -23,6 +23,7 @@ enum ath79_mach_type {
- 	ATH79_MACH_ALL0315N,		/* Allnet ALL0315N */
+@@ -24,6 +24,7 @@ enum ath79_mach_type {
  	ATH79_MACH_CSAC,		/* CSAC-III board */
+ 	ATH79_MACH_MI4PRO,		/* XIAOMI4-PRO */
  	ATH79_MACH_ANTMINER_S1,	/* Antminer-S1 */
 +	ATH79_MACH_ANTMINER_S3, /* Antminer-S3 */
  	ATH79_MACH_LETV,		/* LETV board */

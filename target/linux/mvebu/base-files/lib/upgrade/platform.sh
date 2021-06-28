@@ -4,6 +4,7 @@
 
 . /lib/mvebu.sh
 
+RAMFS_COPY_BIN='fw_printenv fw_setenv'
 RAMFS_COPY_DATA=/lib/mvebu.sh
 
 platform_check_image() {

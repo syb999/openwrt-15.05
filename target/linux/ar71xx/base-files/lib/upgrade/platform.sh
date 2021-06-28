@@ -7,6 +7,7 @@
 
 PART_NAME=firmware
 RAMFS_COPY_DATA=/lib/ar71xx.sh
+RAMFS_COPY_BIN='nandwrite'
 
 CI_BLKSZ=65536
 CI_LDADR=0x80060000
@@ -412,6 +413,12 @@ platform_check_image() {
 		;;
 
 	csac)
+		[ "$magic_long" != "68737173" -a "$magic_long" != "19852003" ] && {
+			echo "Invalid image type."
+			return 1
+		}
+
+	mi4pro)
 		[ "$magic_long" != "68737173" -a "$magic_long" != "19852003" ] && {
 			echo "Invalid image type."
 			return 1

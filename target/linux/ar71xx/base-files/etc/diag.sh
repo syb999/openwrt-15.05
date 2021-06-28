@@ -30,6 +30,9 @@ get_status_led() {
 	csac)
 		status_led="csac:green:status"
 		;;
+	mi4pro)
+		status_led="mi4pro:green:status"
+		;;
 	ap132)
 		status_led="ap132:green:status"
 		;;

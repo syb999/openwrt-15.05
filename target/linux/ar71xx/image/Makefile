@@ -163,6 +163,17 @@ define Device/CSAC
 endef
 TARGET_DEVICES += CSAC
 
+define Device/MI4PRO
+  BOARDNAME = MI4PRO
+  CONSOLE = ttyATH0,115200
+  KERNEL_SIZE := 1472k
+  ROOTFS_SIZE := 14528k
+  IMAGE_SIZE := 16000k
+  MTDPARTS := spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,14528k(rootfs),1472k(kernel),64k(art)ro,16000k@0x50000(firmware)
+  IMAGE/sysupgrade.bin := append-rootfs | pad-rootfs | pad-to $$$$(ROOTFS_SIZE) | append-kernel | check-size $$$$(IMAGE_SIZE)
+endef
+TARGET_DEVICES += MI4PRO
+
 define Device/LG-A291Q
   BOARDNAME = LG-A291Q
   CONSOLE = ttyATH0,115200

@@ -56,6 +56,10 @@ csac)
 	ucidef_set_led_wlan "wlan5g" "WLAN5G" "csac:green:wlan-5g" "phy0tpt"
 	;;
 
+mi4pro)
+	ucidef_set_led_switch "status" "STATUS" "mi4pro:green:status" "switch0" "0x10"
+	;;
+
 bsb)
 	ucidef_set_led_default "sys" "SYS" "bsb:red:sys" "1"
 	;;
