@@ -517,7 +517,7 @@ define Device/Init
 
   FILESYSTEMS := $(TARGET_FILESYSTEMS)
 
-  UBOOT_PATH :=  $(STAGING_DIR_IMAGE)/uboot-$(1
+  UBOOT_PATH :=  $(STAGING_DIR_IMAGE)/uboot-$(1)
 endef
 
 DEFAULT_DEVICE_VARS := \
