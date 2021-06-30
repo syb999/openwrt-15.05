@@ -1,0 +1,91 @@
+net: tracepoint napi:napi_poll add work and budget
+https://github.com/torvalds/linux/commit/1db19db7f5ff4ddd3b1b6dd2092a87298ee5bd0b
+
+--- a/include/trace/events/napi.h
++++ b/include/trace/events/napi.h
+@@ -12,22 +12,27 @@
+ 
+ TRACE_EVENT(napi_poll,
+ 
+-	TP_PROTO(struct napi_struct *napi),
++	TP_PROTO(struct napi_struct *napi, int work, int budget),
+ 
+-	TP_ARGS(napi),
++	TP_ARGS(napi, work, budget),
+ 
+ 	TP_STRUCT__entry(
+ 		__field(	struct napi_struct *,	napi)
++		__field(	int,			work)
++		__field(	int,			budget)
+ 		__string(	dev_name, napi->dev ? napi->dev->name : NO_DEV)
+ 	),
+ 
+ 	TP_fast_assign(
+ 		__entry->napi = napi;
++		__entry->work = work;
++		__entry->budget = budget;
+ 		__assign_str(dev_name, napi->dev ? napi->dev->name : NO_DEV);
+ 	),
+ 
+-	TP_printk("napi poll on napi struct %p for device %s",
+-		__entry->napi, __get_str(dev_name))
++	TP_printk("napi poll on napi struct %p for device %s work %d budget %d",
++		  __entry->napi, __get_str(dev_name),
++		  __entry->work, __entry->budget)
+ );
+ 
+ #undef NO_DEV
+--- a/net/core/drop_monitor.c
++++ b/net/core/drop_monitor.c
+@@ -187,7 +187,8 @@
+ 	trace_drop_common(skb, location);
+ }
+ 
+-static void trace_napi_poll_hit(void *ignore, struct napi_struct *napi)
++static void trace_napi_poll_hit(void *ignore, struct napi_struct *napi,
++				int work, int budget)
+ {
+ 	struct dm_hw_stat_delta *new_stat;
+ 
+--- a/net/core/netpoll.c
++++ b/net/core/netpoll.c
+@@ -161,7 +161,7 @@
+ 
+ 	work = napi->poll(napi, budget);
+ 	WARN_ONCE(work > budget, "%pF exceeded budget in poll\n", napi->poll);
+-	trace_napi_poll(napi);
++	trace_napi_poll(napi, work, 0);
+ 
+ 	clear_bit(NAPI_STATE_NPSVC, &napi->state);
+ 
+--- a/tools/perf/scripts/python/netdev-times.py
++++ b/tools/perf/scripts/python/netdev-times.py
+@@ -252,9 +252,10 @@
+ 	event_info = (name, context, cpu, nsecs(sec, nsec), pid, comm, irq, ret)
+ 	all_event_list.append(event_info)
+ 
+-def napi__napi_poll(name, context, cpu, sec, nsec, pid, comm, callchain, napi, dev_name):
++def napi__napi_poll(name, context, cpu, sec, nsec, pid, comm, callchain, napi,
++                    dev_name, work=None, budget=None):
+ 	event_info = (name, context, cpu, nsecs(sec, nsec), pid, comm,
+-			napi, dev_name)
++			napi, dev_name, work, budget)
+ 	all_event_list.append(event_info)
+ 
+ def net__netif_receive_skb(name, context, cpu, sec, nsec, pid, comm, callchain, skbaddr,
+@@ -354,11 +355,13 @@
+ 	receive_hunk_list.append(rec_data)
+ 
+ def handle_napi_poll(event_info):
+-	(name, context, cpu, time, pid, comm, napi, dev_name) = event_info
++	(name, context, cpu, time, pid, comm, napi, dev_name,
++		work, budget) = event_info
+ 	if cpu in net_rx_dic.keys():
+ 		event_list = net_rx_dic[cpu]['event_list']
+ 		rec_data = {'event_name':'napi_poll',
+-				'dev':dev_name, 'event_t':time}
++				'dev':dev_name, 'event_t':time,
++				'work':work, 'budget':budget}
+ 		event_list.append(rec_data)
+ 
+ def handle_netif_rx(event_info):

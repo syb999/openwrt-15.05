@@ -1,0 +1,330 @@
+net: add support for threaded NAPI polling
+https://lwn.net/Articles/828372/
+
+--- a/include/linux/netdevice.h
++++ b/include/linux/netdevice.h
+@@ -317,6 +317,7 @@
+ 	struct list_head	dev_list;
+ 	struct hlist_node	napi_hash_node;
+ 	unsigned int		napi_id;
++	struct work_struct	work;
+ };
+ 
+ enum {
+@@ -324,8 +325,18 @@
+ 	NAPI_STATE_DISABLE,	/* Disable pending */
+ 	NAPI_STATE_NPSVC,	/* Netpoll - don't dequeue from poll_list */
+ 	NAPI_STATE_HASHED,	/* In NAPI hash */
++	NAPI_STATE_THREADED,	/* Use threaded NAPI */
+ };
+ 
++enum {
++	NAPIF_STATE_SCHED	 = BIT(NAPI_STATE_SCHED),
++	NAPIF_STATE_DISABLE	 = BIT(NAPI_STATE_DISABLE),
++	NAPIF_STATE_NPSVC	 = BIT(NAPI_STATE_NPSVC),
++	NAPIF_STATE_HASHED	 = BIT(NAPI_STATE_HASHED),
++	NAPIF_STATE_THREADED = BIT(NAPI_STATE_THREADED),
++};
++
++
+ enum gro_result {
+ 	GRO_MERGED,
+ 	GRO_MERGED_FREE,
+@@ -1888,6 +1899,26 @@
+ 		    int (*poll)(struct napi_struct *, int), int weight);
+ 
+ /**
++ *	netif_threaded_napi_add - initialize a NAPI context
++ *	@dev:  network device
++ *	@napi: NAPI context
++ *	@poll: polling function
++ *	@weight: default weight
++ *
++ * This variant of netif_napi_add() should be used from drivers using NAPI
++ * with CPU intensive poll functions.
++ * This will schedule polling from a high priority workqueue that
++ */
++static inline void netif_threaded_napi_add(struct net_device *dev,
++					   struct napi_struct *napi,
++					   int (*poll)(struct napi_struct *, int),
++					   int weight)
++{
++	set_bit(NAPI_STATE_THREADED, &napi->state);
++	netif_napi_add(dev, napi, poll, weight);
++}
++
++/**
+  *  netif_napi_del - remove a napi context
+  *  @napi: napi context
+  *
+--- a/net/core/dev.c
++++ b/net/core/dev.c
+@@ -147,6 +147,7 @@
+ struct list_head ptype_base[PTYPE_HASH_SIZE] __read_mostly;
+ struct list_head ptype_all __read_mostly;	/* Taps */
+ static struct list_head offload_base __read_mostly;
++static struct workqueue_struct *napi_workq __read_mostly;
+ 
+ static int netif_rx_internal(struct sk_buff *skb);
+ static int call_netdevice_notifiers_info(unsigned long val,
+@@ -4459,6 +4460,11 @@
+ {
+ 	unsigned long flags;
+ 
++	if (test_bit(NAPI_STATE_THREADED, &n->state)) {
++		queue_work(napi_workq, &n->work);
++		return;
++	}
++
+ 	local_irq_save(flags);
+ 	____napi_schedule(this_cpu_ptr(&softnet_data), n);
+ 	local_irq_restore(flags);
+@@ -4473,6 +4479,11 @@
+  */
+ void __napi_schedule_irqoff(struct napi_struct *n)
+ {
++	if (test_bit(NAPI_STATE_THREADED, &n->state)) {
++		queue_work(napi_workq, &n->work);
++		return;
++	}
++
+ 	____napi_schedule(this_cpu_ptr(&softnet_data), n);
+ }
+ EXPORT_SYMBOL(__napi_schedule_irqoff);
+@@ -4564,6 +4575,93 @@
+ }
+ EXPORT_SYMBOL_GPL(napi_hash_del);
+ 
++static int __napi_poll(struct napi_struct *n, bool *repoll)
++{
++	int work, weight;
++
++	weight = n->weight;
++
++	/* This NAPI_STATE_SCHED test is for avoiding a race
++	 * with netpoll's poll_napi().  Only the entity which
++	 * obtains the lock and sees NAPI_STATE_SCHED set will
++	 * actually make the ->poll() call.  Therefore we avoid
++	 * accidentally calling ->poll() when NAPI is not scheduled.
++	 */
++	work = 0;
++	if (test_bit(NAPI_STATE_SCHED, &n->state)) {
++		work = n->poll(n, weight);
++		trace_napi_poll(n, work, weight);
++	}
++
++	if (unlikely(work > weight))
++		pr_err_once("NAPI poll function %pS returned %d, exceeding its budget of %d.\n",
++			    n->poll, work, weight);
++
++	if (likely(work < weight))
++		return work;
++
++	/* Drivers must not modify the NAPI state if they
++	 * consume the entire weight.  In such cases this code
++	 * still "owns" the NAPI instance and therefore can
++	 * move the instance around on the list at-will.
++	 */
++	if (unlikely(napi_disable_pending(n))) {
++		napi_complete(n);
++		return work;
++	}
++
++	if (n->gro_list) {
++		/* flush too old packets
++		 * If HZ < 1000, flush all packets.
++		 */
++		napi_gro_flush(n, HZ >= 1000);
++	}
++
++	/* Some drivers may have called napi_schedule
++	 * prior to exhausting their budget.
++	 */
++	if (unlikely(!list_empty(&n->poll_list))) {
++		pr_warn_once("%s: Budget exhausted after napi rescheduled\n",
++			     n->dev ? n->dev->name : "backlog");
++		return work;
++	}
++
++	*repoll = true;
++
++	return work;
++}
++
++static void napi_workfn(struct work_struct *work)
++{
++	struct napi_struct *n = container_of(work, struct napi_struct, work);
++	void *have;
++
++	for (;;) {
++		bool repoll = false;
++
++		local_bh_disable();
++
++		have = netpoll_poll_lock(n);
++		__napi_poll(n, &repoll);
++		netpoll_poll_unlock(have);
++
++		local_bh_enable();
++
++		if (!repoll)
++			return;
++
++		if (!need_resched())
++			continue;
++
++		/*
++		 * have to pay for the latency of task switch even if
++		 * napi is scheduled
++		 */
++		queue_work(napi_workq, work);
++		return;
++	}
++}
++
+ void netif_napi_add(struct net_device *dev, struct napi_struct *napi,
+ 		    int (*poll)(struct napi_struct *, int), int weight)
+ {
+@@ -4582,6 +4680,7 @@
+ 	spin_lock_init(&napi->poll_lock);
+ 	napi->poll_owner = -1;
+ #endif
++	INIT_WORK(&napi->work, napi_workfn);
+ 	set_bit(NAPI_STATE_SCHED, &napi->state);
+ }
+ EXPORT_SYMBOL(netif_napi_add);
+@@ -4588,6 +4686,7 @@
+ 
+ void netif_napi_del(struct napi_struct *napi)
+ {
++	cancel_work_sync(&napi->work);
+ 	list_del_init(&napi->dev_list);
+ 	napi_free_frags(napi);
+ 
+@@ -4599,52 +4698,18 @@
+ 
+ static int napi_poll(struct napi_struct *n, struct list_head *repoll)
+ {
++	bool do_repoll = false;
+ 	void *have;
+-	int work, weight;
++	int work;
+ 
+ 	list_del_init(&n->poll_list);
+ 
+ 	have = netpoll_poll_lock(n);
+ 
+-	weight = n->weight;
++	work = __napi_poll(n, &do_repoll);
++	if (do_repoll)
++		list_add_tail(&n->poll_list, repoll);
+ 
+-	/* This NAPI_STATE_SCHED test is for avoiding a race
+-	 * with netpoll's poll_napi().  Only the entity which
+-	 * obtains the lock and sees NAPI_STATE_SCHED set will
+-	 * actually make the ->poll() call.  Therefore we avoid
+-	 * accidentally calling ->poll() when NAPI is not scheduled.
+-	 */
+-	work = 0;
+-	if (test_bit(NAPI_STATE_SCHED, &n->state)) {
+-		work = n->poll(n, weight);
+-		trace_napi_poll(n);
+-	}
+-
+-	WARN_ON_ONCE(work > weight);
+-
+-	if (likely(work < weight))
+-		goto out_unlock;
+-
+-	/* Drivers must not modify the NAPI state if they
+-	 * consume the entire weight.  In such cases this code
+-	 * still "owns" the NAPI instance and therefore can
+-	 * move the instance around on the list at-will.
+-	 */
+-	if (unlikely(napi_disable_pending(n))) {
+-		napi_complete(n);
+-		goto out_unlock;
+-	}
+-
+-	if (n->gro_list) {
+-		/* flush too old packets
+-		 * If HZ < 1000, flush all packets.
+-		 */
+-		napi_gro_flush(n, HZ >= 1000);
+-	}
+-
+-	list_add_tail(&n->poll_list, repoll);
+-
+-out_unlock:
+ 	netpoll_poll_unlock(have);
+ 
+ 	return work;
+@@ -7485,6 +7550,10 @@
+ 		sd->backlog.weight = weight_p;
+ 	}
+ 
++	napi_workq = alloc_workqueue("napi_workq", WQ_UNBOUND | WQ_HIGHPRI,
++				     WQ_UNBOUND_MAX_ACTIVE | WQ_SYSFS);
++	BUG_ON(!napi_workq);
++
+ 	dev_boot_phase = 0;
+ 
+ 	/* The loopback device is special if any other network devices
+--- a/net/core/net-sysfs.c
++++ b/net/core/net-sysfs.c
+@@ -377,6 +377,47 @@
+ NETDEVICE_SHOW(group, fmt_dec);
+ static DEVICE_ATTR(netdev_group, S_IRUGO | S_IWUSR, group_show, group_store);
+ 
++static int change_napi_threaded(struct net_device *dev, unsigned long val)
++{
++	struct napi_struct *napi;
++
++	if (list_empty(&dev->napi_list))
++		return -EOPNOTSUPP;
++
++	list_for_each_entry(napi, &dev->napi_list, dev_list) {
++		if (val)
++			set_bit(NAPI_STATE_THREADED, &napi->state);
++		else
++			clear_bit(NAPI_STATE_THREADED, &napi->state);
++	}
++
++	return 0;
++}
++
++static ssize_t napi_threaded_store(struct device *dev,
++				struct device_attribute *attr,
++				const char *buf, size_t len)
++{
++	return netdev_store(dev, attr, buf, len, change_napi_threaded);
++}
++
++static ssize_t napi_threaded_show(struct device *dev,
++				  struct device_attribute *attr,
++				  char *buf)
++{
++	struct net_device *netdev = to_net_dev(dev);
++	struct napi_struct *napi;
++	bool enabled = false;
++
++	list_for_each_entry(napi, &netdev->napi_list, dev_list) {
++		if (test_bit(NAPI_STATE_THREADED, &napi->state))
++			enabled = true;
++	}
++
++	return sprintf(buf, fmt_dec, enabled);
++}
++DEVICE_ATTR_RW(napi_threaded);
++
+ static ssize_t phys_port_id_show(struct device *dev,
+ 				 struct device_attribute *attr, char *buf)
+ {
+@@ -422,6 +463,7 @@
+ 	&dev_attr_mtu.attr,
+ 	&dev_attr_flags.attr,
+ 	&dev_attr_tx_queue_len.attr,
++	&dev_attr_napi_threaded.attr,
+ 	&dev_attr_phys_port_id.attr,
+ 	NULL,
+ };

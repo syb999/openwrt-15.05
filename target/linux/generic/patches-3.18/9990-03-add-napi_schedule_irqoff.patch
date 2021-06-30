@@ -1,0 +1,63 @@
+net: introduce napi_schedule_irqoff()
+https://github.com/torvalds/linux/commit/bc9ad166e38ae1cdcb5323a8aa45dff834d68bfa
+
+--- a/include/linux/netdevice.h
++++ b/include/linux/netdevice.h
+@@ -388,6 +388,7 @@
+ typedef rx_handler_result_t rx_handler_func_t(struct sk_buff **pskb);
+ 
+ void __napi_schedule(struct napi_struct *n);
++void __napi_schedule_irqoff(struct napi_struct *n);
+ 
+ static inline bool napi_disable_pending(struct napi_struct *n)
+ {
+@@ -422,6 +423,18 @@
+ 		__napi_schedule(n);
+ }
+ 
++/**
++ *	napi_schedule_irqoff - schedule NAPI poll
++ *	@n: napi context
++ *
++ * Variant of napi_schedule(), assuming hard irqs are masked.
++ */
++static inline void napi_schedule_irqoff(struct napi_struct *n)
++{
++	if (napi_schedule_prep(n))
++		__napi_schedule_irqoff(n);
++}
++
+ /* Try to reschedule poll. Called by dev->poll() after napi_complete().  */
+ static inline bool napi_reschedule(struct napi_struct *napi)
+ {
+--- a/net/core/dev.c
++++ b/net/core/dev.c
+@@ -4452,7 +4452,8 @@
+  * __napi_schedule - schedule for receive
+  * @n: entry to schedule
+  *
+- * The entry's receive function will be scheduled to run
++ * The entry's receive function will be scheduled to run.
++ * Consider using __napi_schedule_irqoff() if hard irqs are masked.
+  */
+ void __napi_schedule(struct napi_struct *n)
+ {
+@@ -4464,6 +4465,18 @@
+ }
+ EXPORT_SYMBOL(__napi_schedule);
+ 
++/**
++ * __napi_schedule_irqoff - schedule for receive
++ * @n: entry to schedule
++ *
++ * Variant of __napi_schedule() assuming hard irqs are masked
++ */
++void __napi_schedule_irqoff(struct napi_struct *n)
++{
++	____napi_schedule(this_cpu_ptr(&softnet_data), n);
++}
++EXPORT_SYMBOL(__napi_schedule_irqoff);
++
+ void __napi_complete(struct napi_struct *n)
+ {
+ 	BUG_ON(!test_bit(NAPI_STATE_SCHED, &n->state));
