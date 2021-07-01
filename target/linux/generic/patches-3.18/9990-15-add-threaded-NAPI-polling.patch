@@ -11,26 +11,23 @@ https://lwn.net/Articles/828372/
  };
  
  enum {
-@@ -324,8 +325,18 @@
- 	NAPI_STATE_DISABLE,	/* Disable pending */
- 	NAPI_STATE_NPSVC,	/* Netpoll - don't dequeue from poll_list */
- 	NAPI_STATE_HASHED,	/* In NAPI hash */
+@@ -326,6 +327,7 @@
+ 	NAPI_STATE_HASHED,	/* In NAPI hash (busy polling possible) */
+ 	NAPI_STATE_NO_BUSY_POLL,/* Do not add in napi_hash, no busy polling */
+ 	NAPI_STATE_IN_BUSY_POLL,/* sk_busy_loop() owns this NAPI */
 +	NAPI_STATE_THREADED,	/* Use threaded NAPI */
  };
  
-+enum {
-+	NAPIF_STATE_SCHED	 = BIT(NAPI_STATE_SCHED),
-+	NAPIF_STATE_DISABLE	 = BIT(NAPI_STATE_DISABLE),
-+	NAPIF_STATE_NPSVC	 = BIT(NAPI_STATE_NPSVC),
-+	NAPIF_STATE_HASHED	 = BIT(NAPI_STATE_HASHED),
-+	NAPIF_STATE_THREADED = BIT(NAPI_STATE_THREADED),
-+};
-+
-+
+ enum {
+@@ -335,6 +337,7 @@
+ 	NAPIF_STATE_HASHED	 = (1UL << NAPI_STATE_HASHED),
+ 	NAPIF_STATE_NO_BUSY_POLL = (1UL << NAPI_STATE_NO_BUSY_POLL),
+ 	NAPIF_STATE_IN_BUSY_POLL = (1UL << NAPI_STATE_IN_BUSY_POLL),
++	NAPIF_STATE_THREADED	 = BIT(NAPI_STATE_THREADED),
+ };
+ 
  enum gro_result {
- 	GRO_MERGED,
- 	GRO_MERGED_FREE,
-@@ -1888,6 +1899,26 @@
+@@ -1890,6 +1893,26 @@
  		    int (*poll)(struct napi_struct *, int), int weight);
  
  /**
@@ -54,9 +51,9 @@ https://lwn.net/Articles/828372/
 +}
 +
 +/**
-  *  netif_napi_del - remove a napi context
-  *  @napi: napi context
-  *
+  *	netif_tx_napi_add - initialize a napi context
+  *	@dev:  network device
+  *	@napi: napi context
 --- a/net/core/dev.c
 +++ b/net/core/dev.c
 @@ -147,6 +147,7 @@
@@ -201,7 +198,7 @@ https://lwn.net/Articles/828372/
  	list_del_init(&napi->dev_list);
  	napi_free_frags(napi);
  
-@@ -4599,52 +4698,18 @@
+@@ -4697,61 +4796,18 @@
  
  static int napi_poll(struct napi_struct *n, struct list_head *repoll)
  {
@@ -253,13 +250,22 @@ https://lwn.net/Articles/828372/
 -		napi_gro_flush(n, HZ >= 1000);
 -	}
 -
+-	/* Some drivers may have called napi_schedule
+-	 * prior to exhausting their budget.
+-	 */
+-	if (unlikely(!list_empty(&n->poll_list))) {
+-		pr_warn_once("%s: Budget exhausted after napi rescheduled\n",
+-			     n->dev ? n->dev->name : "backlog");
+-		goto out_unlock;
+-	}
+-
 -	list_add_tail(&n->poll_list, repoll);
 -
 -out_unlock:
  	netpoll_poll_unlock(have);
  
  	return work;
-@@ -7485,6 +7550,10 @@
+@@ -7592,6 +7648,10 @@
  		sd->backlog.weight = weight_p;
  	}
  

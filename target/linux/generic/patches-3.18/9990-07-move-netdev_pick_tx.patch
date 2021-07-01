@@ -1,0 +1,208 @@
+net: move netdev_pick_tx and dependencies to net/core/dev.c
+https://github.com/torvalds/linux/commit/638b2a699fd3ec926d6dda2d2bd96e8f1c49e463
+
+xps: fix xps for stacked devices
+https://github.com/torvalds/linux/commit/2bd82484bb4c5db1d5dc983ac7c409b2782e0154
+
+--- a/net/core/dev.c
++++ b/net/core/dev.c
+@@ -2917,6 +2917,84 @@
+ }
+ EXPORT_SYMBOL(dev_loopback_xmit);
+ 
++static inline int get_xps_queue(struct net_device *dev, struct sk_buff *skb)
++{
++#ifdef CONFIG_XPS
++	struct xps_dev_maps *dev_maps;
++	struct xps_map *map;
++	int queue_index = -1;
++
++	rcu_read_lock();
++	dev_maps = rcu_dereference(dev->xps_maps);
++	if (dev_maps) {
++		map = rcu_dereference(
++		    dev_maps->cpu_map[skb->sender_cpu - 1]);
++		if (map) {
++			if (map->len == 1)
++				queue_index = map->queues[0];
++			else
++				queue_index = map->queues[reciprocal_scale(skb_get_hash(skb),
++									   map->len)];
++			if (unlikely(queue_index >= dev->real_num_tx_queues))
++				queue_index = -1;
++		}
++	}
++	rcu_read_unlock();
++
++	return queue_index;
++#else
++	return -1;
++#endif
++}
++
++static u16 __netdev_pick_tx(struct net_device *dev, struct sk_buff *skb)
++{
++	struct sock *sk = skb->sk;
++	int queue_index = sk_tx_queue_get(sk);
++
++	if (queue_index < 0 || skb->ooo_okay ||
++	    queue_index >= dev->real_num_tx_queues) {
++		int new_index = get_xps_queue(dev, skb);
++		if (new_index < 0)
++			new_index = skb_tx_hash(dev, skb);
++
++		if (queue_index != new_index && sk &&
++		    rcu_access_pointer(sk->sk_dst_cache))
++			sk_tx_queue_set(sk, new_index);
++
++		queue_index = new_index;
++	}
++
++	return queue_index;
++}
++
++struct netdev_queue *netdev_pick_tx(struct net_device *dev,
++				    struct sk_buff *skb,
++				    void *accel_priv)
++{
++	int queue_index = 0;
++
++#ifdef CONFIG_XPS
++	if (skb->sender_cpu == 0)
++		skb->sender_cpu = raw_smp_processor_id() + 1;
++#endif
++
++	if (dev->real_num_tx_queues != 1) {
++		const struct net_device_ops *ops = dev->netdev_ops;
++		if (ops->ndo_select_queue)
++			queue_index = ops->ndo_select_queue(dev, skb, accel_priv,
++							    __netdev_pick_tx);
++		else
++			queue_index = __netdev_pick_tx(dev, skb);
++
++		if (!accel_priv)
++			queue_index = netdev_cap_txqueue(dev, queue_index);
++	}
++
++	skb_set_queue_mapping(skb, queue_index);
++	return netdev_get_tx_queue(dev, queue_index);
++}
++
+ /**
+  *	__dev_queue_xmit - transmit a buffer
+  *	@skb: buffer to transmit
+--- a/include/linux/skbuff.h
++++ b/include/linux/skbuff.h
+@@ -621,8 +621,11 @@
+ 	__u32			hash;
+ 	__be16			vlan_proto;
+ 	__u16			vlan_tci;
+-#ifdef CONFIG_NET_RX_BUSY_POLL
+-	unsigned int	napi_id;
++#if defined(CONFIG_NET_RX_BUSY_POLL) || defined(CONFIG_XPS)
++	union {
++		unsigned int	napi_id;
++		unsigned int	sender_cpu;
++	};
+ #endif
+ #ifdef CONFIG_NETWORK_SECMARK
+ 	__u32			secmark;
+--- a/net/core/skbuff.c
++++ b/net/core/skbuff.c
+@@ -769,6 +769,9 @@
+ #ifdef CONFIG_NET_RX_BUSY_POLL
+ 	CHECK_SKB_FIELD(napi_id);
+ #endif
++#ifdef CONFIG_XPS
++	CHECK_SKB_FIELD(sender_cpu);
++#endif
+ #ifdef CONFIG_NET_SCHED
+ 	CHECK_SKB_FIELD(tc_index);
+ #ifdef CONFIG_NET_CLS_ACT
+@@ -4113,6 +4116,7 @@
+ 	ipvs_reset(skb);
+ 	skb_orphan(skb);
+ 	skb->mark = 0;
++	skb->sender_cpu = 0;
+ }
+ EXPORT_SYMBOL_GPL(skb_scrub_packet);
+ 
+--- a/net/core/flow_dissector.c
++++ b/net/core/flow_dissector.c
+@@ -396,76 +396,3 @@
+ 
+ 	return __skb_get_poff(skb, skb->data, &keys, skb_headlen(skb));
+ }
+-
+-static inline int get_xps_queue(struct net_device *dev, struct sk_buff *skb)
+-{
+-#ifdef CONFIG_XPS
+-	struct xps_dev_maps *dev_maps;
+-	struct xps_map *map;
+-	int queue_index = -1;
+-
+-	rcu_read_lock();
+-	dev_maps = rcu_dereference(dev->xps_maps);
+-	if (dev_maps) {
+-		map = rcu_dereference(
+-		    dev_maps->cpu_map[raw_smp_processor_id()]);
+-		if (map) {
+-			if (map->len == 1)
+-				queue_index = map->queues[0];
+-			else
+-				queue_index = map->queues[reciprocal_scale(skb_get_hash(skb),
+-									   map->len)];
+-			if (unlikely(queue_index >= dev->real_num_tx_queues))
+-				queue_index = -1;
+-		}
+-	}
+-	rcu_read_unlock();
+-
+-	return queue_index;
+-#else
+-	return -1;
+-#endif
+-}
+-
+-static u16 __netdev_pick_tx(struct net_device *dev, struct sk_buff *skb)
+-{
+-	struct sock *sk = skb->sk;
+-	int queue_index = sk_tx_queue_get(sk);
+-
+-	if (queue_index < 0 || skb->ooo_okay ||
+-	    queue_index >= dev->real_num_tx_queues) {
+-		int new_index = get_xps_queue(dev, skb);
+-		if (new_index < 0)
+-			new_index = skb_tx_hash(dev, skb);
+-
+-		if (queue_index != new_index && sk &&
+-		    rcu_access_pointer(sk->sk_dst_cache))
+-			sk_tx_queue_set(sk, new_index);
+-
+-		queue_index = new_index;
+-	}
+-
+-	return queue_index;
+-}
+-
+-struct netdev_queue *netdev_pick_tx(struct net_device *dev,
+-				    struct sk_buff *skb,
+-				    void *accel_priv)
+-{
+-	int queue_index = 0;
+-
+-	if (dev->real_num_tx_queues != 1) {
+-		const struct net_device_ops *ops = dev->netdev_ops;
+-		if (ops->ndo_select_queue)
+-			queue_index = ops->ndo_select_queue(dev, skb, accel_priv,
+-							    __netdev_pick_tx);
+-		else
+-			queue_index = __netdev_pick_tx(dev, skb);
+-
+-		if (!accel_priv)
+-			queue_index = netdev_cap_txqueue(dev, queue_index);
+-	}
+-
+-	skb_set_queue_mapping(skb, queue_index);
+-	return netdev_get_tx_queue(dev, queue_index);
+-}

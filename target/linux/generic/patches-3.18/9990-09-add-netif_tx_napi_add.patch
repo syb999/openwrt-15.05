@@ -1,0 +1,218 @@
+net: add netif_tx_napi_add()
+https://github.com/torvalds/linux/commit/d64b5e85bfe2fe4c790abcbd16d9ae32391ddd7e#diff-39a264b88ebda2d654f2e244c24bd0ec682a72eb9a866baea5ae5c1fe2e793a6
+
+--- a/drivers/net/ethernet/broadcom/bcmsysport.c
++++ b/drivers/net/ethernet/broadcom/bcmsysport.c
+@@ -1123,7 +1123,7 @@
+ 	/* Initialize SW view of the ring */
+ 	spin_lock_init(&ring->lock);
+ 	ring->priv = priv;
+-	netif_napi_add(priv->netdev, &ring->napi, bcm_sysport_tx_poll, 64);
++	netif_tx_napi_add(priv->netdev, &ring->napi, bcm_sysport_tx_poll, 64);
+ 	ring->index = index;
+ 	ring->size = size;
+ 	ring->alloc_size = ring->size;
+--- a/drivers/net/ethernet/broadcom/genet/bcmgenet.c
++++ b/drivers/net/ethernet/broadcom/genet/bcmgenet.c
+@@ -1666,7 +1666,7 @@
+ 
+ 	spin_lock_init(&ring->lock);
+ 	ring->priv = priv;
+-	netif_napi_add(priv->dev, &ring->napi, bcmgenet_tx_poll, 64);
++	netif_tx_napi_add(priv->dev, &ring->napi, bcmgenet_tx_poll, 64);
+ 	ring->index = index;
+ 	if (index == DESC_INDEX) {
+ 		ring->queue = 0;
+@@ -2641,7 +2641,7 @@
+ 	dev->watchdog_timeo = 2 * HZ;
+ 	dev->ethtool_ops = &bcmgenet_ethtool_ops;
+ 	dev->netdev_ops = &bcmgenet_netdev_ops;
+-	netif_napi_add(dev, &priv->napi, bcmgenet_poll, 64);
++	netif_tx_napi_add(dev, &priv->napi, bcmgenet_poll, 64);
+ 
+ 	priv->msg_enable = netif_msg_init(-1, GENET_MSG_DEFAULT);
+ 
+--- a/drivers/net/ethernet/freescale/fs_enet/fs_enet-main.c
++++ b/drivers/net/ethernet/freescale/fs_enet/fs_enet-main.c
+@@ -998,8 +998,8 @@
+ 
+ 	ndev->netdev_ops = &fs_enet_netdev_ops;
+ 	ndev->watchdog_timeo = 2 * HZ;
+-	netif_napi_add(ndev, &fep->napi, fs_enet_rx_napi, fpi->napi_weight);
+-	netif_napi_add(ndev, &fep->napi_tx, fs_enet_tx_napi, 2);
++	netif_tx_napi_add(ndev, &fep->napi, fs_enet_rx_napi, fpi->napi_weight);
++	netif_tx_napi_add(ndev, &fep->napi_tx, fs_enet_tx_napi, 2);
+ 
+ 	ndev->ethtool_ops = &fs_ethtool_ops;
+ 
+--- a/drivers/net/ethernet/freescale/gianfar.c
++++ b/drivers/net/ethernet/freescale/gianfar.c
+@@ -1329,14 +1329,14 @@
+ 	/* Register for napi ...We are registering NAPI for each grp */
+ 	for (i = 0; i < priv->num_grps; i++) {
+ 		if (priv->poll_mode == GFAR_SQ_POLLING) {
+-			netif_napi_add(dev, &priv->gfargrp[i].napi_rx,
++			netif_tx_napi_add(dev, &priv->gfargrp[i].napi_rx,
+ 				       gfar_poll_rx_sq, GFAR_DEV_WEIGHT);
+-			netif_napi_add(dev, &priv->gfargrp[i].napi_tx,
++			netif_tx_napi_add(dev, &priv->gfargrp[i].napi_tx,
+ 				       gfar_poll_tx_sq, 2);
+ 		} else {
+-			netif_napi_add(dev, &priv->gfargrp[i].napi_rx,
++			netif_tx_napi_add(dev, &priv->gfargrp[i].napi_rx,
+ 				       gfar_poll_rx, GFAR_DEV_WEIGHT);
+-			netif_napi_add(dev, &priv->gfargrp[i].napi_tx,
++			netif_tx_napi_add(dev, &priv->gfargrp[i].napi_tx,
+ 				       gfar_poll_tx, 2);
+ 		}
+ 	}
+--- a/drivers/net/ethernet/mellanox/mlx4/en_cq.c
++++ b/drivers/net/ethernet/mellanox/mlx4/en_cq.c
+@@ -165,7 +165,7 @@
+ 	cq->mcq.event = mlx4_en_cq_event;
+ 
+ 	if (cq->is_tx) {
+-		netif_napi_add(cq->dev, &cq->napi, mlx4_en_poll_tx_cq,
++		netif_tx_napi_add(cq->dev, &cq->napi, mlx4_en_poll_tx_cq,
+ 			       NAPI_POLL_WEIGHT);
+ 	} else {
+ 		struct mlx4_en_rx_ring *ring = priv->rx_ring[cq->ring];
+@@ -175,7 +175,7 @@
+ 		if (err)
+ 			mlx4_warn(mdev, "Failed setting affinity hint\n");
+ 
+-		netif_napi_add(cq->dev, &cq->napi, mlx4_en_poll_rx_cq, 64);
++		netif_tx_napi_add(cq->dev, &cq->napi, mlx4_en_poll_rx_cq, 64);
+ 		napi_hash_add(&cq->napi);
+ 	}
+ 
+--- a/drivers/net/ethernet/qlogic/qlcnic/qlcnic_io.c
++++ b/drivers/net/ethernet/qlogic/qlcnic/qlcnic_io.c
+@@ -1573,15 +1573,15 @@
+ 		sds_ring = &recv_ctx->sds_rings[ring];
+ 		if (qlcnic_check_multi_tx(adapter) &&
+ 		    !adapter->ahw->diag_test) {
+-			netif_napi_add(netdev, &sds_ring->napi, qlcnic_rx_poll,
++			netif_tx_napi_add(netdev, &sds_ring->napi, qlcnic_rx_poll,
+ 				       NAPI_POLL_WEIGHT);
+ 		} else {
+ 			if (ring == (adapter->drv_sds_rings - 1))
+-				netif_napi_add(netdev, &sds_ring->napi,
++				netif_tx_napi_add(netdev, &sds_ring->napi,
+ 					       qlcnic_poll,
+ 					       NAPI_POLL_WEIGHT);
+ 			else
+-				netif_napi_add(netdev, &sds_ring->napi,
++				netif_tx_napi_add(netdev, &sds_ring->napi,
+ 					       qlcnic_rx_poll,
+ 					       NAPI_POLL_WEIGHT);
+ 		}
+@@ -1595,7 +1595,7 @@
+ 	if (qlcnic_check_multi_tx(adapter) && !adapter->ahw->diag_test) {
+ 		for (ring = 0; ring < adapter->drv_tx_rings; ring++) {
+ 			tx_ring = &adapter->tx_ring[ring];
+-			netif_napi_add(netdev, &tx_ring->napi, qlcnic_tx_poll,
++			netif_tx_napi_add(netdev, &tx_ring->napi, qlcnic_tx_poll,
+ 				       NAPI_POLL_WEIGHT);
+ 		}
+ 	}
+@@ -2089,16 +2089,16 @@
+ 		sds_ring = &recv_ctx->sds_rings[ring];
+ 		if (adapter->flags & QLCNIC_MSIX_ENABLED) {
+ 			if (!(adapter->flags & QLCNIC_TX_INTR_SHARED))
+-				netif_napi_add(netdev, &sds_ring->napi,
++				netif_tx_napi_add(netdev, &sds_ring->napi,
+ 					       qlcnic_83xx_rx_poll,
+ 					       NAPI_POLL_WEIGHT);
+ 			else
+-				netif_napi_add(netdev, &sds_ring->napi,
++				netif_tx_napi_add(netdev, &sds_ring->napi,
+ 					       qlcnic_83xx_msix_sriov_vf_poll,
+ 					       NAPI_POLL_WEIGHT);
+ 
+ 		} else {
+-			netif_napi_add(netdev, &sds_ring->napi,
++			netif_tx_napi_add(netdev, &sds_ring->napi,
+ 				       qlcnic_83xx_poll,
+ 				       NAPI_POLL_WEIGHT);
+ 		}
+@@ -2113,7 +2113,7 @@
+ 	    !(adapter->flags & QLCNIC_TX_INTR_SHARED)) {
+ 		for (ring = 0; ring < adapter->drv_tx_rings; ring++) {
+ 			tx_ring = &adapter->tx_ring[ring];
+-			netif_napi_add(netdev, &tx_ring->napi,
++			netif_tx_napi_add(netdev, &tx_ring->napi,
+ 				       qlcnic_83xx_msix_tx_poll,
+ 				       NAPI_POLL_WEIGHT);
+ 		}
+--- a/drivers/net/ethernet/ti/cpsw.c
++++ b/drivers/net/ethernet/ti/cpsw.c
+@@ -2177,7 +2177,7 @@
+ 
+ 	ndev->netdev_ops = &cpsw_netdev_ops;
+ 	ndev->ethtool_ops = &cpsw_ethtool_ops;
+-	netif_napi_add(ndev, &priv_sl2->napi, cpsw_poll, CPSW_POLL_WEIGHT);
++	netif_tx_napi_add(ndev, &priv_sl2->napi, cpsw_poll, CPSW_POLL_WEIGHT);
+ 
+ 	/* register the network device */
+ 	SET_NETDEV_DEV(ndev, &pdev->dev);
+@@ -2413,7 +2413,7 @@
+ 
+ 	ndev->netdev_ops = &cpsw_netdev_ops;
+ 	ndev->ethtool_ops = &cpsw_ethtool_ops;
+-	netif_napi_add(ndev, &priv->napi, cpsw_poll, CPSW_POLL_WEIGHT);
++	netif_tx_napi_add(ndev, &priv->napi, cpsw_poll, CPSW_POLL_WEIGHT);
+ 
+ 	/* register the network device */
+ 	SET_NETDEV_DEV(ndev, &pdev->dev);
+--- a/include/linux/netdevice.h
++++ b/include/linux/netdevice.h
+@@ -323,7 +323,8 @@
+ 	NAPI_STATE_SCHED,	/* Poll is scheduled */
+ 	NAPI_STATE_DISABLE,	/* Disable pending */
+ 	NAPI_STATE_NPSVC,	/* Netpoll - don't dequeue from poll_list */
+-	NAPI_STATE_HASHED,	/* In NAPI hash */
++	NAPI_STATE_HASHED,	/* In NAPI hash (busy polling possible) */
++	NAPI_STATE_NO_BUSY_POLL,/* Do not add in napi_hash, no busy polling */
+ };
+ 
+ enum gro_result {
+@@ -1888,6 +1889,26 @@
+ 		    int (*poll)(struct napi_struct *, int), int weight);
+ 
+ /**
++ *	netif_tx_napi_add - initialize a napi context
++ *	@dev:  network device
++ *	@napi: napi context
++ *	@poll: polling function
++ *	@weight: default weight
++ *
++ * This variant of netif_napi_add() should be used from drivers using NAPI
++ * to exclusively poll a TX queue.
++ * This will avoid we add it into napi_hash[], thus polluting this hash table.
++ */
++static inline void netif_tx_napi_add(struct net_device *dev,
++				     struct napi_struct *napi,
++				     int (*poll)(struct napi_struct *, int),
++				     int weight)
++{
++	set_bit(NAPI_STATE_NO_BUSY_POLL, &napi->state);
++	netif_napi_add(dev, napi, poll, weight);
++}
++
++/**
+  *  netif_napi_del - remove a napi context
+  *  @napi: napi context
+  *
+--- a/net/core/dev.c
++++ b/net/core/dev.c
+@@ -4608,7 +4608,8 @@
+ 
+ void napi_hash_add(struct napi_struct *napi)
+ {
+-	if (test_and_set_bit(NAPI_STATE_HASHED, &napi->state))
++	if (test_bit(NAPI_STATE_NO_BUSY_POLL, &napi->state) ||
++	    test_and_set_bit(NAPI_STATE_HASHED, &napi->state))
+ 		return;
+ 
+ 	spin_lock(&napi_hash_lock);

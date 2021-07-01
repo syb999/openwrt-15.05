@@ -1,0 +1,21 @@
+net: Detect drivers that reschedule NAPI and exhaust budget
+https://github.com/torvalds/linux/commit/001ce546bb537bb5b7821f05633556a0c9787e32
+
+--- a/net/core/dev.c
++++ b/net/core/dev.c
+@@ -4642,6 +4642,15 @@
+ 		napi_gro_flush(n, HZ >= 1000);
+ 	}
+ 
++	/* Some drivers may have called napi_schedule
++	 * prior to exhausting their budget.
++	 */
++	if (unlikely(!list_empty(&n->poll_list))) {
++		pr_warn_once("%s: Budget exhausted after napi rescheduled\n",
++			     n->dev ? n->dev->name : "backlog");
++		goto out_unlock;
++	}
++
+ 	list_add_tail(&n->poll_list, repoll);
+ 
+ out_unlock:
