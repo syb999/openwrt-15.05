@@ -154,15 +154,15 @@ function getxmlyaudios(){
 		xmlyturenamed=$(cat /tmp/tmp.XMV.filenamelist | head -n 1)
 		if [ $xmlyturenum -le 9 ];then
 			nxmlyturenum=000$xmlyturenum
-			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nxmlyturenum$xmlyturename$xmlyturenamed.m4a
+			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nxmlyturenum-$xmlyturename$xmlyturenamed.m4a
 		elif [ $xmlyturenum -le 99 ];then
 			nnxmlyturenum=00$xmlyturenum
-			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nnxmlyturenum$xmlyturename$xmlyturenamed.m4a
+			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nnxmlyturenum-$xmlyturename$xmlyturenamed.m4a
 		elif [ $xmlyturenum -le 999 ];then
 			nnnxmlyturenum=0$xmlyturenum
-			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nnnxmlyturenum$xmlyturename$xmlyturenamed.m4a
+			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nnnxmlyturenum-$xmlyturename$xmlyturenamed.m4a
 		else
-			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$xmlyturenum$xmlyturename$xmlyturenamed.m4a
+			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$xmlyturenum-$xmlyturename$xmlyturenamed.m4a
 		fi
 		sed 1d -i /tmp/tmp.XMV.filenamelist
 		tmpcounthead=$(echo `expr $tmpcounthead + 1`)
