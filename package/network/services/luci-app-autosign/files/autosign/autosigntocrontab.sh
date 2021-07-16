@@ -1,5 +1,11 @@
 #!/bin/sh
 
+checkcron=/etc/crontabs/root
+
+if [ -s "$checkcron" ]; then
+	cp /etc/crontabs/root /etc/crontabs/root.bak
+fi
+
 workhour0=$(uci get autosign.@autosign[0].workhour)
 workminute0=$(uci get autosign.@autosign[0].workminute)
 gooffworkhour0=$(uci get autosign.@autosign[0].gooffworkhour)
