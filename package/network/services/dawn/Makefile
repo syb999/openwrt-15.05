@@ -5,13 +5,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dawn
-PKG_SOURCE_DATE:=2020-12-31
+PKG_SOURCE_DATE:=2021-07-11
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/berlin-open-wireless-lab/DAWN.git
-PKG_SOURCE_VERSION:=8ce09d64def9a1ad4bbf57dd3fe724a8a9b93334
-PKG_MD5SUM:=e7aa145ef64cc294cdb47bcef953b38f
+PKG_SOURCE_VERSION:=ec9a3a96e8c708a0ad85287fd3ed42cc0527e869
+PKG_MD5SUM:=76964194bb2bce04e18e858623973bbb
 
 PKG_MAINTAINER:=Nick Hainke <vincent@systemli.org>
 PKG_LICENSE:=GPL-2.0-only
