@@ -19,7 +19,7 @@
 #include "dev-spi.h"
 #include "dev-wmac.h"
 
-#define MI4PRO_GPIO_LED_STATUS		7
+#define MI4PRO_GPIO_LED_SYSTEM			7
 
 #define MI4PRO_GPIO_BTN_RESET            2
 #define MI4PRO_KEYS_POLL_INTERVAL        20     /* msecs */
@@ -31,8 +31,8 @@
 
 static struct gpio_led mi4pro_leds_gpio[] __initdata = {
 	{
-		.name		= "mi4pro:green:status",
-		.gpio		= MI4PRO_GPIO_LED_STATUS,
+		.name		= "mi4pro:blue:system",
+		.gpio		= MI4PRO_GPIO_LED_SYSTEM,
 		.active_low	= 1,
 	},
 };
@@ -104,5 +104,5 @@ static void __init mi4pro_setup(void)
 	ath79_register_eth(0);
 }
 
-MIPS_MACHINE(ATH79_MACH_MI4PRO, "MI4PRO", "MI4PRO",
+MIPS_MACHINE(ATH79_MACH_MI4PRO, "MI4PRO", "XiaoMi4-PRO",
 	     mi4pro_setup);

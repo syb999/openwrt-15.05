@@ -366,7 +366,7 @@ ar71xx_board_detect() {
 	*"CSAC reference board")
 		name="csac"
 		;;
-	*"XIAOMI4-PRO")
+	*"MI4PRO")
 		name="mi4pro"
 		;;
 	*AP113)

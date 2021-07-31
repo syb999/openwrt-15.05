@@ -57,7 +57,7 @@ csac)
 	;;
 
 mi4pro)
-	ucidef_set_led_switch "status" "STATUS" "mi4pro:green:status" "switch0" "0x10"
+	ucidef_set_led_switch "wan" "WAN" "mi4pro:pink:internet" "switch0" "0x10"
 	;;
 
 bsb)
