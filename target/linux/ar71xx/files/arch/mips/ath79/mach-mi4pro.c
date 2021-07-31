@@ -90,6 +90,7 @@ static void __init mi4pro_setup(void)
 				    ARRAY_SIZE(mi4pro_mdio0_info));
 
 	ath79_register_wmac(art + MI4PRO_WMAC_CALDATA_OFFSET, NULL);
+
 	ath79_register_pci();
 
 	ath79_init_mac(ath79_eth0_data.mac_addr, art + MI4PRO_MAC0_OFFSET, 0);

@@ -409,6 +409,7 @@ platform_check_image() {
 			echo "Invalid image type."
 			return 1
 		}
+
 		return 0
 		;;
 
@@ -417,13 +418,14 @@ platform_check_image() {
 			echo "Invalid image type."
 			return 1
 		}
+		return 0
+		;;
 
 	mi4pro)
 		[ "$magic_long" != "68737173" -a "$magic_long" != "19852003" ] && {
 			echo "Invalid image type."
 			return 1
 		}
-
 		return 0
 		;;
 

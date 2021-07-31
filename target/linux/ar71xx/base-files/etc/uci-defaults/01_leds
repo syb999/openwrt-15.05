@@ -56,10 +56,6 @@ csac)
 	ucidef_set_led_wlan "wlan5g" "WLAN5G" "csac:green:wlan-5g" "phy0tpt"
 	;;
 
-mi4pro)
-	ucidef_set_led_switch "wan" "WAN" "mi4pro:pink:internet" "switch0" "0x10"
-	;;
-
 bsb)
 	ucidef_set_led_default "sys" "SYS" "bsb:red:sys" "1"
 	;;
