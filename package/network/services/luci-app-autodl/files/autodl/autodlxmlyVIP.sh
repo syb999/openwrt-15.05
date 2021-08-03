@@ -37,7 +37,7 @@ function getxmlyaudios(){
 
 	cat /tmp/tmp.XMV.xmlyhttp1 | grep isPaid > /tmp/tmp.XMV.xmlyhttp2
 	cat /tmp/tmp.XMV.xmlyhttp1 | grep showShareBtn > /tmp/tmp.XMV.xmlyhttp2n
-	cat /tmp/tmp.XMV.xmlyhttp2n | sed 's/title/\n/g'| grep showLikeBtn | cut -d '"' -f 1 | sed -e 's/\\/＼/g' | sed -e 's/\//／/g' | sed -e 's/</《/g' | sed -e 's/>/》/g' | sed -e 's/:/：/g' | sed -e 's/*//g' | sed -e 's/?/？/g' | sed -e 's/\"/“/g' > /tmp/tmp.XMV.filenamelist
+	cat /tmp/tmp.XMV.xmlyhttp | sed 's/title/\n/g' | grep showShareBtn | cut -d '"' -f 3 | sed -e 's/\\/＼/g' | sed -e 's/\//／/g' | sed -e 's/</《/g' | sed -e 's/>/》/g' | sed -e 's/:/：/g' | sed -e 's/*//g' | sed -e 's/?/？/g' | sed -e 's/\"/“/g'  | sed -e 's/\ /-/g'  > /tmp/tmp.XMV.filenamelist
 	xmlyhttp2=$(cat /tmp/tmp.XMV.xmlyhttp2)
 	for i in `echo "$xmlyhttp2" | sed 's/{\"index\":/\n/g'`
 	do  
@@ -138,8 +138,6 @@ function getxmlyaudios(){
 	cat /tmp/tmp.XMV.xmlyhttp0num | grep '^[0-9]' | cut -d ',' -f 1 > /tmp/tmp.XMV.xmlyhttp1num
 	sed '1!G;h;$!d' /tmp/tmp.XMV.xmlyhttp1num > /tmp/tmp.XMV.xmlyhttp2num
 
-	cat /tmp/tmp.XMV.xmlyhttp0num | grep tag | cut -d ',' -f 5 | cut -d '"' -f 4 | sed -e 's/《//g' | sed -e 's/》//g' | sed -e 's/（/-/g' | sed -e 's/）/-/g' |  sed -e 's/？//g' | sed -e 's/?//g' | sed -e 's/|//g' | sed -e 's/\\//g' | sed -e 's/\"//g' | sed -e 's/“//g' | sed -e 's/”//g' | sed -e 's/,//g' | sed -e "s/'//g" | sed -e 's/://g' | sed -e "s/[0-9]//g" | sed -e "s/第集//g" | sed -e "s/第章//g" > /tmp/tmp.XMV.xmlynam
-
 	ls -al | grep "^-" > /tmp/tmpXMVIP.filelist
 
 	cat /tmp/tmpXMVIP.filelist | while read LINE
@@ -147,22 +145,21 @@ function getxmlyaudios(){
 		xmlyfilename=$(echo $LINE)
 		xtmpcounthead=$tmpcounthead
 		xmlyturenum=$(tail -n $xtmpcounthead /tmp/tmp.XMV.xmlyhttp2num | head -n 1)
-		xmlyturename=$(head -n $xtmpcounthead /tmp/tmp.XMV.xmlynam | tail -n 1 )
+		xmlyturename=$(cat /tmp/tmp.XMV.filenamelist | head -n 1)
 		if [ "$xmlyturename" = "$paudioname" ];then
 			xmlyturename=""
 		fi
-		xmlyturenamed=$(cat /tmp/tmp.XMV.filenamelist | head -n 1)
 		if [ $xmlyturenum -le 9 ];then
 			nxmlyturenum=000$xmlyturenum
-			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nxmlyturenum-$xmlyturename$xmlyturenamed.m4a
+			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nxmlyturenum-$xmlyturename.m4a
 		elif [ $xmlyturenum -le 99 ];then
 			nnxmlyturenum=00$xmlyturenum
-			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nnxmlyturenum-$xmlyturename$xmlyturenamed.m4a
+			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nnxmlyturenum-$xmlyturename.m4a
 		elif [ $xmlyturenum -le 999 ];then
 			nnnxmlyturenum=0$xmlyturenum
-			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nnnxmlyturenum-$xmlyturename$xmlyturenamed.m4a
+			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nnnxmlyturenum-$xmlyturename.m4a
 		else
-			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$xmlyturenum-$xmlyturename$xmlyturenamed.m4a
+			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$xmlyturenum-$xmlyturename.m4a
 		fi
 		sed 1d -i /tmp/tmp.XMV.filenamelist
 		tmpcounthead=$(echo `expr $tmpcounthead + 1`)
