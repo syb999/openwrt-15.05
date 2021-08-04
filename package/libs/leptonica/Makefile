@@ -30,7 +30,7 @@ define Package/libleptonica
   CATEGORY:=Libraries
   TITLE:=A library for efficient image processing and image analysis operations
   URL:=http://www.leptonica.org/
-  DEPENDS:=+giflib +libjpeg +libpng +libtiff +libwebp +zlib
+  DEPENDS:=+giflib +libjpeg-turbo +libpng +libtiff +libwebp +zlib
 endef
 
 TARGET_CFLAGS:=$(filter-out -O%,$(TARGET_CFLAGS)) -O3
