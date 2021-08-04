@@ -1,13 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=https-dns-proxy
-PKG_VERSION:=2021-06-03
+PKG_VERSION:=2021-07-29
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/aarond10/https_dns_proxy
-PKG_SOURCE_VERSION:=5651b984f770a8bcecb14aeffc224703f8f82586
-PKG_MD5SUM:=81c403e89949fffdee74da2ca7417a28
+PKG_SOURCE_URL:=https://github.com/aarond10/https_dns_proxy/
+PKG_SOURCE_VERSION:=750c4dbdfe3d3c65edcd57349df181ffd1f6ceeb
+PKG_MD5SUM:=ed662be350117bf3c9f3486499ed83b9
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.net>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -15,8 +15,8 @@ PKG_LICENSE_FILES:=LICENSE
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-CMAKE_OPTIONS += -DCLANG_TIDY_EXE=
 TARGET_CFLAGS += -std=gnu99
+CMAKE_OPTIONS += -DCLANG_TIDY_EXE=
 
 define Package/https-dns-proxy
 	SECTION:=net
@@ -38,11 +38,12 @@ define Package/https-dns-proxy/conffiles
 endef
 
 define Package/https-dns-proxy/install
-	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/init.d ${1}/etc/config
+	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/init.d ${1}/etc/config $(1)/etc/hotplug.d/iface
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/https_dns_proxy $(1)/usr/sbin/https-dns-proxy
 	$(INSTALL_BIN) ./files/https-dns-proxy.init $(1)/etc/init.d/https-dns-proxy
 	$(SED) "s|^\(PKG_VERSION\).*|\1='$(PKG_VERSION)-$(PKG_RELEASE)'|" $(1)/etc/init.d/https-dns-proxy
 	$(INSTALL_CONF) ./files/https-dns-proxy.config $(1)/etc/config/https-dns-proxy
+	$(INSTALL_DATA) ./files/https-dns-proxy.hotplug.iface $(1)/etc/hotplug.d/iface/90-https-dns-proxy
 endef
 
 $(eval $(call BuildPackage,https-dns-proxy))

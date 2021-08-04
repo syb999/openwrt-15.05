@@ -1,0 +1,11 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -15,7 +15,7 @@
+ set(CMAKE_BUILD_TYPE "Debug")
+ #set(CMAKE_BUILD_TYPE "Release")
+ 
+-set(CMAKE_C_FLAGS "-Wall -Wextra --pedantic -Wno-strict-aliasing -Wno-variadic-macros")
++#set(CMAKE_C_FLAGS "-Wall -Wextra --pedantic -Wno-strict-aliasing -Wno-variadic-macros")
+ set(CMAKE_C_FLAGS_DEBUG "-g -DDEBUG")
+ set(CMAKE_C_FLAGS_RELEASE "-O2")
+ 
