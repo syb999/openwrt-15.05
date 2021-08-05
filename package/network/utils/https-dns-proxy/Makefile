@@ -15,7 +15,6 @@ PKG_LICENSE_FILES:=LICENSE
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-TARGET_CFLAGS += -std=gnu99
 CMAKE_OPTIONS += -DCLANG_TIDY_EXE=
 
 define Package/https-dns-proxy
