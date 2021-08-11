@@ -37,7 +37,7 @@ function getxmlyaudios(){
 
 	cat /tmp/tmp.XMV.xmlyhttp1 | grep isPaid > /tmp/tmp.XMV.xmlyhttp2
 	cat /tmp/tmp.XMV.xmlyhttp1 | grep showShareBtn > /tmp/tmp.XMV.xmlyhttp2n
-	cat /tmp/tmp.XMV.xmlyhttp | sed 's/title/\n/g' | grep showShareBtn | cut -d '"' -f 3 | sed -e 's/\\/＼/g' | sed -e 's/\//／/g' | sed -e 's/</《/g' | sed -e 's/>/》/g' | sed -e 's/:/：/g' | sed -e 's/*//g' | sed -e 's/?/？/g' | sed -e 's/\"/“/g'  | sed -e 's/\ /-/g'  > /tmp/tmp.XMV.filenamelist
+	cat /tmp/tmp.XMV.xmlyhttp | sed 's/title/\n/g' | grep showShareBtn | cut -d '"' -f 3 | sed -e 's/\\/＼/g' | sed -e 's/\//／/g' | sed -e 's/</《/g' | sed -e 's/>/》/g' | sed -e 's/:/：/g' | sed -e 's/*//g' | sed -e 's/?/？/g' | sed -e 's/\"/“/g'  | sed -e 's/\ /-/g' | sed -e 's/|/-/g'  > /tmp/tmp.XMV.filenamelist
 	xmlyhttp2=$(cat /tmp/tmp.XMV.xmlyhttp2)
 	for i in `echo "$xmlyhttp2" | sed 's/{\"index\":/\n/g'`
 	do  
@@ -123,11 +123,11 @@ function getxmlyaudios(){
 		xmlyvipaudiosuffixduration="&duration="
 
 		xmlyvipaudiorealurl=${xmlyvipaudioprefix}${xmlyvipaudiopath}${xmlyvipaudiosuffixbuykey}${xmlybuykey}${xmlyvipaudiosuffixsign}${xmlysign}${xmlyvipaudiosuffixtoken}${xmlytoken}${xmlyvipaudiosuffixtimestamp}${xmlytimestamp}${xmlyvipaudiosuffixduration}${xmlynewdurationcode}
-		wget-ssl -q -c $(uci get network.lan.ipaddr) -O /tmp/tmpXMVIP.testwget > /dev/null 2>&1
+		wget-ssl -t 5 -w 3 -T 60 -q -c $(uci get network.lan.ipaddr) -O /tmp/tmpXMVIP.testwget > /dev/null 2>&1
 		if [ -s /tmp/tmpXMVIP.testwget ];then
-			wget-ssl -q -c $xmlyvipaudiorealurl -O $paudionum.m4a
+			wget-ssl -t 5 -w 3 -T 60 -q -c $xmlyvipaudiorealurl -O $paudionum.m4a
 		else
-			wget -q -c $xmlyvipaudiorealurl -O $paudionum.m4a
+			wget -t 5 -w 3 -T 60 -q -c $xmlyvipaudiorealurl -O $paudionum.m4a
 		fi
 		sleep 3
 		paudionum=$(echo `expr $paudionum - 1`)
@@ -151,15 +151,15 @@ function getxmlyaudios(){
 		fi
 		if [ $xmlyturenum -le 9 ];then
 			nxmlyturenum=000$xmlyturenum
-			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nxmlyturenum-$xmlyturename.m4a
+			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/${paudioname}${nxmlyturenum}-${xmlyturename}.m4a
 		elif [ $xmlyturenum -le 99 ];then
 			nnxmlyturenum=00$xmlyturenum
-			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nnxmlyturenum-$xmlyturename.m4a
+			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/${paudioname}${nnxmlyturenum}-${xmlyturename}.m4a
 		elif [ $xmlyturenum -le 999 ];then
 			nnnxmlyturenum=0$xmlyturenum
-			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nnnxmlyturenum-$xmlyturename.m4a
+			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/${paudioname}${nnnxmlyturenum}-${xmlyturename}.m4a
 		else
-			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$xmlyturenum-$xmlyturename.m4a
+			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/${paudioname}${xmlyturenum}-${xmlyturename}.m4a
 		fi
 		sed 1d -i /tmp/tmp.XMV.filenamelist
 		tmpcounthead=$(echo `expr $tmpcounthead + 1`)

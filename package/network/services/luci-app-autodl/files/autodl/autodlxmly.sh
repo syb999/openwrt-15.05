@@ -33,7 +33,7 @@ function getxmlyaudios(){
 
 	cat /tmp/tmpXM.xmlyhttp1 | grep isPaid > /tmp/tmpXM.xmlyhttp2
 	cat /tmp/tmpXM.xmlyhttp1 | grep showShareBtn > /tmp/tmpXM.xmlyhttp2n
-	cat /tmp/tmpXM.xmlyhttp | sed 's/title/\n/g' | grep showShareBtn | cut -d '"' -f 3 | sed -e 's/\\/＼/g' | sed -e 's/\//／/g' | sed -e 's/</《/g' | sed -e 's/>/》/g' | sed -e 's/:/：/g' | sed -e 's/*//g' | sed -e 's/?/？/g' | sed -e 's/\"/“/g'  | sed -e 's/\ /-/g'  > /tmp/tmpXM.filenamelist
+	cat /tmp/tmpXM.xmlyhttp | sed 's/title/\n/g' | grep showShareBtn | cut -d '"' -f 3 | sed -e 's/\\/＼/g' | sed -e 's/\//／/g' | sed -e 's/</《/g' | sed -e 's/>/》/g' | sed -e 's/:/：/g' | sed -e 's/*//g' | sed -e 's/?/？/g' | sed -e 's/\"/“/g'  | sed -e 's/\ /-/g' | sed -e 's/|/-/g'  > /tmp/tmpXM.filenamelist
 	xmlyhttp2=$(cat /tmp/tmpXM.xmlyhttp2)
 	for i in `echo "$xmlyhttp2" | sed 's/{\"index\":/\n/g'`
 	do  
@@ -99,15 +99,15 @@ function getxmlyaudios(){
 		fi
 		if [ $xmlyturenum -le 9 ];then
 			nxmlyturenum=000$xmlyturenum
-			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nxmlyturenum-$xmlyturename.m4a
+			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/${paudioname}${nxmlyturenum}-${xmlyturename}.m4a
 		elif [ $xmlyturenum -le 99 ];then
 			nnxmlyturenum=00$xmlyturenum
-			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nnxmlyturenum-$xmlyturename.m4a
+			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/${paudioname}${nnxmlyturenum}-${xmlyturename}.m4a
 		elif [ $xmlyturenum -le 999 ];then
 			nnnxmlyturenum=0$xmlyturenum
-			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$nnnxmlyturenum-$xmlyturename.m4a
+			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/${paudioname}${nnnxmlyturenum}-${xmlyturename}.m4a
 		else
-			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/$paudioname$xmlyturenum-$xmlyturename.m4a
+			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/${paudioname}${xmlyturenum}-${xmlyturename}.m4a
 		fi
 		sed 1d -i /tmp/tmpXM.filenamelist
 		tmpcounthead=$(echo `expr $tmpcounthead + 1`)
