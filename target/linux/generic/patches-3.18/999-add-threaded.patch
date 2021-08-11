@@ -1,0 +1,21 @@
+--- a/include/linux/netdevice.h
++++ b/include/linux/netdevice.h
+@@ -1740,6 +1740,7 @@
+ 	struct lock_class_key *qdisc_tx_busylock;
+ 	int group;
+ 	struct pm_qos_request	pm_qos_req;
++	unsigned		threaded:1;
+ };
+ #define to_net_dev(d) container_of(d, struct net_device, dev)
+ 
+--- a/net/core/dev.c
++++ b/net/core/dev.c
+@@ -4862,6 +4862,8 @@
+ void netif_napi_add(struct net_device *dev, struct napi_struct *napi,
+ 		    int (*poll)(struct napi_struct *, int), int weight)
+ {
++	if (dev->threaded)
++		set_bit(NAPI_STATE_THREADED, &napi->state);
+ 	INIT_LIST_HEAD(&napi->poll_list);
+ 	napi->gro_count = 0;
+ 	napi->gro_list = NULL;
