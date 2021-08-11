@@ -22,7 +22,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 --- a/include/net/fq_impl.h
 +++ b/include/net/fq_impl.h
 @@ -151,8 +151,7 @@ static u32 fq_flow_idx(struct fq *fq, st
-
+ 
  static struct fq_flow *fq_flow_classify(struct fq *fq,
  					struct fq_tin *tin, u32 idx,
 -					struct sk_buff *skb,
@@ -30,9 +30,9 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 +					struct sk_buff *skb)
  {
  	struct fq_flow *flow;
-
+ 
 @@ -160,7 +159,7 @@ static struct fq_flow *fq_flow_classify(
-
+ 
  	flow = &fq->flows[idx];
  	if (flow->tin && flow->tin != tin) {
 -		flow = get_default_func(fq, tin, idx, skb);
@@ -50,12 +50,12 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  {
  	struct fq_flow *flow;
  	bool oom;
-
+ 
  	lockdep_assert_held(&fq->lock);
-
+ 
 -	flow = fq_flow_classify(fq, tin, idx, skb, get_default_func);
 +	flow = fq_flow_classify(fq, tin, idx, skb);
-
+ 
  	flow->tin = tin;
  	flow->backlog += skb->len;
 @@ -331,6 +329,7 @@ static void fq_tin_init(struct fq_tin *t
@@ -64,11 +64,11 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  	INIT_LIST_HEAD(&tin->old_flows);
 +	fq_flow_init(&tin->default_flow);
  }
-
+ 
  static int fq_init(struct fq *fq, int flows_cnt)
 --- a/net/mac80211/ieee80211_i.h
 +++ b/net/mac80211/ieee80211_i.h
-@@ -855,7 +855,6 @@ enum txq_info_flags {
+@@ -846,7 +846,6 @@ enum txq_info_flags {
   */
  struct txq_info {
  	struct fq_tin tin;
@@ -80,17 +80,17 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 +++ b/net/mac80211/tx.c
 @@ -1322,7 +1322,7 @@ static struct sk_buff *codel_dequeue_fun
  	fq = &local->fq;
-
+ 
  	if (cvars == &txqi->def_cvars)
 -		flow = &txqi->def_flow;
 +		flow = &txqi->tin.default_flow;
  	else
  		flow = &fq->flows[cvars - local->cvars];
-
+ 
 @@ -1365,7 +1365,7 @@ static struct sk_buff *fq_tin_dequeue_fu
  		cparams = &local->cparams;
  	}
-
+ 
 -	if (flow == &txqi->def_flow)
 +	if (flow == &tin->default_flow)
  		cvars = &txqi->def_cvars;
@@ -99,7 +99,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 @@ -1392,17 +1392,6 @@ static void fq_skb_free_func(struct fq *
  	ieee80211_free_txskb(&local->hw, skb);
  }
-
+ 
 -static struct fq_flow *fq_flow_get_default_func(struct fq *fq,
 -						struct fq_tin *tin,
 -						int idx,
@@ -115,7 +115,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  				  struct txq_info *txqi,
  				  struct sk_buff *skb)
 @@ -1415,8 +1404,7 @@ static void ieee80211_txq_enqueue(struct
-
+ 
  	spin_lock_bh(&fq->lock);
  	fq_tin_enqueue(fq, tin, flow_idx, skb,
 -		       fq_skb_free_func,
@@ -123,7 +123,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 +		       fq_skb_free_func);
  	spin_unlock_bh(&fq->lock);
  }
-
+ 
 @@ -1459,7 +1447,6 @@ void ieee80211_txq_init(struct ieee80211
  			struct txq_info *txqi, int tid)
  {
@@ -134,7 +134,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  	__skb_queue_head_init(&txqi->frags);
 @@ -3310,8 +3297,7 @@ static bool ieee80211_amsdu_aggregate(st
  	 */
-
+ 
  	tin = &txqi->tin;
 -	flow = fq_flow_classify(fq, tin, flow_idx, skb,
 -				fq_flow_get_default_func);

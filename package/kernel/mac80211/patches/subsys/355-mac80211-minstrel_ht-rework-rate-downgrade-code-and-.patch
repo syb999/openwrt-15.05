@@ -30,13 +30,13 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 +	/* make the rate at least 18% slower than max tp rates */
 +	if (minstrel_get_duration(index) <= min_dur * 19 / 16)
 +		return;
-
+ 
  	cur_group = MI_RATE_GROUP(index);
  	cur_idx = MI_RATE_IDX(index);
 @@ -532,11 +540,6 @@ minstrel_ht_set_best_prob_rate(struct mi
  	    !minstrel_ht_is_legacy_group(max_tp_group))
  		return;
-
+ 
 -	/* skip rates faster than max tp rate with lower prob */
 -	if (minstrel_get_duration(mi->max_tp_rate[0]) > minstrel_get_duration(index) &&
 -	    mrs->prob_avg < max_tp_prob)
@@ -46,9 +46,9 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  	max_gpr_idx = MI_RATE_IDX(mg->max_group_prob_rate);
  	max_gpr_prob = mi->groups[max_gpr_group].rates[max_gpr_idx].prob_avg;
 @@ -594,40 +597,6 @@ minstrel_ht_assign_best_tp_rates(struct
-
+ 
  }
-
+ 
 -/*
 - * Try to increase robustness of max_prob rate by decrease number of
 - * streams if possible.
@@ -87,27 +87,27 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  __minstrel_ht_get_sample_rate(struct minstrel_ht_sta *mi,
  			      enum minstrel_sample_type type)
 @@ -1111,8 +1080,6 @@ minstrel_ht_update_stats(struct minstrel
-
+ 
  	mi->max_prob_rate = tmp_max_prob_rate;
-
+ 
 -	/* Try to increase robustness of max_prob_rate*/
 -	minstrel_ht_prob_rate_reduce_streams(mi);
  	minstrel_ht_refill_sample_rates(mi);
-
+ 
  #ifdef CPTCFG_MAC80211_DEBUGFS
 @@ -1157,7 +1124,7 @@ minstrel_ht_txstat_valid(struct minstrel
  }
-
+ 
  static void
 -minstrel_downgrade_rate(struct minstrel_ht_sta *mi, u16 *idx, bool primary)
 +minstrel_downgrade_prob_rate(struct minstrel_ht_sta *mi, u16 *idx)
  {
  	int group, orig_group;
-
+ 
 @@ -1172,11 +1139,7 @@ minstrel_downgrade_rate(struct minstrel_
  		    minstrel_mcs_groups[orig_group].streams)
  			continue;
-
+ 
 -		if (primary)
 -			*idx = mi->groups[group].max_group_tp_rate[0];
 -		else
@@ -116,8 +116,8 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 +		*idx = mi->groups[group].max_group_prob_rate;
  	}
  }
-
-@@ -1210,7 +1173,7 @@
+ 
+@@ -1210,7 +1173,7 @@ minstrel_ht_tx_status(void *priv, struct
  	struct ieee80211_tx_info *info = st->info;
  	struct minstrel_ht_sta *mi = priv_sta;
  	struct ieee80211_tx_rate *ar = info->status.rates;
@@ -126,7 +126,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  	struct minstrel_priv *mp = priv;
  	u32 update_interval = mp->update_interval;
  	bool last, update = false;
-@@ -1256,18 +1219,13 @@
+@@ -1256,18 +1219,13 @@ minstrel_ht_tx_status(void *priv, struct
  		/*
  		 * check for sudden death of spatial multiplexing,
  		 * downgrade to a lower number of streams if necessary.

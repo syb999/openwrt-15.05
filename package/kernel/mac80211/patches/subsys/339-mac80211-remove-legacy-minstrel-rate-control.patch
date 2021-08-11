@@ -12,17 +12,17 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 
 --- a/net/mac80211/Makefile
 +++ b/net/mac80211/Makefile
-@@ -54,11 +54,9 @@ mac80211-$(CONFIG_PM) += pm.o
+@@ -55,11 +55,9 @@ mac80211-$(CONFIG_PM) += pm.o
  CFLAGS_trace.o := -I$(src)
-
+ 
  rc80211_minstrel-y := \
 -	rc80211_minstrel.o \
  	rc80211_minstrel_ht.o
-
+ 
  rc80211_minstrel-$(CPTCFG_MAC80211_DEBUGFS) += \
 -	rc80211_minstrel_debugfs.o \
  	rc80211_minstrel_ht_debugfs.o
-
+ 
  mac80211-$(CPTCFG_MAC80211_RC_MINSTREL) += $(rc80211_minstrel-y)
 --- a/net/mac80211/rc80211_minstrel.c
 +++ /dev/null
@@ -972,12 +972,12 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  #include "sta_info.h"
 -#include "rc80211_minstrel.h"
  #include "rc80211_minstrel_ht.h"
-
+ 
  #define AVG_AMPDU_SIZE	16
 @@ -716,6 +715,83 @@ out:
  	mi->sample_mode = MINSTREL_SAMPLE_ACTIVE;
  }
-
+ 
 +static inline int
 +minstrel_ewma(int old, int new, int weight)
 +{
@@ -1059,13 +1059,13 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
   * Update rate statistics and select new primary rates
   *
 @@ -808,7 +884,7 @@ minstrel_ht_update_stats(struct minstrel
-
+ 
  			mrs = &mg->rates[i];
  			mrs->retry_updated = false;
 -			minstrel_calc_rate_stats(mp, mrs);
 +			minstrel_ht_calc_rate_stats(mp, mrs);
  			cur_prob = mrs->prob_avg;
-
+ 
  			if (minstrel_ht_get_tp_avg(mi, group, i, cur_prob) == 0)
 @@ -960,8 +1036,7 @@ minstrel_ht_tx_status(void *priv, struct
                        void *priv_sta, struct ieee80211_tx_status *st)
@@ -1086,7 +1086,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 +	struct minstrel_ht_sta *mi = priv_sta;
  	struct minstrel_priv *mp = priv;
  	int sample_idx;
-
+ 
 @@ -1484,8 +1558,7 @@ minstrel_ht_update_caps(void *priv, stru
  			struct ieee80211_sta *sta, void *priv_sta)
  {
@@ -1109,7 +1109,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 @@ -1659,35 +1732,13 @@ minstrel_ht_alloc_sta(void *priv, struct
  			max_rates = sband->n_bitrates;
  	}
-
+ 
 -	msp = kzalloc(sizeof(*msp), gfp);
 -	if (!msp)
 -		return NULL;
@@ -1131,7 +1131,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 -	return NULL;
 +	return kzalloc(sizeof(*mi), gfp);
  }
-
+ 
  static void
  minstrel_ht_free_sta(void *priv, struct ieee80211_sta *sta, void *priv_sta)
  {
@@ -1142,12 +1142,12 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 -	kfree(msp);
 +	kfree(priv_sta);
  }
-
+ 
  static void
 @@ -1768,12 +1819,6 @@ minstrel_ht_alloc(struct ieee80211_hw *h
  	mp->cw_min = 15;
  	mp->cw_max = 1023;
-
+ 
 -	/* number of packets (in %) to use for sampling other rates
 -	 * sample less often for non-mrr packets, because the overhead
 -	 * is much higher than with mrr */
@@ -1156,23 +1156,23 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 -
  	/* maximum time that the hw is allowed to stay in one MRR segment */
  	mp->segment_size = 6000;
-
+ 
 @@ -1821,8 +1866,7 @@ minstrel_ht_free(void *priv)
-
+ 
  static u32 minstrel_ht_get_expected_throughput(void *priv_sta)
  {
 -	struct minstrel_ht_sta_priv *msp = priv_sta;
 -	struct minstrel_ht_sta *mi = &msp->ht;
 +	struct minstrel_ht_sta *mi = priv_sta;
  	int i, j, prob, tp_avg;
-
+ 
  	i = mi->max_tp_rate[0] / MCS_GROUP_RATES;
 --- a/net/mac80211/rc80211_minstrel_ht.h
 +++ b/net/mac80211/rc80211_minstrel_ht.h
 @@ -6,6 +6,33 @@
  #ifndef __RC_MINSTREL_HT_H
  #define __RC_MINSTREL_HT_H
-
+ 
 +/* number of highest throughput rates to consider*/
 +#define MAX_THR_RATES 4
 +#define SAMPLE_COLUMNS	10	/* number of columns in sample table */
@@ -1204,9 +1204,9 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
   * The number of streams can be changed to 2 to reduce code
   * size and memory footprint.
 @@ -30,6 +57,32 @@
-
+ 
  #define MCS_GROUP_RATES		10
-
+ 
 +struct minstrel_priv {
 +	struct ieee80211_hw *hw;
 +	bool has_mrr;
@@ -1239,7 +1239,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 @@ -42,6 +95,26 @@ extern const s16 minstrel_cck_bitrates[4
  extern const s16 minstrel_ofdm_bitrates[8];
  extern const struct mcs_group minstrel_mcs_groups[];
-
+ 
 +struct minstrel_rate_stats {
 +	/* current / last sampling period attempts/success counters */
 +	u16 attempts, last_attempts;
@@ -1266,7 +1266,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 @@ -111,12 +184,6 @@ struct minstrel_ht_sta {
  	struct minstrel_mcs_group_data groups[MINSTREL_GROUPS_NB];
  };
-
+ 
 -struct minstrel_ht_sta_priv {
 -	struct minstrel_ht_sta ht;
 -	void *ratelist;
@@ -1284,7 +1284,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  #include <net/mac80211.h>
 -#include "rc80211_minstrel.h"
  #include "rc80211_minstrel_ht.h"
-
+ 
 +struct minstrel_debugfs_info {
 +	size_t len;
 +	char buf[];

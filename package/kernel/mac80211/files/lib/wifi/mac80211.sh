@@ -1,4 +1,5 @@
 #!/bin/sh
+. /lib/netifd/mac80211.sh
 
 append DRIVERS "mac80211"
 
@@ -10,7 +11,7 @@ lookup_phy() {
 	local devpath
 	config_get devpath "$device" path
 	[ -n "$devpath" ] && {
-		phy="$(iwinfo nl80211 phyname "path=$devpath")"
+		phy="$(mac80211_path_to_phy "$devpath")"
 		[ -n "$phy" ] && return
 	}
 
@@ -82,14 +83,11 @@ detect_mac80211() {
 		ssnm=_$(cat /sys/class/ieee80211/${dev}/macaddress | sed 's/.[0-9A-Fa-f]:.[0-9A-Fa-f]:.[0-9A-Fa-f]:\(.[0-9A-Fa-f]\):\(.[0-9A-Fa-f]\):\(.[0-9A-Fa-f]\)/\1\2\3/g' | tr :[a-z] :[A-Z])
 
 		iw phy "$dev" info | grep -q 'Capabilities:' && htmode=HT20
-		iw phy "$dev" info | grep -q '2412 MHz' || { mode_band="a"; channel="36"; }
 
-		vht_cap=$(iw phy "$dev" info | grep -c 'VHT Capabilities')
-		cap_5ghz=$(iw phy "$dev" info | grep -c "Band 2")
-		[ "$vht_cap" -gt 0 -a "$cap_5ghz" -gt 0 ] && {
-			mode_band="a";
-			channel="36"
-			htmode="VHT80"
+		iw phy "$dev" info | grep -q '\* 5... MHz \[' && {
+			mode_band="a"
+			channel=$(iw phy "$dev" info | grep '\* 5... MHz \[' | grep '(disabled)' -v -m 1 | sed 's/[^[]*\[\|\].*//g')
+			iw phy "$dev" info | grep -q 'VHT Capabilities' && htmode="VHT80"
 		}
 
 		iw phy "$dev" info | grep -q '\* 5.... MHz \[' && {
@@ -100,7 +98,7 @@ detect_mac80211() {
 
 		[ -n $htmode ] && append ht_capab "	option htmode	$htmode" "$N"
 
-		path="$(iwinfo nl80211 path "$dev")"
+		path="$(mac80211_phy_to_path "$dev")"
 		if [ -n "$path" ]; then
 			dev_id="	option path	'$path'"
 		else
@@ -136,7 +134,7 @@ config wifi-iface
 	option isolate 0
 
 EOF
+
 	devidx=$(($devidx + 1))
 	done
 }
-
