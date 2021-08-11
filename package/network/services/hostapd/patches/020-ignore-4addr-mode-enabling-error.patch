@@ -28,22 +28,22 @@ index 72189da24..011a15e68 100644
  	u8 *macaddr;
 +	u8 use_4addr;
  };
-
-
+ 
+ 
 @@ -639,6 +640,9 @@ static int netdev_info_handler(struct nl_msg *msg, void *arg)
  		os_memcpy(info->macaddr, nla_data(tb[NL80211_ATTR_MAC]),
  			  ETH_ALEN);
-
+ 
 +	if (tb[NL80211_ATTR_4ADDR])
 +		info->use_4addr = nla_get_u8(tb[NL80211_ATTR_4ADDR]);
 +
  	return NL_SKIP;
  }
-
+ 
 @@ -691,6 +695,20 @@ static int nl80211_get_macaddr(struct i802_bss *bss)
  }
-
-
+ 
+ 
 +static int nl80211_get_4addr(struct i802_bss *bss)
 +{
 +	struct nl_msg *msg;
@@ -62,7 +62,7 @@ index 72189da24..011a15e68 100644
  				    struct nl80211_wiphy_data *w)
  {
 @@ -11482,6 +11500,11 @@ static int nl80211_set_4addr_mode(void *priv, const char *bridge_ifname,
-
+ 
  	ret = send_and_recv_msgs(drv, msg, NULL, NULL);
  	msg = NULL;
 +	if (ret && val && nl80211_get_4addr(bss) == 1) {
