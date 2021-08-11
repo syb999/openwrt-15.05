@@ -1,0 +1,61 @@
+--- a/mt7915/mac.c
++++ b/mt7915/mac.c
+@@ -1088,7 +1088,7 @@
+ 
+ static void
+ mt7915_txwi_free(struct mt7915_dev *dev, struct mt76_txwi_cache *t,
+-		 struct ieee80211_sta *sta, struct list_head *free_list)
++		 struct ieee80211_sta *sta)
+ {
+ 	struct mt76_dev *mdev = &dev->mt76;
+ 	struct mt76_wcid *wcid;
+@@ -1110,7 +1110,7 @@
+ 		wcid_idx = FIELD_GET(MT_TXD1_WLAN_IDX, le32_to_cpu(txwi[1]));
+ 	}
+ 
+-	__mt76_tx_complete_skb(mdev, wcid_idx, t->skb, free_list);
++	mt76_tx_complete_skb(mdev, wcid_idx, t->skb);
+ 
+ out:
+ 	t->skb = NULL;
+@@ -1125,8 +1125,6 @@
+ 	struct mt76_phy *mphy_ext = mdev->phy2;
+ 	struct mt76_txwi_cache *txwi;
+ 	struct ieee80211_sta *sta = NULL;
+-	LIST_HEAD(free_list);
+-	struct sk_buff *tmp;
+ 	u8 i, count;
+ 	bool wake = false;
+ 
+@@ -1183,7 +1181,7 @@
+ 		if (!txwi)
+ 			continue;
+ 
+-		mt7915_txwi_free(dev, txwi, sta, &free_list);
++		mt7915_txwi_free(dev, txwi, sta);
+ 	}
+ 
+ 	mt7915_mac_sta_poll(dev);
+@@ -1192,13 +1190,6 @@
+ 		mt76_set_tx_blocked(&dev->mt76, false);
+ 
+ 	mt76_worker_schedule(&dev->mt76.tx_worker);
+-
+-	napi_consume_skb(skb, 1);
+-
+-	list_for_each_entry_safe(skb, tmp, &free_list, list) {
+-		skb_list_del_init(skb);
+-		napi_consume_skb(skb, 1);
+-	}
+ }
+ 
+ static bool
+@@ -1623,7 +1614,7 @@
+ 
+ 	spin_lock_bh(&dev->mt76.token_lock);
+ 	idr_for_each_entry(&dev->mt76.token, txwi, id) {
+-		mt7915_txwi_free(dev, txwi, NULL, NULL);
++		mt7915_txwi_free(dev, txwi, NULL);
+ 		dev->mt76.token_count--;
+ 	}
+ 	spin_unlock_bh(&dev->mt76.token_lock);

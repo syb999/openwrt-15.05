@@ -1,0 +1,16 @@
+https://github.com/openwrt/mt76/pull/476/commits
+Signed-off-by: Chen Minqiang <ptpt52@gmail.com>
+
+--- a/mt7615/init.c
++++ b/mt7615/init.c
+@@ -447,9 +447,9 @@
+ 	 */
+ 	memcpy(mphy->macaddr, dev->mt76.eeprom.data + MT_EE_MAC_ADDR,
+ 	       ETH_ALEN);
++	mt76_eeprom_override(mphy);
+ 	mphy->macaddr[0] |= 2;
+ 	mphy->macaddr[0] ^= BIT(7);
+-	mt76_eeprom_override(mphy);
+ 
+ 	/* second phy can only handle 5 GHz */
+ 	mphy->cap.has_5ghz = true;

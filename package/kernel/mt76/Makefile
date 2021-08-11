@@ -1,18 +1,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mt76
-PKG_VERSION:=2020-08-22
-PKG_RELEASE:=7
+PKG_RELEASE=8
 
 PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILES:=
 
 PKG_SOURCE_URL:=https://github.com/openwrt/mt76
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=888990e159d21e932a4cde91d2e073b149cd9ead
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.xz
-PKG_MD5SUM:=61be955c0bed1f1919d11b3abae1407e
+PKG_SOURCE_DATE:=2021-05-15
+PKG_SOURCE_VERSION:=9d736545bb5ac9707e60b7900b7d6b290492e24d
+PKG_MD5SUM:=b8716a11fc7cd27681642910c7d159b1
 
 PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
 PKG_BUILD_PARALLEL:=1
@@ -25,18 +23,23 @@ PKG_CONFIG_DEPENDS += \
 	CONFIG_PACKAGE_kmod-mt76x2-common \
 	CONFIG_PACKAGE_kmod-mt76x2 \
 	CONFIG_PACKAGE_kmod-mt76x2u \
-	CONFIG_PACKAGE_kmod-mt7603
+	CONFIG_PACKAGE_kmod-mt7603 \
+	CONFIG_PACKAGE_CFG80211_TESTMODE
 
 STAMP_CONFIGURED_DEPENDS := $(STAGING_DIR)/usr/include/mac80211-backport/backport/autoconf.h
 
 include $(INCLUDE_DIR)/kernel.mk
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
+
+CMAKE_SOURCE_DIR:=$(PKG_BUILD_DIR)/tools
+CMAKE_BINARY_DIR:=$(PKG_BUILD_DIR)/tools
 
 define KernelPackage/mt76-default
   SUBMENU:=Wireless Drivers
   DEPENDS:= \
 	+kmod-mac80211 \
-	+@DRIVER_11AC_SUPPORT +@DRIVER_11N_SUPPORT +@DRIVER_11W_SUPPORT
+	+@DRIVER_11AC_SUPPORT +@DRIVER_11N_SUPPORT
 endef
 
 define KernelPackage/mt76
@@ -140,37 +143,71 @@ define KernelPackage/mt7603
   AUTOLOAD:=$(call AutoProbe,mt7603e)
 endef
 
+define KernelPackage/mt76-connac
+  $(KernelPackage/mt76-default)
+  TITLE:=MediaTek MT7615/MT79xx wireless driver common code
+  HIDDEN:=1
+  DEPENDS+=+kmod-mt76-core
+  FILES:= $(PKG_BUILD_DIR)/mt76-connac-lib.ko
+endef
+
 define KernelPackage/mt7615-common
   $(KernelPackage/mt76-default)
   TITLE:=MediaTek MT7615 wireless driver common code
   HIDDEN:=1
-  DEPENDS+=@PCI_SUPPORT +kmod-mt76-core
+  DEPENDS+=@PCI_SUPPORT +kmod-mt76-core +kmod-mt76-connac
   FILES:= $(PKG_BUILD_DIR)/mt7615/mt7615-common.ko
+endef
+
+define KernelPackage/mt7615-firmware
+  $(KernelPackage/mt76-default)
+  TITLE:=MediaTek MT7615e firmware
+  DEFAULT:=PACKAGE_kmod-mt7615e
 endef
 
 define KernelPackage/mt7615e
   $(KernelPackage/mt76-default)
   TITLE:=MediaTek MT7615e wireless driver
   DEPENDS+=@PCI_SUPPORT +kmod-mt7615-common
-  FILES:=\
-	$(PKG_BUILD_DIR)/mt7615/mt7615e.ko
+  FILES:= $(PKG_BUILD_DIR)/mt7615/mt7615e.ko
   AUTOLOAD:=$(call AutoProbe,mt7615e)
 endef
 
 define KernelPackage/mt7663-firmware-ap
   $(KernelPackage/mt76-default)
   TITLE:=MediaTek MT7663e firmware (optimized for AP)
-  DEPENDS+=+kmod-mt7615e
-  FILES:=\
-	$(PKG_BUILD_DIR)/mt7615/mt7615e.ko
 endef
 
 define KernelPackage/mt7663-firmware-sta
- $(KernelPackage/mt76-default)
+  $(KernelPackage/mt76-default)
   TITLE:=MediaTek MT7663e firmware (client mode offload)
-  DEPENDS+=+kmod-mt7615e
-  FILES:=\
-	$(PKG_BUILD_DIR)/mt7615/mt7615e.ko
+endef
+
+define KernelPackage/mt7663-usb-sdio
+  $(KernelPackage/mt76-default)
+  TITLE:=MediaTek MT7663 USB/SDIO shared code
+  DEPENDS+=+kmod-mt7615-common
+  HIDDEN:=1
+  FILES:= \
+	$(PKG_BUILD_DIR)/mt7615/mt7663-usb-sdio-common.ko
+endef
+
+define KernelPackage/mt7663s
+  $(KernelPackage/mt76-default)
+  TITLE:=MediaTek MT7663s wireless driver
+  DEPENDS+=+kmod-mmc +kmod-mt7615-common +kmod-mt7663-usb-sdio
+  FILES:= \
+	$(PKG_BUILD_DIR)/mt76-sdio.ko \
+	$(PKG_BUILD_DIR)/mt7615/mt7663s.ko
+  AUTOLOAD:=$(call AutoProbe,mt7663s)
+endef
+
+define KernelPackage/mt7663u
+  $(KernelPackage/mt76-default)
+  TITLE:=MediaTek MT7663u wireless driver
+  DEPENDS+=+kmod-mt76-usb +kmod-mt7615-common +kmod-mt7663-usb-sdio
+  FILES:= $(PKG_BUILD_DIR)/mt7615/mt7663u.ko
+  AUTOLOAD:=$(call AutoProbe,mt7663u)
 endef
 
 define KernelPackage/mt7915e
@@ -180,6 +217,23 @@ define KernelPackage/mt7915e
   FILES:= $(PKG_BUILD_DIR)/mt7915/mt7915e.ko
   AUTOLOAD:=$(call AutoProbe,mt7915e)
 endef
+
+define KernelPackage/mt7921e
+  $(KernelPackage/mt76-default)
+  TITLE:=MediaTek MT7921e wireless driver
+  DEPENDS+=@PCI_SUPPORT +kmod-mt76-connac
+  FILES:= $(PKG_BUILD_DIR)/mt7921/mt7921e.ko
+  AUTOLOAD:=$(call AutoProbe,mt7921e)
+endef
+
+define Package/mt76-test
+  SECTION:=devel
+  CATEGORY:=Development
+  TITLE:=mt76 testmode CLI
+  DEPENDS:=kmod-mt76-core +libnl-tiny
+endef
+
+TARGET_CFLAGS += -I$(STAGING_DIR)/usr/include/libnl-tiny
 
 NOSTDINC_FLAGS = \
 	-I$(PKG_BUILD_DIR) \
@@ -192,6 +246,11 @@ NOSTDINC_FLAGS = \
 
 ifdef CONFIG_PACKAGE_MAC80211_MESH
   NOSTDINC_FLAGS += -DCONFIG_MAC80211_MESH
+endif
+
+ifdef CONFIG_PACKAGE_CFG80211_TESTMODE
+  NOSTDINC_FLAGS += -DCONFIG_NL80211_TESTMODE
+  PKG_MAKE_FLAGS += CONFIG_NL80211_TESTMODE=y
 endif
 
 ifdef CONFIG_PACKAGE_kmod-mt76-usb
@@ -224,6 +283,9 @@ endif
 ifdef CONFIG_PACKAGE_kmod-mt7603
   PKG_MAKE_FLAGS += CONFIG_MT7603E=m
 endif
+ifdef CONFIG_PACKAGE_kmod-mt76-connac
+  PKG_MAKE_FLAGS += CONFIG_MT76_CONNAC_LIB=m
+endif
 ifdef CONFIG_PACKAGE_kmod-mt7615-common
   PKG_MAKE_FLAGS += CONFIG_MT7615_COMMON=m
 endif
@@ -234,8 +296,21 @@ ifdef CONFIG_PACKAGE_kmod-mt7615e
     NOSTDINC_FLAGS += -DCONFIG_MT7622_WMAC
   endif
 endif
+ifdef CONFIG_PACKAGE_kmod-mt7663-usb-sdio
+  PKG_MAKE_FLAGS += CONFIG_MT7663_USB_SDIO_COMMON=m
+endif
+ifdef CONFIG_PACKAGE_kmod-mt7663s
+  PKG_MAKE_FLAGS += CONFIG_MT76_SDIO=m
+  PKG_MAKE_FLAGS += CONFIG_MT7663S=m
+endif
+ifdef CONFIG_PACKAGE_kmod-mt7663u
+  PKG_MAKE_FLAGS += CONFIG_MT7663U=m
+endif
 ifdef CONFIG_PACKAGE_kmod-mt7915e
   PKG_MAKE_FLAGS += CONFIG_MT7915E=m
+endif
+ifdef CONFIG_PACKAGE_kmod-mt7921e
+  PKG_MAKE_FLAGS += CONFIG_MT7921E=m
 endif
 
 define Build/Compile
@@ -247,6 +322,11 @@ define Build/Compile
 		SUBDIRS="$(PKG_BUILD_DIR)" \
 		NOSTDINC_FLAGS="$(NOSTDINC_FLAGS)" \
 		modules
+	$(MAKE) -C $(PKG_BUILD_DIR)/tools
+endef
+
+define Build/Install
+	:
 endef
 
 define Package/kmod-mt76/install
@@ -291,7 +371,7 @@ define KernelPackage/mt7603/install
 		$(1)/lib/firmware
 endef
 
-define KernelPackage/mt7615e/install
+define KernelPackage/mt7615-firmware/install
 	$(INSTALL_DIR) $(1)/lib/firmware/mediatek
 	cp \
 		$(PKG_BUILD_DIR)/firmware/mt7615_cr4.bin \
@@ -328,6 +408,19 @@ define KernelPackage/mt7915e/install
 		$(1)/lib/firmware/mediatek
 endef
 
+define KernelPackage/mt7921e/install
+	$(INSTALL_DIR) $(1)/lib/firmware/mediatek
+	cp \
+		$(PKG_BUILD_DIR)/firmware/WIFI_MT7961_patch_mcu_1_2_hdr.bin \
+		$(PKG_BUILD_DIR)/firmware/WIFI_RAM_CODE_MT7961_1.bin \
+		$(1)/lib/firmware/mediatek
+endef
+
+define Package/mt76-test/install
+	mkdir -p $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/tools/mt76-test $(1)/usr/sbin
+endef
+
 $(eval $(call KernelPackage,mt76-core))
 $(eval $(call KernelPackage,mt76-usb))
 $(eval $(call KernelPackage,mt76x02-usb))
@@ -339,9 +432,16 @@ $(eval $(call KernelPackage,mt76x2-common))
 $(eval $(call KernelPackage,mt76x2u))
 $(eval $(call KernelPackage,mt76x2))
 $(eval $(call KernelPackage,mt7603))
+$(eval $(call KernelPackage,mt76-connac))
 $(eval $(call KernelPackage,mt7615-common))
+$(eval $(call KernelPackage,mt7615-firmware))
 $(eval $(call KernelPackage,mt7615e))
 $(eval $(call KernelPackage,mt7663-firmware-ap))
 $(eval $(call KernelPackage,mt7663-firmware-sta))
+$(eval $(call KernelPackage,mt7663-usb-sdio))
+#$(eval $(call KernelPackage,mt7663u))
+#$(eval $(call KernelPackage,mt7663s))
 $(eval $(call KernelPackage,mt7915e))
+#$(eval $(call KernelPackage,mt7921e))
 $(eval $(call KernelPackage,mt76))
+$(eval $(call BuildPackage,mt76-test))

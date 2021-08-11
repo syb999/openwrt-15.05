@@ -1,0 +1,10 @@
+--- a/mt76.h
++++ b/mt76.h
+@@ -13,6 +13,7 @@
+ #include <linux/leds.h>
+ #include <linux/usb.h>
+ #include <linux/average.h>
++#include <linux/module.h>
+ #include <net/mac80211.h>
+ #include "util.h"
+ #include "testmode.h"

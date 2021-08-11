@@ -1,0 +1,324 @@
+--- a/agg-rx.c
++++ b/agg-rx.c
+@@ -76,9 +76,9 @@
+ 
+ 		nframes--;
+ 		status = (struct mt76_rx_status *)skb->cb;
+-		if (!time_after32(jiffies,
+-				  status->reorder_time +
+-				  mt76_aggr_tid_to_timeo(tid->num)))
++		if (!time_after(jiffies,
++				status->reorder_time +
++				mt76_aggr_tid_to_timeo(tid->num)))
+ 			continue;
+ 
+ 		mt76_rx_aggr_release_frames(tid, frames, status->seqno);
+--- a/mac80211.c
++++ b/mac80211.c
+@@ -754,8 +754,6 @@
+ 	status->signal = mstat.signal;
+ 	status->chains = mstat.chains;
+ 	status->ampdu_reference = mstat.ampdu_ref;
+-	status->device_timestamp = mstat.timestamp;
+-	status->mactime = mstat.timestamp;
+ 
+ 	BUILD_BUG_ON(sizeof(mstat) > sizeof(skb->cb));
+ 	BUILD_BUG_ON(sizeof(status->chain_signal) !=
+--- a/mt76.h
++++ b/mt76.h
+@@ -499,10 +499,9 @@
+ 		u16 wcid_idx;
+ 	};
+ 
+-	u32 reorder_time;
++	unsigned long reorder_time;
+ 
+ 	u32 ampdu_ref;
+-	u32 timestamp;
+ 
+ 	u8 iv[6];
+ 
+--- a/mt7603/init.c
++++ b/mt7603/init.c
+@@ -548,9 +548,6 @@
+ 	hw->max_report_rates = 7;
+ 	hw->max_rate_tries = 11;
+ 
+-	hw->radiotap_timestamp.units_pos =
+-		IEEE80211_RADIOTAP_TIMESTAMP_UNIT_US;
+-
+ 	hw->sta_data_size = sizeof(struct mt7603_sta);
+ 	hw->vif_data_size = sizeof(struct mt7603_vif);
+ 
+--- a/mt7603/mac.c
++++ b/mt7603/mac.c
+@@ -532,6 +532,20 @@
+ 		status->flag |= RX_FLAG_MMIC_STRIPPED | RX_FLAG_MIC_STRIPPED;
+ 	}
+ 
++	if (!(rxd2 & (MT_RXD2_NORMAL_NON_AMPDU_SUB |
++		      MT_RXD2_NORMAL_NON_AMPDU))) {
++		status->flag |= RX_FLAG_AMPDU_DETAILS;
++
++		/* all subframes of an A-MPDU have the same timestamp */
++		if (dev->rx_ampdu_ts != rxd[12]) {
++			if (!++dev->ampdu_ref)
++				dev->ampdu_ref++;
++		}
++		dev->rx_ampdu_ts = rxd[12];
++
++		status->ampdu_ref = dev->ampdu_ref;
++	}
++
+ 	remove_pad = rxd1 & MT_RXD1_NORMAL_HDR_OFFSET;
+ 
+ 	if (rxd2 & MT_RXD2_NORMAL_MAX_LEN_ERROR)
+@@ -565,23 +579,6 @@
+ 			return -EINVAL;
+ 	}
+ 	if (rxd0 & MT_RXD0_NORMAL_GROUP_2) {
+-		status->timestamp = le32_to_cpu(rxd[0]);
+-		status->flag |= RX_FLAG_MACTIME_START;
+-
+-		if (!(rxd2 & (MT_RXD2_NORMAL_NON_AMPDU_SUB |
+-			      MT_RXD2_NORMAL_NON_AMPDU))) {
+-			status->flag |= RX_FLAG_AMPDU_DETAILS;
+-
+-			/* all subframes of an A-MPDU have the same timestamp */
+-			if (dev->rx_ampdu_ts != status->timestamp) {
+-				if (!++dev->ampdu_ref)
+-					dev->ampdu_ref++;
+-			}
+-			dev->rx_ampdu_ts = status->timestamp;
+-
+-			status->ampdu_ref = dev->ampdu_ref;
+-		}
+-
+ 		rxd += 2;
+ 		if ((u8 *)rxd - skb->data >= skb->len)
+ 			return -EINVAL;
+--- a/mt7603/mt7603.h
++++ b/mt7603/mt7603.h
+@@ -120,7 +120,7 @@
+ 	unsigned long last_cca_adj;
+ 
+ 	u32 ampdu_ref;
+-	u32 rx_ampdu_ts;
++	__le32 rx_ampdu_ts;
+ 	u8 rssi_offset[3];
+ 
+ 	u8 slottime;
+--- a/mt7615/init.c
++++ b/mt7615/init.c
+@@ -341,9 +341,6 @@
+ 	hw->max_rate_tries = 11;
+ 	hw->netdev_features = NETIF_F_RXCSUM;
+ 
+-	hw->radiotap_timestamp.units_pos =
+-		IEEE80211_RADIOTAP_TIMESTAMP_UNIT_US;
+-
+ 	phy->slottime = 9;
+ 
+ 	hw->sta_data_size = sizeof(struct mt7615_sta);
+--- a/mt7615/mac.c
++++ b/mt7615/mac.c
+@@ -235,6 +235,7 @@
+ 	u32 rxd1 = le32_to_cpu(rxd[1]);
+ 	u32 rxd2 = le32_to_cpu(rxd[2]);
+ 	u32 csum_mask = MT_RXD0_NORMAL_IP_SUM | MT_RXD0_NORMAL_UDP_TCP_SUM;
++	__le32 rxd12 = rxd[12];
+ 	bool unicast, hdr_trans, remove_pad, insert_ccmp_hdr = false;
+ 	int phy_idx;
+ 	int i, idx;
+@@ -328,23 +329,6 @@
+ 	}
+ 
+ 	if (rxd0 & MT_RXD0_NORMAL_GROUP_2) {
+-		status->timestamp = le32_to_cpu(rxd[0]);
+-		status->flag |= RX_FLAG_MACTIME_START;
+-
+-		if (!(rxd2 & (MT_RXD2_NORMAL_NON_AMPDU_SUB |
+-			      MT_RXD2_NORMAL_NON_AMPDU))) {
+-			status->flag |= RX_FLAG_AMPDU_DETAILS;
+-
+-			/* all subframes of an A-MPDU have the same timestamp */
+-			if (phy->rx_ampdu_ts != status->timestamp) {
+-				if (!++phy->ampdu_ref)
+-					phy->ampdu_ref++;
+-			}
+-			phy->rx_ampdu_ts = status->timestamp;
+-
+-			status->ampdu_ref = phy->ampdu_ref;
+-		}
+-
+ 		rxd += 2;
+ 		if ((u8 *)rxd - skb->data >= skb->len)
+ 			return -EINVAL;
+@@ -388,6 +372,20 @@
+ 	if (!sband->channels)
+ 		return -EINVAL;
+ 
++	if (!(rxd2 & (MT_RXD2_NORMAL_NON_AMPDU_SUB |
++		      MT_RXD2_NORMAL_NON_AMPDU))) {
++		status->flag |= RX_FLAG_AMPDU_DETAILS;
++
++		/* all subframes of an A-MPDU have the same timestamp */
++		if (phy->rx_ampdu_ts != rxd12) {
++			if (!++phy->ampdu_ref)
++				phy->ampdu_ref++;
++		}
++		phy->rx_ampdu_ts = rxd12;
++
++		status->ampdu_ref = phy->ampdu_ref;
++	}
++
+ 	if (rxd0 & MT_RXD0_NORMAL_GROUP_3) {
+ 		u32 rxdg0 = le32_to_cpu(rxd[0]);
+ 		u32 rxdg1 = le32_to_cpu(rxd[1]);
+--- a/mt7615/mt7615.h
++++ b/mt7615/mt7615.h
+@@ -168,7 +168,7 @@
+ 	u8 rdd_state;
+ 	int dfs_state;
+ 
+-	u32 rx_ampdu_ts;
++	__le32 rx_ampdu_ts;
+ 	u32 ampdu_ref;
+ 
+ 	struct mib_stats mib;
+--- a/mt7915/init.c
++++ b/mt7915/init.c
+@@ -133,9 +133,6 @@
+ 	hw->max_tx_aggregation_subframes = IEEE80211_MAX_AMPDU_BUF;
+ 	hw->netdev_features = NETIF_F_RXCSUM;
+ 
+-	hw->radiotap_timestamp.units_pos =
+-		IEEE80211_RADIOTAP_TIMESTAMP_UNIT_US;
+-
+ 	phy->slottime = 9;
+ 
+ 	hw->sta_data_size = sizeof(struct mt7915_sta);
+--- a/mt7915/mac.c
++++ b/mt7915/mac.c
+@@ -389,6 +389,19 @@
+ 		status->flag |= RX_FLAG_MMIC_STRIPPED | RX_FLAG_MIC_STRIPPED;
+ 	}
+ 
++	if (!(rxd2 & MT_RXD2_NORMAL_NON_AMPDU)) {
++		status->flag |= RX_FLAG_AMPDU_DETAILS;
++
++		/* all subframes of an A-MPDU have the same timestamp */
++		if (phy->rx_ampdu_ts != rxd[14]) {
++			if (!++phy->ampdu_ref)
++				phy->ampdu_ref++;
++		}
++		phy->rx_ampdu_ts = rxd[14];
++
++		status->ampdu_ref = phy->ampdu_ref;
++	}
++
+ 	remove_pad = FIELD_GET(MT_RXD2_NORMAL_HDR_OFFSET, rxd2);
+ 
+ 	if (rxd2 & MT_RXD2_NORMAL_MAX_LEN_ERROR)
+@@ -427,22 +440,6 @@
+ 	}
+ 
+ 	if (rxd1 & MT_RXD1_NORMAL_GROUP_2) {
+-		status->timestamp = le32_to_cpu(rxd[0]);
+-		status->flag |= RX_FLAG_MACTIME_START;
+-
+-		if (!(rxd2 & MT_RXD2_NORMAL_NON_AMPDU)) {
+-			status->flag |= RX_FLAG_AMPDU_DETAILS;
+-
+-			/* all subframes of an A-MPDU have the same timestamp */
+-			if (phy->rx_ampdu_ts != status->timestamp) {
+-				if (!++phy->ampdu_ref)
+-					phy->ampdu_ref++;
+-			}
+-			phy->rx_ampdu_ts = status->timestamp;
+-
+-			status->ampdu_ref = phy->ampdu_ref;
+-		}
+-
+ 		rxd += 2;
+ 		if ((u8 *)rxd - skb->data >= skb->len)
+ 			return -EINVAL;
+--- a/mt7915/mt7915.h
++++ b/mt7915/mt7915.h
+@@ -138,7 +138,7 @@
+ 	u8 rdd_state;
+ 	int dfs_state;
+ 
+-	u32 rx_ampdu_ts;
++	__le32 rx_ampdu_ts;
+ 	u32 ampdu_ref;
+ 
+ 	struct mib_stats mib;
+--- a/mt7921/init.c
++++ b/mt7921/init.c
+@@ -77,9 +77,6 @@
+ 	hw->max_rx_aggregation_subframes = IEEE80211_MAX_AMPDU_BUF;
+ 	hw->max_tx_aggregation_subframes = IEEE80211_MAX_AMPDU_BUF;
+ 
+-	hw->radiotap_timestamp.units_pos =
+-		IEEE80211_RADIOTAP_TIMESTAMP_UNIT_US;
+-
+ 	phy->slottime = 9;
+ 
+ 	hw->sta_data_size = sizeof(struct mt7921_sta);
+--- a/mt7921/mac.c
++++ b/mt7921/mac.c
+@@ -370,6 +370,19 @@
+ 		status->flag |= RX_FLAG_MMIC_STRIPPED | RX_FLAG_MIC_STRIPPED;
+ 	}
+ 
++	if (!(rxd2 & MT_RXD2_NORMAL_NON_AMPDU)) {
++		status->flag |= RX_FLAG_AMPDU_DETAILS;
++
++		/* all subframes of an A-MPDU have the same timestamp */
++		if (phy->rx_ampdu_ts != rxd[14]) {
++			if (!++phy->ampdu_ref)
++				phy->ampdu_ref++;
++		}
++		phy->rx_ampdu_ts = rxd[14];
++
++		status->ampdu_ref = phy->ampdu_ref;
++	}
++
+ 	remove_pad = FIELD_GET(MT_RXD2_NORMAL_HDR_OFFSET, rxd2);
+ 
+ 	if (rxd2 & MT_RXD2_NORMAL_MAX_LEN_ERROR)
+@@ -401,22 +414,6 @@
+ 	}
+ 
+ 	if (rxd1 & MT_RXD1_NORMAL_GROUP_2) {
+-		status->timestamp = le32_to_cpu(rxd[0]);
+-		status->flag |= RX_FLAG_MACTIME_START;
+-
+-		if (!(rxd2 & MT_RXD2_NORMAL_NON_AMPDU)) {
+-			status->flag |= RX_FLAG_AMPDU_DETAILS;
+-
+-			/* all subframes of an A-MPDU have the same timestamp */
+-			if (phy->rx_ampdu_ts != status->timestamp) {
+-				if (!++phy->ampdu_ref)
+-					phy->ampdu_ref++;
+-			}
+-			phy->rx_ampdu_ts = status->timestamp;
+-
+-			status->ampdu_ref = phy->ampdu_ref;
+-		}
+-
+ 		rxd += 2;
+ 		if ((u8 *)rxd - skb->data >= skb->len)
+ 			return -EINVAL;
+--- a/mt7921/mt7921.h
++++ b/mt7921/mt7921.h
+@@ -132,7 +132,7 @@
+ 	s16 coverage_class;
+ 	u8 slottime;
+ 
+-	u32 rx_ampdu_ts;
++	__le32 rx_ampdu_ts;
+ 	u32 ampdu_ref;
+ 
+ 	struct mib_stats mib;
