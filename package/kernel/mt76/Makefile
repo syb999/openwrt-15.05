@@ -371,7 +371,7 @@ define KernelPackage/mt7603/install
 		$(1)/lib/firmware
 endef
 
-define KernelPackage/mt7615-firmware/install
+define KernelPackage/mt7615e/install
 	$(INSTALL_DIR) $(1)/lib/firmware/mediatek
 	cp \
 		$(PKG_BUILD_DIR)/firmware/mt7615_cr4.bin \
