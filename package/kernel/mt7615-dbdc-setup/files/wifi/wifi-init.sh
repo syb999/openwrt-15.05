@@ -12,4 +12,6 @@ wifi_first_init()
 {
 	wifi_setup_radio
 	uci commit wireless
+	sleep 5
+	/sbin/wifi
 }

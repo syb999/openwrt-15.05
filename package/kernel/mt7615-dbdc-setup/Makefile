@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mt7615-dbdc-setup
-PKG_VERSION:=0.2.2
+PKG_VERSION:=0.2.3
 
 include $(INCLUDE_DIR)/package.mk
 
