@@ -360,6 +360,20 @@ function au3vdown.write(self, section)
     luci.util.exec("nohup /usr/autodl/volumedown.sh >/dev/null 2>&1 &")
 end
 
+au3usesnd1 = s:taboption("audioxmly", Button, "_au3usesnd1", translate("Use the second sound card"))
+au3usesnd1.inputstyle = "apply"
+au3usesnd1.description = translate("alsa-utils needs to be installed")
+function au3usesnd1.write(self, section)
+    luci.util.exec("nohup /usr/autodl/usesoundcard1.sh >/dev/null 2>&1 &")
+end
+
+au3usesnd0 = s:taboption("audioxmly", Button, "_au3usesnd0", translate("Use default sound card"))
+au3usesnd0.inputstyle = "apply"
+au3usesnd0.description = translate("alsa-utils needs to be installed")
+function au3usesnd0.write(self, section)
+    luci.util.exec("nohup /usr/autodl/usesoundcard0.sh >/dev/null 2>&1 &")
+end
+
 au3isy = s:taboption("audioxmly", Button, "_audioisy", translate("www.ishuyin.com One-click download"))
 au3isy:depends("wanna_get_ishuyin_audios", "1")
 au3isy.inputstyle = "apply"
