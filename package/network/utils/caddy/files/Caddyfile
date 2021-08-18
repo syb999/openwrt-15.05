@@ -1,7 +1,6 @@
-0.0.0.0:8080
+0.0.0.0:8000
 {
 gzip
-basicauth / admin password
 webdav /webdav {
 scope /mnt
 }

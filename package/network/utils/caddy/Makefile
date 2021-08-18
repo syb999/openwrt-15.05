@@ -42,6 +42,14 @@ define Package/$(PKG_NAME)/description
 Caddy is an extensible server platform that uses TLS by default.
 endef
 
+define Package/$(PKG_NAME)-7621mmcbin
+  TITLE:=Caddy is an open source web server
+  URL:=https://caddyserver.com
+  SECTION:=net
+  CATEGORY:=Network
+  SUBMENU:=Web Servers/Proxies
+  DEPENDS:=$(GO_ARCH_DEPENDS) +libpthread
+endef
 
 define Build/Prepare
 	 $(call Build/Prepare/Default)
@@ -54,15 +62,27 @@ define Build/Compile
 endef
 
 define Package/$(PKG_NAME)/install
-	$(INSTALL_DIR) $(1)/usr/bin/caddy
-	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/caddy $(1)/usr/bin/caddy
-	$(INSTALL_DIR) $(1)/bin
-	ln -s /usr/bin/caddy/caddy $(1)/bin/caddy
+	$(INSTALL_DIR) $(1)/usr/caddy1
+	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/caddy $(1)/usr/caddy1
 	$(INSTALL_DIR) $(1)/etc/caddy
 	$(INSTALL_CONF) ./files/Caddyfile $(1)/etc/caddy/Caddyfile
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/caddy.init $(1)/etc/init.d/caddy
+	$(INSTALL_DIR) $(1)/etc/security
+	$(INSTALL_CONF) ./files/limits.conf $(1)/etc/security/limits.conf
+endef
+
+define Package/$(PKG_NAME)-7621mmcbin/install
+	$(INSTALL_DIR) $(1)/mnt/mmcblk0p1/caddy1
+	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/caddy $(1)/mnt/mmcblk0p1/caddy1
+	$(INSTALL_DIR) $(1)/etc/caddy
+	$(INSTALL_CONF) ./files/Caddyfile $(1)/etc/caddy/Caddyfile
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/caddy7621mmcbin.init $(1)/etc/init.d/caddy
+	$(INSTALL_DIR) $(1)/etc/security
+	$(INSTALL_CONF) ./files/limits.conf $(1)/etc/security/limits.conf
 endef
 
 $(eval $(call GoBinPackage,$(PKG_NAME)))
 $(eval $(call BuildPackage,$(PKG_NAME)))
+$(eval $(call BuildPackage,$(PKG_NAME)-7621mmcbin))

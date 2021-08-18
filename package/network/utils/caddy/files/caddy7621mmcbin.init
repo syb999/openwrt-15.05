@@ -1,0 +1,24 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+SERVICE_USE_PID=1
+SERVICE_WRITE_PID=1
+SERVICE_DAEMONIZE=1
+
+start() {
+	if [ ! -s /mnt/mmcblk0p1/caddy1/caddy.tar ];then
+		cd /mnt/mmcblk0p1/caddy1
+		tar -cvf caddy.tar caddy
+		rm caddy
+	fi
+	cd /mnt/mmcblk0p1/caddy1
+	tar -xvf caddy.tar -C /tmp
+	service_start /tmp/caddy -conf /etc/caddy/Caddyfile
+}
+
+stop() {
+	if [ -s /tmp/caddy ];then
+		service_stop /tmp/caddy
+	fi
+}

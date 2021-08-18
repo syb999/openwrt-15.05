@@ -7,9 +7,9 @@ SERVICE_WRITE_PID=1
 SERVICE_DAEMONIZE=1
 
 start() {
-        service_start /usr/bin/caddy/caddy -conf /etc/caddy/Caddyfile
+        service_start /usr/caddy1/caddy -conf /etc/caddy/Caddyfile
 }
 
 stop() {
-        service_stop /usr/bin/caddy/caddy
+        service_stop /usr/caddy1/caddy
 }
