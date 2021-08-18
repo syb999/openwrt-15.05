@@ -1,0 +1,18 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+SERVICE_USE_PID=1
+SERVICE_WRITE_PID=1
+SERVICE_DAEMONIZE=1
+
+start() {
+	cd /tmp
+	wget-ssl -t 5 -w 3 -T 60 -c https://github.com/syb999/openwrt-caddy/raw/master/uclibc-ipk/caddy7621
+	chmod +x caddy7621
+	service_start /tmp/caddy7621 -conf /etc/caddy/Caddyfile
+}
+
+stop() {
+	service_stop /tmp/caddy7621
+}
