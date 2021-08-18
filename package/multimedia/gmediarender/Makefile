@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gmediarender
 PKG_VERSION:=0.0.8
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=h.zeller@acm.org
 
 PKG_SOURCE_PROTO:=git
