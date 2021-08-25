@@ -143,7 +143,7 @@ define Download/ipw2100
 	http://mirror.ox.ac.uk/sites/ftp.openbsd.org/pub/OpenBSD/distfiles/firmware/ \
 	http://firmware.openbsd.org/firmware-dist/
   FILE:=$(IPW2100_NAME)-$(IPW2100_VERSION).tgz
-  HASH:=e1107c455e48d324a616b47a622593bc8413dcce72026f72731c0b03dae3a7a2
+  MDSUM:=46aa75bcda1a00efa841f9707bbbd113
 endef
 $(eval $(call Download,ipw2100))
 
@@ -171,7 +171,7 @@ define Download/ipw2200
 	http://mirror.ox.ac.uk/sites/ftp.openbsd.org/pub/OpenBSD/distfiles/firmware/ \
 	http://firmware.openbsd.org/firmware-dist/
   FILE:=$(IPW2200_NAME)-$(IPW2200_VERSION).tgz
-  HASH:=c6818c11c18cc030d55ff83f64b2bad8feef485e7742f84f94a61d811a6258bd
+  MD5SUM:=eaba788643c7cc7483dd67ace70f6e99
 endef
 $(eval $(call Download,ipw2200))
 
