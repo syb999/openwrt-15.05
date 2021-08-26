@@ -27,7 +27,7 @@ tools-$(BUILD_TOOLCHAIN) += gmp mpfr mpc libelf
 tools-y += m4 libtool autoconf automake flex bison pkgconf sed mklibs
 tools-y += sstrip make-ext4fs e2fsprogs mtd-utils mkimage
 tools-y += firmware-utils patch-image patch quilt yaffs2 flock padjffs2
-tools-y += mm-macros missing-macros xz cmake scons bc findutils gengetopt patchelf
+tools-y += mm-macros missing-macros xz cmake scons bc findutils gengetopt patchelf zlib
 tools-$(CONFIG_TARGET_orion_generic) += wrt350nv2-builder upslug2
 tools-y += ucl upx
 tools-$(CONFIG_TARGET_x86) += qemu
@@ -56,7 +56,7 @@ $(curdir)/mpc/compile := $(curdir)/mpfr/install $(curdir)/gmp/install
 $(curdir)/mpfr/compile := $(curdir)/gmp/install
 $(curdir)/ppl/compile := $(curdir)/gmp/install
 $(curdir)/cloog/compile := $(curdir)/ppl/install
-$(curdir)/mtd-utils/compile := $(curdir)/e2fsprogs/install $(curdir)/xz/install
+$(curdir)/mtd-utils/compile := $(curdir)/libtool/install $(curdir)/e2fsprogs/install $(curdir)/zlib/install
 $(curdir)/mkimage/compile := $(curdir)/sed/install
 $(curdir)/mklibs/compile := $(curdir)/libtool/install
 $(curdir)/qemu/compile := $(curdir)/e2fsprogs/install
@@ -75,6 +75,7 @@ $(curdir)/gengetopt/compile := $(curdir)/libtool/install
 $(curdir)/patchelf/compile := $(curdir)/libtool/install
 $(curdir)/dosfstools/compile := $(curdir)/autoconf/install $(curdir)/automake/install
 $(curdir)/libressl/compile := $(curdir)/pkgconf/install
+$(curdir)/zlib/compile := $(curdir)/cmake/install
 $(curdir)/cmake/compile += $(curdir)/libressl/install
 
 ifneq ($(CONFIG_CCACHE)$(CONFIG_SDK),)
