@@ -7,7 +7,6 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=squashfs4
-PKG_CPE_ID:=cpe:/a:phillip_lougher:squashfs
 PKG_VERSION:=4.2
 
 PKG_SOURCE:=squashfs$(PKG_VERSION).tar.gz
@@ -20,8 +19,8 @@ HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/squashfs$(PKG_VERSION)
 include $(INCLUDE_DIR)/host-build.mk
 
 define Host/Compile
-	+$(HOST_MAKE_VARS) \
 	$(MAKE) -C $(HOST_BUILD_DIR)/squashfs-tools \
+		CC="$(HOSTCC)" \
 		XZ_SUPPORT=1 \
 		LZMA_XZ_SUPPORT=1 \
 		XATTR_SUPPORT= \

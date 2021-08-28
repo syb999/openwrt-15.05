@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2015 OpenWrt.org
+# Copyright (C) 2010-2013 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,29 +8,26 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=e2fsprogs
-PKG_CPE_ID:=cpe:/a:e2fsprogs_project:e2fsprogs
-PKG_VERSION:=1.46.2
-PKG_MD5SUM:=40c7b53a90cb1c43d0f42164a7c8c8d9
+PKG_VERSION:=1.42.8
+PKG_MD5SUM:=8ef664b6eb698aa6b733df59b17b9ed4
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@KERNEL/linux/kernel/people/tytso/e2fsprogs/v$(PKG_VERSION)/
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=@SF/e2fsprogs
 
 HOST_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/host-build.mk
 
-ifneq ($(shell $(HOSTCC) --version | grep clang),)
-  HOST_CFLAGS += -D__GNUC_PREREQ\(...\)=0 -Dloff_t=off_t
-endif
-HOST_CFLAGS += $(HOST_FPIC)
+HOST_CFLAGS += $(FPIC)
 
 HOST_CONFIGURE_ARGS += \
+	--disable-shared \
 	--disable-elf-shlibs \
-	--enable-libuuid \
+	--enable-static \
+	--enable-dynamic-e2fsck \
 	--disable-tls \
-	--disable-nls \
-	--enable-threads=pth
+	--disable-nls
 
 define Host/Prepare
 	$(call Host/Prepare/Default)
