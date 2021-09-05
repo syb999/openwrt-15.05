@@ -555,6 +555,18 @@ define Device/hc5962
 endef
 TARGET_DEVICES += hc5962
 
+define Device/nokia-a040wq
+  DTS := NOKIA-A040WQ
+  BLOCKSIZE := 128KiB
+  IMAGES := sysupgrade.bin
+  PAGESIZE := 2048
+  KERNEL_SIZE := 2048k
+  IMAGE_SIZE := 124928k
+  FILESYSTEMS := squashfs
+  IMAGE/sysupgrade.bin:= append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
+endef
+TARGET_DEVICES += nokia-a040wq
+
 define Device/mi-router-ac2100
   DTS := MI-ROUTER-AC2100
   BLOCKSIZE := 128KiB

@@ -137,7 +137,6 @@ platform_check_image() {
 	zbt-we1226 |\
 	zbt-wg2626 |\
 	zte-q7 |\
-	hc5962 |\
 	newifi-d1 |\
 	newifi-d2 |\
 	jcg-y2 |\
@@ -215,6 +214,7 @@ platform_do_upgrade() {
 
 	case "$board" in
 	mi-router-ac2100|\
+	nokia-a040wq |\
 	redmi-router-ac2100|\
 	hc5962)
 		nand_do_upgrade "$ARGV"

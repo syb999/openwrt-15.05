@@ -502,6 +502,9 @@ ramips_board_detect() {
 	*"Newifi-D2")
 		name="newifi-d2"
 		;;
+	*"NOKIA-A040WQ")
+		name="nokia-a040wq"
+		;;
 	*"JCG-Y2")
 		name="jcg-y2"
 		;;

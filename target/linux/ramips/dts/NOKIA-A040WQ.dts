@@ -1,0 +1,127 @@
+/dts-v1/;
+
+/include/ "mt7621.dtsi"
+
+/ {
+	compatible = "nokia-a040wq", "mediatek,mt7621-soc";
+	model = "NOKIA-A040WQ";
+
+	palmbus@1E000000 {
+		spi@b00 {
+			status="disabled";
+		};
+	};
+
+	chosen {
+		bootargs = "console=ttyS0,115200";
+	};
+
+	nand@1e003000 {
+		status = "okay";
+
+		partition@0 {
+			label = "u-boot";
+			reg = <0x0 0x80000>;
+			read-only;
+		};
+
+		partition@80000 {
+			label = "u-boot-env";
+			reg = <0x80000 0x80000>;
+			read-only;
+		};
+
+		factory: partition@100000 {
+			label = "factory";
+			reg = <0x100000 0x40000>;
+			read-only;
+		};
+		
+		partition@140000 {
+			label = "kernel";
+			reg = <0x140000 0x200000>;
+		};
+
+		partition@340000 {
+			label = "ubi";
+			reg = <0x340000 0x7a00000>;
+		};
+	};
+
+	pcie@1e140000 {
+		status = "okay";
+
+		pcie0 {
+			wifi@0,0 {
+				compatible = "mediatek,mt76";
+				reg = <0x0000 0 0 0 0>;
+				device_type = "pci";
+				mediatek,mtd-eeprom = <&factory 0x0>;
+
+				led {
+					led-sources = <3>;
+					led-active-low;
+				};
+			};
+		};
+	};
+
+	ethernet@1e100000 {
+		mtd-mac-address = <&factory 0x4>;
+	};	
+
+	gpio-leds {
+		compatible = "gpio-leds";
+
+		sys {
+			label = "nokia:blue:sys";
+			gpios = <&gpio0 5 1>;
+		};
+
+		wlan2g {
+			label = "nokia:blue:wlan2g";
+			gpios = <&gpio0 4 1>;
+		};
+
+		wlan5g {
+			label = "nokia:blue:wlan5g";
+			gpios = <&gpio0 3 1>;
+		};
+
+		usb {
+			label = "nokia:blue:usb";
+			gpios = <&gpio0 13 1>;
+			trigger-sources = <&xhci_ehci_port1>, <&ehci_port2>;
+			linux,default-trigger = "usbport";
+		};
+	};
+
+	gpio-keys-polled {
+		compatible = "gpio-keys-polled";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		poll-interval = <20>;
+
+		reset {
+			label = "reset";
+			gpios = <&gpio0 15 1>;
+			linux,code = <0x198>;
+		};
+
+		wps {
+			label = "wps";
+			gpios = <&gpio0 18 1>;
+			linux,code = <0x211>;
+		};
+	};
+
+	pinctrl {
+		state_default: pinctrl0 {
+			gpio {
+				ralink,group = "i2c", "jtag", "uart2", "uart3", "wdt";
+				ralink,function = "gpio";
+			};
+		};
+	};
+
+};

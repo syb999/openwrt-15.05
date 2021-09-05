@@ -219,6 +219,13 @@ ramips_setup_interfaces()
 		ucidef_add_switch_vlan "switch0" "2" "4 6t"
 		;;
 
+	nokia-a040wq)
+		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
+		ucidef_add_switch "switch0" "1" "1"
+		ucidef_add_switch_vlan "switch0" "1" "0 1 2 3 6t"
+		ucidef_add_switch_vlan "switch0" "2" "4 6t"
+		;;
+
 	whr-1166d)
 		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
 		ucidef_add_switch "switch0" "1" "1"
@@ -471,6 +478,12 @@ ramips_setup_macs()
 	newifi-d1)
 		lan_mac=$(cat /sys/class/net/eth0/address)
 		wan_mac=$(macaddr_add "$lan_mac" -1)
+		;;
+
+	nokia-a040wq)
+		eth0_mac=$(cat /sys/class/net/eth0/address)
+		lan_mac=$(macaddr_add "$eth0_mac" -1)
+		wan_mac=$(macaddr_add "$eth0_mac" -2)
 		;;
 
 	hc5611 | \
