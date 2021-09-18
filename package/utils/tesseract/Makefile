@@ -53,8 +53,8 @@ define Package/tesseract/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib*.so.* $(1)/usr/lib/
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) ./files/*.traineddata $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/usr/tessdata
+	$(INSTALL_BIN) ./files/*.traineddata $(1)/usr/tessdata/
 endef
 
 $(eval $(call BuildPackage,tesseract))
