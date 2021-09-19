@@ -1,0 +1,11 @@
+--- a/Makefile
++++ b/Makefile
+@@ -603,7 +603,7 @@
+ #
+ install: all install-test install-prog install-icc2ps install-osx-hotplug \
+ 	    install-extra install-crd install-foo install-ppd \
+-	    install-gui install-desktop install-filter \
++	    install-gui install-desktop \
+ 	    install-man install-doc
+ 	#
+ 	# If you use CUPS, then restart the spooler:
