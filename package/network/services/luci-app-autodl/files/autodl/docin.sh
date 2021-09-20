@@ -1,9 +1,9 @@
 #!/bin/sh
 
-docinurl=$(cat /tmp/autodldocin.url)
-docintotalpage=$(cat /tmp/autodldocin.page)
-docinname=$(cat /tmp/autodldocin.name)
-pdocinpath=$(cat /tmp/autodldocin.path)
+docinurl=$(uci get autodl.@autodl[0].docinurl)
+docintotalpage=$(uci get autodl.@autodl[0].docinpage)
+docinname=$(uci get autodl.@autodl[0].docinname)
+pdocinpath=$(uci get autodl.@autodl[0].docinpath)
 docindlpage=1
 
 if [ ! -d "/autodl" ]; then
@@ -64,4 +64,3 @@ mkdir $docinname
 fi
 
 mv -f *.png $docinname
-

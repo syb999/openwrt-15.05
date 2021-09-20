@@ -367,15 +367,14 @@ au4 = s:taboption("autodldocin", Button, "_autodldocin", translate("One-click do
 au4.inputstyle = "apply"
 au4.description = translate("docin.com documents download")
 function au4.write(self, section)
-    luci.util.exec("uci get autodl.@autodl[0].docinurl > /tmp/autodldocin.url")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autodl.@autodl[0].docinpage > /tmp/autodldocin.page")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autodl.@autodl[0].docinname > /tmp/autodldocin.name")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autodl.@autodl[0].docinpath > /tmp/autodldocin.path")
-    luci.util.exec("sleep 1")
-    luci.util.exec("/usr/autodl/docin.sh &")
+    luci.util.exec("/usr/autodl/docin.sh >/dev/null 2>&1 &")
+end
+
+au4txt = s:taboption("autodldocin", Button, "_autodldocintxt", translate("One-click convert to TXT"))
+au4txt.inputstyle = "apply"
+au4txt.description = translate("docin.com documents convert to TXT(depends imagemagick & tesseract)")
+function au4txt.write(self, section)
+    luci.util.exec("/usr/autodl/docintotxt.sh >/dev/null 2>&1 &")
 end
 
 s:tab("autodlbook", translate("Books Download Page"))
