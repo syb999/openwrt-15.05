@@ -19,6 +19,12 @@ msgstr "小说基本设置"
 msgid "Videos Download Page"
 msgstr "视频下载页面"
 
+msgid "Download Audio from https://www.ximalaya.com"
+msgstr "喜马拉雅音频下载页面"
+
+msgid "Download from https://www.docin.com"
+msgstr "docin.com下载页面"
+
 msgid "Video URL"
 msgstr "视频 URL"
 
@@ -165,6 +171,12 @@ msgstr "调高音量"
 
 msgid "Volume Down"
 msgstr "调低音量"
+
+msgid "Use the second sound card"
+msgstr "使用第二块声卡"
+
+msgid "Use default sound card"
+msgstr "使用默认声卡"
 
 msgid "www.ishuyin.com One-click download"
 msgstr "一键下载ishuyin.com"
