@@ -1,0 +1,39 @@
+--- a/drivers/net/wireless/ralink/rt2x00/rt2x00queue.c
++++ b/drivers/net/wireless/ralink/rt2x00/rt2x00queue.c
+@@ -463,6 +463,8 @@
+ 		txdesc->rate_mode = RATE_MODE_HT_MIX;
+ 	else {
+ 		rate = ieee80211_get_tx_rate(rt2x00dev->hw, tx_info);
++		if (rate == NULL || rate->hw_value >= 12)
++			return;
+ 		hwrate = rt2x00_get_rate(rate->hw_value);
+ 		if (hwrate->flags & DEV_RATE_OFDM)
+ 			txdesc->rate_mode = RATE_MODE_OFDM;
+@@ -476,6 +478,16 @@
+ 	rt2x00crypto_create_tx_descriptor(rt2x00dev, skb, txdesc);
+ 	rt2x00queue_create_tx_descriptor_seq(rt2x00dev, skb, txdesc);
+ 
++	if (!hwrate) {
++		if (!rt2x00_has_cap_flag(rt2x00dev, REQUIRE_HT_TX_DESC) ||
++				!(txrate->flags & IEEE80211_TX_RC_MCS)) {
++			rate = ieee80211_get_tx_rate(rt2x00dev->hw, tx_info);
++			if (rate == NULL || rate->hw_value >= 12)
++				return;
++			hwrate = rt2x00_get_rate(rate->hw_value);
++		}
++	}
++
+ 	if (rt2x00_has_cap_flag(rt2x00dev, REQUIRE_HT_TX_DESC))
+ 		rt2x00queue_create_tx_descriptor_ht(rt2x00dev, skb, txdesc,
+ 						   sta, hwrate);
+--- a/include/net/mac80211.h
++++ b/include/net/mac80211.h
+@@ -2718,7 +2718,7 @@
+ ieee80211_get_tx_rate(const struct ieee80211_hw *hw,
+ 		      const struct ieee80211_tx_info *c)
+ {
+-	if (WARN_ON_ONCE(c->control.rates[0].idx < 0))
++	if (c->control.rates[0].idx < 0)
+ 		return NULL;
+ 	return &hw->wiphy->bands[c->band]->bitrates[c->control.rates[0].idx];
+ }
