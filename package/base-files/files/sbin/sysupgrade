@@ -10,6 +10,7 @@ export INTERACTIVE=0
 export VERBOSE=1
 export SAVE_CONFIG=1
 export SAVE_OVERLAY=0
+export DELAY=
 export SAVE_PARTITIONS=1
 export CONF_IMAGE=
 export CONF_BACKUP_LIST=0
@@ -24,6 +25,7 @@ export TEST=0
 while [ -n "$1" ]; do
 	case "$1" in
 		-i) export INTERACTIVE=1;;
+		-d) export DELAY="$2"; shift;;
 		-v) export VERBOSE="$(($VERBOSE + 1))";;
 		-q) export VERBOSE="$(($VERBOSE - 1))";;
 		-n) export SAVE_CONFIG=0;;
@@ -256,9 +258,5 @@ if [ -n "$FAILSAFE" ]; then
 	printf '%s\x00%s\x00%s' "$RAM_ROOT" "$IMAGE" "$COMMAND" >/tmp/sysupgrade
 	lock -u /tmp/.failsafe
 else
-	ubus call system sysupgrade "{
-		\"prefix\": $(json_string "$RAM_ROOT"),
-		\"path\": $(json_string "$IMAGE"),
-		\"command\": $(json_string "$COMMAND")
-	}"
+	do_upgrade
 fi

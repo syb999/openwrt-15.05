@@ -251,5 +251,26 @@ default_do_upgrade() {
 	else
 		get_image "$1" "$2" | mtd $MTD_ARGS write - "${PART_NAME:-image}"
 	fi
-	[ $? -ne 0 ] && exit 1
+}
+
+do_upgrade() {
+	v "Performing system upgrade..."
+	if type 'platform_do_upgrade' >/dev/null 2>/dev/null; then
+		platform_do_upgrade "$ARGV"
+	else
+		default_do_upgrade "$ARGV"
+	fi
+
+	if [ "$SAVE_CONFIG" -eq 1 ] && type 'platform_copy_config' >/dev/null 2>/dev/null; then
+		platform_copy_config
+	fi
+
+	v "Upgrade completed"
+	[ -n "$DELAY" ] && sleep "$DELAY"
+	ask_bool 1 "Reboot" && {
+		v "Rebooting system..."
+		reboot -f
+		sleep 5
+		echo b 2>/dev/null >/proc/sysrq-trigger
+	}
 }
