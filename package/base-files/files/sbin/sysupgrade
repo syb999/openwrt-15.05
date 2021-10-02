@@ -1,5 +1,7 @@
 #!/bin/sh
 
+[ "$1" = "nand" ] && exec /lib/upgrade/stage2 "$2" "$3"
+
 . /lib/functions.sh
 . /lib/functions/system.sh
 
@@ -247,16 +249,7 @@ else
 	rm -f /tmp/sysupgrade.always.overwrite.bootdisk.partmap
 fi
 
-run_hooks "" $sysupgrade_pre_upgrade
-
 install_bin /sbin/upgraded
 v "Commencing upgrade. All shell sessions will be closed now."
 
-COMMAND='/lib/upgrade/do_stage2'
-
-if [ -n "$FAILSAFE" ]; then
-	printf '%s\x00%s\x00%s' "$RAM_ROOT" "$IMAGE" "$COMMAND" >/tmp/sysupgrade
-	lock -u /tmp/.failsafe
-else
-	do_upgrade
-fi
+do_upgrade
