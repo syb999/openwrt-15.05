@@ -60,7 +60,7 @@
  			  bool flush);
 --- a/tx.c
 +++ b/tx.c
-@@ -54,23 +54,11 @@
+@@ -54,27 +54,10 @@
  
  	spin_unlock_bh(&dev->status_list.lock);
  
@@ -74,19 +74,22 @@
 -		struct mt76_wcid *wcid;
 -
 -		wcid = rcu_dereference(dev->wcid[cb->wcid]);
--		if (wcid)
+-		if (wcid) {
 -			status.sta = wcid_to_sta(wcid);
+-
+-			if (status.sta)
+-				status.rate = &wcid->rate;
+-		}
 -
  		hw = mt76_tx_status_get_hw(dev, skb);
 -		ieee80211_tx_status_ext(hw, &status);
 +		ieee80211_tx_status(hw, skb);
  	}
 -	rcu_read_unlock();
-+
  }
  EXPORT_SYMBOL_GPL(mt76_tx_status_unlock);
  
-@@ -92,7 +80,7 @@
+@@ -92,7 +75,7 @@
  
  	/* Tx status can be unreliable. if it fails, mark the frame as ACKed */
  	if (flags & MT_TX_CB_TXS_FAILED) {
@@ -95,7 +98,7 @@
  		info->status.rates[0].idx = -1;
  		info->flags |= IEEE80211_TX_STAT_ACK;
  	}
-@@ -185,37 +173,36 @@
+@@ -185,37 +168,36 @@
  EXPORT_SYMBOL_GPL(mt76_tx_status_check);
  
  static void
@@ -152,7 +155,7 @@
  
  #ifdef CONFIG_NL80211_TESTMODE
  	if (mt76_is_testmode_skb(dev, skb, &hw)) {
-@@ -227,25 +214,21 @@
+@@ -227,25 +209,21 @@
  			wake_up(&dev->tx_wait);
  
  		dev_kfree_skb_any(skb);
