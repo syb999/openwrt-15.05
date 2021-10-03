@@ -251,5 +251,6 @@ fi
 
 install_bin /sbin/upgraded
 v "Commencing upgrade. All shell sessions will be closed now."
+COMMAND='/lib/upgrade/do_stage2'
 
 do_upgrade
