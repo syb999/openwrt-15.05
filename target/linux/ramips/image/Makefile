@@ -549,6 +549,7 @@ define Device/hc5962
   BLOCKSIZE := 128KiB
   PAGESIZE := 2048
   KERNEL_SIZE := 2097152
+  IMAGE_SIZE := 127232k
   FILESYSTEMS := squashfs
   IMAGES := factory.bin
   IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
