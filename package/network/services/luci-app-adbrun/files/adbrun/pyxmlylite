@@ -13,7 +13,7 @@ process.close()
 
 while True:
 	subprocess.call(r'adb -s $(uci get adbrun.'+sectionname+'.'+currentclient+'):5555 exec-out screencap -p > /tmp/sc$(uci get adbrun.'+sectionname+'.'+currentclient+').jpg',shell=True)
-	time.sleep(30)
+	time.sleep(5)
 	img = Image.open(fpath)
 	img = img.convert("RGB")
 	for x in range(30,1070,10):

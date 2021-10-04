@@ -16,7 +16,7 @@ define Package/luci-app-adbrun
 	DEPENDS:=+adb
 endef
 
-define Package/gmrender/description
+define Package/luci-app-adbrun/description
 	python3 script depends pillow
 endef
 
