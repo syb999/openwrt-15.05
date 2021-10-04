@@ -2,8 +2,8 @@ include $(TOPDIR)/rules.mk
 
 
 PKG_NAME:=luci-app-adbrun
-PKG_VERSION:=0.1
-PKG_RELEASE:=20201101
+PKG_VERSION:=20211005
+PKG_RELEASE:=
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -13,7 +13,11 @@ define Package/luci-app-adbrun
 	SUBMENU:=3. Applications
 	TITLE:=LuCI Support for adb
 	PKGARCH:=all
-	DEPENDS:=+adb +coreutils +coreutils-nohup
+	DEPENDS:=+adb
+endef
+
+define Package/gmrender/description
+	python3 script depends pillow
 endef
 
 define Build/Prepare

@@ -1,135 +1,56 @@
 m = Map("adbrun", translate("adb server."))
 
 s = m:section(TypedSection, "adbrun", "", translate("Assistant for automatic control android devices."))
-s.anonymous = true
-s.addremove = false
 
-s:tab("adbrun", translate("Details"))
+s:tab("adb_set", translate("basic"))
 
----- connect phone1
-o = s:taboption("adbrun", Button, "_connect1", translate("connect phone1"))
-o.inputstyle = "apply"
-function o.write(self, section)
-    luci.util.exec("adb connect 192.168.170.21")
+s.anonymous = false
+s.addremove = true
+
+adbclient=s:taboption("adb_set",Value, "adbclient", translate("adb client name"))
+adbclient.rmempty = true
+adbclient.datatype = "or(ipaddr, network)"
+
+adbiplist=s:taboption("adb_set",Value, "adbiplist", translate("IP address")) 
+adbiplist.rmempty = true
+adbiplist.datatype = "ipaddr"
+luci.sys.net.ipv4_hints(function(ip, name)
+	adbiplist:value(ip, "%s (%s)" %{ ip, name })
+end)
+
+adbconnect=s:taboption("adb_set",Button,"adbconnect",translate("Connect client"))
+adbconnect.rmempty = true
+adbconnect.inputstyle = "apply"
+function adbconnect.write(self, section)
+	local adbconnectip = luci.util.exec("adb connect $(uci get adbrun."..section..".adbiplist)")
+--	local testconnect = luci.util.exec("adb devices | grep -i "..section)
+--	if testconnect == "" then
+--		luci.util.exec("logger Connection failed: Please connect the computer with USB cable. ")
+--		luci.util.exec("logger Run: adb tcpip 5555 ")
+--	else
+--		luci.util.exec("logger Successful: "..adbconnectip)
+--	end
 end
 
----- connect phone2
-o = s:taboption("adbrun", Button, "_connect2", translate("connect phone2"))
-o.inputstyle = "apply"
-function o.write(self, section)
-    luci.util.exec("adb connect 192.168.170.22")
+adbcommandlist = s:taboption("adb_set", ListValue, "adbcommandlist", translate("command list"), translate("adbrun command list"))
+adbcommandlist.placeholder = "none"
+adbcommandlist:value("none", translate("none"))
+adbcommandlist:value("turn-offon-the-screen", translate("Turn off/on the screen"))
+adbcommandlist:value("turn-on-the-screen", translate("Turn on screen"))
+adbcommandlist:value("playback", translate("Playback audio"))
+adbcommandlist:value("pause-playback", translate("Pause audio"))
+adbcommandlist:value("mute", translate("Mute on/off"))
+adbcommandlist:value("appactivity", translate("Get running APP"))
+adbcommandlist:value("runxmlylite", translate("Run ximalaya lite version"))
+adbcommandlist:value("pyxmlylite", translate("Automatically get gold coins from ximalaya lite version"))
+adbcommandlist.default     = "none"
+adbcommandlist.rempty      = false
+adbplay=s:taboption("adb_set",Button, "adbplay", translate("Play")) 
+adbplay.rmempty = true
+adbplay.inputstyle = "apply"
+function adbplay.write(self, section)
+	luci.util.exec("cp /usr/adbrun/adbcommand.sh /tmp/adb_" ..section.. "_.sh")
+	luci.util.exec("/tmp/adb_" ..section.. "_.sh")
 end
-
----- connect phone3
-o = s:taboption("adbrun", Button, "_connect3", translate("connect phone3"))
-o.inputstyle = "apply"
-function o.write(self, section)
-    luci.util.exec("adb connect 192.168.170.23")
-end
-
----- connect phone4
-o = s:taboption("adbrun", Button, "_connect4", translate("connect phone4"))
-o.inputstyle = "apply"
-function o.write(self, section)
-    luci.util.exec("adb connect 192.168.170.24")
-end
-
----- connect phone5
-o = s:taboption("adbrun", Button, "_connect5", translate("connect phone5"))
-o.inputstyle = "apply"
-function o.write(self, section)
-    luci.util.exec("adb connect 192.168.170.25")
-end
-
----- connect phone6
-o = s:taboption("adbrun", Button, "_connect6", translate("connect phone6"))
-o.inputstyle = "apply"
-function o.write(self, section)
-    luci.util.exec("adb connect 192.168.170.26")
-end
-
----- control phone1
-o = s:taboption("adbrun", Button, "_control1", translate("control phone1 video"))
-o.inputstyle = "apply"
-function o.write(self, section)
-    luci.util.exec("nohup /usr/adbrun/adbd1.sh >/dev/null 2>&1 &")
-end
-
----- control phone2
-o = s:taboption("adbrun", Button, "_control2", translate("control phone2 video"))
-o.inputstyle = "apply"
-function o.write(self, section)
-    luci.util.exec("nohup /usr/adbrun/adbd2.sh >/dev/null 2>&1 &")
-end
-
----- control phone3
-o = s:taboption("adbrun", Button, "_control3", translate("control phone3 video"))
-o.inputstyle = "apply"
-function o.write(self, section)
-    luci.util.exec("nohup /usr/adbrun/adbd3.sh >/dev/null 2>&1 &")
-end
-
-
----- control phone4
-o = s:taboption("adbrun", Button, "_control4", translate("control phone4 video"))
-o.inputstyle = "apply"
-function o.write(self, section)
-    luci.util.exec("nohup /usr/adbrun/adbd4.sh >/dev/null 2>&1 &")
-end
-
----- stop phone4
-o = s:taboption("adbrun", Button, "_stop4", translate("stop phone4"))
-o.inputstyle = "apply"
-function o.write(self, section)
-    luci.util.exec("nohup /usr/adbrun/adbd4-stop.sh >/dev/null 2>&1 &")
-end
-
----- control phone5
-o = s:taboption("adbrun", Button, "_control5", translate("control phone5 video"))
-o.inputstyle = "apply"
-function o.write(self, section)
-    luci.util.exec("nohup /usr/adbrun/adbd5.sh >/dev/null 2>&1 &")
-end
-
----- stop phone5
-o = s:taboption("adbrun", Button, "_stop5", translate("stop phone5"))
-o.inputstyle = "apply"
-function o.write(self, section)
-    luci.util.exec("nohup /usr/adbrun/adbd5-stop.sh >/dev/null 2>&1 &")
-end
-
-
----- control phone6
-o = s:taboption("adbrun", Button, "_control6", translate("control phone6 book"))
-o.inputstyle = "apply"
-function o.write(self, section)
-    luci.util.exec("nohup /usr/adbrun/adbd6.sh >/dev/null 2>&1 &")
-end
-
----- stop phone6
-o = s:taboption("adbrun", Button, "_stop6", translate("stop phone6"))
-o.inputstyle = "apply"
-function o.write(self, section)
-    luci.util.exec("nohup /usr/adbrun/adbd6-stop.sh >/dev/null 2>&1 &")
-end
-
-
-s:tab("basic",  translate("Base Setting"))
-
-o = s:taboption("basic", Flag, "enabled", translate("Enable"))
-
-local detail = "/usr/adbrun/detail"
-local NXFS = require "nixio.fs"
-o = s:taboption("basic", TextValue, "detail")
-o.description = translate("init detail")
-o.rows = 9
-o.wrap = "off"
-o.cfgvalue = function(self, section)
-	return NXFS.readfile(detail) or ""
-end
-o.write = function(self, section, value)
-	NXFS.writefile(detail, value:gsub("\r\n", "\n"))
-end
-
 
 return m
