@@ -33,6 +33,7 @@ function adbconnect.write(self, section)
 end
 
 adbcommandlist = s:taboption("adb_set", ListValue, "adbcommandlist", translate("command list"), translate("adbrun command list"))
+adbcommandlist.placeholder = "none"
 adbcommandlist:value("none", translate("none"))
 adbcommandlist:value("turn-offon-the-screen", translate("Turn off/on the screen"))
 adbcommandlist:value("turn-on-the-screen", translate("Turn on screen"))

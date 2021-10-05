@@ -43,6 +43,7 @@ case $adbcommand in
 		adbsh="readbook"
 	;;
 	none) adbcd=""
+	;;
 esac
 
 if [ $adbcd == "scripts" ];then
