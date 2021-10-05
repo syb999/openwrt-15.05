@@ -1,0 +1,29 @@
+import os
+import time
+import subprocess
+from PIL import Image
+
+currentclient="adbiplist"
+sectionname = os.path.basename(__file__).split("_")[0]
+process = os.popen('uci get adbrun.'+sectionname+'.'+currentclient)
+output = process.read()
+fixoutput=output.rstrip("\n")
+fpath='/tmp/sc'+ fixoutput+'.jpg'
+process.close()
+
+while True:
+	subprocess.call(r'adb -s $(uci get adbrun.'+sectionname+'.'+currentclient+'):5555 shell screencap -p /data/local/tmp/sc$(uci get adbrun.'+sectionname+'.'+currentclient+').jpg',shell=True)
+	subprocess.call(r'adb -s $(uci get adbrun.'+sectionname+'.'+currentclient+'):5555 pull /data/local/tmp/sc$(uci get adbrun.'+sectionname+'.'+currentclient+').jpg /tmp/ > /dev/null 2>&1',shell=True)
+	time.sleep(5)
+	img = Image.open(fpath)
+	img = img.convert("RGB")
+	for x in range(10,710,5):
+		for y in range(330,680):
+			data = (img.getpixel((x,y)))
+			if (data[0] == 252 and data[1] == 195 and data[2] == 92 ):
+				subprocess.call('adb -s $(uci get adbrun.'+sectionname+'.'+currentclient+'):5555 shell input tap '+ str(x) +' '+ str(y),shell=True)
+				time.sleep(2)
+				subprocess.call('adb -s $(uci get adbrun.'+sectionname+'.'+currentclient+'):5555 shell input tap 555 335',shell=True)
+				subprocess.call('adb -s $(uci get adbrun.'+sectionname+'.'+currentclient+'):5555 shell input tap 555 380',shell=True)
+				time.sleep(2)
+	continue;

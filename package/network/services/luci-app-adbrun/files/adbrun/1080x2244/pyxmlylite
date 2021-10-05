@@ -26,4 +26,3 @@ while True:
 				subprocess.call('adb -s $(uci get adbrun.'+sectionname+'.'+currentclient+'):5555 shell input tap 855 690',shell=True)
 				time.sleep(2)
 	continue;
-
