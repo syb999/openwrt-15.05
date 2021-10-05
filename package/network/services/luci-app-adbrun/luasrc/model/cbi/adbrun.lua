@@ -56,4 +56,12 @@ function adbplay.write(self, section)
 	luci.util.exec("/tmp/adb_" ..section.. "_.sh")
 end
 
+adbstop=s:taboption("adb_set",Button, "adbstop", translate("Stop loop script")) 
+adbstop.rmempty = true
+adbstop.inputstyle = "apply"
+function adbstop.write(self, section)
+	luci.util.exec("kill $(ps | grep " ..section.. " | head -n 1 | grep -v grep | cut -d 'r' -f 1) > /dev/null 2>&1")
+	luci.util.exec("kill $(ps | grep " ..section.. " | head -n 1 | grep -v grep | cut -d 'r' -f 1) > /dev/null 2>&1")
+end
+
 return m
