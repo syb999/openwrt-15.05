@@ -35,6 +35,8 @@ define Package/luci-app-adbrun/install
 	$(INSTALL_BIN) ./files/adbrun/720x1280/* $(1)/usr/adbrun/720x1280
 	$(INSTALL_DIR) $(1)/usr/adbrun/1080x2244
 	$(INSTALL_BIN) ./files/adbrun/1080x2244/* $(1)/usr/adbrun/1080x2244
+	$(INSTALL_DIR) $(1)/usr/adbrun/1080x1920
+	$(INSTALL_BIN) ./files/adbrun/1080x1920/* $(1)/usr/adbrun/1080x1920
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/adbrun.conf $(1)/etc/config/adbrun
 	$(INSTALL_DIR) $(1)/etc/init.d

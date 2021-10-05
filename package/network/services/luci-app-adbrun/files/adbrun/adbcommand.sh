@@ -11,6 +11,8 @@ if [ ${screensize} == "720x1280" ];then
 	sizepath="720x1280"
 elif  [ ${screensize} == "1080x2244" ];then
 	sizepath="1080x2244"
+elif  [ ${screensize} == "1080x1920" ];then
+	sizepath="1080x1920"
 fi
 
 case $adbcommand in
@@ -35,13 +37,21 @@ case $adbcommand in
 	pyxmlylite) adbcd="scripts"
 		adbsh="pyxmlylite"
 	;;
+	readbook) adbcd="scripts"
+		adbsh="readbook"
+	;;
 	none) adbcd=""
 	;;
 esac
 
 if [ $adbcd == "scripts" ];then
-	cp ${spath}${sizepath}/${adbsh} /tmp/${sectionname}_py
-	python3 /tmp/${sectionname}_py
+	if [ ${adbsh} ==  "pyxmlylite" ];then
+		cp ${spath}${sizepath}/${adbsh} /tmp/${sectionname}_py
+		python3 /tmp/${sectionname}_py
+	elif  [ ${adbsh} == "readbook" ];then
+		cp ${spath}${sizepath}/${adbsh} /tmp/${sectionname}_sh
+		sh /tmp/${sectionname}_sh
+	fi
 else
 	adb -s ${adbclient}:5555 ${adbcd}
 fi

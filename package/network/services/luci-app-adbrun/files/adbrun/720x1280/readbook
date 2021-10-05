@@ -1,0 +1,17 @@
+#!/bin/sh
+
+basex=650
+basey=600
+
+sectionname=$(echo $0 | cut -d '_' -f 2)
+adbclient=$(uci get adbrun.$sectionname.adbiplist)
+
+while true
+do
+	rtime=$(echo `expr $(date +"%s" | cut -c 10) + 1`)
+	rx=$(echo `expr $basex + $rtime`)
+	ry=$(echo `expr $basey + $rtime`)
+	adb -s ${adbclient}:5555 shell input swipe ${rx} ${ry} 420 500
+	sleep ${rtime}
+done
+
