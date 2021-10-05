@@ -26,13 +26,15 @@ case $adbcommand in
 	;;
 	mute) adbcd="shell input keyevent 164"
 	;;
+	runcamera) adbcd="shell am start -n com.android.camera/.Camera"
+	;;
+	photograph) adbcd="shell input keyevent 27"
+	;;
 	appactivity) adbcd="shell dumpsys activity activities | grep -i run"
 	;;
 	runxmlylite) adbcd="shell am start -n com.ximalaya.ting.lite/com.ximalaya.ting.android.host.activity.MainActivity"
 	;;
-	runcamera) adbcd="shell am start -n com.android.camera/.Camera"
-	;;
-	photograph) adbcd="shell input keyevent 27"
+	runfqxs) adbcd="shell am start -n com.dragon.read/.pages.splash.SplashActivity"
 	;;
 	pyxmlylite) adbcd="scripts"
 		adbsh="pyxmlylite"
@@ -41,7 +43,6 @@ case $adbcommand in
 		adbsh="readbook"
 	;;
 	none) adbcd=""
-	;;
 esac
 
 if [ $adbcd == "scripts" ];then

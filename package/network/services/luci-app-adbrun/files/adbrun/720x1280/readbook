@@ -3,7 +3,7 @@
 basex=650
 basey=600
 
-sectionname=$(echo $0 | cut -d '_' -f 2)
+sectionname=$(echo $0 | cut -d '/' -f 3 | cut -d '_' -f 1)
 adbclient=$(uci get adbrun.$sectionname.adbiplist)
 
 while true
@@ -14,4 +14,3 @@ do
 	adb -s ${adbclient}:5555 shell input swipe ${rx} ${ry} 420 500
 	sleep ${rtime}
 done
-

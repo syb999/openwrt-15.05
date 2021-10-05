@@ -33,18 +33,18 @@ function adbconnect.write(self, section)
 end
 
 adbcommandlist = s:taboption("adb_set", ListValue, "adbcommandlist", translate("command list"), translate("adbrun command list"))
-adbcommandlist.placeholder = "none"
 adbcommandlist:value("none", translate("none"))
 adbcommandlist:value("turn-offon-the-screen", translate("Turn off/on the screen"))
 adbcommandlist:value("turn-on-the-screen", translate("Turn on screen"))
 adbcommandlist:value("playback", translate("Playback audio"))
 adbcommandlist:value("pause-playback", translate("Pause audio"))
 adbcommandlist:value("mute", translate("Mute on/off"))
-adbcommandlist:value("appactivity", translate("Get running APP"))
-adbcommandlist:value("runxmlylite", translate("Run ximalaya lite version"))
 adbcommandlist:value("runcamera", translate("Run camera"))
 adbcommandlist:value("photograph", translate("Take a picture"))
+adbcommandlist:value("appactivity", translate("Get running APP"))
+adbcommandlist:value("runxmlylite", translate("Run ximalaya lite version"))
 adbcommandlist:value("pyxmlylite", translate("Automatically get gold coins from ximalaya lite version"))
+adbcommandlist:value("runfqxs", translate("Run fanqie xiaoshuo"))
 adbcommandlist:value("readbook", translate("Automatically read book"))
 adbcommandlist.default     = "none"
 adbcommandlist.rempty      = false
