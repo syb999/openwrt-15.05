@@ -28,6 +28,10 @@ case $adbcommand in
 	;;
 	runxmlylite) adbcd="shell am start -n com.ximalaya.ting.lite/com.ximalaya.ting.android.host.activity.MainActivity"
 	;;
+	runcamera) adbcd="shell am start -n com.android.camera/.Camera"
+	;;
+	photograph) adbcd="shell input keyevent 27"
+	;;
 	pyxmlylite) adbcd="scripts"
 		adbsh="pyxmlylite"
 	;;

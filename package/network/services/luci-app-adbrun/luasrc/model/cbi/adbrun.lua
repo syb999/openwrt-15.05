@@ -43,6 +43,8 @@ adbcommandlist:value("mute", translate("Mute on/off"))
 adbcommandlist:value("appactivity", translate("Get running APP"))
 adbcommandlist:value("runxmlylite", translate("Run ximalaya lite version"))
 adbcommandlist:value("pyxmlylite", translate("Automatically get gold coins from ximalaya lite version"))
+adbcommandlist:value("runcamera", translate("Run camera"))
+adbcommandlist:value("photograph", translate("Take a picture"))
 adbcommandlist.default     = "none"
 adbcommandlist.rempty      = false
 adbplay=s:taboption("adb_set",Button, "adbplay", translate("Play")) 
