@@ -20,7 +20,13 @@ case $adbcommand in
 	;;
 	turn-on-the-screen) adbcd="shell input keyevent 224"
 	;;
-	playback) adbcd="shell input keyevent 126"
+	playstop) adbcd="shell input keyevent 85"
+	;;
+	playnext) adbcd="shell input keyevent 87"
+	;;
+	playprevious) adbcd="shell input keyevent 88"
+	;;
+	resume-playback) adbcd="shell input keyevent 126"
 	;;
 	pause-playback) adbcd="shell input keyevent 127"
 	;;

@@ -2,14 +2,10 @@ m = Map("adbrun", translate("adb server."))
 
 s = m:section(TypedSection, "adbrun", "", translate("Assistant for automatic control android devices."))
 
-s:tab("adb_set", translate("basic"))
+s:tab("adb_set", translate("Basic setting"))
 
 s.anonymous = false
 s.addremove = true
-
-adbclient=s:taboption("adb_set",Value, "adbclient", translate("adb client name"))
-adbclient.rmempty = true
-adbclient.datatype = "or(ipaddr, network)"
 
 adbiplist=s:taboption("adb_set",Value, "adbiplist", translate("IP address")) 
 adbiplist.rmempty = true
@@ -18,26 +14,15 @@ luci.sys.net.ipv4_hints(function(ip, name)
 	adbiplist:value(ip, "%s (%s)" %{ ip, name })
 end)
 
-adbconnect=s:taboption("adb_set",Button,"adbconnect",translate("Connect client"))
-adbconnect.rmempty = true
-adbconnect.inputstyle = "apply"
-function adbconnect.write(self, section)
-	local adbconnectip = luci.util.exec("adb connect $(uci get adbrun."..section..".adbiplist)")
---	local testconnect = luci.util.exec("adb devices | grep -i "..section)
---	if testconnect == "" then
---		luci.util.exec("logger Connection failed: Please connect the computer with USB cable. ")
---		luci.util.exec("logger Run: adb tcpip 5555 ")
---	else
---		luci.util.exec("logger Successful: "..adbconnectip)
---	end
-end
-
 adbcommandlist = s:taboption("adb_set", ListValue, "adbcommandlist", translate("command list"), translate("adbrun command list"))
 adbcommandlist.placeholder = "none"
 adbcommandlist:value("none", translate("none"))
 adbcommandlist:value("turn-offon-the-screen", translate("Turn off/on the screen"))
 adbcommandlist:value("turn-on-the-screen", translate("Turn on screen"))
-adbcommandlist:value("playback", translate("Playback audio"))
+adbcommandlist:value("playstop", translate("Play audio or stop"))
+adbcommandlist:value("playnext", translate("Play the next"))
+adbcommandlist:value("playprevious", translate("Play the previous"))
+adbcommandlist:value("resume-playback", translate("Playback audio"))
 adbcommandlist:value("pause-playback", translate("Pause audio"))
 adbcommandlist:value("mute", translate("Mute on/off"))
 adbcommandlist:value("runcamera", translate("Run camera"))
@@ -49,14 +34,32 @@ adbcommandlist:value("runtaobao", translate("Run taobao"))
 adbcommandlist:value("runtaobaolite", translate("Run taobao lite version"))
 adbcommandlist:value("rundiantao", translate("Run taobao live"))
 adbcommandlist:value("runjdlite", translate("Run JD lite version"))
+adbcommandlist:value("runfqxs", translate("Run fanqie xiaoshuo"))
 adbcommandlist:value("runxmlylite", translate("Run ximalaya lite version"))
 adbcommandlist:value("pyxmlylite", translate("Automatically get gold coins from ximalaya lite version"))
-adbcommandlist:value("runfqxs", translate("Run fanqie xiaoshuo"))
 adbcommandlist:value("readbook", translate("Automatically read book"))
 adbcommandlist:value("autodiantao", translate("Automatically taobao live"))
 adbcommandlist.default     = "none"
 adbcommandlist.rempty      = false
-adbplay=s:taboption("adb_set",Button, "adbplay", translate("Play")) 
+
+
+s:tab("adb_action", translate("Action"))
+
+adbconnect=s:taboption("adb_action",Button,"adbconnect",translate("Connect client"))
+adbconnect.rmempty = true
+adbconnect.inputstyle = "apply"
+function adbconnect.write(self, section)
+	local adbconnectip = luci.util.exec("adb connect $(uci get adbrun."..section..".adbiplist)")
+	--testconnect = luci.util.exec("adb devices | grep -i "..section)
+	--if testconnect == "" then
+		--luci.util.exec("logger Connection failed: Please connect the computer with USB cable. ")
+		--luci.util.exec("logger Run: adb tcpip 5555 ")
+	--else
+		--luci.util.exec("logger Successful: "..adbconnectip)
+	--end
+end
+
+adbplay=s:taboption("adb_action",Button, "adbplay", translate("Play")) 
 adbplay.rmempty = true
 adbplay.inputstyle = "apply"
 function adbplay.write(self, section)
@@ -64,7 +67,7 @@ function adbplay.write(self, section)
 	luci.util.exec("/tmp/adb_" ..section.. "_.sh")
 end
 
-adbstop=s:taboption("adb_set",Button, "adbstop", translate("Stop loop script")) 
+adbstop=s:taboption("adb_action",Button, "adbstop", translate("Stop loop script")) 
 adbstop.rmempty = true
 adbstop.inputstyle = "apply"
 function adbstop.write(self, section)
@@ -75,3 +78,4 @@ function adbstop.write(self, section)
 end
 
 return m
+
