@@ -47,6 +47,12 @@ adbcommandlist:value("runxmlylite", translate("Run ximalaya lite version"))
 adbcommandlist:value("pyxmlylite", translate("Automatically get gold coins from ximalaya lite version"))
 adbcommandlist:value("runfqxs", translate("Run fanqie xiaoshuo"))
 adbcommandlist:value("readbook", translate("Automatically read book"))
+adbcommandlist:value("runwechat", translate("Run Wechat"))
+adbcommandlist:value("runqq", translate("Run QQ"))
+adbcommandlist:value("runtaobao", translate("Run taobao"))
+adbcommandlist:value("runtaobaolite", translate("Run taobao lite version"))
+adbcommandlist:value("rundiantao", translate("Run taobao live"))
+adbcommandlist:value("runjdlite", translate("Run JD lite version"))
 adbcommandlist.default     = "none"
 adbcommandlist.rempty      = false
 adbplay=s:taboption("adb_set",Button, "adbplay", translate("Play")) 

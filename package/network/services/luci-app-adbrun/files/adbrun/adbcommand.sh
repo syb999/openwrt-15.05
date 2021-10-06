@@ -36,6 +36,18 @@ case $adbcommand in
 	;;
 	runfqxs) adbcd="shell am start -n com.dragon.read/.pages.splash.SplashActivity"
 	;;
+	runwechat) adbcd="shell am start -n com.tencent.mm/.ui.LauncherUI"
+	;;
+	runqq) adbcd="shell am start -n com.tencent.mobileqq/.activity.SplashActivity"
+	;;
+	runtaobao) adbcd="shell am start -n  com.taobao.taobao/com.taobao.tao.TBMainActivity"
+	;;
+	runtaobaolite) adbcd="shell am start -n  com.taobao.litetao/com.taobao.ltao.maintab.MainFrameActivity"
+	;;
+	rundiantao) adbcd="shell am start -n com.taobao.live/.home.activity.TaoLiveHomeActivity"
+	;;
+	runjdlite) adbcd="shell am start -n com.jd.jdlite/.MainActivity"
+	;;
 	pyxmlylite) adbcd="scripts"
 		adbsh="pyxmlylite"
 	;;
