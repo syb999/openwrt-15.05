@@ -14,23 +14,18 @@ function look30sec() {
 adb connect ${adbclient}:5555
 sleep 2
 
-# 启动点淘
 adb -s ${adbclient}:5555 shell am start -n com.taobao.live/.home.activity.TaoLiveHomeActivity
 sleep 5
 
-# 进入我的
 adb -s ${adbclient}:5555 shell input tap 950 1845
 sleep 3
 
-#进入元宝中心
 adb -s ${adbclient}:5555 shell input tap 950 700
 sleep 3
 
-#关闭可能出现的弹出框
 adb -s ${adbclient}:5555 shell input tap 950 200
 sleep 3
 
-#领取金蛋
 adb -s ${adbclient}:5555 shell input tap 950 200
 sleep 3
 adb -s ${adbclient}:5555 shell input tap 950 200
@@ -38,46 +33,35 @@ sleep 3
 adb -s ${adbclient}:5555 shell input tap 950 200
 sleep 3
 
-#进入打工赚元宝
 adb -s ${adbclient}:5555 shell input tap 780 1280
 sleep 5
 
-#领取体力
 adb -s ${adbclient}:5555 shell input tap 155 1425
 sleep 3
 
-#领取元宝
 adb -s ${adbclient}:5555 shell input tap 858 1368
 sleep 3
 adb -s ${adbclient}:5555 shell input tap 885 510
 sleep 3
 
-#去打工赚钱
 adb -s ${adbclient}:5555 shell input tap 858 1368
 sleep 5
 
-#选择歌手
 adb -s ${adbclient}:5555 shell input tap 220 990
 sleep 3
 
-#开始打工
 adb -s ${adbclient}:5555 shell input tap 550 1780
 sleep 5
 
-#赚体力
 adb -s ${adbclient}:5555 shell input tap 385 1460
 sleep 3
 
-#依次做任务
-#任务1-去芭芭农场施肥
 adb -s ${adbclient}:5555 shell input tap 910 860
 sleep 12
 
-#完成一次施肥
 adb -s ${adbclient}:5555 shell input tap 550 1800
 sleep 3
 
-#任务1完成-从芭芭农场返回点淘任务列表
 adb -s ${adbclient}:5555 shell input keyevent 4
 sleep 2
 adb -s ${adbclient}:5555 shell input keyevent 4
@@ -88,8 +72,6 @@ sleep 2
 adb -s ${adbclient}:5555 shell input keyevent 4
 sleep 5
 
-
-#看直播任务1-30秒3次
 ltimes=0
 while [ $ltimes -lt 3 ]
 do
@@ -102,7 +84,6 @@ do
 	ltimes=$(echo `expr $ltimes + 1`)
 done
 
-#看直播任务2-60秒3次
 ltimes=0
 while [ $ltimes -lt 3 ]
 do
@@ -116,7 +97,6 @@ do
 	ltimes=$(echo `expr $ltimes + 1`)
 done
 
-#看直播任务3-60秒5次
 ltimes=0
 while [ $ltimes -lt 5 ]
 do
@@ -131,8 +111,6 @@ do
 done
 
 
-
-#看直播任务4-3分钟1次
 adb -s ${adbclient}:5555 shell input tap 910 860
 sleep 3
 ltimes=0
@@ -145,7 +123,6 @@ sleep 2
 adb -s ${adbclient}:5555 shell input keyevent 4
 sleep 3
 
-#看直播任务5-5分钟1次
 adb -s ${adbclient}:5555 shell input tap 910 860
 sleep 3
 ltimes=0
@@ -158,7 +135,6 @@ sleep 2
 adb -s ${adbclient}:5555 shell input keyevent 4
 sleep 3
 
-#看直播任务6-点赞20次
 adb -s ${adbclient}:5555 shell input tap 910 860
 sleep 3
 dianzan=0
@@ -172,15 +148,14 @@ sleep 1
 adb -s ${adbclient}:5555 shell input keyevent 4
 sleep 3
 
-#看直播任务7-闲鱼
 adb -s ${adbclient}:5555 shell input tap 910 860
 sleep 5
 adb -s ${adbclient}:5555 shell input tap 770 1760
 sleep 7
-#闲鱼每日签到
+
 adb -s ${adbclient}:5555 shell input tap 530 1315
 sleep
-#返回点淘继续做任务
+
 adb -s ${adbclient}:5555 shell input keyevent 4
 sleep 2
 adb -s ${adbclient}:5555 shell input keyevent 4
@@ -191,7 +166,6 @@ sleep 2
 adb -s ${adbclient}:5555 shell input keyevent 4
 sleep 3
 
-#看直播任务8-8分钟1次
 adb -s ${adbclient}:5555 shell input tap 910 860
 sleep 3
 ltimes=0
@@ -204,7 +178,6 @@ sleep 2
 adb -s ${adbclient}:5555 shell input keyevent 4
 sleep 3
 
-#看直播任务9-10分钟1次
 adb -s ${adbclient}:5555 shell input tap 910 860
 sleep 3
 ltimes=0
@@ -217,7 +190,6 @@ sleep 2
 adb -s ${adbclient}:5555 shell input keyevent 4
 sleep 3
 
-#看直播任务10-浏览好货卖场30秒
 adb -s ${adbclient}:5555 shell input tap 910 860
 sleep 1
 ltimes=0
@@ -231,29 +203,22 @@ sleep 2
 adb -s ${adbclient}:5555 shell input keyevent 4
 sleep 3
 
-#领取体力
 adb -s ${adbclient}:5555 shell input tap 155 1425
 sleep 2
 
-#领取元宝
 adb -s ${adbclient}:5555 shell input tap 858 1368
 sleep 3
 adb -s ${adbclient}:5555 shell input tap 885 510
 sleep 3
 
-#去打工赚钱
 adb -s ${adbclient}:5555 shell input tap 858 1368
 sleep 5
 
-#选择厨师
 adb -s ${adbclient}:5555 shell input tap 550 990
 sleep 3
 
-#开始打工
 adb -s ${adbclient}:5555 shell input tap 550 1780
 sleep 5
 
-#签到
 adb -s ${adbclient}:5555 shell input tap 635 1645
 
-#任务完成
