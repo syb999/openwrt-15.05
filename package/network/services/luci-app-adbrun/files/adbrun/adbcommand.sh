@@ -54,6 +54,9 @@ case $adbcommand in
 	readbook) adbcd="scripts"
 		adbsh="readbook"
 	;;
+	autodiantao) adbcd="scripts"
+		adbsh="diantao"
+	;;
 	none) adbcd=""
 	;;
 esac
@@ -63,6 +66,9 @@ if [ $adbcd == "scripts" ];then
 		cp ${spath}${sizepath}/${adbsh} /tmp/${sectionname}_py
 		python3 /tmp/${sectionname}_py
 	elif  [ ${adbsh} == "readbook" ];then
+		cp ${spath}${sizepath}/${adbsh} /tmp/${sectionname}_sh
+		sh /tmp/${sectionname}_sh
+	elif  [ ${adbsh} == "diantao" ];then
 		cp ${spath}${sizepath}/${adbsh} /tmp/${sectionname}_sh
 		sh /tmp/${sectionname}_sh
 	fi
