@@ -1,4 +1,4 @@
-m = Map("adbrun", translate("adb server."))
+m = Map("adbrun", translate("ADB server"))
 
 s = m:section(TypedSection, "adbrun", "", translate("Assistant for automatic control android devices."))
 
@@ -14,16 +14,16 @@ luci.sys.net.ipv4_hints(function(ip, name)
 	adbiplist:value(ip, "%s (%s)" %{ ip, name })
 end)
 
-adbcommandlist = s:taboption("adb_set", ListValue, "adbcommandlist", translate("command list"), translate("adbrun command list"))
+adbcommandlist = s:taboption("adb_set", ListValue, "adbcommandlist", translate("Command list"), translate("adbrun command list"))
 adbcommandlist.placeholder = "none"
 adbcommandlist:value("none", translate("none"))
 adbcommandlist:value("turn-offon-the-screen", translate("Turn off/on the screen"))
 adbcommandlist:value("turn-on-the-screen", translate("Turn on screen"))
-adbcommandlist:value("playstop", translate("Play audio or stop"))
+adbcommandlist:value("playstop", translate("Play or stop"))
 adbcommandlist:value("playnext", translate("Play the next"))
 adbcommandlist:value("playprevious", translate("Play the previous"))
-adbcommandlist:value("resume-playback", translate("Playback audio"))
-adbcommandlist:value("pause-playback", translate("Pause audio"))
+adbcommandlist:value("resume-playback", translate("Resume playback"))
+adbcommandlist:value("pause-playback", translate("Pause playback"))
 adbcommandlist:value("mute", translate("Mute on/off"))
 adbcommandlist:value("runcamera", translate("Run camera"))
 adbcommandlist:value("photograph", translate("Take a picture"))

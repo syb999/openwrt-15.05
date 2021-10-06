@@ -1,0 +1,96 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "ADB server"
+msgstr "ADB服务器"
+
+msgid "Assistant for automatic control android devices."
+msgstr "android设备自动控制助手"
+
+msgid "Basic setting"
+msgstr "基本设置"
+
+msgid "IP address"
+msgstr "IP地址"
+
+msgid "Command list"
+msgstr "命令列表"
+
+msgid "adbrun command list"
+msgstr "adbrun命令列表"
+
+msgid "Turn off/on the screen"
+msgstr "关闭/打开屏幕"
+
+msgid "Turn on screen"
+msgstr "点亮屏幕"
+
+msgid "Play or stop"
+msgstr "播放/暂停"
+
+msgid "Play the next"
+msgstr "播放下一首"
+
+msgid "Play the previous"
+msgstr "播放上一首"
+
+msgid "Resume playback"
+msgstr "恢复播放"
+
+msgid "Pause playback"
+msgstr "暂停播放"
+
+msgid "Mute on/off"
+msgstr "静音 开/关"
+
+msgid "Run camera"
+msgstr "开启摄像头"
+
+msgid "Take a picture"
+msgstr "拍摄照片"
+
+msgid "Get running APP"
+msgstr "获取运行中的应用程序"
+
+msgid "Run Wechat"
+msgstr "打开微信"
+
+msgid "Run QQ"
+msgstr "打开QQ"
+
+msgid "Run taobao"
+msgstr "打开淘宝"
+
+msgid "Run taobao lite version"
+msgstr "打开淘宝极速版"
+
+msgid "Run taobao live"
+msgstr "打开点淘"
+
+msgid "Run JD lite version"
+msgstr "打开京东极速版"
+
+msgid "Run fanqie xiaoshuo"
+msgstr "打开番茄小说"
+
+msgid "Run ximalaya lite version"
+msgstr "打开喜马拉雅极速版"
+
+msgid "Automatically get gold coins from ximalaya lite version"
+msgstr "自动获取金币脚本-喜马拉雅极速版"
+
+msgid "Automatically read book"
+msgstr "自动获取金币脚本-番茄小说"
+
+msgid "Automatically taobao live"
+msgstr "自动获取金币脚本-点淘任务"
+
+msgid "Connect client"
+msgstr "一键连接客户端"
+
+msgid "Play"
+msgstr "启动命令或脚本"
+
+msgid "Stop loop script"
+msgstr "立即终止循环脚本"
+
