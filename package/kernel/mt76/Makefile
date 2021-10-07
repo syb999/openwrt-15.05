@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mt76
-PKG_RELEASE=8
+PKG_RELEASE=9
 
 PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILES:=
@@ -168,7 +168,7 @@ endef
 define KernelPackage/mt7615e
   $(KernelPackage/mt76-default)
   TITLE:=MediaTek MT7615e wireless driver
-  DEPENDS+=@PCI_SUPPORT +kmod-mt7615-common
+  DEPENDS+=@PCI_SUPPORT +kmod-mt7615-common +kmod-mt7615-firmware
   FILES:= $(PKG_BUILD_DIR)/mt7615/mt7615e.ko
   AUTOLOAD:=$(call AutoProbe,mt7615e)
 endef
@@ -235,7 +235,8 @@ endef
 
 TARGET_CFLAGS += -I$(STAGING_DIR)/usr/include/libnl-tiny
 
-NOSTDINC_FLAGS = \
+NOSTDINC_FLAGS := \
+	$(KERNEL_NOSTDINC_FLAGS) \
 	-I$(PKG_BUILD_DIR) \
 	-I$(STAGING_DIR)/usr/include/mac80211-backport/uapi \
 	-I$(STAGING_DIR)/usr/include/mac80211-backport \
@@ -438,10 +439,10 @@ $(eval $(call KernelPackage,mt7615-firmware))
 $(eval $(call KernelPackage,mt7615e))
 $(eval $(call KernelPackage,mt7663-firmware-ap))
 $(eval $(call KernelPackage,mt7663-firmware-sta))
-$(eval $(call KernelPackage,mt7663-usb-sdio))
+#$(eval $(call KernelPackage,mt7663-usb-sdio))
 #$(eval $(call KernelPackage,mt7663u))
 #$(eval $(call KernelPackage,mt7663s))
 $(eval $(call KernelPackage,mt7915e))
-#$(eval $(call KernelPackage,mt7921e))
+$(eval $(call KernelPackage,mt7921e))
 $(eval $(call KernelPackage,mt76))
 $(eval $(call BuildPackage,mt76-test))

@@ -1,0 +1,61 @@
+--- a/mt7921/mac.c
++++ b/mt7921/mac.c
+@@ -935,15 +935,13 @@
+ 
+ static void
+ mt7921_tx_complete_status(struct mt76_dev *mdev, struct sk_buff *skb,
+-			  struct ieee80211_sta *sta, u8 stat,
+-			  struct list_head *free_list)
++			  struct ieee80211_sta *sta, u8 stat)
+ {
+ 	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+ 	struct ieee80211_tx_status status = {
+ 		.sta = sta,
+ 		.info = info,
+ 		.skb = skb,
+-		.free_list = free_list,
+ 	};
+ 	struct ieee80211_hw *hw;
+ 
+@@ -1006,8 +1004,6 @@
+ 	struct mt76_dev *mdev = &dev->mt76;
+ 	struct mt76_txwi_cache *txwi;
+ 	struct ieee80211_sta *sta = NULL;
+-	LIST_HEAD(free_list);
+-	struct sk_buff *tmp;
+ 	bool wake = false;
+ 	u8 i, count;
+ 
+@@ -1075,7 +1071,7 @@
+ 					atomic_cmpxchg(&wcid->non_aql_packets, pending, 0);
+ 			}
+ 
+-			mt7921_tx_complete_status(mdev, txwi->skb, sta, stat, &free_list);
++			mt7921_tx_complete_status(mdev, txwi->skb, sta, stat);
+ 			txwi->skb = NULL;
+ 		}
+ 
+@@ -1085,13 +1081,6 @@
+ 	if (wake)
+ 		mt76_set_tx_blocked(&dev->mt76, false);
+ 
+-	napi_consume_skb(skb, 1);
+-
+-	list_for_each_entry_safe(skb, tmp, &free_list, list) {
+-		skb_list_del_init(skb);
+-		napi_consume_skb(skb, 1);
+-	}
+-
+ 	mt7921_mac_sta_poll(dev);
+ 	mt76_worker_schedule(&dev->mt76.tx_worker);
+ }
+@@ -1125,8 +1114,7 @@
+ 
+ 		wcid = rcu_dereference(dev->mt76.wcid[cb->wcid]);
+ 
+-		mt7921_tx_complete_status(mdev, e->skb, wcid_to_sta(wcid), 0,
+-					  NULL);
++		mt7921_tx_complete_status(mdev, e->skb, wcid_to_sta(wcid), 0);
+ 	}
+ }
+ 
