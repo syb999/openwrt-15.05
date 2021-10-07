@@ -63,6 +63,9 @@ case $adbcommand in
 	autodiantao) adbcd="scripts"
 		adbsh="diantao"
 	;;
+	autojdlite) adbcd="scripts"
+		adbsh="jdlite"
+	;;
 	none) adbcd=""
 	;;
 esac
@@ -75,6 +78,9 @@ if [ $adbcd == "scripts" ];then
 		cp ${spath}${sizepath}/${adbsh} /tmp/${sectionname}_sh
 		sh /tmp/${sectionname}_sh
 	elif  [ ${adbsh} == "diantao" ];then
+		cp ${spath}${sizepath}/${adbsh} /tmp/${sectionname}_sh
+		sh /tmp/${sectionname}_sh
+	elif  [ ${adbsh} == "jdlite" ];then
 		cp ${spath}${sizepath}/${adbsh} /tmp/${sectionname}_sh
 		sh /tmp/${sectionname}_sh
 	fi

@@ -1,0 +1,95 @@
+#!/bin/sh
+
+sectionname=$(echo $0 | cut -d '/' -f 3 | cut -d '_' -f 1)
+adbclient=$(uci get adbrun.$sectionname.adbiplist)
+
+function redo() {
+	sleep 6
+	adb -s ${adbclient}:5555 shell input swipe 550 1398 550 670
+	sleep 2
+	adb -s ${adbclient}:5555 shell input swipe 550 1398 550 670
+	sleep 2
+	adb -s ${adbclient}:5555 shell input swipe 550 1398 550 670
+	sleep 5
+	adb -s ${adbclient}:5555 shell input tap 945 1015
+}
+
+adb connect ${adbclient}:5555
+sleep 2
+
+
+adb -s ${adbclient}:5555 shell am start -n com.jd.jdlite/.MainActivity
+sleep 7
+
+#进入天天领红包
+adb -s ${adbclient}:5555 shell input tap 105 605
+sleep 7
+
+#领取
+adb -s ${adbclient}:5555 shell input tap 525 1100
+sleep 3
+adb -s ${adbclient}:5555 shell input tap 525 1100
+sleep 3
+adb -s ${adbclient}:5555 shell input tap 525 1100
+sleep 3
+
+#点击小狗
+adb -s ${adbclient}:5555 shell input tap 945 877
+sleep 7
+
+#进入赚金币
+adb -s ${adbclient}:5555 shell input tap 545 950
+sleep 5
+
+#赚金币
+adb -s ${adbclient}:5555 shell input tap 919 1662
+sleep 6
+
+#刷浏览任务50次
+ltimes=0
+while [ $ltimes -lt 50 ]
+do
+	redo
+	sleep 2
+	ltimes=$(echo `expr $ltimes + 1`)
+done
+
+#返回首页
+adb -s ${adbclient}:5555 shell input keyevent 4
+sleep 3
+adb -s ${adbclient}:5555 shell input keyevent 4
+sleep 3
+
+#进入我的
+adb -s ${adbclient}:5555 shell input tap 970 2030
+sleep 3
+
+#签到提现
+adb -s ${adbclient}:5555 shell input tap 320 1130
+sleep 5
+#关闭弹出
+adb -s ${adbclient}:5555 shell input tap 915 720
+
+#返回上一页
+adb -s ${adbclient}:5555 shell input keyevent 4
+sleep 3
+
+#发财大赢家
+adb -s ${adbclient}:5555 shell input tap 110 1130
+sleep 5
+adb -s ${adbclient}:5555 shell input tap 545 1350
+sleep 5
+adb -s ${adbclient}:5555 shell input tap 540 1466
+sleep 5
+adb -s ${adbclient}:5555 shell input tap 537 1380
+sleep 5
+adb -s ${adbclient}:5555 shell input tap 339 1500
+sleep 5
+adb -s ${adbclient}:5555 shell input tap 540 1635
+sleep 5
+adb -s ${adbclient}:5555 shell input tap 537 1437
+sleep 3
+adb -s ${adbclient}:5555 shell input keyevent 4
+sleep 3
+
+#完成

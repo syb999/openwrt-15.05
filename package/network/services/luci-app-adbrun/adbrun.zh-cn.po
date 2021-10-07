@@ -85,6 +85,9 @@ msgstr "自动获取金币脚本-番茄小说"
 msgid "Automatically taobao live"
 msgstr "自动获取金币脚本-点淘任务"
 
+msgid "Automatically jdlite"
+msgstr "自动获取金币脚本-京东极速版任务"
+
 msgid "Connect client"
 msgstr "一键连接客户端"
 

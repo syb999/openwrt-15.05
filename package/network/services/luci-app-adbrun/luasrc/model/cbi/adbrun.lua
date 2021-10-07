@@ -39,6 +39,7 @@ adbcommandlist:value("runxmlylite", translate("Run ximalaya lite version"))
 adbcommandlist:value("pyxmlylite", translate("Automatically get gold coins from ximalaya lite version"))
 adbcommandlist:value("readbook", translate("Automatically read book"))
 adbcommandlist:value("autodiantao", translate("Automatically taobao live"))
+adbcommandlist:value("autojdlite", translate("Automatically jdlite"))
 adbcommandlist.default     = "none"
 adbcommandlist.rempty      = false
 

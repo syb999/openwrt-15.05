@@ -1,0 +1,81 @@
+#!/bin/sh
+
+sectionname=$(echo $0 | cut -d '/' -f 3 | cut -d '_' -f 1)
+adbclient=$(uci get adbrun.$sectionname.adbiplist)
+
+function redo() {
+	sleep 6
+	adb -s ${adbclient}:5555 shell input swipe 550 1398 550 470
+	sleep 2
+	adb -s ${adbclient}:5555 shell input swipe 550 1398 550 470
+	sleep 2
+	adb -s ${adbclient}:5555 shell input swipe 550 1398 550 470
+	sleep 5
+	adb -s ${adbclient}:5555 shell input tap 945 815
+}
+
+adb connect ${adbclient}:5555
+sleep 2
+
+adb -s ${adbclient}:5555 shell am start -n com.jd.jdlite/.MainActivity
+sleep 7
+
+adb -s ${adbclient}:5555 shell input tap 105 405
+sleep 7
+
+adb -s ${adbclient}:5555 shell input tap 525 900
+sleep 3
+adb -s ${adbclient}:5555 shell input tap 525 900
+sleep 3
+adb -s ${adbclient}:5555 shell input tap 525 900
+sleep 3
+
+adb -s ${adbclient}:5555 shell input tap 945 677
+sleep 7
+
+adb -s ${adbclient}:5555 shell input tap 545 750
+sleep 5
+
+adb -s ${adbclient}:5555 shell input tap 919 1462
+sleep 6
+
+ltimes=0
+while [ $ltimes -lt 50 ]
+do
+	redo
+	sleep 2
+	ltimes=$(echo `expr $ltimes + 1`)
+done
+
+adb -s ${adbclient}:5555 shell input keyevent 4
+sleep 3
+adb -s ${adbclient}:5555 shell input keyevent 4
+sleep 3
+
+adb -s ${adbclient}:5555 shell input tap 970 1830
+sleep 3
+
+adb -s ${adbclient}:5555 shell input tap 320 930
+sleep 5
+adb -s ${adbclient}:5555 shell input tap 915 520
+
+adb -s ${adbclient}:5555 shell input keyevent 4
+sleep 3
+
+adb -s ${adbclient}:5555 shell input tap 110 930
+sleep 5
+adb -s ${adbclient}:5555 shell input tap 545 1150
+sleep 5
+adb -s ${adbclient}:5555 shell input tap 540 1266
+sleep 5
+adb -s ${adbclient}:5555 shell input tap 537 1180
+sleep 5
+adb -s ${adbclient}:5555 shell input tap 339 1300
+sleep 5
+adb -s ${adbclient}:5555 shell input tap 540 1435
+sleep 5
+adb -s ${adbclient}:5555 shell input tap 537 1237
+sleep 3
+adb -s ${adbclient}:5555 shell input keyevent 4
+sleep 3
+
