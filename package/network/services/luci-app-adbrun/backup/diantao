@@ -4,11 +4,13 @@ sectionname=$(echo $0 | cut -d '/' -f 3 | cut -d '_' -f 1)
 adbclient=$(uci get adbrun.$sectionname.adbiplist)
 
 function look30sec() {
-	sleep 10
+	sleep 8
 	adb -s ${adbclient}:5555 shell input swipe 835 1050 835 700
-	sleep 10
+	sleep 8
 	adb -s ${adbclient}:5555 shell input swipe 835 1050 835 700
-	sleep 10
+	sleep 8
+	adb -s ${adbclient}:5555 shell input swipe 835 1050 835 700
+	sleep 8
 }
 
 adb connect ${adbclient}:5555
@@ -21,6 +23,18 @@ sleep 5
 # 进入我的
 adb -s ${adbclient}:5555 shell input tap 950 2045
 sleep 3
+adb -s ${adbclient}:5555 shell input tap 950 2045
+sleep 3
+
+
+#立即签到
+adb -s ${adbclient}:5555 shell input tap 535 1525
+sleep 3
+adb -s ${adbclient}:5555 shell input tap 535 1280
+sleep 3
+adb -s ${adbclient}:5555 shell input keyevent 4
+sleep 3
+
 
 #进入元宝中心
 adb -s ${adbclient}:5555 shell input tap 950 900
@@ -68,11 +82,22 @@ sleep 3
 #任务1-去芭芭农场施肥
 adb -s ${adbclient}:5555 shell input tap 910 1060
 sleep 12
-
+#任务1完成-从芭芭农场返回点淘任务列表
+adb -s ${adbclient}:5555 shell input keyevent 4
+sleep 2
+adb -s ${adbclient}:5555 shell input keyevent 4
+sleep 2
+adb -s ${adbclient}:5555 shell input keyevent 4
+adb -s ${adbclient}:5555 shell input keyevent 4
+sleep 2
+adb -s ${adbclient}:5555 shell input keyevent 4
+sleep 5
+#任务1-去芭芭农场施肥
+adb -s ${adbclient}:5555 shell input tap 910 1060
+sleep 12
 #完成一次施肥
 adb -s ${adbclient}:5555 shell input tap 550 2000
 sleep 3
-
 #任务1完成-从芭芭农场返回点淘任务列表
 adb -s ${adbclient}:5555 shell input keyevent 4
 sleep 2

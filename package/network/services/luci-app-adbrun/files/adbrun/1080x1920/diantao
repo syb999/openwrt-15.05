@@ -4,11 +4,13 @@ sectionname=$(echo $0 | cut -d '/' -f 3 | cut -d '_' -f 1)
 adbclient=$(uci get adbrun.$sectionname.adbiplist)
 
 function look30sec() {
-	sleep 10
+	sleep 8
 	adb -s ${adbclient}:5555 shell input swipe 835 850 835 500
-	sleep 10
+	sleep 8
 	adb -s ${adbclient}:5555 shell input swipe 835 850 835 500
-	sleep 10
+	sleep 8
+	adb -s ${adbclient}:5555 shell input swipe 835 850 835 500
+	sleep 8
 }
 
 adb connect ${adbclient}:5555
@@ -18,6 +20,15 @@ adb -s ${adbclient}:5555 shell am start -n com.taobao.live/.home.activity.TaoLiv
 sleep 5
 
 adb -s ${adbclient}:5555 shell input tap 950 1845
+sleep 3
+adb -s ${adbclient}:5555 shell input tap 950 1845
+sleep 3
+
+adb -s ${adbclient}:5555 shell input tap 535 1325
+sleep 3
+adb -s ${adbclient}:5555 shell input tap 535 1080
+sleep 3
+adb -s ${adbclient}:5555 shell input keyevent 4
 sleep 3
 
 adb -s ${adbclient}:5555 shell input tap 950 700
@@ -56,6 +67,18 @@ sleep 5
 adb -s ${adbclient}:5555 shell input tap 385 1460
 sleep 3
 
+adb -s ${adbclient}:5555 shell input tap 910 860
+sleep 12
+
+adb -s ${adbclient}:5555 shell input keyevent 4
+sleep 2
+adb -s ${adbclient}:5555 shell input keyevent 4
+sleep 2
+adb -s ${adbclient}:5555 shell input keyevent 4
+adb -s ${adbclient}:5555 shell input keyevent 4
+sleep 2
+adb -s ${adbclient}:5555 shell input keyevent 4
+sleep 5
 adb -s ${adbclient}:5555 shell input tap 910 860
 sleep 12
 
