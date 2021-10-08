@@ -2,7 +2,7 @@ m = Map("adbrun", translate("ADB server"))
 
 a = m:section(TypedSection, "adbinit", "")
 
-adbinit = a:option(Button, "_adbinit","ONE-CLICK DEVICE INIT", "Please connect usb cable to your openwrt router");
+adbinit = a:option(Button, "_adbinit","一键初始化设备", "请使用USB电缆连接openwrt路由器和安卓手机(支持多个设备)");
 adbinit.rmempty = true
 adbinit.inputstyle = "apply"
 function adbinit.write(self, section)

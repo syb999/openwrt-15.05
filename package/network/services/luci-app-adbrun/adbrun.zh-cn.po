@@ -4,15 +4,6 @@ msgstr "Content-Type: text/plain; charset=UTF-8\n"
 msgid "ADB server"
 msgstr "ADB服务器"
 
-msgid "initialization"
-msgstr "初始化"
-
-msgid "ONE-CLICK DEVICE INIT"
-msgstr "一键初始化设备"
-
-msgid "Please connect usb cable to your openwrt router(support multiple devices)"
-msgstr "请使用USB电缆连接openwrt路由器和安卓手机(支持多个设备)"
-
 msgid "Assistant for automatic control android devices."
 msgstr "android设备自动控制助手"
 
