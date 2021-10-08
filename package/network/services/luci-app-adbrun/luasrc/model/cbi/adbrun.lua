@@ -1,5 +1,14 @@
 m = Map("adbrun", translate("ADB server"))
 
+a = m:section(TypedSection, "adbinit", "")
+
+adbinit = a:option(Button, "_adbinit","ONE-CLICK DEVICE INIT", "Please connect usb cable to your openwrt router");
+adbinit.rmempty = true
+adbinit.inputstyle = "apply"
+function adbinit.write(self, section)
+	luci.util.exec("/usr/adbrun/adbinit.sh >/dev/null 2>&1 &")
+end
+
 s = m:section(TypedSection, "adbrun", "", translate("Assistant for automatic control android devices."))
 
 s:tab("adb_set", translate("Basic setting"))
@@ -50,22 +59,15 @@ adbconnect=s:taboption("adb_action",Button,"adbconnect",translate("Connect clien
 adbconnect.rmempty = true
 adbconnect.inputstyle = "apply"
 function adbconnect.write(self, section)
-	local adbconnectip = luci.util.exec("adb connect $(uci get adbrun."..section..".adbiplist)")
-	--testconnect = luci.util.exec("adb devices | grep -i "..section)
-	--if testconnect == "" then
-		--luci.util.exec("logger Connection failed: Please connect the computer with USB cable. ")
-		--luci.util.exec("logger Run: adb tcpip 5555 ")
-	--else
-		--luci.util.exec("logger Successful: "..adbconnectip)
-	--end
+	luci.util.exec("adb connect $(uci get adbrun."..section..".adbiplist) >/dev/null 2>&1 &")
 end
 
 adbplay=s:taboption("adb_action",Button, "adbplay", translate("Play")) 
 adbplay.rmempty = true
 adbplay.inputstyle = "apply"
 function adbplay.write(self, section)
-	luci.util.exec("cp /usr/adbrun/adbcommand.sh /tmp/adb_" ..section.. "_.sh")
-	luci.util.exec("/tmp/adb_" ..section.. "_.sh")
+	luci.util.exec("cp /usr/adbrun/adbcommand.sh /tmp/adb_" ..section.. "_.sh >/dev/null 2>&1 &")
+	luci.util.exec("/tmp/adb_" ..section.. "_.sh >/dev/null 2>&1 &")
 end
 
 adbstop=s:taboption("adb_action",Button, "adbstop", translate("Stop loop script")) 
