@@ -60,6 +60,9 @@ case $adbcommand in
 	readbook) adbcd="scripts"
 		adbsh="readbook"
 	;;
+	kuaishou) adbcd="scripts"
+		adbsh="kuaishou"
+	;;
 	autodiantao) adbcd="scripts"
 		adbsh="diantao"
 	;;
@@ -72,11 +75,50 @@ esac
 
 if [ $adbcd == "scripts" ];then
 	if [ ${adbsh} ==  "pyxmlylite" ];then
-		cp ${spath}${sizepath}/${adbsh} /tmp/${sectionname}_py
-		python3 /tmp/${sectionname}_py
+		echo ximalayalite
+		if [ ${screensize} == "720x1280" ];then
+			cat ${spath}${adbsh} | sed -e "s/while\ True:/while\ True:\n\tsubprocess.call(r\'adb\ -s\ \$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\'):5555\ shell\ screencap\ -p\ \/data\/local\/tmp\/sc\$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\').jpg\',shell=True)\n\tsubprocess.call(r\'adb\ -s\ \$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\'):5555\ pull\ \/data\/local\/tmp\/sc\$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\').jpg\ \/tmp\/\ >\ \/dev\/null\ 2>\&1',shell=True)/;s/dosedxrangestart/10/;s/dosedxrangeend/710/;s/dosedxrangestep/5/;s/dosedyrangestart/330/;s/dosedyrangeend/680/;s/dosedtapax/555/;s/dosedtapay/335/;s/dosedtapbx/555/;s/dosedtapby/380/;" > /tmp/${sectionname}_py
+			chmod +x /tmp/${sectionname}_py
+			python3 /tmp/${sectionname}_py
+		elif  [ ${screensize} == "1080x2244" ];then
+			cat ${spath}${adbsh} | sed -e "s/while\ True:/while\ True:\n\tsubprocess.call(r\'adb\ -s\ \$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\'):5555\ exec-out\ screencap\ -p\ >\ \/tmp\/sc\$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\').jpg\',shell=True)/;s/dosedxrangestart/30/;s/dosedxrangeend/1070/;s/dosedxrangestep/10/;s/dosedyrangestart/450/;s/dosedyrangeend/950/;s/dosedtapax/855/;s/dosedtapay/648/;s/dosedtapbx/855/;s/dosedtapby/690/;" > /tmp/${sectionname}_py
+			chmod +x /tmp/${sectionname}_py
+			python3 /tmp/${sectionname}_py
+		elif  [ ${screensize} == "1080x1920" ];then
+			cat ${spath}${adbsh} | sed -e "s/while\ True:/while\ True:\n\tsubprocess.call(r\'adb\ -s\ \$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\'):5555\ exec-out\ screencap\ -p\ >\ \/tmp\/sc\$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\').jpg\',shell=True)/;s/dosedxrangestart/20/;s/dosedxrangeend/1070/;s/dosedxrangestep/10/;s/dosedyrangestart/470/;s/dosedyrangeend/1010/;s/dosedtapax/830/;s/dosedtapay/500/;s/dosedtapbx/830/;s/dosedtapby/570/;" > /tmp/${sectionname}_py
+			chmod +x /tmp/${sectionname}_py
+			python3 /tmp/${sectionname}_py
+		fi
 	elif  [ ${adbsh} == "readbook" ];then
-		cp ${spath}${sizepath}/${adbsh} /tmp/${sectionname}_sh
-		sh /tmp/${sectionname}_sh
+		echo fanqiexiaoshuo
+		if [ ${screensize} == "720x1280" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=680/;s/dosedbasey=/basey=130/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif  [ ${screensize} == "1080x2244" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=1030/;s/dosedbasey=/basey=300/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif  [ ${screensize} == "1080x1920" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=1030/;s/dosedbasey=/basey=200/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		fi
+	elif  [ ${adbsh} == "kuaishou" ];then
+		echo kuaishou
+		if [ ${screensize} == "720x1280" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=386/;s/dosedbasey=/basey=620/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif  [ ${screensize} == "1080x2244" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=586/;s/dosedbasey=/basey=750/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif  [ ${screensize} == "1080x1920" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=586/;s/dosedbasey=/basey=700/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		fi
 	elif  [ ${adbsh} == "diantao" ];then
 		cp ${spath}${sizepath}/${adbsh} /tmp/${sectionname}_sh
 		sh /tmp/${sectionname}_sh

@@ -12,17 +12,17 @@ fpath='/tmp/sc'+ fixoutput+'.jpg'
 process.close()
 
 while True:
-	subprocess.call(r'adb -s $(uci get adbrun.'+sectionname+'.'+currentclient+'):5555 exec-out screencap -p > /tmp/sc$(uci get adbrun.'+sectionname+'.'+currentclient+').jpg',shell=True)
 	time.sleep(5)
 	img = Image.open(fpath)
 	img = img.convert("RGB")
-	for x in range(30,1070,10):
-		for y in range(450,950):
+	for x in range(dosedxrangestart,dosedxrangeend,dosedxrangestep):
+		for y in range(dosedyrangestart,dosedyrangeend):
 			data = (img.getpixel((x,y)))
 			if (data[0] == 252 and data[1] == 195 and data[2] == 92 ):
 				subprocess.call('adb -s $(uci get adbrun.'+sectionname+'.'+currentclient+'):5555 shell input tap '+ str(x) +' '+ str(y),shell=True)
 				time.sleep(2)
-				subprocess.call('adb -s $(uci get adbrun.'+sectionname+'.'+currentclient+'):5555 shell input tap 855 648',shell=True)
-				subprocess.call('adb -s $(uci get adbrun.'+sectionname+'.'+currentclient+'):5555 shell input tap 855 690',shell=True)
+				subprocess.call('adb -s $(uci get adbrun.'+sectionname+'.'+currentclient+'):5555 shell input tap dosedtapax dosedtapay',shell=True)
+				subprocess.call('adb -s $(uci get adbrun.'+sectionname+'.'+currentclient+'):5555 shell input tap dosedtapbx dosedtapby',shell=True)
 				time.sleep(2)
 	continue;
+
