@@ -82,6 +82,9 @@ msgstr "自动获取金币脚本-喜马拉雅极速版"
 msgid "Automatically read book"
 msgstr "自动获取金币脚本-番茄小说"
 
+msgid "Automatically play kuaishou"
+msgstr "自动获取金币脚本-快手视频"
+
 msgid "Automatically taobao live"
 msgstr "自动获取金币脚本-点淘任务"
 

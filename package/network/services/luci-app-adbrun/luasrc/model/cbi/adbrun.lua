@@ -47,6 +47,7 @@ adbcommandlist:value("runfqxs", translate("Run fanqie xiaoshuo"))
 adbcommandlist:value("runxmlylite", translate("Run ximalaya lite version"))
 adbcommandlist:value("pyxmlylite", translate("Automatically get gold coins from ximalaya lite version"))
 adbcommandlist:value("readbook", translate("Automatically read book"))
+adbcommandlist:value("kuaishou", translate("Automatically play kuaishou"))
 adbcommandlist:value("autodiantao", translate("Automatically taobao live"))
 adbcommandlist:value("autojdlite", translate("Automatically jdlite"))
 adbcommandlist.default     = "none"
