@@ -541,8 +541,6 @@ endif
 #
 
 ifeq ($(SUBTARGET),mt7621-nand)
-  TARGET_DEVICES +=
-endif
 
 define Device/hc5962
   DTS := HC5962
@@ -600,6 +598,7 @@ define Device/redmi-router-ac2100
 endef
 TARGET_DEVICES += redmi-router-ac2100
 
+endif
 #
 # MT7628 Profiles
 #
