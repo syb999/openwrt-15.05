@@ -1,0 +1,126 @@
+#!/bin/sh
+#自行进入元宝中心-打工赚元宝-赚体力页面
+
+dosedxstart=
+dosedystart=
+dosedbasex=
+dosedbasey=
+
+sectionname=$(echo $0 | cut -d '/' -f 3 | cut -d '_' -f 1)
+adbclient=$(uci get adbrun.$sectionname.adbiplist)
+
+function look30sec() {
+	sleep 8
+	adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 280`)
+	sleep 8
+	adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 280`)
+	sleep 8
+	adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 280`)
+	sleep 8
+}
+
+adb connect ${adbclient}:5555
+sleep 2
+
+ltimes=0
+while [ $ltimes -lt 10 ]
+do
+	adb -s ${adbclient}:5555 shell input tap $basex $basey
+	sleep 3
+	look30sec
+	sleep 2
+	adb -s ${adbclient}:5555 shell input keyevent 4
+	sleep 6
+	ltimes=$(echo `expr $ltimes + 1`)
+done
+
+ltimes=0
+while [ $ltimes -lt 5 ]
+do
+	adb -s ${adbclient}:5555 shell input tap $basex $basey
+	sleep 3
+	look30sec
+	sleep 2
+	adb -s ${adbclient}:5555 shell input keyevent 4
+	sleep 6
+	ltimes=$(echo `expr $ltimes + 1`)
+done
+
+ltimes=0
+while [ $ltimes -lt 5 ]
+do
+	adb -s ${adbclient}:5555 shell input tap $basex $basey
+	sleep 3
+	look30sec
+	sleep 2
+	look30sec
+	adb -s ${adbclient}:5555 shell input keyevent 4
+	sleep 6
+	ltimes=$(echo `expr $ltimes + 1`)
+done
+
+ltimes=0
+while [ $ltimes -lt 3 ]
+do
+	adb -s ${adbclient}:5555 shell input tap $basex $basey
+	sleep 3
+	look30sec
+	sleep 2
+	look30sec
+	adb -s ${adbclient}:5555 shell input keyevent 4
+	sleep 6
+	ltimes=$(echo `expr $ltimes + 1`)
+done
+
+
+ltimes=0
+while [ $ltimes -lt 1 ]
+do
+	adb -s ${adbclient}:5555 shell input tap $basex $basey
+	sleep 3
+	look30sec
+	sleep 2
+	look30sec
+	sleep 3
+	look30sec
+	sleep 2
+	look30sec
+	sleep 3
+	look30sec
+	sleep 2
+	look30sec
+	adb -s ${adbclient}:5555 shell input keyevent 4
+	sleep 6
+	ltimes=$(echo `expr $ltimes + 1`)
+done
+
+
+ltimes=0
+while [ $ltimes -lt 1 ]
+do
+	adb -s ${adbclient}:5555 shell input tap $basex $basey
+	sleep 3
+	look30sec
+	sleep 2
+	look30sec
+	sleep 3
+	look30sec
+	sleep 2
+	look30sec
+	sleep 3
+	look30sec
+	sleep 2
+	look30sec
+	sleep 3
+	look30sec
+	sleep 2
+	look30sec
+	sleep 3
+	look30sec
+	sleep 2
+	look30sec
+	adb -s ${adbclient}:5555 shell input keyevent 4
+	sleep 6
+	ltimes=$(echo `expr $ltimes + 1`)
+done
+

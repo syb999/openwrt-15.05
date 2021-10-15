@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 
 PKG_NAME:=luci-app-adbrun
-PKG_VERSION:=20211013
+PKG_VERSION:=20211015
 PKG_RELEASE:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -30,16 +30,7 @@ define Package/luci-app-adbrun/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci
 	cp -pR ./luasrc/* $(1)/usr/lib/lua/luci
 	$(INSTALL_DIR) $(1)/usr/adbrun
-	$(INSTALL_BIN) ./files/adbrun/adbcommand.sh $(1)/usr/adbrun
-	$(INSTALL_BIN) ./files/adbrun/pyxmlylite $(1)/usr/adbrun
-	$(INSTALL_BIN) ./files/adbrun/readbook $(1)/usr/adbrun
-	$(INSTALL_BIN) ./files/adbrun/kuaishou $(1)/usr/adbrun
-	$(INSTALL_DIR) $(1)/usr/adbrun/720x1280
-	$(INSTALL_BIN) ./files/adbrun/720x1280/* $(1)/usr/adbrun/720x1280
-	$(INSTALL_DIR) $(1)/usr/adbrun/1080x2244
-	$(INSTALL_BIN) ./files/adbrun/1080x2244/* $(1)/usr/adbrun/1080x2244
-	$(INSTALL_DIR) $(1)/usr/adbrun/1080x1920
-	$(INSTALL_BIN) ./files/adbrun/1080x1920/* $(1)/usr/adbrun/1080x1920
+	$(INSTALL_BIN) ./files/adbrun/* $(1)/usr/adbrun
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/adbrun.conf $(1)/etc/config/adbrun
 	$(INSTALL_DIR) $(1)/etc/init.d

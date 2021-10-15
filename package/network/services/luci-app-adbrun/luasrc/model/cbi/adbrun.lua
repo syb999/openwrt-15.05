@@ -49,7 +49,6 @@ adbcommandlist:value("pyxmlylite", translate("Automatically get gold coins from 
 adbcommandlist:value("readbook", translate("Automatically read book"))
 adbcommandlist:value("kuaishou", translate("Automatically play kuaishou"))
 adbcommandlist:value("autodiantao", translate("Automatically taobao live"))
-adbcommandlist:value("autojdlite", translate("Automatically jdlite"))
 adbcommandlist.default     = "none"
 adbcommandlist.rempty      = false
 
@@ -79,7 +78,6 @@ function adbstop.write(self, section)
 	luci.util.exec("kill $(ps | grep " ..section.. " | grep -v grep | head -n 1 | cut -d 'r' -f 1) > /dev/null 2>&1")
 	luci.util.exec("kill $(ps | grep " ..section.. " | grep -v grep | head -n 1 | cut -d ' ' -f 1) > /dev/null 2>&1")
 	luci.util.exec("kill $(ps | grep " ..section.. " | grep -v grep | head -n 1 | cut -d ' ' -f 1) > /dev/null 2>&1")
-
 end
 
 return m
