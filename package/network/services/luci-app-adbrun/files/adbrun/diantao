@@ -11,11 +11,11 @@ adbclient=$(uci get adbrun.$sectionname.adbiplist)
 
 function look30sec() {
 	sleep 8
-	adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 280`)
+	adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 390`)
 	sleep 8
-	adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 280`)
+	adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 390`)
 	sleep 8
-	adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 280`)
+	adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 390`)
 	sleep 8
 }
 

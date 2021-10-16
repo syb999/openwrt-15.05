@@ -13,6 +13,8 @@ elif  [ ${screensize} == "1080x2244" ];then
 	sizepath="1080x2244"
 elif  [ ${screensize} == "1080x1920" ];then
 	sizepath="1080x1920"
+elif  [ ${screensize} == "1080x2280" ];then
+	sizepath="1080x2280"
 fi
 
 case $adbcommand in
@@ -85,6 +87,10 @@ if [ $adbcd == "scripts" ];then
 			cat ${spath}${adbsh} | sed -e "s/while\ True:/while\ True:\n\tsubprocess.call(r\'adb\ -s\ \$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\'):5555\ exec-out\ screencap\ -p\ >\ \/tmp\/sc\$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\').jpg\',shell=True)/;s/dosedxrangestart/20/;s/dosedxrangeend/1070/;s/dosedxrangestep/10/;s/dosedyrangestart/470/;s/dosedyrangeend/1010/;s/dosedtapax/830/;s/dosedtapay/500/;s/dosedtapbx/830/;s/dosedtapby/570/;" > /tmp/${sectionname}_py
 			chmod +x /tmp/${sectionname}_py
 			python3 /tmp/${sectionname}_py
+		elif  [ ${screensize} == "1080x2280" ];then
+			cat ${spath}${adbsh} | sed -e "s/while\ True:/while\ True:\n\tsubprocess.call(r\'adb\ -s\ \$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\'):5555\ exec-out\ screencap\ -p\ >\ \/tmp\/sc\$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\').jpg\',shell=True)/;s/dosedxrangestart/30/;s/dosedxrangeend/1070/;s/dosedxrangestep/10/;s/dosedyrangestart/450/;s/dosedyrangeend/950/;s/dosedtapax/855/;s/dosedtapay/648/;s/dosedtapbx/855/;s/dosedtapby/690/;" > /tmp/${sectionname}_py
+			chmod +x /tmp/${sectionname}_py
+			python3 /tmp/${sectionname}_py
 		fi
 	elif  [ ${adbsh} == "readbook" ];then
 		echo fanqiexiaoshuo
@@ -98,6 +104,10 @@ if [ $adbcd == "scripts" ];then
 			sh /tmp/${sectionname}_sh
 		elif  [ ${screensize} == "1080x1920" ];then
 			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=1030/;s/dosedbasey=/basey=200/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif  [ ${screensize} == "1080x2280" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=1030/;s/dosedbasey=/basey=300/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
 		fi
@@ -115,6 +125,10 @@ if [ $adbcd == "scripts" ];then
 			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=586/;s/dosedbasey=/basey=700/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
+		elif  [ ${screensize} == "1080x2280" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=586/;s/dosedbasey=/basey=750/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
 		fi
 	elif  [ ${adbsh} == "diantao" ];then
 		echo diantao
@@ -128,6 +142,10 @@ if [ $adbcd == "scripts" ];then
 			sh /tmp/${sectionname}_sh
 		elif  [ ${screensize} == "1080x1920" ];then
 			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=850/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=860/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif  [ ${screensize} == "1080x2280" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=1050/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=1060/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
 		fi

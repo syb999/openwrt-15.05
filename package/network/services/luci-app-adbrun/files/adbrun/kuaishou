@@ -11,7 +11,7 @@ do
 	rtime=$(echo `expr $(date +"%s" | cut -c 10) + 1`)
 	rx=$(echo `expr $basex + $rtime`)
 	ry=$(echo `expr $basey + $rtime`)
-	adb -s ${adbclient}:5555 shell input swipe ${rx} ${ry} $(echo `expr ${rx} + 10`) $(echo `expr ${ry} - 300`)
-    sleep $(echo `expr $rtime + 15`)
+	adb -s ${adbclient}:5555 shell input swipe ${rx} ${ry} $(echo `expr ${rx} + 10`) $(echo `expr ${ry} - 390`)
+    sleep $(echo `expr $rtime + 12`)
 done
 
