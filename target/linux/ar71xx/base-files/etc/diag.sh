@@ -18,6 +18,9 @@ get_status_led() {
 	antminer-s3)
 		status_led="antminer-s3:green:system"
 		;;
+	belair20e11)
+		status_led="belair:blue:power"
+		;;
 	letv)
 		status_led="letv:green:status"
 		;;

@@ -1,6 +1,6 @@
 --- a/arch/mips/ath79/machtypes.h
 +++ b/arch/mips/ath79/machtypes.h
-@@ -16,22 +16,207 @@
+@@ -16,22 +16,208 @@
  
  enum ath79_mach_type {
  	ATH79_MACH_GENERIC = 0,
@@ -205,6 +205,7 @@
 +	ATH79_MACH_WZR_450HP2,		/* Buffalo WZR-450HP2 */
 +	ATH79_MACH_ZCN_1523H_2,		/* Zcomax ZCN-1523H-2-xx */
 +	ATH79_MACH_ZCN_1523H_5,		/* Zcomax ZCN-1523H-5-xx */
++	ATH79_MACH_BELAIR20E_11,	/* BelAir Networks BelAir20E-11 */
  };
  
  #endif /* _ATH79_MACHTYPE_H */
@@ -1441,10 +1442,21 @@
  
  config ATH79_MACH_UBNT_XM
  	bool "Ubiquiti Networks XM/UniFi boards"
-@@ -83,6 +1205,106 @@ config ATH79_MACH_UBNT_XM
+@@ -83,6 +1205,117 @@ config ATH79_MACH_UBNT_XM
  	  Say 'Y' here if you want your kernel to support the
  	  Ubiquiti Networks XM (rev 1.0) board.
  
++config ATH79_MACH_BELAIR20E_11
++	bool "BelAir Networks BelAir20E-11 support"
++	select SOC_AR934X
++	select ATH79_DEV_AP9X_PCI if PCI
++	select ATH79_DEV_ETH
++	select ATH79_DEV_GPIO_BUTTONS
++	select ATH79_DEV_LEDS_GPIO
++	select ATH79_DEV_M25P80
++	select ATH79_DEV_USB
++	select ATH79_DEV_WMAC
++
 +config ATH79_MACH_WEIO
 +	bool "WeIO board"
 +	select SOC_AR933X
@@ -1548,7 +1560,7 @@
  endmenu
  
  config SOC_AR71XX
-@@ -124,7 +1346,10 @@ config ATH79_DEV_DSA
+@@ -124,7 +1357,10 @@ config ATH79_DEV_DSA
  config ATH79_DEV_ETH
  	def_bool n
  
@@ -1560,7 +1572,7 @@
  	def_bool n
  
  config ATH79_DEV_GPIO_BUTTONS
-@@ -154,6 +1379,11 @@ config ATH79_PCI_ATH9K_FIXUP
+@@ -154,6 +1390,11 @@ config ATH79_PCI_ATH9K_FIXUP
  	def_bool n
  
  config ATH79_ROUTERBOOT
@@ -1574,7 +1586,7 @@
  endif
 --- a/arch/mips/ath79/Makefile
 +++ b/arch/mips/ath79/Makefile
-@@ -38,9 +39,134 @@ obj-$(CONFIG_ATH79_ROUTERBOOT)		+= route
+@@ -38,9 +39,135 @@ obj-$(CONFIG_ATH79_ROUTERBOOT)		+= route
  #
  # Machines
  #
@@ -1710,6 +1722,7 @@
 +obj-$(CONFIG_ATH79_MACH_ZCN_1523H)	+= mach-zcn-1523h.o
 +obj-$(CONFIG_ATH79_MACH_CARAMBOLA2)	+= mach-carambola2.o
 +obj-$(CONFIG_ATH79_MACH_NBG6716)	+= mach-nbg6716.o
++obj-$(CONFIG_ATH79_MACH_BELAIR20E_11)	+= mach-belair20e-11.o
 --- a/arch/mips/ath79/prom.c
 +++ b/arch/mips/ath79/prom.c
 @@ -180,6 +180,12 @@ void __init prom_init(void)

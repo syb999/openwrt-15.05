@@ -354,6 +354,9 @@ ar71xx_board_detect() {
 	*Antminer-S3)
 		name="antminer-s3"
 		;;
+	*"BelAir20E-11")
+		name="belair20e11"
+		;;
 	*"LETV board")
 		name="letv"
 		;;

@@ -46,6 +46,12 @@ ap113)
 	ucidef_set_led_usbdev "usb" "USB" "ap113:green:usb" "1-1"
 	;;
 
+belair20e11)
+	ucidef_set_led_wlan "wlan2g" "WLAN2G" "belair:blue:wlan2g" "phy0tpt"
+	ucidef_set_led_wlan "wlan5g" "WLAN5G" "belair:blue:wlan5g" "phy1tpt"
+	ucidef_set_led_switch "internet" "INTERNET" "belair:blue:internet" "switch0" "0x20"
+	;;
+
 k2t)
 	ucidef_set_led_default "yellow" "STATUS(yellow)" "k2t:yellow:lan" "1"
 	;;

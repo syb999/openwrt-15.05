@@ -253,6 +253,7 @@ platform_check_image() {
 	unifi | \
 	unifi-outdoor | \
 	carambola2 | \
+	belair20e11 | \
 	weio )
 		[ "$magic" != "2705" ] && {
 			echo "Invalid image type."
