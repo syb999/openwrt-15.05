@@ -7,6 +7,15 @@ msgstr "ADB服务器"
 msgid "Assistant for automatic control android devices."
 msgstr "android设备自动控制助手"
 
+msgid "Photos directory"
+msgstr "照片下载目录"
+
+msgid "One-click initialize devices"
+msgstr "一键初始化设备"
+
+msgid "Please use USB cable to connect openwrt router and Android device(multi devices support)"
+msgstr "请使用USB电缆连接openwrt路由器和安卓设备(支持多设备)"
+
 msgid "Basic setting"
 msgstr "基本设置"
 
@@ -75,6 +84,9 @@ msgstr "打开番茄小说"
 
 msgid "Run ximalaya lite version"
 msgstr "打开喜马拉雅极速版"
+
+msgid "Automatically take photos"
+msgstr "自动拍照脚本"
 
 msgid "Automatically get gold coins from ximalaya lite version"
 msgstr "自动获取金币脚本-喜马拉雅极速版"

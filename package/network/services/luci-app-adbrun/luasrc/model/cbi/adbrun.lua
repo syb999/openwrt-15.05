@@ -2,12 +2,20 @@ m = Map("adbrun", translate("ADB server"))
 
 a = m:section(TypedSection, "adbinit", "")
 
-adbinit = a:option(Button, "_adbinit","一键初始化设备", "请使用USB电缆连接openwrt路由器和安卓手机(支持多个设备)");
+adbinit = a:option(Button, "_adbinit", translate("One-click initialize devices"))
 adbinit.rmempty = true
 adbinit.inputstyle = "apply"
+adbinit.description = translate("Please use USB cable to connect openwrt router and Android device(multi devices support)")
 function adbinit.write(self, section)
 	luci.util.exec("/usr/adbrun/adbinit.sh >/dev/null 2>&1 &")
 end
+
+adbphotopath=a:option(Value, "adbphotopath", translate("Photos directory"))
+adbphotopath.datatype = "string"
+adbphotopath.default = "/tmp"
+adbphotopath.rmempty = false
+adbphotopath.description = translate("Please enter a valid directory")
+
 
 s = m:section(TypedSection, "adbrun", "", translate("Assistant for automatic control android devices."))
 
@@ -45,6 +53,7 @@ adbcommandlist:value("rundiantao", translate("Run taobao live"))
 adbcommandlist:value("runjdlite", translate("Run JD lite version"))
 adbcommandlist:value("runfqxs", translate("Run fanqie xiaoshuo"))
 adbcommandlist:value("runxmlylite", translate("Run ximalaya lite version"))
+adbcommandlist:value("takephoto", translate("Automatically take photos"))
 adbcommandlist:value("pyxmlylite", translate("Automatically get gold coins from ximalaya lite version"))
 adbcommandlist:value("readbook", translate("Automatically read book"))
 adbcommandlist:value("kuaishou", translate("Automatically play kuaishou"))

@@ -21,6 +21,8 @@ define Package/luci-app-adbrun/description
 endef
 
 define Build/Prepare
+	$(foreach po,$(wildcard ${CURDIR}/luasrc/i18n/*.po), \
+		po2lmo $(po) $(PKG_BUILD_DIR)/$(patsubst %.po,%.lmo,$(notdir $(po)));)
 endef
 
 define Build/Compile

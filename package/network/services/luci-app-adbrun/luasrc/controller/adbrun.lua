@@ -1,6 +1,10 @@
 module("luci.controller.adbrun",package.seeall)
 
 function index()
-	local page = entry({"admin", "services", "adbrun"}, cbi("adbrun"), _("adbrun"))
+	if not nixio.fs.access("/etc/config/adbrun") then
+		return
+	end
+
+	local page = entry({"admin", "services", "adbrun"}, cbi("adbrun"), _("adbrun"),3)
 	page.dependent = true
 end

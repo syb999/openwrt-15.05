@@ -1,0 +1,36 @@
+#!/bin/sh
+
+sectionname=$(echo $0 | cut -d '/' -f 3 | cut -d '_' -f 1)
+adbclient=$(uci get adbrun.$sectionname.adbiplist)
+photopath=$(uci get adbrun.@adbinit[0].adbphotopath)
+
+adb disconnect ${adbclient}:5555
+sleep 2
+adb connect ${adbclient}:5555
+sleep 2
+
+function getphoto3() {
+	adb -s ${adbclient}:5555 shell am start -n com.android.camera/.Camera
+	sleep 3
+	for i in $(seq 1 3) ;do
+		adb -s ${adbclient}:5555 shell input keyevent 27
+		sleep 5
+	done
+}
+
+adb -s ${adbclient}:5555 shell mkdir /storage/self/primary/DCIM/backup
+adb -s ${adbclient}:5555 shell mv /storage/self/primary/DCIM/Camera/*.* /storage/self/primary/DCIM/backup
+
+getphoto3
+
+adb -s ${adbclient}:5555 shell ls /storage/self/primary/DCIM/Camera/ | sed -e 's/ /\n/g;' | sed -e '/^$/d' | grep .jpg > /tmp/adbcamera.photo.list
+
+cat /tmp/adbcamera.photo.list | while read LINE
+do
+	adb -s ${adbclient}:5555 pull /storage/self/primary/DCIM/Camera/$LINE $photopath
+	sleep 10
+	adb -s ${adbclient}:5555 shell rm /storage/self/primary/DCIM/Camera/$LINE
+done
+
+adb -s ${adbclient}:5555 shell input keyevent 4
+rm /tmp/adbcamera.photo.list
