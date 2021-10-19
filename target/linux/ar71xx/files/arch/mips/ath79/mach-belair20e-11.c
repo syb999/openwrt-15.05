@@ -156,10 +156,6 @@ static void __init belair_setup(void)
 	ath79_eth0_pll_data.pll_1000 = 0x06000000;
 	ath79_register_eth(0);
 
-	gpio_request_one(BELAIR_GPIO_USB_POWER,
-			 GPIOF_OUT_INIT_HIGH | GPIOF_EXPORT_DIR_FIXED,
-			 "USB power");
-
 	ath79_register_usb();
 }
 
