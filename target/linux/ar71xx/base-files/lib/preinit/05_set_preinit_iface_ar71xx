@@ -36,6 +36,7 @@ set_preinit_iface() {
 	tl-wr710n |\
 	tl-wr720n-v3 |\
 	tl-wr841n-v8 |\
+	tl-mw300-r4 |\
 	tl-wr842n-v2 |\
 	tl-wr941nd-v6 |\
 	wnr2000-v3 |\

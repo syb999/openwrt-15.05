@@ -365,6 +365,8 @@ platform_check_image() {
 	tl-wr841n-v8 | \
 	tl-wr841n-v9 | \
 	tl-wr841n-v11 | \
+	tl-mw300-r4 | \
+	pisen-wmb001n | \
 	tl-wr842n-v2 | \
 	tl-wr941nd | \
 	tl-wr941nd-v5 | \

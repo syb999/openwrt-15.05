@@ -632,6 +632,13 @@ define Device/tl-wr841n-v11
     TPLINK_HWID := 0x08410011
 endef
 
+define Device/tl-mw300-r4
+    $(Device/tplink-16mlzma)
+    BOARDNAME := TL-MW300-r4
+    DEVICE_PROFILE := TLWR841
+    TPLINK_HWID := 0x08410012
+endef
+
 define Device/tl-wr842n-v2
     $(Device/tplink-8mlzma)
     BOARDNAME := TL-WR842N-v2
@@ -652,7 +659,7 @@ define Device/tl-wr847n-v8
     DEVICE_PROFILE := TLWR841
     TPLINK_HWID := 0x08470008
 endef
-TARGET_DEVICES += tl-wr841n-v8 tl-wr841n-v9 tl-wr841n-v10 tl-wr841n-v11 tl-wr842n-v2 tl-wr843nd-v1 tl-wr847n-v8
+TARGET_DEVICES += tl-wr841n-v8 tl-wr841n-v9 tl-wr841n-v10 tl-wr841n-v11 tl-mw300-r4 tl-wr842n-v2 tl-wr843nd-v1 tl-wr847n-v8
 
 define Device/tl-wr941nd-v5
     $(Device/tplink-4mlzma)
@@ -675,7 +682,14 @@ define Device/tl-wr941nd-v6-cn
     DEVICE_PROFILE := TLWR941
     TPLINK_HWID := 0x09410006
 endef
-TARGET_DEVICES += tl-wr941nd-v5 tl-wr941nd-v6 tl-wr941nd-v6-cn
+
+define Device/pisen-wmb001n
+    $(Device/tplink-16mlzma)
+    BOARDNAME := PISEN_WMB001N
+    DEVICE_PROFILE := TLWR941
+    TPLINK_HWID := 0x09410007
+endef
+TARGET_DEVICES += tl-wr941nd-v5 tl-wr941nd-v6 tl-wr941nd-v6-cn pisen-wmb001n
 
 define Device/tl-wr1041n-v2
     $(Device/tplink-4mlzma)
