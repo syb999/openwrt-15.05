@@ -1,0 +1,715 @@
+--- a/sound/soc/Kconfig
++++ b/sound/soc/Kconfig
+@@ -55,6 +55,8 @@
+ source "sound/soc/tegra/Kconfig"
+ source "sound/soc/txx9/Kconfig"
+ source "sound/soc/ux500/Kconfig"
++source "sound/soc/ath79/Kconfig"
++
+ 
+ # Supported codecs
+ source "sound/soc/codecs/Kconfig"
+--- a/sound/soc/Makefile
++++ b/sound/soc/Makefile
+@@ -32,3 +32,4 @@
+ obj-$(CONFIG_SND_SOC)	+= tegra/
+ obj-$(CONFIG_SND_SOC)	+= txx9/
+ obj-$(CONFIG_SND_SOC)	+= ux500/
++obj-$(CONFIG_SND_SOC)	+= ath79/
+--- a/sound/soc/codecs/Kconfig
++++ b/sound/soc/codecs/Kconfig
+@@ -34,6 +34,7 @@
+ 	select SND_SOC_ADAU1701 if I2C
+ 	select SND_SOC_ADS117X
+ 	select SND_SOC_AK4104 if SPI_MASTER
++	select SND_SOC_AK4430
+ 	select SND_SOC_AK4535 if I2C
+ 	select SND_SOC_AK4554
+ 	select SND_SOC_AK4641 if I2C
+@@ -299,6 +300,9 @@
+ 	tristate "AKM AK4104 CODEC"
+ 	depends on SPI_MASTER
+ 
++config SND_SOC_AK4430
++	tristate "AKM AK4430 CODEC"
++
+ config SND_SOC_AK4535
+ 	tristate
+ 
+--- a/sound/soc/codecs/Makefile
++++ b/sound/soc/codecs/Makefile
+@@ -24,6 +24,7 @@
+ snd-soc-adav803-objs := adav803.o
+ snd-soc-ads117x-objs := ads117x.o
+ snd-soc-ak4104-objs := ak4104.o
++snd-soc-ak4430-objs := ak4430.o
+ snd-soc-ak4535-objs := ak4535.o
+ snd-soc-ak4554-objs := ak4554.o
+ snd-soc-ak4641-objs := ak4641.o
+@@ -198,6 +199,7 @@
+ obj-$(CONFIG_SND_SOC_ADAV803)  += snd-soc-adav803.o
+ obj-$(CONFIG_SND_SOC_ADS117X)	+= snd-soc-ads117x.o
+ obj-$(CONFIG_SND_SOC_AK4104)	+= snd-soc-ak4104.o
++obj-$(CONFIG_SND_SOC_AK4430)	+= snd-soc-ak4430.o
+ obj-$(CONFIG_SND_SOC_AK4535)	+= snd-soc-ak4535.o
+ obj-$(CONFIG_SND_SOC_AK4554)	+= snd-soc-ak4554.o
+ obj-$(CONFIG_SND_SOC_AK4641)	+= snd-soc-ak4641.o
+--- /dev/null
++++ b/sound/soc/codecs/ak4430.c
+@@ -0,0 +1,69 @@
++/*
++ * ak4430.c  --  AK4430 ALSA SoC Audio driver
++ *
++ * Copyright 2013 Fon Technology S.L.
++ *
++ * Author: Alejandro Enrique <alejandro.enrique@fon.com>
++ *
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ */
++
++#include <linux/module.h>
++#include <sound/soc.h>
++#include <sound/pcm.h>
++
++#define DRV_NAME	"ak4430-codec"
++
++#define AK4430_RATES   (SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_44100 \
++	               | SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_88200 \
++		       | SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_176400 \
++		       | SNDRV_PCM_RATE_192000)
++/* AK4430 needs 32 bit I2S words, although it will only use the upper 24 bits */
++#define AK4430_FORMATS (SNDRV_PCM_FMTBIT_S32_BE)
++
++
++static struct snd_soc_dai_driver ak4430_dai = {
++	.name = "ak4430-hifi",
++	.playback = {
++		.stream_name = "Playback",
++		.channels_min = 2,
++		.channels_max = 2,
++		.rates = AK4430_RATES,
++		.formats = AK4430_FORMATS,
++		},
++};
++
++static struct snd_soc_codec_driver soc_codec_dev_ak4430;
++
++static  int ak4430_probe(struct platform_device *pdev)
++{
++	return snd_soc_register_codec(&pdev->dev,
++			&soc_codec_dev_ak4430, &ak4430_dai, 1);
++}
++
++static int  ak4430_remove(struct platform_device *pdev)
++{
++	snd_soc_unregister_codec(&pdev->dev);
++	return 0;
++}
++
++static struct platform_driver ak4430_codec_driver = {
++	.driver = {
++			.name = DRV_NAME,
++			.owner = THIS_MODULE,
++	},
++
++	.probe = ak4430_probe,
++	.remove = ak4430_remove,
++};
++
++module_platform_driver(ak4430_codec_driver);
++
++MODULE_DESCRIPTION("ASoC ak4430 driver");
++MODULE_AUTHOR("Fon Technology S.L.");
++MODULE_AUTHOR("Alejandro Enrique <alejandro.enrique@fon.com>");
++MODULE_LICENSE("GPL");
++MODULE_ALIAS("platform:" DRV_NAME);
+--- a/arch/mips/include/asm/mach-ath79/ar71xx_regs.h
++++ b/arch/mips/include/asm/mach-ath79/ar71xx_regs.h
+@@ -1,6 +1,7 @@
+ /*
+  *  Atheros AR71XX/AR724X/AR913X SoC register definitions
+  *
++ *  Copyright (c) 2013 Qualcomm Atheros, Inc.
+  *  Copyright (C) 2010-2011 Jaiganesh Narayanan <jnarayanan@atheros.com>
+  *  Copyright (C) 2008-2010 Gabor Juhos <juhosg@openwrt.org>
+  *  Copyright (C) 2008 Imre Kaloz <kaloz@openwrt.org>
+@@ -25,7 +26,7 @@
+ #define AR71XX_GE1_BASE		0x1a000000
+ #define AR71XX_GE1_SIZE		0x10000
+ #define AR71XX_EHCI_BASE	0x1b000000
+-#define AR71XX_EHCI_SIZE	0x1000
++#define AR71XX_EHCI_SIZE	0x200
+ #define AR71XX_OHCI_BASE	0x1c000000
+ #define AR71XX_OHCI_SIZE	0x1000
+ #define AR71XX_SPI_BASE		0x1f000000
+@@ -78,10 +79,10 @@
+ #define AR724X_PCI_CTRL_SIZE	0x100
+ 
+ #define AR724X_EHCI_BASE	0x1b000000
+-#define AR724X_EHCI_SIZE	0x1000
++#define AR724X_EHCI_SIZE	0x200
+ 
+ #define AR913X_EHCI_BASE	0x1b000000
+-#define AR913X_EHCI_SIZE	0x1000
++#define AR913X_EHCI_SIZE	0x200
+ #define AR913X_WMAC_BASE	(AR71XX_APB_BASE + 0x000C0000)
+ #define AR913X_WMAC_SIZE	0x30000
+ 
+@@ -92,14 +93,20 @@
+ #define AR933X_WMAC_BASE	(AR71XX_APB_BASE + 0x00100000)
+ #define AR933X_WMAC_SIZE	0x20000
+ #define AR933X_EHCI_BASE	0x1b000000
+-#define AR933X_EHCI_SIZE	0x1000
++#define AR933X_EHCI_SIZE	0x200
+ 
+ #define AR934X_GMAC_BASE	(AR71XX_APB_BASE + 0x00070000)
+ #define AR934X_GMAC_SIZE	0x14
+ #define AR934X_WMAC_BASE	(AR71XX_APB_BASE + 0x00100000)
+ #define AR934X_WMAC_SIZE	0x20000
++#define AR934X_AUD_DPLL_BASE	(AR71XX_APB_BASE + 0x00116200)
++#define AR934X_AUD_DPLL_SIZE	0x10
+ #define AR934X_EHCI_BASE	0x1b000000
+ #define AR934X_EHCI_SIZE	0x200
++#define AR934X_DMA_BASE		(AR71XX_APB_BASE + 0x000A0000)
++#define AR934X_DMA_SIZE		0x6C
++#define AR934X_STEREO_BASE	(AR71XX_APB_BASE + 0x000B0000)
++#define AR934X_STEREO_SIZE	0x18
+ #define AR934X_NFC_BASE		0x1b000200
+ #define AR934X_NFC_SIZE		0xb8
+ #define AR934X_SRIF_BASE	(AR71XX_APB_BASE + 0x00116000)
+@@ -243,7 +250,7 @@
+ #define AR71XX_ETH1_PLL_SHIFT		19
+ 
+ #define AR724X_PLL_REG_CPU_CONFIG	0x00
+-#define AR724X_PLL_REG_PCIE_CONFIG	0x10
++#define AR724X_PLL_REG_PCIE_CONFIG	0x18
+ 
+ #define AR724X_PLL_DIV_SHIFT		0
+ #define AR724X_PLL_DIV_MASK		0x3ff
+@@ -294,6 +301,8 @@
+ #define AR934X_PLL_CPU_DDR_CLK_CTRL_REG		0x08
+ #define AR934X_PLL_SWITCH_CLOCK_CONTROL_REG	0x24
+ #define AR934X_PLL_ETH_XMII_CONTROL_REG		0x2c
++#define AR934X_PLL_AUDIO_CONFIG_REG		0x30
++#define AR934X_PLL_AUDIO_MOD_REG		0x34
+ 
+ #define AR934X_PLL_CPU_CONFIG_NFRAC_SHIFT	0
+ #define AR934X_PLL_CPU_CONFIG_NFRAC_MASK	0x3f
+@@ -403,6 +412,19 @@
+ #define QCA955X_PLL_CLK_CTRL_DDRCLK_FROM_DDRPLL		BIT(21)
+ #define QCA955X_PLL_CLK_CTRL_AHBCLK_FROM_DDRPLL		BIT(24)
+ 
++#define AR934X_PLL_AUDIO_CONFIG_EXT_DIV_SHIFT		12
++#define AR934X_PLL_AUDIO_CONFIG_EXT_DIV_MASK		0x7
++#define AR934X_PLL_AUDIO_CONFIG_POSTPLLPWD_SHIFT	7
++#define AR934X_PLL_AUDIO_CONFIG_POSTPLLPWD_MASK		0x7
++#define AR934X_PLL_AUDIO_CONFIG_PLLPWD			BIT(5)
++#define AR934X_PLL_AUDIO_CONFIG_BYPASS			BIT(4)
++#define AR934X_PLL_AUDIO_CONFIG_REFDIV_SHIFT		0
++#define AR934X_PLL_AUDIO_CONFIG_REFDIV_MASK		0xf
++#define AR934X_PLL_AUDIO_MOD_TGT_DIV_FRAC_SHIFT	11
++#define AR934X_PLL_AUDIO_MOD_TGT_DIV_FRAC_MASK	0x3ffff
++#define AR934X_PLL_AUDIO_MOD_TGT_DIV_INT_SHIFT	1
++#define AR934X_PLL_AUDIO_MOD_TGT_DIV_INT_MASK	0x3f
++
+ #define QCA956X_PLL_CPU_CONFIG_REG			0x00
+ #define QCA956X_PLL_CPU_CONFIG1_REG			0x04
+ #define QCA956X_PLL_DDR_CONFIG_REG			0x08
+@@ -862,6 +884,35 @@
+ #define AR934X_GPIO_REG_OUT_FUNC5	0x40
+ #define AR934X_GPIO_REG_FUNC		0x6c
+ 
++#define AR934X_GPIO_REG_IN_ENABLE0	0x44
++#define AR934X_GPIO_REG_IN_ENABLE1	0x48
++#define AR934X_GPIO_REG_IN_ENABLE2	0x4C
++#define AR934X_GPIO_REG_IN_ENABLE3	0x50
++#define AR934X_GPIO_REG_IN_ENABLE4	0x54
++
++#define AR934X_GPIO_REG_IN_ENABLE9	0x68
++#define AR934X_GPIO_REG_FUNC		0x6c
++
++#define AR934X_GPIO_OUT_MUX_SPI_CS1		7
++#define AR934X_GPIO_OUT_MUX_SPI_CS2		8
++#define AR934X_GPIO_OUT_MUX_SPI_CS0		9
++#define AR934X_GPIO_OUT_MUX_SPI_CLK		10
++#define AR934X_GPIO_OUT_MUX_SPI_MOSI		11
++#define AR934X_GPIO_OUT_MUX_I2S_CLK		12
++#define AR934X_GPIO_OUT_MUX_I2S_WS		13
++#define AR934X_GPIO_OUT_MUX_I2S_SD		14
++#define AR934X_GPIO_OUT_MUX_I2S_MCK		15
++#define AR934X_GPIO_OUT_MUX_SPDIF_OUT		25
++#define AR934X_GPIO_IN_MUX_SPI_MISO		0
++#define AR934X_GPIO_IN_MUX_UART0_SIN		1
++#define AR934X_GPIO_IN_MUX_I2S_WS		4
++#define AR934X_GPIO_IN_MUX_I2S_MIC_SD		5
++#define AR934X_GPIO_IN_MUX_I2S_CLK		6
++#define AR934X_GPIO_IN_MUX_I2S_MCK		7
++#define AR934X_GPIO_IN_MUX_I2S_ETH_RX_ERR	8
++#define AR934X_GPIO_IN_MUX_I2S_ETH_RX_COL	9
++#define AR934X_GPIO_IN_MUX_I2S_ETH_RX_CRS	10
++
+ #define QCA955X_GPIO_REG_OUT_FUNC0	0x2c
+ #define QCA955X_GPIO_REG_OUT_FUNC1	0x30
+ #define QCA955X_GPIO_REG_OUT_FUNC2	0x34
+@@ -933,6 +984,232 @@
+ #define AR934X_SRIF_DPLL2_OUTDIV_SHIFT	13
+ #define AR934X_SRIF_DPLL2_OUTDIV_MASK	0x7
+ 
++#define QCA955X_ETH_CFG_RGMII_GMAC0	BIT(0)
++#define QCA955X_ETH_CFG_SGMII_GMAC0	BIT(6)
++
++/*
++ * DPLL block
++ */
++
++#define AR934X_DPLL_REG_1		0x00
++#define AR934X_DPLL_REG_2		0x04
++
++#define AR934X_DPLL_2_RANGE		BIT(31)
++#define AR934X_DPLL_2_KI_SHIFT		26
++#define AR934X_DPLL_2_KI_MASK		0xf
++#define AR934X_DPLL_2_KD_SHIFT		19
++#define AR934X_DPLL_2_KD_MASK		0x7f
++
++#define AR934X_DPLL_REG_3		0x08
++
++#define AR934X_DPLL_3_DO_MEAS		BIT(30)
++#define AR934X_DPLL_3_PHASESH_SHIFT	23
++#define AR934X_DPLL_3_PHASESH_MASK	0x7f
++#define AR934X_DPLL_3_SQSUM_DVC_SHIFT	3
++#define AR934X_DPLL_3_SQSUM_DVC_MASK	0xfffff
++
++#define AR934X_DPLL_REG_4		0x0c
++
++#define AR934X_DPLL_4_MEAS_DONE		BIT(3)
++
++
++/*
++ * DMA block (MBOX/PCM)
++ */
++#define AR934X_DMA_REG_MBOX_FIFO			0x00
++#define AR934X_DMA_REG_MBOX_FIFO_STATUS			0x08
++#define AR934X_DMA_REG_SLIC_MBOX_FIFO_STATUS		0x0c
++#define AR934X_DMA_REG_MBOX_DMA_POLICY			0x10
++
++#define AR934X_DMA_MBOX_DMA_POLICY_TX_FIFO_THRESH_SHIFT	4
++#define AR934X_DMA_MBOX_DMA_POLICY_TX_FIFO_THRESH_MASK	0xf
++#define AR934X_DMA_MBOX_DMA_POLICY_TX_QUANTUM		BIT(3)
++#define AR934X_DMA_MBOX_DMA_POLICY_RX_QUANTUM		BIT(1)
++
++#define AR934X_DMA_REG_SLIC_MBOX_DMA_POLICY		0x14
++#define AR934X_DMA_REG_MBOX0_DMA_RX_DESCRIPTOR_BASE	0x18
++#define AR934X_DMA_REG_MBOX0_DMA_RX_CONTROL		0x1c
++#define AR934X_DMA_REG_MBOX0_DMA_TX_DESCRIPTOR_BASE	0x20
++#define AR934X_DMA_REG_MBOX0_DMA_TX_CONTROL		0x24
++#define AR934X_DMA_REG_MBOX1_DMA_RX_DESCRIPTOR_BASE	0x28
++#define AR934X_DMA_REG_MBOX1_DMA_RX_CONTROL		0x2c
++#define AR934X_DMA_REG_MBOX1_DMA_TX_DESCRIPTOR_BASE	0x30
++#define AR934X_DMA_REG_MBOX1_DMA_TX_CONTROL		0x34
++
++#define AR934X_DMA_MBOX_DMA_CONTROL_RESUME		BIT(2)
++#define AR934X_DMA_MBOX_DMA_CONTROL_START		BIT(1)
++#define AR934X_DMA_MBOX_DMA_CONTROL_STOP		BIT(0)
++
++#define AR934X_DMA_REG_MBOX_FRAME			0x38
++#define AR934X_DMA_REG_SLIC_MBOX_FRAME			0x3c
++#define AR934X_DMA_REG_FIFO_TIMEOUT			0x40
++#define AR934X_DMA_REG_MBOX_INT_STATUS			0x44
++#define AR934X_DMA_REG_SLIC_MBOX_INT_STATUS		0x48
++
++#define AR934X_DMA_MBOX_INT_STATUS_RX_DMA_COMPLETE	BIT(10)
++#define AR934X_DMA_MBOX_INT_STATUS_TX_DMA_COMPLETE	BIT(6)
++
++#define AR934X_DMA_REG_MBOX_INT_ENABLE			0x4c
++#define AR934X_DMA_REG_SLIC_MBOX_INT_ENABLE		0x50
++
++#define AR934X_DMA_MBOX1_INT_RX_COMPLETE		BIT(11)
++#define AR934X_DMA_MBOX0_INT_RX_COMPLETE		BIT(10)
++#define AR934X_DMA_MBOX1_INT_TX_EOM_COMPLETE		BIT(9)
++#define AR934X_DMA_MBOX0_INT_TX_EOM_COMPLETE		BIT(8)
++#define AR934X_DMA_MBOX1_INT_TX_COMPLETE		BIT(7)
++#define AR934X_DMA_MBOX0_INT_TX_COMPLETE		BIT(6)
++
++#define AR934X_DMA_REG_MBOX_FIFO_RESET			0x58
++#define AR934X_DMA_REG_SLIC_MBOX_FIFO_RESET		0x5c
++
++#define AR934X_DMA_MBOX_FIFO_RESET_ALL			0xff
++#define AR934X_DMA_MBOX1_FIFO_RESET_RX			BIT(3)
++#define AR934X_DMA_MBOX0_FIFO_RESET_RX			BIT(2)
++#define AR934X_DMA_MBOX1_FIFO_RESET_TX			BIT(1)
++#define AR934X_DMA_MBOX0_FIFO_RESET_TX			BIT(0)
++
++/*
++ * STEREO block
++ */
++#define	AR934X_STEREO_REG_CONFIG			0x00
++
++#define	AR934X_STEREO_CONFIG_SPDIF_ENABLE		BIT(23)
++#define AR934X_STEREO_CONFIG_I2S_ENABLE			BIT(21)
++#define AR934X_STEREO_CONFIG_MIC_RESET			BIT(20)
++#define AR934X_STEREO_CONFIG_RESET			BIT(19)
++#define AR934X_STEREO_CONFIG_I2S_DELAY			BIT(18)
++#define AR934X_STEREO_CONFIG_PCM_SWAP			BIT(17)
++#define AR934X_STEREO_CONFIG_MIC_WORD_SIZE		BIT(16)
++#define AR934X_STEREO_CONFIG_STEREO_MONO_SHIFT		14
++#define AR934X_STEREO_CONFIG_STEREO_MONO_MASK		0x03
++#define AR934X_STEREO_CONFIG_STEREO_MONO_STEREO		0
++#define AR934X_STEREO_CONFIG_STEREO_MONO_CH0		1
++#define AR934X_STEREO_CONFIG_STEREO_MONO_CH1		2
++
++#define AR934X_STEREO_CONFIG_DATA_WORD_SIZE_SHIFT	12
++#define AR934X_STEREO_CONFIG_DATA_WORD_SIZE_MASK	0x03
++#define AR934X_STEREO_CONFIG_DATA_WORD_8		0
++#define AR934X_STEREO_CONFIG_DATA_WORD_16		1
++#define AR934X_STEREO_CONFIG_DATA_WORD_24		2
++#define AR934X_STEREO_CONFIG_DATA_WORD_32		3
++
++#define AR934X_STEREO_CONFIG_I2S_WORD_SIZE		BIT(11)
++#define AR934X_STEREO_CONFIG_MCK_SEL			BIT(10)
++#define AR934X_STEREO_CONFIG_SAMPLE_CNT_CLEAR_TYPE	BIT(9)
++#define AR934X_STEREO_CONFIG_MASTER			BIT(8)
++#define AR934X_STEREO_CONFIG_POSEDGE_SHIFT		0
++#define AR934X_STEREO_CONFIG_POSEDGE_MASK		0xff
++
++#define	AR934X_STEREO_REG_VOLUME			0x04
++
++#define AR934X_STEREO_VOLUME_CH0			0
++#define AR934X_STEREO_VOLUME_CH1			8
++#define AR934X_STEREO_VOLUME_MASK			0x1f
++
++#define	AR934X_STEREO_REG_MASTER_CLOCK			0x08
++#define	AR934X_STEREO_REG_TX_SAMPLE_CNT_LSB		0x0c
++#define	AR934X_STEREO_REG_TX_SAMPLE_CNT_MSB		0x10
++#define	AR934X_STEREO_REG_RX_SAMPLE_CNT_LSB		0x14
++#define	AR934X_STEREO_REG_RX_SAMPLE_CNT_MSB 		0x18
++
++/*
++ * NAND controller
++ */
++#define AR934X_NAND_REG_COMMAND          0x00
++#define AR934X_NAND_REG_CTRL             0x04
++#define AR934X_NAND_REG_STATUS           0x08
++#define AR934X_NAND_REG_INT_MASK         0x0c
++#define AR934X_NAND_REG_INT_STATUS       0x10
++#define AR934X_NAND_REG_ECC_CTRL         0x14
++#define AR934X_NAND_REG_ECC_OFFSET       0x18
++#define AR934X_NAND_REG_ADDR0_0          0x1c
++#define AR934X_NAND_REG_ADDR1_0          0x20
++#define AR934X_NAND_REG_ADDR0_1          0x24
++#define AR934X_NAND_REG_ADDR1_1          0x28
++#define AR934X_NAND_REG_SPARE_SIZE       0x30
++#define AR934X_NAND_REG_PROTECT          0x38
++#define AR934X_NAND_REG_LOOKUP_EN        0x40
++#define AR934X_NAND_REG_LOOKUP0          0x44
++#define AR934X_NAND_REG_LOOKUP1          0x48
++#define AR934X_NAND_REG_LOOKUP2          0x4c
++#define AR934X_NAND_REG_LOOKUP3          0x50
++#define AR934X_NAND_REG_LOOKUP4          0x54
++#define AR934X_NAND_REG_LOOKUP5          0x58
++#define AR934X_NAND_REG_LOOKUP6          0x5c
++#define AR934X_NAND_REG_LOOKUP7          0x60
++#define AR934X_NAND_REG_DMA_ADDR         0x64
++#define AR934X_NAND_REG_DMA_COUNT        0x68
++#define AR934X_NAND_REG_DMA_CTRL         0x6c
++#define AR934X_NAND_REG_MEM_CTRL         0x80
++#define AR934X_NAND_REG_PG_SIZE          0x84
++#define AR934X_NAND_REG_RD_STATUS        0x88
++#define AR934X_NAND_REG_TIME_SEQ         0x8c
++#define AR934X_NAND_REG_TIMINGS_ASYN     0x90
++#define AR934X_NAND_REG_TIMINGS_SYN      0x94
++#define AR934X_NAND_REG_FIFO_DATA        0x98
++#define AR934X_NAND_REG_TIME_MODE        0x9c
++#define AR934X_NAND_REG_DMA_ADDR_OFFSET  0xa0
++#define AR934X_NAND_REG_DMA_ADDR_OFFSET  0xa0
++#define AR934X_NAND_REG_FIFO_INIT        0xb0
++#define AR934X_NAND_REG_GENERIC_SEQ_CTRL 0xb4
++
++#define AR934X_NAND_DMA_DESCR_SIZE		8
++
++#define AR934X_NAND_TIMING_ASYN_SETTING		0x11
++#define AR934X_NAND_TIME_SEQ_SETTING		0x7fff
++#define AR934X_NAND_CTRL_CUSTOM_SIZE_EN		BIT(11)
++
++#define AR934X_NAND_CTRL_PAGE_SIZE_256		(0 <<  8)
++#define AR934X_NAND_CTRL_PAGE_SIZE_512		BIT(8)
++#define AR934X_NAND_CTRL_PAGE_SIZE_1024		(2 <<  8)
++#define AR934X_NAND_CTRL_PAGE_SIZE_2048		(3 <<  8)
++#define AR934X_NAND_CTRL_PAGE_SIZE_4096		(4 <<  8)
++#define AR934X_NAND_CTRL_PAGE_SIZE_8192		(5 <<  8)
++#define AR934X_NAND_CTRL_PAGE_SIZE_16384	(6 <<  8)
++#define AR934X_NAND_CTRL_PAGE_SIZE_0		(7 <<  8)
++
++#define AR934X_NAND_CTRL_BLOCK_SIZE_32		(0 <<  6)
++#define AR934X_NAND_CTRL_BLOCK_SIZE_64		BIT(6)
++#define AR934X_NAND_CTRL_BLOCK_SIZE_128		(2 <<  6)
++#define AR934X_NAND_CTRL_BLOCK_SIZE_256		(3 <<  6)
++
++#define AR934X_NAND_CTRL_ECC_EN			BIT(5)
++#define AR934X_NAND_CTRL_INT_EN			BIT(4)
++#define AR934X_NAND_CTRL_SPARE_EN		BIT(3)
++
++#define AR934X_NAND_CTRL_ADDR_CYCLE0(c)		((c) << 0)
++
++#define AR934X_NAND_DMA_CTRL_DMA_START		BIT(7)
++#define AR934X_NAND_DMA_CTRL_DMA_DIR_WRITE	(0 << 6)
++#define AR934X_NAND_DMA_CTRL_DMA_DIR_READ	BIT(6)
++#define AR934X_NAND_DMA_CTRL_DMA_MODE_SG	BIT(5)
++#define AR934X_NAND_DMA_CTRL_DMA_BURST_0	(0 << 2)
++#define AR934X_NAND_DMA_CTRL_DMA_BURST_1	BIT(2)
++#define AR934X_NAND_DMA_CTRL_DMA_BURST_2	(2 << 2)
++#define AR934X_NAND_DMA_CTRL_DMA_BURST_3	(3 << 2)
++#define AR934X_NAND_DMA_CTRL_DMA_BURST_4	(4 << 2)
++#define AR934X_NAND_DMA_CTRL_DMA_BURST_5	(5 << 2)
++#define AR934X_NAND_DMA_CTRL_ERR_FLAG		BIT(1)
++#define AR934X_NAND_DMA_CTRL_DMA_READY		BIT(0)
++
++#define AR934X_NAND_ECC_CTRL_ERR_THRESH(x)	(((x) << 8) & (0x1fu << 8))
++#define AR934X_NAND_ECC_CTRL_ECC_CAP(x)		(((x) << 5) & (0x07u << 5))
++#define AR934X_NAND_ECC_CTRL_ECC_2_BITS		AR934X_NAND_ECC_CTRL_ECC_CAP(0)
++#define AR934X_NAND_ECC_CTRL_ECC_4_BITS		AR934X_NAND_ECC_CTRL_ECC_CAP(1)
++#define AR934X_NAND_ECC_CTRL_ECC_6_BITS		AR934X_NAND_ECC_CTRL_ECC_CAP(2)
++#define AR934X_NAND_ECC_CTRL_ECC_8_BITS		AR934X_NAND_ECC_CTRL_ECC_CAP(3)
++#define AR934X_NAND_ECC_CTRL_ECC_10_BITS	AR934X_NAND_ECC_CTRL_ECC_CAP(4)
++#define AR934X_NAND_ECC_CTRL_ECC_12_BITS	AR934X_NAND_ECC_CTRL_ECC_CAP(5)
++#define AR934X_NAND_ECC_CTRL_ECC_14_BITS	AR934X_NAND_ECC_CTRL_ECC_CAP(6)
++#define AR934X_NAND_ECC_CTRL_ECC_16_BITS	AR934X_NAND_ECC_CTRL_ECC_CAP(7)
++#define AR934X_NAND_ECC_CORR_BITS(x)		(AR934X_NAND_ECC_CTRL_ERR_THRESH(x) | AR934X_NAND_ECC_CTRL_ECC_CAP(((x) / 2) - 1))
++#define AR934X_NAND_ECC_CTRL_ERR_OVER		BIT(2)
++#define AR934X_NAND_ECC_CTRL_ERR_UNCORR		BIT(1)
++#define AR934X_NAND_ECC_CTRL_ERR_CORR		BIT(0)
++#define AR934X_NAND_ECC_ERROR			(AR934X_NAND_ECC_CTRL_ERR_UNCORR | AR934X_NAND_ECC_CTRL_ERR_OVER)
++
++#define AR934X_NAND_CMD_END_INT		BIT(1)
++
+ #define QCA953X_SRIF_CPU_DPLL1_REG	0x1c0
+ #define QCA953X_SRIF_CPU_DPLL2_REG	0x1c4
+ #define QCA953X_SRIF_CPU_DPLL3_REG	0x1c8
+--- a/arch/mips/include/asm/mach-ath79/ath79.h
++++ b/arch/mips/include/asm/mach-ath79/ath79.h
+@@ -152,12 +152,35 @@
+ extern void __iomem *ath79_gpio_base;
+ extern void __iomem *ath79_pll_base;
+ extern void __iomem *ath79_reset_base;
++extern void __iomem *ath79_dma_base;
++extern void __iomem *ath79_stereo_base;
++extern void __iomem *ath79_audio_dpll_base;
+ 
+ static inline void ath79_pll_wr(unsigned reg, u32 val)
+ {
+ 	__raw_writel(val, ath79_pll_base + reg);
+ }
+ 
++static inline void ath79_stereo_wr(unsigned reg, u32 val)
++{
++	__raw_writel(val, ath79_stereo_base + reg);
++}
++
++static inline u32 ath79_stereo_rr(unsigned reg)
++{
++	return __raw_readl(ath79_stereo_base + reg);
++}
++
++static inline void ath79_audio_dpll_wr(unsigned reg, u32 val)
++{
++	__raw_writel(val, ath79_audio_dpll_base + reg);
++}
++
++static inline u32 ath79_audio_dpll_rr(unsigned reg)
++{
++	return __raw_readl(ath79_audio_dpll_base + reg);
++}
++
+ static inline u32 ath79_pll_rr(unsigned reg)
+ {
+ 	return __raw_readl(ath79_pll_base + reg);
+@@ -181,4 +204,14 @@
+ void ath79_flash_acquire(void);
+ void ath79_flash_release(void);
+ 
++static inline void ath79_dma_wr(unsigned reg, u32 val)
++{
++	__raw_writel(val, ath79_dma_base + reg);
++}
++
++static inline u32 ath79_dma_rr(unsigned reg)
++{
++	return __raw_readl(ath79_dma_base + reg);
++}
++
+ #endif /* __ASM_MACH_ATH79_H */
+--- a/arch/mips/include/asm/mach-ath79/irq.h
++++ b/arch/mips/include/asm/mach-ath79/irq.h
+@@ -16,6 +16,26 @@
+ 
+ #define ATH79_MISC_IRQ_BASE	8
+ #define ATH79_MISC_IRQ_COUNT	32
++
++#define ATH79_CPU_IRQ_IP2	(MIPS_CPU_IRQ_BASE + 2)
++#define ATH79_CPU_IRQ_USB	(MIPS_CPU_IRQ_BASE + 3)
++#define ATH79_CPU_IRQ_GE0	(MIPS_CPU_IRQ_BASE + 4)
++#define ATH79_CPU_IRQ_GE1	(MIPS_CPU_IRQ_BASE + 5)
++#define ATH79_CPU_IRQ_MISC	(MIPS_CPU_IRQ_BASE + 6)
++#define ATH79_CPU_IRQ_TIMER	(MIPS_CPU_IRQ_BASE + 7)
++
++#define ATH79_MISC_IRQ_TIMER	(ATH79_MISC_IRQ_BASE + 0)
++#define ATH79_MISC_IRQ_ERROR	(ATH79_MISC_IRQ_BASE + 1)
++#define ATH79_MISC_IRQ_GPIO	(ATH79_MISC_IRQ_BASE + 2)
++#define ATH79_MISC_IRQ_UART	(ATH79_MISC_IRQ_BASE + 3)
++#define ATH79_MISC_IRQ_WDOG	(ATH79_MISC_IRQ_BASE + 4)
++#define ATH79_MISC_IRQ_PERFC	(ATH79_MISC_IRQ_BASE + 5)
++#define ATH79_MISC_IRQ_OHCI	(ATH79_MISC_IRQ_BASE + 6)
++#define ATH79_MISC_IRQ_DMA	(ATH79_MISC_IRQ_BASE + 7)
++#define ATH79_MISC_IRQ_TIMER2	(ATH79_MISC_IRQ_BASE + 8)
++#define ATH79_MISC_IRQ_TIMER3	(ATH79_MISC_IRQ_BASE + 9)
++#define ATH79_MISC_IRQ_TIMER4	(ATH79_MISC_IRQ_BASE + 10)
++#define ATH79_MISC_IRQ_ETHSW	(ATH79_MISC_IRQ_BASE + 12)
+ #define ATH79_MISC_IRQ(_x)	(ATH79_MISC_IRQ_BASE + (_x))
+ 
+ #define ATH79_PCI_IRQ_BASE	(ATH79_MISC_IRQ_BASE + ATH79_MISC_IRQ_COUNT)
+--- a/arch/mips/ath79/common.h
++++ b/arch/mips/ath79/common.h
+@@ -27,6 +27,7 @@
+ void ath79_gpio_function_enable(u32 mask);
+ void ath79_gpio_function_disable(u32 mask);
+ void ath79_gpio_function_setup(u32 set, u32 clear);
++void ath79_gpio_input_select(unsigned gpio, u8 val);
+ void ath79_gpio_output_select(unsigned gpio, u8 val);
+ void ath79_gpio_init(void);
+ 
+--- /dev/null
++++ b/arch/mips/ath79/dev-audio.c
+@@ -0,0 +1,51 @@
++/*
++ *  Atheros AR71xx Audio driver code
++ *
++ *  Copyright (c) 2013 Qualcomm Atheros, Inc.
++ *
++ *  This program is free software; you can redistribute it and/or modify it
++ *  under the terms of the GNU General Public License version 2 as published
++ *  by the Free Software Foundation.
++ */
++
++#include <linux/kernel.h>
++#include <linux/platform_device.h>
++#include <linux/module.h>
++
++#include <asm/mach-ath79/ar71xx_regs.h>
++#include <asm/mach-ath79/ath79.h>
++
++#include "dev-audio.h"
++
++void __iomem *ath79_dma_base;
++EXPORT_SYMBOL_GPL(ath79_dma_base);
++
++void __iomem *ath79_stereo_base;
++EXPORT_SYMBOL_GPL(ath79_stereo_base);
++
++void __iomem *ath79_audio_dpll_base;
++EXPORT_SYMBOL_GPL(ath79_audio_dpll_base);
++
++static struct platform_device ath79_i2s_device = {
++	.name		= "ath79-i2s",
++	.id		= -1,
++};
++
++static struct platform_device ath79_pcm_device = {
++	.name		= "ath79-pcm-audio",
++	.id		= -1,
++};
++
++void __init ath79_audio_device_register(void)
++{
++	platform_device_register(&ath79_i2s_device);
++	platform_device_register(&ath79_pcm_device);
++}
++
++void __init ath79_audio_setup(void)
++{
++	ath79_dma_base = ioremap_nocache(AR934X_DMA_BASE,AR934X_DMA_SIZE);
++	ath79_stereo_base = ioremap_nocache(AR934X_STEREO_BASE,AR934X_STEREO_SIZE);
++	ath79_audio_dpll_base = ioremap_nocache(AR934X_AUD_DPLL_BASE,AR934X_AUD_DPLL_SIZE);
++}
++
+--- /dev/null
++++ b/arch/mips/ath79/dev-audio.h
+@@ -0,0 +1,18 @@
++/*
++ *  Atheros AR71xx Audio driver code
++ *
++ *  Copyright (c) 2013 Qualcomm Atheros, Inc.
++ *
++ *  This program is free software; you can redistribute it and/or modify it
++ *  under the terms of the GNU General Public License version 2 as published
++ *  by the Free Software Foundation.
++ */
++
++#ifndef _ATH79_DEV_AUDIO_H
++#define _ATH79_DEV_AUDIO_H
++
++void __init ath79_audio_device_register(void);
++
++void ath79_audio_setup(void);
++
++#endif /* _ATH79_DEV_DSA_H */
+--- a/arch/mips/ath79/gpio.c
++++ b/arch/mips/ath79/gpio.c
+@@ -174,6 +174,34 @@
+ 	spin_unlock_irqrestore(&ath79_gpio_lock, flags);
+ }
+ 
++void __init ath79_gpio_input_select(unsigned gpio, u8 val)
++{
++	void __iomem *base = ath79_gpio_base;
++	unsigned long flags;
++	unsigned int reg;
++	u32 t, s;
++
++	BUG_ON(!soc_is_ar934x());
++
++	if (gpio >= AR934X_GPIO_COUNT)
++		return;
++
++	reg = AR934X_GPIO_REG_IN_ENABLE0 + 4 * (val / 4);
++	s = 8 * (val % 4);
++
++	spin_lock_irqsave(&ath79_gpio_lock, flags);
++
++	t = __raw_readl(base + reg);
++	t &= ~(0xff << s);
++	t |= gpio << s;
++	__raw_writel(t, base + reg);
++
++	/* flush write */
++	(void) __raw_readl(base + reg);
++
++	spin_unlock_irqrestore(&ath79_gpio_lock, flags);
++}
++
+ void ath79_gpio_function_enable(u32 mask)
+ {
+ 	ath79_gpio_function_setup(mask, 0);
+--- a/arch/mips/ath79/Kconfig
++++ b/arch/mips/ath79/Kconfig
+@@ -1518,6 +1518,9 @@
+ 	select ATH79_PCI_ATH9K_FIXUP
+ 	def_bool n
+ 
++config ATH79_DEV_AUDIO
++	def_bool y
++
+ config ATH79_DEV_DSA
+ 	def_bool n
+ 
+--- a/arch/mips/ath79/Makefile
++++ b/arch/mips/ath79/Makefile
+@@ -18,6 +18,7 @@
+ #
+ obj-y					+= dev-common.o
+ obj-$(CONFIG_ATH79_DEV_AP9X_PCI)	+= dev-ap9x-pci.o
++obj-$(CONFIG_ATH79_DEV_AUDIO)		+= dev-audio.o
+ obj-$(CONFIG_ATH79_DEV_DSA)		+= dev-dsa.o
+ obj-$(CONFIG_ATH79_DEV_ETH)		+= dev-eth.o
+ obj-$(CONFIG_ATH79_DEV_GPIO_BUTTONS)	+= dev-gpio-buttons.o

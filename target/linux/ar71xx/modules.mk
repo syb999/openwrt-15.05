@@ -54,15 +54,40 @@ $(eval $(call KernelPackage,spi-vsc7385))
 
 
 define KernelPackage/sound-ak4430
+  SUBMENU:=$(SOUND_MENU)
   TITLE:=ar71xx I2S Audio Driver
   DEPENDS:=@TARGET_ar71xx +kmod-sound-core +kmod-sound-soc-core +kmod-regmap
+  KCONFIG:= \
+	CONFIG_LZO_COMPRESS=y \
+	CONFIG_LZO_DECOMPRESS=y \
+	CONFIG_MTD_NAND=y \
+	CONFIG_MTD_NAND_AR934X=y \
+	CONFIG_MTD_NAND_AR934X_HW_ECC=y \
+	CONFIG_MTD_NAND_ECC=y \
+	CONFIG_REGMAP=y \
+	CONFIG_REGMAP_I2C=y \
+	CONFIG_REGMAP_SPI=y \
+	CONFIG_SND=y \
+	CONFIG_SND_ATH79_SOC_CODEC=y \
+	CONFIG_SND_ATH79_SOC_I2S=y \
+	CONFIG_SND_COMPRESS_OFFLOAD=y \
+	CONFIG_SND_PCM=y \
+	CONFIG_SND_SOC=y \
+	CONFIG_SND_SOC_AK4430=y \
+	CONFIG_SND_SOC_I2C_AND_SPI=y \
+	CONFIG_SND_TIMER=y \
+	CONFIG_SOUND=y \
+	CONFIG_ATH79_DEV_AUDIO=y \
+	CONFIG_SND_ATH79_SOC=y \
+	CONFIG_SND_ATH79_SOC_AP123_AK4430=y \
+	CONFIG_SND_SOC_AK4430=y
   FILES:= \
 	$(LINUX_DIR)/sound/soc/ath79/snd-soc-ath79-i2s.ko \
 	$(LINUX_DIR)/sound/soc/ath79/snd-soc-ath79-pcm.ko \
 	$(LINUX_DIR)/sound/soc/ath79/snd-soc-ath79-codec.ko \
 	$(LINUX_DIR)/sound/soc/ath79/snd-soc-ap123-ak4430.ko \
 	$(LINUX_DIR)/sound/soc/codecs/snd-soc-ak4430.ko
-  AUTOLOAD:=$(call AutoLoad,90,snd-soc-ath79-i2s snd-soc-ath79-pcm snd-soc-ath79-codec snd-soc-ap123-ak4430 snd-soc-ak4430)
+  AUTOLOAD:=$(call AutoLoad,65,snd-soc-ath79-i2s snd-soc-ath79-pcm snd-soc-ath79-codec snd-soc-ap123-ak4430 snd-soc-ak4430)
   $(call AddDepends/sound)
 endef
 
