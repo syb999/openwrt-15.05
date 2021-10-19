@@ -1,0 +1,90 @@
+#!/bin/sh
+#自行进入双11元宝狂欢节页面
+
+dosedxstart=
+dosedystart=
+dosedbasex=
+dosedbasey=
+
+sectionname=$(echo $0 | cut -d '/' -f 3 | cut -d '_' -f 1)
+adbclient=$(uci get adbrun.$sectionname.adbiplist)
+
+function look30sec() {
+	sleep 8
+	for i in $(seq 1 3) ;do
+		adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 390`)
+		sleep 8
+	done
+}
+
+adb disconnect ${adbclient}:5555
+sleep 2
+adb connect ${adbclient}:5555
+sleep 2
+
+adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 600`)
+
+ltimes=0
+while [ $ltimes -lt 10 ]
+do
+	adb -s ${adbclient}:5555 shell input tap $basex $basey
+	sleep 3
+	look30sec
+	sleep 2
+	adb -s ${adbclient}:5555 shell input keyevent 4
+	sleep 6
+	ltimes=$(echo `expr $ltimes + 1`)
+done
+
+ltimes=0
+while [ $ltimes -lt 10 ]
+do
+	adb -s ${adbclient}:5555 shell input tap $basex $basey
+	sleep 3
+	look30sec
+	sleep 2
+	look30sec
+	adb -s ${adbclient}:5555 shell input keyevent 4
+	sleep 6
+	ltimes=$(echo `expr $ltimes + 1`)
+done
+
+ltimes=0
+while [ $ltimes -lt 10 ]
+do
+	adb -s ${adbclient}:5555 shell input tap $basex $basey
+	sleep 3
+	for i in $(seq 1 6) ;do
+		look30sec
+	done
+	sleep 2
+	adb -s ${adbclient}:5555 shell input keyevent 4
+	sleep 6
+	ltimes=$(echo `expr $ltimes + 1`)
+done
+
+ltimes=0
+while [ $ltimes -lt 10 ]
+do
+	adb -s ${adbclient}:5555 shell input tap $basex $basey
+	sleep 3
+	look30sec
+	sleep 2
+	adb -s ${adbclient}:5555 shell input keyevent 4
+	sleep 6
+	ltimes=$(echo `expr $ltimes + 1`)
+done
+
+ltimes=0
+while [ $ltimes -lt 10 ]
+do
+	adb -s ${adbclient}:5555 shell input tap $basex $basey
+	sleep 3
+	look30sec
+	sleep 2
+	look30sec
+	adb -s ${adbclient}:5555 shell input keyevent 4
+	sleep 6
+	ltimes=$(echo `expr $ltimes + 1`)
+done
+
