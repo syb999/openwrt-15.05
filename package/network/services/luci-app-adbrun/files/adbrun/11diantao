@@ -1,5 +1,5 @@
 #!/bin/sh
-#自行进入双11元宝狂欢节页面
+#自行进入双11元宝狂欢节页面并点击赚元宝升级
 
 dosedxstart=
 dosedystart=
@@ -21,8 +21,6 @@ adb disconnect ${adbclient}:5555
 sleep 2
 adb connect ${adbclient}:5555
 sleep 2
-
-adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 600`)
 
 ltimes=0
 while [ $ltimes -lt 10 ]

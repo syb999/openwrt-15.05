@@ -1,0 +1,29 @@
+#!/bin/sh
+#自行进入淘宝双11种草机页面
+
+dosedxstart=
+dosedystart=
+dosedbasex=
+dosedbasey=
+
+sectionname=$(echo $0 | cut -d '/' -f 3 | cut -d '_' -f 1)
+adbclient=$(uci get adbrun.$sectionname.adbiplist)
+
+adb disconnect ${adbclient}:5555
+sleep 2
+adb connect ${adbclient}:5555
+sleep 2
+
+ltimes=0
+while [ $ltimes -lt 500 ]
+do
+	adb -s ${adbclient}:5555 shell input tap $xstart $ystart
+	sleep 9
+	adb -s ${adbclient}:5555 shell input keyevent 4
+	sleep 5
+	for i in $(seq 1 2) ;do
+		adb -s ${adbclient}:5555 shell input tap $basex $basey
+		sleep 3
+	done
+	ltimes=$(echo `expr $ltimes + 1`)
+done

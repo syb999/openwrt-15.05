@@ -60,6 +60,7 @@ adbcommandlist:value("kuaishou", translate("Automatically play kuaishou"))
 adbcommandlist:value("autodiantao", translate("Automatically taobao live"))
 adbcommandlist:value("autojdlite", translate("Automatically jdlite"))
 adbcommandlist:value("11diantao", translate("Automatically 11.11 taobao live"))
+adbcommandlist:value("11taobaozc", translate("Automatically 11.11 taobao zhongcaoji"))
 adbcommandlist.default     = "none"
 adbcommandlist.rempty      = false
 
