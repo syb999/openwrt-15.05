@@ -7,6 +7,21 @@ msgstr "ADB服务器"
 msgid "Assistant for automatic control android devices."
 msgstr "android设备自动控制助手"
 
+msgid "init devices"
+msgstr "设备初始化"
+
+msgid "init setting"
+msgstr "初始化设置"
+
+msgid "diantao daytime worklist"
+msgstr "点淘白天挂机列表"
+
+msgid "diantao dawn worklist"
+msgstr "点淘凌晨挂机列表"
+
+msgid "diantao night worklist"
+msgstr "点淘晚上8点后挂机列表"
+
 msgid "Photos directory"
 msgstr "照片下载目录"
 

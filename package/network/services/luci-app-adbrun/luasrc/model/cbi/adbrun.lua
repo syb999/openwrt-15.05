@@ -2,7 +2,8 @@ m = Map("adbrun", translate("ADB server"))
 
 a = m:section(TypedSection, "adbinit", "")
 
-adbinit = a:option(Button, "_adbinit", translate("One-click initialize devices"))
+a:tab("adb_init", translate("init devices"))
+adbinit = a:taboption("adb_init", Button, "_adbinit", translate("One-click initialize devices"))
 adbinit.rmempty = true
 adbinit.inputstyle = "apply"
 adbinit.description = translate("Please use USB cable to connect openwrt router and Android device(multi devices support)")
@@ -10,11 +11,27 @@ function adbinit.write(self, section)
 	luci.util.exec("/usr/adbrun/adbinit.sh >/dev/null 2>&1 &")
 end
 
-adbphotopath=a:option(Value, "adbphotopath", translate("Photos directory"))
+a:tab("init_set", translate("init setting"))
+adbphotopath=a:taboption("init_set", Value, "adbphotopath", translate("Photos directory"))
 adbphotopath.datatype = "string"
 adbphotopath.default = "/tmp"
 adbphotopath.rmempty = false
 adbphotopath.description = translate("Please enter a valid directory")
+
+diantaodayworklist=a:taboption("init_set", Value, "diantaodayworklist", translate("diantao daytime worklist"))
+diantaodayworklist.datatype = "string"
+diantaodayworklist.default = "30秒10次 60秒10次 3分钟10次 30秒10次 60秒10次 30秒1次"
+diantaodayworklist.rmempty = false
+
+diantaodawnworklist=a:taboption("init_set", Value, "diantaodawnworklist", translate("diantao dawn worklist"))
+diantaodawnworklist.datatype = "string"
+diantaodawnworklist.default = "30秒20次 30秒10次 60秒20次 60秒10次 3分钟10次 30秒1次 30秒1次 30秒1次"
+diantaodawnworklist.rmempty = false
+
+diantaonightworklist=a:taboption("init_set", Value, "diantaonightworklist", translate("diantao night worklist"))
+diantaonightworklist.datatype = "string"
+diantaonightworklist.default = "60秒3次 3分钟5次 30秒10次 60秒10次 3分钟10次 30秒10次 60秒10次"
+diantaonightworklist.rmempty = false
 
 
 s = m:section(TypedSection, "adbrun", "", translate("Assistant for automatic control android devices."))
