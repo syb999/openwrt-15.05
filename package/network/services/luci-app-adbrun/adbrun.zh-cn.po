@@ -14,13 +14,13 @@ msgid "init setting"
 msgstr "初始化设置"
 
 msgid "diantao daytime worklist"
-msgstr "点淘白天挂机列表"
+msgstr "点淘白天挂机列表(8:00~19:59)"
 
 msgid "diantao dawn worklist"
-msgstr "点淘凌晨挂机列表"
+msgstr "点淘凌晨挂机列表(2:00~7:59)"
 
 msgid "diantao night worklist"
-msgstr "点淘晚上8点后挂机列表"
+msgstr "点淘晚上8点后挂机列表(20:00~~)"
 
 msgid "Photos directory"
 msgstr "照片下载目录"
