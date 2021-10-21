@@ -104,10 +104,16 @@ msgid "Automatically jdlite"
 msgstr "自动获取金币脚本-京东极速版任务"
 
 msgid "Automatically 11.11 taobao live"
-msgstr "自动获取金币脚本-双11活动-点淘"
+msgstr "自动获取金币脚本-双11活动-点淘-赚元宝升级(白天或晚上8点后)"
+
+msgid "Automatically 11.11 taobao live lucky event"
+msgstr "自动获取金币脚本-双11活动-点淘-幸运大抽奖"
 
 msgid "Automatically 11.11 taobao zhongcaoji"
 msgstr "自动获取金币脚本-双11活动-淘宝-天猫双11种草机"
+
+msgid "Automatically 11.11 taobao miaotang event"
+msgstr "自动获取金币脚本-双11活动-淘宝-天猫双11做任务赚喵糖"
 
 msgid "Connect client"
 msgstr "一键连接客户端"

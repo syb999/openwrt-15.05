@@ -9,12 +9,16 @@ adb connect ${adbclient}:5555
 screensize=$(adb -s ${adbclient}:5555 shell wm size | cut -d ':' -f 2 | sed -e "s/ //g;s/\n//g;s/\r//g")
 if [ ${screensize} == "720x1280" ];then
 	sizepath="720x1280"
+elif  [ ${screensize} == "720x1560" ];then
+	sizepath="720x1560"
 elif  [ ${screensize} == "1080x2244" ];then
 	sizepath="1080x2244"
 elif  [ ${screensize} == "1080x1920" ];then
 	sizepath="1080x1920"
 elif  [ ${screensize} == "1080x2280" ];then
 	sizepath="1080x2280"
+elif  [ ${screensize} == "1080x2340" ];then
+	sizepath="1080x2340"
 fi
 
 case $adbcommand in
@@ -77,8 +81,14 @@ case $adbcommand in
 	11diantao) adbcd="scripts"
 		adbsh="11diantao"
 	;;
+	11diantaolucky) adbcd="scripts"
+		adbsh="11diantaolucky"
+	;;
 	11taobaozc) adbcd="scripts"
 		adbsh="11taobaozc"
+	;;
+	11taobaomiaotang) adbcd="scripts"
+		adbsh="11taobaomiaotang"
 	;;
 	none) adbcd=""
 	;;
@@ -95,18 +105,22 @@ if [ $adbcd == "scripts" ];then
 			cat ${spath}${adbsh} | sed -e "s/while\ True:/while\ True:\n\tsubprocess.call(r\'adb\ -s\ \$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\'):5555\ shell\ screencap\ -p\ \/data\/local\/tmp\/sc\$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\').jpg\',shell=True)\n\tsubprocess.call(r\'adb\ -s\ \$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\'):5555\ pull\ \/data\/local\/tmp\/sc\$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\').jpg\ \/tmp\/\ >\ \/dev\/null\ 2>\&1',shell=True)/;s/dosedxrangestart/10/;s/dosedxrangeend/710/;s/dosedxrangestep/5/;s/dosedyrangestart/330/;s/dosedyrangeend/680/;s/dosedtapax/555/;s/dosedtapay/335/;s/dosedtapbx/555/;s/dosedtapby/380/;" > /tmp/${sectionname}_py
 			chmod +x /tmp/${sectionname}_py
 			python3 /tmp/${sectionname}_py
-		elif  [ ${screensize} == "1080x2244" ];then
+		elif [ ${screensize} == "720x1560" ];then
+			echo "unsupport now"
+		elif [ ${screensize} == "1080x2244" ];then
 			cat ${spath}${adbsh} | sed -e "s/while\ True:/while\ True:\n\tsubprocess.call(r\'adb\ -s\ \$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\'):5555\ exec-out\ screencap\ -p\ >\ \/tmp\/sc\$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\').jpg\',shell=True)/;s/dosedxrangestart/30/;s/dosedxrangeend/1070/;s/dosedxrangestep/10/;s/dosedyrangestart/450/;s/dosedyrangeend/950/;s/dosedtapax/855/;s/dosedtapay/648/;s/dosedtapbx/855/;s/dosedtapby/690/;" > /tmp/${sectionname}_py
 			chmod +x /tmp/${sectionname}_py
 			python3 /tmp/${sectionname}_py
-		elif  [ ${screensize} == "1080x1920" ];then
+		elif [ ${screensize} == "1080x1920" ];then
 			cat ${spath}${adbsh} | sed -e "s/while\ True:/while\ True:\n\tsubprocess.call(r\'adb\ -s\ \$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\'):5555\ exec-out\ screencap\ -p\ >\ \/tmp\/sc\$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\').jpg\',shell=True)/;s/dosedxrangestart/20/;s/dosedxrangeend/1070/;s/dosedxrangestep/10/;s/dosedyrangestart/470/;s/dosedyrangeend/1010/;s/dosedtapax/830/;s/dosedtapay/500/;s/dosedtapbx/830/;s/dosedtapby/570/;" > /tmp/${sectionname}_py
 			chmod +x /tmp/${sectionname}_py
 			python3 /tmp/${sectionname}_py
-		elif  [ ${screensize} == "1080x2280" ];then
+		elif [ ${screensize} == "1080x2280" ];then
 			cat ${spath}${adbsh} | sed -e "s/while\ True:/while\ True:\n\tsubprocess.call(r\'adb\ -s\ \$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\'):5555\ exec-out\ screencap\ -p\ >\ \/tmp\/sc\$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\').jpg\',shell=True)/;s/dosedxrangestart/30/;s/dosedxrangeend/1070/;s/dosedxrangestep/10/;s/dosedyrangestart/450/;s/dosedyrangeend/950/;s/dosedtapax/855/;s/dosedtapay/648/;s/dosedtapbx/855/;s/dosedtapby/690/;" > /tmp/${sectionname}_py
 			chmod +x /tmp/${sectionname}_py
 			python3 /tmp/${sectionname}_py
+		elif [ ${screensize} == "1080x2340" ];then
+			echo "unsupport now"
 		fi
 	elif  [ ${adbsh} == "readbook" ];then
 		echo fanqiexiaoshuo
@@ -114,16 +128,22 @@ if [ $adbcd == "scripts" ];then
 			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=680/;s/dosedbasey=/basey=130/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
-		elif  [ ${screensize} == "1080x2244" ];then
+		elif [ ${screensize} == "720x1560" ];then
+			echo "unsupport now"
+		elif [ ${screensize} == "1080x2244" ];then
 			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=1030/;s/dosedbasey=/basey=300/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
-		elif  [ ${screensize} == "1080x1920" ];then
+		elif [ ${screensize} == "1080x1920" ];then
 			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=1030/;s/dosedbasey=/basey=200/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
-		elif  [ ${screensize} == "1080x2280" ];then
+		elif [ ${screensize} == "1080x2280" ];then
 			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=1030/;s/dosedbasey=/basey=300/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x2340" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=1030/;s/dosedbasey=/basey=395/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
 		fi
@@ -133,16 +153,22 @@ if [ $adbcd == "scripts" ];then
 			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=386/;s/dosedbasey=/basey=620/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
-		elif  [ ${screensize} == "1080x2244" ];then
+		elif [ ${screensize} == "720x1560" ];then
+			echo "unsupport now"
+		elif [ ${screensize} == "1080x2244" ];then
 			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=586/;s/dosedbasey=/basey=750/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
-		elif  [ ${screensize} == "1080x1920" ];then
+		elif [ ${screensize} == "1080x1920" ];then
 			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=586/;s/dosedbasey=/basey=700/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
-		elif  [ ${screensize} == "1080x2280" ];then
+		elif [ ${screensize} == "1080x2280" ];then
 			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=586/;s/dosedbasey=/basey=750/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x2340" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=586/;s/dosedbasey=/basey=845/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
 		fi
@@ -152,16 +178,22 @@ if [ $adbcd == "scripts" ];then
 			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=360/;s/dosedystart=/ystart=515/;s/dosedbasex=/basex=605/;s/dosedbasey=/basey=586/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
-		elif  [ ${screensize} == "1080x2244" ];then
+		elif [ ${screensize} == "720x1560" ];then
+			echo "unsupport now"
+		elif [ ${screensize} == "1080x2244" ];then
 			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=1050/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=1060/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
-		elif  [ ${screensize} == "1080x1920" ];then
+		elif [ ${screensize} == "1080x1920" ];then
 			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=850/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=860/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
-		elif  [ ${screensize} == "1080x2280" ];then
+		elif [ ${screensize} == "1080x2280" ];then
 			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=1050/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=1060/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x2340" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=1145/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=1155/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
 		fi
@@ -171,16 +203,22 @@ if [ $adbcd == "scripts" ];then
 			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=350/;s/dosedystart=/ystart=800/;s/dosedbasex=/basex=620/;s/dosedbasey=/basey=550/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
-		elif  [ ${screensize} == "1080x2244" ];then
+		elif [ ${screensize} == "720x1560" ];then
+			echo "unsupport now"
+		elif [ ${screensize} == "1080x2244" ];then
 			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=530/;s/dosedystart=/ystart=1560/;s/dosedbasex=/basex=950/;s/dosedbasey=/basey=835/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
-		elif  [ ${screensize} == "1080x1920" ];then
+		elif [ ${screensize} == "1080x1920" ];then
 			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=530/;s/dosedystart=/ystart=1360/;s/dosedbasex=/basex=950/;s/dosedbasey=/basey=635/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
-		elif  [ ${screensize} == "1080x2280" ];then
+		elif [ ${screensize} == "1080x2280" ];then
 			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=530/;s/dosedystart=/ystart=1560/;s/dosedbasex=/basex=950/;s/dosedbasey=/basey=835/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x2340" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=530/;s/dosedystart=/ystart=1655/;s/dosedbasex=/basex=950/;s/dosedbasey=/basey=930/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
 		fi
@@ -190,16 +228,47 @@ if [ $adbcd == "scripts" ];then
 			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=310/;s/dosedystart=/ystart=710/;s/dosedbasex=/basex=600/;s/dosedbasey=/basey=500/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
-		elif  [ ${screensize} == "1080x2244" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=518/;s/dosedystart=/ystart=1390/;s/dosedbasex=/basex=900/;s/dosedbasey=/basey=1705/' > /tmp/${sectionname}_sh
+		elif [ ${screensize} == "720x1560" ];then
+			echo "unsupport now"
+		elif [ ${screensize} == "1080x2244" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=518/;s/dosedystart=/ystart=1390/;s/dosedbasex=/basex=900/;s/dosedbasey=/basey=755/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
-		elif  [ ${screensize} == "1080x1920" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=518/;s/dosedystart=/ystart=1190/;s/dosedbasex=/basex=900/;s/dosedbasey=/basey=1505/' > /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x1920" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=518/;s/dosedystart=/ystart=1190/;s/dosedbasex=/basex=900/;s/dosedbasey=/basey=555/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
-		elif  [ ${screensize} == "1080x2280" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=518/;s/dosedystart=/ystart=1390/;s/dosedbasex=/basex=900/;s/dosedbasey=/basey=1705/' > /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x2280" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=518/;s/dosedystart=/ystart=1390/;s/dosedbasex=/basex=900/;s/dosedbasey=/basey=755/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x2340" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=518/;s/dosedystart=/ystart=1485/;s/dosedbasex=/basex=900/;s/dosedbasey=/basey=850/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		fi
+	elif  [ ${adbsh} == "11diantaolucky" ];then
+		echo "shuang11"
+		if [ ${screensize} == "720x1280" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=310/;s/dosedystart=/ystart=710/;s/dosedbasex=/basex=635/;s/dosedbasey=/basey=1000/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "720x1560" ];then
+			echo "unsupport now"
+		elif [ ${screensize} == "1080x2244" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=518/;s/dosedystart=/ystart=1390/;s/dosedbasex=/basex=945/;s/dosedbasey=/basey=1520/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x1920" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=518/;s/dosedystart=/ystart=1190/;s/dosedbasex=/basex=945/;s/dosedbasey=/basey=1320/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x2280" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=518/;s/dosedystart=/ystart=1390/;s/dosedbasex=/basex=945/;s/dosedbasey=/basey=1520/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x2340" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=518/;s/dosedystart=/ystart=1485/;s/dosedbasex=/basex=945/;s/dosedbasey=/basey=1615/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
 		fi
@@ -209,16 +278,47 @@ if [ $adbcd == "scripts" ];then
 			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=320/;s/dosedystart=/ystart=1065/;s/dosedbasex=/basex=360/;s/dosedbasey=/basey=500/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
-		elif  [ ${screensize} == "1080x2244" ];then
+		elif [ ${screensize} == "720x1560" ];then
+			echo "unsupport now"
+		elif [ ${screensize} == "1080x2244" ];then
 			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=360/;s/dosedystart=/ystart=1560/;s/dosedbasex=/basex=550/;s/dosedbasey=/basey=770/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
-		elif  [ ${screensize} == "1080x1920" ];then
+		elif [ ${screensize} == "1080x1920" ];then
 			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=360/;s/dosedystart=/ystart=1360/;s/dosedbasex=/basex=550/;s/dosedbasey=/basey=570/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
-		elif  [ ${screensize} == "1080x2280" ];then
+		elif [ ${screensize} == "1080x2280" ];then
 			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=360/;s/dosedystart=/ystart=1560/;s/dosedbasex=/basex=550/;s/dosedbasey=/basey=770/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x2340" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=360/;s/dosedystart=/ystart=1655/;s/dosedbasex=/basex=550/;s/dosedbasey=/basey=865/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		fi
+	elif  [ ${adbsh} == "11taobaomiaotang" ];then
+		echo "shuang11"
+		if [ ${screensize} == "720x1280" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=600/;s/dosedbasey=/basey=900/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "720x1560" ];then
+			echo "unsupport now"
+		elif [ ${screensize} == "1080x2244" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=900/;s/dosedbasey=/basey=1550/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x1920" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=900/;s/dosedbasey=/basey=1350/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x2280" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=900/;s/dosedbasey=/basey=1550/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x2340" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=900/;s/dosedbasey=/basey=1645/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
 		fi

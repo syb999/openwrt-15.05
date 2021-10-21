@@ -1,5 +1,5 @@
 #!/bin/sh
-#自行进入元宝中心-打工赚元宝-赚体力页面
+#自行进入双11元宝狂欢节页面-进入幸运大抽奖页面
 
 dosedxstart=
 dosedystart=
@@ -35,7 +35,7 @@ do
 done
 
 ltimes=0
-while [ $ltimes -lt 5 ]
+while [ $ltimes -lt 10 ]
 do
 	adb -s ${adbclient}:5555 shell input tap $basex $basey
 	sleep 3
@@ -46,21 +46,9 @@ do
 	ltimes=$(echo `expr $ltimes + 1`)
 done
 
-ltimes=0
-while [ $ltimes -lt 5 ]
-do
-	adb -s ${adbclient}:5555 shell input tap $basex $basey
-	sleep 3
-	look30sec
-	sleep 2
-	look30sec
-	adb -s ${adbclient}:5555 shell input keyevent 4
-	sleep 6
-	ltimes=$(echo `expr $ltimes + 1`)
-done
 
 ltimes=0
-while [ $ltimes -lt 3 ]
+while [ $ltimes -lt 10 ]
 do
 	adb -s ${adbclient}:5555 shell input tap $basex $basey
 	sleep 3
@@ -72,9 +60,21 @@ do
 	ltimes=$(echo `expr $ltimes + 1`)
 done
 
+ltimes=0
+while [ $ltimes -lt 10 ]
+do
+	adb -s ${adbclient}:5555 shell input tap $basex $basey
+	sleep 3
+	look30sec
+	sleep 2
+	look30sec
+	adb -s ${adbclient}:5555 shell input keyevent 4
+	sleep 6
+	ltimes=$(echo `expr $ltimes + 1`)
+done
 
 ltimes=0
-while [ $ltimes -lt 1 ]
+while [ $ltimes -lt 10 ]
 do
 	adb -s ${adbclient}:5555 shell input tap $basex $basey
 	sleep 3
@@ -87,13 +87,12 @@ do
 	ltimes=$(echo `expr $ltimes + 1`)
 done
 
-
 ltimes=0
-while [ $ltimes -lt 1 ]
+while [ $ltimes -lt 8 ]
 do
 	adb -s ${adbclient}:5555 shell input tap $basex $basey
 	sleep 3
-	for i in $(seq 1 10) ;do
+	for i in $(seq 1 6) ;do
 		look30sec
 	done
 	sleep 2
@@ -102,3 +101,16 @@ do
 	ltimes=$(echo `expr $ltimes + 1`)
 done
 
+ltimes=0
+while [ $ltimes -lt 10 ]
+do
+	adb -s ${adbclient}:5555 shell input tap $basex $basey
+	sleep 3
+	for i in $(seq 1 20) ;do
+		look30sec
+	done
+	sleep 2
+	adb -s ${adbclient}:5555 shell input keyevent 4
+	sleep 6
+	ltimes=$(echo `expr $ltimes + 1`)
+done
