@@ -90,6 +90,9 @@ case $adbcommand in
 	11taobaomiaotang) adbcd="scripts"
 		adbsh="11taobaomiaotang"
 	;;
+	11taobaoshaizi) adbcd="scripts"
+		adbsh="11taobaoshaizi"
+	;;
 	none) adbcd=""
 	;;
 esac
@@ -304,21 +307,50 @@ if [ $adbcd == "scripts" ];then
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
 		elif [ ${screensize} == "720x1560" ];then
-			echo "unsupport now"
-		elif [ ${screensize} == "1080x2244" ];then
-			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=900/;s/dosedbasey=/basey=1550/' > /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=600/;s/dosedbasey=/basey=950/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
-		elif [ ${screensize} == "1080x1920" ];then
+		elif [ ${screensize} == "1080x2244" ];then
 			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=900/;s/dosedbasey=/basey=1350/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x1920" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=900/;s/dosedbasey=/basey=1150/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
 		elif [ ${screensize} == "1080x2280" ];then
-			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=900/;s/dosedbasey=/basey=1550/' > /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=900/;s/dosedbasey=/basey=1350/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
 		elif [ ${screensize} == "1080x2340" ];then
-			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=900/;s/dosedbasey=/basey=1645/' > /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=900/;s/dosedbasey=/basey=1445/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		fi
+	elif  [ ${adbsh} == "11taobaoshaizi" ];then
+		echo "shuang11"
+		if [ ${screensize} == "720x1280" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=360/;s/dosedbasey=/basey=1118/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "720x1560" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=360/;s/dosedbasey=/basey=1168/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x2244" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=535/;s/dosedbasey=/basey=1780/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x1920" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=535/;s/dosedbasey=/basey=1580/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x2280" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=535/;s/dosedbasey=/basey=1780/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x2340" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=535/;s/dosedbasey=/basey=1875/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
 		fi

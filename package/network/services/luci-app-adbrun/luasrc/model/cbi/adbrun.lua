@@ -11,28 +11,34 @@ function adbinit.write(self, section)
 	luci.util.exec("/usr/adbrun/adbinit.sh >/dev/null 2>&1 &")
 end
 
-a:tab("init_set", translate("init setting"))
-adbphotopath=a:taboption("init_set", Value, "adbphotopath", translate("Photos directory"))
+a:tab("diantaoinit_set", translate("diantao init setting"))
+diantaodayworklistd11=a:taboption("diantaoinit_set", Value, "diantaodayworklistd11", translate("d11event-diantao daytime worklist"))
+diantaodayworklistd11.datatype = "string"
+diantaodayworklistd11.default = "30秒10次 60秒10次 3分钟10次 30秒10次 60秒10次 30秒1次"
+diantaodayworklistd11.rmempty = false
+diantaodayworklistd11.description = translate("格式:X秒 X分钟")
+
+diantaonightworklistd11=a:taboption("diantaoinit_set", Value, "diantaonightworklistd11", translate("d11event-diantao night worklist"))
+diantaonightworklistd11.datatype = "string"
+diantaonightworklistd11.default = "60秒3次 3分钟5次 30秒10次 60秒10次 3分钟10次 30秒10次 60秒10次"
+diantaonightworklistd11.rmempty = false
+
+diantaodayworklist=a:taboption("diantaoinit_set", Value, "diantaodayworklist", translate("diantao daytime worklist"))
+diantaodayworklist.datatype = "string"
+diantaodayworklist.default = "30秒20次 60秒20次 60秒3次 3分钟1次 30秒1次 30秒1次 5分钟1次 8分钟1次 30秒1次"
+diantaodayworklist.rmempty = false
+
+diantaonightworklist=a:taboption("diantaoinit_set", Value, "diantaonightworklist", translate("diantao night worklist"))
+diantaonightworklist.datatype = "string"
+diantaonightworklist.default = "30秒20次 60秒20次 60秒3次 3分钟1次 30秒1次 30秒1次 5分钟1次 8分钟1次 30秒1次"
+diantaonightworklist.rmempty = false
+
+a:tab("photoinit_set", translate("photo init setting"))
+adbphotopath=a:taboption("photoinit_set", Value, "adbphotopath", translate("Photos directory"))
 adbphotopath.datatype = "string"
 adbphotopath.default = "/tmp"
 adbphotopath.rmempty = false
 adbphotopath.description = translate("Please enter a valid directory")
-
-diantaodayworklist=a:taboption("init_set", Value, "diantaodayworklist", translate("diantao daytime worklist"))
-diantaodayworklist.datatype = "string"
-diantaodayworklist.default = "30秒10次 60秒10次 3分钟10次 30秒10次 60秒10次 30秒1次"
-diantaodayworklist.rmempty = false
-
-diantaodawnworklist=a:taboption("init_set", Value, "diantaodawnworklist", translate("diantao dawn worklist"))
-diantaodawnworklist.datatype = "string"
-diantaodawnworklist.default = "30秒20次 30秒10次 60秒20次 60秒10次 3分钟10次 30秒1次 30秒1次 30秒1次"
-diantaodawnworklist.rmempty = false
-
-diantaonightworklist=a:taboption("init_set", Value, "diantaonightworklist", translate("diantao night worklist"))
-diantaonightworklist.datatype = "string"
-diantaonightworklist.default = "60秒3次 3分钟5次 30秒10次 60秒10次 3分钟10次 30秒10次 60秒10次"
-diantaonightworklist.rmempty = false
-
 
 s = m:section(TypedSection, "adbrun", "", translate("Assistant for automatic control android devices."))
 
@@ -80,6 +86,7 @@ adbcommandlist:value("11diantao", translate("Automatically 11.11 taobao live"))
 adbcommandlist:value("11diantaolucky", translate("Automatically 11.11 taobao live lucky event"))
 adbcommandlist:value("11taobaozc", translate("Automatically 11.11 taobao zhongcaoji"))
 adbcommandlist:value("11taobaomiaotang", translate("Automatically 11.11 taobao miaotang event"))
+adbcommandlist:value("11taobaoshaizi", translate("Automatically 11.11 taobao miaotang event-touzi"))
 adbcommandlist.default     = "none"
 adbcommandlist.rempty      = false
 

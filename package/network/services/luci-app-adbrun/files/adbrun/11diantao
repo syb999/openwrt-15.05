@@ -1,5 +1,5 @@
 #!/bin/sh
-#自行进入双11元宝狂欢节页面并点击赚元宝升级-白天+晚上
+#自行进入双11元宝狂欢节页面-并点击赚元宝升级-白天+晚上
 
 dosedxstart=
 dosedystart=
@@ -70,14 +70,11 @@ sleep 2
 
 gettimenow=$(date "+%H")
 
-if [ $gettimenow -lt 20 -a $gettimenow -gt 7 ];then
-	worklist=$(uci get adbrun.@adbinit[0].diantaodayworklist)
-	botting
-elif [ $gettimenow -le 7 -a $gettimenow -gt 1 ];then
-	worklist=$(uci get adbrun.@adbinit[0].diantaodawnworklist)
+if [ $gettimenow -lt 20 -a $gettimenow -ge 0 ];then
+	worklist=$(uci get adbrun.@adbinit[0].diantaodayworklistd11)
 	botting
 else
-	worklist=$(uci get adbrun.@adbinit[0].diantaonightworklist)
+	worklist=$(uci get adbrun.@adbinit[0].diantaonightworklistd11)
 	botting
 fi
 rm /tmp/worklist${sectionname}.adbtmp

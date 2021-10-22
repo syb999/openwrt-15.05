@@ -1,5 +1,5 @@
 #!/bin/sh
-#自行进入淘宝一起赢20亿红包-做任务赚喵糖
+#自行进入淘宝双11喵糖总动员-点击赢红包页面
 
 dosedbasex=
 dosedbasey=
@@ -12,12 +12,8 @@ sleep 2
 adb connect ${adbclient}:5555
 sleep 2
 
-ltimes=0
-while [ $ltimes -lt 40 ]
+while true
 do
 	adb -s ${adbclient}:5555 shell input tap $basex $basey
-	sleep 30
-	adb -s ${adbclient}:5555 shell input keyevent 4
-	sleep 6
-	ltimes=$(echo `expr $ltimes + 1`)
+	sleep 3
 done

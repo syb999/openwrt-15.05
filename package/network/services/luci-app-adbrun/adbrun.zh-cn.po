@@ -5,7 +5,7 @@ msgid "ADB server"
 msgstr "ADB服务器"
 
 msgid "Assistant for automatic control android devices."
-msgstr "android设备自动控制助手"
+msgstr "android设备自动控制助手(设备名尽量取得长一点，比如AAA1，BBB2)"
 
 msgid "init devices"
 msgstr "设备初始化"
@@ -13,14 +13,23 @@ msgstr "设备初始化"
 msgid "init setting"
 msgstr "初始化设置"
 
-msgid "diantao daytime worklist"
-msgstr "点淘白天挂机列表(8:00~19:59)"
+msgid "diantao init setting"
+msgstr "点淘设置"
 
-msgid "diantao dawn worklist"
-msgstr "点淘凌晨挂机列表(2:00~7:59)"
+msgid "d11event-diantao daytime worklist"
+msgstr "双11元宝狂欢节-点淘白天挂机列表(0:00~19:59)"
+
+msgid "d11event-diantao night worklist"
+msgstr "双11元宝狂欢节-点淘晚上8点后挂机列表(20:00~23:59)"
+
+msgid "diantao daytime worklist"
+msgstr "点淘-打工赚体力-白天挂机列表(0:00~19:59)"
 
 msgid "diantao night worklist"
-msgstr "点淘晚上8点后挂机列表(20:00~~)"
+msgstr "点淘-打工赚体力-晚上8点后挂机列表(20:00~23:59)"
+
+msgid "photo init setting"
+msgstr "照片设置"
 
 msgid "Photos directory"
 msgstr "照片下载目录"
@@ -129,6 +138,9 @@ msgstr "自动获取金币脚本-双11活动-淘宝-天猫双11种草机"
 
 msgid "Automatically 11.11 taobao miaotang event"
 msgstr "自动获取金币脚本-双11活动-淘宝-天猫双11做任务赚喵糖"
+
+msgid "Automatically 11.11 taobao miaotang event-touzi"
+msgstr "自动获取金币脚本-双11活动-淘宝-天猫双11做任务赚喵糖-自动点骰子"
 
 msgid "Connect client"
 msgstr "一键连接客户端"
