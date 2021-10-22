@@ -13,7 +13,7 @@ define Package/luci-app-gmediarender
 	SUBMENU:=3. Applications
 	TITLE:=LuCI Support for gmediarender
 	PKGARCH:=all
-	DEPENDS:=
+	DEPENDS:=+gmediarender
 endef
 
 define Package/luci-app-gmediarender/description
