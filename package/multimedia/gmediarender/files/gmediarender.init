@@ -11,20 +11,21 @@ hostname="$(uci get system.@system[0].hostname)"
 dlnaname="$(uci get gmediarender.@gmediarender[0].gmrendersuffix)"
 
 if [ $(uci get gmediarender.@gmediarender[0].gmrenderbindiplist) = lan ];then
-	findlan=$(ifconfig $(uci get network.lan.ifname) | grep "inet addr" | sed -e "s/[ ][ ]*/ /g" | cut -d ' ' -f 3 | cut -d ':' -f 2)
-	if [ ! -n "${findlan}" ];then
-		bindip=$(ifconfig br-lan | grep "inet addr" | sed -e "s/[ ][ ]*/ /g" | cut -d ' ' -f 3 | cut -d ':' -f 2)
-	fi
+	bindip=$(uci get network.lan.ipaddr)
 elif [ $(uci get gmediarender.@gmediarender[0].gmrenderbindiplist) = wan ];then
-		bindip=$(ifconfig $(uci get network.wan.ifname) | grep "inet addr" | sed -e "s/[ ][ ]*/ /g" | cut -d ' ' -f 3 | cut -d ':' -f 2)
+	bindip=$(ifconfig $(uci get network.wan.ifname) | grep "inet addr" | sed -e "s/[ ][ ]*/ /g" | cut -d ' ' -f 3 | cut -d ':' -f 2)
 elif [ $(uci get gmediarender.@gmediarender[0].gmrenderbindiplist) = other ];then
-		bindip=$(uci get gmediarender.@gmediarender[0].gmrenderotherip)
+	bindip=$(uci get gmediarender.@gmediarender[0].gmrenderotherip)
 fi
 
 start_service() {
 	procd_open_instance
 
-	procd_set_param command /usr/bin/$APP -f ${APP}-${hostname}-${dlnaname} -I ${bindip}
+	if [ ! -n "${bindip}" ];then
+		procd_set_param command /usr/bin/$APP -f ${APP}-${hostname}-${dlnaname}
+	else
+		procd_set_param command /usr/bin/$APP -f ${APP}-${hostname}-${dlnaname} -I ${bindip}
+	fi
 
 	procd_set_param respawn
 	procd_close_instance
