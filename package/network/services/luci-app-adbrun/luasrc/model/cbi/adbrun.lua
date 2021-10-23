@@ -11,19 +11,25 @@ function adbinit.write(self, section)
 	luci.util.exec("/usr/adbrun/adbinit.sh >/dev/null 2>&1 &")
 end
 
-a:tab("diantaoinit_set", translate("diantao init setting"))
-diantaodayworklistd11=a:taboption("diantaoinit_set", Value, "diantaodayworklistd11", translate("d11event-diantao daytime worklist"))
+a:tab("diantaod11init_set", translate("d11event diantao init setting"))
+diantaodayworklistd11 = a:taboption("diantaod11init_set", Value, "diantaodayworklistd11", translate("d11event-diantao daytime worklist"))
 diantaodayworklistd11.datatype = "string"
 diantaodayworklistd11.default = "30秒10次 60秒10次 3分钟10次 30秒10次 60秒10次 30秒1次"
 diantaodayworklistd11.rmempty = false
 diantaodayworklistd11.description = translate("格式:X秒 X分钟")
 
-diantaonightworklistd11=a:taboption("diantaoinit_set", Value, "diantaonightworklistd11", translate("d11event-diantao night worklist"))
+diantaonightworklistd11 = a:taboption("diantaod11init_set", Value, "diantaonightworklistd11", translate("d11event-diantao night worklist"))
 diantaonightworklistd11.datatype = "string"
 diantaonightworklistd11.default = "60秒3次 3分钟5次 30秒10次 60秒10次 3分钟10次 30秒10次 60秒10次"
 diantaonightworklistd11.rmempty = false
 
-diantaodayworklist=a:taboption("diantaoinit_set", Value, "diantaodayworklist", translate("diantao daytime worklist"))
+diantaoluckyworklistd11=a:taboption("diantaod11init_set", Value, "diantaoluckyworklistd11", translate("d11event-diantao lucky worklist"))
+diantaoluckyworklistd11.datatype = "string"
+diantaoluckyworklistd11.default = "60秒20次 30秒20次 3分钟20次 60秒10次 3分钟8次 30秒3次"
+diantaoluckyworklistd11.rmempty = false
+
+a:tab("diantaoinit_set", translate("diantao init setting"))
+diantaodayworklist = a:taboption("diantaoinit_set", Value, "diantaodayworklist", translate("diantao daytime worklist"))
 diantaodayworklist.datatype = "string"
 diantaodayworklist.default = "30秒20次 60秒20次 60秒3次 3分钟1次 30秒1次 30秒1次 5分钟1次 8分钟1次 30秒1次"
 diantaodayworklist.rmempty = false
@@ -34,7 +40,7 @@ diantaonightworklist.default = "30秒20次 60秒20次 60秒3次 3分钟1次 30�
 diantaonightworklist.rmempty = false
 
 a:tab("photoinit_set", translate("photo init setting"))
-adbphotopath=a:taboption("photoinit_set", Value, "adbphotopath", translate("Photos directory"))
+adbphotopath = a:taboption("photoinit_set", Value, "adbphotopath", translate("Photos directory"))
 adbphotopath.datatype = "string"
 adbphotopath.default = "/tmp"
 adbphotopath.rmempty = false
@@ -47,7 +53,7 @@ s:tab("adb_set", translate("Basic setting"))
 s.anonymous = false
 s.addremove = true
 
-adbiplist=s:taboption("adb_set",Value, "adbiplist", translate("IP address")) 
+adbiplist = s:taboption("adb_set",Value, "adbiplist", translate("IP address")) 
 adbiplist.rmempty = true
 adbiplist.datatype = "ipaddr"
 luci.sys.net.ipv4_hints(function(ip, name)
@@ -93,14 +99,21 @@ adbcommandlist.rempty      = false
 
 s:tab("adb_action", translate("Action"))
 
-adbconnect=s:taboption("adb_action",Button,"adbconnect",translate("Connect client"))
+adbdisconnect = s:taboption("adb_action",Button,"adbdisconnect",translate("Disconnect the current client"))
+adbdisconnect.rmempty = true
+adbdisconnect.inputstyle = "apply"
+function adbdisconnect.write(self, section)
+	luci.util.exec("adb disconnect $(uci get adbrun."..section..".adbiplist) >/dev/null 2>&1 &")
+end
+
+adbconnect = s:taboption("adb_action",Button,"adbconnect",translate("Connect the current client"))
 adbconnect.rmempty = true
 adbconnect.inputstyle = "apply"
 function adbconnect.write(self, section)
 	luci.util.exec("adb connect $(uci get adbrun."..section..".adbiplist) >/dev/null 2>&1 &")
 end
 
-adbplay=s:taboption("adb_action",Button, "adbplay", translate("Play")) 
+adbplay = s:taboption("adb_action",Button, "adbplay", translate("Play")) 
 adbplay.rmempty = true
 adbplay.inputstyle = "apply"
 function adbplay.write(self, section)
@@ -108,7 +121,7 @@ function adbplay.write(self, section)
 	luci.util.exec("/tmp/adb_" ..section.. "_.sh >/dev/null 2>&1 &")
 end
 
-adbstop=s:taboption("adb_action",Button, "adbstop", translate("Stop loop script")) 
+adbstop = s:taboption("adb_action",Button, "adbstop", translate("Stop loop script")) 
 adbstop.rmempty = true
 adbstop.inputstyle = "apply"
 function adbstop.write(self, section)

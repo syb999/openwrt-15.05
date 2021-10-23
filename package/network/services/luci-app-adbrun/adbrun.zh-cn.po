@@ -13,6 +13,9 @@ msgstr "设备初始化"
 msgid "init setting"
 msgstr "初始化设置"
 
+msgid "d11event diantao init setting"
+msgstr "双11活动-点淘设置"
+
 msgid "diantao init setting"
 msgstr "点淘设置"
 
@@ -21,6 +24,9 @@ msgstr "双11元宝狂欢节-点淘白天挂机列表(0:00~19:59)"
 
 msgid "d11event-diantao night worklist"
 msgstr "双11元宝狂欢节-点淘晚上8点后挂机列表(20:00~23:59)"
+
+msgid "d11event-diantao lucky worklist"
+msgstr "双11元宝狂欢节-点淘幸运大抽奖挂机列表"
 
 msgid "diantao daytime worklist"
 msgstr "点淘-打工赚体力-白天挂机列表(0:00~19:59)"
@@ -142,8 +148,11 @@ msgstr "自动获取金币脚本-双11活动-淘宝-天猫双11做任务赚喵�
 msgid "Automatically 11.11 taobao miaotang event-touzi"
 msgstr "自动获取金币脚本-双11活动-淘宝-天猫双11做任务赚喵糖-自动点骰子"
 
-msgid "Connect client"
-msgstr "一键连接客户端"
+msgid "Disconnect the current client"
+msgstr "一键断开当前客户端"
+
+msgid "Connect the current client"
+msgstr "一键连接当前客户端"
 
 msgid "Play"
 msgstr "启动命令或脚本"
