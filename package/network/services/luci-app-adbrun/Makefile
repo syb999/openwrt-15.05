@@ -37,6 +37,8 @@ define Package/luci-app-adbrun/install
 	$(INSTALL_CONF) ./files/adbrun.conf $(1)/etc/config/adbrun
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/adbrun.init $(1)/etc/init.d/adbrun
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/usb
+	$(INSTALL_BIN) ./files/hotplug $(1)/etc/hotplug.d/usb/30-adb_init
 endef
 
 $(eval $(call BuildPackage,luci-app-adbrun))
