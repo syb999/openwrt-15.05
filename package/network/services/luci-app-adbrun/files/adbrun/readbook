@@ -17,6 +17,6 @@ do
 	rx=$(echo `expr $basex + $rtime`)
 	ry=$(echo `expr $basey + $rtime`)
 	adb -s ${adbclient}:5555 shell input swipe ${rx} ${ry} $(echo `expr ${rx} - 300`) ${ry}
-	sleep $rtime
+	sleep 5
 done
 

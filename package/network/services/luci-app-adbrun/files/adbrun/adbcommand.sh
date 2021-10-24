@@ -303,7 +303,7 @@ if [ $adbcd == "scripts" ];then
 	elif  [ ${adbsh} == "11taobaomiaotang" ];then
 		echo "shuang11"
 		if [ ${screensize} == "720x1280" ];then
-			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=600/;s/dosedbasey=/basey=900/' > /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=600/;s/dosedbasey=/basey=775/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
 		elif [ ${screensize} == "720x1560" ];then
