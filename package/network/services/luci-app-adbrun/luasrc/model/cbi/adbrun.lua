@@ -11,6 +11,22 @@ function adbinit.write(self, section)
 	luci.util.exec("/usr/adbrun/adbinit.sh >/dev/null 2>&1 &")
 end
 
+adbstophotplug = a:taboption("adb_init", Button, "adbstophotplug", translate("One-click disable hotplug"))
+adbstophotplug.rmempty = true
+adbstophotplug.inputstyle = "apply"
+adbstophotplug.description = translate("Suitable for connecting to openwrt through USB cable for a long time")
+function adbstophotplug.write(self, section)
+	luci.util.exec("mv /etc/hotplug.d/usb/30-adb_init /tmp/30-adb_init >/dev/null 2>&1 &")
+end
+
+adbxhotplug = a:taboption("adb_init", Button, "adbxhotplug", translate("One-click resume hotplug"))
+adbxhotplug.rmempty = true
+adbxhotplug.inputstyle = "apply"
+adbxhotplug.description = translate("After hot plug is enabled, you can continue to initialize the device using USB cable")
+function adbxhotplug.write(self, section)
+	luci.util.exec("mv /tmp/30-adb_init /etc/hotplug.d/usb/30-adb_init >/dev/null 2>&1 &")
+end
+
 a:tab("diantaod11init_set", translate("d11event diantao init setting"))
 diantaodayworklistd11 = a:taboption("diantaod11init_set", Value, "diantaodayworklistd11", translate("d11event-diantao daytime worklist"))
 diantaodayworklistd11.datatype = "string"
@@ -83,6 +99,7 @@ adbcommandlist:value("runjdlite", translate("Run JD lite version"))
 adbcommandlist:value("runfqxs", translate("Run fanqie xiaoshuo"))
 adbcommandlist:value("runxmlylite", translate("Run ximalaya lite version"))
 adbcommandlist:value("takephoto", translate("Automatically take photos"))
+adbcommandlist:value("screenshot", translate("Automatically push screenshot to openwrt"))
 adbcommandlist:value("pyxmlylite", translate("Automatically get gold coins from ximalaya lite version"))
 adbcommandlist:value("readbook", translate("Automatically read book"))
 adbcommandlist:value("kuaishou", translate("Automatically play kuaishou"))

@@ -11,6 +11,8 @@ if [ ${screensize} == "720x1280" ];then
 	sizepath="720x1280"
 elif  [ ${screensize} == "720x1560" ];then
 	sizepath="720x1560"
+elif  [ ${screensize} == "768x1024" ];then
+	sizepath="768x1024"
 elif  [ ${screensize} == "1080x2244" ];then
 	sizepath="1080x2244"
 elif  [ ${screensize} == "1080x1920" ];then
@@ -63,6 +65,9 @@ case $adbcommand in
 	takephoto) adbcd="scripts"
 		adbsh="takephoto"
 	;;
+	screenshot) adbcd="scripts"
+		adbsh="screenshot"
+	;;
 	pyxmlylite) adbcd="scripts"
 		adbsh="pyxmlylite"
 	;;
@@ -99,6 +104,10 @@ esac
 
 if [ $adbcd == "scripts" ];then
 	if [ ${adbsh} ==  "takephoto" ];then
+		cp ${spath}${adbsh} /tmp/${sectionname}_sh
+		chmod +x /tmp/${sectionname}_sh
+		sh /tmp/${sectionname}_sh
+	elif [ ${adbsh} ==  "screenshot" ];then
 		cp ${spath}${adbsh} /tmp/${sectionname}_sh
 		chmod +x /tmp/${sectionname}_sh
 		sh /tmp/${sectionname}_sh

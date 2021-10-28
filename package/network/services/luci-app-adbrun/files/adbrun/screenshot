@@ -1,0 +1,18 @@
+#!/bin/sh
+
+sectionname=$(echo $0 | cut -d '/' -f 3 | cut -d '_' -f 1)
+adbclient=$(uci get adbrun.$sectionname.adbiplist)
+photopath=$(uci get adbrun.@adbinit[0].adbphotopath)
+
+adb disconnect ${adbclient}:5555
+sleep 2
+adb connect ${adbclient}:5555
+sleep 2
+
+
+if [ $(adb -s ${adbclient}:5555 shell getprop ro.build.version.release | cut -d '.' -f 1) -lt 6 ];then
+	adb -s ${adbclient}:5555 shell screencap -p /data/local/tmp/screenshot.jpg
+	adb -s ${adbclient}:5555 pull /data/local/tmp/screenshot.jpg $(uci get adbrun.@adbinit[0].adbphotopath)/screenshot${adbclient}.jpg
+else
+	adb -s ${adbclient}:5555 exec-out screencap -p > $(uci get adbrun.@adbinit[0].adbphotopath)/screenshot${adbclient}.jpg
+fi

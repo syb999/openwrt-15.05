@@ -5,6 +5,6 @@ function index()
 		return
 	end
 
-	local page = entry({"admin", "services", "adbrun"}, cbi("adbrun"), _("adbrun"),3)
+	local page = entry({"admin", "services", "adbrun"}, cbi("adbrun"), _("ADBrun"),3)
 	page.dependent = true
 end

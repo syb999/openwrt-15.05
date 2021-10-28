@@ -10,6 +10,18 @@ msgstr "android设备自动控制助手(设备名尽量取得长一点，比如A
 msgid "init devices"
 msgstr "设备初始化"
 
+msgid "One-click disable hotplug"
+msgstr "一键禁用USB热插拔"
+
+msgid "Suitable for connecting to openwrt through USB cable for a long time"
+msgstr "适用于通过USB电缆长时间连接openwrt"
+
+msgid "One-click resume hotplug"
+msgstr "一键恢复热插拔"
+
+msgid "After hot plug is enabled, you can continue to initialize the device using USB cable"
+msgstr "启用热插拔后，您可以继续使用USB电缆初始化设备"
+
 msgid "init setting"
 msgstr "初始化设置"
 
@@ -117,6 +129,9 @@ msgstr "打开喜马拉雅极速版"
 
 msgid "Automatically take photos"
 msgstr "自动拍照脚本"
+
+msgid "Automatically push screenshot to openwrt"
+msgstr "自动将屏幕截图推送到openwrt"
 
 msgid "Automatically get gold coins from ximalaya lite version"
 msgstr "自动获取金币脚本-喜马拉雅极速版"
