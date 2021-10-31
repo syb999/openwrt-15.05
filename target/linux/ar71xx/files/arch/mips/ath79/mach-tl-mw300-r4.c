@@ -182,7 +182,7 @@ static void __init tl_mw300_r4_setup(void)
 					tl_mw300_r4_gpio_keys);
 }
 
-MIPS_MACHINE(ATH79_MACH_TL_MW300_R4, "TL_MW300-r4", "Audio_MW300R4",
+MIPS_MACHINE(ATH79_MACH_TL_MW300_R4, "TL_MW300-r4", "TL_MW300-r4",
 	     tl_mw300_r4_setup);
 
 
