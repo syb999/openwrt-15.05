@@ -845,8 +845,14 @@ ar71xx_board_detect() {
 	*"TL-MW300-r4")
 		name="tl-mw300-r4"
 		;;
-	*"PISEN-WMB001N")
+	*"PISEN_WFR101N")
+		name="pisen-wfr101n"
+		;;
+	*"PISEN_WMB001N")
 		name="pisen-wmb001n"
+		;;
+	*"PISEN_WPR003N")
+		name="pisen-wpr003n"
 		;;
 	*TL-WR941ND)
 		name="tl-wr941nd"

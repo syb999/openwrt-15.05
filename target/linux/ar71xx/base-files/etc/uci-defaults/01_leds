@@ -525,7 +525,6 @@ tl-wr941nd-v5)
 	ucidef_set_led_wlan "wlan" "WLAN" "tp-link:green:wlan" "phy0tpt"
 	;;
 
-pisen-wmb001n | \
 tl-mw300-r4)
 	ucidef_set_led_wlan "wlan" "WLAN" "tp-link:green:wlan" "phy0tpt"
 	;;

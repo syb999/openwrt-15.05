@@ -332,6 +332,17 @@ endef
 $(eval $(call Profile,TLWR841))
 
 
+define Profile/PISEN
+	NAME:=PISEN Cloud Router
+	PACKAGES:=kmod-usb-core kmod-usb2 kmod-sound-ak4430
+endef
+
+define Profile/PISEN/Description
+	Package set optimized for the PISEN_WFR101N/PISEN_WMB001N/PISEN_WPR003N.
+endef
+$(eval $(call Profile,PISEN))
+
+
 define Profile/TLWR842
 	NAME:=TP-LINK TL-WR842N/ND
 	PACKAGES:=kmod-usb-core kmod-usb2 kmod-ledtrig-usbdev
