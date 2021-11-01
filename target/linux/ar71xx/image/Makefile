@@ -705,13 +705,7 @@ define Device/tl-wr941nd-v6-cn
     TPLINK_HWID := 0x09410006
 endef
 
-define Device/pisen-wmb001n
-    $(Device/tplink-16mlzma)
-    BOARDNAME := PISEN_WMB001N
-    DEVICE_PROFILE := TLWR941
-    TPLINK_HWID := 0x09410007
-endef
-TARGET_DEVICES += tl-wr941nd-v5 tl-wr941nd-v6 tl-wr941nd-v6-cn pisen-wmb001n
+TARGET_DEVICES += tl-wr941nd-v5 tl-wr941nd-v6 tl-wr941nd-v6-cn
 
 define Device/tl-wr1041n-v2
     $(Device/tplink-4mlzma)
