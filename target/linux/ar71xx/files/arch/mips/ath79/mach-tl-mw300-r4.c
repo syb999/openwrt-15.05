@@ -32,9 +32,6 @@
 #define TL_MW300R4_GPIO_BTN_RESET      17
 #define TL_MW300R4_GPIO_SW_RFKILL      20
 
-#define PISEN_WMB001N_GPIO_LED_WLAN      22
-#define PISEN_WMB001N_GPIO_LED_SYSTEM    4
-
 #define TL_MW300R4_KEYS_POLL_INTERVAL	20	/* msecs */
 #define TL_MW300R4_KEYS_DEBOUNCE_INTERVAL (3 * TL_MW300R4_KEYS_POLL_INTERVAL)
 
@@ -69,18 +66,6 @@ static struct gpio_led tl_mw300_r4_leds_gpio[] __initdata = {
 	},
 };
 
-
-static struct gpio_led pisen_wmb001n_leds_gpio[] __initdata = {
-	{
-		.name		= "tp-link:green:system",
-		.gpio		= PISEN_WMB001N_GPIO_LED_SYSTEM,
-		.active_low	= 1,
-	}, {
-		.name		= "tp-link:green:wlan",
-		.gpio		= PISEN_WMB001N_GPIO_LED_WLAN,
-		.active_low	= 1,
-	},
-};
 
 static struct gpio_keys_button tl_mw300_r4_gpio_keys[] __initdata = {
 	{
@@ -184,19 +169,3 @@ static void __init tl_mw300_r4_setup(void)
 
 MIPS_MACHINE(ATH79_MACH_TL_MW300_R4, "TL_MW300-r4", "TL_MW300-r4",
 	     tl_mw300_r4_setup);
-
-
-static void __init pisen_wmb001n_setup(void)
-{
-	tl_ap123_setup();
-
-	ath79_register_leds_gpio(-1, ARRAY_SIZE(pisen_wmb001n_leds_gpio),
-				 pisen_wmb001n_leds_gpio);
-
-	ath79_register_gpio_keys_polled(1, TL_MW300R4_KEYS_POLL_INTERVAL,
-					ARRAY_SIZE(tl_mw300_r4_gpio_keys),
-					tl_mw300_r4_gpio_keys);
-}
-
-MIPS_MACHINE(ATH79_MACH_PISEN_WMB001N, "PISEN_WMB001N", "PISEN_WMB001N",
-	     pisen_wmb001n_setup);
