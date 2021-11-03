@@ -1,0 +1,21 @@
+--- a/net/Kconfig
++++ b/net/Kconfig
+@@ -379,6 +379,8 @@
+ source "net/ceph/Kconfig"
+ source "net/nfc/Kconfig"
+ 
++source "net/shortcut-fe/Kconfig"
++source "net/fast-classifier/Kconfig"
+ endif   # if NET
+ 
+ # Used by archs to tell that they support BPF_JIT
+--- a/net/Makefile
++++ b/net/Makefile
+@@ -73,3 +73,6 @@
+ obj-$(CONFIG_VSOCKETS)	+= vmw_vsock/
+ obj-$(CONFIG_NET_MPLS_GSO)	+= mpls/
+ obj-$(CONFIG_HSR)		+= hsr/
++
++obj-$(CONFIG_SHORTCUT_FE)		+= shortcut-fe/
++obj-$(CONFIG_FAST_CLASSIFIER)	+= fast-classifier/
+

@@ -2,9 +2,10 @@
 # Shortcut forwarding engine
 #
 
-config SHORTCUT_FE
+config FAST_CLASSIFIER
 	tristate "Shortcut Forwarding Engine"
-	depends on NF_CONNTRACK
+	depends on SHORTCUT_FE
+	default y
 	---help---
 	  Shortcut is a fast in-kernel packet forwarding engine.
 

@@ -1,4 +1,4 @@
-obj-m += fast-classifier.o
+obj-$(CONFIG_FAST_CLASSIFIER) += fast-classifier.o
 
 ifeq ($(SFE_SUPPORT_IPV6),)
 SFE_SUPPORT_IPV6=y
