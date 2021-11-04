@@ -151,8 +151,8 @@ msgstr "音频播放菜单"
 msgid "One-click Play mp3"
 msgstr "一键播放mp3节目"
 
-msgid "One-click Play selected mp3(gst-play-1.0 also support m4a aac)"
-msgstr "一键播放被选择的mp3节目(gst-play-1.0还支持m4a和aac格式)"
+msgid "One-click Play selected mp3(m4a aac)"
+msgstr "一键播放被选择的mp3文件(m4a aac)"
 
 msgid "One-click Play mp3(Positive)"
 msgstr "一键播放当前mp3节目(正序)"

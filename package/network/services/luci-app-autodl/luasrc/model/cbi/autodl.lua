@@ -75,7 +75,7 @@ xmlygetlist = s:taboption("basic2", Button, "xmlygetlist", translate("Get list")
 xmlygetlist.inputstyle = "apply"
 xmlygetlist.description = translate("Show current audio list")
 function xmlygetlist.write(self, section)
-    luci.util.exec("/usr/autodl/xmlygetlist.sh &")
+    luci.util.exec("/usr/autodl/xmlygetlist.sh >/dev/null 2>&1 &")
 end
 
 xmlyopennum = s:taboption("basic2", Flag, "select_audio_numbers", translate("Select Audio number"))
@@ -301,8 +301,38 @@ function au3isy.write(self, section)
     luci.util.exec("nohup /usr/autodl/autodlisy.sh >/dev/null 2>&1 &")
 end
 
+s:tab("autodldocin", translate("Download from https://www.docin.com"))
+au4 = s:taboption("autodldocin", Button, "_autodldocin", translate("One-click download documents"))
+au4.inputstyle = "apply"
+au4.description = translate("docin.com documents download")
+function au4.write(self, section)
+    luci.util.exec("/usr/autodl/docin.sh >/dev/null 2>&1 &")
+end
+
+au4txt = s:taboption("autodldocin", Button, "_autodldocintxt", translate("One-click convert to TXT"))
+au4txt.inputstyle = "apply"
+au4txt.description = translate("docin.com documents convert to TXT(depends imagemagick & tesseract)")
+function au4txt.write(self, section)
+    luci.util.exec("/usr/autodl/docintotxt.sh >/dev/null 2>&1 &")
+end
+
+s:tab("autodlbook", translate("Books Download Page"))
+bk1 = s:taboption("autodlbook", Button, "_autodlbook", translate("One-click download book"))
+bk1.inputstyle = "apply"
+bk1.description = translate("Download a book from http://book.zongheng.com")
+function bk1.write(self, section)
+    luci.util.exec("/usr/autodl/autodlbook1.sh &")
+end
+
+bk2 = s:taboption("autodlbook", Button, "_autodlbook2", translate("One-click download book"))
+bk2.inputstyle = "apply"
+bk2.description = translate("Download a book from https://www.biquge5200.cc")
+function bk2.write(self, section)
+    luci.util.exec("/usr/autodl/autodlbook2.sh &")
+end
+
 s:tab("audioplaytab", translate("Audio playback menu"))
-au3selectedplay = s:taboption("audioplaytab", Button, "_autodl3selectedplay", translate("One-click Play selected mp3(gst-play-1.0 also support m4a aac)"))
+au3selectedplay = s:taboption("audioplaytab", Button, "_autodl3selectedplay", translate("One-click Play selected mp3"))
 au3selectedplay.inputstyle = "apply"
 au3selectedplay.description = translate("USB sound card is needed and gst-play-1.0 or mpg123 package has been installed")
 function au3selectedplay.write(self, section)
@@ -361,36 +391,6 @@ au3usesnd0.inputstyle = "apply"
 au3usesnd0.description = translate("alsa-utils needs to be installed")
 function au3usesnd0.write(self, section)
     luci.util.exec("nohup /usr/autodl/usesoundcard0.sh >/dev/null 2>&1 &")
-end
-
-s:tab("autodldocin", translate("Download from https://www.docin.com"))
-au4 = s:taboption("autodldocin", Button, "_autodldocin", translate("One-click download documents"))
-au4.inputstyle = "apply"
-au4.description = translate("docin.com documents download")
-function au4.write(self, section)
-    luci.util.exec("/usr/autodl/docin.sh >/dev/null 2>&1 &")
-end
-
-au4txt = s:taboption("autodldocin", Button, "_autodldocintxt", translate("One-click convert to TXT"))
-au4txt.inputstyle = "apply"
-au4txt.description = translate("docin.com documents convert to TXT(depends imagemagick & tesseract)")
-function au4txt.write(self, section)
-    luci.util.exec("/usr/autodl/docintotxt.sh >/dev/null 2>&1 &")
-end
-
-s:tab("autodlbook", translate("Books Download Page"))
-bk1 = s:taboption("autodlbook", Button, "_autodlbook", translate("One-click download book"))
-bk1.inputstyle = "apply"
-bk1.description = translate("Download a book from http://book.zongheng.com")
-function bk1.write(self, section)
-    luci.util.exec("/usr/autodl/autodlbook1.sh &")
-end
-
-bk2 = s:taboption("autodlbook", Button, "_autodlbook2", translate("One-click download book"))
-bk2.inputstyle = "apply"
-bk2.description = translate("Download a book from https://www.biquge5200.cc")
-function bk2.write(self, section)
-    luci.util.exec("/usr/autodl/autodlbook2.sh &")
 end
 
 return m
