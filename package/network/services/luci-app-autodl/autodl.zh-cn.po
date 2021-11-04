@@ -145,11 +145,14 @@ msgstr "需要已安装好node"
 msgid "One-click m4a to mp3"
 msgstr "一键m4a转mp3"
 
+msgid "Audio playback menu"
+msgstr "音频播放菜单"
+
 msgid "One-click Play mp3"
 msgstr "一键播放mp3节目"
 
-msgid "One-click Play selected mp3"
-msgstr "一键播放被选择的mp3节目"
+msgid "One-click Play selected mp3(gst-play-1.0 also support m4a aac)"
+msgstr "一键播放被选择的mp3节目(gst-play-1.0还支持m4a和aac格式)"
 
 msgid "One-click Play mp3(Positive)"
 msgstr "一键播放当前mp3节目(正序)"
@@ -157,8 +160,8 @@ msgstr "一键播放当前mp3节目(正序)"
 msgid "One-click Play mp3(Reverse)"
 msgstr "一键播放当前mp3节目(倒序)"
 
-msgid "USB sound card is needed and mpg123 package has been installed"
-msgstr "需要USB声卡，并已安装mpg123软件包"
+msgid "USB sound card is needed and gst-play-1.0 or mpg123 package has been installed"
+msgstr "需要USB声卡，并已安装gst-play-1.0(额外支持m4a和aac格式)或者mpg123软件包"
 
 msgid "Play Next mp3"
 msgstr "播放下一首mp3"

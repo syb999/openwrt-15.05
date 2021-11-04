@@ -293,73 +293,74 @@ function au3t.write(self, section)
     luci.util.exec("nohup /usr/autodl/m4atomp3.sh >/dev/null 2>&1 &")
 end
 
-au3selectedplay = s:taboption("audioxmly", Button, "_autodl3selectedplay", translate("One-click Play selected mp3"))
-au3selectedplay.inputstyle = "apply"
-au3selectedplay.description = translate("USB sound card is needed and mpg123 package has been installed")
-function au3selectedplay.write(self, section)
-    luci.util.exec("/usr/autodl/playselectedmp3a.sh &")
-end
-
-au3play = s:taboption("audioxmly", Button, "_autodl3play", translate("One-click Play mp3(Positive)"))
-au3play.inputstyle = "apply"
-au3play.description = translate("USB sound card is needed and mpg123 package has been installed")
-function au3play.write(self, section)
-    luci.util.exec("/usr/autodl/playmp3a.sh &")
-end
-
-au3stop = s:taboption("audioxmly", Button, "_autodl3stop", translate("Stop play mp3"))
-au3stop.inputstyle = "apply"
-function au3stop.write(self, section)
-    luci.util.exec("/usr/autodl/stopmp3.sh &")
-end
-
-au3playlastest = s:taboption("audioxmly", Button, "_autodl3playlastest", translate("One-click Play mp3(Reverse)"))
-au3playlastest.inputstyle = "apply"
-au3playlastest.description = translate("USB sound card is needed and mpg123 package has been installed")
-function au3playlastest.write(self, section)
-    luci.util.exec("/usr/autodl/playlastestmp3a.sh &")
-end
-
-au3next = s:taboption("audioxmly", Button, "_autodl3next", translate("Play Next mp3"))
-au3next.inputstyle = "apply"
-function au3next.write(self, section)
-    luci.util.exec("/usr/autodl/playnext.sh &")
-end
-
-au3vup = s:taboption("audioxmly", Button, "_autodl3vup", translate("Volume Up"))
-au3vup.inputstyle = "apply"
-au3vup.description = translate("alsa-utils needs to be installed")
-function au3vup.write(self, section)
-    luci.util.exec("nohup /usr/autodl/volumeup.sh >/dev/null 2>&1 &")
-end
-
-au3vdown = s:taboption("audioxmly", Button, "_autodl3vdown", translate("Volume Down"))
-au3vdown.inputstyle = "apply"
-au3vdown.description = translate("alsa-utils needs to be installed")
-function au3vdown.write(self, section)
-    luci.util.exec("nohup /usr/autodl/volumedown.sh >/dev/null 2>&1 &")
-end
-
-au3usesnd1 = s:taboption("audioxmly", Button, "_au3usesnd1", translate("Use the second sound card"))
-au3usesnd1.inputstyle = "apply"
-au3usesnd1.description = translate("alsa-utils needs to be installed")
-function au3usesnd1.write(self, section)
-    luci.util.exec("nohup /usr/autodl/usesoundcard1.sh >/dev/null 2>&1 &")
-end
-
-au3usesnd0 = s:taboption("audioxmly", Button, "_au3usesnd0", translate("Use default sound card"))
-au3usesnd0.inputstyle = "apply"
-au3usesnd0.description = translate("alsa-utils needs to be installed")
-function au3usesnd0.write(self, section)
-    luci.util.exec("nohup /usr/autodl/usesoundcard0.sh >/dev/null 2>&1 &")
-end
-
 au3isy = s:taboption("audioxmly", Button, "_audioisy", translate("www.ishuyin.com One-click download"))
 au3isy:depends("wanna_get_ishuyin_audios", "1")
 au3isy.inputstyle = "apply"
 au3isy.description = translate("Audios download from https://www.ishuyin.com")
 function au3isy.write(self, section)
     luci.util.exec("nohup /usr/autodl/autodlisy.sh >/dev/null 2>&1 &")
+end
+
+s:tab("audioplaytab", translate("Audio playback menu"))
+au3selectedplay = s:taboption("audioplaytab", Button, "_autodl3selectedplay", translate("One-click Play selected mp3(gst-play-1.0 also support m4a aac)"))
+au3selectedplay.inputstyle = "apply"
+au3selectedplay.description = translate("USB sound card is needed and gst-play-1.0 or mpg123 package has been installed")
+function au3selectedplay.write(self, section)
+    luci.util.exec("/usr/autodl/playselectedmp3a.sh &")
+end
+
+au3play = s:taboption("audioplaytab", Button, "_autodl3play", translate("One-click Play mp3(Positive)"))
+au3play.inputstyle = "apply"
+au3play.description = translate("USB sound card is needed and gst-play-1.0 or mpg123 package has been installed")
+function au3play.write(self, section)
+    luci.util.exec("/usr/autodl/playmp3a.sh &")
+end
+
+au3stop = s:taboption("audioplaytab", Button, "_autodl3stop", translate("Stop play mp3"))
+au3stop.inputstyle = "apply"
+function au3stop.write(self, section)
+    luci.util.exec("/usr/autodl/stopmp3.sh &")
+end
+
+au3playlastest = s:taboption("audioplaytab", Button, "_autodl3playlastest", translate("One-click Play mp3(Reverse)"))
+au3playlastest.inputstyle = "apply"
+au3playlastest.description = translate("USB sound card is needed and gst-play-1.0 or mpg123 package has been installed")
+function au3playlastest.write(self, section)
+    luci.util.exec("/usr/autodl/playlastestmp3a.sh &")
+end
+
+au3next = s:taboption("audioplaytab", Button, "_autodl3next", translate("Play Next mp3"))
+au3next.inputstyle = "apply"
+function au3next.write(self, section)
+    luci.util.exec("/usr/autodl/playnext.sh &")
+end
+
+au3vup = s:taboption("audioplaytab", Button, "_autodl3vup", translate("Volume Up"))
+au3vup.inputstyle = "apply"
+au3vup.description = translate("alsa-utils needs to be installed")
+function au3vup.write(self, section)
+    luci.util.exec("nohup /usr/autodl/volumeup.sh >/dev/null 2>&1 &")
+end
+
+au3vdown = s:taboption("audioplaytab", Button, "_autodl3vdown", translate("Volume Down"))
+au3vdown.inputstyle = "apply"
+au3vdown.description = translate("alsa-utils needs to be installed")
+function au3vdown.write(self, section)
+    luci.util.exec("nohup /usr/autodl/volumedown.sh >/dev/null 2>&1 &")
+end
+
+au3usesnd1 = s:taboption("audioplaytab", Button, "_au3usesnd1", translate("Use the second sound card"))
+au3usesnd1.inputstyle = "apply"
+au3usesnd1.description = translate("alsa-utils needs to be installed")
+function au3usesnd1.write(self, section)
+    luci.util.exec("nohup /usr/autodl/usesoundcard1.sh >/dev/null 2>&1 &")
+end
+
+au3usesnd0 = s:taboption("audioplaytab", Button, "_au3usesnd0", translate("Use default sound card"))
+au3usesnd0.inputstyle = "apply"
+au3usesnd0.description = translate("alsa-utils needs to be installed")
+function au3usesnd0.write(self, section)
+    luci.util.exec("nohup /usr/autodl/usesoundcard0.sh >/dev/null 2>&1 &")
 end
 
 s:tab("autodldocin", translate("Download from https://www.docin.com"))

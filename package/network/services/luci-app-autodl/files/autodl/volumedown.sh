@@ -10,7 +10,7 @@ fi
 if [ "$xmgetspkdev" == "Speaker" ];then
 	getmaxvolume=$(amixer get Speaker | head -n 4 | tail -n 1 | cut -d '-' -f 2 | cut -d ' ' -f 2)
 	if [ $getmaxvolume -lt 100 ];then
-		volumestep=3
+		volumestep=5
 	else
 		volumestep=12
 	fi
