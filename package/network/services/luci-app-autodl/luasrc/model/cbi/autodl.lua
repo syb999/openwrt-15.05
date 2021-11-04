@@ -332,7 +332,7 @@ function bk2.write(self, section)
 end
 
 s:tab("audioplaytab", translate("Audio playback menu"))
-au3selectedplay = s:taboption("audioplaytab", Button, "_autodl3selectedplay", translate("One-click Play selected mp3"))
+au3selectedplay = s:taboption("audioplaytab", Button, "_autodl3selectedplay", translate("One-click Play selected mp3(m4a aac)"))
 au3selectedplay.inputstyle = "apply"
 au3selectedplay.description = translate("USB sound card is needed and gst-play-1.0 or mpg123 package has been installed")
 function au3selectedplay.write(self, section)
