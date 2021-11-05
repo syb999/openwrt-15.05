@@ -244,3 +244,15 @@ msgstr "从纵横中文网下载小说"
 msgid "Download a book from https://www.biquge5200.cc"
 msgstr "从笔趣阁下载小说"
 
+msgid "Network radio"
+msgstr "网络电台"
+
+msgid "Select radio URL"
+msgstr "选择电台链接"
+
+msgid "PLAY "
+msgstr "播放"
+
+msgid "STOP"
+msgstr "停止"
+

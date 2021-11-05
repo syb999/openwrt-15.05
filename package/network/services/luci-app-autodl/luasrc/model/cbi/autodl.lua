@@ -393,5 +393,68 @@ function au3usesnd0.write(self, section)
     luci.util.exec("nohup /usr/autodl/usesoundcard0.sh >/dev/null 2>&1 &")
 end
 
+
+s:tab("webradiotab", translate("Network radio"))
+
+local aweburllist = "/usr/autodl/audurllist"
+local AUDNXFS = require "nixio.fs"
+audweburl = s:taboption("webradiotab", TextValue, "aweburllist")
+audweburl.rows = 6
+audweburl.wrap = "on"
+audweburl.cfgvalue = function(self, section)
+	return AUDNXFS.readfile(aweburllist) or ""
+end
+audweburl.write = function(self, section, value)
+	AUDNXFS.writefile(aweburllist, value:gsub("\r\n", "\n"))
+end
+
+webaudioselc = s:taboption("webradiotab", ListValue, "wbaudurl", translate("Select radio URL"))
+webaudioselc.default = "null"
+
+local webplayselcurl = { }
+local webplayload = io.open("/usr/autodl/audurllist", "r")
+
+if webplayload then
+	local listaudurl
+	repeat
+		listaudurl = webplayload:read("*l")
+		local s = listaudurl
+		if s then webplayselcurl[#webplayselcurl+1] = s end
+	until not listaudurl
+	webplayload:close()
+end
+
+for _, v in luci.util.vspairs(webplayselcurl) do
+    webaudioselc:value(v)
+end
+
+webaudioplay = s:taboption("webradiotab", Button, "webaudioplay", translate("PLAY"))
+webaudioplay.rmempty = true
+webaudioplay.inputstyle = "apply"
+function webaudioplay.write(self, section)
+    luci.util.exec("/usr/autodl/weburlplay.sh >/dev/null 2>&1 &")
+end
+
+webaudiostop = s:taboption("webradiotab", Button, "_webaudiostop", translate("STOP"))
+webaudiostop.inputstyle = "apply"
+function webaudiostop.write(self, section)
+    luci.util.exec("/usr/autodl/stopmp3.sh >/dev/null 2>&1 &")
+end
+
+webaudiovup = s:taboption("webradiotab", Button, "_webaudiovup", translate("Volume Up"))
+webaudiovup.inputstyle = "apply"
+webaudiovup.description = translate("alsa-utils needs to be installed")
+function webaudiovup.write(self, section)
+    luci.util.exec("/usr/autodl/volumeup.sh >/dev/null 2>&1 &")
+end
+
+webaudiovdown = s:taboption("webradiotab", Button, "_webaudiovdown", translate("Volume Down"))
+webaudiovdown.inputstyle = "apply"
+webaudiovdown.description = translate("alsa-utils needs to be installed")
+function webaudiovdown.write(self, section)
+    luci.util.exec("/usr/autodl/volumedown.sh >/dev/null 2>&1 &")
+end
+
+
 return m
 
