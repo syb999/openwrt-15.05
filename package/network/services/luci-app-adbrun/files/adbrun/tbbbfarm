@@ -1,0 +1,96 @@
+#!/bin/sh
+
+dosedxstart=
+dosedystart=
+dosedbasex=
+dosedbasey=
+dosedysetp1=
+dosedentbbx=
+dosedentbby=
+
+sectionname=$(echo $0 | cut -d '/' -f 3 | cut -d '_' -f 1)
+adbclient=$(uci get adbrun.$sectionname.adbiplist)
+
+adb disconnect ${adbclient}:5555
+sleep 2
+adb connect ${adbclient}:5555
+adb connect ${adbclient}:5555
+sleep 2
+
+adb -s ${adbclient}:5555 shell am start -n com.taobao.taobao/com.taobao.tao.TBMainActivity
+sleep 18
+adb -s ${adbclient}:5555 shell input tap $entbbx $entbby
+sleep 10
+adb -s ${adbclient}:5555 shell am force-stop com.taobao.taobao
+sleep 5
+adb -s ${adbclient}:5555 shell am start -n com.taobao.taobao/com.taobao.tao.TBMainActivity
+sleep 18
+adb -s ${adbclient}:5555 shell input tap $entbbx $entbby
+sleep 10
+
+ltimes=0
+while [ $ltimes -lt 3 ]
+do
+	adb -s ${adbclient}:5555 shell input tap $(expr $basex - 260) $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+	sleep 2
+	ltimes=$(echo `expr $ltimes + 1`)
+done
+
+adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+sleep 5
+
+adb -s ${adbclient}:5555 shell input tap $basex $basey
+sleep 5
+
+adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1)
+sleep 25
+adb -s ${adbclient}:5555 shell input keyevent 4
+sleep 5
+
+ltimes=0
+while [ $ltimes -lt 4 ]
+do
+	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+	sleep 3
+	adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 600`)
+	sleep 25
+	adb -s ${adbclient}:5555 shell input keyevent 4
+	sleep 5
+	ltimes=$(echo `expr $ltimes + 1`)
+done
+
+adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 600`)
+sleep 5
+
+adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+sleep 5
+
+adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1)
+sleep 3
+adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 600`)
+sleep 25
+adb -s ${adbclient}:5555 shell input keyevent 4
+sleep 5
+
+adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+sleep 37
+adb -s ${adbclient}:5555 shell input keyevent 4
+sleep 5
+
+adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1)
+sleep 3
+adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 600`)
+sleep 25
+adb -s ${adbclient}:5555 shell input keyevent 4
+sleep 5
+
+adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+sleep 25
+adb -s ${adbclient}:5555 shell input keyevent 4
+sleep 2
+adb -s ${adbclient}:5555 shell input keyevent 4
+sleep 5
+
+adb -s ${adbclient}:5555 shell am force-stop com.taobao.taobao
+
+adb disconnect ${adbclient}:5555

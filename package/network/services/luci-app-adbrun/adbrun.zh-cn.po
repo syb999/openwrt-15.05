@@ -148,6 +148,9 @@ msgstr "自动获取金币脚本-点淘任务"
 msgid "Automatically jdlite"
 msgstr "自动获取金币脚本-京东极速版任务"
 
+msgid "Automatically taobao baba farm"
+msgstr "自动淘宝芭芭农场任务"
+
 msgid "Automatically 11.11 taobao live"
 msgstr "自动获取金币脚本-双11活动-点淘-赚元宝升级(白天或晚上8点后)"
 
