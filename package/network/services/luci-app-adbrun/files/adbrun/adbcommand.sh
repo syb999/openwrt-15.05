@@ -342,27 +342,27 @@ if [ $adbcd == "scripts" ];then
 	elif  [ ${adbsh} == "11taobaomiaotang" ];then
 		echo "shuang11"
 		if [ ${screensize} == "720x1280" ];then
-			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=600/;s/dosedbasey=/basey=975/' > /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=600/;s/dosedbasey=/basey=775/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
 		elif [ ${screensize} == "720x1560" ];then
-			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=600/;s/dosedbasey=/basey=1085/' > /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=600/;s/dosedbasey=/basey=950/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
 		elif [ ${screensize} == "1080x2244" ];then
-			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=900/;s/dosedbasey=/basey=1550/' > /tmp/${sectionname}_sh
-			chmod +x /tmp/${sectionname}_sh
-			sh /tmp/${sectionname}_sh
-		elif [ ${screensize} == "1080x1920" ];then
 			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=900/;s/dosedbasey=/basey=1350/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x1920" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=900/;s/dosedbasey=/basey=1150/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
 		elif [ ${screensize} == "1080x2280" ];then
-			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=900/;s/dosedbasey=/basey=1550/' > /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=900/;s/dosedbasey=/basey=1350/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
 		elif [ ${screensize} == "1080x2340" ];then
-			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=900/;s/dosedbasey=/basey=1645/' > /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=900/;s/dosedbasey=/basey=1445/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
 		fi
