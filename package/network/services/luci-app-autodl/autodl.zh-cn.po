@@ -250,7 +250,7 @@ msgstr "网络电台"
 msgid "Select radio URL"
 msgstr "选择电台链接"
 
-msgid "PLAY "
+msgid "PLAY"
 msgstr "播放"
 
 msgid "STOP"

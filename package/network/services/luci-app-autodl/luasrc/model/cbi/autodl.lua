@@ -196,7 +196,7 @@ function au1.write(self, section)
     luci.util.exec("sleep 1")
     luci.util.exec("uci get autodl.@autodl[0].num > /tmp/autodl.num")
     luci.util.exec("sleep 1")
-    luci.util.exec("/usr/autodl/autodl1.sh &")
+    luci.util.exec("/usr/autodl/autodl1.sh >/dev/null 2>&1 &")
 end
 
 au2 = s:taboption("autodl1", Button, "_autodl2", translate("One-click download"))
@@ -213,7 +213,7 @@ function au2.write(self, section)
     luci.util.exec("sleep 1")
     luci.util.exec("uci get autodl.@autodl[0].num > /tmp/autodl.num")
     luci.util.exec("sleep 1")
-    luci.util.exec("/usr/autodl/autodl2.sh &")
+    luci.util.exec("/usr/autodl/autodl2.sh >/dev/null 2>&1 &")
 end
 
 au5 = s:taboption("autodl1", Button, "_autodl5", translate("One-click download"))
@@ -230,7 +230,7 @@ function au5.write(self, section)
     luci.util.exec("sleep 1")
     luci.util.exec("uci get autodl.@autodl[0].num > /tmp/autodl.num")
     luci.util.exec("sleep 1")
-    luci.util.exec("/usr/autodl/autodl5.sh &")
+    luci.util.exec("/usr/autodl/autodl5.sh >/dev/null 2>&1 &")
 end
 
 au6 = s:taboption("autodl1", Button, "_autodl6", translate("One-click download"))
@@ -247,28 +247,28 @@ function au6.write(self, section)
     luci.util.exec("sleep 1")
     luci.util.exec("uci get autodl.@autodl[0].num > /tmp/autodl.num")
     luci.util.exec("sleep 1")
-    luci.util.exec("/usr/autodl/autodl6.sh &")
+    luci.util.exec("/usr/autodl/autodl6.sh >/dev/null 2>&1 &")
 end
 
 au7 = s:taboption("autodl1", Button, "_autodl7", translate("One-click download"))
 au7.inputstyle = "apply"
 au7.description = translate("Download from https://www.ppys5.net (depends openssl)")
 function au7.write(self, section)
-    luci.util.exec("/usr/autodl/autodl7.sh &")
+    luci.util.exec("/usr/autodl/autodl7.sh >/dev/null 2>&1 &")
 end
 
 au8 = s:taboption("autodl1", Button, "_autodl8", translate("One-click download"))
 au8.inputstyle = "apply"
 au8.description = translate("Download from http://www.jingcai520.com (depends openssl)")
 function au8.write(self, section)
-    luci.util.exec("/usr/autodl/autodl8.sh &")
+    luci.util.exec("/usr/autodl/autodl8.sh >/dev/null 2>&1 &")
 end
 
 au1t = s:taboption("autodl1", Button, "_autodl1t", translate("One-click ts to mp4"))
 au1t.inputstyle = "apply"
 au1t.description = translate("ffmpeg needs to be installed")
 function au1t.write(self, section)
-    luci.util.exec("/usr/autodl/tstomp4.sh &")
+    luci.util.exec("/usr/autodl/tstomp4.sh >/dev/null 2>&1 &")
 end
 
 s:tab("audioxmly", translate("Download Audio from https://www.ximalaya.com"))
@@ -321,14 +321,14 @@ bk1 = s:taboption("autodlbook", Button, "_autodlbook", translate("One-click down
 bk1.inputstyle = "apply"
 bk1.description = translate("Download a book from http://book.zongheng.com")
 function bk1.write(self, section)
-    luci.util.exec("/usr/autodl/autodlbook1.sh &")
+    luci.util.exec("/usr/autodl/autodlbook1.sh >/dev/null 2>&1 &")
 end
 
 bk2 = s:taboption("autodlbook", Button, "_autodlbook2", translate("One-click download book"))
 bk2.inputstyle = "apply"
 bk2.description = translate("Download a book from https://www.biquge5200.cc")
 function bk2.write(self, section)
-    luci.util.exec("/usr/autodl/autodlbook2.sh &")
+    luci.util.exec("/usr/autodl/autodlbook2.sh >/dev/null 2>&1 &")
 end
 
 s:tab("audioplaytab", translate("Audio playback menu"))
@@ -336,61 +336,61 @@ au3selectedplay = s:taboption("audioplaytab", Button, "_autodl3selectedplay", tr
 au3selectedplay.inputstyle = "apply"
 au3selectedplay.description = translate("USB sound card is needed and gst-play-1.0 or mpg123 package has been installed")
 function au3selectedplay.write(self, section)
-    luci.util.exec("/usr/autodl/playselectedmp3a.sh &")
+    luci.util.exec("/usr/autodl/playselectedmp3a.sh >/dev/null 2>&1 &")
 end
 
 au3play = s:taboption("audioplaytab", Button, "_autodl3play", translate("One-click Play mp3(Positive)"))
 au3play.inputstyle = "apply"
 au3play.description = translate("USB sound card is needed and gst-play-1.0 or mpg123 package has been installed")
 function au3play.write(self, section)
-    luci.util.exec("/usr/autodl/playmp3a.sh &")
+    luci.util.exec("/usr/autodl/playmp3a.sh >/dev/null 2>&1 &")
 end
 
 au3stop = s:taboption("audioplaytab", Button, "_autodl3stop", translate("Stop play mp3"))
 au3stop.inputstyle = "apply"
 function au3stop.write(self, section)
-    luci.util.exec("/usr/autodl/stopmp3.sh &")
+    luci.util.exec("/usr/autodl/stopmp3.sh >/dev/null 2>&1 &")
 end
 
 au3playlastest = s:taboption("audioplaytab", Button, "_autodl3playlastest", translate("One-click Play mp3(Reverse)"))
 au3playlastest.inputstyle = "apply"
 au3playlastest.description = translate("USB sound card is needed and gst-play-1.0 or mpg123 package has been installed")
 function au3playlastest.write(self, section)
-    luci.util.exec("/usr/autodl/playlastestmp3a.sh &")
+    luci.util.exec("/usr/autodl/playlastestmp3a.sh >/dev/null 2>&1 &")
 end
 
 au3next = s:taboption("audioplaytab", Button, "_autodl3next", translate("Play Next mp3"))
 au3next.inputstyle = "apply"
 function au3next.write(self, section)
-    luci.util.exec("/usr/autodl/playnext.sh &")
+    luci.util.exec("/usr/autodl/playnext.sh >/dev/null 2>&1 &")
 end
 
 au3vup = s:taboption("audioplaytab", Button, "_autodl3vup", translate("Volume Up"))
 au3vup.inputstyle = "apply"
 au3vup.description = translate("alsa-utils needs to be installed")
 function au3vup.write(self, section)
-    luci.util.exec("nohup /usr/autodl/volumeup.sh >/dev/null 2>&1 &")
+    luci.util.exec("/usr/autodl/volumeup.sh >/dev/null 2>&1 &")
 end
 
 au3vdown = s:taboption("audioplaytab", Button, "_autodl3vdown", translate("Volume Down"))
 au3vdown.inputstyle = "apply"
 au3vdown.description = translate("alsa-utils needs to be installed")
 function au3vdown.write(self, section)
-    luci.util.exec("nohup /usr/autodl/volumedown.sh >/dev/null 2>&1 &")
+    luci.util.exec("/usr/autodl/volumedown.sh >/dev/null 2>&1 &")
 end
 
 au3usesnd1 = s:taboption("audioplaytab", Button, "_au3usesnd1", translate("Use the second sound card"))
 au3usesnd1.inputstyle = "apply"
 au3usesnd1.description = translate("alsa-utils needs to be installed")
 function au3usesnd1.write(self, section)
-    luci.util.exec("nohup /usr/autodl/usesoundcard1.sh >/dev/null 2>&1 &")
+    luci.util.exec("/usr/autodl/usesoundcard1.sh >/dev/null 2>&1 &")
 end
 
 au3usesnd0 = s:taboption("audioplaytab", Button, "_au3usesnd0", translate("Use default sound card"))
 au3usesnd0.inputstyle = "apply"
 au3usesnd0.description = translate("alsa-utils needs to be installed")
 function au3usesnd0.write(self, section)
-    luci.util.exec("nohup /usr/autodl/usesoundcard0.sh >/dev/null 2>&1 &")
+    luci.util.exec("/usr/autodl/usesoundcard0.sh >/dev/null 2>&1 &")
 end
 
 
@@ -457,4 +457,3 @@ end
 
 
 return m
-

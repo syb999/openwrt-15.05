@@ -17,20 +17,26 @@ if [ ! "$testplayer" ];then
 		echo "No player. Stop script."
 	else
 		find $paudiopath/$paudioname/*.mp3 > /tmp/myatdl.play.list
-		cat /tmp/myatdl.play.list | while read LINE
+		getfiles="/tmp/myatdl.play.list"
+		countfiles=$(awk 'END{print NR}' $getfiles)
+		for i in $(seq 1 $countfiles)
 		do
-			currentmp3=$(echo $LINE)
-			mpg123 -q -i $currentmp3
+			cat $getfiles > /tmp/pdtmp.playnext
+			mpg123 -q -i $(cat $getfiles | head -n 1)
+			sed "1d" -i ${getfiles}
 		done
 	fi
 else
 	find $paudiopath/$paudioname/*.mp3 > /tmp/myatdl.play.list
 	find $paudiopath/$paudioname/*.m4a >> /tmp/myatdl.play.list
 	find $paudiopath/$paudioname/*.aac >> /tmp/myatdl.play.list
-	cat /tmp/myatdl.play.list | while read LINE
+	getfiles="/tmp/myatdl.play.list"
+	countfiles=$(awk 'END{print NR}' $getfiles)
+	for i in $(seq 1 $countfiles)
 	do
-		currentmp3=$(echo $LINE)
-		gst-play-1.0 -q $currentmp3
+		cat $getfiles > /tmp/pdtmp.playnext
+		gst-play-1.0 -q $(cat $getfiles | head -n 1)
+		sed "1d" -i ${getfiles}
 	done
 fi
 

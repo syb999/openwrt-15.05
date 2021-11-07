@@ -1,15 +1,31 @@
 #!/bin/sh
+. /usr/autodl/stopmp3.sh
+
+stopaudio
 
 testplayer=$(opkg list-installed | grep "gst-play-1.0")
 
 if [ ! "$testplayer" ];then
-	pidof mpg123 > /tmp/tmpplayer.tmp
-	runmpg123=$(cat /tmp/tmpplayer.tmp)
-	kill $runmpg123 > /dev/null 2>&1
+	testplayer=$(opkg list-installed | grep "mpg123")
+	if [ ! "$testplayer" ];then
+		echo "No player. Stop script."
+	else
+		ps | grep playnext.sh | grep -v grep | cut -d 'r' -f 1 > /tmp/tmpmpg123.playnext
+		getfiles="/tmp/pdtmp.playnext"
+		countfiles=$(awk 'END{print NR}' $getfiles)
+		for i in $(seq 1 $countfiles)
+		do
+			sed "1d" -i ${getfiles}
+			mpg123 -q -i $(cat $getfiles | head -n 1)
+		done
+	fi
 else
-	pidof gst-play-1.0 > /tmp/tmpplayer.tmp
-	rungst=$(cat /tmp/tmpplayer.tmp)
-	kill $rungst > /dev/null 2>&1
+	ps | grep playnext.sh | grep -v grep | cut -d 'r' -f 1 > /tmp/tmpmpg123.playnext
+	getfiles="/tmp/pdtmp.playnext"
+	countfiles=$(awk 'END{print NR}' $getfiles)
+	for i in $(seq 1 $countfiles)
+	do
+		sed "1d" -i ${getfiles}
+		gst-play-1.0 -q $(cat $getfiles | head -n 1)
+	done
 fi
-
-rm /tmp/tmpplayer.*

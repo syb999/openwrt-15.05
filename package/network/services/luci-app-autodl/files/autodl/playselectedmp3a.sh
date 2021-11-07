@@ -40,17 +40,23 @@ if [ ! "$testplayer" ];then
 	if [ ! "$testplayer" ];then
 		echo "No player. Stop script."
 	else
-		cat /tmp/tmp.Audioxm.xlistx | while read LINE
+		getfiles="/tmp/tmp.Audioxm.xlistx"
+		countfiles=$(awk 'END{print NR}' $getfiles)
+		for i in $(seq 1 $countfiles)
 		do
-			currentmp3=$(echo $LINE)
-			mpg123 -q -i $currentmp3
+			cat $getfiles > /tmp/pdtmp.playnext
+			mpg123 -q -i $(cat $getfiles | head -n 1)
+			sed "1d" -i ${getfiles}
 		done
 	fi
 else
-	cat /tmp/tmp.Audioxm.xlistx | while read LINE
+	getfiles="/tmp/tmp.Audioxm.xlistx"
+	countfiles=$(awk 'END{print NR}' $getfiles)
+	for i in $(seq 1 $countfiles)
 	do
-		currentmp3=$(echo $LINE)
-		gst-play-1.0 -q $currentmp3
+		cat $getfiles > /tmp/pdtmp.playnext
+		gst-play-1.0 -q $(cat $getfiles | head -n 1)
+		sed "1d" -i ${getfiles}
 	done
 fi
 

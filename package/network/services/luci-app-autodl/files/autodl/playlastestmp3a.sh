@@ -18,21 +18,28 @@ if [ ! "$testplayer" ];then
 	else
 		find $paudiopath/$paudioname/*.mp3 > /tmp/myatdl.play.list
 		sed '1!G;h;$!d' /tmp/myatdl.play.list > /tmp/myatdl.xplay.list
-		cat /tmp/myatdl.xplay.list | while read LINE
+		getfiles="/myatdl.xplay.list"
+		countfiles=$(awk 'END{print NR}' $getfiles)
+		for i in $(seq 1 $countfiles)
 		do
-			currentmp3=$(echo $LINE)
-			mpg123 -q -i $currentmp3
+			cat $getfiles > /tmp/pdtmp.playnext
+			mpg123 -q -i $(cat $getfiles | head -n 1)
+			sed "1d" -i ${getfiles}
 		done
+
 	fi
 else
 	find $paudiopath/$paudioname/*.mp3 > /tmp/myatdl.play.list
 	find $paudiopath/$paudioname/*.m4a >> /tmp/myatdl.play.list
 	find $paudiopath/$paudioname/*.aac >> /tmp/myatdl.play.list
 	sed '1!G;h;$!d' /tmp/myatdl.play.list > /tmp/myatdl.xplay.list
-	cat /tmp/myatdl.xplay.list | while read LINE
+	getfiles="/tmp/myatdl.xplay.list"
+	countfiles=$(awk 'END{print NR}' $getfiles)
+	for i in $(seq 1 $countfiles)
 	do
-		currentmp3=$(echo $LINE)
-		gst-play-1.0 -q $currentmp3
+		cat $getfiles > /tmp/pdtmp.playnext
+		gst-play-1.0 -q $(cat $getfiles | head -n 1)
+		sed "1d" -i ${getfiles}
 	done
 fi
 
