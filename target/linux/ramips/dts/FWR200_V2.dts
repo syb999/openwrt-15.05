@@ -78,9 +78,17 @@
 
 	gpio-leds {
 		compatible = "gpio-leds";
-		wlan {
-			label = "fast:green:wlan";
-			gpios = <&gpio3 0 1>;
+		wan {
+			label = "fast:green:wan";
+			gpios = <&gpio2 0 1>;
+		};
+		lan {
+			label = "fast:green:lan";
+			gpios = <&gpio2 1 1>;
+		};
+		power {
+			label = "fast:green:power";
+			gpios = <&gpio2 3 1>;
 		};
 	};
 
