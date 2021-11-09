@@ -31,10 +31,16 @@ adb -s ${adbclient}:5555 shell input keyevent 4
 sleep 5
 gotobbfm
 
+
+screensize=$(adb -s ${adbclient}:5555 shell wm size | cut -d ':' -f 2 | sed -e "s/ //g;s/\n//g;s/\r//g")
 ltimes=0
 while [ $ltimes -lt 3 ]
 do
+if [ ${screensize} == "720x1280" ];then
+	adb -s ${adbclient}:5555 shell input tap $(expr $basex - 260) $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+else
 	adb -s ${adbclient}:5555 shell input tap $(expr $basex - 260) $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+fi
 	sleep 2
 	ltimes=$(echo `expr $ltimes + 1`)
 done
@@ -42,7 +48,11 @@ adb -s ${adbclient}:5555 shell input keyevent 4
 sleep 5
 gotobbfm
 
-adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+if [ ${screensize} == "720x1280" ];then
+	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+else
+	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+fi
 sleep 5
 
 adb -s ${adbclient}:5555 shell input tap $basex $basey
@@ -68,17 +78,29 @@ done
 adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 600`)
 sleep 5
 
-adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+if [ ${screensize} == "720x1280" ];then
+	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+else
+	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+fi
 sleep 5
 
-adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1)
-sleep 3
-adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 600`)
-sleep 25
-adb -s ${adbclient}:5555 shell input keyevent 4
-sleep 5
+if [ ${screensize} == "720x1280" ];then
+	echo "skip"
+else
+	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1)
+	sleep 3
+	adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 600`)
+	sleep 25
+	adb -s ${adbclient}:5555 shell input keyevent 4
+	sleep 5
+fi
 
-adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+if [ ${screensize} == "720x1280" ];then
+	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1)
+else
+	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+fi
 sleep 37
 adb -s ${adbclient}:5555 shell input keyevent 4
 sleep 5
@@ -90,7 +112,11 @@ sleep 25
 adb -s ${adbclient}:5555 shell input keyevent 4
 sleep 5
 
-adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+if [ ${screensize} == "720x1280" ];then
+	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1)
+else
+	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+fi
 sleep 25
 adb -s ${adbclient}:5555 shell input keyevent 4
 sleep 2
@@ -100,4 +126,3 @@ sleep 5
 adb -s ${adbclient}:5555 shell am force-stop com.taobao.taobao
 
 adb disconnect ${adbclient}:5555
-
