@@ -72,18 +72,10 @@ define Device/youku-yk1
 endef
 TARGET_DEVICES += youku-yk1
 
-define Device/daishuyun
-  DTS := DAISHUYUN
-  IMAGE_SIZE := $(ralink_default_fw_size_32M)
-  DEVICE_TITLE := DAISHUYUN
-  DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci kmod-sdhci-mt7620 kmod-usb-ledtrig-usbport \
-		     kmod-mt76x2
-endef
-TARGET_DEVICES += daishuyun
-
 define Device/fwr200-v2
   DTS := FWR200_V2
   DEVICE_TITLE := FAST FWR200-V2
+  IMAGE_SIZE := $(ralink_default_fw_size_16M)
 endef
 TARGET_DEVICES += fwr200-v2
 
@@ -96,4 +88,12 @@ define Device/xiaomi-miwifi-mini
 endef
 TARGET_DEVICES += xiaomi-miwifi-mini
 
+define Device/daishuyun
+  DTS := DAISHUYUN
+  IMAGE_SIZE := $(ralink_default_fw_size_32M)
+  DEVICE_TITLE := DAISHUYUN
+  DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci kmod-sdhci-mt7620 kmod-usb-ledtrig-usbport \
+		     kmod-mt76x2
+endef
+TARGET_DEVICES += daishuyun
 
