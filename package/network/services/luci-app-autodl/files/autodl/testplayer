@@ -1,0 +1,4 @@
+#!/bin/sh
+
+testplayer=$(opkg list-installed | grep "gstplaybroken")
+

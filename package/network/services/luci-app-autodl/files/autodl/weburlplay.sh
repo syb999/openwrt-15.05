@@ -1,16 +1,9 @@
 #!/bin/sh
-
+. /usr/autodl/testplayer
 urlselected=$(uci get autodl.@autodl[0].wbaudurl)
 
-testplayer=$(opkg list-installed | grep "gst-play-1.0")
-
 if [ ! "$testplayer" ];then
-	testplayer=$(opkg list-installed | grep "mpg123")
-	if [ ! "$testplayer" ];then
-		echo "No player. Stop script."
-	else
-		mpg123 -q -i $urlselected
-	fi
+	mpg123 -q $urlselected
 else
 	gst-play-1.0 -q $urlselected
 fi

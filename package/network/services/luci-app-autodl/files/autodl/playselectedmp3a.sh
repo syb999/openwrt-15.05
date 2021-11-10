@@ -1,10 +1,8 @@
 #!/bin/sh
-
+. /usr/autodl/testplayer
 paudiopath=$(uci get autodl.@autodl[0].xmlypath)
 paudioname=$(uci get autodl.@autodl[0].xmlyname)
 mp3selected=$(uci get autodl.@autodl[0].audio_num)
-
-testplayer=$(opkg list-installed | grep "gst-play-1.0")
 
 cd $paudiopath/$paudioname
 
@@ -36,19 +34,14 @@ else
 fi
 
 if [ ! "$testplayer" ];then
-	testplayer=$(opkg list-installed | grep "mpg123")
-	if [ ! "$testplayer" ];then
-		echo "No player. Stop script."
-	else
-		getfiles="/tmp/tmp.Audioxm.xlistx"
-		countfiles=$(awk 'END{print NR}' $getfiles)
-		for i in $(seq 1 $countfiles)
-		do
-			cat $getfiles > /tmp/pdtmp.playnext
-			mpg123 -q -i $(cat $getfiles | head -n 1)
-			sed "1d" -i ${getfiles}
-		done
-	fi
+	getfiles="/tmp/tmp.Audioxm.xlistx"
+	countfiles=$(awk 'END{print NR}' $getfiles)
+	for i in $(seq 1 $countfiles)
+	do
+		cat $getfiles > /tmp/pdtmp.playnext
+		mpg123 -q $(cat $getfiles | head -n 1)
+		sed "1d" -i ${getfiles}
+	done
 else
 	getfiles="/tmp/tmp.Audioxm.xlistx"
 	countfiles=$(awk 'END{print NR}' $getfiles)

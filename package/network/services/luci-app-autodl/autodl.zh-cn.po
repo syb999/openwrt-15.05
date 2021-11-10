@@ -148,6 +148,15 @@ msgstr "一键m4a转mp3"
 msgid "Audio playback menu"
 msgstr "音频播放菜单"
 
+msgid "One-click discard gst-play-1.0"
+msgstr "一键弃用gst-play-1.0"
+
+msgid "Not suitable for MIPS routers"
+msgstr "不适合mips路由器(cpu负载高)"
+
+msgid "One-click reuse gst-play-1.0"
+msgstr "一键再次使用gst-play-1.0"
+
 msgid "One-click Play mp3"
 msgstr "一键播放mp3节目"
 

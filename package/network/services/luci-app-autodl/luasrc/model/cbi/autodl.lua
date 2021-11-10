@@ -332,6 +332,19 @@ function bk2.write(self, section)
 end
 
 s:tab("audioplaytab", translate("Audio playback menu"))
+byebyegst = s:taboption("audioplaytab", Button, "byebyegst", translate("One-click discard gst-play-1.0"))
+byebyegst.inputstyle = "apply"
+byebyegst.description = translate("Not suitable for MIPS routers")
+function byebyegst.write(self, section)
+    luci.util.exec("sed -i 's/gst-play-1.0/gstplaybroken/' /usr/autodl/testplayer >/dev/null 2>&1 &")
+end
+
+hellogst = s:taboption("audioplaytab", Button, "hellogst", translate("One-click reuse gst-play-1.0"))
+hellogst.inputstyle = "apply"
+function hellogst.write(self, section)
+    luci.util.exec("sed -i 's/gstplaybroken/gst-play-1.0/' /usr/autodl/testplayer >/dev/null 2>&1 &")
+end
+
 au3selectedplay = s:taboption("audioplaytab", Button, "_autodl3selectedplay", translate("One-click Play selected mp3(m4a aac)"))
 au3selectedplay.inputstyle = "apply"
 au3selectedplay.description = translate("USB sound card is needed and gst-play-1.0 or mpg123 package has been installed")
