@@ -86,6 +86,21 @@ case $adbcommand in
 	tbbbfarm) adbcd="scripts"
 		adbsh="tbbbfarm"
 	;;
+	11diantao) adbcd="scripts"
+		adbsh="11diantao"
+	;;
+	11diantaolucky) adbcd="scripts"
+		adbsh="11diantaolucky"
+	;;
+	11taobaozc) adbcd="scripts"
+		adbsh="11taobaozc"
+	;;
+	11taobaomiaotang) adbcd="scripts"
+		adbsh="11taobaomiaotang"
+	;;
+	11taobaoshaizi) adbcd="scripts"
+		adbsh="11taobaoshaizi"
+	;;
 	none) adbcd=""
 	;;
 esac
@@ -246,6 +261,135 @@ if [ $adbcd == "scripts" ];then
 			sh /tmp/${sectionname}_sh
 		elif [ ${screensize} == "1080x2340" ];then
 			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=300/;s/dosedystart=/ystart=1295/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=775/;s/dosedysetp1=/ysetp1=185/;s/dosedentbbx=/entbbx=550/;s/dosedentbby=/entbby=555/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		fi
+	elif  [ ${adbsh} == "11diantao" ];then
+		echo "shuang11"
+		if [ ${screensize} == "720x1280" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=310/;s/dosedystart=/ystart=710/;s/dosedbasex=/basex=600/;s/dosedbasey=/basey=500/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "720x1560" ];then
+			echo "unsupport now"
+		elif [ ${screensize} == "1080x2244" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=518/;s/dosedystart=/ystart=1390/;s/dosedbasex=/basex=900/;s/dosedbasey=/basey=755/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x1920" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=518/;s/dosedystart=/ystart=1190/;s/dosedbasex=/basex=900/;s/dosedbasey=/basey=555/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x2280" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=518/;s/dosedystart=/ystart=1390/;s/dosedbasex=/basex=900/;s/dosedbasey=/basey=755/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x2340" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=518/;s/dosedystart=/ystart=1485/;s/dosedbasex=/basex=900/;s/dosedbasey=/basey=850/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		fi
+	elif  [ ${adbsh} == "11diantaolucky" ];then
+		echo "shuang11"
+		if [ ${screensize} == "720x1280" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=310/;s/dosedystart=/ystart=710/;s/dosedbasex=/basex=635/;s/dosedbasey=/basey=1000/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "720x1560" ];then
+			echo "unsupport now"
+		elif [ ${screensize} == "1080x2244" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=518/;s/dosedystart=/ystart=1390/;s/dosedbasex=/basex=945/;s/dosedbasey=/basey=1520/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x1920" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=518/;s/dosedystart=/ystart=1190/;s/dosedbasex=/basex=945/;s/dosedbasey=/basey=1320/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x2280" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=518/;s/dosedystart=/ystart=1390/;s/dosedbasex=/basex=945/;s/dosedbasey=/basey=1520/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x2340" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=518/;s/dosedystart=/ystart=1485/;s/dosedbasex=/basex=945/;s/dosedbasey=/basey=1615/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		fi
+	elif  [ ${adbsh} == "11taobaozc" ];then
+		echo "shuang11"
+		if [ ${screensize} == "720x1280" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=320/;s/dosedystart=/ystart=1065/;s/dosedbasex=/basex=360/;s/dosedbasey=/basey=500/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "720x1560" ];then
+			echo "unsupport now"
+		elif [ ${screensize} == "1080x2244" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=360/;s/dosedystart=/ystart=1560/;s/dosedbasex=/basex=550/;s/dosedbasey=/basey=770/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x1920" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=360/;s/dosedystart=/ystart=1360/;s/dosedbasex=/basex=550/;s/dosedbasey=/basey=570/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x2280" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=360/;s/dosedystart=/ystart=1560/;s/dosedbasex=/basex=550/;s/dosedbasey=/basey=770/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x2340" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=360/;s/dosedystart=/ystart=1655/;s/dosedbasex=/basex=550/;s/dosedbasey=/basey=865/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		fi
+	elif  [ ${adbsh} == "11taobaomiaotang" ];then
+		echo "shuang11"
+		if [ ${screensize} == "720x1280" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=600/;s/dosedbasey=/basey=775/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "720x1560" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=600/;s/dosedbasey=/basey=950/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x2244" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=900/;s/dosedbasey=/basey=1350/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x1920" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=900/;s/dosedbasey=/basey=1150/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x2280" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=900/;s/dosedbasey=/basey=1350/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x2340" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=900/;s/dosedbasey=/basey=1445/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		fi
+	elif  [ ${adbsh} == "11taobaoshaizi" ];then
+		echo "shuang11"
+		if [ ${screensize} == "720x1280" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=360/;s/dosedbasey=/basey=1118/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "720x1560" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=360/;s/dosedbasey=/basey=1168/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x2244" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=535/;s/dosedbasey=/basey=1780/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x1920" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=535/;s/dosedbasey=/basey=1580/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x2280" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=535/;s/dosedbasey=/basey=1780/' > /tmp/${sectionname}_sh
+			chmod +x /tmp/${sectionname}_sh
+			sh /tmp/${sectionname}_sh
+		elif [ ${screensize} == "1080x2340" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=535/;s/dosedbasey=/basey=1875/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
 		fi

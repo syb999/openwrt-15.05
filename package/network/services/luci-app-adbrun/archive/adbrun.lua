@@ -27,6 +27,23 @@ function adbxhotplug.write(self, section)
 	luci.util.exec("mv /tmp/30-adb_init /etc/hotplug.d/usb/30-adb_init >/dev/null 2>&1 &")
 end
 
+a:tab("diantaod11init_set", translate("d11event diantao init setting"))
+diantaodayworklistd11 = a:taboption("diantaod11init_set", Value, "diantaodayworklistd11", translate("d11event-diantao daytime worklist"))
+diantaodayworklistd11.datatype = "string"
+diantaodayworklistd11.default = "30秒10次 60秒10次 3分钟10次 30秒10次 60秒10次 30秒1次"
+diantaodayworklistd11.rmempty = false
+diantaodayworklistd11.description = translate("格式:X秒 X分钟")
+
+diantaonightworklistd11 = a:taboption("diantaod11init_set", Value, "diantaonightworklistd11", translate("d11event-diantao night worklist"))
+diantaonightworklistd11.datatype = "string"
+diantaonightworklistd11.default = "60秒3次 3分钟5次 30秒10次 60秒10次 3分钟10次 30秒10次 60秒10次"
+diantaonightworklistd11.rmempty = false
+
+diantaoluckyworklistd11=a:taboption("diantaod11init_set", Value, "diantaoluckyworklistd11", translate("d11event-diantao lucky worklist"))
+diantaoluckyworklistd11.datatype = "string"
+diantaoluckyworklistd11.default = "60秒20次 30秒20次 3分钟20次 60秒10次 3分钟8次 30秒3次"
+diantaoluckyworklistd11.rmempty = false
+
 a:tab("diantaoinit_set", translate("diantao init setting"))
 diantaodayworklist = a:taboption("diantaoinit_set", Value, "diantaodayworklist", translate("diantao daytime worklist"))
 diantaodayworklist.datatype = "string"
@@ -89,6 +106,11 @@ adbcommandlist:value("kuaishou", translate("Automatically play kuaishou"))
 adbcommandlist:value("autodiantao", translate("Automatically taobao live"))
 adbcommandlist:value("autojdlite", translate("Automatically jdlite"))
 adbcommandlist:value("tbbbfarm", translate("Automatically taobao baba farm"))
+adbcommandlist:value("11diantao", translate("Automatically 11.11 taobao live"))
+adbcommandlist:value("11diantaolucky", translate("Automatically 11.11 taobao live lucky event"))
+adbcommandlist:value("11taobaozc", translate("Automatically 11.11 taobao zhongcaoji"))
+adbcommandlist:value("11taobaomiaotang", translate("Automatically 11.11 taobao miaotang event"))
+adbcommandlist:value("11taobaoshaizi", translate("Automatically 11.11 taobao miaotang event-touzi"))
 adbcommandlist.default     = "none"
 adbcommandlist.rempty      = false
 
@@ -123,6 +145,8 @@ adbstop.inputstyle = "apply"
 function adbstop.write(self, section)
 	luci.util.exec("kill $(ps | grep " ..section.. " | grep -v grep | head -n 1 | cut -d 'r' -f 1) > /dev/null 2>&1")
 	luci.util.exec("kill $(ps | grep " ..section.. " | grep -v grep | head -n 1 | cut -d 'r' -f 1) > /dev/null 2>&1")
+	luci.util.exec("kill $(ps | grep " ..section.. " | grep -v grep | head -n 1 | cut -d ' ' -f 1) > /dev/null 2>&1")
+	luci.util.exec("kill $(ps | grep " ..section.. " | grep -v grep | head -n 1 | cut -d ' ' -f 1) > /dev/null 2>&1")
 end
 
 return m
