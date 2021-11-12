@@ -10,6 +10,14 @@ function stopaudio() {
 		sed "1d" -i ${astopmp3}
 	done
 
+	runnext="/tmp/tmpmpg123.pid"
+	countfiles=$(awk 'END{print NR}' $runnext)
+	for i in $(seq 1 $countfiles)
+	do
+		kill $(cat $runnext | head -n 1) > /dev/null 2>&1
+		sed "1d" -i ${runnext}
+	done
+
 	ps | grep mpg123 | grep -v grep | cut -d 'r' -f 1 > /tmp/tmpmpg123.mtmp
 	runmpg123="/tmp/tmpmpg123.mtmp"
 	countfiles=$(awk 'END{print NR}' $runmpg123)
@@ -28,16 +36,7 @@ function stopaudio() {
 		sed "1d" -i ${rungst}
 	done
 
-	runnext="/tmp/tmpmpg123.pid"
-	countfiles=$(awk 'END{print NR}' $runnext)
-	for i in $(seq 1 $countfiles)
-	do
-		kill $(cat $runnext | head -n 1) > /dev/null 2>&1
-		sed "1d" -i ${runnext}
-	done
-
-	rm /tmp/tmpmpg123.*
-	rm /tmp/tmpmp3124.*
+	rm /tmp/tmpmpg123.* /tmp/tmpmp3124.* myatdl.play.list myatdl.xplay.list
 }
 
 stopaudio

@@ -15,11 +15,11 @@ findmp3name=$(cat /tmp/tmp.Audioxm.listf)
 
 if [ $mp3selected != $findmp3name ];then
 	if [ ! "$testplayer" ];then
-		find $paudiopath/$paudioname/*.mp3 > /tmp/tmp.Audioxm.xlist
+		find *.mp3 > /tmp/tmp.Audioxm.xlist
 	else
-		find $paudiopath/$paudioname/*.mp3 > /tmp/tmp.Audioxm.xlist
-		find $paudiopath/$paudioname/*.m4a >> /tmp/tmp.Audioxm.xlist
-		find $paudiopath/$paudioname/*.aac >> /tmp/tmp.Audioxm.xlist
+		find *.mp3 > /tmp/tmp.Audioxm.xlist
+		find *.m4a >> /tmp/tmp.Audioxm.xlist
+		find *.aac >> /tmp/tmp.Audioxm.xlist
 	fi
 	grep -n $mp3selected /tmp/tmp.Audioxm.xlist | cut -d ':' -f 1 > /tmp/tmp.Audioxm.listn
 	numname=$(cat /tmp/tmp.Audioxm.listn)
@@ -27,9 +27,12 @@ if [ $mp3selected != $findmp3name ];then
 	sed -i '1,'$numnamenew'd' /tmp/tmp.Audioxm.xlist
 fi	
 
+realpath="${paudiopath}/${paudioname}/"
 if [ -e /tmp/tmp.Audioxm.xlist ];then
-	cp /tmp/tmp.Audioxm.xlist /tmp/tmp.Audioxm.xlistx
+	sed -i "s/^/$realpath/" /tmp/tmp.Audioxm.xlist
+ 	cp /tmp/tmp.Audioxm.xlist /tmp/tmp.Audioxm.xlistx
 else
+	sed -i "s/^/$realpath/" /tmp/tmp.Audioxm.list
 	cp /tmp/tmp.Audioxm.list /tmp/tmp.Audioxm.xlistx
 fi
 
