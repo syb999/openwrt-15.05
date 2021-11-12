@@ -175,25 +175,25 @@ if [ $adbcd == "scripts" ];then
 	elif  [ ${adbsh} == "diantao" ];then
 		echo diantao
 		if [ ${screensize} == "720x1280" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=360/;s/dosedystart=/ystart=515/;s/dosedbasex=/basex=605/;s/dosedbasey=/basey=586/' > /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=360/;s/dosedystart=/ystart=515/;s/dosedbasex=/basex=605/;s/dosedbasey=/basey=720/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
 		elif [ ${screensize} == "720x1560" ];then
 			echo "unsupport now"
 		elif [ ${screensize} == "1080x2244" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=1050/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=1060/' > /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=1050/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=1280/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
 		elif [ ${screensize} == "1080x1920" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=850/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=860/' > /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=850/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=1080/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
 		elif [ ${screensize} == "1080x2280" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=1050/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=1060/' > /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=1050/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=1280/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
 		elif [ ${screensize} == "1080x2340" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=1145/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=1155/' > /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=1145/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=1375/' > /tmp/${sectionname}_sh
 			chmod +x /tmp/${sectionname}_sh
 			sh /tmp/${sectionname}_sh
 		fi
