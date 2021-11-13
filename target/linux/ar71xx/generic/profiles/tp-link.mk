@@ -255,6 +255,17 @@ endef
 $(eval $(call Profile,TLWA901))
 
 
+define Profile/WB2000
+	NAME:=WB2000
+	PACKAGES:=kmod-usb-core kmod-usb2 kmod-ledtrig-usbdev kmod-sound-ak4430
+endef
+
+define Profile/WB2000/Description
+	Package set optimized for WB2000.
+endef
+$(eval $(call Profile,WB2000))
+
+
 define Profile/TLWDR4300
 	NAME:=TP-LINK TL-WDR3500/3600/4300/4310/MW4350R
 	PACKAGES:=kmod-usb-core kmod-usb2 kmod-ledtrig-usbdev

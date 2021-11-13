@@ -280,6 +280,15 @@ $(Device/tplink)
   IMAGE_SIZE := 15872k
 endef
 
+define Device/wb2000
+$(Device/tplink-16mlzma)
+  BOARDNAME = WB2000
+  DEVICE_PROFILE = WB2000
+  TPLINK_HWID := 0x00200001
+endef
+
+TARGET_DEVICES += wb2000
+
 define Device/tl-wdr4300-v1
 $(Device/tplink-16mlzma)
   BOARDNAME = TL-WDR4300
