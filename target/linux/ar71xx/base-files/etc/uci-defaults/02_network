@@ -507,8 +507,6 @@ tew-732br |\
 tl-mr3220 |\
 tl-mr3220-v2 |\
 tl-mr3420 |\
-wb2000 |\
-tl-wdr3500 |\
 tl-wdr3500 |\
 tl-wr741nd |\
 tl-wr741nd-v4 |\
@@ -522,6 +520,15 @@ wzr-hp-ag300h)
 	ucidef_set_interfaces_lan_wan "eth0" "eth1"
 	ucidef_add_switch "switch0" "1" "1"
 	ucidef_add_switch_vlan "switch0" "1" "0 1 2 3 4"
+	;;
+
+wb2000)
+	ucidef_set_interface_lan "eth0 eth1"
+	ucidef_set_interface_wan "eth0"
+	mac_lan=$(cat /sys/class/net/eth0/address)
+	[ -n "$mac_lan" ] && ucidef_set_interface_macaddr "lan" "$mac_lan"
+	mac_wan=$(cat /sys/class/net/eth0/address)
+	[ -n "$mac_wan" ] && ucidef_set_interface_macaddr "wan" "$mac_wan"
 	;;
 
 wzr-hp-g450h)

@@ -198,14 +198,14 @@ static void __init wb2000_setup(void)
 					ARRAY_SIZE(wb2000_gpio_keys),
 					wb2000_gpio_keys);
 
+	ath79_init_mac(ath79_eth0_data.mac_addr, art + WB2000_MAC0_OFFSET, -1);
+
 	ath79_init_mac(tmpmac, mac, 0);
 	ath79_register_wmac(art + WB2000_WMAC_CALDATA_OFFSET, tmpmac);
 
 	ath79_init_mac(tmpmac, mac, 1);
 	ap9x_pci_setup_wmac_led_pin(0, 0);
 	ap91_pci_init(art + WB2000_PCIE_CALDATA_OFFSET, tmpmac);
-
-	ath79_register_usb();
 
     ath79_register_mdio(0, 0x0);
 
@@ -221,6 +221,8 @@ static void __init wb2000_setup(void)
     ath79_eth0_pll_data.pll_100 = 0x0101;
     ath79_eth0_pll_data.pll_10 = 0x1313;
     ath79_register_eth(0);
+
+	ath79_register_usb();
 
     /* Audio initialization: PCM/I2S and CODEC */
 	wb2000_audio_setup();
