@@ -29,10 +29,10 @@ local BMNXFS = require "nixio.fs"
             luci.util.exec("/usr/banmac/ban.sh")
         end
 
-     o = banlist:option(Button, "unban_mac", translate("One-Click UnBAN")) 
-        o.rmempty = false
-        o.inputstyle = "apply"
-        function o.write(self, section)
+     o1 = banlist:option(Button, "unban_mac", translate("One-Click UnBAN")) 
+        o1.rmempty = false
+        o1.inputstyle = "apply"
+        function o1.write(self, section)
             luci.util.exec("/usr/banmac/unban.sh")
         end
 
