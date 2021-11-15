@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-banmac
-PKG_VERSION:=0.1
-PKG_RELEASE:=20210307
+PKG_VERSION:=20211115
+
 
 include $(INCLUDE_DIR)/package.mk
 
