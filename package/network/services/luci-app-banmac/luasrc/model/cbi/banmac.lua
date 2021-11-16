@@ -1,9 +1,9 @@
 m = Map("banmac", translate("BanMac"))
 
-local banlist = m:section(TypedSection, "banlist", translate("note"))
+local banlist = m:section(TypedSection, "banlist", translate("log"))
 banlist.anonymous = true
 
-local bmdetails = "/etc/banmacdetails"
+local bmdetails = "/etc/banmaclog"
 local BMNXFS = require "nixio.fs"
 bmd = banlist:option(TextValue, "details")
 bmd.rows = 6

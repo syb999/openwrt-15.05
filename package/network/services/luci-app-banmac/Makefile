@@ -23,7 +23,7 @@ define Package/luci-app-banmac/install
 	$(INSTALL_DIR) $(1)/usr/banmac
 	$(INSTALL_BIN) ./files/banmac/* $(1)/usr/banmac
 	$(INSTALL_DIR) $(1)/etc
-	$(INSTALL_CONF) ./files/banmacdetails $(1)/etc/banmacdetails
+	$(INSTALL_CONF) ./files/banmaclog $(1)/etc/banmaclog
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/banmac.conf $(1)/etc/config/banmac
 endef

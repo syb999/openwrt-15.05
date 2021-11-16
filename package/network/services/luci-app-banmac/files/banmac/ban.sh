@@ -13,3 +13,7 @@ do
 		fi
 	done
 done
+
+hostname=$(grep -n $getcmac /tmp/dhcp.leases | cut -d ' ' -f 4)
+hostip=$(grep -n $getcmac /tmp/dhcp.leases | cut -d ' ' -f 3)
+echo "★禁网设备：$hostname($hostip) MAC地址：$getcmac 操作日期：$(date +%Y年%m月%d日\ %H点%M分%S秒)" >> /etc/banmaclog
