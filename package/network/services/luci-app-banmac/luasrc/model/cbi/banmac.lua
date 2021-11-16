@@ -34,7 +34,6 @@ ban_mac.inputstyle = "apply"
 function ban_mac.write(self, section)
 	luci.util.exec("cp /usr/banmac/ban.sh /tmp/ban_OO!%!OO" ..section.. "_.sh >/dev/null 2>&1 &")
 	luci.util.exec("/tmp/ban_OO!%!OO" ..section.. "_.sh >/dev/null 2>&1 &")
-	luci.util.exec("rm /tmp/ban_OO!%!OO" ..section.. "_.sh >/dev/null 2>&1 &")
 end
 
 unban_mac = s:taboption("banmactab", Button, "unban_mac", translate("One-Click UnBAN")) 
@@ -43,7 +42,6 @@ unban_mac.inputstyle = "apply"
 function unban_mac.write(self, section)
 	luci.util.exec("cp /usr/banmac/unban.sh /tmp/unban_OO!%!OO" ..section.. "_.sh >/dev/null 2>&1 &")
 	luci.util.exec("/tmp/unban_OO!%!OO" ..section.. "_.sh >/dev/null 2>&1 &")
-	luci.util.exec("rm /tmp/unban_OO!%!OO" ..section.. "_.sh >/dev/null 2>&1 &")
 end
 
 return m
