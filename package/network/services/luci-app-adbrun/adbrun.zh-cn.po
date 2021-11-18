@@ -5,7 +5,7 @@ msgid "ADB server"
 msgstr "ADB服务器"
 
 msgid "Assistant for automatic control android devices."
-msgstr "android设备自动控制助手(设备名尽量取得长一点，比如AAA1，BBB2)"
+msgstr "android设备自动控制助手"
 
 msgid "init devices"
 msgstr "设备初始化"

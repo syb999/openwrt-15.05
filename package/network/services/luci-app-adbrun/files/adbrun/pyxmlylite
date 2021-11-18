@@ -4,11 +4,13 @@ import subprocess
 from PIL import Image
 
 currentclient="adbiplist"
-sectionname = os.path.basename(__file__).split("_")[0]
+osectionname = os.path.basename(__file__).split("_")[0]
+sectionname = osectionname.replace('ADBRUN', "")
 process = os.popen('uci get adbrun.'+sectionname+'.'+currentclient)
 output = process.read()
 fixoutput=output.rstrip("\n")
 fpath='/tmp/sc'+ fixoutput+'.jpg'
+process = os.popen('rm /tmp/adb_ADBRUN'+sectionname+'_.sh')
 process.close()
 
 while True:

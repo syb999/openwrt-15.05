@@ -1,7 +1,7 @@
 #!/bin/sh
 
 spath="/usr/adbrun/"
-sectionname=$(echo $0 | cut -d '_' -f 2)
+sectionname=$(echo $0 | cut -d '_' -f 2 | sed 's/^ADBRUN//')
 adbclient=$(uci get adbrun.$sectionname.adbiplist)
 adbcommand=$(uci get adbrun.$sectionname.adbcommandlist)
 
@@ -92,162 +92,162 @@ esac
 
 if [ $adbcd == "scripts" ];then
 	if [ ${adbsh} ==  "takephoto" ];then
-		cp ${spath}${adbsh} /tmp/${sectionname}_sh
-		chmod +x /tmp/${sectionname}_sh
-		sh /tmp/${sectionname}_sh
+		cp ${spath}${adbsh} /tmp/ADBRUN${sectionname}_.sh
+		chmod +x /tmp/ADBRUN${sectionname}_.sh
+		exec sh /tmp/ADBRUN${sectionname}_.sh
 	elif [ ${adbsh} ==  "screenshot" ];then
-		cp ${spath}${adbsh} /tmp/${sectionname}_sh
-		chmod +x /tmp/${sectionname}_sh
-		sh /tmp/${sectionname}_sh
+		cp ${spath}${adbsh} /tmp/ADBRUN${sectionname}_.sh
+		chmod +x /tmp/ADBRUN${sectionname}_.sh
+		exec sh /tmp/ADBRUN${sectionname}_.sh
 	elif [ ${adbsh} ==  "pyxmlylite" ];then
 		echo ximalayalite
 		if [ ${screensize} == "720x1280" ];then
-			cat ${spath}${adbsh} | sed -e "s/while\ True:/while\ True:\n\tsubprocess.call(r\'adb\ -s\ \$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\'):5555\ shell\ screencap\ -p\ \/data\/local\/tmp\/sc\$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\').jpg\',shell=True)\n\tsubprocess.call(r\'adb\ -s\ \$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\'):5555\ pull\ \/data\/local\/tmp\/sc\$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\').jpg\ \/tmp\/\ >\ \/dev\/null\ 2>\&1',shell=True)/;s/dosedxrangestart/10/;s/dosedxrangeend/710/;s/dosedxrangestep/5/;s/dosedyrangestart/330/;s/dosedyrangeend/680/;s/dosedtapax/555/;s/dosedtapay/335/;s/dosedtapbx/555/;s/dosedtapby/380/;" > /tmp/${sectionname}_py
-			chmod +x /tmp/${sectionname}_py
-			python3 /tmp/${sectionname}_py
+			cat ${spath}${adbsh} | sed -e "s/while\ True:/while\ True:\n\tsubprocess.call(r\'adb\ -s\ \$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\'):5555\ shell\ screencap\ -p\ \/data\/local\/tmp\/sc\$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\').jpg\',shell=True)\n\tsubprocess.call(r\'adb\ -s\ \$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\'):5555\ pull\ \/data\/local\/tmp\/sc\$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\').jpg\ \/tmp\/\ >\ \/dev\/null\ 2>\&1',shell=True)/;s/dosedxrangestart/10/;s/dosedxrangeend/710/;s/dosedxrangestep/5/;s/dosedyrangestart/330/;s/dosedyrangeend/680/;s/dosedtapax/555/;s/dosedtapay/335/;s/dosedtapbx/555/;s/dosedtapby/380/;" > /tmp/ADBRUN${sectionname}_py
+			chmod +x /tmp/ADBRUN${sectionname}_py
+			exec python3 /tmp/ADBRUN${sectionname}_py
 		elif [ ${screensize} == "720x1560" ];then
 			echo "unsupport now"
 		elif [ ${screensize} == "1080x2244" ];then
-			cat ${spath}${adbsh} | sed -e "s/while\ True:/while\ True:\n\tsubprocess.call(r\'adb\ -s\ \$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\'):5555\ exec-out\ screencap\ -p\ >\ \/tmp\/sc\$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\').jpg\',shell=True)/;s/dosedxrangestart/30/;s/dosedxrangeend/1070/;s/dosedxrangestep/10/;s/dosedyrangestart/450/;s/dosedyrangeend/950/;s/dosedtapax/855/;s/dosedtapay/648/;s/dosedtapbx/855/;s/dosedtapby/690/;" > /tmp/${sectionname}_py
-			chmod +x /tmp/${sectionname}_py
-			python3 /tmp/${sectionname}_py
+			cat ${spath}${adbsh} | sed -e "s/while\ True:/while\ True:\n\tsubprocess.call(r\'adb\ -s\ \$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\'):5555\ exec-out\ screencap\ -p\ >\ \/tmp\/sc\$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\').jpg\',shell=True)/;s/dosedxrangestart/30/;s/dosedxrangeend/1070/;s/dosedxrangestep/10/;s/dosedyrangestart/450/;s/dosedyrangeend/950/;s/dosedtapax/855/;s/dosedtapay/648/;s/dosedtapbx/855/;s/dosedtapby/690/;" > /tmp/ADBRUN${sectionname}_py
+			chmod +x /tmp/ADBRUN${sectionname}_py
+			exec python3 /tmp/ADBRUN${sectionname}_py
 		elif [ ${screensize} == "1080x1920" ];then
-			cat ${spath}${adbsh} | sed -e "s/while\ True:/while\ True:\n\tsubprocess.call(r\'adb\ -s\ \$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\'):5555\ exec-out\ screencap\ -p\ >\ \/tmp\/sc\$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\').jpg\',shell=True)/;s/dosedxrangestart/20/;s/dosedxrangeend/1070/;s/dosedxrangestep/10/;s/dosedyrangestart/470/;s/dosedyrangeend/1010/;s/dosedtapax/830/;s/dosedtapay/500/;s/dosedtapbx/830/;s/dosedtapby/570/;" > /tmp/${sectionname}_py
-			chmod +x /tmp/${sectionname}_py
-			python3 /tmp/${sectionname}_py
+			cat ${spath}${adbsh} | sed -e "s/while\ True:/while\ True:\n\tsubprocess.call(r\'adb\ -s\ \$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\'):5555\ exec-out\ screencap\ -p\ >\ \/tmp\/sc\$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\').jpg\',shell=True)/;s/dosedxrangestart/20/;s/dosedxrangeend/1070/;s/dosedxrangestep/10/;s/dosedyrangestart/470/;s/dosedyrangeend/1010/;s/dosedtapax/830/;s/dosedtapay/500/;s/dosedtapbx/830/;s/dosedtapby/570/;" > /tmp/ADBRUN${sectionname}_py
+			chmod +x /tmp/ADBRUN${sectionname}_py
+			exec python3 /tmp/ADBRUN${sectionname}_py
 		elif [ ${screensize} == "1080x2280" ];then
-			cat ${spath}${adbsh} | sed -e "s/while\ True:/while\ True:\n\tsubprocess.call(r\'adb\ -s\ \$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\'):5555\ exec-out\ screencap\ -p\ >\ \/tmp\/sc\$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\').jpg\',shell=True)/;s/dosedxrangestart/30/;s/dosedxrangeend/1070/;s/dosedxrangestep/10/;s/dosedyrangestart/450/;s/dosedyrangeend/950/;s/dosedtapax/855/;s/dosedtapay/648/;s/dosedtapbx/855/;s/dosedtapby/690/;" > /tmp/${sectionname}_py
-			chmod +x /tmp/${sectionname}_py
-			python3 /tmp/${sectionname}_py
+			cat ${spath}${adbsh} | sed -e "s/while\ True:/while\ True:\n\tsubprocess.call(r\'adb\ -s\ \$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\'):5555\ exec-out\ screencap\ -p\ >\ \/tmp\/sc\$(uci\ get\ adbrun.\'+sectionname+\'.\'+currentclient+\').jpg\',shell=True)/;s/dosedxrangestart/30/;s/dosedxrangeend/1070/;s/dosedxrangestep/10/;s/dosedyrangestart/450/;s/dosedyrangeend/950/;s/dosedtapax/855/;s/dosedtapay/648/;s/dosedtapbx/855/;s/dosedtapby/690/;" > /tmp/ADBRUN${sectionname}_py
+			chmod +x /tmp/ADBRUN${sectionname}_py
+			exec python3 /tmp/ADBRUN${sectionname}_py
 		elif [ ${screensize} == "1080x2340" ];then
 			echo "unsupport now"
 		fi
 	elif  [ ${adbsh} == "readbook" ];then
 		echo fanqiexiaoshuo
 		if [ ${screensize} == "720x1280" ];then
-			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=680/;s/dosedbasey=/basey=130/' > /tmp/${sectionname}_sh
-			chmod +x /tmp/${sectionname}_sh
-			sh /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=680/;s/dosedbasey=/basey=130/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "720x1560" ];then
 			echo "unsupport now"
 		elif [ ${screensize} == "1080x2244" ];then
-			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=1030/;s/dosedbasey=/basey=300/' > /tmp/${sectionname}_sh
-			chmod +x /tmp/${sectionname}_sh
-			sh /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=1030/;s/dosedbasey=/basey=300/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "1080x1920" ];then
-			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=1030/;s/dosedbasey=/basey=200/' > /tmp/${sectionname}_sh
-			chmod +x /tmp/${sectionname}_sh
-			sh /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=1030/;s/dosedbasey=/basey=200/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "1080x2280" ];then
-			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=1030/;s/dosedbasey=/basey=300/' > /tmp/${sectionname}_sh
-			chmod +x /tmp/${sectionname}_sh
-			sh /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=1030/;s/dosedbasey=/basey=300/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "1080x2340" ];then
-			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=1030/;s/dosedbasey=/basey=395/' > /tmp/${sectionname}_sh
-			chmod +x /tmp/${sectionname}_sh
-			sh /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=1030/;s/dosedbasey=/basey=395/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
 		fi
 	elif  [ ${adbsh} == "kuaishou" ];then
 		echo kuaishou
 		if [ ${screensize} == "720x1280" ];then
-			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=386/;s/dosedbasey=/basey=620/' > /tmp/${sectionname}_sh
-			chmod +x /tmp/${sectionname}_sh
-			sh /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=386/;s/dosedbasey=/basey=620/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "720x1560" ];then
 			echo "unsupport now"
 		elif [ ${screensize} == "1080x2244" ];then
-			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=586/;s/dosedbasey=/basey=750/' > /tmp/${sectionname}_sh
-			chmod +x /tmp/${sectionname}_sh
-			sh /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=586/;s/dosedbasey=/basey=750/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "1080x1920" ];then
-			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=586/;s/dosedbasey=/basey=700/' > /tmp/${sectionname}_sh
-			chmod +x /tmp/${sectionname}_sh
-			sh /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=586/;s/dosedbasey=/basey=700/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "1080x2280" ];then
-			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=586/;s/dosedbasey=/basey=750/' > /tmp/${sectionname}_sh
-			chmod +x /tmp/${sectionname}_sh
-			sh /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=586/;s/dosedbasey=/basey=750/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "1080x2340" ];then
-			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=586/;s/dosedbasey=/basey=845/' > /tmp/${sectionname}_sh
-			chmod +x /tmp/${sectionname}_sh
-			sh /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=586/;s/dosedbasey=/basey=845/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
 		fi
 	elif  [ ${adbsh} == "diantao" ];then
 		echo diantao
 		if [ ${screensize} == "720x1280" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=360/;s/dosedystart=/ystart=515/;s/dosedbasex=/basex=605/;s/dosedbasey=/basey=720/' > /tmp/${sectionname}_sh
-			chmod +x /tmp/${sectionname}_sh
-			sh /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=360/;s/dosedystart=/ystart=515/;s/dosedbasex=/basex=605/;s/dosedbasey=/basey=720/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "720x1560" ];then
 			echo "unsupport now"
 		elif [ ${screensize} == "1080x2244" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=1050/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=1280/' > /tmp/${sectionname}_sh
-			chmod +x /tmp/${sectionname}_sh
-			sh /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=1050/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=1280/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "1080x1920" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=850/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=1080/' > /tmp/${sectionname}_sh
-			chmod +x /tmp/${sectionname}_sh
-			sh /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=850/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=1080/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "1080x2280" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=1050/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=1280/' > /tmp/${sectionname}_sh
-			chmod +x /tmp/${sectionname}_sh
-			sh /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=1050/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=1280/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "1080x2340" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=1145/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=1375/' > /tmp/${sectionname}_sh
-			chmod +x /tmp/${sectionname}_sh
-			sh /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=1145/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=1375/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
 		fi
 	elif  [ ${adbsh} == "jdlite" ];then
 		echo jdlite
 		if [ ${screensize} == "720x1280" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=350/;s/dosedystart=/ystart=800/;s/dosedbasex=/basex=620/;s/dosedbasey=/basey=550/' > /tmp/${sectionname}_sh
-			chmod +x /tmp/${sectionname}_sh
-			sh /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=350/;s/dosedystart=/ystart=800/;s/dosedbasex=/basex=620/;s/dosedbasey=/basey=550/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "720x1560" ];then
 			echo "unsupport now"
 		elif [ ${screensize} == "1080x2244" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=530/;s/dosedystart=/ystart=1560/;s/dosedbasex=/basex=950/;s/dosedbasey=/basey=835/' > /tmp/${sectionname}_sh
-			chmod +x /tmp/${sectionname}_sh
-			sh /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=530/;s/dosedystart=/ystart=1560/;s/dosedbasex=/basex=950/;s/dosedbasey=/basey=835/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "1080x1920" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=530/;s/dosedystart=/ystart=1360/;s/dosedbasex=/basex=950/;s/dosedbasey=/basey=635/' > /tmp/${sectionname}_sh
-			chmod +x /tmp/${sectionname}_sh
-			sh /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=530/;s/dosedystart=/ystart=1360/;s/dosedbasex=/basex=950/;s/dosedbasey=/basey=635/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "1080x2280" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=530/;s/dosedystart=/ystart=1560/;s/dosedbasex=/basex=950/;s/dosedbasey=/basey=835/' > /tmp/${sectionname}_sh
-			chmod +x /tmp/${sectionname}_sh
-			sh /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=530/;s/dosedystart=/ystart=1560/;s/dosedbasex=/basex=950/;s/dosedbasey=/basey=835/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "1080x2340" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=530/;s/dosedystart=/ystart=1655/;s/dosedbasex=/basex=950/;s/dosedbasey=/basey=930/' > /tmp/${sectionname}_sh
-			chmod +x /tmp/${sectionname}_sh
-			sh /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=530/;s/dosedystart=/ystart=1655/;s/dosedbasex=/basex=950/;s/dosedbasey=/basey=930/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
 		fi
 	elif  [ ${adbsh} == "tbbbfarm" ];then
 		echo tbbbfarm
 		if [ ${screensize} == "720x1280" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=300/;s/dosedystart=/ystart=1000/;s/dosedbasex=/basex=600/;s/dosedbasey=/basey=570/;s/dosedysetp1=/ysetp1=125/;s/dosedentbbx=/entbbx=500/;s/dosedentbby=/entbby=300/' > /tmp/${sectionname}_sh
-			chmod +x /tmp/${sectionname}_sh
-			sh /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=300/;s/dosedystart=/ystart=1000/;s/dosedbasex=/basex=600/;s/dosedbasey=/basey=570/;s/dosedysetp1=/ysetp1=125/;s/dosedentbbx=/entbbx=500/;s/dosedentbby=/entbby=300/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "720x1560" ];then
 			echo "unsupport now"
 		elif [ ${screensize} == "768x1024" ];then
 			echo "unsupport now"
 		elif [ ${screensize} == "1080x2244" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=300/;s/dosedystart=/ystart=1200/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=680/;s/dosedysetp1=/ysetp1=185/;s/dosedentbbx=/entbbx=550/;s/dosedentbby=/entbby=460/' > /tmp/${sectionname}_sh
-			chmod +x /tmp/${sectionname}_sh
-			sh /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=300/;s/dosedystart=/ystart=1200/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=680/;s/dosedysetp1=/ysetp1=185/;s/dosedentbbx=/entbbx=550/;s/dosedentbby=/entbby=460/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "1080x1920" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=300/;s/dosedystart=/ystart=1000/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=480/;s/dosedysetp1=/ysetp1=185/;s/dosedentbbx=/entbbx=550/;s/dosedentbby=/entbby=260/' > /tmp/${sectionname}_sh
-			chmod +x /tmp/${sectionname}_sh
-			sh /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=300/;s/dosedystart=/ystart=1000/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=480/;s/dosedysetp1=/ysetp1=185/;s/dosedentbbx=/entbbx=550/;s/dosedentbby=/entbby=260/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "1080x2280" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=300/;s/dosedystart=/ystart=1200/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=680/;s/dosedysetp1=/ysetp1=185/;s/dosedentbbx=/entbbx=550/;s/dosedentbby=/entbby=460/' > /tmp/${sectionname}_sh
-			chmod +x /tmp/${sectionname}_sh
-			sh /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=300/;s/dosedystart=/ystart=1200/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=680/;s/dosedysetp1=/ysetp1=185/;s/dosedentbbx=/entbbx=550/;s/dosedentbby=/entbby=460/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "1080x2340" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=300/;s/dosedystart=/ystart=1295/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=775/;s/dosedysetp1=/ysetp1=185/;s/dosedentbbx=/entbbx=550/;s/dosedentbby=/entbby=555/' > /tmp/${sectionname}_sh
-			chmod +x /tmp/${sectionname}_sh
-			sh /tmp/${sectionname}_sh
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=300/;s/dosedystart=/ystart=1295/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=775/;s/dosedysetp1=/ysetp1=185/;s/dosedentbbx=/entbbx=550/;s/dosedentbby=/entbby=555/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
 		fi
 	fi
 else

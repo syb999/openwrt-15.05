@@ -135,18 +135,15 @@ adbplay = s:taboption("adb_action",Button, "adbplay", translate("Play"))
 adbplay.rmempty = true
 adbplay.inputstyle = "apply"
 function adbplay.write(self, section)
-	luci.util.exec("cp /usr/adbrun/adbcommand.sh /tmp/adb_" ..section.. "_.sh >/dev/null 2>&1 &")
-	luci.util.exec("/tmp/adb_" ..section.. "_.sh >/dev/null 2>&1 &")
+	luci.util.exec("cp /usr/adbrun/adbcommand.sh /tmp/adb_ADBRUN" ..section.. "_.sh >/dev/null 2>&1 &")
+	luci.util.exec("/tmp/adb_ADBRUN" ..section.. "_.sh >/dev/null 2>&1 &")
 end
 
 adbstop = s:taboption("adb_action",Button, "adbstop", translate("Stop loop script")) 
 adbstop.rmempty = true
 adbstop.inputstyle = "apply"
 function adbstop.write(self, section)
-	luci.util.exec("kill $(ps | grep " ..section.. " | grep -v grep | head -n 1 | cut -d 'r' -f 1) > /dev/null 2>&1")
-	luci.util.exec("kill $(ps | grep " ..section.. " | grep -v grep | head -n 1 | cut -d 'r' -f 1) > /dev/null 2>&1")
-	luci.util.exec("kill $(ps | grep " ..section.. " | grep -v grep | head -n 1 | cut -d ' ' -f 1) > /dev/null 2>&1")
-	luci.util.exec("kill $(ps | grep " ..section.. " | grep -v grep | head -n 1 | cut -d ' ' -f 1) > /dev/null 2>&1")
+	luci.util.exec("kill $(ps | grep ADBRUN" ..section.. "_ | grep -v grep | head -n 1 | cut -d 'r' -f 1) > /dev/null 2>&1")
 end
 
 return m

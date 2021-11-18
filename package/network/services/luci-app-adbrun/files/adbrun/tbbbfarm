@@ -8,8 +8,9 @@ dosedysetp1=
 dosedentbbx=
 dosedentbby=
 
-sectionname=$(echo $0 | cut -d '/' -f 3 | cut -d '_' -f 1)
+sectionname=$(echo $0 | cut -d '/' -f 3 | cut -d '_' -f 1 | sed 's/^ADBRUN//')
 adbclient=$(uci get adbrun.$sectionname.adbiplist)
+rm /tmp/adb_ADBRUN${sectionname}_.sh
 
 adb disconnect ${adbclient}:5555
 sleep 2
@@ -30,7 +31,6 @@ gotobbfm
 adb -s ${adbclient}:5555 shell input keyevent 4
 sleep 5
 gotobbfm
-
 
 screensize=$(adb -s ${adbclient}:5555 shell wm size | cut -d ':' -f 2 | sed -e "s/ //g;s/\n//g;s/\r//g")
 ltimes=0
@@ -58,15 +58,10 @@ sleep 5
 adb -s ${adbclient}:5555 shell input tap $basex $basey
 sleep 5
 
-adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1)
-sleep 25
-adb -s ${adbclient}:5555 shell input keyevent 4
-sleep 5
-
 ltimes=0
 while [ $ltimes -lt 4 ]
 do
-	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1)
 	sleep 3
 	adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 600`)
 	sleep 25
@@ -124,5 +119,3 @@ adb -s ${adbclient}:5555 shell input keyevent 4
 sleep 5
 
 adb -s ${adbclient}:5555 shell am force-stop com.taobao.taobao
-
-adb disconnect ${adbclient}:5555
