@@ -5,10 +5,17 @@ START=99
 USE_PROCD=1
 
 APP=gmediarender
-SERVICE_WRITE_PID=1
-SERVICE_DAEMONIZE=1
 hostname="$(uci get system.@system[0].hostname)"
 dlnaname="$(uci get gmediarender.@gmediarender[0].gmrendersuffix)"
+havelog="$(uci get gmediarender.@gmediarender[0].gmrenderextra)"
+
+function gmrconftest(){
+	gmrdir="$(uci get gmediarender.@gmediarender[0].gmrenderdir)"
+	if [ ! -d "$gmrdir" ]; then
+		mkdir -p $gmrdir
+	fi
+	gmrlog="$(uci get gmediarender.@gmediarender[0].gmrenderlog)"
+}
 
 if [ $(uci get gmediarender.@gmediarender[0].gmrenderbindiplist) = lan ];then
 	bindip=$(uci get network.lan.ipaddr)
@@ -22,9 +29,19 @@ start_service() {
 	procd_open_instance
 
 	if [ ! -n "${bindip}" ];then
-		procd_set_param command /usr/bin/$APP -f ${APP}-${hostname}-${dlnaname}
+		if [ ! -n "${havelog}" ];then
+			procd_set_param command /usr/bin/$APP -f ${APP}-${hostname}-${dlnaname}
+		else
+			gmrconftest
+			procd_set_param command /usr/bin/$APP -f ${APP}-${hostname}-${dlnaname} --logfile /tmp/${gmrlog}
+		fi
 	else
-		procd_set_param command /usr/bin/$APP -f ${APP}-${hostname}-${dlnaname} -I ${bindip}
+		if [ ! -n "${havelog}" ];then
+			procd_set_param command /usr/bin/$APP -f ${APP}-${hostname}-${dlnaname} -I ${bindip}
+		else
+			gmrconftest
+			procd_set_param command /usr/bin/$APP -f ${APP}-${hostname}-${dlnaname} -I ${bindip} --logfile /tmp/${gmrlog}
+		fi
 	fi
 
 	procd_set_param respawn
@@ -34,3 +51,4 @@ start_service() {
 stop_service() {
 	service_stop /usr/bin/$APP
 }
+

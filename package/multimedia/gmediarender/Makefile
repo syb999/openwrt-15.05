@@ -37,24 +37,6 @@ endef
 
 TARGET_CFLAGS += -std=gnu99
 
-define Package/gmediarender/postinst
-#!/bin/sh
-if [ -z "$${IPKG_INSTROOT}" ]; then
-	echo "Enabling rc.d symlink for gmediarender"
-	/etc/init.d/gmediarender enable
-fi
-exit 0
-endef
-
-define Package/gmediarender/prerm
-#!/bin/sh
-if [ -z "$${IPKG_INSTROOT}" ]; then
-	echo "Removing rc.d symlink for gmediarender"
-	/etc/init.d/gmediarender disable
-fi
-exit 0
-endef
-
 define Package/gmediarender/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gmediarender $(1)/usr/bin

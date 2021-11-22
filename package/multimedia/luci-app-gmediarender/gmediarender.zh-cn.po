@@ -22,3 +22,15 @@ msgstr "行动"
 msgid "One-click initialize gmediarender"
 msgstr "一键初始化gmediarender"
 
+msgid "Wanna download while Listening"
+msgstr "开启边听边下"
+
+msgid "Please type log file's name"
+msgstr "请输入日志文件名"
+
+msgid "One-click download while Listening"
+msgstr "一键启动-播放时自动下载功能"
+
+msgid "One-click STOP download"
+msgstr "停止自动下载"
+

@@ -2,8 +2,7 @@ include $(TOPDIR)/rules.mk
 
 
 PKG_NAME:=luci-app-gmediarender
-PKG_VERSION:=1
-PKG_RELEASE:=
+PKG_VERSION:=2021-11-22
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -33,6 +32,9 @@ define Package/luci-app-gmediarender/install
 	cp -pR ./luasrc/* $(1)/usr/lib/lua/luci
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/gmediarender.conf $(1)/etc/config/gmediarender
+	$(INSTALL_DIR) $(1)/usr/share/gmediarender/
+	$(INSTALL_BIN) ./files/gmrdownload $(1)/usr/share/gmediarender/gmrdownload
+	$(INSTALL_BIN) ./files/gmrdownloadstop $(1)/usr/share/gmediarender/gmrdownloadstop
 endef
 
 $(eval $(call BuildPackage,luci-app-gmediarender))

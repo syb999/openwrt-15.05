@@ -1,0 +1,5 @@
+#!/bin/sh
+
+kill $(ps | grep gmrdownload | grep -v grep | head -n 1 | cut -d 'r' -f 1)
+rm /tmp/xgmrender.tmp.*
+echo "clear" > $gmrlog
