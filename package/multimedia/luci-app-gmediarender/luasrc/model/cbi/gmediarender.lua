@@ -63,7 +63,7 @@ gmrenderdownloadstop:depends("gmrenderextra", "1")
 gmrenderdownloadstop.rmempty = true
 gmrenderdownloadstop.inputstyle = "apply"
 function gmrenderdownloadstop.write(self, section)
-	luci.util.exec("/usr/share/gmediarender/gmrdownloadstop > /dev/null 2>&1")
+	luci.util.exec("/usr/share/gmediarender/gmrdownloadstop >/dev/null 2>&1 &")
 end
 
 

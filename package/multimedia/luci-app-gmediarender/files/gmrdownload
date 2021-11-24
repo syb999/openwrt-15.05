@@ -32,15 +32,33 @@ function gmrenderdownload(){
 		thename="$(cat /tmp/xgmrender.tmp.url | cut -d '/' -f $(expr $(grep -o '/' /tmp/xgmrender.tmp.url | wc -l) + 1) | cut -d '.' -f 1 | sed 's/?/？/g').$urlsuffix"
 	fi
 
+	findurl2="$(expr $(cat $gmrlog | grep -n "CurrentTrackURI: http" | head -n 1 | cut -d ':' -f 1) + 1)"
+	informaudio="$(grep -n $findurl2 $gmrlog)"
+	gettitle0="$(echo ${informaudio#*&lt;dc:title&gt;})"
+	thetitle="$(echo ${gettitle0%%&lt;/dc:title&gt;*} | tr -d "a-zA-Z0-9~!@#$%^&*()_=+-\\\/[]{};\':\",.|-" | sed "s/[ ][ ]*//g")"
+	getartist0="$(echo ${informaudio#*&lt;upnp:artist role=&quot;Performer&quot;&gt;})"
+	theartist="$(echo ${getartist0%%&lt;/upnp:artist&gt;*} | tr -d "a-zA-Z0-9~!@#$%^&*()_=+-\\\/[]{};\':\",.|-" | sed "s/[ ][ ]*//g")"
+	theaudio="${thetitle} ${theartist}"
+
 	saferom="$(df -h | grep tmpfs | sed -e "s/[ ][ ]* / /g" | head -n 1 | cut -d ' ' -f 5 | cut -d '%' -f 1)"
 	if [ $saferom -gt 80 ];then
 		logger -t gmediarender ☆☆☆☆☆☆☆ Not enough diskspace! ☆☆☆☆☆☆☆
 	else
 		wget-ssl -q -c $(uci get network.lan.ipaddr) -O /tmp/xgmrender.tmp.testwget > /dev/null 2>&1
 		if [ -s /tmp/xgmrender.tmp.testwget ];then
-			wget-ssl --timeout=35 -q -c $(cat /tmp/xgmrender.tmp.url) -O $thename
+			wget-ssl --timeout=10 -q -c $(cat /tmp/xgmrender.tmp.url) -O $thename
+			if [ -s $thename ];then		
+				echo "$(date "+%Y-%H-%d %H:%M:%S") ☆☆☆ $thename ☆☆☆ $theaudio" >> $gmrdir/.0@downloadlist.txt
+			else
+				echo "$(date "+%Y-%H-%d %H:%M:%S") ☆☆☆ Download timeout" >> $gmrdir/.0@downloadlist.txt
+			fi
 		else
-			wget --timeout=35 -q -c $(cat /tmp/xgmrender.tmp.url) -O $thename
+			wget --timeout=10 -q -c $(cat /tmp/xgmrender.tmp.url) -O $thename
+			if [ -s $thename ];then		
+				echo "$(date "+%Y-%H-%d %H:%M:%S") ☆☆☆ $thename ☆☆☆ $theaudio" >> $gmrdir/.0@downloadlist.txt
+			else
+				echo "$(date "+%Y-%H-%d %H:%M:%S") ☆☆☆ Download timeout" >> $gmrdir/.0@downloadlist.txt
+			fi
 		fi
 	fi
 
