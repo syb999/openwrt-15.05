@@ -21,7 +21,7 @@ name=s:taboption("basic", Value, "name", translate("Videos Name"))
 name.datatype = "string"
 name.default = "鬼灭之刃"
 name.rmempty = false
-name.description = translate("Videos from dy10000.com or xgys.net")
+name.description = translate("Videos from dy10000.org or xgys.net")
 
 num=s:taboption("basic", Value, "num", translate("Total number of video files"))
 num.datatype = "string"
@@ -184,18 +184,8 @@ bookpath.description = translate("Please enter a valid directory")
 s:tab("autodl1", translate("Videos Download Page"))
 au1 = s:taboption("autodl1", Button, "_autodl1", translate("One-click download"))
 au1.inputstyle = "apply"
-au1.description = translate("Download from https://www.dy10000.com")
+au1.description = translate("Download from https://www.dy10000.org")
 function au1.write(self, section)
-    luci.util.exec("uci get autodl.@autodl[0].url > /tmp/autodl.url")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autodl.@autodl[0].url > /tmp/autodl.url.bk")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autodl.@autodl[0].path > /tmp/autodl.path")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autodl.@autodl[0].name > /tmp/autodl.name")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autodl.@autodl[0].num > /tmp/autodl.num")
-    luci.util.exec("sleep 1")
     luci.util.exec("/usr/autodl/autodl1.sh >/dev/null 2>&1 &")
 end
 
