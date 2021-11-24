@@ -33,8 +33,7 @@ define Package/luci-app-gmediarender/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/gmediarender.conf $(1)/etc/config/gmediarender
 	$(INSTALL_DIR) $(1)/usr/share/gmediarender/
-	$(INSTALL_BIN) ./files/gmrdownload $(1)/usr/share/gmediarender/gmrdownload
-	$(INSTALL_BIN) ./files/gmrdownloadstop $(1)/usr/share/gmediarender/gmrdownloadstop
+	$(INSTALL_BIN) ./files/gmr* $(1)/usr/share/gmediarender
 endef
 
 $(eval $(call BuildPackage,luci-app-gmediarender))

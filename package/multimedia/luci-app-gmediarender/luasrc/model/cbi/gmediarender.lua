@@ -66,5 +66,21 @@ function gmrenderdownloadstop.write(self, section)
 	luci.util.exec("/usr/share/gmediarender/gmrdownloadstop >/dev/null 2>&1 &")
 end
 
+gmrendervqq = s:taboption("gmrender_init", Button, "gmrendervqq", translate("One-click download v.qq.com"))
+gmrendervqq:depends("gmrenderextra", "1")
+gmrendervqq.rmempty = true
+gmrendervqq.inputstyle = "apply"
+function gmrendervqq.write(self, section)
+	luci.util.exec("/usr/share/gmediarender/gmrvqq >/dev/null 2>&1 &")
+end
+
+gmrendervqqstop = s:taboption("gmrender_init", Button, "gmrendervqqstop", translate("One-click STOP v.qq.com"))
+gmrendervqqstop:depends("gmrenderextra", "1")
+gmrendervqqstop.rmempty = true
+gmrendervqqstop.inputstyle = "apply"
+function gmrendervqqstop.write(self, section)
+	luci.util.exec("/usr/share/gmediarender/gmrvqqstop >/dev/null 2>&1 &")
+end
+
 
 return m
