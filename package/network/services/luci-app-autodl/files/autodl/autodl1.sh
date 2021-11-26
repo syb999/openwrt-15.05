@@ -1,15 +1,13 @@
 #!/bin/sh
 
 uci get autodl.@autodl[0].url > /tmp/autodl.url
-autodlgeturl=$(cat /tmp/autodl.url)
-autodlgetpath=$(uci get autodl.@autodl[0].path)
-autodlgetname=$(uci get autodl.@autodl[0].name)
-autodlgetnum=$(uci get autodl.@autodl[0].num)
+autodlgetpath="$(uci get autodl.@autodl[0].path)"
+autodlgetname="$(uci get autodl.@autodl[0].name)"
+autodlgetnum="$(uci get autodl.@autodl[0].num)"
 
+avdnum=1
 avdnum0=$(uci get autodl.@autodl[0].url)
 avdnum1=$(echo $avdnum0 | cut -d '-' -f 3 | cut -d '.' -f 1)
-
-autodlcount=1
 
 if [ ! -d "/autodl" ]; then
 	mkdir /autodl
@@ -24,17 +22,15 @@ else
 fi
 
 cd $autodlgetpath
-
-curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 $autodlgeturl | grep vod_name > /tmp/autodldmdm.0
-avdname0=$(cat /tmp/autodldmdm.0)
-echo ${avdname0#*var\ vod_name\ =\ \'} > /tmp/autodldmdm.0
-avdname1=$(cat /tmp/autodldmdm.0)
-echo ${avdname1%%\',\ vod_url*} > /tmp/autodldmdm.0
-avdname2=$(cat /tmp/autodldmdm.0)
+avdname2=$(uci get autodl.@autodl[0].name)
 
 function autodlvd(){
 	aurl=$(cat /tmp/autodldmdm.1)
 	echo ${aurl#*link_pre\":\"\",\"url\":\"} | sed 's/\\//g' > /tmp/autodldmdm.1
+	if [ $(cat /tmp/autodldmdm.1 | cut -d ' ' -f 1 ) == "<!DOCTYPE" ];then
+		burl=$(cat /tmp/autodldmdm.1)
+		echo ${burl#*html\",\"url\":\"} | sed 's/\\//g' > /tmp/autodldmdm.1
+	fi
 	a2url=$(cat /tmp/autodldmdm.1)
 	echo ${a2url%%\",\"url_next\"*} > /tmp/autodldmdm.1
 	a3url=$(cat /tmp/autodldmdm.1)
@@ -47,6 +43,8 @@ function autodlvd(){
 		strkey=$(hexdump -v -e '16/1 "%02x"' /tmp/autodldmdm.aeskey)
 		sed 1d -i /tmp/autodltmp.index.m3u8
 		autodlm3u8="/tmp/autodltmp.index.m3u8"
+		autodlcount=1
+		aescount=0
 
 		while read LINE
 		do
@@ -66,12 +64,12 @@ function autodlvd(){
 		done < $autodlm3u8
 	fi
 
-	autodlcount=$(echo `expr $autodlcount + 1`)
-	avdnumnew=$(echo `expr $avdnum1 + 1`)
-	echo $autodlgeturl | sed "s/${avdnum1}.html/${avdnumnew}.html/" > /tmp/autodl.url
+	autodlcount="$(expr $autodlcount + 1)"
+	avdnumnew="$(expr $avdnum1 + 1)"
+	sed -i "s/${avdnum1}.html/${avdnumnew}.html/" /tmp/autodl.url
 }
 
-while [ $avdnum1 -le $autodlgetnum ]
+while [ $avdnum -le $autodlgetnum ]
 do
 	autodlgeturl=$(cat /tmp/autodl.url)
 	curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 $autodlgeturl | grep m3u8 > /tmp/autodldmdm.1
@@ -87,13 +85,13 @@ do
 		autodlvd
 		mv -f $autodlgetpath/hls.ts $autodlgetpath/$avdname2第$avdnum1集.ts
 	fi
-	avdnum1=$(echo `expr $avdnum1 + 1`)
+	avdnum1=$(expr $avdnum1 + 1)
+	avdnum=$(expr $avdnum + 1)
 done
 
-if [ ! -d "/$autodlgetpath/$autodlgetname" ]; then
-mkdir $autodlgetname
+if [ ! -d "$autodlgetpath/$autodlgetname" ]; then
+	mkdir -p $autodlgetpath/$autodlgetname
 fi
 
-mv -f *.ts $autodlgetname
-
-rm /tmp/autodldmdm.* /tmp/tmp.autodl.testwget /tmp/autodl.url /tmp/autodltmp.index.m3u8
+mv -f *.ts $autodlgetpath/$autodlgetname
+rm /tmp/autodldmdm.* /tmp/autodl.url /tmp/autodltmp.index.m3u8
