@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 
 PKG_NAME:=luci-app-gmediarender
-PKG_VERSION:=2021-11-24
+PKG_VERSION:=2021-11-26
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -12,7 +12,7 @@ define Package/luci-app-gmediarender
 	SUBMENU:=3. Applications
 	TITLE:=LuCI Support for gmediarender
 	PKGARCH:=all
-	DEPENDS:=+gmediarender
+	DEPENDS:=+gmediarender +file
 endef
 
 define Package/luci-app-gmediarender/description

@@ -1,5 +1,6 @@
 #!/bin/sh
 
-kill $(ps | grep gmrvqq | grep -v grep | head -n 1 | cut -d 'r' -f 1)
+gmrvqqprocess="$(ps | grep gmrvqq | grep -v grep | head -n 1 | cut -d 'r' -f 1)"
+kill $gmrvqqprocess
 rm /tmp/xgmrender.tmp.*
 echo "clear" > $gmrlog

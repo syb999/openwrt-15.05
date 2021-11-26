@@ -26,39 +26,54 @@ function gmrenderdownload(){
 	them3u8=$(cat /tmp/xgmrender.tmp.url | cut -d '/' -f $(expr $(grep -o '/' /tmp/xgmrender.tmp.url | wc -l) + 1) | cut -d '?' -f 1)
 	thesuffix=$(cat /tmp/xgmrender.tmp.url | cut -d '/' -f $(expr $(grep -o '/' /tmp/xgmrender.tmp.url | wc -l) + 1))
 	thename=$(cat $gmrlog | grep "<dc:title>" | head -n 1 | tr -d '<:>/dctile' | sed 's/^[ ][ ]*//g;s/ /-/')
+	thedirname=$(cat $gmrlog | grep "<dc:title>" | head -n 1 | tr -d '<:>/dctile' | sed 's/^[ ][ ]*//g' | cut -d ' ' -f 1)
 
 	saferom="$(df -h | grep tmpfs | sed -e "s/[ ][ ]* / /g" | head -n 1 | cut -d ' ' -f 5 | cut -d '%' -f 1)"
 	if [ $saferom -gt 80 ];then
 		logger -t gmediarender ☆☆☆☆☆☆☆ Not enough diskspace! ☆☆☆☆☆☆☆
 	else
-		wget-ssl -q -c $(uci get network.lan.ipaddr) -O /tmp/xgmrender.tmp.testwget > /dev/null 2>&1
-		if [ -s /tmp/xgmrender.tmp.testwget ];then
-			wget-ssl --timeout=10 -q -c $geturl -O $them3u8
-			cat $them3u8 | grep .ts > /tmp/xgmrender.tmp.m3u8
-			tmpm3u8=$(cat /tmp/xgmrender.tmp.m3u8)
-			for i in $tmpm3u8
-			do
-				theprefix=$(cat /tmp/xgmrender.tmp.url | sed "s/${thesuffix}//")
-				tsfragment="${theprefix}${i}"
-				wget-ssl --timeout=3 -q $tsfragment -O /tmp/xgmrender.tmp.fragment
-				cat /tmp/xgmrender.tmp.fragment >> $gmrdir/$thename.ts.downloading
-			done
+		isbin=$(file /tmp/xgmrender.tmp.m3u8)
+		if [ $isbin == "/tmp/xgmrender.tmp.m3u8: data" ];then
+			echo skip
 		else
-			wget --timeout=10 -q -c $geturl -O $them3u8
-			cat $them3u8 | grep .ts > /tmp/xgmrender.tmp.m3u8
-			tmpm3u8=$(cat /tmp/xgmrender.tmp.m3u8)
-			for i in $tmpm3u8
-			do
-				theprefix=$(cat /tmp/xgmrender.tmp.url | sed "s/${thesuffix}//")
-				tsfragment="${theprefix}${i}"
-				wget --timeout=3 -q $tsfragment -O /tmp/xgmrender.tmp.fragment
-				cat /tmp/xgmrender.tmp.fragment >> $gmrdir/$thename.ts.downloading
-			done
+			wget-ssl -q -c $(uci get network.lan.ipaddr) -O /tmp/xgmrender.tmp.testwget > /dev/null 2>&1
+			if [ -s /tmp/xgmrender.tmp.testwget ];then
+				wget-ssl --timeout=10 -q -c $geturl -O $them3u8
+				cat $them3u8 | grep .ts > /tmp/xgmrender.tmp.m3u8
+				tmpm3u8=$(cat /tmp/xgmrender.tmp.m3u8)
+				for i in $tmpm3u8
+				do
+					theprefix=$(cat /tmp/xgmrender.tmp.url | sed "s/${thesuffix}//")
+					tsfragment="${theprefix}${i}"
+					wget-ssl --timeout=3 -q $tsfragment -O /tmp/xgmrender.tmp.fragment
+					cat /tmp/xgmrender.tmp.fragment >> $gmrdir/$thename.ts.downloading
+				done
+			else
+				wget --timeout=10 -q -c $geturl -O $them3u8
+				cat $them3u8 | grep .ts > /tmp/xgmrender.tmp.m3u8
+				tmpm3u8=$(cat /tmp/xgmrender.tmp.m3u8)
+				for i in $tmpm3u8
+				do
+					theprefix=$(cat /tmp/xgmrender.tmp.url | sed "s/${thesuffix}//")
+					tsfragment="${theprefix}${i}"
+					wget --timeout=3 -q $tsfragment -O /tmp/xgmrender.tmp.fragment
+					cat /tmp/xgmrender.tmp.fragment >> $gmrdir/$thename.ts.downloading
+				done
+			fi
 		fi
 	fi
 
-	mv $gmrdir/$thename.ts.downloading $gmrdir/$thename.ts
-	rm /tmp/xgmrender.tmp.*
+	if [ ! -d "$gmrdir/$thedirname" ]; then
+		mkdir -p $gmrdir/$thedirname
+	fi
+
+	if [ -s $thename.ts.downloading ];then
+		mv $gmrdir/$thename.ts.downloading $gmrdir/$thedirname/$thename.ts
+	else
+		mv $gmrdir/$them3u8 $gmrdir/$thedirname/$thename.mp4
+		rm $gmrdir/$thename.ts.downloading
+	fi
+	rm /tmp/xgmrender.tmp.* $gmrdir/$them3u8 $gmrdir/$thename.ts
 	echo "clear" > $gmrlog
 }
 
