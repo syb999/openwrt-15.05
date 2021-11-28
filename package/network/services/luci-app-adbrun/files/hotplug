@@ -1,5 +1,5 @@
 #!/bin/sh
-
+sleep 1
 adb devices | grep -v "List of devices attached" | grep -v grep | sed -e 's/\t//g;s/device//g;s/ //g;/^$/d' > /tmp/adbtmp.devices.list
 adblist="/tmp/adbtmp.devices.list"
 while read LINE
