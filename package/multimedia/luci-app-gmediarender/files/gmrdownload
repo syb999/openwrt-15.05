@@ -62,6 +62,10 @@ function gmrenderdownload(){
 		fi
 	fi
 
+	if [ $gmrdir != "/tmp" ];then
+		rm /tmp/$thename
+	fi
+
 	rm /tmp/xgmrender.tmp.*
 	echo "clear" > $gmrlog
 }
