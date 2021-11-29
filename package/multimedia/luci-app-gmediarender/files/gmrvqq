@@ -25,7 +25,7 @@ function gmrenderdownload(){
 	geturl=$(cat /tmp/xgmrender.tmp.url)
 	them3u8=$(cat /tmp/xgmrender.tmp.url | cut -d '/' -f $(expr $(grep -o '/' /tmp/xgmrender.tmp.url | wc -l) + 1) | cut -d '?' -f 1)
 	thesuffix=$(cat /tmp/xgmrender.tmp.url | cut -d '/' -f $(expr $(grep -o '/' /tmp/xgmrender.tmp.url | wc -l) + 1))
-	thename=$(cat $gmrlog | grep "<dc:title>" | head -n 1 | tr -d '<:>/dctile' | sed 's/^[ ][ ]*//g;s/ /-/')
+	thename=$(cat $gmrlog | grep "<dc:title>" | head -n 1 | tr -d '<:>/dctile' | sed 's/^[ ][ ]*//g;s/ /-/g')
 	thedirname=$(cat $gmrlog | grep "<dc:title>" | head -n 1 | tr -d '<:>/dctile' | sed 's/^[ ][ ]*//g' | cut -d ' ' -f 1)
 
 	saferom="$(df -h | grep tmpfs | sed -e "s/[ ][ ]* / /g" | head -n 1 | cut -d ' ' -f 5 | cut -d '%' -f 1)"
