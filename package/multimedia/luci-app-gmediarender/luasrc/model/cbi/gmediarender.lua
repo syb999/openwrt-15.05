@@ -82,5 +82,21 @@ function gmrendervqqstop.write(self, section)
 	luci.util.exec("/usr/share/gmediarender/gmrvqqstop >/dev/null 2>&1 &")
 end
 
+gmrenderxigua = s:taboption("gmrender_init", Button, "gmrenderxigua", translate("One-click download ixigua.com"))
+gmrenderxigua:depends("gmrenderextra", "1")
+gmrenderxigua.rmempty = true
+gmrenderxigua.inputstyle = "apply"
+function gmrenderxigua.write(self, section)
+	luci.util.exec("/usr/share/gmediarender/gmrxigua >/dev/null 2>&1 &")
+end
+
+gmrenderxiguastop = s:taboption("gmrender_init", Button, "gmrenderxiguastop", translate("One-click STOP ixigua.com"))
+gmrenderxiguastop:depends("gmrenderextra", "1")
+gmrenderxiguastop.rmempty = true
+gmrenderxiguastop.inputstyle = "apply"
+function gmrenderxiguastop.write(self, section)
+	luci.util.exec("/usr/share/gmediarender/gmrxiguastop >/dev/null 2>&1 &")
+end
+
 
 return m

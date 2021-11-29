@@ -40,3 +40,8 @@ msgstr "投屏后自动下载该节目(腾讯视频)"
 msgid "One-click STOP v.qq.com"
 msgstr "停止腾讯视频节目下载"
 
+msgid "One-click download ixigua.com"
+msgstr "投屏后自动下载该节目(西瓜视频)"
+
+msgid "One-click STOP ixigua.com"
+msgstr "停止西瓜视频节目下载"
