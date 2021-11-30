@@ -1,0 +1,127 @@
+mt76: move sar utilities to mt76-core module
+Move mt76_get_sar_power and mt76_init_sar_power in the common code.
+This is a preliminary patch to add sar support to mt76x02 drivers.
+
+Signed-off-by: Lorenzo Bianconi <lorenzo@kernel.org>
+Signed-off-by: Felix Fietkau <nbd@nbd.name>
+
+
+--- a/mac80211.c
++++ b/mac80211.c
+@@ -1196,6 +1196,59 @@
+ }
+ EXPORT_SYMBOL_GPL(mt76_get_txpower);
+ 
++int mt76_init_sar_power(struct ieee80211_hw *hw,
++			const struct cfg80211_sar_specs *sar)
++{
++	struct mt76_phy *phy = hw->priv;
++	const struct cfg80211_sar_capa *capa = hw->wiphy->sar_capa;
++	int i;
++
++	if (sar->type != NL80211_SAR_TYPE_POWER || !sar->num_sub_specs)
++		return -EINVAL;
++
++	for (i = 0; i < sar->num_sub_specs; i++) {
++		u32 index = sar->sub_specs[i].freq_range_index;
++		/* SAR specifies power limitaton in 0.25dbm */
++		s32 power = sar->sub_specs[i].power >> 1;
++
++		if (power > 127 || power < -127)
++			power = 127;
++
++		phy->frp[index].range = &capa->freq_ranges[index];
++		phy->frp[index].power = power;
++	}
++
++	return 0;
++}
++EXPORT_SYMBOL_GPL(mt76_init_sar_power);
++
++int mt76_get_sar_power(struct mt76_phy *phy,
++		       struct ieee80211_channel *chan,
++		       int power)
++{
++	const struct cfg80211_sar_capa *capa = phy->hw->wiphy->sar_capa;
++	int freq, i;
++
++	if (!capa || !phy->frp)
++		return power;
++
++	if (power > 127 || power < -127)
++		power = 127;
++
++	freq = ieee80211_channel_to_frequency(chan->hw_value, chan->band);
++	for (i = 0 ; i < capa->num_freq_ranges; i++) {
++		if (phy->frp[i].range &&
++		    freq >= phy->frp[i].range->start_freq &&
++		    freq < phy->frp[i].range->end_freq) {
++			power = min_t(int, phy->frp[i].power, power);
++			break;
++		}
++	}
++
++	return power;
++}
++EXPORT_SYMBOL_GPL(mt76_get_sar_power);
++
+ static void
+ __mt76_csa_finish(void *priv, u8 *mac, struct ieee80211_vif *vif)
+ {
+--- a/mt76.h
++++ b/mt76.h
+@@ -1128,6 +1128,11 @@
+ 
+ int mt76_get_txpower(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+ 		     int *dbm);
++int mt76_init_sar_power(struct ieee80211_hw *hw,
++			const struct cfg80211_sar_specs *sar);
++int mt76_get_sar_power(struct mt76_phy *phy,
++		       struct ieee80211_channel *chan,
++		       int power);
+ 
+ void mt76_csa_check(struct mt76_dev *dev);
+ void mt76_csa_finish(struct mt76_dev *dev);
+--- a/mt76_connac_mcu.c
++++ b/mt76_connac_mcu.c
+@@ -1758,30 +1758,6 @@
+ 	}
+ }
+ 
+-static s8 mt76_connac_get_sar_power(struct mt76_phy *phy,
+-				    struct ieee80211_channel *chan,
+-				    s8 target_power)
+-{
+-	const struct cfg80211_sar_capa *capa = phy->hw->wiphy->sar_capa;
+-	struct mt76_freq_range_power *frp = phy->frp;
+-	int freq, i;
+-
+-	if (!capa || !frp)
+-		return target_power;
+-
+-	freq = ieee80211_channel_to_frequency(chan->hw_value, chan->band);
+-	for (i = 0 ; i < capa->num_freq_ranges; i++) {
+-		if (frp[i].range &&
+-		    freq >= frp[i].range->start_freq &&
+-		    freq < frp[i].range->end_freq) {
+-			target_power = min_t(s8, frp[i].power, target_power);
+-			break;
+-		}
+-	}
+-
+-	return target_power;
+-}
+-
+ static s8 mt76_connac_get_ch_power(struct mt76_phy *phy,
+ 				   struct ieee80211_channel *chan,
+ 				   s8 target_power)
+@@ -1890,8 +1866,7 @@
+ 
+ 			reg_power = mt76_connac_get_ch_power(phy, &chan,
+ 							     tx_power);
+-			sar_power = mt76_connac_get_sar_power(phy, &chan,
+-							      reg_power);
++			sar_power = mt76_get_sar_power(phy, &chan, reg_power);
+ 
+ 			mt76_get_rate_power_limits(phy, &chan, &limits,
+ 						   sar_power);

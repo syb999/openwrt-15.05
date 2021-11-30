@@ -1,0 +1,22 @@
+mt76: mt7603: improve reliability of tx powersave filtering
+Leave more time to abort transmissions (which could happen at low CCK rates)
+Only warn if the last filter command is stuck
+
+Signed-off-by: Felix Fietkau <nbd@nbd.name>
+
+--- a/mt7603/mac.c
++++ b/mt7603/mac.c
+@@ -202,10 +202,11 @@
+ 			FIELD_PREP(MT_DMA_FQCR0_DEST_PORT_ID, port) |
+ 			FIELD_PREP(MT_DMA_FQCR0_DEST_QUEUE_ID, queue));
+ 
+-		WARN_ON_ONCE(!mt76_poll(dev, MT_DMA_FQCR0, MT_DMA_FQCR0_BUSY,
+-					0, 5000));
++		mt76_poll(dev, MT_DMA_FQCR0, MT_DMA_FQCR0_BUSY, 0, 15000);
+ 	}
+ 
++	WARN_ON_ONCE(mt76_rr(dev, MT_DMA_FQCR0) & MT_DMA_FQCR0_BUSY);
++
+ 	mt76_wr(dev, MT_TX_ABORT, 0);
+ 
+ 	mt7603_wtbl_set_skip_tx(dev, idx, false);

@@ -1,0 +1,25 @@
+mt76: clear sta powersave flag after notifying driver
+If the driver has configured the hardware to drop packets for a sta that was
+in powersave mode, then clearing the flag too early opens up a small race
+window during which packets could be dropped on wakeup
+
+Signed-off-by: Felix Fietkau <nbd@nbd.name>
+
+
+--- a/mac80211.c
++++ b/mac80211.c
+@@ -1020,10 +1020,12 @@
+ 
+ 	if (ps)
+ 		set_bit(MT_WCID_FLAG_PS, &wcid->flags);
+-	else
+-		clear_bit(MT_WCID_FLAG_PS, &wcid->flags);
+ 
+ 	dev->drv->sta_ps(dev, sta, ps);
++
++	if (!ps)
++		clear_bit(MT_WCID_FLAG_PS, &wcid->flags);
++
+ 	ieee80211_sta_ps_transition(sta, ps);
+ }
+ 
