@@ -45,3 +45,19 @@ msgstr "投屏后自动下载该节目(西瓜视频)"
 
 msgid "One-click STOP ixigua.com"
 msgstr "停止西瓜视频节目下载"
+
+msgid "BiliBili menu"
+msgstr "BiliBili菜单"
+
+msgid "BiliBili directory"
+msgstr "BiliBili视频目录"
+
+msgid "One-click flv to mp4"
+msgstr "一键转换成MP4"
+
+msgid "One-click download bilibili.com"
+msgstr "投屏后自动下载该节目(BiliBili)"
+
+msgid "One-click STOP bilibili.com"
+msgstr "停止BiliBili视频节目下载"
+

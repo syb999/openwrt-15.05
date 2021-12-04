@@ -1,0 +1,57 @@
+#!/bin/sh
+
+gmrdir="$(uci get gmediarender.@gmediarender[0].gmrenderdir)"
+gmrlog="/tmp/$(uci get gmediarender.@gmediarender[0].gmrenderlog)"
+
+if [ ! -d "$gmrdir" ];then
+	mkdir -p $gmrdir
+fi
+
+function gmrenderdownload(){
+	gmrbilibilidir="$(uci get gmediarender.@gmediarender[0].gmrenderbilibilidir)"
+	cd $gmrdir
+	if [ ! -s $gmrlog ];then
+		/etc/init.d/gmediarender restart
+	fi
+	cat $gmrlog | grep -n "CurrentTrackURI: http" | head -n 1 > /tmp/xgmrender.tmp.find
+	findurl=$(cat /tmp/xgmrender.tmp.find)
+	while [ ! -n "$findurl" ]
+	do
+		sleep 3
+		cat $gmrlog | grep -n "CurrentTrackURI: http" | head -n 1 > /tmp/xgmrender.tmp.find
+		findurl=$(cat /tmp/xgmrender.tmp.find)
+	done
+
+	theurl=$(echo ${findurl#*CurrentTrackURI: } > /tmp/xgmrender.tmp.url)
+	geturl=$(cat /tmp/xgmrender.tmp.url)
+	thevfile=$(cat /tmp/xgmrender.tmp.url | cut -d '/' -f $(expr $(grep -o '/' /tmp/xgmrender.tmp.url | wc -l) + 1) | cut -d '?' -f 1)
+	thesuffix=$(cat /tmp/xgmrender.tmp.url | cut -d '/' -f $(expr $(grep -o '/' /tmp/xgmrender.tmp.url | wc -l) + 1) | cut -d '?' -f 1 | cut -d '.' -f 2)
+	findurl2="$(cat $gmrlog | grep "<dc:title>" | head -n 1)"
+	getname0="$(echo ${findurl2#*<dc:title>})"
+	thename="$(echo ${getname0%%</dc:title>*} | sed 's/[ ][ ]*//g' )"
+
+	saferom="$(df -h | grep tmpfs | sed -e "s/[ ][ ]* / /g" | head -n 1 | cut -d ' ' -f 5 | cut -d '%' -f 1)"
+	if [ $saferom -gt 80 ];then
+		logger -t gmediarender ☆☆☆☆☆☆☆ Not enough diskspace! ☆☆☆☆☆☆☆
+	else
+		wget-ssl -q -c $(uci get network.lan.ipaddr) -O /tmp/xgmrender.tmp.testwget > /dev/null 2>&1
+		if [ -s /tmp/xgmrender.tmp.testwget ];then
+			wget-ssl --timeout=3 -q $geturl -O $gmrdir/$thename.downloading
+		else
+			wget --timeout=3 -q $geturl -O $gmrdir/$thename.downloading
+		fi
+	fi
+
+	if [ ! -d "$gmrdir/$gmrbilibilidir" ]; then
+		mkdir -p $gmrdir/$gmrbilibilidir
+	fi
+
+	mv $gmrdir/$thename.downloading $gmrdir/$gmrbilibilidir/$thename.$thesuffix
+	rm /tmp/xgmrender.tmp.*
+	echo "clear" > $gmrlog
+}
+
+while true
+do
+	gmrenderdownload
+done

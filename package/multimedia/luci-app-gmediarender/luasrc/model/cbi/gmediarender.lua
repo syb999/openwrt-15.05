@@ -99,4 +99,36 @@ function gmrenderxiguastop.write(self, section)
 end
 
 
+s:tab("gmrender_bilibili", translate("BiliBili menu"))
+gmrenderbilibilidir = s:taboption("gmrender_bilibili", Value, "gmrenderbilibilidir", translate("BiliBili directory"))
+gmrenderbilibilidir:depends("gmrenderextra", "1")
+gmrenderbilibilidir.datatype = "string"
+gmrenderbilibilidir.default = "bilibili"
+gmrenderbilibilidir.placeholder = "bilibili"
+gmrenderbilibilidir.rmempty = false
+
+gmrenderbilibilimp4 = s:taboption("gmrender_bilibili", Button, "gmrenderbilibilimp4", translate("One-click flv to mp4"))
+gmrenderbilibilimp4.inputstyle = "apply"
+gmrenderbilibilimp4.description = translate("ffmpeg needs to be installed")
+function gmrenderbilibilimp4.write(self, section)
+    luci.util.exec("/usr/share/gmediarender/flvtomp4 >/dev/null 2>&1 &")
+end
+
+gmrenderbilibili = s:taboption("gmrender_bilibili", Button, "gmrenderbilibili", translate("One-click download bilibili.com"))
+gmrenderbilibili:depends("gmrenderextra", "1")
+gmrenderbilibili.rmempty = true
+gmrenderbilibili.inputstyle = "apply"
+function gmrenderbilibili.write(self, section)
+	luci.util.exec("/usr/share/gmediarender/gmrbilibili >/dev/null 2>&1 &")
+end
+
+gmrenderbilibilistop = s:taboption("gmrender_bilibili", Button, "gmrenderbilibilistop", translate("One-click STOP bilibili.com"))
+gmrenderbilibilistop:depends("gmrenderextra", "1")
+gmrenderbilibilistop.rmempty = true
+gmrenderbilibilistop.inputstyle = "apply"
+function gmrenderbilibilistop.write(self, section)
+	luci.util.exec("/usr/share/gmediarender/gmrbilibilistop >/dev/null 2>&1 &")
+end
+
+
 return m

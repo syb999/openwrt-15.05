@@ -1,0 +1,29 @@
+#!/bin/sh
+
+gmrdir="$(uci get gmediarender.@gmediarender[0].gmrenderdir)"
+gmrbilibilidir="$(uci get gmediarender.@gmediarender[0].gmrenderbilibilidir)"
+
+testffmpeg=$(opkg list-installed | grep ffmpeg)
+
+if [ ! "$testffmpeg" ];then
+	echo "No ffmpeg. Stop script."
+else
+	cd $gmrdir/$gmrbilibilidir
+
+	temp_v="0"
+	for fileName in `find . -name "*.flv" | sort`
+	do 
+		tempName=${fileName#*./}
+		mp4ffmpeg=$(echo $tempName)
+		ffmpeg -v quiet -i $mp4ffmpeg -vcodec copy $mp4ffmpeg.mp4
+		temp_v=$tempName
+	done
+
+	for tmfile in `ls | grep .mp4`
+	do
+		newfile=$(echo $tmfile | sed 's/.flv//g')
+		mv $tmfile $newfile
+	done
+
+	rm *.flv
+fi
