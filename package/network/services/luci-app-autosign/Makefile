@@ -1,8 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-autosign
-PKG_VERSION:=0.5
-PKG_RELEASE:=20210716
+PKG_VERSION:=20211205
 
 include $(INCLUDE_DIR)/package.mk
 

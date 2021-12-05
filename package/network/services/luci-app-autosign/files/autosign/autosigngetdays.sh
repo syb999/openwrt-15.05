@@ -4,9 +4,8 @@ autosigngettianapikeyprefix="key="
 autosigngettianapikey=$(uci get autosign.@autosign[0].tianapikey)
 autosigngettiandateprefix="&type=1&date="
 autosigngettiandate=$(uci get autosign.@autosign[0].tianapidate)
-autosigngettianmode="&mode=1"
 
-tmpgettianapidaytmp="${autosigngettianapikeyprefix}${autosigngettianapikey}${autosigngettiandateprefix}${autosigngettiandate}${autosigngettianmode}"
+tmpgettianapidaytmp="${autosigngettianapikeyprefix}${autosigngettianapikey}${autosigngettiandateprefix}${autosigngettiandate}"
 
 curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -d "$tmpgettianapidaytmp" http://api.tianapi.com/txapi/jiejiari/index > /tmp/autosign.daytmp
 
