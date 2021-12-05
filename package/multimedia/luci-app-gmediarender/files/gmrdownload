@@ -48,9 +48,9 @@ function gmrenderdownload(){
 		if [ -s /tmp/xgmrender.tmp.testwget ];then
 			wget-ssl --timeout=3 -q $(cat /tmp/xgmrender.tmp.url) -O $thename
 			if [ -s $thename ];then		
-				echo "$(date "+%Y-%H-%d %H:%M:%S") ☆☆☆ $thename ☆☆☆ $theaudio" >> $gmrdir/.0@downloadlist.txt
+				echo "$(date "+%Y-%m-%d %H:%M:%S") ☆☆☆ $thename ☆☆☆ $theaudio" >> $gmrdir/.0@downloadlist.txt
 			else
-				echo "$(date "+%Y-%H-%d %H:%M:%S") ☆☆☆ Download timeout" >> $gmrdir/.0@downloadlist.txt
+				echo "$(date "+%Y-%m-%d %H:%M:%S") ☆☆☆ Download timeout" >> $gmrdir/.0@downloadlist.txt
 			fi
 		else
 			wget --timeout=3 -q $(cat /tmp/xgmrender.tmp.url) -O $thename
