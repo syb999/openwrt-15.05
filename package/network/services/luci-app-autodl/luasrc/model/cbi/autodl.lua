@@ -266,21 +266,21 @@ au3 = s:taboption("audioxmly", Button, "_audioxmly", translate("One-click downlo
 au3.inputstyle = "apply"
 au3.description = translate("Audios download")
 function au3.write(self, section)
-    luci.util.exec("nohup /usr/autodl/autodlxmly.sh >/dev/null 2>&1 &")
+    luci.util.exec("/usr/autodl/autodlxmly.sh >/dev/null 2>&1 &")
 end
 
 au3v = s:taboption("audioxmly", Button, "_audioau3v", translate("One-click download freeVIP"))
 au3v.inputstyle = "apply"
 au3v.description = translate("node needs to be installed")
 function au3v.write(self, section)
-    luci.util.exec("nohup /usr/autodl/autodlxmlyVIP.sh >/dev/null 2>&1 &")
+    luci.util.exec("/usr/autodl/autodlxmlyVIP.sh >/dev/null 2>&1 &")
 end
 
 au3t = s:taboption("audioxmly", Button, "_autodl3t", translate("One-click m4a to mp3"))
 au3t.inputstyle = "apply"
 au3t.description = translate("ffmpeg needs to be installed")
 function au3t.write(self, section)
-    luci.util.exec("nohup /usr/autodl/m4atomp3.sh >/dev/null 2>&1 &")
+    luci.util.exec("/usr/autodl/m4atomp3.sh >/dev/null 2>&1 &")
 end
 
 au3isy = s:taboption("audioxmly", Button, "_audioisy", translate("www.ishuyin.com One-click download"))
@@ -288,7 +288,7 @@ au3isy:depends("wanna_get_ishuyin_audios", "1")
 au3isy.inputstyle = "apply"
 au3isy.description = translate("Audios download from https://www.ishuyin.com")
 function au3isy.write(self, section)
-    luci.util.exec("nohup /usr/autodl/autodlisy.sh >/dev/null 2>&1 &")
+    luci.util.exec("/usr/autodl/autodlisy.sh >/dev/null 2>&1 &")
 end
 
 s:tab("autodldocin", translate("Download from https://www.docin.com"))

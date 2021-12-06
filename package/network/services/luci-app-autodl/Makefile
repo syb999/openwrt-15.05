@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-autodl
-PKG_VERSION:=20211126
+PKG_VERSION:=20211206
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -11,7 +11,7 @@ define Package/luci-app-autodl
 	SUBMENU:=3. Applications
 	TITLE:=LuCI Support for auto download video & audio
 	PKGARCH:=all
-	DEPENDS:=+curl +wget +coreutils +coreutils-nohup
+	DEPENDS:=+curl +wget
 endef
 
 define Build/Prepare
