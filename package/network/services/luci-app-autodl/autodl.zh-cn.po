@@ -265,3 +265,5 @@ msgstr "播放"
 msgid "STOP"
 msgstr "停止"
 
+msgid "Background Music of Event"
+msgstr "活动背景音乐"

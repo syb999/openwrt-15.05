@@ -458,5 +458,45 @@ function webaudiovdown.write(self, section)
     luci.util.exec("/usr/autodl/volumedown.sh >/dev/null 2>&1 &")
 end
 
+s:tab("eventradiotab", translate("Background Music of Event"))
+eventname1=s:taboption("eventradiotab", Value, "eventname1", translate("FileName1"))
+eventname1.datatype = "string"
+eventname1.default = "/tmp/1.mp3"
+eventname1.rmempty = false
+
+eventaudio1 = s:taboption("eventradiotab", Button, "eventaudio1", translate("Play FileName1"))
+eventaudio1.inputstyle = "apply"
+function eventaudio1.write(self, section)
+    luci.util.exec("mpg123 \"$(uci get autodl.@autodl[0].eventname1)\" >/dev/null 2>&1 &")
+end
+
+eventname2=s:taboption("eventradiotab", Value, "eventname2", translate("FileName2"))
+eventname2.datatype = "string"
+eventname2.default = "/tmp/2.mp3"
+eventname2.rmempty = false
+
+eventaudio2 = s:taboption("eventradiotab", Button, "eventaudio2", translate("Play FileName2"))
+eventaudio2.inputstyle = "apply"
+function eventaudio2.write(self, section)
+    luci.util.exec("mpg123 \"$(uci get autodl.@autodl[0].eventname2)\" >/dev/null 2>&1 &")
+end
+
+eventname3=s:taboption("eventradiotab", Value, "eventname3", translate("FileName3"))
+eventname3.datatype = "string"
+eventname3.default = "/tmp/3.mp3"
+eventname3.rmempty = false
+
+eventaudio3 = s:taboption("eventradiotab", Button, "eventaudio3", translate("Play FileName3"))
+eventaudio3.inputstyle = "apply"
+function eventaudio3.write(self, section)
+    luci.util.exec("mpg123 \"$(uci get autodl.@autodl[0].eventname3)\" >/dev/null 2>&1 &")
+end
+
+eventaudiostop = s:taboption("eventradiotab", Button, "eventaudiostop", translate("STOP"))
+eventaudiostop.inputstyle = "apply"
+function eventaudiostop.write(self, section)
+    luci.util.exec("/usr/autodl/stopmp3.sh >/dev/null 2>&1 &")
+end
+
 
 return m
