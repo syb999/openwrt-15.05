@@ -660,6 +660,22 @@ endef
 $(eval $(call KernelPackage,arptables))
 
 
+define KernelPackage/br-netfilter
+  SUBMENU:=$(NF_MENU)
+  TITLE:=Bridge netfilter support modules
+  DEPENDS:=+kmod-ipt-core +kmod-bridge
+  FILES:=$(LINUX_DIR)/net/bridge/br_netfilter.ko
+  KCONFIG:=CONFIG_BRIDGE_NETFILTER
+  AUTOLOAD:=$(call AutoProbe,br_netfilter)
+endef
+
+define KernelPackage/br-netfilter/description
+ Kernel modules for br-netfilter
+endef
+
+$(eval $(call KernelPackage,br-netfilter))
+
+
 define KernelPackage/ebtables
   SUBMENU:=$(NF_MENU)
   TITLE:=Bridge firewalling modules
