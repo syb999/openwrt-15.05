@@ -17,7 +17,7 @@ PKG_MD5SUM:=3da1c992ce9fcc67597d83036f591712
 PKG_BUILD_DIR:=$(BUILD_DIR)/python3-pillow-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
-include $(TOPDIR)/feeds/packages/lang/python3/python3-package.mk
+include $(TOPDIR)/feeds/packages/lang/python/python3-package.mk
 
 PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 

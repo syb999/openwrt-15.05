@@ -17,7 +17,7 @@ PKG_MD5SUM:=d37f1d35b5ec99d21dd0e24af90b9109
 PKG_BUILD_DIR:=$(BUILD_DIR)/python3-pytesseract-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
-include $(TOPDIR)/feeds/packages/lang/python3/python3-package.mk
+include $(TOPDIR)/feeds/packages/lang/python/python3-package.mk
 
 PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
