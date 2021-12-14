@@ -36,9 +36,9 @@ function gmrenderdownload(){
 	else
 		wget-ssl -q -c $(uci get network.lan.ipaddr) -O /tmp/xgmrender.tmp.testwget > /dev/null 2>&1
 		if [ -s /tmp/xgmrender.tmp.testwget ];then
-			wget-ssl --timeout=3 -q -c $geturl -O $gmrdir/$thedirname/$thename.mp4.fragment
+			wget-ssl --timeout=3 -q $geturl -O $gmrdir/$thedirname/$thename.mp4.fragment
 		else
-			wget-ssl --timeout=3 -q -c $geturl -O $gmrdir/$thedirname/$thename.mp4.fragment
+			wget-ssl --timeout=3 -q $geturl -O $gmrdir/$thedirname/$thename.mp4.fragment
 		fi
 	fi
 
