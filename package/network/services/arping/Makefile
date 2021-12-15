@@ -22,7 +22,7 @@ define Package/arping
   SECTION:=net
   CATEGORY:=Network
   TITLE:=arping By Thomas Habets
-  DEPENDS+= +libnet-1.2.x +libpcap +librt
+  DEPENDS+= +libnet-1.2.x +libpcap +librt +libcap
 endef
 
 define Package/arping/description
