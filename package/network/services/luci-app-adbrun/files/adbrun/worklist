@@ -27,7 +27,6 @@ function botting() {
 				for i in $(seq 1 ${adbswitchtimes}) ;do
 					look30sec
 				done
-				sleep 2
 				adb -s ${adbclient}:5555 shell input keyevent 4
 				sleep 6
 				ltimes=$(echo `expr $ltimes + 1`)
@@ -45,7 +44,6 @@ function botting() {
 				for i in $(seq 1 ${adbswitchtimes}) ;do
 					look30sec
 				done
-				sleep 2
 				adb -s ${adbclient}:5555 shell input keyevent 4
 				sleep 6
 				ltimes=$(echo `expr $ltimes + 1`)

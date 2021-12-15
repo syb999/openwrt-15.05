@@ -2,6 +2,8 @@
 
 dosedbasex=
 dosedbasey=
+dosedbasecx=
+dosedbasecy=
 
 sectionname=$(echo $0 | cut -d '/' -f 3 | cut -d '_' -f 1 | sed 's/^ADBRUN//')
 adbclient=$(uci get adbrun.$sectionname.adbiplist)
@@ -18,6 +20,7 @@ do
 	rx=$(echo `expr $basex + $rtime`)
 	ry=$(echo `expr $basey + $rtime`)
 	adb -s ${adbclient}:5555 shell input swipe ${rx} ${ry} $(echo `expr ${rx} + 10`) $(echo `expr ${ry} - 390`)
-    sleep $(echo `expr $rtime + 12`)
+	adb -s ${adbclient}:5555 shell input tap $basecx $basecy
+	sleep $(echo `expr $rtime + 12`)
 done
 
