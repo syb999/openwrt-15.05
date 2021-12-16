@@ -1,0 +1,10 @@
+#!/bin/sh
+. /usr/share/gmediarender/gmrloadfunc
+while true
+do
+	gmr_init
+	gmr_iqiyiinit
+	gmr_dirinit
+	gmr_iqiyidownload
+	gmr_clear
+done

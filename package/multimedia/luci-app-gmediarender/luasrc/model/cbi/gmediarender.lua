@@ -128,4 +128,22 @@ function gmrenderbilibilistop.write(self, section)
 end
 
 
+s:tab("gmrender_iqiyi", translate("iqiyi.com menu"))
+gmrenderiqiyi = s:taboption("gmrender_iqiyi", Button, "gmrenderiqiyi", translate("One-click download iqiyi.com"))
+gmrenderiqiyi:depends("gmrenderextra", "1")
+gmrenderiqiyi.rmempty = true
+gmrenderiqiyi.inputstyle = "apply"
+function gmrenderiqiyi.write(self, section)
+	luci.util.exec("/usr/share/gmediarender/gmriqiyi >/dev/null 2>&1 &")
+end
+
+gmrenderiqiyistop = s:taboption("gmrender_iqiyi", Button, "gmrenderiqiyistop", translate("One-click STOP iqiyi.com"))
+gmrenderiqiyistop:depends("gmrenderextra", "1")
+gmrenderiqiyistop.rmempty = true
+gmrenderiqiyistop.inputstyle = "apply"
+function gmrenderiqiyistop.write(self, section)
+	luci.util.exec("/usr/share/gmediarender/gmriqiyistop >/dev/null 2>&1 &")
+end
+
+
 return m

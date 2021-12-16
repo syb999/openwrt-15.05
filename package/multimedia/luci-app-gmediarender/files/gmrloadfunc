@@ -71,6 +71,12 @@ function gmr_xiguainit(){
 	thename="$(date +%m%d)"
 }
 
+function gmr_iqiyiinit(){
+	thedirname="iqiyi"
+	them3u8=$(cat /tmp/xgmrender.tmp.url | cut -d '/' -f $(expr $(grep -o '/' /tmp/xgmrender.tmp.url | wc -l) + 1) | cut -d '?' -f 1)
+	thename="$(date +%m%d)"
+}
+
 function gmr_dirinit(){
 	if [ ! -d "$gmrdir/$thedirname" ]; then
 		mkdir -p $gmrdir/$thedirname
@@ -167,6 +173,44 @@ function gmr_xiguadownload(){
 			wget-ssl --timeout=3 -q $geturl -O $gmrdir/$thedirname/$thename.mp4.fragment
 		fi
 		mv $gmrdir/$thedirname/$thename.mp4.fragment $gmrdir/$thedirname/$thename-$(date +%s).mp4
+	fi
+}
+
+function gmr_iqiyidownload(){
+	if [ $saferom -gt 80 ];then
+		logger -t gmediarender ☆☆☆☆☆☆☆ Not enough diskspace! ☆☆☆☆☆☆☆
+	else
+		isbin=$(file /tmp/xgmrender.tmp.m3u8)
+		if [ $isbin == "/tmp/xgmrender.tmp.m3u8: data" ];then
+			echo skip
+		else
+			wget-ssl -q -c $(uci get network.lan.ipaddr) -O /tmp/xgmrender.tmp.testwget > /dev/null 2>&1
+			if [ -s /tmp/xgmrender.tmp.testwget ];then
+				wget-ssl --timeout=10 -q $geturl -O $them3u8
+				cat $them3u8 | grep .ts > /tmp/xgmrender.tmp.m3u8
+				tmpm3u8=$(cat /tmp/xgmrender.tmp.m3u8)
+				for i in $tmpm3u8
+				do
+					wget-ssl --timeout=3 -q $i -O /tmp/xgmrender.tmp.fragment
+					cat /tmp/xgmrender.tmp.fragment >> $gmrdir/$thename.ts.downloading
+				done
+			else
+				wget --timeout=10 -q -c $geturl -O $them3u8
+				cat $them3u8 | grep .ts > /tmp/xgmrender.tmp.m3u8
+				tmpm3u8=$(cat /tmp/xgmrender.tmp.m3u8)
+				for i in $tmpm3u8
+				do
+					wget --timeout=3 -q $i -O /tmp/xgmrender.tmp.fragment
+					cat /tmp/xgmrender.tmp.fragment >> $gmrdir/$thename.ts.downloading
+				done
+			fi
+		fi
+		if [ -s $thename.ts.downloading ];then
+			mv $gmrdir/$thename.ts.downloading $gmrdir/$thedirname/$thename-$(date +%s).ts
+		else
+			mv $gmrdir/$them3u8 $gmrdir/$thedirname/$thename-$(date +%s).mp4
+			rm $gmrdir/$thename.ts.downloading
+		fi
 	fi
 }
 
