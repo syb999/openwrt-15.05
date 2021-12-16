@@ -1,0 +1,177 @@
+#!/bin/sh
+
+gmrdir="$(uci get gmediarender.@gmediarender[0].gmrenderdir)"
+gmrlog="/tmp/$(uci get gmediarender.@gmediarender[0].gmrenderlog)"
+saferom="$(df -h | grep tmpfs | sed -e "s/[ ][ ]* / /g" | head -n 1 | cut -d ' ' -f 5 | cut -d '%' -f 1)"
+
+if [ ! -d "$gmrdir" ];then
+	mkdir -p $gmrdir
+fi
+
+function gmr_init(){
+	cd $gmrdir
+	if [ ! -s $gmrlog ];then
+		/etc/init.d/gmediarender restart
+	fi
+	cat $gmrlog | grep -n "CurrentTrackURI: http" | head -n 1 > /tmp/xgmrender.tmp.find
+	findurl=$(cat /tmp/xgmrender.tmp.find)
+	while [ ! -n "$findurl" ]
+	do
+		sleep 3
+		cat $gmrlog | grep -n "CurrentTrackURI: http" | head -n 1 > /tmp/xgmrender.tmp.find
+		findurl=$(cat /tmp/xgmrender.tmp.find)
+	done
+	theurl=$(echo ${findurl#*CurrentTrackURI: } > /tmp/xgmrender.tmp.url)
+	geturl=$(cat /tmp/xgmrender.tmp.url)
+}
+
+function gmr_musicinit(){
+	thedirname="music"
+	ismp3=$(cat /tmp/xgmrender.tmp.url | cut -d '/' -f $(expr $(grep -o '/' /tmp/xgmrender.tmp.url | wc -l) + 1) | cut -d '.' -f 2 | cut -d '?' -f 1)
+	if [ $ismp3 == "mp3" ];then
+		urlsuffix="mp3"
+		thename="$(cat /tmp/xgmrender.tmp.url | cut -d '/' -f $(expr $(grep -o '/' /tmp/xgmrender.tmp.url | wc -l) + 1) | cut -d '.' -f 1 | sed 's/?/？/g').$urlsuffix"
+	else
+		urlsuffix="m4a"
+		thename="$(cat /tmp/xgmrender.tmp.url | cut -d '/' -f $(expr $(grep -o '/' /tmp/xgmrender.tmp.url | wc -l) + 1) | cut -d '.' -f 1 | sed 's/?/？/g').$urlsuffix"
+	fi
+	findurl2="$(expr $(cat $gmrlog | grep -n "CurrentTrackURI: http" | head -n 1 | cut -d ':' -f 1) + 1)"
+	informaudio="$(grep -n $findurl2 $gmrlog)"
+	gettitle0="$(echo ${informaudio#*&lt;dc:title&gt;})"
+	thetitle="$(echo ${gettitle0%%&lt;/dc:title&gt;*} | tr -d "a-zA-Z0-9~!@#$%^&*()_=+-\\\/[]{};\':\",.|-" | sed "s/[ ][ ]*//g")"
+	getartist0="$(echo ${informaudio#*&lt;upnp:artist role=&quot;Performer&quot;&gt;})"
+	theartist="$(echo ${getartist0%%&lt;/upnp:artist&gt;*} | tr -d "a-zA-Z0-9~!@#$%^&*()_=+-\\\/[]{};\':\",.|-" | sed "s/[ ][ ]*//g")"
+	theaudio="${thetitle} ${theartist}"
+}
+
+function gmr_vqqinit(){
+	thedirname=$(cat $gmrlog | grep "<dc:title>" | head -n 1 | tr -d '<:>/dctile' | sed 's/^[ ][ ]*//g' | cut -d ' ' -f 1)
+	them3u8=$(cat /tmp/xgmrender.tmp.url | cut -d '/' -f $(expr $(grep -o '/' /tmp/xgmrender.tmp.url | wc -l) + 1) | cut -d '?' -f 1)
+	thesuffix=$(cat /tmp/xgmrender.tmp.url | cut -d '/' -f $(expr $(grep -o '/' /tmp/xgmrender.tmp.url | wc -l) + 1))
+	thename=$(cat $gmrlog | grep "<dc:title>" | head -n 1 | tr -d '<:>/dctile' | sed 's/^[ ][ ]*//g;s/ /-/g')
+}
+
+function gmr_bilibiliinit(){
+	thedirname="bilibili"
+	thevfile=$(cat /tmp/xgmrender.tmp.url | cut -d '/' -f $(expr $(grep -o '/' /tmp/xgmrender.tmp.url | wc -l) + 1) | cut -d '?' -f 1)
+	thesuffix=$(cat /tmp/xgmrender.tmp.url | cut -d '/' -f $(expr $(grep -o '/' /tmp/xgmrender.tmp.url | wc -l) + 1) | cut -d '?' -f 1 | cut -d '.' -f 2)
+	findurl2="$(cat $gmrlog | grep "<dc:title>" | head -n 1)"
+	getname0="$(echo ${findurl2#*<dc:title>})"
+	thenamea="$(echo ${getname0%%</dc:title>*} | sed 's/[ ][ ]*//g' | sed "s/第[0-9]话/&#*#/" | tr -cd '0-9\n#*#' | grep "#*#" | tr -d '#*#' | sed 's/^/第0/;s/$/话/')"
+	thenameb="$(echo ${getname0%%</dc:title>*} | sed 's/[ ][ ]*//g' | cut -d '-' -f 2 )"
+	if [ ! -n "$thenamea" ];then
+		thename="$(echo ${getname0%%</dc:title>*} | sed 's/[ ][ ]*//g')"
+	else
+		thename="${thenamea}-${thenameb}"
+	fi
+}
+
+function gmr_xiguainit(){
+	thedirname="xigua"
+	thename="$(date +%m%d)"
+}
+
+function gmr_dirinit(){
+	if [ ! -d "$gmrdir/$thedirname" ]; then
+		mkdir -p $gmrdir/$thedirname
+	fi
+}
+
+function gmr_musicdownload(){
+	if [ $saferom -gt 80 ];then
+		logger -t gmediarender ☆☆☆☆☆☆☆ Not enough diskspace! ☆☆☆☆☆☆☆
+	else
+		wget-ssl -q -c $(uci get network.lan.ipaddr) -O /tmp/xgmrender.tmp.testwget > /dev/null 2>&1
+		if [ -s /tmp/xgmrender.tmp.testwget ];then
+			wget-ssl --timeout=3 -q $geturl -O $gmrdir/$thedirname/$thename
+			if [ -n "$thename" ];then		
+				echo "$(date "+%Y-%m-%d %H:%M:%S") ☆☆☆ $thename ☆☆☆ $theaudio" >> $gmrdir/.0@downloadlist.txt
+			else
+				echo "$(date "+%Y-%m-%d %H:%M:%S") ☆☆☆ Download timeout" >> $gmrdir/.0@downloadlist.txt
+			fi
+		else
+			wget --timeout=3 -q $geturl -O $gmrdir/$thedirname/$thename
+			if [ -n "$thename" ];then		
+				echo "$(date "+%Y-%m-%d %H:%M:%S") ☆☆☆ $thename ☆☆☆ $theaudio" >> $gmrdir/.0@downloadlist.txt
+			else
+				echo "$(date "+%Y-%m-%d %H:%M:%S") ☆☆☆ Download timeout" >> $gmrdir/.0@downloadlist.txt
+			fi
+		fi
+	fi
+}
+
+function gmr_vqqdownload(){
+	if [ $saferom -gt 80 ];then
+		logger -t gmediarender ☆☆☆☆☆☆☆ Not enough diskspace! ☆☆☆☆☆☆☆
+	else
+		isbin=$(file /tmp/xgmrender.tmp.m3u8)
+		if [ $isbin == "/tmp/xgmrender.tmp.m3u8: data" ];then
+			echo skip
+		else
+			wget-ssl -q -c $(uci get network.lan.ipaddr) -O /tmp/xgmrender.tmp.testwget > /dev/null 2>&1
+			if [ -s /tmp/xgmrender.tmp.testwget ];then
+				wget-ssl --timeout=10 -q $geturl -O $them3u8
+				cat $them3u8 | grep .ts > /tmp/xgmrender.tmp.m3u8
+				tmpm3u8=$(cat /tmp/xgmrender.tmp.m3u8)
+				for i in $tmpm3u8
+				do
+					theprefix=$(cat /tmp/xgmrender.tmp.url | sed "s/${thesuffix}//")
+					tsfragment="${theprefix}${i}"
+					wget-ssl --timeout=3 -q $tsfragment -O /tmp/xgmrender.tmp.fragment
+					cat /tmp/xgmrender.tmp.fragment >> $gmrdir/$thename.ts.downloading
+				done
+			else
+				wget --timeout=10 -q -c $geturl -O $them3u8
+				cat $them3u8 | grep .ts > /tmp/xgmrender.tmp.m3u8
+				tmpm3u8=$(cat /tmp/xgmrender.tmp.m3u8)
+				for i in $tmpm3u8
+				do
+					theprefix=$(cat /tmp/xgmrender.tmp.url | sed "s/${thesuffix}//")
+					tsfragment="${theprefix}${i}"
+					wget --timeout=3 -q $tsfragment -O /tmp/xgmrender.tmp.fragment
+					cat /tmp/xgmrender.tmp.fragment >> $gmrdir/$thename.ts.downloading
+				done
+			fi
+		fi
+		if [ -s $thename.ts.downloading ];then
+			mv $gmrdir/$thename.ts.downloading $gmrdir/$thedirname/$thename.ts
+		else
+			mv $gmrdir/$them3u8 $gmrdir/$thedirname/$thename.mp4
+			rm $gmrdir/$thename.ts.downloading
+		fi
+	fi
+}
+
+function gmr_bilibilidownload(){
+	if [ $saferom -gt 80 ];then
+		logger -t gmediarender ☆☆☆☆☆☆☆ Not enough diskspace! ☆☆☆☆☆☆☆
+	else
+		wget-ssl -q -c $(uci get network.lan.ipaddr) -O /tmp/xgmrender.tmp.testwget > /dev/null 2>&1
+		if [ -s /tmp/xgmrender.tmp.testwget ];then
+			wget-ssl --timeout=3 -q $geturl -O $gmrdir/$thename.downloading
+		else
+			wget --timeout=3 -q $geturl -O $gmrdir/$thename.downloading
+		fi
+		mv $gmrdir/$thename.downloading $gmrdir/$thedirname/$thename.$thesuffix
+	fi
+}
+
+function gmr_xiguadownload(){
+	if [ $saferom -gt 80 ];then
+		logger -t gmediarender ☆☆☆☆☆☆☆ Not enough diskspace! ☆☆☆☆☆☆☆
+	else
+		wget-ssl -q -c $(uci get network.lan.ipaddr) -O /tmp/xgmrender.tmp.testwget > /dev/null 2>&1
+		if [ -s /tmp/xgmrender.tmp.testwget ];then
+			wget-ssl --timeout=3 -q $geturl -O $gmrdir/$thedirname/$thename.mp4.fragment
+		else
+			wget-ssl --timeout=3 -q $geturl -O $gmrdir/$thedirname/$thename.mp4.fragment
+		fi
+		mv $gmrdir/$thedirname/$thename.mp4.fragment $gmrdir/$thedirname/$thename-$(date +%s).mp4
+	fi
+}
+
+function gmr_clear(){
+	rm /tmp/xgmrender.tmp.* $gmrdir/$them3u8 $gmrdir/$thename.ts
+	echo "clear" > $gmrlog
+}
+

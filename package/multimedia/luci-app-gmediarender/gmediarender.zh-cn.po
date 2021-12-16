@@ -46,8 +46,17 @@ msgstr "投屏后自动下载该节目(西瓜视频)"
 msgid "One-click STOP ixigua.com"
 msgstr "停止西瓜视频节目下载"
 
+msgid "v.qq.com menu"
+msgstr "腾讯视频菜单"
+
+msgid "ixigua.com menu"
+msgstr "西瓜视频菜单"
+
 msgid "BiliBili menu"
-msgstr "BiliBili菜单"
+msgstr "哔哩哔哩菜单"
+
+msgid "iqiyi.com menu"
+msgstr "爱奇艺菜单"
 
 msgid "BiliBili directory"
 msgstr "BiliBili视频目录"

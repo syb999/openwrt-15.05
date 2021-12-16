@@ -66,7 +66,8 @@ function gmrenderdownloadstop.write(self, section)
 	luci.util.exec("/usr/share/gmediarender/gmrdownloadstop >/dev/null 2>&1 &")
 end
 
-gmrendervqq = s:taboption("gmrender_init", Button, "gmrendervqq", translate("One-click download v.qq.com"))
+s:tab("gmrender_vqq", translate("v.qq.com menu"))
+gmrendervqq = s:taboption("gmrender_vqq", Button, "gmrendervqq", translate("One-click download v.qq.com"))
 gmrendervqq:depends("gmrenderextra", "1")
 gmrendervqq.rmempty = true
 gmrendervqq.inputstyle = "apply"
@@ -74,7 +75,7 @@ function gmrendervqq.write(self, section)
 	luci.util.exec("/usr/share/gmediarender/gmrvqq >/dev/null 2>&1 &")
 end
 
-gmrendervqqstop = s:taboption("gmrender_init", Button, "gmrendervqqstop", translate("One-click STOP v.qq.com"))
+gmrendervqqstop = s:taboption("gmrender_vqq", Button, "gmrendervqqstop", translate("One-click STOP v.qq.com"))
 gmrendervqqstop:depends("gmrenderextra", "1")
 gmrendervqqstop.rmempty = true
 gmrendervqqstop.inputstyle = "apply"
@@ -82,7 +83,9 @@ function gmrendervqqstop.write(self, section)
 	luci.util.exec("/usr/share/gmediarender/gmrvqqstop >/dev/null 2>&1 &")
 end
 
-gmrenderxigua = s:taboption("gmrender_init", Button, "gmrenderxigua", translate("One-click download ixigua.com"))
+
+s:tab("gmrender_xigua", translate("ixigua.com menu"))
+gmrenderxigua = s:taboption("gmrender_xigua", Button, "gmrenderxigua", translate("One-click download ixigua.com"))
 gmrenderxigua:depends("gmrenderextra", "1")
 gmrenderxigua.rmempty = true
 gmrenderxigua.inputstyle = "apply"
@@ -90,7 +93,7 @@ function gmrenderxigua.write(self, section)
 	luci.util.exec("/usr/share/gmediarender/gmrxigua >/dev/null 2>&1 &")
 end
 
-gmrenderxiguastop = s:taboption("gmrender_init", Button, "gmrenderxiguastop", translate("One-click STOP ixigua.com"))
+gmrenderxiguastop = s:taboption("gmrender_xigua", Button, "gmrenderxiguastop", translate("One-click STOP ixigua.com"))
 gmrenderxiguastop:depends("gmrenderextra", "1")
 gmrenderxiguastop.rmempty = true
 gmrenderxiguastop.inputstyle = "apply"
@@ -100,14 +103,8 @@ end
 
 
 s:tab("gmrender_bilibili", translate("BiliBili menu"))
-gmrenderbilibilidir = s:taboption("gmrender_bilibili", Value, "gmrenderbilibilidir", translate("BiliBili directory"))
-gmrenderbilibilidir:depends("gmrenderextra", "1")
-gmrenderbilibilidir.datatype = "string"
-gmrenderbilibilidir.default = "bilibili"
-gmrenderbilibilidir.placeholder = "bilibili"
-gmrenderbilibilidir.rmempty = false
-
 gmrenderbilibilimp4 = s:taboption("gmrender_bilibili", Button, "gmrenderbilibilimp4", translate("One-click flv to mp4"))
+gmrenderbilibilimp4:depends("gmrenderextra", "1")
 gmrenderbilibilimp4.inputstyle = "apply"
 gmrenderbilibilimp4.description = translate("ffmpeg needs to be installed")
 function gmrenderbilibilimp4.write(self, section)

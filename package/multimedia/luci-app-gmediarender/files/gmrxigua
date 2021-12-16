@@ -1,54 +1,10 @@
 #!/bin/sh
-
-gmrdir="$(uci get gmediarender.@gmediarender[0].gmrenderdir)"
-gmrlog="/tmp/$(uci get gmediarender.@gmediarender[0].gmrenderlog)"
-
-if [ ! -d "$gmrdir" ];then
-	mkdir -p $gmrdir
-fi
-
-function gmrenderdownload(){
-	cd $gmrdir
-	if [ ! -s $gmrlog ];then
-		/etc/init.d/gmediarender restart
-	fi
-	cat $gmrlog | grep -n "CurrentTrackURI: http" | head -n 1 > /tmp/xgmrender.tmp.find
-	findurl=$(cat /tmp/xgmrender.tmp.find)
-	while [ ! -n "$findurl" ]
-	do
-		sleep 3
-		cat $gmrlog | grep -n "CurrentTrackURI: http" | head -n 1 > /tmp/xgmrender.tmp.find
-		findurl=$(cat /tmp/xgmrender.tmp.find)
-	done
-
-	theurl=$(echo ${findurl#*CurrentTrackURI: } > /tmp/xgmrender.tmp.url)
-	geturl=$(cat /tmp/xgmrender.tmp.url)
-	thedirname="xigua"
-	thename="$(date +%m%d)"
-
-	if [ ! -d "$gmrdir/$thedirname" ]; then
-		mkdir -p $gmrdir/$thedirname
-	fi
-
-	saferom="$(df -h | grep tmpfs | sed -e "s/[ ][ ]* / /g" | head -n 1 | cut -d ' ' -f 5 | cut -d '%' -f 1)"
-	if [ $saferom -gt 80 ];then
-		logger -t gmediarender ☆☆☆☆☆☆☆ Not enough diskspace! ☆☆☆☆☆☆☆
-	else
-		wget-ssl -q -c $(uci get network.lan.ipaddr) -O /tmp/xgmrender.tmp.testwget > /dev/null 2>&1
-		if [ -s /tmp/xgmrender.tmp.testwget ];then
-			wget-ssl --timeout=3 -q $geturl -O $gmrdir/$thedirname/$thename.mp4.fragment
-		else
-			wget-ssl --timeout=3 -q $geturl -O $gmrdir/$thedirname/$thename.mp4.fragment
-		fi
-	fi
-
-	mv $gmrdir/$thedirname/$thename.mp4.fragment $gmrdir/$thedirname/$thename-$(date +%s).mp4
-
-	rm /tmp/xgmrender.tmp.*
-	echo "clear" > $gmrlog
-}
-
+. /usr/share/gmediarender/gmrloadfunc
 while true
 do
-	gmrenderdownload
+	gmr_init
+	gmr_xiguainit
+	gmr_dirinit
+	gmr_xiguadownload
+	gmr_clear
 done
