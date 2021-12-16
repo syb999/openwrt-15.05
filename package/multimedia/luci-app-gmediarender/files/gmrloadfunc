@@ -90,18 +90,8 @@ function gmr_musicdownload(){
 		wget-ssl -q -c $(uci get network.lan.ipaddr) -O /tmp/xgmrender.tmp.testwget > /dev/null 2>&1
 		if [ -s /tmp/xgmrender.tmp.testwget ];then
 			wget-ssl --timeout=3 -q $geturl -O $gmrdir/$thedirname/$thename
-			if [ -n "$thename" ];then		
-				echo "$(date "+%Y-%m-%d %H:%M:%S") ☆☆☆ $thename ☆☆☆ $theaudio" >> $gmrdir/.0@downloadlist.txt
-			else
-				echo "$(date "+%Y-%m-%d %H:%M:%S") ☆☆☆ Download timeout" >> $gmrdir/.0@downloadlist.txt
-			fi
 		else
 			wget --timeout=3 -q $geturl -O $gmrdir/$thedirname/$thename
-			if [ -n "$thename" ];then		
-				echo "$(date "+%Y-%m-%d %H:%M:%S") ☆☆☆ $thename ☆☆☆ $theaudio" >> $gmrdir/.0@downloadlist.txt
-			else
-				echo "$(date "+%Y-%m-%d %H:%M:%S") ☆☆☆ Download timeout" >> $gmrdir/.0@downloadlist.txt
-			fi
 		fi
 	fi
 }
