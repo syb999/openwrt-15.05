@@ -58,15 +58,18 @@ msgstr "哔哩哔哩菜单"
 msgid "iqiyi.com menu"
 msgstr "爱奇艺菜单"
 
-msgid "BiliBili directory"
-msgstr "BiliBili视频目录"
-
 msgid "One-click flv to mp4"
 msgstr "一键转换成MP4"
 
 msgid "One-click download bilibili.com"
-msgstr "投屏后自动下载该节目(BiliBili)"
+msgstr "投屏后自动下载该节目(哔哩哔哩)"
 
 msgid "One-click STOP bilibili.com"
-msgstr "停止BiliBili视频节目下载"
+msgstr "停止哔哩哔哩节目下载"
+
+msgid "One-click download iqiyi.com"
+msgstr "投屏后自动下载该节目(爱奇艺)"
+
+msgid "One-click STOP iqiyi.com"
+msgstr "停止爱奇艺节目下载"
 
