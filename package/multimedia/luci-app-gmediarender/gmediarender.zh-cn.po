@@ -58,6 +58,9 @@ msgstr "哔哩哔哩菜单"
 msgid "iqiyi.com menu"
 msgstr "爱奇艺菜单"
 
+msgid "youku.com menu"
+msgstr "优酷菜单"
+
 msgid "One-click flv to mp4"
 msgstr "一键转换成MP4"
 
@@ -72,4 +75,10 @@ msgstr "投屏后自动下载该节目(爱奇艺)"
 
 msgid "One-click STOP iqiyi.com"
 msgstr "停止爱奇艺节目下载"
+
+msgid "One-click download youku.com"
+msgstr "投屏后自动下载该节目(优酷)"
+
+msgid "One-click STOP youku.com"
+msgstr "停止优酷节目下载"
 

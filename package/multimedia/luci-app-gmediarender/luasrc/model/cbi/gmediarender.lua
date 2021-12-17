@@ -146,4 +146,22 @@ function gmrenderiqiyistop.write(self, section)
 end
 
 
+s:tab("gmrender_youku", translate("youku.com menu"))
+gmrenderyouku = s:taboption("gmrender_youku", Button, "gmrenderyouku", translate("One-click download youku.com"))
+gmrenderyouku:depends("gmrenderextra", "1")
+gmrenderyouku.rmempty = true
+gmrenderyouku.inputstyle = "apply"
+function gmrenderyouku.write(self, section)
+	luci.util.exec("/usr/share/gmediarender/gmryouku >/dev/null 2>&1 &")
+end
+
+gmrenderyoukustop = s:taboption("gmrender_youku", Button, "gmrenderyoukustop", translate("One-click STOP youku.com"))
+gmrenderyoukustop:depends("gmrenderextra", "1")
+gmrenderyoukustop.rmempty = true
+gmrenderyoukustop.inputstyle = "apply"
+function gmrenderyoukustop.write(self, section)
+	luci.util.exec("/usr/share/gmediarender/gmryoukustop >/dev/null 2>&1 &")
+end
+
+
 return m
