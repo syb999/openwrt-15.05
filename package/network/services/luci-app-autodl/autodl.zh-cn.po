@@ -70,6 +70,9 @@ msgstr "音频节目URL"
 msgid "URL for downloading https://www.ximalaya.com Audios"
 msgstr "喜马拉雅音频节目的URL页面地址"
 
+msgid "The starting page number"
+msgstr "起始页码"
+
 msgid "Audios URL multi pages"
 msgstr "启用下载音频节目URL多页功能"
 

@@ -22,29 +22,15 @@ function getxmlyaudios(){
 
 	cd /$paudiopath
 
-	curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -H ""user-agent": "Mozilla/5.0"" $paudiourl > /tmp/tmpXM.xmlyhttp
-	sleep 2
-	xmlyhttp=$(cat /tmp/tmpXM.xmlyhttp)  
-
-	for i in `echo "$xmlyhttp" | sed 's/</\n/g'`
-	do  
-	    echo $i >> /tmp/tmpXM.xmlyhttp1
-	done
-
-	cat /tmp/tmpXM.xmlyhttp1 | grep isPaid > /tmp/tmpXM.xmlyhttp2
-	cat /tmp/tmpXM.xmlyhttp1 | grep showShareBtn > /tmp/tmpXM.xmlyhttp2n
-	cat /tmp/tmpXM.xmlyhttp | sed 's/title/\n/g' | grep showShareBtn | cut -d '"' -f 3 | sed -e 's/\\/＼/g' | sed -e 's/\//／/g' | sed -e 's/</《/g' | sed -e 's/>/》/g' | sed -e 's/:/：/g' | sed -e 's/*//g' | sed -e 's/?/？/g' | sed -e 's/\"/“/g'  | sed -e 's/\ /-/g' | sed -e 's/|/-/g'  > /tmp/tmpXM.filenamelist
-	xmlyhttp2=$(cat /tmp/tmpXM.xmlyhttp2)
-	for i in `echo "$xmlyhttp2" | sed 's/{\"index\":/\n/g'`
-	do  
-	    echo $i >> /tmp/tmpXM.xmlyhttp3
-	done
-
-	cat /tmp/tmpXM.xmlyhttp3 | grep trackId > /tmp/tmpXM.xmlyhttp4
-	cat /tmp/tmpXM.xmlyhttp4 | grep '^[0-9]' | cut -d ',' -f 2 | cut -d ':' -f 2 > /tmp/tmpXM.xmlyhttp5
-	cat /tmp/tmpXM.xmlyhttp5 > /tmp/tmpXM.xmlyhttp5d
-
-	cat /tmp/tmpXM.xmlyhttp5d | while read LINE
+	newlistprefix="https://www.ximalaya.com/revision/album/v1/getTracksList?albumId="
+	newlistpagenumprefix="&pageNum="
+	newlistpagesuffix="&sort=0"
+	thenewlist="${newlistprefix}${newlistalbumId}${newlistpagenumprefix}${newlistpagenum}${newlistpagesuffix}"
+	curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -H ""user-agent": "Mozilla/5.0"" $thenewlist > /tmp/tmpXM.newlist
+	cat /tmp/tmpXM.newlist | sed 's/\/sound\//\n/g' | sed '1d' | cut -d '"' -f 1 > /tmp/tmpXM.newlist2
+	cat /tmp/tmpXM.newlist | sed 's/\"title\"/\n/g' | sed '1d' | cut -d '"' -f 2 | sed 's/[ ][ ]*/-/g' | sed -e 's/\\/＼/g' | sed -e 's/\//／/g' | sed -e 's/</《/g' | sed -e 's/>/》/g' | sed -e 's/:/：/g' | sed -e 's/*//g' | sed -e 's/?/？/g' | sed -e 's/\"/“/g'  | sed -e 's/\ /-/g' | sed -e 's/|/-/g'  > /tmp/tmpXM.filenamelist
+	cat /tmp/tmp.XMV.newlist | sed 's/\"index\":/\n/g' | sed '1d'| cut -d ',' -f 1 > /tmp/tmp.XMV.newlist3
+	cat /tmp/tmpXM.newlist2 | while read LINE
 	do
 		xmlytrackId=$(echo $LINE)
 		adurlprefix=$urlprefix
@@ -83,9 +69,7 @@ function getxmlyaudios(){
 		rm /tmp/tmp.XM.*
 	done
 
-	cat /tmp/tmpXM.xmlyhttp3 | grep trackId > /tmp/tmpXM.xmlyhttp0num
-	cat /tmp/tmpXM.xmlyhttp0num | grep '^[0-9]' | cut -d ',' -f 1 > /tmp/tmpXM.xmlyhttp1num
-	sed '1!G;h;$!d' /tmp/tmpXM.xmlyhttp1num > /tmp/tmpXM.xmlyhttp2num
+	sed '1!G;h;$!d' /tmp/tmp/tmp.XMV.newlist3 > /tmp/tmpXM.xmlyhttp2num
 
 	ls -al | grep "^-" > /tmp/tmpXM.filelist
 
@@ -123,29 +107,19 @@ function getxmlyaudios(){
 }
 
 if [ ! $(uci get autodl.@autodl[0].xmlygetpages) ];then
-	paudiourl=$(uci get autodl.@autodl[0].xmlyurl | sed "s/\/$//")
+	newlistalbumId=$(uci get autodl.@autodl[0].xmlyurl | sed "s/\/$//" | sed 's/album\//^/' | cut -d '^' -f 2)
+	newlistpagenum=$(uci get autodl.@autodl[0].xmlypagenum)
 	getxmlyaudios
 else
-	uci get autodl.@autodl[0].xmlyurl | sed "s/\/$//" > /tmp/doxmly.seturl.tmp
+	newlistalbumId=$(uci get autodl.@autodl[0].xmlyurl | sed "s/\/$//" | sed 's/album\//^/' | cut -d '^' -f 2)
+	newlistpagenum=$(uci get autodl.@autodl[0].xmlypagenum)
 	xmlypagesendcount=$(uci get autodl.@autodl[0].xmlygetpages)
 	xmlypagescount=0
-	if [ ! $(uci get autodl.@autodl[0].xmlyurl | cut -d "/" -f 6 | sed 's/p//') ];then
-		paudiourlstartpage=1
-	else
-		paudiourlstartpage=$(uci get autodl.@autodl[0].xmlyurl | cut -d "/" -f 6 | sed 's/p//')
-	fi
 	while [ $xmlypagescount -lt $xmlypagesendcount ]
 	do
-		if [ $xmlypagescount -eq 0 ];then
-			paudiourlstartpage=$(echo `expr $paudiourlstartpage + $xmlypagescount`)
-		else
-			paudiourlstartpage=$(echo `expr $paudiourlstartpage + 1`)
-		fi
-		sed -i "s/$(cat /tmp/doxmly.seturl.tmp | cut -d "/" -f 6)/p$paudiourlstartpage/g" /tmp/doxmly.seturl.tmp
-
 		xmlypagescount=$(echo `expr $xmlypagescount + 1`)
-		paudiourl=$(cat /tmp/doxmly.seturl.tmp)
 		getxmlyaudios
+		newlistpagenum=$(echo `expr $newlistpagenum + 1`)
 	done
 	rm /tmp/doxmly.seturl.tmp
 fi
