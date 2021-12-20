@@ -24,12 +24,12 @@ function getxmlyaudios(){
 
 	newlistprefix="https://www.ximalaya.com/revision/album/v1/getTracksList?albumId="
 	newlistpagenumprefix="&pageNum="
-	newlistpagesuffix="&sort=0"
+	newlistpagesuffix="&sort=1"
 	thenewlist="${newlistprefix}${newlistalbumId}${newlistpagenumprefix}${newlistpagenum}${newlistpagesuffix}"
 	curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -H ""user-agent": "Mozilla/5.0"" $thenewlist > /tmp/tmpXM.newlist
 	cat /tmp/tmpXM.newlist | sed 's/\/sound\//\n/g' | sed '1d' | cut -d '"' -f 1 > /tmp/tmpXM.newlist2
 	cat /tmp/tmpXM.newlist | sed 's/\"title\"/\n/g' | sed '1d' | cut -d '"' -f 2 | sed 's/[ ][ ]*/-/g' | sed -e 's/\\/＼/g' | sed -e 's/\//／/g' | sed -e 's/</《/g' | sed -e 's/>/》/g' | sed -e 's/:/：/g' | sed -e 's/*//g' | sed -e 's/?/？/g' | sed -e 's/\"/“/g'  | sed -e 's/\ /-/g' | sed -e 's/|/-/g'  > /tmp/tmpXM.filenamelist
-	cat /tmp/tmp.XMV.newlist | sed 's/\"index\":/\n/g' | sed '1d'| cut -d ',' -f 1 > /tmp/tmp.XMV.newlist3
+	cat /tmp/tmpXM.newlist | sed 's/\"index\":/\n/g' | sed '1d'| cut -d ',' -f 1 > /tmp/tmpXM.newlist3
 	cat /tmp/tmpXM.newlist2 | while read LINE
 	do
 		xmlytrackId=$(echo $LINE)
@@ -69,7 +69,7 @@ function getxmlyaudios(){
 		rm /tmp/tmp.XM.*
 	done
 
-	sed '1!G;h;$!d' /tmp/tmp/tmp.XMV.newlist3 > /tmp/tmpXM.xmlyhttp2num
+	sed '1!G;h;$!d' /tmp/tmp/tmpXM.newlist3 > /tmp/tmpXM.xmlyhttp2num
 
 	ls -al | grep "^-" > /tmp/tmpXM.filelist
 
