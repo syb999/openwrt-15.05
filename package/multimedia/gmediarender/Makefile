@@ -1,16 +1,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gmediarender
-PKG_VERSION:=0.0.8
-PKG_RELEASE:=2
+PKG_VERSION:=0.0.9
+PKG_RELEASE:=1
 PKG_MAINTAINER:=h.zeller@acm.org
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/hzeller/gmrender-resurrect.git
-PKG_SOURCE_VERSION:=26d8f7edf5336bc30f7334c6ad459bf7f4f90ff2
+PKG_SOURCE_VERSION:=b2362c3b60991f0ed1e6493fce7de3ee2e74c8cb
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_MD5SUM:=f002d6a154bb5a73cb9a784cbc3be9d3
+PKG_MD5SUM:=862accc1d9aaad3991f759c522c6c17e
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -43,7 +43,7 @@ define Package/gmediarender/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/gmediarender.init $(1)/etc/init.d/gmediarender
 	$(INSTALL_DIR) $(1)/usr/share/gmediarender/
-	$(INSTALL_DATA) ./files/*.png $(1)/usr/share/gmediarender/
+	#$(INSTALL_DATA) ./files/*.png $(1)/usr/share/gmediarender/
 endef
 
 $(eval $(call BuildPackage,gmediarender))
