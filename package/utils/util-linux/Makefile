@@ -273,6 +273,16 @@ define Package/lsblk/description
  lsblk lists information about all or the specified block devices
 endef
 
+define Package/lscpu
+$(call Package/util-linux/Default)
+  TITLE:=display information about the CPU architecture
+  DEPENDS:= +libsmartcols
+endef
+
+define Package/lscpu/description
+ lscpu displays information about the CPU architecture
+endef
+
 define Package/mcookie
 $(call Package/util-linux/Default)
   TITLE:=generate magic cookies for xauth
@@ -517,6 +527,11 @@ define Package/lsblk/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/.libs/lsblk $(1)/usr/bin/
 endef
 
+define Package/lscpu/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/.libs/lscpu $(1)/usr/bin/
+endef
+
 define Package/mcookie/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/mcookie $(1)/usr/bin/
@@ -611,6 +626,7 @@ $(eval $(call BuildPackage,logger))
 $(eval $(call BuildPackage,look))
 $(eval $(call BuildPackage,losetup))
 $(eval $(call BuildPackage,lsblk))
+$(eval $(call BuildPackage,lscpu))
 $(eval $(call BuildPackage,mcookie))
 $(eval $(call BuildPackage,mount-utils))
 $(eval $(call BuildPackage,namei))
