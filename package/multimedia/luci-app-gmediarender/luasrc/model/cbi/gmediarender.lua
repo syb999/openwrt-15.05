@@ -3,19 +3,19 @@ m = Map("gmediarender", translate("gmediarender server"))
 s = m:section(TypedSection, "gmediarender", "")
 
 s:tab("gmrender_set", translate("Basic setting"))
-gmrenderbindiplist = s:taboption("gmrender_set", ListValue, "gmrenderbindiplist", translate("Binding ip list"))
-gmrenderbindiplist.placeholder = "lan"
-gmrenderbindiplist:value("lan", translate("lan"))
-gmrenderbindiplist:value("wan", translate("wan"))
-gmrenderbindiplist:value("other", translate("other"))
-gmrenderbindiplist.default = "lan"
-gmrenderbindiplist.rempty = false
+gmrenderbindiflist = s:taboption("gmrender_set", ListValue, "gmrenderbindiflist", translate("Binding interface list"))
+gmrenderbindiflist.placeholder = "lan"
+gmrenderbindiflist:value("lan", translate("lan"))
+gmrenderbindiflist:value("wan", translate("wan"))
+gmrenderbindiflist:value("other", translate("other"))
+gmrenderbindiflist.default = "lan"
+gmrenderbindiflist.rempty = false
 
-gmrenderotherip = s:taboption("gmrender_set", Value, "gmrenderotherip", translate("Other ip"))
-gmrenderotherip:depends("gmrenderbindiplist", "other")
-gmrenderotherip.rmempty = true
-gmrenderotherip.datatype = "ipaddr"
-gmrenderotherip.description = translate("Please type ip address")
+gmrenderotherif = s:taboption("gmrender_set", Value, "gmrenderotherif", translate("Other interface"))
+gmrenderotherif:depends("gmrenderbindiflist", "other")
+gmrenderotherif.rmempty = true
+gmrenderotherif.datatype = "string"
+gmrenderotherif.description = translate("Please type interface name")
 
 gmrendersuffix = s:taboption("gmrender_set", Value, "gmrendersuffix", translate("gmediarender friendly-name suffix"))
 gmrendersuffix.datatype = "string"

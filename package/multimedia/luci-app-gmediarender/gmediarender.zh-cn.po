@@ -4,14 +4,14 @@ msgstr "Content-Type: text/plain; charset=UTF-8\n"
 msgid "gmediarender server"
 msgstr "gmediarender服务器"
 
-msgid "Binding ip list"
-msgstr "绑定ip列表"
+msgid "Binding interface list"
+msgstr "绑定接口列表"
 
-msgid "Other ip"
-msgstr "其他ip"
+msgid "Other interface"
+msgstr "其他接口"
 
-msgid "Please type ip address"
-msgstr "请属入ip地址"
+msgid "Please type interface name"
+msgstr "请属入接口名称"
 
 msgid "gmediarender friendly-name suffix"
 msgstr "gmediarender友好名称后缀"
