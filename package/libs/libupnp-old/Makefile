@@ -7,14 +7,17 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=libupnp
+PKG_NAME:=libupnp-old
 PKG_VERSION:=1.6.19
 PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE:=libupnp-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/pupnp
 PKG_MD5SUM:=ee16e5d33a3ea7506f38d71facc057dd
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
+
+PKG_SOURCE_SUBDIR:=libupnp-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -28,7 +31,7 @@ define Package/libupnp-old/Default
 endef
 
 define Package/libupnp-old
-  $(call Package/libupnp/Default)
+  $(call Package/libupnp-old/Default)
   DEPENDS:=+libpthread
   TITLE:=UPnP SDK library
   MENU:=1
