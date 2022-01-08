@@ -11,7 +11,7 @@ msgid "Other interface"
 msgstr "其他接口"
 
 msgid "Please type interface name"
-msgstr "请属入接口名称"
+msgstr "请输入接口名称"
 
 msgid "gmediarender friendly-name suffix"
 msgstr "gmediarender友好名称后缀"
