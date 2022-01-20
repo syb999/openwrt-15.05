@@ -1,4 +1,5 @@
 #!/bin/sh
+workcount=1
 
 function look30sec() {
 	sleep 8
@@ -13,6 +14,10 @@ function botting() {
 	workline=/tmp/worklist${sectionname}.adbtmp
 	while read LINE
 	do
+		skipthis=$(uci get adbrun.initialization.diantaoskip)
+		if [ $skipthis = $workcount ];then
+			basey=$(expr $basey  \* 5 / 4)
+		fi
 		result=$(echo $LINE | grep "秒")
 		if [ "$result" != "" ];then
 			adbtimes=$(echo $LINE | sed "s/秒/\n/;s/次//" | tail -n 1)
@@ -49,6 +54,6 @@ function botting() {
 				ltimes=$(echo `expr $ltimes + 1`)
 			done
 		fi
+		workcount=$(expr $workcount + 1)
 	done < $workline
 }
-

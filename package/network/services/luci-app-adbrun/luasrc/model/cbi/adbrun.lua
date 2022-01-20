@@ -16,7 +16,7 @@ adbstophotplug.rmempty = true
 adbstophotplug.inputstyle = "apply"
 adbstophotplug.description = translate("Suitable for connecting to openwrt through USB cable for a long time")
 function adbstophotplug.write(self, section)
-	luci.util.exec("mv /etc/hotplug.d/usb/30-adb_init /tmp/30-adb_init >/dev/null 2>&1 &")
+	luci.util.exec("mv /etc/hotplug.d/usb/30-adb_init /etc/30-adb_init >/dev/null 2>&1 &")
 end
 
 adbxhotplug = a:taboption("adb_init", Button, "adbxhotplug", translate("One-click resume hotplug"))
@@ -24,13 +24,18 @@ adbxhotplug.rmempty = true
 adbxhotplug.inputstyle = "apply"
 adbxhotplug.description = translate("After hot plug is enabled, you can continue to initialize the device using USB cable")
 function adbxhotplug.write(self, section)
-	luci.util.exec("mv /tmp/30-adb_init /etc/hotplug.d/usb/30-adb_init >/dev/null 2>&1 &")
+	luci.util.exec("mv /etc/30-adb_init /etc/hotplug.d/usb/30-adb_init >/dev/null 2>&1 &")
 end
 
 a:tab("diantaoinit_set", translate("diantao init setting"))
+diantaoskip = a:taboption("diantaoinit_set", Value, "diantaoskip", translate("diantao skip"))
+diantaoskip.datatype = "string"
+diantaoskip.default = "2"
+diantaoskip.rmempty = false
+
 diantaodayworklist = a:taboption("diantaoinit_set", Value, "diantaodayworklist", translate("diantao daytime worklist"))
 diantaodayworklist.datatype = "string"
-diantaodayworklist.default = "30秒20次 60秒20次 60秒3次 3分钟1次 30秒1次 30秒1次 5分钟1次 8分钟1次 30秒1次"
+diantaodayworklist.default = "60秒2次 skip 3分钟1次 5分钟2次 5分钟1次 60秒1次"
 diantaodayworklist.rmempty = false
 
 diantaonightworklist=a:taboption("diantaoinit_set", Value, "diantaonightworklist", translate("diantao night worklist"))
