@@ -12,12 +12,6 @@ sectionname=$(echo $0 | cut -d '/' -f 3 | cut -d '_' -f 1 | sed 's/^ADBRUN//')
 adbclient=$(uci get adbrun.$sectionname.adbiplist)
 rm /tmp/adb_ADBRUN${sectionname}_.sh
 
-adb disconnect ${adbclient}:5555
-sleep 2
-adb connect ${adbclient}:5555
-adb connect ${adbclient}:5555
-sleep 2
-
 function gotobbfm() {
 	adb -s ${adbclient}:5555 shell am force-stop com.taobao.taobao
 	sleep 5
@@ -49,9 +43,9 @@ sleep 5
 gotobbfm
 
 if [ ${screensize} == "720x1280" ];then
-	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+	adb -s ${adbclient}:5555 shell input tap $(expr $basex \* 5 / 6) $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
 else
-	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+	adb -s ${adbclient}:5555 shell input tap $(expr $basex \* 5 / 6) $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
 fi
 sleep 5
 
@@ -61,7 +55,7 @@ sleep 5
 ltimes=0
 while [ $ltimes -lt 4 ]
 do
-	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1)
+	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1)
 	sleep 3
 	adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 600`)
 	sleep 25
@@ -94,13 +88,13 @@ fi
 if [ ${screensize} == "720x1280" ];then
 	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1)
 else
-	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1)
 fi
 sleep 37
 adb -s ${adbclient}:5555 shell input keyevent 4
 sleep 5
 
-adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1)
+adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1)
 sleep 3
 adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 600`)
 sleep 25
