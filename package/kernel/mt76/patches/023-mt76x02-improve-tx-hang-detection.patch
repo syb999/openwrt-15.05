@@ -1,0 +1,75 @@
+mt76: mt76x02: improve tx hang detection
+Instead of checking if any queue has not made progress since the last run,
+only trigger hang detection if one of the queues has not made any progress
+in 10 subsequent runs. This should reduce false positive firmware restarts
+
+Signed-off-by: Felix Fietkau <nbd@nbd.name>
+https://github.com/openwrt/mt76/commit/9b2ac62d6f31b193949e91555fabba317b54c701
+
+--- a/mt76x02.h
++++ b/mt76x02.h
+@@ -103,7 +103,7 @@
+ 	u8 tbtt_count;
+ 
+ 	u32 tx_hang_reset;
+-	u8 tx_hang_check;
++	u8 tx_hang_check[4];
+ 	u8 beacon_hang_check;
+ 	u8 mcu_timeout;
+ 
+--- a/mt76x02_mmio.c
++++ b/mt76x02_mmio.c
+@@ -348,18 +348,20 @@
+ 	for (i = 0; i < 4; i++) {
+ 		q = dev->mphy.q_tx[i];
+ 
+-		if (!q->queued)
+-			continue;
+-
+ 		prev_dma_idx = dev->mt76.tx_dma_idx[i];
+ 		dma_idx = readl(&q->regs->dma_idx);
+ 		dev->mt76.tx_dma_idx[i] = dma_idx;
+ 
+-		if (prev_dma_idx == dma_idx)
+-			break;
++		if (!q->queued || prev_dma_idx != dma_idx) {
++			dev->tx_hang_check[i] = 0;
++			continue;
++		}
++
++		if (++dev->tx_hang_check[i] >= MT_TX_HANG_TH)
++			return true;
+ 	}
+ 
+-	return i < 4;
++	return false;
+ }
+ 
+ static void mt76x02_key_sync(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+@@ -528,23 +530,13 @@
+ 	if (test_bit(MT76_RESTART, &dev->mphy.state))
+ 		return;
+ 
+-	if (mt76x02_tx_hang(dev)) {
+-		if (++dev->tx_hang_check >= MT_TX_HANG_TH)
+-			goto restart;
+-	} else {
+-		dev->tx_hang_check = 0;
+-	}
+-
+-	if (dev->mcu_timeout)
+-		goto restart;
+-
+-	return;
++	if (!mt76x02_tx_hang(dev) && !dev->mcu_timeout)
++		return;
+ 
+-restart:
+ 	mt76x02_watchdog_reset(dev);
+ 
+ 	dev->tx_hang_reset++;
+-	dev->tx_hang_check = 0;
++	memset(dev->tx_hang_check, 0, sizeof(dev->tx_hang_check));
+ 	memset(dev->mt76.tx_dma_idx, 0xff,
+ 	       sizeof(dev->mt76.tx_dma_idx));
+ }
