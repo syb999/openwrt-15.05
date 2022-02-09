@@ -69,7 +69,7 @@ function getxmlyaudios(){
 		rm /tmp/tmp.XM.*
 	done
 
-	sed '1!G;h;$!d' /tmp/tmp/tmpXM.newlist3 > /tmp/tmpXM.xmlyhttp2num
+	sed '1!G;h;$!d' /tmp/tmpXM.newlist3 > /tmp/tmpXM.xmlyhttp2num
 
 	ls -al | grep "^-" > /tmp/tmpXM.filelist
 
