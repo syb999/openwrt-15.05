@@ -35,7 +35,7 @@ diantaoskip.rmempty = false
 
 diantaodayworklist = a:taboption("diantaoinit_set", Value, "diantaodayworklist", translate("diantao daytime worklist"))
 diantaodayworklist.datatype = "string"
-diantaodayworklist.default = "60秒2次 skip 3分钟1次 5分钟2次 5分钟1次 60秒1次"
+diantaodayworklist.default = "60秒2次 skip 3分钟1次 5分钟2次 5分钟3次 60秒1次"
 diantaodayworklist.rmempty = false
 
 diantaonightworklist=a:taboption("diantaoinit_set", Value, "diantaonightworklist", translate("diantao night worklist"))

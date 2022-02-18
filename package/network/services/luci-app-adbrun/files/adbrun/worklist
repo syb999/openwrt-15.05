@@ -2,10 +2,10 @@
 workcount=1
 
 function look30sec() {
-	sleep 8
-	for i in $(seq 1 3) ;do
+	sleep 7
+	for i in $(seq 1 4) ;do
 		adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 390`)
-		sleep 9
+		sleep 8
 	done
 }
 
@@ -16,44 +16,45 @@ function botting() {
 	do
 		skipthis=$(uci get adbrun.initialization.diantaoskip)
 		if [ $skipthis = $workcount ];then
-			basey=$(expr $basey  \* 5 / 4)
+			basey=$(expr $basey  \* 3 / 2)
 		fi
 		result=$(echo $LINE | grep "秒")
 		if [ "$result" != "" ];then
 			adbtimes=$(echo $LINE | sed "s/秒/\n/;s/次//" | tail -n 1)
 			switchtimes=$(echo $LINE | sed "s/秒/\n/" | head -n 1)
-			switchtimes=$(echo `expr $switchtimes \* 1`)
-			adbswitchtimes=$(echo `expr $switchtimes / 30`)
+			switchtimes=$(expr $switchtimes \* 1)
+			adbswitchtimes=$(expr $switchtimes / 30)
 			ltimes=0
-			while [ $ltimes -lt ${adbtimes} ]
+			while [ $ltimes -lt $adbtimes ]
 			do
 				adb -s ${adbclient}:5555 shell input tap $basex $basey
 				sleep 3
-				for i in $(seq 1 ${adbswitchtimes}) ;do
+				for i in $(seq 1 $adbswitchtimes) ;do
 					look30sec
 				done
 				adb -s ${adbclient}:5555 shell input keyevent 4
 				sleep 6
-				ltimes=$(echo `expr $ltimes + 1`)
+				ltimes=$(expr $ltimes + 1)
 			done
 		else
 			adbtimes=$(echo $LINE | sed "s/分钟/\n/;s/次//" | tail -n 1)
 			switchtimes=$(echo $LINE | sed "s/分钟/\n/" | head -n 1)
-			switchtimes=$(echo `expr $switchtimes \* 60`)
-			adbswitchtimes=$(echo `expr $switchtimes / 30`)
+			switchtimes=$(expr $switchtimes \* 60)
+			adbswitchtimes=$(expr $switchtimes / 30)
 			ltimes=0
-			while [ $ltimes -lt ${adbtimes} ]
+			while [ $ltimes -lt $adbtimes ]
 			do
 				adb -s ${adbclient}:5555 shell input tap $basex $basey
 				sleep 3
-				for i in $(seq 1 ${adbswitchtimes}) ;do
+				for i in $(seq 1 $adbswitchtimes) ;do
 					look30sec
 				done
 				adb -s ${adbclient}:5555 shell input keyevent 4
 				sleep 6
-				ltimes=$(echo `expr $ltimes + 1`)
+				ltimes=$(expr $ltimes + 1)
 			done
 		fi
 		workcount=$(expr $workcount + 1)
 	done < $workline
 }
+
