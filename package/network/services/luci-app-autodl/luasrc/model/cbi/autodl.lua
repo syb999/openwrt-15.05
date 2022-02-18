@@ -164,6 +164,19 @@ docinpath.default = "/mnt/sda3/docs"
 docinpath.rmempty = false
 docinpath.description = translate("Please enter a valid directory")
 
+s:tab("basic4", translate("Basic Setting for xuexila"))
+
+xuexilaurl=s:taboption("basic4", Value, "xuexilaurl", translate("xuexila.com doc URL"))
+xuexilaurl.rmempty = true
+xuexilaurl.datatype = "string"
+xuexilaurl.description = translate("URL for downloading https://xuexila.com documents")
+
+xuexilapath=s:taboption("basic4", Value, "xuexilapath", translate("Download documents directory"))
+xuexilapath.datatype = "string"
+xuexilapath.default = "/mnt/sda3/docs"
+xuexilapath.rmempty = false
+xuexilapath.description = translate("Please enter a valid directory")
+
 s:tab("basic5", translate("Basic Setting for book"))
 
 bookurl=s:taboption("basic5", Value, "bookurl", translate("Book contents URL"))
@@ -309,6 +322,14 @@ au4txt.inputstyle = "apply"
 au4txt.description = translate("docin.com documents convert to TXT(depends imagemagick & tesseract)")
 function au4txt.write(self, section)
     luci.util.exec("/usr/autodl/docintotxt.sh >/dev/null 2>&1 &")
+end
+
+s:tab("autodlxuexila", translate("Download from https://xuexila.com"))
+xx4txt = s:taboption("autodlxuexila", Button, "_autodlxuexila", translate("One-click download txt"))
+xx4txt.inputstyle = "apply"
+xx4txt.description = translate("xuexila.com documents download")
+function xx4txt.write(self, section)
+    luci.util.exec("/usr/autodl/xuexila.sh >/dev/null 2>&1 &")
 end
 
 s:tab("autodlbook", translate("Books Download Page"))

@@ -13,6 +13,9 @@ msgstr "音频基本设置"
 msgid "Basic Setting for docin"
 msgstr "docin.com基本设置"
 
+msgid "Basic Setting for xuexila"
+msgstr "xuexila.com基本设置"
+
 msgid "Basic Setting for book"
 msgstr "小说基本设置"
 
@@ -24,6 +27,15 @@ msgstr "喜马拉雅音频下载页面"
 
 msgid "Download from https://www.docin.com"
 msgstr "docin.com下载页面"
+
+msgid "Download from https://xuexila.com"
+msgstr "xuexila.com下载页面"
+
+msgid "One-click download txt"
+msgstr "一键下载为TXT文件"
+
+msgid "xuexila.com documents download"
+msgstr "学习啦文档下载"
 
 msgid "Video URL"
 msgstr "视频 URL"
@@ -231,6 +243,12 @@ msgstr "获取自豆丁网的文档"
 
 msgid "URL for downloading https://docin.com documents"
 msgstr "豆丁网文档的URL页面地址"
+
+msgid "xuexila.com doc URL"
+msgstr "获取自学习啦网站的文档"
+
+msgid "URL for downloading https://xuexila.com documents"
+msgstr "学习啦网站文档的URL页面地址"
 
 msgid "Book contents URL"
 msgstr "小说目录网址"
