@@ -1,0 +1,5 @@
+example:
+wget-ssl -q $i -O /tmp/tmpradio.m4a
+nohup aconvert
+theurl=$(cat nohup.out | grep .mp3 | head -n 1 | sed s'/url=\"/\n/;s/\"//g' |  tail -n 1)
+wget-ssl -q $theurl -O tmpfrag.mp3

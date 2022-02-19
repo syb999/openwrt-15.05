@@ -6,16 +6,16 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=aconvert-api
+PKG_NAME:=aconvert
 PKG_VERSION:=2022-02-18
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/jfk9w-go/aconvert-api
 PKG_SOURCE_VERSION:=82350b7fb9eaa6b2c57e2bca90923e6b4f4c8619
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-api-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_MD5SUM:=6b6d311cf2d460c0cce16826bf98c7a6
 
-PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-api-$(PKG_VERSION)
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
@@ -44,14 +44,14 @@ define Build/Prepare
 endef
 
 define Build/Compile
-	$(eval GO_PKG_BUILD_PKG:=$(GO_PKG)/example)
+	$(eval GO_PKG_BUILD_PKG:=$(GO_PKG)/aconvert)
 	$(call GoPackage/Build/Configure)
 	$(call GoPackage/Build/Compile)
 endef
 
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/example $(1)/usr/bin
+	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/aconvert $(1)/usr/bin
 endef
 
 $(eval $(call GoBinPackage,$(PKG_NAME)))

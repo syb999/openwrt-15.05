@@ -1,0 +1,73 @@
+--- /dev/null
++++ b/aconvert/main.go
+@@ -0,0 +1,70 @@
++package main
++
++import (
++	"context"
++	"net/http"
++	"os"
++	"path/filepath"
++	"strconv"
++
++	. "github.com/jfk9w-go/aconvert-api"
++	"github.com/jfk9w-go/flu"
++	"github.com/jfk9w-go/flu/me3x"
++	"github.com/sirupsen/logrus"
++)
++
++//noinspection GoUnhandledErrorResult
++func main() {
++	logrus.SetLevel(logrus.TraceLevel)
++	m4a := flu.File("/tmp/tmpradio.m4a")
++	mp3 := flu.File(filepath.Join(os.TempDir(), "tmpfrag.mp3"))
++	err := os.RemoveAll(mp3.Path())
++	if err != nil {
++		panic(err)
++	}
++
++	defer os.RemoveAll(mp3.Path())
++	config := &Config{
++		Probe: &Probe{
++			File:   m4a,
++			Format: "mp3",
++		},
++	}
++
++	ctx := context.Background()
++	client := NewClient(ctx, me3x.DummyRegistry{}, config)
++	resp, err := client.Convert(context.Background(), m4a, make(Opts).TargetFormat("mp3"))
++	if err != nil {
++		panic(err)
++	}
++	logrus.Infof("State: %s\n", resp.State)
++	handler := new(sizeResponseHandler)
++	err = client.HEAD(resp.URL()).Execute().HandleResponse(handler).Error
++	if err != nil {
++		panic(err)
++	}
++
++	logrus.Infof("Content-Length: %d b", handler.size)
++	err = client.GET(resp.URL()).Execute().DecodeBodyTo(mp3).Error
++	if err != nil {
++		panic(err)
++	}
++
++	stat, err := os.Stat(mp3.Path())
++	if err != nil {
++		panic(err)
++	}
++
++	size := stat.Size()
++	logrus.Infof("Downloaded file size: %d b", size)
++}
++
++type sizeResponseHandler struct {
++	size int64
++}
++
++func (h *sizeResponseHandler) Handle(resp *http.Response) (err error) {
++	header := resp.Header.Get("Content-Length")
++	h.size, err = strconv.ParseInt(header, 10, 64)
++	return
++}
