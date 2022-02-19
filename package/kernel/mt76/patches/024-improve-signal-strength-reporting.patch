@@ -1,0 +1,119 @@
+mt76: improve signal strength reporting
+Instead of just taking the maximum per-chain signal strength values,
+add an approximation for the sum of the combined signal.
+This should more accurately reflect the real signal strength, especially
+if the per-chain signal strength values are close to each other
+
+Signed-off-by: Felix Fietkau <nbd@nbd.name>
+https://github.com/openwrt/mt76/commit/7fa5229a4228fb3cabeafd5239963345a98835a3
+
+--- a/mac80211.c
++++ b/mac80211.c
+@@ -795,6 +795,35 @@
+ }
+ EXPORT_SYMBOL(mt76_wcid_key_setup);
+ 
++static int
++mt76_rx_signal(struct mt76_rx_status *status)
++{
++	s8 *chain_signal = status->chain_signal;
++	int signal = -128;
++	u8 chains;
++
++	for (chains = status->chains; chains; chains >>= 1, chain_signal++) {
++		int cur, diff;
++
++		if (!(chains & BIT(0)))
++			continue;
++
++		cur = *chain_signal;
++		if (cur > signal)
++			swap(cur, signal);
++
++		diff = signal - cur;
++		if (diff == 0)
++			signal += 3;
++		else if (diff <= 2)
++			signal += 2;
++		else if (diff <= 6)
++			signal += 1;
++	}
++
++	return signal;
++}
++
+ static void
+ mt76_rx_convert(struct mt76_dev *dev, struct sk_buff *skb,
+ 		struct ieee80211_hw **hw,
+@@ -820,6 +849,9 @@
+ 	status->signal = mstat.signal;
+ 	status->chains = mstat.chains;
+ 	status->ampdu_reference = mstat.ampdu_ref;
++	status->signal = mt76_rx_signal(&mstat);
++	if (status->signal <= -128)
++		status->flag |= RX_FLAG_NO_SIGNAL_VAL;
+ 
+ 	BUILD_BUG_ON(sizeof(mstat) > sizeof(skb->cb));
+ 	BUILD_BUG_ON(sizeof(status->chain_signal) !=
+--- a/mt7603/mac.c
++++ b/mt7603/mac.c
+@@ -636,11 +636,6 @@
+ 		status->chain_signal[1] = FIELD_GET(MT_RXV4_IB_RSSI1, rxdg3) +
+ 					  dev->rssi_offset[1];
+ 
+-		status->signal = status->chain_signal[0];
+-		if (status->chains & BIT(1))
+-			status->signal = max(status->signal,
+-					     status->chain_signal[1]);
+-
+ 		if (FIELD_GET(MT_RXV1_FRAME_MODE, rxdg0) == 1)
+ 			status->bw = RATE_INFO_BW_40;
+ 
+--- a/mt7615/mac.c
++++ b/mt7615/mac.c
+@@ -484,15 +484,6 @@
+ 		status->chain_signal[1] = to_rssi(MT_RXV4_RCPI1, rxdg3);
+ 		status->chain_signal[2] = to_rssi(MT_RXV4_RCPI2, rxdg3);
+ 		status->chain_signal[3] = to_rssi(MT_RXV4_RCPI3, rxdg3);
+-		status->signal = status->chain_signal[0];
+-
+-		for (i = 1; i < hweight8(mphy->antenna_mask); i++) {
+-			if (!(status->chains & BIT(i)))
+-				continue;
+-
+-			status->signal = max(status->signal,
+-					     status->chain_signal[i]);
+-		}
+ 
+ 		mt7615_mac_fill_tm_rx(mphy->priv, rxd);
+ 
+--- a/mt76x02_mac.c
++++ b/mt76x02_mac.c
+@@ -860,9 +860,7 @@
+ 		status->chain_signal[1] = mt76x02_mac_get_rssi(dev,
+ 							       rxwi->rssi[1],
+ 							       1);
+-		signal = max_t(s8, signal, status->chain_signal[1]);
+ 	}
+-	status->signal = signal;
+ 	status->freq = dev->mphy.chandef.chan->center_freq;
+ 	status->band = dev->mphy.chandef.chan->band;
+ 
+--- a/mt7915/mac.c
++++ b/mt7915/mac.c
+@@ -556,15 +556,6 @@
+ 		status->chain_signal[1] = to_rssi(MT_PRXV_RCPI1, v1);
+ 		status->chain_signal[2] = to_rssi(MT_PRXV_RCPI2, v1);
+ 		status->chain_signal[3] = to_rssi(MT_PRXV_RCPI3, v1);
+-		status->signal = status->chain_signal[0];
+-
+-		for (i = 1; i < hweight8(mphy->antenna_mask); i++) {
+-			if (!(status->chains & BIT(i)))
+-				continue;
+-
+-			status->signal = max(status->signal,
+-					     status->chain_signal[i]);
+-		}
+ 
+ 		/* RXD Group 5 - C-RXV */
+ 		if (rxd1 & MT_RXD1_NORMAL_GROUP_5) {
