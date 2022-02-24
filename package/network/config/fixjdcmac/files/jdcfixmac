@@ -1,0 +1,13 @@
+#!/bin/sh /etc/rc.common
+. /lib/functions/system.sh
+
+START=99
+
+lan_mac=$(cat /sys/class/net/eth0/address)
+wifi1_mac=$(macaddr_add "$lan_mac" +1)
+wifi2_mac=$(macaddr_add "$lan_mac" +2)
+echo $wifi1_mac > /sys/class/ieee80211/phy0/macaddress
+echo $wifi2_mac > /sys/class/ieee80211/phy1/macaddress
+ubus call network.wireless down
+sleep 1
+ubus call network.wireless up

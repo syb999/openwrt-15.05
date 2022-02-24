@@ -10,7 +10,7 @@ define Profile/JDCloud-1
 	PACKAGES:=\
 		kmod-usb-core kmod-usb3 kmod-usb-hid kmod-sdhci-mt7620 \
 		kmod-ledtrig-usbdev kmod-mt7603 \
-		kmod-mt7615e wpad-mini
+		kmod-mt7615e wpad-mini fixjdcmac
 endef
 
 define Profile/JDCloud-1/Description
