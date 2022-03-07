@@ -301,6 +301,19 @@ function au3t.write(self, section)
     luci.util.exec("/usr/autodl/m4atomp3.sh >/dev/null 2>&1 &")
 end
 
+onlineip = s:taboption("audioxmly", Value, "onlineip", translate("在线解码服务器"))
+onlineip.datatype = "string"
+onlineip.placeholder = "http://192.168.7.7:7777"
+onlineip.rmempty = false
+onlineip.description = translate("请输入服务器ip地址、端口号")
+
+au3online = s:taboption("audioxmly", Button, "_au3online", translate("用解码服务器下载新品限免VIP资源(本机免安装Node)"))
+au3online.inputstyle = "apply"
+au3online.description = translate("需要特定的解码服务器支持,本机需安装urlencode")
+function au3online.write(self, section)
+    luci.util.exec("/usr/autodl/xmlyonline.sh >/dev/null 2>&1 &")
+end
+
 au3isy = s:taboption("audioxmly", Button, "_audioisy", translate("www.ishuyin.com One-click download"))
 au3isy:depends("wanna_get_ishuyin_audios", "1")
 au3isy.inputstyle = "apply"
