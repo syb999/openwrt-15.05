@@ -301,17 +301,55 @@ function au3t.write(self, section)
     luci.util.exec("/usr/autodl/m4atomp3.sh >/dev/null 2>&1 &")
 end
 
-onlineip = s:taboption("audioxmly", Value, "onlineip", translate("在线解码服务器"))
-onlineip.datatype = "string"
-onlineip.placeholder = "http://192.168.7.7:7777"
-onlineip.rmempty = false
-onlineip.description = translate("请输入服务器ip地址、端口号")
+ollist=s:taboption("audioxmly", ListValue, "ollist", translate("在线解码服务"))
+ollist:value("olremote", translate("使用在线解码服务"))
+ollist:value("ollocal", translate("提供在线解码服务"))
+ollist.default     = "olremote"
+ollist.rempty      = false
 
-au3online = s:taboption("audioxmly", Button, "_au3online", translate("用解码服务器下载新品限免VIP资源(本机免安装Node)"))
-au3online.inputstyle = "apply"
-au3online.description = translate("需要特定的解码服务器支持,本机需安装urlencode")
-function au3online.write(self, section)
-    luci.util.exec("/usr/autodl/xmlyonline.sh >/dev/null 2>&1 &")
+s:tab("online_server", translate("在线解码服务"))
+olslef=s:taboption("online_server", Button, "olslef", translate("运行解码服务"))
+olslef:depends("ollist", "ollocal")
+olslef.inputstyle = "apply"
+olslef.description = translate("提供解码服务，需要安装好fastapi和uvicorn")
+function olslef.write(self, section)
+    luci.util.exec("python3 /usr/online_server/dexmly.py >/dev/null 2>&1 &")
+end
+
+olip = s:taboption("online_server", Value, "olip", translate("在线解码服务器"))
+olip:depends("ollist", "olremote")
+olip.datatype = "string"
+olip.placeholder = "http://192.168.7.7"
+olip.default = "http://192.168.7.7"
+olip.description = translate("请输入服务器ip地址")
+
+olp1 = s:taboption("online_server", Value, "olp1", translate("解码服务端口"))
+olp1:depends("ollist", "olremote")
+olp1.datatype = "string"
+olp1.placeholder = "7777"
+olp1.default = "7777"
+olp1.description = translate("请输入解码服务端口号")
+
+olp2 = s:taboption("online_server", Value, "olp2", translate("web服务端口"))
+olp2:depends("ollist", "olremote")
+olp2.datatype = "string"
+olp2.placeholder = "80"
+olp2.default = "80"
+olp2.description = translate("请输入web服务端口号")
+
+oldlvip = s:taboption("online_server", Button, "_oldlvip", translate("用解码服务器下载新品限免VIP资源(本机免安装Node)"))
+oldlvip:depends("ollist", "olremote")
+oldlvip.inputstyle = "apply"
+oldlvip.description = translate("需要特定的解码服务器支持,本机需安装urlencode")
+function oldlvip.write(self, section)
+    luci.util.exec("/usr/autodl/ols/xmlyonline.sh >/dev/null 2>&1 &")
+end
+
+olm4amp3 = s:taboption("online_server", Button, "_olm4amp3", translate("m4a在线转码mp3"))
+olm4amp3:depends("ollist", "olremote")
+olm4amp3.inputstyle = "apply"
+function olm4amp3.write(self, section)
+    luci.util.exec("/usr/autodl/ols/onlinemp3.sh >/dev/null 2>&1 &")
 end
 
 au3isy = s:taboption("audioxmly", Button, "_audioisy", translate("www.ishuyin.com One-click download"))

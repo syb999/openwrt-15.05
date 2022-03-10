@@ -12,20 +12,26 @@ async def index():
 @app.get("/epcode/{epcode}")
 async def read_ep(epcode: str):
 	epcode = urllib.parse.unquote(epcode)
-	epval = os.popen('sh ./scripts/epxmly.sh '+epcode)
+	epval = os.popen('sh /usr/online_server/scripts/epxmly.sh '+epcode)
 	return epval.read()
 
 @app.get("/sdcode/{sdcode}")
 async def read_sd(sdcode: str):
-	sdval = os.popen('sh ./scripts/sdxmly.sh '+sdcode)
+	sdval = os.popen('sh /usr/online_server/scripts/sdxmly.sh '+sdcode)
 	return sdval.read()
 
 @app.get("/phcode/{phcode}")
 async def read_ph(phcode: str):
 	phcode = urllib.parse.unquote(phcode)
-	phval = os.popen('sh ./scripts/phxmly.sh '+phcode)
+	phval = os.popen('sh /usr/online_server/scripts/phxmly.sh '+phcode)
 	return phval.read()
 
+
+@app.get("/m4atomp3/{m4aurl}")
+async def read_m4a(m4aurl: str):
+	m4aurl = urllib.parse.unquote(m4aurl)
+	urlval = os.popen('sh /usr/online_server/scripts/onlinem4amp3.sh '+m4aurl)
+	return m4aurl
 
 if __name__ == "__main__":
 	uvicorn.run("dexmly:app", host="0.0.0.0", port=7777)
