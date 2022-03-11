@@ -352,6 +352,39 @@ function olm4amp3.write(self, section)
     luci.util.exec("/usr/autodl/ols/onlinemp3.sh >/dev/null 2>&1 &")
 end
 
+s:tab("online_serverp", translate("在线解码播放"))
+olalbumid = s:taboption("online_serverp", Value, "olalbumid", translate("Audios URL"))
+olalbumid:depends("ollist", "olremote")
+olalbumid.rmempty = true
+olalbumid.datatype = "string"
+olalbumid.description = translate("播放https://www.ximalaya.com音频的网址url")
+
+olpagenums = s:taboption("online_serverp", Value, "olpagenums", translate("起始页码"))
+olpagenums:depends("ollist", "olremote")
+olpagenums.datatype = "string"
+olpagenums.placeholder = "1"
+olpagenums.default = "1"
+
+olpagenume = s:taboption("online_serverp", Value, "olpagenume", translate("结束页码"))
+olpagenume:depends("ollist", "olremote")
+olpagenume.datatype = "string"
+olpagenume.placeholder = "2"
+olpagenume.default = "2"
+
+olplayfr = s:taboption("online_serverp", Button, "_olplayfr", translate("直接在线播放喜马拉雅免费节目"))
+olplayfr:depends("ollist", "olremote")
+olplayfr.inputstyle = "apply"
+function olplayfr.write(self, section)
+    luci.util.exec("/usr/autodl/ols/onlineplayxmf.sh >/dev/null 2>&1 &")
+end
+
+olstop = s:taboption("online_serverp", Button, "_olstop", translate("停止播放"))
+olstop:depends("ollist", "olremote")
+olstop.inputstyle = "apply"
+function olstop.write(self, section)
+    luci.util.exec("/usr/autodl/ols/onlinestop.sh >/dev/null 2>&1 &")
+end
+
 au3isy = s:taboption("audioxmly", Button, "_audioisy", translate("www.ishuyin.com One-click download"))
 au3isy:depends("wanna_get_ishuyin_audios", "1")
 au3isy.inputstyle = "apply"
