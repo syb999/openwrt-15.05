@@ -25,7 +25,7 @@ do
 		sleep 6
 		wget-ssl --timeout=3 $olip:$olp2/onlineplay/online$filecount.mp3 -O /tmp/online$filecount.mp3
 		failcount=$(expr $failcount + 1)
-		if [ $failcount -gt 30 ];then
+		if [ $failcount -gt 150 ];then
 			break 2
 		fi
 	done
