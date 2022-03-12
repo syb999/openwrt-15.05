@@ -378,6 +378,13 @@ function olplayfr.write(self, section)
     luci.util.exec("/usr/autodl/ols/onlineplayxmf.sh >/dev/null 2>&1 &")
 end
 
+olnext = s:taboption("online_serverp", Button, "_olnext", translate("播放下一集"))
+olnext:depends("ollist", "olremote")
+olnext.inputstyle = "apply"
+function olnext.write(self, section)
+    luci.util.exec("/usr/autodl/ols/onlinenext.sh >/dev/null 2>&1 &")
+end
+
 olstop = s:taboption("online_serverp", Button, "_olstop", translate("停止播放"))
 olstop:depends("ollist", "olremote")
 olstop.inputstyle = "apply"

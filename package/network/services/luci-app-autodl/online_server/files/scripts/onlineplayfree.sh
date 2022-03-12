@@ -3,8 +3,6 @@
 theparam=$(echo $1 | sed 's/%3A/:/;s/%3a/:/' )
 thealbumid=$(echo $theparam | cut -d ':' -f 1 )
 pagenums=$(echo $theparam | cut -d ':' -f 2)
-pagenume=$(echo $theparam | cut -d ':' -f 3)
-kcount=1
 
 mkdir /tmp/onlineplay
 ln -s /tmp/onlineplay /www
@@ -56,16 +54,16 @@ function gettmpm4a() {
 	rm /tmp/online.tmpXM.*
 }
 
-for i in $(seq $pagenums $pagenume);do
+for i in $(seq $pagenums $(expr $pagenums + 1));do
 	weburl="https://www.ximalaya.com/revision/album/v1/getTracksList?albumId=$thealbumid&pageNum=$i&pageSize=1&sort=1"
 	gettmpm4a
-	mv /tmp/tmpplay.mp3 /tmp/onlineplay/online$kcount.mp3
-	rm /tmp/tmpplay.m4a
-	kcount=$(expr $kcount + 1)
-	if [ $kcount -eq 4 ];then
-		kcount=1
+	if [ ! -f "/tmp/onlineplay/online$pagenums.mp3" ];then
+		mv /tmp/tmpplay.mp3 /tmp/onlineplay/online$pagenums.mp3
+	else
+		mv /tmp/tmpplay.mp3 /tmp/onlineplay/online$(expr $pagenums + 1).mp3
 	fi
-	while [ $(ls /tmp/onlineplay/*.mp3 | wc -l) -gt 3 ]
+	rm /tmp/tmpplay.m4a
+	while [ $(ls /tmp/onlineplay/*.mp3 | wc -l) -gt 2 ]
 	do
 		sleep 5
 	done

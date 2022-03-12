@@ -1,6 +1,5 @@
 #!/bin/sh
 
-for f in $(seq 1 3);do
-	rm /tmp/onlineplay/online$f.mp3
-done
+filenum=$(echo $1)
+rm /tmp/onlineplay/online$filenum.mp3
 

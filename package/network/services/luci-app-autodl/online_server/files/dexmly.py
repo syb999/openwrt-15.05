@@ -41,7 +41,7 @@ async def read_furl(freeurl: str):
 @app.get("/playrm/{rmfile}")
 async def read_fmfl(rmfile: str):
 	rmfile = urllib.parse.unquote(rmfile)
-	fmfval = os.popen('sh /usr/online_server/scripts/playrm.sh')
+	fmfval = os.popen('sh /usr/online_server/scripts/playrm.sh '+rmfile)
 	return rmfile
 
 if __name__ == "__main__":
