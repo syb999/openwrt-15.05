@@ -359,17 +359,19 @@ olalbumid.rmempty = true
 olalbumid.datatype = "string"
 olalbumid.description = translate("播放https://www.ximalaya.com音频的网址url")
 
-olpagenums = s:taboption("online_serverp", Value, "olpagenums", translate("起始页码"))
+olpagenums = s:taboption("online_serverp", Value, "olpagenums", translate("起始集数"))
 olpagenums:depends("ollist", "olremote")
 olpagenums.datatype = "string"
 olpagenums.placeholder = "1"
 olpagenums.default = "1"
+olpagenums.description = translate("免费节目集数排序取反，最新一集定为第1集")
 
 olpagenume = s:taboption("online_serverp", Value, "olpagenume", translate("结束页码"))
 olpagenume:depends("ollist", "olremote")
 olpagenume.datatype = "string"
 olpagenume.placeholder = "2"
 olpagenume.default = "2"
+olpagenume.description = translate("每页30集")
 
 olplayfr = s:taboption("online_serverp", Button, "_olplayfr", translate("直接在线播放喜马拉雅免费节目"))
 olplayfr:depends("ollist", "olremote")
@@ -377,6 +379,14 @@ olplayfr.inputstyle = "apply"
 function olplayfr.write(self, section)
     luci.util.exec("/usr/autodl/ols/onlineplayxmf.sh >/dev/null 2>&1 &")
 end
+
+olplayvp = s:taboption("online_serverp", Button, "_olplayvp", translate("直接在线播放喜马拉雅新品限免VIP节目"))
+olplayvp:depends("ollist", "olremote")
+olplayvp.inputstyle = "apply"
+function olplayvp.write(self, section)
+    luci.util.exec("/usr/autodl/ols/onlineplayxmv.sh >/dev/null 2>&1 &")
+end
+
 
 olnext = s:taboption("online_serverp", Button, "_olnext", translate("播放下一集"))
 olnext:depends("ollist", "olremote")

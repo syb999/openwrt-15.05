@@ -16,7 +16,7 @@ fi
 
 while true
 do
-	curl -s $olip:$olp1/playfree/$olalbumid:$olpagenums:$olpagenume
+	curl -s $olip:$olp1/playvip/$olalbumid:$olpagenums:$olpagenume
 	sleep 3
 	wget-ssl --timeout=3 $olip:$olp2/onlineplay/online$filecount.mp3 -O /tmp/online$filecount.mp3
 	getfile="/tmp/online$filecount.mp3"
@@ -33,7 +33,7 @@ do
 	sleep 1
 	curl -s $olip:$olp1/playrm/$filecount
 	failcount=1
-	rm /tmp/online$filecount.mp3
+	rm /tmp/online*.mp3
 	filecount=$(expr $filecount + 1)
 	olpagenums=$filecount
 	sleep 1

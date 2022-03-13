@@ -51,7 +51,7 @@ function gettmpm4a() {
 		wget-ssl --timeout=3 $audiofile -O /tmp/tmpplay.m4a
 		ffmpeg -y -i /tmp/tmpplay.m4a -acodec libmp3lame /tmp/tmpplay.mp3 >/dev/null 2>&1
 	done
-	rm /tmp/online.tmpXM.*
+	rm /tmp/online.tmpXM.* /tmp/online.tmp.XM.*
 }
 
 for i in $(seq $pagenums $(expr $pagenums + 1));do
@@ -66,6 +66,7 @@ for i in $(seq $pagenums $(expr $pagenums + 1));do
 	while [ $(ls /tmp/onlineplay/*.mp3 | wc -l) -gt 2 ]
 	do
 		sleep 5
+		rm $(ls /tmp/onlineplay/*.mp3 | grep -v online$pagenums.mp3 | grep -v online$(expr $pagenums + 1).mp3)
 	done
 done
 

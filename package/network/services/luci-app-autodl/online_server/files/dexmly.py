@@ -38,6 +38,13 @@ async def read_furl(freeurl: str):
 	furlval = os.popen('sh /usr/online_server/scripts/onlineplayfree.sh '+freeurl)
 	return freeurl
 
+@app.get("/playvip/{vipurl}")
+async def read_vurl(vipurl: str):
+	vipurl = urllib.parse.unquote(vipurl)
+	vurlval = os.popen('sh /usr/online_server/scripts/onlineplayvip.sh '+vipurl)
+	return vipurl
+
+
 @app.get("/playrm/{rmfile}")
 async def read_fmfl(rmfile: str):
 	rmfile = urllib.parse.unquote(rmfile)
