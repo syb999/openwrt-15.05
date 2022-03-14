@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=online_server
-PKG_VERSION:=20220313
+PKG_VERSION:=20220314
 
 include $(INCLUDE_DIR)/package.mk
 
