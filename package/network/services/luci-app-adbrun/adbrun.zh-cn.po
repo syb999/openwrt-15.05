@@ -76,6 +76,12 @@ msgstr "关闭/打开屏幕"
 msgid "Turn on screen"
 msgstr "点亮屏幕"
 
+msgid "Increase screen brightness"
+msgstr "增加屏幕亮度"
+
+msgid "Reduce screen brightness"
+msgstr "降低屏幕亮度"
+
 msgid "Play or stop"
 msgstr "播放/暂停"
 

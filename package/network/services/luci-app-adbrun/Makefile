@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 
 PKG_NAME:=luci-app-adbrun
-PKG_VERSION:=20220218
+PKG_VERSION:=20220314
 
 include $(INCLUDE_DIR)/package.mk
 

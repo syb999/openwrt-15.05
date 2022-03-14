@@ -28,6 +28,10 @@ case $adbcommand in
 	;;
 	turn-on-the-screen) adbcd="shell input keyevent 224"
 	;;
+	increase-screen-brightness) adbcd="shell input keyevent 221"
+	;;
+	reduce-screen-brightness) adbcd="shell input keyevent 220"
+	;;
 	playstop) adbcd="shell input keyevent 85"
 	;;
 	playnext) adbcd="shell input keyevent 87"

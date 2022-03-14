@@ -69,6 +69,8 @@ adbcommandlist.placeholder = "none"
 adbcommandlist:value("none", translate("none"))
 adbcommandlist:value("turn-offon-the-screen", translate("Turn off/on the screen"))
 adbcommandlist:value("turn-on-the-screen", translate("Turn on screen"))
+adbcommandlist:value("increase-screen-brightness", translate("Increase screen brightness"))
+adbcommandlist:value("reduce-screen-brightness", translate("Reduce screen brightness"))
 adbcommandlist:value("playstop", translate("Play or stop"))
 adbcommandlist:value("playnext", translate("Play the next"))
 adbcommandlist:value("playprevious", translate("Play the previous"))
