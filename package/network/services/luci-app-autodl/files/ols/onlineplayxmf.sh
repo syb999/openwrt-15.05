@@ -47,12 +47,12 @@ do
 		getasec=$(expr $(date +%S) + $filecount)
 
 		if [ $getasec -lt 60 ];then
-			getminnew=$(expr $getminnow + 2)
+			getminnew=$(expr $getminnow + 1)
 			if [ $getminnew -ge 60 ];then
 				getminnew=$(expr $getminnew - 60)
 			fi
 		else
-			getminnew=$(expr $getminnow + 3)
+			getminnew=$(expr $getminnow + 2)
 			if [ $getminnew -ge 60 ];then
 				getminnew=$(expr $getminnew - 60)
 			fi
