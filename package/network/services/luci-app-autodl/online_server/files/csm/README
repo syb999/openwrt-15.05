@@ -1,0 +1,15 @@
+使用环境python3.6+
+pip install pillow qrcode
+目录内文件说明：
+1. main.sh
+     该文件是主体运行脚本
+2. mergeimg.py
+     该文件是生成二维码图片的核心脚本
+     先通过url生成二维码图片,再把logo.png嵌入该图片。然后把新图片嵌入basename.png。
+     最后在图片上加上文字。		
+3. logo.png
+     该图片是嵌入二维码中的图标
+4. basename.png
+     该文件是场所码主体背景文件
+5. simhei.ttf
+     该文件是生成文字的字体文件

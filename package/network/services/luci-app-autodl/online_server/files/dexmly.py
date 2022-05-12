@@ -2,6 +2,7 @@ from fastapi import FastAPI
 import uvicorn
 import os
 import urllib
+import subprocess
 
 app = FastAPI()
 
@@ -44,12 +45,17 @@ async def read_vurl(vipurl: str):
 	vurlval = os.popen('sh /usr/online_server/scripts/onlineplayvip.sh '+vipurl)
 	return vipurl
 
-
 @app.get("/playrm/{rmfile}")
 async def read_fmfl(rmfile: str):
 	rmfile = urllib.parse.unquote(rmfile)
 	fmfval = os.popen('sh /usr/online_server/scripts/playrm.sh '+rmfile)
 	return rmfile
+
+@app.get("/qrccode/{qrccode}")
+async def read_qrcep(qrccode: str):
+	qrccode = urllib.parse.unquote(qrccode)
+	subprocess.call('sh /usr/online_server/csm/main.sh '+qrccode,shell=True)
+	return qrccode
 
 if __name__ == "__main__":
 	uvicorn.run("dexmly:app", host="0.0.0.0", port=7777)

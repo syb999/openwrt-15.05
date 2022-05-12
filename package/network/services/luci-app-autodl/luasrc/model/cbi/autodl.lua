@@ -301,13 +301,14 @@ function au3t.write(self, section)
     luci.util.exec("/usr/autodl/m4atomp3.sh >/dev/null 2>&1 &")
 end
 
-ollist=s:taboption("audioxmly", ListValue, "ollist", translate("在线解码服务"))
+
+s:tab("online_server", translate("在线解码服务"))
+ollist=s:taboption("online_server", ListValue, "ollist", translate("在线解码服务"))
 ollist:value("olremote", translate("使用在线解码服务"))
 ollist:value("ollocal", translate("提供在线解码服务"))
 ollist.default     = "olremote"
 ollist.rempty      = false
 
-s:tab("online_server", translate("在线解码服务"))
 olslef=s:taboption("online_server", Button, "olslef", translate("运行解码服务"))
 olslef:depends("ollist", "ollocal")
 olslef.inputstyle = "apply"
@@ -350,6 +351,32 @@ olm4amp3:depends("ollist", "olremote")
 olm4amp3.inputstyle = "apply"
 function olm4amp3.write(self, section)
     luci.util.exec("/usr/autodl/ols/onlinemp3.sh >/dev/null 2>&1 &")
+end
+
+s:tab("online_serveqr", translate("在线生成二维码图片"))
+qrcodeclientip= s:taboption("online_serveqr", Value, "qrcodeclientip", translate("wan ip"))
+qrcodeclientip:depends("ollist", "olremote")
+qrcodeclientip.datatype = "string"
+qrcodeclientip.default = "http://192.168.1.1"
+qrcodeclientip.description = translate("本机wan口ip(请自行确保http服务端口已做映射)")
+
+qrcodefilepath = s:taboption("online_serveqr", Value, "qrcodefilepath", translate("File Path"))
+qrcodefilepath:depends("ollist", "olremote")
+qrcodefilepath.datatype = "string"
+qrcodefilepath.default = "/tmp/file.csv"
+qrcodefilepath.description = translate("二维码URL数据表文件路径（文件内容格式(支持多行)：名字,url,信息）")
+
+qrcodeoutputpath = s:taboption("online_serveqr", Value, "qrcodeoutputpath", translate("Output Directory"))
+qrcodeoutputpath:depends("ollist", "olremote")
+qrcodeoutputpath.datatype = "string"
+qrcodeoutputpath.default = "/tmp"
+qrcodeoutputpath.description = translate("文件输出目录")
+
+qrcodemake = s:taboption("online_serveqr", Button, "qrcodemake", translate("批量在线生成二维码图片"))
+qrcodemake:depends("ollist", "olremote")
+qrcodemake.inputstyle = "apply"
+function qrcodemake.write(self, section)
+    luci.util.exec("/usr/autodl/ols/onlineqrcode.sh >/dev/null 2>&1 &")
 end
 
 s:tab("online_serverp", translate("在线解码播放"))
@@ -627,3 +654,4 @@ end
 
 
 return m
+
