@@ -1,33 +1,8 @@
 m = Map("autodl", translate("Autodl"))
 
-s = m:section(TypedSection, "autodl", "", translate("Assistant for automatic download m3u8 videos."))
+s = m:section(TypedSection, "autodl", "", translate("Assistant for automatic download."))
 s.anonymous = true
 s.addremove = false
-
-s:tab("basic", translate("Basic Setting for Video"))
-
-url=s:taboption("basic", Value, "url", translate("Video URL"))
-url.rmempty = true
-url.datatype = "string"
-url.description = translate("URL for downloading videos")
-
-path=s:taboption("basic", Value, "path", translate("Download Videos directory"))
-path.datatype = "string"
-path.default = "/mnt/sda3/videos"
-path.rmempty = false
-path.description = translate("Please enter a valid directory")
-
-name=s:taboption("basic", Value, "name", translate("Videos Name"))
-name.datatype = "string"
-name.default = "鬼灭之刃"
-name.rmempty = false
-name.description = translate("Videos from dy10000.org or xgys.net")
-
-num=s:taboption("basic", Value, "num", translate("Total number of video files"))
-num.datatype = "string"
-num.default = "1"
-num.rmempty = false
-num.description = translate("Please enter a valid number")
 
 s:tab("basic2", translate("Basic Setting for Audio"))
 
@@ -164,120 +139,6 @@ docinpath.default = "/mnt/sda3/docs"
 docinpath.rmempty = false
 docinpath.description = translate("Please enter a valid directory")
 
-s:tab("basic4", translate("Basic Setting for xuexila"))
-
-xuexilaurl=s:taboption("basic4", Value, "xuexilaurl", translate("xuexila.com doc URL"))
-xuexilaurl.rmempty = true
-xuexilaurl.datatype = "string"
-xuexilaurl.description = translate("URL for downloading https://xuexila.com documents")
-
-xuexilapath=s:taboption("basic4", Value, "xuexilapath", translate("Download documents directory"))
-xuexilapath.datatype = "string"
-xuexilapath.default = "/mnt/sda3/docs"
-xuexilapath.rmempty = false
-xuexilapath.description = translate("Please enter a valid directory")
-
-s:tab("basic5", translate("Basic Setting for book"))
-
-bookurl=s:taboption("basic5", Value, "bookurl", translate("Book contents URL"))
-bookurl.rmempty = true
-bookurl.datatype = "string"
-bookurl.description = translate("Book URL")
-
-bookname=s:taboption("basic5", Value, "bookname", translate("The title of a book"))
-bookname.datatype = "string"
-bookname.placeholder = "story"
-bookname.default = "story"
-bookname.rmempty = false
-
-bookpath=s:taboption("basic5", Value, "bookpath", translate("Download book directory"))
-bookpath.datatype = "string"
-bookpath.default = "/mnt/sda3/book"
-bookpath.rmempty = false
-bookpath.description = translate("Please enter a valid directory")
-
----url1=s:taboption("basic", Button, "url1", translate("Sync download address (save & app after sync)"))
----url1.inputstyle = "apply"
-
-s:tab("autodl1", translate("Videos Download Page"))
-au1 = s:taboption("autodl1", Button, "_autodl1", translate("One-click download"))
-au1.inputstyle = "apply"
-au1.description = translate("Download from https://www.dy10000.org")
-function au1.write(self, section)
-    luci.util.exec("/usr/autodl/autodl1.sh >/dev/null 2>&1 &")
-end
-
-au2 = s:taboption("autodl1", Button, "_autodl2", translate("One-click download"))
-au2.inputstyle = "apply"
-au2.description = translate("Download from https://www.xgys.net")
-function au2.write(self, section)
-    luci.util.exec("uci get autodl.@autodl[0].url > /tmp/autodl.url")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autodl.@autodl[0].url > /tmp/autodl.url.bk")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autodl.@autodl[0].path > /tmp/autodl.path")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autodl.@autodl[0].name > /tmp/autodl.name")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autodl.@autodl[0].num > /tmp/autodl.num")
-    luci.util.exec("sleep 1")
-    luci.util.exec("/usr/autodl/autodl2.sh >/dev/null 2>&1 &")
-end
-
-au5 = s:taboption("autodl1", Button, "_autodl5", translate("One-click download"))
-au5.inputstyle = "apply"
-au5.description = translate("Download from https://www.gclxx.com")
-function au5.write(self, section)
-    luci.util.exec("uci get autodl.@autodl[0].url > /tmp/autodl.url")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autodl.@autodl[0].url > /tmp/autodl.url.bk")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autodl.@autodl[0].path > /tmp/autodl.path")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autodl.@autodl[0].name > /tmp/autodl.name")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autodl.@autodl[0].num > /tmp/autodl.num")
-    luci.util.exec("sleep 1")
-    luci.util.exec("/usr/autodl/autodl5.sh >/dev/null 2>&1 &")
-end
-
-au6 = s:taboption("autodl1", Button, "_autodl6", translate("One-click download"))
-au6.inputstyle = "apply"
-au6.description = translate("Download from http://gtghy-45.cn")
-function au6.write(self, section)
-    luci.util.exec("uci get autodl.@autodl[0].url > /tmp/autodl.url")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autodl.@autodl[0].url > /tmp/autodl.url.bk")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autodl.@autodl[0].path > /tmp/autodl.path")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autodl.@autodl[0].name > /tmp/autodl.name")
-    luci.util.exec("sleep 1")
-    luci.util.exec("uci get autodl.@autodl[0].num > /tmp/autodl.num")
-    luci.util.exec("sleep 1")
-    luci.util.exec("/usr/autodl/autodl6.sh >/dev/null 2>&1 &")
-end
-
-au7 = s:taboption("autodl1", Button, "_autodl7", translate("One-click download"))
-au7.inputstyle = "apply"
-au7.description = translate("Download from https://www.ppys5.net (depends openssl)")
-function au7.write(self, section)
-    luci.util.exec("/usr/autodl/autodl7.sh >/dev/null 2>&1 &")
-end
-
-au8 = s:taboption("autodl1", Button, "_autodl8", translate("One-click download"))
-au8.inputstyle = "apply"
-au8.description = translate("Download from http://www.jingcai520.com (depends openssl)")
-function au8.write(self, section)
-    luci.util.exec("/usr/autodl/autodl8.sh >/dev/null 2>&1 &")
-end
-
-au1t = s:taboption("autodl1", Button, "_autodl1t", translate("One-click ts to mp4"))
-au1t.inputstyle = "apply"
-au1t.description = translate("ffmpeg needs to be installed")
-function au1t.write(self, section)
-    luci.util.exec("/usr/autodl/tstomp4.sh >/dev/null 2>&1 &")
-end
 
 s:tab("audioxmly", translate("Download Audio from https://www.ximalaya.com"))
 au3 = s:taboption("audioxmly", Button, "_audioxmly", translate("One-click download"))
@@ -452,28 +313,6 @@ function au4txt.write(self, section)
     luci.util.exec("/usr/autodl/docintotxt.sh >/dev/null 2>&1 &")
 end
 
-s:tab("autodlxuexila", translate("Download from https://xuexila.com"))
-xx4txt = s:taboption("autodlxuexila", Button, "_autodlxuexila", translate("One-click download txt"))
-xx4txt.inputstyle = "apply"
-xx4txt.description = translate("xuexila.com documents download")
-function xx4txt.write(self, section)
-    luci.util.exec("/usr/autodl/xuexila.sh >/dev/null 2>&1 &")
-end
-
-s:tab("autodlbook", translate("Books Download Page"))
-bk1 = s:taboption("autodlbook", Button, "_autodlbook", translate("One-click download book"))
-bk1.inputstyle = "apply"
-bk1.description = translate("Download a book from http://book.zongheng.com")
-function bk1.write(self, section)
-    luci.util.exec("/usr/autodl/autodlbook1.sh >/dev/null 2>&1 &")
-end
-
-bk2 = s:taboption("autodlbook", Button, "_autodlbook2", translate("One-click download book"))
-bk2.inputstyle = "apply"
-bk2.description = translate("Download a book from https://www.biquge5200.cc")
-function bk2.write(self, section)
-    luci.util.exec("/usr/autodl/autodlbook2.sh >/dev/null 2>&1 &")
-end
 
 s:tab("audioplaytab", translate("Audio playback menu"))
 byebyegst = s:taboption("audioplaytab", Button, "byebyegst", translate("One-click discard gst-play-1.0"))
