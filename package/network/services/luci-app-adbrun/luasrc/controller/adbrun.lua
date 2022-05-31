@@ -11,7 +11,6 @@ function index()
 	entry({"admin", "services", "adbrun", "status"}, call("xact_status")).leaf = true
 end
 
-
 function xact_status()
 	local json = require "luci.jsonc"
 	luci.http.prepare_content("application/json")
@@ -20,7 +19,7 @@ function xact_status()
 	if adblist then
 		infolist = { }
 		local num = 0
-		local deviceip, port, apk, rapk
+		local deviceip, port, apk, rapk, runapk
 		while true do
 			local ln = adblist:read("*l")
 			if not ln then
@@ -29,8 +28,11 @@ function xact_status()
 				deviceip, port = ln:match("(%S-):(%d+).-")
 
 				if num and deviceip and port then
-					apk = io.popen("adb -s " .. deviceip .. ":" .. port .." shell dumpsys activity activities | grep -i run | grep -e 'SplashActivity' -e 'MainActivity' -e 'AudioPlayActivity' -e 'NewMapActivity' -e 'NewMainActivity' | grep -v miui. | grep -v android.systemui | grep -v recent | awk '{print $5}' | cut -d '/' -f 1 2>/dev/null")
-					rapk = apk:read("*l")
+					apk = io.popen("adb -s " .. deviceip .. ":" .. port .." shell dumpsys activity activities | grep -i run | grep -e 'SplashActivity' -e 'MainActivity' -e 'AudioPlayActivity' -e 'NewMapActivity' -e 'NewMainActivity' -e 'LauncherUI' -e 'MainFrameActivity' -e 'AlipayLogin' -e 'InnerUCMobile' -e 'MediaActivity' | grep -v miui. | grep -v android.systemui | grep -v recent | awk '{print $5}' | cut -d '/' -f 1 | head -n 1 2>/dev/null")
+					rapk = apk:read("*a")
+					if rapk then
+						runapk = rapk
+					end
 					num = num + 1
 				end
 			end
@@ -39,7 +41,7 @@ function xact_status()
 				num = num,
 				deviceip = deviceip,
 				port = port,
-				apk = rapk
+				apk = runapk
 			}
 		end
 	end

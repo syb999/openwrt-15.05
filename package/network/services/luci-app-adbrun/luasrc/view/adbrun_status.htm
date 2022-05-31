@@ -1,10 +1,12 @@
 <script type="text/javascript">//<![CDATA[
+
 	XHR.poll(10, '<%=luci.dispatcher.build_url("admin", "services", "adbrun", "status")%>', null,
 		function(x, st)
 		{
 			var tb = document.getElementById('adbrun_status_table');
 			if (st && tb)
 			{
+
 				while(tb.rows.length > 1)
 					tb.deleteRow(1);
 				for( var i = 0; i < st.length; i++ )
@@ -17,37 +19,49 @@
 					tr.insertCell(-1).innerHTML = st[i].port;
 					tr.insertCell(-1).innerHTML = (function() {
 									var devmac = st[i].apk;
-									if (devmac == "com.ss.android.article.lite")
+									if (devmac == "com.ss.android.article.lite\n")
 										return String.format("今日头条极速版")
-									else if (devmac == "com.ss.android.ugc.aweme.lite")
+									else if (devmac == "com.ss.android.ugc.aweme\n")
+										return String.format('抖音')
+									else if (devmac == "com.ss.android.ugc.aweme.lite\n")
 										return String.format('抖音极速版')
-									else if (devmac == "com.xs.fm")
+									else if (devmac == "com.xs.fm\n")
 										return String.format('番茄畅听')
-									else if (devmac == "com.baidu.searchbox.lite")
+									else if (devmac == "com.baidu.searchbox.lite\n")
 										return String.format('百度极速版')
-									else if (devmac == "com.ximalaya.ting.lite")
+									else if (devmac == "com.ximalaya.ting.android\n")
+										return String.format('喜马拉雅')
+									else if (devmac == "com.ximalaya.ting.lite\n")
 										return String.format('喜马拉雅极速版')
-									else if (devmac == "com.dragon.read")
+									else if (devmac == "com.dragon.read\n")
 										return String.format('番茄小说')
-									else if (devmac == "com.tencent.mm")
+									else if (devmac == "com.tencent.mm\n")
 										return String.format('微信')
-									else if (devmac == "tencent.mobileqq")
+									else if (devmac == "com.tencent.mobileqq\n")
 										return String.format('QQ')
-									else if (devmac == "com.taobao.taobao")
+									else if (devmac == "com.taobao.taobao\n")
 										return String.format('淘宝')
-									else if (devmac == "com.taobao.litetao")
+									else if (devmac == "com.taobao.litetao\n")
 										return String.format('淘宝特价版')
-									else if (devmac == "com.taobao.live")
+									else if (devmac == "com.taobao.live\n")
 										return String.format('点淘')
-									else if (devmac == "com.jd.jdlite")
+									else if (devmac == "com.jd.jdlite\n")
 										return String.format('京东极速版')
-									else if (devmac == "com.sankuai.meituan")
+									else if (devmac == "com.sankuai.meituan\n")
 										return String.format('美团')
-									else if (devmac == "mobi.w3studio.apps.android.shsmy.phone")
+									else if (devmac == "mobi.w3studio.apps.android.shsmy.phone\n")
 										return String.format('随申办')
-									else if (devmac == "com.autonavi.minimap")
+									else if (devmac == "com.autonavi.minimap\n")
 										return String.format('高德地图')
-									else if (devmac == "com.android.camera")
+									else if (devmac == "com.eg.android.AlipayGphone\n")
+										return String.format('支付宝')
+									else if (devmac == "com.UCMobile\n")
+										return String.format('UC浏览器')
+									else if (devmac == "tv.danmaku.bili\n")
+										return String.format('bilibili')
+									else if (devmac == "com.kugou.android\n")
+										return String.format('酷狗音乐')
+									else if (devmac == "com.android.camera\n")
 										return String.format('照相机')
 									else
 										return String.format('未知')
@@ -72,4 +86,3 @@
 		<tr>
 	</table>
 </fieldset>
-
