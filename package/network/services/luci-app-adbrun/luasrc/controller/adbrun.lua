@@ -12,13 +12,11 @@ function index()
 end
 
 
-
 function xact_status()
 	local json = require "luci.jsonc"
 	luci.http.prepare_content("application/json")
 
-	local adblist = io.popen("adb devices | sed '1d;$d'")
-
+	local adblist = io.popen("adb devices | sed '1d;$d' 2>/dev/null")
 	if adblist then
 		infolist = { }
 		local num = 0
@@ -31,7 +29,7 @@ function xact_status()
 				deviceip, port = ln:match("(%S-):(%d+).-")
 
 				if num and deviceip and port then
-					apk = io.popen("adb -s " .. deviceip .. ":" .. port .." shell dumpsys activity activities | grep -i run | grep -e 'SplashActivity' -e 'MainActivity' -e 'AudioPlayActivity' -e 'NewMapActivity' -e 'NewMainActivity' | grep -v miui. | grep -v android.systemui | grep -v recent | awk '{print $5}' | cut -d '/' -f 1")
+					apk = io.popen("adb -s " .. deviceip .. ":" .. port .." shell dumpsys activity activities | grep -i run | grep -e 'SplashActivity' -e 'MainActivity' -e 'AudioPlayActivity' -e 'NewMapActivity' -e 'NewMainActivity' | grep -v miui. | grep -v android.systemui | grep -v recent | awk '{print $5}' | cut -d '/' -f 1 2>/dev/null")
 					rapk = apk:read("*l")
 					num = num + 1
 				end
@@ -43,11 +41,8 @@ function xact_status()
 				port = port,
 				apk = rapk
 			}
-
 		end
-
 	end
-
 	adblist:close()
 	
 	luci.http.write_json(infolist);
