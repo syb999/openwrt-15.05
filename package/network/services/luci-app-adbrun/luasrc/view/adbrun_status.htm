@@ -1,0 +1,75 @@
+<script type="text/javascript">//<![CDATA[
+	XHR.poll(10, '<%=luci.dispatcher.build_url("admin", "services", "adbrun", "status")%>', null,
+		function(x, st)
+		{
+			var tb = document.getElementById('adbrun_status_table');
+			if (st && tb)
+			{
+				while(tb.rows.length > 1)
+					tb.deleteRow(1);
+				for( var i = 0; i < st.length; i++ )
+				{
+					var tr = tb.insertRow(-1);
+						tr.className = 'cbi-section-table-row cbi-rowstyle-' ;
+
+					tr.insertCell(-1).innerHTML = st[i].num;
+					tr.insertCell(-1).innerHTML = st[i].deviceip;
+					tr.insertCell(-1).innerHTML = st[i].port;
+					tr.insertCell(-1).innerHTML = (function() {
+									var devmac = st[i].apk;
+									if (devmac == "com.ss.android.article.lite")
+										return String.format("今日头条极速版")
+									else if (devmac == "com.ss.android.ugc.aweme.lite")
+										return String.format('抖音极速版')
+									else if (devmac == "com.xs.fm")
+										return String.format('番茄畅听')
+									else if (devmac == "com.baidu.searchbox.lite")
+										return String.format('百度极速版')
+									else if (devmac == "com.ximalaya.ting.lite")
+										return String.format('喜马拉雅极速版')
+									else if (devmac == "com.dragon.read")
+										return String.format('番茄小说')
+									else if (devmac == "com.tencent.mm")
+										return String.format('微信')
+									else if (devmac == "tencent.mobileqq")
+										return String.format('QQ')
+									else if (devmac == "com.taobao.taobao")
+										return String.format('淘宝')
+									else if (devmac == "com.taobao.litetao")
+										return String.format('淘宝特价版')
+									else if (devmac == "com.taobao.live")
+										return String.format('点淘')
+									else if (devmac == "com.jd.jdlite")
+										return String.format('京东极速版')
+									else if (devmac == "com.sankuai.meituan")
+										return String.format('美团')
+									else if (devmac == "mobi.w3studio.apps.android.shsmy.phone")
+										return String.format('随申办')
+									else if (devmac == "com.autonavi.minimap")
+										return String.format('高德地图')
+									else if (devmac == "com.android.camera")
+										return String.format('照相机')
+									else
+										return String.format('未知')
+									})();
+				}
+			}
+		}
+	);
+//]]></script>
+
+<fieldset class="cbi-section">
+	<legend><%:Active adb devices%></legend>
+	<table class="cbi-section-table" id="adbrun_status_table">
+		<tr class="cbi-section-table-titles">
+			<th class="cbi-section-table-cell"><%:序号%></th>
+			<th class="cbi-section-table-cell"><%:IP地址%></th>
+			<th class="cbi-section-table-cell"><%:端口%></th>
+			<th class="cbi-section-table-cell"><%:当前运行程序%></th>
+		</tr>
+		<tr class="cbi-section-table-row">
+			<td colspan="4"></td>
+		<tr>
+	</table>
+</fieldset>
+

@@ -1,5 +1,7 @@
 m = Map("adbrun", translate("ADB server"))
 
+m:section(SimpleSection).template  = "adbrun_status"
+
 a = m:section(TypedSection, "adbinit", "")
 
 a:tab("adb_init", translate("init devices"))
