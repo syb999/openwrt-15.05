@@ -28,7 +28,7 @@ function xact_status()
 				deviceip, port = ln:match("(%S-):(%d+).-")
 
 				if num and deviceip and port then
-					apk = io.popen("adb -s " .. deviceip .. ":" .. port .." shell dumpsys activity activities | grep -i run | grep -e 'SplashActivity' -e 'MainActivity' -e 'AudioPlayActivity' -e 'NewMapActivity' -e 'NewMainActivity' -e 'LauncherUI' -e 'MainFrameActivity' -e 'AlipayLogin' -e 'InnerUCMobile' -e 'MediaActivity' | grep -v miui. | grep -v android.systemui | grep -v recent | awk '{print $5}' | cut -d '/' -f 1 | head -n 1 2>/dev/null")
+					apk = io.popen("adb -s " .. deviceip .. ":" .. port .." shell dumpsys activity activities | grep -i run | grep -v miui. | grep -v android.systemui | grep -v recent | grep -e 'SplashActivity' -e 'MainActivity' -e 'AudioPlayActivity' -e 'NewMapActivity' -e 'NewMainActivity' -e 'LauncherUI' -e 'MainFrameActivity' -e 'AlipayLogin' -e 'InnerUCMobile' -e 'MediaActivity' | head -n 1 | awk '{print $5}' | cut -d '/' -f 1 2>/dev/null")
 					rapk = apk:read("*a")
 					if rapk then
 						runapk = rapk
