@@ -6,6 +6,11 @@
 #
 
 OPENWRT_GIT = http://git.openwrt.org
+PROJECT_GIT = https://git.openwrt.org
+
+OPENWRT_GIT = $(PROJECT_GIT)
+LEDE_GIT = $(PROJECT_GIT)
+
 
 ifdef PKG_SOURCE_VERSION
 PKG_VERSION ?= $(if $(PKG_SOURCE_DATE),$(PKG_SOURCE_DATE)-)$(call version_abbrev,$(PKG_SOURCE_VERSION))
