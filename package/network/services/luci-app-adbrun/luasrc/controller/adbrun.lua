@@ -19,27 +19,33 @@ function xact_status()
 	if adblist then
 		infolist = { }
 		local num = 0
-		local deviceip, port, apk, rapk, runapk
+		local deviceid, port, apk, rapk, runapk
 		while true do
 			local ln = adblist:read("*l")
 			if not ln then
 				break
 			elseif ln:match("(%S-):(%d+).-") then
-				deviceip, port = ln:match("(%S-):(%d+).-")
-
-				if num and deviceip and port then
-					apk = io.popen("adb -s " .. deviceip .. ":" .. port .." shell dumpsys activity activities | grep -i run | grep -v miui. | grep -v android.systemui | grep -v recent | grep -e 'SplashActivity' -e 'MainActivity' -e 'AudioPlayActivity' -e 'NewMapActivity' -e 'NewMainActivity' -e 'LauncherUI' -e 'MainFrameActivity' -e 'AlipayLogin' -e 'InnerUCMobile' -e 'MediaActivity' | head -n 1 | awk '{print $5}' | cut -d '/' -f 1 2>/dev/null")
+				deviceid, port = ln:match("(%S-):(%d+).-")
+				if num and deviceid and port then
+					num = num + 1
+					apk = io.popen("adb -s " .. deviceid .. ":" .. port .." shell dumpsys activity activities | grep -i run | grep -v miui. | grep -v android.systemui | grep -v recent | grep -e 'SplashActivity' -e 'MainActivity' -e 'AudioPlayActivity' -e 'NewMapActivity' -e 'NewMainActivity' -e 'LauncherUI' -e 'MainFrameActivity' -e 'AlipayLogin' -e 'InnerUCMobile' -e 'MediaActivity' -e '.Camera' | head -n 1 | awk '{print $5}' | cut -d '/' -f 1 2>/dev/null")
 					rapk = apk:read("*a")
 					if rapk then
 						runapk = rapk
 					end
+				end
+			elseif ln:match("^(%w+).-device") then
+				deviceid = ln:match("^(%w+).-device")
+				if num and deviceid then
 					num = num + 1
+					port = "USB Cable"
+					runapk = "init_adbrun"
 				end
 			end
 
 			infolist[#infolist+1] = {
 				num = num,
-				deviceip = deviceip,
+				deviceid = deviceid,
 				port = port,
 				apk = runapk
 			}

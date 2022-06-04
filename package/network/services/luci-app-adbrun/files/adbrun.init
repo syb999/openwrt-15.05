@@ -11,5 +11,6 @@ start() {
 }
 
 stop() {
-        service_stop /usr/bin/adb
+        kill -9 $(busybox ps | grep adb | grep server | grep -v grep | awk '{print $1}') >/dev/null 2>&1
 }
+

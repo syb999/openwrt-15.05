@@ -1,12 +1,10 @@
 <script type="text/javascript">//<![CDATA[
-
 	XHR.poll(10, '<%=luci.dispatcher.build_url("admin", "services", "adbrun", "status")%>', null,
 		function(x, st)
 		{
 			var tb = document.getElementById('adbrun_status_table');
 			if (st && tb)
 			{
-
 				while(tb.rows.length > 1)
 					tb.deleteRow(1);
 				for( var i = 0; i < st.length; i++ )
@@ -15,54 +13,56 @@
 						tr.className = 'cbi-section-table-row cbi-rowstyle-' ;
 
 					tr.insertCell(-1).innerHTML = st[i].num;
-					tr.insertCell(-1).innerHTML = st[i].deviceip;
+					tr.insertCell(-1).innerHTML = st[i].deviceid;
 					tr.insertCell(-1).innerHTML = st[i].port;
 					tr.insertCell(-1).innerHTML = (function() {
-									var devmac = st[i].apk;
-									if (devmac == "com.ss.android.article.lite\n")
+									var apkid = st[i].apk;
+									if (apkid == "com.ss.android.article.lite\n")
 										return String.format("今日头条极速版")
-									else if (devmac == "com.ss.android.ugc.aweme\n")
+									else if (apkid == "com.ss.android.ugc.aweme\n")
 										return String.format('抖音')
-									else if (devmac == "com.ss.android.ugc.aweme.lite\n")
+									else if (apkid == "com.ss.android.ugc.aweme.lite\n")
 										return String.format('抖音极速版')
-									else if (devmac == "com.xs.fm\n")
+									else if (apkid == "com.xs.fm\n")
 										return String.format('番茄畅听')
-									else if (devmac == "com.baidu.searchbox.lite\n")
+									else if (apkid == "com.baidu.searchbox.lite\n")
 										return String.format('百度极速版')
-									else if (devmac == "com.ximalaya.ting.android\n")
+									else if (apkid == "com.ximalaya.ting.android\n")
 										return String.format('喜马拉雅')
-									else if (devmac == "com.ximalaya.ting.lite\n")
+									else if (apkid == "com.ximalaya.ting.lite\n")
 										return String.format('喜马拉雅极速版')
-									else if (devmac == "com.dragon.read\n")
+									else if (apkid == "com.dragon.read\n")
 										return String.format('番茄小说')
-									else if (devmac == "com.tencent.mm\n")
+									else if (apkid == "com.tencent.mm\n")
 										return String.format('微信')
-									else if (devmac == "com.tencent.mobileqq\n")
+									else if (apkid == "com.tencent.mobileqq\n")
 										return String.format('QQ')
-									else if (devmac == "com.taobao.taobao\n")
+									else if (apkid == "com.taobao.taobao\n")
 										return String.format('淘宝')
-									else if (devmac == "com.taobao.litetao\n")
+									else if (apkid == "com.taobao.litetao\n")
 										return String.format('淘宝特价版')
-									else if (devmac == "com.taobao.live\n")
+									else if (apkid == "com.taobao.live\n")
 										return String.format('点淘')
-									else if (devmac == "com.jd.jdlite\n")
+									else if (apkid == "com.jd.jdlite\n")
 										return String.format('京东极速版')
-									else if (devmac == "com.sankuai.meituan\n")
+									else if (apkid == "com.sankuai.meituan\n")
 										return String.format('美团')
-									else if (devmac == "mobi.w3studio.apps.android.shsmy.phone\n")
+									else if (apkid == "mobi.w3studio.apps.android.shsmy.phone\n")
 										return String.format('随申办')
-									else if (devmac == "com.autonavi.minimap\n")
+									else if (apkid == "com.autonavi.minimap\n")
 										return String.format('高德地图')
-									else if (devmac == "com.eg.android.AlipayGphone\n")
+									else if (apkid == "com.eg.android.AlipayGphone\n")
 										return String.format('支付宝')
-									else if (devmac == "com.UCMobile\n")
+									else if (apkid == "com.UCMobile\n")
 										return String.format('UC浏览器')
-									else if (devmac == "tv.danmaku.bili\n")
+									else if (apkid == "tv.danmaku.bili\n")
 										return String.format('bilibili')
-									else if (devmac == "com.kugou.android\n")
+									else if (apkid == "com.kugou.android\n")
 										return String.format('酷狗音乐')
-									else if (devmac == "com.android.camera\n")
+									else if (apkid == "com.android.camera\n")
 										return String.format('照相机')
+									else if (apkid == "init_adbrun")
+										return String.format('初始化设备')
 									else
 										return String.format('未知')
 									})();
@@ -77,7 +77,7 @@
 	<table class="cbi-section-table" id="adbrun_status_table">
 		<tr class="cbi-section-table-titles">
 			<th class="cbi-section-table-cell"><%:序号%></th>
-			<th class="cbi-section-table-cell"><%:IP地址%></th>
+			<th class="cbi-section-table-cell"><%:设备ID%></th>
 			<th class="cbi-section-table-cell"><%:端口%></th>
 			<th class="cbi-section-table-cell"><%:当前运行程序%></th>
 		</tr>

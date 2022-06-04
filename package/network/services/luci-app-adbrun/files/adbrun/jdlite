@@ -19,10 +19,7 @@ function swipe3s() {
 	sleep 3
 }
 
-adb disconnect ${adbclient}:5555
-sleep 2
 adb connect ${adbclient}:5555
-sleep 2
 
 ltimes=0
 while [ $ltimes -lt 50 ]
