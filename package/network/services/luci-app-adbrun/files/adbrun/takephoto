@@ -21,14 +21,14 @@ adb -s ${adbclient}:5555 shell mv /storage/self/primary/DCIM/Camera/*.* /storage
 
 getphoto3
 
-adb -s ${adbclient}:5555 shell ls /storage/self/primary/DCIM/Camera/ | sed -e 's/ /\n/g;' | sed -e '/^$/d' | grep .jpg > /tmp/adbcamera.photo.list
+adbphotolist=$(adb -s ${adbclient}:5555 shell ls /storage/self/primary/DCIM/Camera/ | sed -e 's/ /\n/g;' | sed -e '/^$/d' | grep .jpg)
 
-cat /tmp/adbcamera.photo.list | while read LINE
-do
-	adb -s ${adbclient}:5555 pull /storage/self/primary/DCIM/Camera/$LINE $photopath
+for i in $adbphotolist;do
+	adb -s ${adbclient}:5555 pull /storage/self/primary/DCIM/Camera/$i $photopath
 	sleep 10
-	adb -s ${adbclient}:5555 shell rm /storage/self/primary/DCIM/Camera/$LINE
+	adb -s ${adbclient}:5555 shell rm /storage/self/primary/DCIM/Camera/$i
 done
 
 adb -s ${adbclient}:5555 shell input keyevent 4
 rm /tmp/adbcamera.photo.list
+

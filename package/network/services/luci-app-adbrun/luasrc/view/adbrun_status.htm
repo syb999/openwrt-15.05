@@ -14,57 +14,67 @@
 
 					tr.insertCell(-1).innerHTML = st[i].num;
 					tr.insertCell(-1).innerHTML = st[i].deviceid;
-					tr.insertCell(-1).innerHTML = st[i].port;
 					tr.insertCell(-1).innerHTML = (function() {
 									var apkid = st[i].apk;
-									if (apkid == "com.ss.android.article.lite\n")
+									if (apkid == "com.ss.android.article.lite")
 										return String.format("今日头条极速版")
-									else if (apkid == "com.ss.android.ugc.aweme\n")
+									else if (apkid == "com.ss.android.ugc.aweme")
 										return String.format('抖音')
-									else if (apkid == "com.ss.android.ugc.aweme.lite\n")
+									else if (apkid == "com.ss.android.ugc.aweme.lite")
 										return String.format('抖音极速版')
-									else if (apkid == "com.xs.fm\n")
+									else if (apkid == "com.xs.fm")
 										return String.format('番茄畅听')
-									else if (apkid == "com.baidu.searchbox.lite\n")
+									else if (apkid == "com.baidu.searchbox.lite")
 										return String.format('百度极速版')
-									else if (apkid == "com.ximalaya.ting.android\n")
+									else if (apkid == "com.ximalaya.ting.android")
 										return String.format('喜马拉雅')
-									else if (apkid == "com.ximalaya.ting.lite\n")
+									else if (apkid == "com.ximalaya.ting.lite")
 										return String.format('喜马拉雅极速版')
-									else if (apkid == "com.dragon.read\n")
+									else if (apkid == "com.dragon.read")
 										return String.format('番茄小说')
-									else if (apkid == "com.tencent.mm\n")
+									else if (apkid == "com.tencent.mm")
 										return String.format('微信')
-									else if (apkid == "com.tencent.mobileqq\n")
+									else if (apkid == "com.tencent.mobileqq")
 										return String.format('QQ')
-									else if (apkid == "com.taobao.taobao\n")
+									else if (apkid == "com.taobao.taobao")
 										return String.format('淘宝')
-									else if (apkid == "com.taobao.litetao\n")
+									else if (apkid == "com.taobao.litetao")
 										return String.format('淘宝特价版')
-									else if (apkid == "com.taobao.live\n")
+									else if (apkid == "com.taobao.live")
 										return String.format('点淘')
-									else if (apkid == "com.jd.jdlite\n")
+									else if (apkid == "com.jd.jdlite")
 										return String.format('京东极速版')
-									else if (apkid == "com.sankuai.meituan\n")
+									else if (apkid == "com.sankuai.meituan")
 										return String.format('美团')
-									else if (apkid == "mobi.w3studio.apps.android.shsmy.phone\n")
+									else if (apkid == "mobi.w3studio.apps.android.shsmy.phone")
 										return String.format('随申办')
-									else if (apkid == "com.autonavi.minimap\n")
+									else if (apkid == "com.autonavi.minimap")
 										return String.format('高德地图')
-									else if (apkid == "com.eg.android.AlipayGphone\n")
+									else if (apkid == "com.eg.android.AlipayGphone")
 										return String.format('支付宝')
-									else if (apkid == "com.UCMobile\n")
+									else if (apkid == "com.UCMobile")
 										return String.format('UC浏览器')
-									else if (apkid == "tv.danmaku.bili\n")
+									else if (apkid == "tv.danmaku.bili")
 										return String.format('bilibili')
-									else if (apkid == "com.kugou.android\n")
+									else if (apkid == "com.kugou.android")
 										return String.format('酷狗音乐')
-									else if (apkid == "com.android.camera\n")
+									else if (apkid == "com.android.camera")
 										return String.format('照相机')
+									else if (apkid == "com.android.browser")
+										return String.format('浏览器')
+									else if (apkid == "org.videolan.vlc")
+										return String.format('VLC播放器')
 									else if (apkid == "init_adbrun")
 										return String.format('初始化设备')
 									else
-										return String.format('未知')
+										return String.format('<font color="red">未知</font>')
+									})();
+					tr.insertCell(-1).innerHTML = (function() {
+									var kscript = st[i].kscript;
+									if (kscript == "")
+										return String.format('<font color="red">未运行</font>')
+									else
+										return String.format('<font color="green">') + kscript + String.format('</font>')
 									})();
 				}
 			}
@@ -73,16 +83,17 @@
 //]]></script>
 
 <fieldset class="cbi-section">
-	<legend><%:Active adb devices%></legend>
+<div><%:激活的ADB设备列表%>
 	<table class="cbi-section-table" id="adbrun_status_table">
 		<tr class="cbi-section-table-titles">
 			<th class="cbi-section-table-cell"><%:序号%></th>
-			<th class="cbi-section-table-cell"><%:设备ID%></th>
-			<th class="cbi-section-table-cell"><%:端口%></th>
+			<th class="cbi-section-table-cell"><%:IP地址%></th>
 			<th class="cbi-section-table-cell"><%:当前运行程序%></th>
+			<th class="cbi-section-table-cell"><%:当前进程pid%></th>
 		</tr>
 		<tr class="cbi-section-table-row">
-			<td colspan="4"></td>
+			<td colspan="4"><em><br /><%:Collecting data...%></em></td>
 		<tr>
 	</table>
+</div>
 </fieldset>
