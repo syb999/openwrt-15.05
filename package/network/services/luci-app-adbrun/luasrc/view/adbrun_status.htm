@@ -13,15 +13,32 @@
 						tr.className = 'cbi-section-table-row cbi-rowstyle-' ;
 
 					tr.insertCell(-1).innerHTML = st[i].num;
+					tr.insertCell(-1).innerHTML = (function() {
+									var pmodel = st[i].model;
+									if (pmodel == "checking")
+										return String.format('正在识别...')
+									else
+										return String.format('<font color="blueviolet">') + pmodel + String.format('</font>')
+									})();
 					tr.insertCell(-1).innerHTML = st[i].deviceid;
 					tr.insertCell(-1).innerHTML = (function() {
 									var apkid = st[i].apk;
 									if (apkid == "com.ss.android.article.lite")
 										return String.format("今日头条极速版")
+									else if (apkid == "com.ss.android.article.news")
+										return String.format('今日头条')
+									else if (apkid == "com.ss.android.article.video")
+										return String.format('西瓜视频')
 									else if (apkid == "com.ss.android.ugc.aweme")
 										return String.format('抖音')
 									else if (apkid == "com.ss.android.ugc.aweme.lite")
 										return String.format('抖音极速版')
+									else if (apkid == "com.ss.android.ugc.live")
+										return String.format('抖音火山版')
+									else if (apkid == "com.smile.gifmaker")
+										return String.format('快手')
+									else if (apkid == "com.kuaishou.nebula")
+										return String.format('快手极速版')
 									else if (apkid == "com.xs.fm")
 										return String.format('番茄畅听')
 									else if (apkid == "com.baidu.searchbox.lite")
@@ -52,6 +69,8 @@
 										return String.format('高德地图')
 									else if (apkid == "com.eg.android.AlipayGphone")
 										return String.format('支付宝')
+									else if (apkid == "com.alibaba.android.rimet")
+										return String.format('钉钉')
 									else if (apkid == "com.UCMobile")
 										return String.format('UC浏览器')
 									else if (apkid == "tv.danmaku.bili")
@@ -64,8 +83,30 @@
 										return String.format('浏览器')
 									else if (apkid == "org.videolan.vlc")
 										return String.format('VLC播放器')
+									else if (apkid == "com.tencent.qqlive")
+										return String.format('腾讯视频')
+									else if (apkid == "com.qiyi.video")
+										return String.format('爱奇艺')
+									else if (apkid == "com.qiyi.video.lite")
+										return String.format('爱奇艺极速版')
+									else if (apkid == "com.youku.phone")
+										return String.format('优酷视频')
+									else if (apkid == "com.sohu.sohuvideo")
+										return String.format('搜狐视频')
+									else if (apkid == "com.xingin.xhs")
+										return String.format('小红书')
+									else if (apkid == "com.kmxs.reader")
+										return String.format('七猫免费小说')
+									else if (apkid == "air.tv.douyu.android")
+										return String.format('斗鱼')
+									else if (apkid == "com.blizzard.wtcg.hearthstone")
+										return String.format('炉石传说')
+									else if (apkid == "com.tencent.lolm")
+										return String.format('英雄联盟')
 									else if (apkid == "init_adbrun")
 										return String.format('初始化设备')
+									else if (apkid == "checking")
+										return String.format('正在识别...')
 									else
 										return String.format('<font color="red">未知</font>')
 									})();
@@ -87,12 +128,13 @@
 	<table class="cbi-section-table" id="adbrun_status_table">
 		<tr class="cbi-section-table-titles">
 			<th class="cbi-section-table-cell"><%:序号%></th>
-			<th class="cbi-section-table-cell"><%:IP地址%></th>
+			<th class="cbi-section-table-cell"><%:设备型号%></th>
+			<th class="cbi-section-table-cell"><%:设备ID%></th>
 			<th class="cbi-section-table-cell"><%:当前运行程序%></th>
 			<th class="cbi-section-table-cell"><%:当前进程pid%></th>
 		</tr>
 		<tr class="cbi-section-table-row">
-			<td colspan="4"><em><br /><%:Collecting data...%></em></td>
+			<td colspan="5"><em><br /><%:Collecting data...%></em></td>
 		<tr>
 	</table>
 </div>
