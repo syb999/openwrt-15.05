@@ -11,50 +11,49 @@ function look30sec() {
 
 function botting() {
 	echo $worklist | sed "s/ /\n/g" > /tmp/worklist${sectionname}.adbtmp
-	workline=/tmp/worklist${sectionname}.adbtmp
-	while read LINE
-	do
-		skipthis=$(uci get adbrun.initialization.diantaoskip)
-		if [ $skipthis = $workcount ];then
+	workline=$(cat /tmp/worklist${sectionname}.adbtmp)
+	for m in $workline;do
+		if [ "$m" == "skip" ];then
 			basey=$(expr $basey  \* 3 / 2)
-		fi
-		result=$(echo $LINE | grep "秒")
-		if [ "$result" != "" ];then
-			adbtimes=$(echo $LINE | sed "s/秒/\n/;s/次//" | tail -n 1)
-			switchtimes=$(echo $LINE | sed "s/秒/\n/" | head -n 1)
-			switchtimes=$(expr $switchtimes \* 1)
-			adbswitchtimes=$(expr $switchtimes / 30)
-			ltimes=0
-			while [ $ltimes -lt $adbtimes ]
-			do
-				adb -s ${adbclient}:5555 shell input tap $basex $basey
-				sleep 3
-				for i in $(seq 1 $adbswitchtimes) ;do
-					look30sec
-				done
-				adb -s ${adbclient}:5555 shell input keyevent 4
-				sleep 6
-				ltimes=$(expr $ltimes + 1)
-			done
 		else
-			adbtimes=$(echo $LINE | sed "s/分钟/\n/;s/次//" | tail -n 1)
-			switchtimes=$(echo $LINE | sed "s/分钟/\n/" | head -n 1)
-			switchtimes=$(expr $switchtimes \* 60)
-			adbswitchtimes=$(expr $switchtimes / 30)
-			ltimes=0
-			while [ $ltimes -lt $adbtimes ]
-			do
-				adb -s ${adbclient}:5555 shell input tap $basex $basey
-				sleep 3
-				for i in $(seq 1 $adbswitchtimes) ;do
-					look30sec
+			result=$(echo $m | grep "秒")
+			if [ "$result" != "" ];then
+				adbtimes=$(echo $m | sed "s/秒/\n/;s/次//" | tail -n 1)
+				switchtimes=$(echo $m | sed "s/秒/\n/" | head -n 1)
+				switchtimes=$(expr $switchtimes \* 1)
+				adbswitchtimes=$(expr $switchtimes / 30)
+				ltimes=0
+				while [ $ltimes -lt $adbtimes ]
+				do
+					adb -s ${adbclient}:5555 shell input tap $basex $basey
+					sleep 3
+					for i in $(seq 1 $adbswitchtimes) ;do
+						look30sec
+					done
+					adb -s ${adbclient}:5555 shell input keyevent 4
+					sleep 6
+					ltimes=$(expr $ltimes + 1)
 				done
-				adb -s ${adbclient}:5555 shell input keyevent 4
-				sleep 6
-				ltimes=$(expr $ltimes + 1)
-			done
+			else
+				adbtimes=$(echo $m | sed "s/分钟/\n/;s/次//" | tail -n 1)
+				switchtimes=$(echo $m | sed "s/分钟/\n/" | head -n 1)
+				switchtimes=$(expr $switchtimes \* 60)
+				adbswitchtimes=$(expr $switchtimes / 30)
+				ltimes=0
+				while [ $ltimes -lt $adbtimes ]
+				do
+					adb -s ${adbclient}:5555 shell input tap $basex $basey
+					sleep 3
+					for i in $(seq 1 $adbswitchtimes) ;do
+						look30sec
+					done
+					adb -s ${adbclient}:5555 shell input keyevent 4
+					sleep 6
+					ltimes=$(expr $ltimes + 1)
+				done
+			fi
 		fi
 		workcount=$(expr $workcount + 1)
-	done < $workline
+	done
 }
 
