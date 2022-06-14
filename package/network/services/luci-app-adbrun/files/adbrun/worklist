@@ -2,10 +2,10 @@
 workcount=1
 
 function look30sec() {
-	sleep 7
-	for i in $(seq 1 4) ;do
-		adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 390`)
-		sleep 8
+	sleep 6
+	for i in $(seq 1 5) ;do
+		adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 390`) 2000
+		sleep 7
 	done
 }
 
@@ -14,7 +14,7 @@ function botting() {
 	workline=$(cat /tmp/worklist${sectionname}.adbtmp)
 	for m in $workline;do
 		if [ "$m" == "skip" ];then
-			basey=$(expr $basey  \* 3 / 2)
+			basey=$(expr $basey  + $(uci get adbrun.@adbinit[0].diantaoskip))
 		else
 			result=$(echo $m | grep "秒")
 			if [ "$result" != "" ];then

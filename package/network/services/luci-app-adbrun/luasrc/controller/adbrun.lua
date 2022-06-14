@@ -41,7 +41,7 @@ function xact_status()
 						runapk = "checking"
 					end
 
-					script = io.popen("busybox ps | grep ADBRUN$(uci show adbrun | grep " ..deviceid .. " | cut -d '.' -f 2) | grep -v grep | awk '{print $1}' 2>/dev/null")
+					script = io.popen("busybox ps | grep ADBRUN$(uci show adbrun | grep " ..deviceid .. " | cut -d '.' -f 2) | grep -v grep | head -n 1 | awk '{print $1}' 2>/dev/null")
 					rscript = script:read("*a")
 					if rscript then
 						kscript = string.gsub(rscript,"\n","")

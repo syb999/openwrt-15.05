@@ -14,7 +14,7 @@
 
 					tr.insertCell(-1).innerHTML = st[i].num;
 					tr.insertCell(-1).innerHTML = (function() {
-									var pmodel = st[i].model;
+									var pmodel = "0" + st[i].model;
 									if (pmodel == "checking")
 										return String.format('正在识别...')
 									else
@@ -125,7 +125,7 @@
 
 <fieldset class="cbi-section">
 <div><%:激活的ADB设备列表%>
-	<table class="cbi-section-table" id="adbrun_status_table">
+	<table class="cbi-section-table" id="adbrun_status_table" border="2">
 		<tr class="cbi-section-table-titles">
 			<th class="cbi-section-table-cell"><%:序号%></th>
 			<th class="cbi-section-table-cell"><%:设备型号%></th>
