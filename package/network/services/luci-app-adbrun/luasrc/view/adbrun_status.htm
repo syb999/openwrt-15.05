@@ -12,9 +12,9 @@
 					var tr = tb.insertRow(-1);
 						tr.className = 'cbi-section-table-row cbi-rowstyle-' ;
 
-					tr.insertCell(-1).innerHTML = st[i].num;
+					tr.insertCell(-1).innerHTML = "0" + st[i].num;
 					tr.insertCell(-1).innerHTML = (function() {
-									var pmodel = "0" + st[i].model;
+									var pmodel = st[i].model;
 									if (pmodel == "checking")
 										return String.format('正在识别...')
 									else
