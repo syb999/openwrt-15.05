@@ -50,7 +50,7 @@ case $adbcommand in
 	;;
 	screenrecord) adbcd="shell screenrecord --time-limit 30 --size ${screensize} /data/local/tmp/screenrecord.mp4"
 	;;
-	dlscreenrecord) adbcd="pull /data/local/tmp/screenrecord.mp4 $(uci get adbrun.@adbinit[0].adbphotopath)/screenrecord.mp4 && rm /data/local/tmp/screenrecord.mp4"
+	dlscreenrecord) adbcd="pull /data/local/tmp/screenrecord.mp4 $(uci get adbrun.@adbinit[0].adbphotopath)/screenrecord.mp4"
 	;;
 	appactivity) adbcd="shell dumpsys activity activities | grep -i run"
 	;;
