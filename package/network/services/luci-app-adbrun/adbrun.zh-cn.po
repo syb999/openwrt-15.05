@@ -106,6 +106,12 @@ msgstr "开启摄像头"
 msgid "Take a picture"
 msgstr "拍摄照片"
 
+msgid "Screen record 30s"
+msgstr "屏幕录像30秒"
+
+msgid "Push screen record to openwrt"
+msgstr "下载屏幕录像到openwrt照片下载目录"
+
 msgid "Get running APP"
 msgstr "获取运行中的应用程序"
 
@@ -137,7 +143,7 @@ msgid "Automatically take photos"
 msgstr "自动拍照脚本"
 
 msgid "Automatically push screenshot to openwrt"
-msgstr "自动将屏幕截图推送到openwrt"
+msgstr "自动将屏幕截图推送到openwrt照片下载目录"
 
 msgid "Automatically get gold coins from ximalaya lite version"
 msgstr "自动获取金币脚本-喜马拉雅极速版"
@@ -147,6 +153,9 @@ msgstr "自动获取金币脚本-番茄小说"
 
 msgid "Automatically play kuaishou"
 msgstr "自动获取金币脚本-快手视频"
+
+msgid "Automatically diantaolive"
+msgstr "自动获取金币脚本-点淘直播"
 
 msgid "Automatically taobao live"
 msgstr "自动获取金币脚本-点淘任务"

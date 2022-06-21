@@ -48,6 +48,10 @@ case $adbcommand in
 	;;
 	photograph) adbcd="shell input keyevent 27"
 	;;
+	screenrecord) adbcd="shell screenrecord --time-limit 30 --size ${screensize} /data/local/tmp/screenrecord.mp4"
+	;;
+	dlscreenrecord) adbcd="pull /data/local/tmp/screenrecord.mp4 $(uci get adbrun.@adbinit[0].adbphotopath)/screenrecord.mp4 && rm /data/local/tmp/screenrecord.mp4"
+	;;
 	appactivity) adbcd="shell dumpsys activity activities | grep -i run"
 	;;
 	runxmlylite) adbcd="shell am start -n com.ximalaya.ting.lite/com.ximalaya.ting.android.host.activity.MainActivity"
@@ -80,6 +84,9 @@ case $adbcommand in
 	;;
 	kuaishou) adbcd="scripts"
 		adbsh="kuaishou"
+	;;
+	diantaolive) adbcd="scripts"
+		adbsh="diantaolive"
 	;;
 	autodiantao) adbcd="scripts"
 		adbsh="diantao"
@@ -153,6 +160,31 @@ if [ $adbcd == "scripts" ];then
 		fi
 	elif  [ ${adbsh} == "kuaishou" ];then
 		echo kuaishou
+		if [ ${screensize} == "720x1280" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=386/;s/dosedbasey=/basey=620/;s/dosedbasecx=/basecx=655/;s/dosedbasecy=/basecy=145/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
+		elif [ ${screensize} == "720x1560" ];then
+			echo "unsupport now"
+		elif [ ${screensize} == "1080x2244" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=586/;s/dosedbasey=/basey=750/;s/dosedbasecx=/basecx=980/;s/dosedbasecy=/basecy=220/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
+		elif [ ${screensize} == "1080x1920" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=586/;s/dosedbasey=/basey=700/;s/dosedbasecx=/basecx=780/;s/dosedbasecy=/basecy=220/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
+		elif [ ${screensize} == "1080x2280" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=586/;s/dosedbasey=/basey=750/;s/dosedbasecx=/basecx=980/;s/dosedbasecy=/basecy=220/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
+		elif [ ${screensize} == "1080x2340" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=586/;s/dosedbasey=/basey=845/;s/dosedbasecx=/basecx=1075/;s/dosedbasecy=/basecy=220/' > /tmp/ADBRUN${sectionname}_.sh
+			chmod +x /tmp/ADBRUN${sectionname}_.sh
+			exec sh /tmp/ADBRUN${sectionname}_.sh
+		fi
+	elif  [ ${adbsh} == "diantaolive" ];then
+		echo diantaolive
 		if [ ${screensize} == "720x1280" ];then
 			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=386/;s/dosedbasey=/basey=620/;s/dosedbasecx=/basecx=655/;s/dosedbasecy=/basecy=145/' > /tmp/ADBRUN${sectionname}_.sh
 			chmod +x /tmp/ADBRUN${sectionname}_.sh

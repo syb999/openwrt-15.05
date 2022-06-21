@@ -30,7 +30,7 @@ function adbxhotplug.write(self, section)
 end
 
 a:tab("diantaoinit_set", translate("diantao init setting"))
-diantaoskip = a:taboption("diantaoinit_set", Value, "diantaoskip", translate("diantao skip step(default fort 1080x1920)"))
+diantaoskip = a:taboption("diantaoinit_set", Value, "diantaoskip", translate("diantao skip step(default for 1080x1920)"))
 diantaoskip.datatype = "string"
 diantaoskip.default = "210"
 diantaoskip.rmempty = false
@@ -82,6 +82,8 @@ adbcommandlist:value("pause-playback", translate("Pause playback"))
 adbcommandlist:value("mute", translate("Mute on/off"))
 adbcommandlist:value("runcamera", translate("Run camera"))
 adbcommandlist:value("photograph", translate("Take a picture"))
+adbcommandlist:value("screenrecord", translate("Screen record 30s"))
+adbcommandlist:value("dlscreenrecord", translate("Push screen record to openwrt"))
 adbcommandlist:value("appactivity", translate("Get running APP"))
 adbcommandlist:value("runwechat", translate("Run Wechat"))
 adbcommandlist:value("runqq", translate("Run QQ"))
@@ -96,6 +98,7 @@ adbcommandlist:value("screenshot", translate("Automatically push screenshot to o
 adbcommandlist:value("pyxmlylite", translate("Automatically get gold coins from ximalaya lite version"))
 adbcommandlist:value("readbook", translate("Automatically read book"))
 adbcommandlist:value("kuaishou", translate("Automatically play kuaishou"))
+adbcommandlist:value("diantaolive", translate("Automatically diantaolive"))
 adbcommandlist:value("autodiantao", translate("Automatically taobao live"))
 adbcommandlist:value("autojdlite", translate("Automatically jdlite"))
 adbcommandlist:value("tbbbfarm", translate("Automatically taobao baba farm"))
