@@ -39,7 +39,7 @@ function xact_status()
 					if not rapk then
 						apk = io.popen("adb -s " .. deviceid .. ":" .. port .." shell dumpsys activity activities | grep -i Activities= | head -n 1 | cut -d '/' -f 1 | awk '{print $3}' 2>/dev/null")
 						rapk = apk:read("*l")
-						if rapk then
+						if not rapk then
 							runapk = "checking"
 						else
 							runapk = string.gsub(rapk,"\n","")
