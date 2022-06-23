@@ -30,29 +30,23 @@ function xact_status()
 					if not rmodel then
 						getmodel = "checking"
 					else
-						getmodel = string.gsub(rmodel,"\n","")
+						getmodel = string.gsub(rmodel,"\r","")
 					end
 					model:close()
 
-					apk = io.popen("adb -s " .. deviceid .. ":" .. port .." shell dumpsys activity activities | grep -i run | grep ActivityRecord | head -n 1 | cut -d '/' -f 1 | awk '{print $5}' 2>/dev/null")
+					apk = io.popen("adb -s " .. deviceid .. ":" .. port .." shell dumpsys activity activities | grep mResumedActivity: | cut -d '/' -f 1 | awk '{print $4}' 2>/dev/null")
 					rapk = apk:read("*l")
 					if not rapk then
-						apk = io.popen("adb -s " .. deviceid .. ":" .. port .." shell dumpsys activity activities | grep -i Activities= | head -n 1 | cut -d '/' -f 1 | awk '{print $3}' 2>/dev/null")
-						rapk = apk:read("*l")
-						if not rapk then
-							runapk = "checking"
-						else
-							runapk = string.gsub(rapk,"\n","")
-						end
+						runapk = "checking"
 					else
-						runapk = string.gsub(rapk,"\n","")
+						runapk = string.gsub(rapk,"\r","")
 					end
 					apk:close()
 
 					script = io.popen("busybox ps | grep ADBRUN$(uci show adbrun | grep " ..deviceid .. " | cut -d '.' -f 2) | grep -v grep | head -n 1 | awk '{print $1}' 2>/dev/null")
 					rscript = script:read("*l")
 					if rscript then
-						kscript = string.gsub(rscript,"\n","")
+						kscript = string.gsub(rscript,"\r","")
 					else
 						kscript = ""
 					end
@@ -63,14 +57,7 @@ function xact_status()
 				port = "USB-Cable"
 				if num and deviceid then
 					num = num + 1
-					model = io.popen("adb -s " .. deviceid .. " shell getprop ro.product.model | sed 's/ //g' 2>/dev/null")
-					rmodel = model:read("*l")
-					if not rmodel then
-						getmodel = "checking"
-					else
-						getmodel = string.gsub(rmodel,"\n","")
-					end
-					model:close()
+					getmodel = "Android"
 					runapk = "init_adbrun"
 					kscript = ""
 				end
