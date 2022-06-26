@@ -1,5 +1,5 @@
 <script type="text/javascript">//<![CDATA[
-	XHR.poll(10, '<%=luci.dispatcher.build_url("admin", "services", "adbrun", "status")%>', null,
+	XHR.poll(11, '<%=luci.dispatcher.build_url("admin", "services", "adbrun", "status")%>', null,
 		function(x, st)
 		{
 			var tb = document.getElementById('adbrun_status_table');
@@ -20,7 +20,7 @@
 									else
 										return String.format('<font color="blueviolet">') + pmodel + String.format('</font>')
 									})();
-					tr.insertCell(-1).innerHTML = st[i].deviceid;
+					tr.insertCell(-1).innerHTML = st[i].deviceid + ":" + st[i].port;
 					tr.insertCell(-1).innerHTML = (function() {
 									var apkid = st[i].apk;
 									if (apkid == "com.ss.android.article.lite")
@@ -171,6 +171,15 @@
 									else
 										return String.format('<font color="green">') + kscript + String.format('</font>')
 									})();
+					var myDate = new Date();
+					tr.insertCell(-1).innerHTML = (function() {
+									var kvid = st[i].deviceid
+									new XHR().post('<%=luci.dispatcher.build_url("admin", "services", "adbrun", "getscreen")%>', {sctime: myDate.getSeconds(),screenid : kvid},
+									function(x,data) {
+										}
+									);
+									return '<button type=\"button\" onclick=\"window.open(\'http:\/\/' + window.location.hostname + '/' + kvid + '\.jpg \')\">预览</button>'
+									})();
 				}
 			}
 		}
@@ -186,9 +195,10 @@
 			<th class="cbi-section-table-cell"><%:设备ID%></th>
 			<th class="cbi-section-table-cell"><%:当前运行程序%></th>
 			<th class="cbi-section-table-cell"><%:当前进程pid%></th>
+			<th class="cbi-section-table-cell"><%:当前屏幕%></th>
 		</tr>
 		<tr class="cbi-section-table-row">
-			<td colspan="5"><em><br /><%:Collecting data...%></em></td>
+			<td colspan="6"><em><br /><%:Collecting data...%></em></td>
 		<tr>
 	</table>
 </div>

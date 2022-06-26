@@ -9,6 +9,7 @@ function index()
 	page.dependent = true
 
 	entry({"admin", "services", "adbrun", "status"}, call("xact_status")).leaf = true
+	entry({"admin", "services", "adbrun", "getscreen"}, call("getscreen")).leaf = true
 end
 
 function xact_status()
@@ -66,16 +67,29 @@ function xact_status()
 			infolist[#infolist+1] = {
 				num = num,
 				model = getmodel,
-				deviceid = deviceid .. ":" .. port,
+				deviceid = deviceid,
 				port = port,
 				apk = runapk,
 				kscript = kscript
 			}
+
 		end
 	end
 	adblist:close()
 
 	luci.http.prepare_content("application/json")	
 	luci.http.write_json(infolist);
+end
+
+function getscreen()
+	if luci.http.formvalue('sctime') ~= "" then
+		local gettime= luci.http.formvalue('sctime')
+		if gettime % 3 == 1 then
+			if luci.http.formvalue('screenid') ~= "" then
+				local vid = luci.http.formvalue('screenid')
+				luci.sys.call("adb -s " .. vid .. ":5555 exec-out screencap -p > /tmp/" .. vid .. ".jpg && ln -s /tmp/" .. vid .. ".jpg /www 2>/dev/null")
+			end
+		end
+	end
 end
 
