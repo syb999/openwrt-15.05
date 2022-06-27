@@ -64,13 +64,17 @@ function xact_status()
 				end
 			end
 
+			local uhttpd = io.popen("uci get uhttpd.main.listen_http | awk '/0.0.0.0/ {print $1}' | cut -d ':' -f 2")
+			local webport = uhttpd:read("*l")
+
 			infolist[#infolist+1] = {
 				num = num,
 				model = getmodel,
 				deviceid = deviceid,
 				port = port,
 				apk = runapk,
-				kscript = kscript
+				kscript = kscript,
+				uhttpd = webport
 			}
 
 		end
