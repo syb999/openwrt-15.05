@@ -15,10 +15,7 @@
 					tr.insertCell(-1).innerHTML = "0" + st[i].num;
 					tr.insertCell(-1).innerHTML = (function() {
 									var pmodel = st[i].model;
-									if (pmodel == "checking")
-										return String.format('正在识别...')
-									else
-										return String.format('<font color="blueviolet">') + pmodel + String.format('</font>')
+									return String.format('<font color="blueviolet">') + pmodel + String.format('</font>')
 									})();
 					tr.insertCell(-1).innerHTML = st[i].deviceid + ":" + st[i].port;
 					tr.insertCell(-1).innerHTML = (function() {
@@ -165,11 +162,11 @@
 										return String.format('<font color="red">') + apkid + String.format('</font>')
 									})();
 					tr.insertCell(-1).innerHTML = (function() {
-									var kscript = st[i].kscript;
-									if (kscript == "")
+									var kpid = st[i].pid;
+									if (kpid == "")
 										return String.format('<font color="red">未运行</font>')
 									else
-										return String.format('<font color="green">') + kscript + String.format('</font>')
+										return String.format('<font color="green">') + kpid + String.format('</font>')
 									})();
 					var myDate = new Date();
 					tr.insertCell(-1).innerHTML = (function() {

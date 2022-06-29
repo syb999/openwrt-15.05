@@ -12,12 +12,46 @@ function index()
 	entry({"admin", "services", "adbrun", "getscreen"}, call("getscreen")).leaf = true
 end
 
+function get_model(ip,port)
+	local model = luci.sys.exec("adb -s " .. ip .. ":" .. port .." shell getprop ro.product.model | sed 's/ //g' 2>/dev/null")
+	if not model then
+		model = luci.sys.exec("adb -s " .. ip .. ":" .. port .." shell getprop ro.product.model | sed 's/ //g' 2>/dev/null")
+	end
+	return model
+end
+
+function get_apk(ip,port)
+	local apk = io.popen("adb -s " .. ip .. ":" .. port .." shell dumpsys activity activities | grep mResumedActivity: | cut -d '/' -f 1 | awk '{print $4}' 2>/dev/null")
+	if apk then
+		local name = apk:read("*l")
+		apk:close()
+		return name
+	end
+	return "checking"
+end
+
+function get_pid(ip)
+	local pid = luci.sys.exec("busybox ps | grep ADBRUN$(uci show adbrun | grep " ..ip .. " | cut -d '.' -f 2) | grep -v grep | head -n 1 | awk '{print $1}' 2>/dev/null")
+	return pid
+end
+
+function get_uhttpd()
+	local uhttpd = io.popen("uci get uhttpd.main.listen_http | awk '/0.0.0.0/ {print $1}' | cut -d ':' -f 2")
+	if uhttpd then
+		local webport = uhttpd:read("*l")
+		uhttpd:close()
+		return webport
+	end
+	return "80"
+end
+
 function xact_status()
+	local webport = get_uhttpd()
 	local adblist = io.popen("adb devices | sed '1d;$d' 2>/dev/null")
 	if adblist then
 		infolist = { }
 		local num = 0
-		local deviceid, port, model, rmodel, getmodel, apk, rapk, runapk, script, rscript, kscript
+		local deviceid, port, model, apk, pid
 		while true do
 			local ln = adblist:read("*l")
 			if not ln then
@@ -26,54 +60,28 @@ function xact_status()
 				deviceid, port = ln:match("(%S-):(%d+).-")
 				if num and deviceid and port then
 					num = num + 1
-					model = io.popen("adb -s " .. deviceid .. ":" .. port .." shell getprop ro.product.model | sed 's/ //g' 2>/dev/null")
-					rmodel = model:read("*l")
-					if not rmodel then
-						getmodel = "checking"
-					else
-						getmodel = string.gsub(rmodel,"\r","")
-					end
-					model:close()
-
-					apk = io.popen("adb -s " .. deviceid .. ":" .. port .." shell dumpsys activity activities | grep mResumedActivity: | cut -d '/' -f 1 | awk '{print $4}' 2>/dev/null")
-					rapk = apk:read("*l")
-					if not rapk then
-						runapk = "checking"
-					else
-						runapk = string.gsub(rapk,"\r","")
-					end
-					apk:close()
-
-					script = io.popen("busybox ps | grep ADBRUN$(uci show adbrun | grep " ..deviceid .. " | cut -d '.' -f 2) | grep -v grep | head -n 1 | awk '{print $1}' 2>/dev/null")
-					rscript = script:read("*l")
-					if rscript then
-						kscript = string.gsub(rscript,"\r","")
-					else
-						kscript = ""
-					end
-					script:close()
+					model = get_model(deviceid,port)
+					apk = get_apk(deviceid,port)
+					pid = get_pid(deviceid)
 				end
 			elseif ln:match("^(%w+).-device") then
 				deviceid = ln:match("^(%w+).-device")
 				port = "USB-Cable"
 				if num and deviceid then
 					num = num + 1
-					getmodel = "Android"
-					runapk = "init_adbrun"
-					kscript = ""
+					model = "Android"
+					apk = "init_adbrun"
+					pid = ""
 				end
 			end
 
-			local uhttpd = io.popen("uci get uhttpd.main.listen_http | awk '/0.0.0.0/ {print $1}' | cut -d ':' -f 2")
-			local webport = uhttpd:read("*l")
-
 			infolist[#infolist+1] = {
 				num = num,
-				model = getmodel,
+				model = model,
 				deviceid = deviceid,
 				port = port,
-				apk = runapk,
-				kscript = kscript,
+				apk = apk,
+				pid = pid,
 				uhttpd = webport
 			}
 
