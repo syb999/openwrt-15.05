@@ -1,3 +1,5 @@
+local uci = require "luci.model.uci".cursor()
+
 module("luci.controller.adbrun",package.seeall)
 
 function index()
@@ -10,14 +12,6 @@ function index()
 
 	entry({"admin", "services", "adbrun", "status"}, call("xact_status")).leaf = true
 	entry({"admin", "services", "adbrun", "getscreen"}, call("getscreen")).leaf = true
-end
-
-function get_model(ip,port)
-	local model = luci.sys.exec("adb -s " .. ip .. ":" .. port .." shell getprop ro.product.model | sed 's/ //g' 2>/dev/null")
-	if not model then
-		model = luci.sys.exec("adb -s " .. ip .. ":" .. port .." shell getprop ro.product.model | sed 's/ //g' 2>/dev/null")
-	end
-	return model
 end
 
 function get_apk(ip,port)
@@ -60,12 +54,16 @@ function xact_status()
 				deviceid, port = ln:match("(%S-):(%d+).-")
 				if num and deviceid and port then
 					num = num + 1
-					model = get_model(deviceid,port)
+					uci:foreach("adbrun", "adbrun", function(e)
+						if e.adbiplist == deviceid then
+							model = string.upper(e[".name"])
+						end
+					end)
 					apk = get_apk(deviceid,port)
 					pid = get_pid(deviceid)
 				end
-			elseif ln:match("^(%w+).-device") then
-				deviceid = ln:match("^(%w+).-device")
+			elseif ln:match("^(%w+).device") then
+				deviceid = ln:match("^(%w+).device")
 				port = "USB-Cable"
 				if num and deviceid then
 					num = num + 1
