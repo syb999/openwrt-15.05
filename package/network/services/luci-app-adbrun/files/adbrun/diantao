@@ -13,7 +13,7 @@ rm /tmp/adb_ADBRUN${sectionname}_.sh
 
 adb connect ${adbclient}:5555
 
-gettimenow=$(date "+%H")
+gettimenow=$(date +%H)
 
 if [ $gettimenow -lt 20 -a $gettimenow -ge 0 ];then
 	worklist=$(uci get adbrun.@adbinit[0].diantaodayworklist)

@@ -4,7 +4,7 @@ workcount=1
 function look30sec() {
 	sleep 6
 	for i in $(seq 1 5) ;do
-		adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 390`) 2000
+		adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(expr $ystart - 390) 2000
 		sleep 7
 	done
 }

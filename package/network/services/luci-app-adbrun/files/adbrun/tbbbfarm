@@ -31,21 +31,21 @@ ltimes=0
 while [ $ltimes -lt 3 ]
 do
 if [ ${screensize} == "720x1280" ];then
-	adb -s ${adbclient}:5555 shell input tap $(expr $basex - 260) $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+	adb -s ${adbclient}:5555 shell input tap $(expr $basex - 260) $(expr $basey + $ysetp1 \* 5)
 else
-	adb -s ${adbclient}:5555 shell input tap $(expr $basex - 260) $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+	adb -s ${adbclient}:5555 shell input tap $(expr $basex - 260) $(expr $basey + $ysetp1 \* 7)
 fi
 	sleep 2
-	ltimes=$(echo `expr $ltimes + 1`)
+	ltimes=$(expr $ltimes + 1)
 done
 adb -s ${adbclient}:5555 shell input keyevent 4
 sleep 5
 gotobbfm
 
 if [ ${screensize} == "720x1280" ];then
-	adb -s ${adbclient}:5555 shell input tap $(expr $basex \* 5 / 6) $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+	adb -s ${adbclient}:5555 shell input tap $(expr $basex \* 5 / 6) $(expr $basey + $ysetp1 \* 5)
 else
-	adb -s ${adbclient}:5555 shell input tap $(expr $basex \* 5 / 6) $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+	adb -s ${adbclient}:5555 shell input tap $(expr $basex \* 5 / 6) $(expr $basey + $ysetp1 \* 7)
 fi
 sleep 5
 
@@ -55,22 +55,22 @@ sleep 5
 ltimes=0
 while [ $ltimes -lt 4 ]
 do
-	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1)
+	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 \* 2)
 	sleep 3
-	adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 600`)
+	adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(expr $ystart - 600)
 	sleep 25
 	adb -s ${adbclient}:5555 shell input keyevent 4
 	sleep 5
-	ltimes=$(echo `expr $ltimes + 1`)
+	ltimes=$(expr $ltimes + 1)
 done
 
-adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 600`)
+adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(expr $ystart - 600)
 sleep 5
 
 if [ ${screensize} == "720x1280" ];then
-	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 \* 4)
 else
-	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 \* 6)
 fi
 sleep 5
 
@@ -79,16 +79,16 @@ if [ ${screensize} == "720x1280" ];then
 else
 	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1)
 	sleep 3
-	adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 600`)
+	adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(expr $ystart - 600)
 	sleep 25
 	adb -s ${adbclient}:5555 shell input keyevent 4
 	sleep 5
 fi
 
 if [ ${screensize} == "720x1280" ];then
-	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1)
+	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 \* 2)
 else
-	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1)
+	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 \* 3)
 fi
 sleep 37
 adb -s ${adbclient}:5555 shell input keyevent 4
@@ -96,15 +96,15 @@ sleep 5
 
 adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1)
 sleep 3
-adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 600`)
+adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(expr $ystart - 600)
 sleep 25
 adb -s ${adbclient}:5555 shell input keyevent 4
 sleep 5
 
 if [ ${screensize} == "720x1280" ];then
-	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1)
+	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 \* 3)
 else
-	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1 + $ysetp1)
+	adb -s ${adbclient}:5555 shell input tap $basex $(expr $basey + $ysetp1 \* 5)
 fi
 sleep 25
 adb -s ${adbclient}:5555 shell input keyevent 4

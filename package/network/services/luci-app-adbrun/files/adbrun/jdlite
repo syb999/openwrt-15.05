@@ -13,7 +13,7 @@ rm /tmp/adb_ADBRUN${sectionname}_.sh
 function swipe3s() {
 	sleep 3
 	for i in $(seq 1 6) ;do
-		adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(echo `expr $ystart - 600`)
+		adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(expr $ystart - 600)
 		sleep 1
 	done
 	sleep 3
@@ -27,5 +27,5 @@ do
 	swipe3s
 	adb -s ${adbclient}:5555 shell input tap $basex $basey
 	sleep 3
-	ltimes=$(echo `expr $ltimes + 1`)
+	ltimes=$(expr $ltimes + 1)
 done
