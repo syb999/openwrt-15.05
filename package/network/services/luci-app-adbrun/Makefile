@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 
 PKG_NAME:=luci-app-adbrun
-PKG_VERSION:=20220713
+PKG_VERSION:=20220719
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -16,7 +16,7 @@ define Package/luci-app-adbrun
 endef
 
 define Package/luci-app-adbrun/description
-	python3 script depends pillow
+	adb tool
 endef
 
 define Build/Prepare
