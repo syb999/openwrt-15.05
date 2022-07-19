@@ -1,7 +1,7 @@
 #!/bin/sh
 . /usr/adbrun/worklist
 #自行进入元宝中心-打工赚元宝-赚体力页面
-
+starttime=
 dosedxstart=
 dosedystart=
 dosedbasex=

@@ -29,6 +29,21 @@ function get_pid(ip)
 	return pid
 end
 
+function get_starttime(name)
+	local fpath = "/tmp/ADBRUN" .. name .. "_.sh"
+	local F,err=io.open(fpath,"r+");
+	if err == nil then
+		local st_time = luci.sys.exec("cat " .. fpath .. " | grep starttime= | cut -d '=' -f 2 2>/dev/null")
+		if st_time == "" then
+			return 0
+		else
+			return st_time
+		end
+	else
+		return 0
+	end
+end
+
 function get_uhttpd()
 	local uhttpd = io.popen("uci get uhttpd.main.listen_http | awk '/0.0.0.0/ {print $1}' | cut -d ':' -f 2")
 	if uhttpd then
@@ -45,7 +60,7 @@ function xact_status()
 	if adblist then
 		infolist = { }
 		local num = 0
-		local deviceid, port, name, apk, pid
+		local deviceid, port, name, lowername, runtime, runhours, runmins, runsecs, apk, pid
 		while true do
 			local ln = adblist:read("*l")
 			if not ln then
@@ -57,6 +72,39 @@ function xact_status()
 					uci:foreach("adbrun", "adbrun", function(e)
 						if e.adbiplist == deviceid then
 							name = string.upper(e[".name"])
+							lowername = string.lower(e[".name"])
+							runtime = get_starttime(lowername)
+							if runtime == nil then
+								runtime = 0
+							elseif tonumber(runtime) > 0 then
+								runtime = os.time() - tonumber(runtime)
+								if runtime >= 3600 then
+									runhours = (runtime - runtime%3600)/3600
+									local x = runtime - (runtime - runtime%3600)
+									if x  >= 60 then
+										runmins = (x - x%60)/60
+										runsecs = x%60
+									else
+										runmins = 0
+										runsecs = x
+									end
+								elseif runtime >= 60 then
+									runhours = 0
+									runmins = (runtime - runtime%60)/60
+									runsecs = runtime%60
+								else
+									runhours = 0
+									runmins = 0
+									runsecs = runtime
+								end
+							else
+								runtime = 0
+							end
+							if runtime == 0 then
+								runhours = 0
+								runmins = 0
+								runsecs = 0
+							end
 						end
 					end)
 					apk = get_apk(deviceid,port)
@@ -70,6 +118,10 @@ function xact_status()
 					name = "Android"
 					apk = "init_adbrun"
 					pid = ""
+					runtime = ""
+					runhours = ""
+					runmins = ""
+					runsecs = ""
 				end
 			end
 
@@ -80,7 +132,11 @@ function xact_status()
 				port = port,
 				apk = apk,
 				pid = pid,
-				uhttpd = webport
+				uhttpd = webport,
+				runtime = runtime,
+				runhours = runhours,
+				runmins = runmins,
+				runsecs = runsecs
 			}
 
 		end

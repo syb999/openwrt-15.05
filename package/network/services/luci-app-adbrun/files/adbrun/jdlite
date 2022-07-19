@@ -1,6 +1,6 @@
 #!/bin/sh
 #自行进入京东极速版--百元生活费--赚金币--逛商品赚金币
-
+starttime=
 dosedxstart=
 dosedystart=
 dosedbasex=
