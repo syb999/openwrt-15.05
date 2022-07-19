@@ -45,7 +45,7 @@ function xact_status()
 	if adblist then
 		infolist = { }
 		local num = 0
-		local deviceid, port, model, apk, pid
+		local deviceid, port, name, apk, pid
 		while true do
 			local ln = adblist:read("*l")
 			if not ln then
@@ -56,7 +56,7 @@ function xact_status()
 					num = num + 1
 					uci:foreach("adbrun", "adbrun", function(e)
 						if e.adbiplist == deviceid then
-							model = string.upper(e[".name"])
+							name = string.upper(e[".name"])
 						end
 					end)
 					apk = get_apk(deviceid,port)
@@ -67,7 +67,7 @@ function xact_status()
 				port = "USB-Cable"
 				if num and deviceid then
 					num = num + 1
-					model = "Android"
+					name = "Android"
 					apk = "init_adbrun"
 					pid = ""
 				end
@@ -75,7 +75,7 @@ function xact_status()
 
 			infolist[#infolist+1] = {
 				num = num,
-				model = model,
+				name = name,
 				deviceid = deviceid,
 				port = port,
 				apk = apk,
@@ -97,7 +97,7 @@ function getscreen()
 		if gettime % 3 == 1 then
 			if luci.http.formvalue('screenid') ~= "" then
 				local vid = luci.http.formvalue('screenid')
-				luci.sys.call("adb -s " .. vid .. ":5555 exec-out screencap -p > /tmp/" .. vid .. ".jpg && ln -s /tmp/" .. vid .. ".jpg /www 2>/dev/null")
+				luci.sys.call("adb -s " .. vid .. ":5555 exec-out screencap -p > /tmp/" .. vid .. ".png 2>/dev/null && ln -s /tmp/" .. vid .. ".png /www 2>/dev/null")
 			end
 		end
 	end

@@ -20,8 +20,8 @@
 										return num;
 									}})();
 					tr.insertCell(-1).innerHTML = (function() {
-									var pmodel = st[i].model;
-									return String.format('<font color="blueviolet">') + pmodel + String.format('</font>')
+									var devname = st[i].name;
+									return String.format('<font color="blueviolet">') + devname + String.format('</font>')
 									})();
 					tr.insertCell(-1).innerHTML = st[i].deviceid + ":" + st[i].port;
 					tr.insertCell(-1).innerHTML = (function() {
@@ -179,7 +179,7 @@
 									var kvid = st[i].deviceid
 									new XHR().post('<%=luci.dispatcher.build_url("admin", "services", "adbrun", "getscreen")%>', {sctime: myDate.getSeconds(),screenid : kvid},
 									function(x,data) {});
-									return '<button type=\"button\" onclick=\"window.open(\'http:\/\/' + window.location.hostname + ":" + st[i].uhttpd + '/' + kvid + '\.jpg \')\">预览</button>'
+									return '<button type=\"button\" onclick=\"window.open(\'http:\/\/' + window.location.hostname + ":" + st[i].uhttpd + '/' + kvid + '\.png \')\">预览</button>'
 									})();
 				}
 			}
@@ -192,11 +192,11 @@
 	<table class="cbi-section-table" id="adbrun_status_table" border="2">
 		<tr class="cbi-section-table-titles">
 			<th class="cbi-section-table-cell"><%:序号%></th>
-			<th class="cbi-section-table-cell"><%:设备名称%></th>
+			<th class="cbi-section-table-cell"><%:设备名%></th>
 			<th class="cbi-section-table-cell"><%:设备ID%></th>
-			<th class="cbi-section-table-cell"><%:当前运行程序%></th>
-			<th class="cbi-section-table-cell"><%:当前进程pid%></th>
-			<th class="cbi-section-table-cell"><%:当前屏幕%></th>
+			<th class="cbi-section-table-cell"><%:当前程序%></th>
+			<th class="cbi-section-table-cell"><%:脚本pid%></th>
+			<th class="cbi-section-table-cell"><%:预览%></th>
 		</tr>
 		<tr class="cbi-section-table-row">
 			<td colspan="6"><em><br /><%:Collecting data...%></em></td>
