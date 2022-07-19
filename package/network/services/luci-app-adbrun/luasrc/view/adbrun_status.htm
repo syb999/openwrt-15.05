@@ -172,8 +172,11 @@
 									if(kpid == ""){
 										return String.format('<font color="red">未计时</font>');
 									}else{
-										return String.format('<font color="green">') + st[i].runhours + "时" + st[i].runmins + "分" + st[i].runsecs + "秒" + String.format('</font>');
-									}})();
+										if(st[i].runtime == 0){
+											return String.format('<font color="green">读取时间</font>');
+										}else{
+											return String.format('<font color="green">') + st[i].runhours + "时" + st[i].runmins + "分" + st[i].runsecs + "秒" + String.format('</font>');
+									}}})();
 					tr.insertCell(-1).innerHTML = (function(){
 									var kpid = st[i].pid;
 									if(kpid == ""){
