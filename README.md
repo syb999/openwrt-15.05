@@ -9,7 +9,7 @@ sudo apt-get install libc6:i386 libgcc1:i386 libstdc++5:i386 libstdc++6:i386 lib
 
 # ------------------------------------------------------
 # for libiconv
-wget http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.13.1.tar.gz2
+wget http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.13.1.tar.gz
 
 tar zxvf libiconv-1.13.1.tar.gz && cd libiconv-1.13.1
 
