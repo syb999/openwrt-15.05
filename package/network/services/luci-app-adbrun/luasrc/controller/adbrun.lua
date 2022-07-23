@@ -65,8 +65,8 @@ function xact_status()
 			local ln = adblist:read("*l")
 			if not ln then
 				break
-			elseif ln:match("(%S-):(%d+).-") then
-				deviceid, port = ln:match("(%S-):(%d+).-")
+			elseif ln:match("(%S-):(%d+).device") then
+				deviceid, port = ln:match("(%S-):(%d+).device")
 				if num and deviceid and port then
 					num = num + 1
 					uci:foreach("adbrun", "adbrun", function(e)
@@ -80,7 +80,7 @@ function xact_status()
 								runtime = os.time() - tonumber(runtime)
 								if runtime >= 3600 then
 									runhours = (runtime - runtime%3600)/3600
-									local x = runtime - (runtime - runtime%3600)
+									local x = runtime%3600
 									if x  >= 60 then
 										runmins = (x - x%60)/60
 										runsecs = x%60
@@ -110,8 +110,8 @@ function xact_status()
 					apk = get_apk(deviceid,port)
 					pid = get_pid(deviceid)
 				end
-			elseif ln:match("^(%w+).device") then
-				deviceid = ln:match("^(%w+).device")
+			elseif ln:match("^(%w+).") then
+				deviceid = ln:match("^(%w+).-")
 				port = "USB-Cable"
 				if num and deviceid then
 					num = num + 1
