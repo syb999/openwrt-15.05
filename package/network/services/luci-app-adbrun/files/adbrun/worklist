@@ -15,7 +15,7 @@ function botting() {
 	for m in $workline;do
 		if [ "$m" == "skip" ];then
 			screensize=$(adb -s ${adbclient}:5555 shell wm size | cut -d ':' -f 2 | sed -e "s/ //g;s/\n//g;s/\r//g")
-			if [ ${screensize} == "1080x1920" ];then
+			if [ ${screensize} == "1080x1920" -o ${screensize} == "1080x2400" ];then
 				basey=$(expr $basey + $(uci get adbrun.@adbinit[0].diantaoskip))
 			elif [ ${screensize} == "720x1280" ];then
 				basey=$(expr $basey + $(uci get adbrun.@adbinit[0].diantaoskip) \* 2 / 3)

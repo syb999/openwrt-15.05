@@ -96,6 +96,8 @@ if [ $adbcd == "scripts" ];then
 			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=1030/;s/dosedbasey=/basey=300/' > /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "1080x2340" ];then
 			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=1030/;s/dosedbasey=/basey=395/' > /tmp/ADBRUN${sectionname}_.sh
+		elif [ ${screensize} == "1080x2400" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=1030/;s/dosedbasey=/basey=395/' > /tmp/ADBRUN${sectionname}_.sh
 		fi
 		sed -i "s/starttime=.*/starttime=$(date +%s)/" /tmp/ADBRUN${sectionname}_.sh
 		chmod +x /tmp/ADBRUN${sectionname}_.sh
@@ -115,6 +117,8 @@ if [ $adbcd == "scripts" ];then
 		elif [ ${screensize} == "1080x2280" ];then
 			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=586/;s/dosedbasey=/basey=750/;s/dosedbasecx=/basecx=980/;s/dosedbasecy=/basecy=220/' > /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "1080x2340" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=586/;s/dosedbasey=/basey=845/;s/dosedbasecx=/basecx=1075/;s/dosedbasecy=/basecy=220/' > /tmp/ADBRUN${sectionname}_.sh
+		elif [ ${screensize} == "1080x2400" ];then
 			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=586/;s/dosedbasey=/basey=845/;s/dosedbasecx=/basecx=1075/;s/dosedbasecy=/basecy=220/' > /tmp/ADBRUN${sectionname}_.sh
 		fi
 		sed -i "s/starttime=.*/starttime=$(date +%s)/" /tmp/ADBRUN${sectionname}_.sh
@@ -136,6 +140,8 @@ if [ $adbcd == "scripts" ];then
 			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=586/;s/dosedbasey=/basey=750/;s/dosedbasecx=/basecx=980/;s/dosedbasecy=/basecy=220/' > /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "1080x2340" ];then
 			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=586/;s/dosedbasey=/basey=845/;s/dosedbasecx=/basecx=1075/;s/dosedbasecy=/basecy=220/' > /tmp/ADBRUN${sectionname}_.sh
+		elif [ ${screensize} == "1080x2400" ];then
+			cat ${spath}${adbsh} | sed 's/dosedbasex=/basex=586/;s/dosedbasey=/basey=845/;s/dosedbasecx=/basecx=1075/;s/dosedbasecy=/basecy=220/' > /tmp/ADBRUN${sectionname}_.sh
 		fi
 		sed -i "s/starttime=.*/starttime=$(date +%s)/" /tmp/ADBRUN${sectionname}_.sh
 		chmod +x /tmp/ADBRUN${sectionname}_.sh
@@ -156,6 +162,8 @@ if [ $adbcd == "scripts" ];then
 			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=1050/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=1060/;s/dosedbasecx=/basecx=980/;s/dosedbasecy=/basecy=220/' > /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "1080x2340" ];then
 			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=1145/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=1155/' > /tmp/ADBRUN${sectionname}_.sh
+		elif [ ${screensize} == "1080x2400" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=1145/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=1350/' > /tmp/ADBRUN${sectionname}_.sh
 		fi
 		sed -i "s/starttime=.*/starttime=$(date +%s)/" /tmp/ADBRUN${sectionname}_.sh
 		chmod +x /tmp/ADBRUN${sectionname}_.sh
@@ -176,6 +184,8 @@ if [ $adbcd == "scripts" ];then
 			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=530/;s/dosedystart=/ystart=1560/;s/dosedbasex=/basex=950/;s/dosedbasey=/basey=835/' > /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "1080x2340" ];then
 			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=530/;s/dosedystart=/ystart=1655/;s/dosedbasex=/basex=950/;s/dosedbasey=/basey=930/' > /tmp/ADBRUN${sectionname}_.sh
+		elif [ ${screensize} == "1080x2400" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=530/;s/dosedystart=/ystart=1655/;s/dosedbasex=/basex=950/;s/dosedbasey=/basey=860/' > /tmp/ADBRUN${sectionname}_.sh
 		fi
 		sed -i "s/starttime=.*/starttime=$(date +%s)/" /tmp/ADBRUN${sectionname}_.sh
 		chmod +x /tmp/ADBRUN${sectionname}_.sh
