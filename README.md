@@ -9,6 +9,8 @@ sudo apt-get install libc6:i386 libgcc1:i386 libstdc++5:i386 libstdc++6:i386 lib
 
 sudo apt-get install libinit
 
+sudo apt-get install intltool
+
 sudo apt-get install python2
 
 # ------------------------------------------------------
