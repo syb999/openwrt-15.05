@@ -13,7 +13,7 @@ tianapikey.description = translate("tianapi vacation days key(from https://www.t
 
 tianapidate=s:taboption("autosign", Value, "tianapidate", translate("date"))
 tianapidate.datatype = "string"
-tianapidate.default="2021"
+tianapidate.default="2022"
 tianapidate.description = translate("What year's vacation days")
 
 workhour=s:taboption("autosign", Value, "workhour", translate("hour"))
@@ -51,7 +51,7 @@ s:tab("vacationlist",  translate("vacation days"))
 getvacationlist = s:taboption("vacationlist", Button, "getvacationlist", translate("one-click get vacation list"))
 getvacationlist.inputstyle = "apply"
 function getvacationlist.write(self, section)
-    luci.util.exec("/usr/autosign/autosigngetdays.sh &")
+    luci.util.exec("sh /usr/autosign/autosigngetdays.sh &")
 end
 
 local vddetails = "/etc/autosignvacationlist"
@@ -69,7 +69,7 @@ end
 getworklist = s:taboption("vacationlist", Button, "getworklist", translate("Get weekend work list"))
 getworklist.inputstyle = "apply"
 function getworklist.write(self, section)
-    luci.util.exec("/usr/autosign/autosigngetwkddays.sh &")
+    luci.util.exec("sh /usr/autosign/autosigngetwkddays.sh &")
 end
 
 local vdwkddetails = "/etc/autosignworklist"
@@ -89,7 +89,7 @@ s:tab("forsignin", translate("Sign in"))
 ocrunsign = s:taboption("forsignin", Button, "ocrunsign", translate("Onc-Click set autosign"))
 ocrunsign.inputstyle = "apply"
 function ocrunsign.write(self, section)
-    luci.util.exec("/usr/autosign/autosigntocrontab.sh")
+    luci.util.exec("sh /usr/autosign/autosigntocrontab.sh")
 end
 
 local autosignrun = "/usr/autosign/autosignrun.sh"
