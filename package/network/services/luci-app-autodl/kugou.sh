@@ -35,7 +35,7 @@ function showlyric() {
 function kugouplay() {
 	kghash=$(cat $thetmpfile1 | head -n 1 | cut -d '"' -f 1)
 	kgname=$(echo -en "$(cat $thetmpfile1 | head -n 2 | tail -n 1 | cut -d '"' -f 1)" | sed s'/\ //g;s/-/_/g')
-	kgmixid=$(cat $thetmpfile1 | head -n 3 | tail -n 1 | cut -d '}' -f 1)
+	kgmixid=$(cat $thetmpfile1 | head -n 3 | tail -n 1 | cut -d '}' -f 1 | cut -d ',' -f 1)
 	mp3prefix="https://wwwapi.kugou.com/yy/index.php?r=play/getdata"
 	mp3hash="&hash=${kghash}"
 	mp3mid="&mid=9d77842dfdc04ea02e7ba982b3552263"
