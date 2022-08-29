@@ -1,0 +1,19 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2022 OpenWrt.org
+
+START=99
+USE_PROCD=1
+
+APP=msd_lite
+
+start_service() {
+	procd_open_instance
+	procd_set_param command /usr/bin/$APP -d -c /etc/msd_lite/msd_lite.conf
+	procd_set_param respawn
+	procd_close_instance
+}
+
+stop_service() {
+	service_stop /usr/bin/$APP
+}
+
