@@ -9,7 +9,7 @@
  <msd>
  	<log>
 -		<file>/root/msd_lite/msd_lite.log</file>
-+		<file>/tmp/msd_lite.log</file>
++		<file>/dev/null/file>
  	</log>
  
  	<threadPool>

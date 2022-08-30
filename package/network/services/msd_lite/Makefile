@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=msd_lite
-PKG_RELEASE=1
+PKG_RELEASE=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://github.com/rozhuk-im/msd_lite
@@ -28,6 +28,8 @@ define Package/msd_lite/install
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/etc/msd_lite/msd_lite.conf.sample $(1)/etc/msd_lite/msd_lite.conf
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/msd_lite.init $(1)/etc/init.d/msd_lite
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_DATA) ./files/msd_lite.conf $(1)/etc/config/msd_lite
 endef
 
 
