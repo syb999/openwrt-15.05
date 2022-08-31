@@ -598,6 +598,18 @@ define Device/redmi-router-ac2100
 endef
 TARGET_DEVICES += redmi-router-ac2100
 
+define Device/zte-e8820s
+  DTS := ZTE-E8820S
+  BLOCKSIZE := 128KiB
+  PAGESIZE := 2048
+  KERNEL_SIZE := 2097152
+  IMAGE_SIZE := 127232k
+  FILESYSTEMS := squashfs
+  IMAGES := factory.bin
+  IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
+endef
+TARGET_DEVICES += zte-e8820s
+
 endif
 #
 # MT7628 Profiles

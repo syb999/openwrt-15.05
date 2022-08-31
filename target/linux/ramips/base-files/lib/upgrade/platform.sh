@@ -216,6 +216,7 @@ platform_do_upgrade() {
 	mi-router-ac2100|\
 	nokia-a040wq |\
 	redmi-router-ac2100|\
+	zte-e8820s|\
 	hc5962)
 		nand_do_upgrade "$ARGV"
 		;;

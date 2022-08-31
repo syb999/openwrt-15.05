@@ -354,6 +354,9 @@ case $board in
 		ucidef_set_led_switch "lan2" "LAN2" "zbt-we1226:green:lan2" "switch0" "0x02"
 		ucidef_set_led_switch "wan" "WAN" "zbt-we1226:green:wan" "switch0" "0x10"
 		;;
+	zte-e8820s)
+		ucidef_set_led_netdev "system" "system" "e8820s:white:system" "eth0" "tx rx"
+		;;
 esac
 
 board_config_flush

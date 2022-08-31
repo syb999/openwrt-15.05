@@ -380,6 +380,13 @@ ramips_setup_interfaces()
 		ucidef_add_switch_vlan "switch0" "1" "1 2 3 4 5t"
 		ucidef_add_switch_vlan "switch0" "2" "0 5t"
 		;;
+
+	zte-e8820s)
+		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
+		ucidef_add_switch "switch0" "1" "1"
+		ucidef_add_switch_vlan "switch0" "1" "0 1 2 3 6t"
+		ucidef_add_switch_vlan "switch0" "2" "4 6t"
+		;;
 	*)
 		RT3X5X=`cat /proc/cpuinfo | egrep "(RT3.5|RT5350)"`
 		if [ -n "${RT3X5X}" ]; then
@@ -547,6 +554,11 @@ ramips_setup_macs()
 	linkits7688d)
 		wan_mac=$(mtd_get_mac_binary factory 4)
 		lan_mac=$(mtd_get_mac_binary factory 46)
+		;;
+
+	zte-e8820s)
+		lan_mac=$(mtd_get_mac_binary factory 57344)
+		wan_mac=$(macaddr_add "$lan_mac" -1)
 		;;
 	*)
 		lan_mac=$(cat /sys/class/net/eth0/address)
