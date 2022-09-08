@@ -6,7 +6,7 @@ olip=$(uci get autodl.@autodl[0].olip)
 olp1=$(uci get autodl.@autodl[0].olp1)
 olp2=$(uci get autodl.@autodl[0].olp2)
 
-localip=$(uci get network.lan.ipaddr)
+localip=$(ubus call network.interface.wan status |grep address | grep -v ipv | grep -v addresses | head -n1 | cut -d '"' -f 4)
 localport=$(uci get uhttpd.main.listen_http | awk '/0.0.0.0/ {print $1}' | cut -d ':' -f 2)
 localddns=$(uci get ddns.myddns_ipv4.domain)
 
