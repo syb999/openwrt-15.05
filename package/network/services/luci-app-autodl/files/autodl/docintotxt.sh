@@ -15,7 +15,7 @@ do
 	pngfilename=$(echo $LINE)
 	convert -quality 96 $pngfilename /tmp/tmp.new.jpg
 	convert /tmp/tmp.new.jpg -resample 150 /tmp/tmp.newimage.jpg
-	export TESSDATA_PREFIX="/usr/tessdata/"
+	export TESSDATA_PREFIX="/usr/share/tessdata/"
 	export PATH=$PATH:$TESSDATA_PREFIX
 	tesseract /tmp/tmp.newimage.jpg /tmp/tessdoc -l chi_sim --dpi 150
 	cat /tmp/tessdoc.txt | sed -e '/^$/d' >> ${fp}/000full.txt
