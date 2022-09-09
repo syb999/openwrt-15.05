@@ -27,7 +27,7 @@ tools-$(BUILD_TOOLCHAIN) += gmp mpfr mpc libelf
 tools-y += m4 libtool autoconf autoconf-archive automake flex bison pkgconf sed mklibs
 tools-y += sstrip make-ext4fs e2fsprogs mtd-utils mkimage
 tools-y += firmware-utils patch-image patch quilt yaffs2 flock padjffs2
-tools-y += mm-macros missing-macros xz cmake scons bc findutils gengetopt patchelf
+tools-y += mm-macros meson missing-macros xz ninja cmake scons bc findutils gengetopt patchelf
 tools-$(CONFIG_TARGET_orion_generic) += wrt350nv2-builder upslug2
 tools-y += ucl upx
 tools-$(CONFIG_TARGET_x86) += qemu
@@ -74,11 +74,12 @@ $(curdir)/findutils/compile := $(curdir)/bison/install
 $(curdir)/gengetopt/compile := $(curdir)/libtool/install
 $(curdir)/patchelf/compile := $(curdir)/libtool/install
 $(curdir)/dosfstools/compile := $(curdir)/autoconf/install $(curdir)/automake/install
+$(curdir)/meson/compile := $(curdir)/ninja/install
 $(curdir)/libressl/compile := $(curdir)/pkgconf/install
-$(curdir)/cmake/compile += $(curdir)/libressl/install
+$(curdir)/cmake/compile += $(curdir)/libressl/install $(curdir)/ninja/install
 
 ifneq ($(CONFIG_CCACHE)$(CONFIG_SDK),)
-$(foreach tool, $(filter-out patch,$(tools-y)), $(eval $(curdir)/$(tool)/compile += $(curdir)/ccache/install))
+$(foreach tool, $(filter-out patch ninja,$(tools-y)), $(eval $(curdir)/$(tool)/compile += $(curdir)/ccache/install))
 tools-y += ccache
 endif
 
