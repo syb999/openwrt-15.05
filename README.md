@@ -11,7 +11,16 @@ sudo apt-get install libinit
 
 sudo apt-get install intltool
 
-sudo apt-get install python2
+For python3.6+,we can use pyenv:
+git clone https://github.com/pyenv/pyenv.git ~/.pyenv
+echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
+echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
+echo 'eval "$(pyenv init -)"' >> ~/.bashrc
+exec $SHELL -l
+pyenv install 3.7.1 -v
+pyenv rehash
+pyenv global 3.7.1
+
 
 # ------------------------------------------------------
 # for libiconv

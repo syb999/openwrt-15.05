@@ -136,10 +136,27 @@ $(eval $(call SetupHostCommand,wget,Please install GNU 'wget', \
 $(eval $(call SetupHostCommand,perl,Please install Perl 5.x, \
 	perl --version | grep "perl.*v5"))
 
-$(eval $(call SetupHostCommand,python,Please install Python 2.x, \
-	python2.7 -V 2>&1 | grep Python, \
-	python2 -V 2>&1 | grep Python, \
-	python -V 2>&1 | grep Python))
+$(eval $(call CleanupPython2))
+
+$(eval $(call SetupHostCommand,python,Please install Python >= 3.6, \
+	python3.10 -V 2>&1 | grep 'Python 3', \
+	python3.9 -V 2>&1 | grep 'Python 3', \
+	python3.8 -V 2>&1 | grep 'Python 3', \
+	python3.7 -V 2>&1 | grep 'Python 3', \
+	python3.6 -V 2>&1 | grep 'Python 3', \
+	python3 -V 2>&1 | grep -E 'Python 3\.[6-9]\.?'))
+
+$(eval $(call SetupHostCommand,python3,Please install Python >= 3.6, \
+	python3.10 -V 2>&1 | grep 'Python 3', \
+	python3.9 -V 2>&1 | grep 'Python 3', \
+	python3.8 -V 2>&1 | grep 'Python 3', \
+	python3.7 -V 2>&1 | grep 'Python 3', \
+	python3.6 -V 2>&1 | grep 'Python 3', \
+	python3 -V 2>&1 | grep -E 'Python 3\.[6-9]\.?'))
+
+$(eval $(call TestHostCommand,python3-distutils, \
+	Please install the Python3 distutils module, \
+	$(STAGING_DIR_HOST)/bin/python3 -c 'import distutils'))
 
 $(eval $(call SetupHostCommand,svn,Please install the Subversion client, \
 	svn --version | grep Subversion))
