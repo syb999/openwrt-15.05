@@ -1,0 +1,48 @@
+mt76: enable the VHT extended NSS BW feature
+https://github.com/openwrt/mt76/commit/d6ae3505ac6c0e34ca2a209d4ac9ffe9ad87575d
+
+mt76: fix 5 GHz connection regression on mt76x0/mt76x2
+https://github.com/openwrt/mt76/commit/d70546462b7b51ebc2bcdd5c534fdf3465be62a4
+
+--- a/mac80211.c
++++ b/mac80211.c
+@@ -186,6 +186,9 @@ static void mt76_init_stream_cap(struct
+ 	}
+ 	vht_cap->vht_mcs.rx_mcs_map = cpu_to_le16(mcs_map);
+ 	vht_cap->vht_mcs.tx_mcs_map = cpu_to_le16(mcs_map);
++	if (ieee80211_hw_check(phy->hw, SUPPORTS_VHT_EXT_NSS_BW))
++		vht_cap->vht_mcs.tx_highest |=
++				cpu_to_le16(IEEE80211_VHT_EXT_NSS_BW_CAPABLE);
+ }
+ 
+ void mt76_set_stream_caps(struct mt76_phy *phy, bool vht)
+--- a/mt7615/init.c
++++ b/mt7615/init.c
+@@ -395,6 +395,7 @@ mt7615_init_wiphy(struct ieee80211_hw *h
+ 	ieee80211_hw_set(hw, TX_STATUS_NO_AMPDU_LEN);
+ 	ieee80211_hw_set(hw, WANT_MONITOR_VIF);
+ 	ieee80211_hw_set(hw, SUPPORTS_RX_DECAP_OFFLOAD);
++	ieee80211_hw_set(hw, SUPPORTS_VHT_EXT_NSS_BW);
+ 
+ 	if (is_mt7615(&phy->dev->mt76))
+ 		hw->max_tx_fragments = MT_TXP_MAX_BUF_NUM;
+--- a/mt7915/init.c
++++ b/mt7915/init.c
+@@ -235,6 +235,7 @@ mt7915_init_wiphy(struct ieee80211_hw *h
+ 	ieee80211_hw_set(hw, SUPPORTS_TX_ENCAP_OFFLOAD);
+ 	ieee80211_hw_set(hw, SUPPORTS_RX_DECAP_OFFLOAD);
+ 	ieee80211_hw_set(hw, WANT_MONITOR_VIF);
++	ieee80211_hw_set(hw, SUPPORTS_VHT_EXT_NSS_BW);
+ 
+ 	hw->max_tx_fragments = 4;
+ 
+--- a/mt7921/init.c
++++ b/mt7921/init.c
+@@ -92,6 +92,7 @@ mt7921_init_wiphy(struct ieee80211_hw *h
+ 	ieee80211_hw_set(hw, WANT_MONITOR_VIF);
+ 	ieee80211_hw_set(hw, SUPPORTS_PS);
+ 	ieee80211_hw_set(hw, SUPPORTS_DYNAMIC_PS);
++	ieee80211_hw_set(hw, SUPPORTS_VHT_EXT_NSS_BW);
+ 
+ 	if (dev->pm.enable)
+ 		ieee80211_hw_set(hw, CONNECTION_MONITOR);
