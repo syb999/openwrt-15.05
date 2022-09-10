@@ -4,7 +4,7 @@
 
 / {
 	compatible = "zte-e8820s", "mediatek,mt7621-soc";
-	model = "ZTE-E8820S";
+	model = "ZTE E8820S";
 
 	palmbus@1E000000 {
 		spi@b00 {
@@ -71,6 +71,11 @@
 				device_type = "pci";
 				mediatek,mtd-eeprom = <&factory 0x8000>;
 				mediatek,5ghz = <0>;
+
+				led {
+					led-sources = <2>;
+					led-active-low;
+				};
 			};
 		};
 	};

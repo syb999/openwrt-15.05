@@ -6,7 +6,7 @@
 #
 
 define Profile/ZTE-E8820S
-	NAME:=ZTE-E8820S
+	NAME:=ZTE E8820S
 	PACKAGES:=\
 		kmod-usb-core kmod-usb3 kmod-usb-hid \
 		kmod-ledtrig-netdev kmod-mt7603 kmod-mt76x2 wpad-mini

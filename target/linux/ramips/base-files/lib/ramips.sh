@@ -514,7 +514,7 @@ ramips_board_detect() {
 	*"ZBT-WE1226")
 		name="zbt-we1226"
 		;;
-	*"ZTE-E8820S")
+	*"ZTE E8820S")
 		name="zte-e8820s"
 		;;
 	*)
