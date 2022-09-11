@@ -1,0 +1,26 @@
+--- a/main.c
++++ b/main.c
+@@ -228,6 +228,23 @@ static void usage(const char *argv0) {
+ 		   argv0);
+ }
+ 
++#if EVENTFD
++#if defined(__UCLIBC__)
++
++int
++eventfd_read(int fd, eventfd_t* value)
++{
++       return (read(fd, value, sizeof(*value)) == sizeof(*value)) ? 0 : -1;
++}
++
++int
++eventfd_write(int fd, eventfd_t value)
++{
++       return (write(fd, &value, sizeof(value)) == sizeof(value)) ? 0 : -1;
++}
++#endif
++#endif
++
+ static void license(void) {
+ 	printf(TITLE "\n\n"
+ 		   "This program is free software: you can redistribute it and/or modify\n"
