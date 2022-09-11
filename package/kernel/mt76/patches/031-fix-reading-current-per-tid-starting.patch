@@ -1,0 +1,18 @@
+wifi: mt76: fix reading current per-tid starting sequence number for aggregation
+
+The code was accidentally shifting register values down by tid % 32 instead of
+(tid * field_size) % 32.
+
+https://github.com/openwrt/mt76/commit/5ec78e1ec43d1e39edfea1efb9fd4541fa004af0
+
+--- a/mt7615/mac.c
++++ b/mt7615/mac.c
+@@ -1020,7 +1020,7 @@ u32 mt7615_mac_get_sta_tid_sn(struct mt7
+ 	offset %= 32;
+ 
+ 	val = mt76_rr(dev, addr);
+-	val >>= (tid % 32);
++	val >>= offset;
+ 
+ 	if (offset > 20) {
+ 		addr += 4;
