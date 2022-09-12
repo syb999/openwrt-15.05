@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 
 PKG_NAME:=luci-app-gmediarender
-PKG_VERSION:=2022-08-16
+PKG_VERSION:=2022-09-12
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -16,7 +16,7 @@ define Package/luci-app-gmediarender
 endef
 
 define Package/luci-app-gmediarender/description
-	Easy to change binding IP
+	Easy to change binding interface
 endef
 
 define Build/Prepare

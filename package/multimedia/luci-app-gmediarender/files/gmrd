@@ -1,0 +1,17 @@
+#!/bin/sh
+. /usr/share/gmediarender/gmrloadfunc
+
+while true
+do
+	gmr_init
+	todolist="iqiyi qq.com bilivideo youku bdxiguavod"
+	for t in $todolist;do
+		gotod=$t
+		if [ ! -z "$(cat /tmp/xgmrender.tmp.find | grep $t)" ];then
+			break
+		fi
+	done
+	/usr/share/gmediarender/gmrdownload $gotod &
+	sleep 3
+done
+

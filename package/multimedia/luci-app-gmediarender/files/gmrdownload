@@ -1,10 +1,42 @@
 #!/bin/sh
 . /usr/share/gmediarender/gmrloadfunc
-while true
-do
+thecase=$1
+
+if [ "$thecase" == "iqiyi" ];then
+	gmr_init
+	gmr_iqiyiinit
+	echo "clear" > $gmrlog
+	gmr_dirinit
+	gmr_iqiyidownload
+elif [ "$thecase" == "qq.com" ];then
+	gmr_init
+	gmr_vqqinit
+	echo "clear" > $gmrlog
+	gmr_dirinit
+	gmr_vqqdownload
+elif [ "$thecase" == "bilivideo" ];then
+	gmr_init
+	gmr_bilibiliinit
+	echo "clear" > $gmrlog
+	gmr_dirinit
+	gmr_bilibilidownload
+elif [ "$thecase" == "youku" ];then
+	gmr_init
+	gmr_youkuinit
+	echo "clear" > $gmrlog
+	gmr_dirinit
+	gmr_youkudownload
+elif [ "$thecase" == "bdxiguavod" ];then
+	gmr_init
+	gmr_xiguainit
+	echo "clear" > $gmrlog
+	gmr_dirinit
+	gmr_xiguadownload
+else
 	gmr_init
 	gmr_musicinit
+	echo "clear" > $gmrlog
 	gmr_dirinit
 	gmr_musicdownload
-	gmr_clear
-done
+fi
+

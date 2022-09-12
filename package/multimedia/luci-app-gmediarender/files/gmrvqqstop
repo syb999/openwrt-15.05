@@ -1,5 +1,0 @@
-#!/bin/sh
-gmrlog="/tmp/$(uci get gmediarender.@gmediarender[0].gmrenderlog)"
-kill $(ps | grep gmrvqq | grep -v grep | grep -v gmrvqqstop | head -n 1 | cut -d 'r' -f 1)
-rm /tmp/xgmrender.tmp.*
-echo "clear" > $gmrlog

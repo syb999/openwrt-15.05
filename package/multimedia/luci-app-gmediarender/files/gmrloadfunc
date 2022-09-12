@@ -4,6 +4,14 @@ gmrdir="$(uci get gmediarender.@gmediarender[0].gmrenderdir)"
 gmrlog="/tmp/$(uci get gmediarender.@gmediarender[0].gmrenderlog)"
 saferom="$(df -h | grep tmpfs | sed -e "s/[ ][ ]* / /g" | head -n 1 | cut -d ' ' -f 5 | cut -d '%' -f 1)"
 
+
+wget-ssl -q -c $(uci get network.lan.ipaddr) -O /tmp/xgmrender.tmp.testwget > /dev/null 2>&1
+if [ -s /tmp/xgmrender.tmp.testwget ];then
+	wget=wget-ssl
+else
+	wget=wget
+fi
+
 if [ ! -d "$gmrdir" ];then
 	mkdir -p $gmrdir
 fi
@@ -95,12 +103,7 @@ function gmr_musicdownload(){
 	if [ $saferom -gt 80 ];then
 		logger -t gmediarender ☆☆☆☆☆☆☆ Not enough diskspace! ☆☆☆☆☆☆☆
 	else
-		wget-ssl -q -c $(uci get network.lan.ipaddr) -O /tmp/xgmrender.tmp.testwget > /dev/null 2>&1
-		if [ -s /tmp/xgmrender.tmp.testwget ];then
-			wget-ssl --timeout=3 -q $geturl -O $gmrdir/$thedirname/$thename
-		else
-			wget --timeout=3 -q $geturl -O $gmrdir/$thedirname/$thename
-		fi
+		$wget --timeout=3 -q $geturl -O $gmrdir/$thedirname/$thename
 	fi
 }
 
@@ -108,41 +111,29 @@ function gmr_vqqdownload(){
 	if [ $saferom -gt 80 ];then
 		logger -t gmediarender ☆☆☆☆☆☆☆ Not enough diskspace! ☆☆☆☆☆☆☆
 	else
+		rdsuffix=$(head -n 1 /dev/urandom | tr -dc "0-9a-z" | head -c8)
 		isbin=$(file /tmp/xgmrender.tmp.m3u8)
-		if [ $isbin == "/tmp/xgmrender.tmp.m3u8: data" ];then
+		if [ "$isbin" == "/tmp/xgmrender.tmp.m3u8: data" ];then
 			echo skip
 		else
-			wget-ssl -q -c $(uci get network.lan.ipaddr) -O /tmp/xgmrender.tmp.testwget > /dev/null 2>&1
-			if [ -s /tmp/xgmrender.tmp.testwget ];then
-				wget-ssl --timeout=10 -q $geturl -O $them3u8
-				cat $them3u8 | grep .ts > /tmp/xgmrender.tmp.m3u8
-				tmpm3u8=$(cat /tmp/xgmrender.tmp.m3u8)
-				for i in $tmpm3u8
-				do
-					theprefix=$(cat /tmp/xgmrender.tmp.url | sed "s/${thesuffix}//")
-					tsfragment="${theprefix}${i}"
-					wget-ssl --timeout=3 -q $tsfragment -O /tmp/xgmrender.tmp.fragment
-					cat /tmp/xgmrender.tmp.fragment >> $gmrdir/$thename.ts.downloading
-				done
-			else
-				wget --timeout=10 -q -c $geturl -O $them3u8
-				cat $them3u8 | grep .ts > /tmp/xgmrender.tmp.m3u8
-				tmpm3u8=$(cat /tmp/xgmrender.tmp.m3u8)
-				for i in $tmpm3u8
-				do
-					theprefix=$(cat /tmp/xgmrender.tmp.url | sed "s/${thesuffix}//")
-					tsfragment="${theprefix}${i}"
-					wget --timeout=3 -q $tsfragment -O /tmp/xgmrender.tmp.fragment
-					cat /tmp/xgmrender.tmp.fragment >> $gmrdir/$thename.ts.downloading
-				done
-			fi
+			$wget --timeout=10 -q -c $geturl -O $them3u8
+			cat $them3u8 | grep .ts > /tmp/xgmrender.tmp.m3u8$rdsuffix
+			tmpm3u8=$(cat /tmp/xgmrender.tmp.m3u8$rdsuffix)
+			for i in $tmpm3u8
+			do
+				theprefix=$(cat /tmp/xgmrender.tmp.url | sed "s/${thesuffix}//")
+				tsfragment="${theprefix}${i}"
+				$wget --timeout=3 -q $tsfragment -O /tmp/xgmrender.tmp.fragment$rdsuffix
+				cat /tmp/xgmrender.tmp.fragment$rdsuffix >> $gmrdir/$thename.ts.downloading$rdsuffix
+			done
 		fi
-		if [ -s $thename.ts.downloading ];then
-			mv $gmrdir/$thename.ts.downloading $gmrdir/$thedirname/$thename.ts
+		if [ -s $thename.ts.downloading$rdsuffix ];then
+			mv $gmrdir/$thename.ts.downloading$rdsuffix $gmrdir/$thedirname/$thename.ts
 		else
 			mv $gmrdir/$them3u8 $gmrdir/$thedirname/$thename.mp4
-			rm $gmrdir/$thename.ts.downloading
+			rm $gmrdir/$thename.ts.downloading$rdsuffix
 		fi
+		rm /tmp/xgmrender.tmp.m3u8$rdsuffix /tmp/xgmrender.tmp.fragment$rdsuffix $them3u8
 	fi
 }
 
@@ -150,13 +141,9 @@ function gmr_bilibilidownload(){
 	if [ $saferom -gt 80 ];then
 		logger -t gmediarender ☆☆☆☆☆☆☆ Not enough diskspace! ☆☆☆☆☆☆☆
 	else
-		wget-ssl -q -c $(uci get network.lan.ipaddr) -O /tmp/xgmrender.tmp.testwget > /dev/null 2>&1
-		if [ -s /tmp/xgmrender.tmp.testwget ];then
-			wget-ssl --timeout=3 -q $geturl -O $gmrdir/$thename.downloading
-		else
-			wget --timeout=3 -q $geturl -O $gmrdir/$thename.downloading
-		fi
-		mv $gmrdir/$thename.downloading $gmrdir/$thedirname/$thename.$thesuffix
+		rdsuffix=$(head -n 1 /dev/urandom | tr -dc "0-9a-z" | head -c8)
+		$wget --timeout=3 -q $geturl -O $gmrdir/$thename.downloading$rdsuffix
+		mv $gmrdir/$thename.downloading$rdsuffix $gmrdir/$thedirname/$thename.$thesuffix
 	fi
 }
 
@@ -164,13 +151,9 @@ function gmr_xiguadownload(){
 	if [ $saferom -gt 80 ];then
 		logger -t gmediarender ☆☆☆☆☆☆☆ Not enough diskspace! ☆☆☆☆☆☆☆
 	else
-		wget-ssl -q -c $(uci get network.lan.ipaddr) -O /tmp/xgmrender.tmp.testwget > /dev/null 2>&1
-		if [ -s /tmp/xgmrender.tmp.testwget ];then
-			wget-ssl --timeout=3 -q $geturl -O $gmrdir/$thedirname/$thename.mp4.fragment
-		else
-			wget-ssl --timeout=3 -q $geturl -O $gmrdir/$thedirname/$thename.mp4.fragment
-		fi
-		mv $gmrdir/$thedirname/$thename.mp4.fragment $gmrdir/$thedirname/$thename-$(date +%s).mp4
+		rdsuffix=$(head -n 1 /dev/urandom | tr -dc "0-9a-z" | head -c8)
+		$wget --timeout=3 -q $geturl -O $gmrdir/$thedirname/$thename.mp4.fragment$rdsuffix
+		mv $gmrdir/$thedirname/$thename.mp4.fragment$rdsuffix $gmrdir/$thedirname/$thename-$(date +%s).mp4
 	fi
 }
 
@@ -178,37 +161,27 @@ function gmr_iqiyidownload(){
 	if [ $saferom -gt 80 ];then
 		logger -t gmediarender ☆☆☆☆☆☆☆ Not enough diskspace! ☆☆☆☆☆☆☆
 	else
+		rdsuffix=$(head -n 1 /dev/urandom | tr -dc "0-9a-z" | head -c8)
 		isbin=$(file /tmp/xgmrender.tmp.m3u8)
-		if [ $isbin == "/tmp/xgmrender.tmp.m3u8: data" ];then
+		if [ "$isbin" == "/tmp/xgmrender.tmp.m3u8: data" ];then
 			echo skip
 		else
-			wget-ssl -q -c $(uci get network.lan.ipaddr) -O /tmp/xgmrender.tmp.testwget > /dev/null 2>&1
-			if [ -s /tmp/xgmrender.tmp.testwget ];then
-				wget-ssl --timeout=10 -q $geturl -O $them3u8
-				cat $them3u8 | grep .ts > /tmp/xgmrender.tmp.m3u8
-				tmpm3u8=$(cat /tmp/xgmrender.tmp.m3u8)
-				for i in $tmpm3u8
-				do
-					wget-ssl --timeout=3 -q $i -O /tmp/xgmrender.tmp.fragment
-					cat /tmp/xgmrender.tmp.fragment >> $gmrdir/$thename.ts.downloading
-				done
-			else
-				wget --timeout=10 -q -c $geturl -O $them3u8
-				cat $them3u8 | grep .ts > /tmp/xgmrender.tmp.m3u8
-				tmpm3u8=$(cat /tmp/xgmrender.tmp.m3u8)
-				for i in $tmpm3u8
-				do
-					wget --timeout=3 -q $i -O /tmp/xgmrender.tmp.fragment
-					cat /tmp/xgmrender.tmp.fragment >> $gmrdir/$thename.ts.downloading
-				done
-			fi
+			$wget --timeout=10 -q -c $geturl -O $them3u8
+			cat $them3u8 | grep .ts > /tmp/xgmrender.tmp.m3u8$rdsuffix
+			tmpm3u8=$(cat /tmp/xgmrender.tmp.m3u8$rdsuffix)
+			for i in $tmpm3u8
+			do
+				$wget --timeout=3 -q $i -O /tmp/xgmrender.tmp.fragment$rdsuffix
+				cat /tmp/xgmrender.tmp.fragment$rdsuffix >> $gmrdir/$thename.ts.downloading$rdsuffix
+			done
 		fi
-		if [ -s $thename.ts.downloading ];then
-			mv $gmrdir/$thename.ts.downloading $gmrdir/$thedirname/$thename-$(date +%s).ts
+		if [ -s $thename.ts.downloading$rdsuffix ];then
+			mv $gmrdir/$thename.ts.downloading$rdsuffix $gmrdir/$thedirname/$thename-$(date +%s).ts
 		else
 			mv $gmrdir/$them3u8 $gmrdir/$thedirname/$thename-$(date +%s).mp4
-			rm $gmrdir/$thename.ts.downloading
+			rm $gmrdir/$thename.ts.downloading$rdsuffix
 		fi
+		rm /tmp/xgmrender.tmp.m3u8$rdsuffix /tmp/xgmrender.tmp.fragment$rdsuffix $them3u8
 	fi
 }
 
@@ -216,32 +189,22 @@ function gmr_youkudownload(){
 	if [ $saferom -gt 80 ];then
 		logger -t gmediarender ☆☆☆☆☆☆☆ Not enough diskspace! ☆☆☆☆☆☆☆
 	else
-		wget-ssl -q -c $(uci get network.lan.ipaddr) -O /tmp/xgmrender.tmp.testwget > /dev/null 2>&1
-		if [ -s /tmp/xgmrender.tmp.testwget ];then
-			wget-ssl --timeout=10 -q $geturl -O /tmp/xgmrender.tmp.mtmp
-			cat /tmp/xgmrender.tmp.mtmp | grep .ts | sed 's/\r$//' | cut -d ' ' -f 1 > /tmp/xgmrender.tmp.m3u8
-			tmpm3u8=$(cat /tmp/xgmrender.tmp.m3u8)
-			for i in $tmpm3u8
-			do
-				wget-ssl --timeout=3 -q $i -O /tmp/xgmrender.tmp.fragment
-				cat /tmp/xgmrender.tmp.fragment >> $gmrdir/$thename.ts.downloading
-			done
-		else
-			wget --timeout=10 -q $geturl -O /tmp/xgmrender.tmp.mtmp
-			cat /tmp/xgmrender.tmp.mtmp | grep .ts | sed 's/\r$//' | cut -d ' ' -f 1 > /tmp/xgmrender.tmp.m3u8
-			tmpm3u8=$(cat /tmp/xgmrender.tmp.m3u8)
-			for i in $tmpm3u8
-			do
-				wget --timeout=3 -q $i -O /tmp/xgmrender.tmp.fragment
-				cat /tmp/xgmrender.tmp.fragment >> $gmrdir/$thename.ts.downloading
-			done
-		fi
-		if [ -s $thename.ts.downloading ];then
-			mv $gmrdir/$thename.ts.downloading $gmrdir/$thedirname/$thename.ts
+		rdsuffix=$(head -n 1 /dev/urandom | tr -dc "0-9a-z" | head -c8)
+		$wget --timeout=10 -q $geturl -O /tmp/xgmrender.tmp.mtmp
+		cat /tmp/xgmrender.tmp.mtmp | grep .ts | sed 's/\r$//' | cut -d ' ' -f 1 > xgmrender.tmp.m3u8$rdsuffix
+		tmpm3u8=$(cat xgmrender.tmp.m3u8$rdsuffix)
+		for i in $tmpm3u8
+		do
+			$wget --timeout=3 -q $i -O /tmp/xgmrender.tmp.fragment$rdsuffix
+			cat /tmp/xgmrender.tmp.fragment$rdsuffix >> $gmrdir/$thename.ts.downloading$rdsuffix
+		done
+		if [ -s $thename.ts.downloading$rdsuffix ];then
+			mv $gmrdir/$thename.ts.downloading$rdsuffix $gmrdir/$thedirname/$thename.ts
 		else
 			mv $gmrdir/$them3u8 $gmrdir/$thedirname/$thename.mp4
-			rm $gmrdir/$thename.ts.downloading
+			rm $gmrdir/$thename.ts.downloading$rdsuffix
 		fi
+		rm xgmrender.tmp.m3u8$rdsuffix /tmp/xgmrender.tmp.fragment$rdsuffix /tmp/xgmrender.tmp.mtmp
 	fi
 }
 

@@ -54,114 +54,18 @@ gmrenderdownload = s:taboption("gmrender_init", Button, "gmrenderdownload", tran
 gmrenderdownload:depends("gmrenderextra", "1")
 gmrenderdownload.rmempty = true
 gmrenderdownload.inputstyle = "apply"
+gmrenderdownload.description = translate("支持腾讯、爱奇艺、哔哩哔哩、优酷、西瓜、酷我等.")
 function gmrenderdownload.write(self, section)
-	luci.util.exec("/usr/share/gmediarender/gmrdownload >/dev/null 2>&1 &")
+	luci.util.exec("/usr/share/gmediarender/gmrd >/dev/null 2>&1 &")
 end
 
-gmrenderdownloadstop = s:taboption("gmrender_init", Button, "gmrenderdownloadstop", translate("One-click STOP download"))
-gmrenderdownloadstop:depends("gmrenderextra", "1")
-gmrenderdownloadstop.rmempty = true
-gmrenderdownloadstop.inputstyle = "apply"
-function gmrenderdownloadstop.write(self, section)
-	luci.util.exec("/usr/share/gmediarender/gmrdownloadstop >/dev/null 2>&1 &")
-end
-
-s:tab("gmrender_vqq", translate("v.qq.com menu"))
-gmrendervqq = s:taboption("gmrender_vqq", Button, "gmrendervqq", translate("One-click download v.qq.com"))
-gmrendervqq:depends("gmrenderextra", "1")
-gmrendervqq.rmempty = true
-gmrendervqq.inputstyle = "apply"
-function gmrendervqq.write(self, section)
-	luci.util.exec("/usr/share/gmediarender/gmrvqq >/dev/null 2>&1 &")
-end
-
-gmrendervqqstop = s:taboption("gmrender_vqq", Button, "gmrendervqqstop", translate("One-click STOP v.qq.com"))
-gmrendervqqstop:depends("gmrenderextra", "1")
-gmrendervqqstop.rmempty = true
-gmrendervqqstop.inputstyle = "apply"
-function gmrendervqqstop.write(self, section)
-	luci.util.exec("/usr/share/gmediarender/gmrvqqstop >/dev/null 2>&1 &")
-end
-
-
-s:tab("gmrender_xigua", translate("ixigua.com menu"))
-gmrenderxigua = s:taboption("gmrender_xigua", Button, "gmrenderxigua", translate("One-click download ixigua.com"))
-gmrenderxigua:depends("gmrenderextra", "1")
-gmrenderxigua.rmempty = true
-gmrenderxigua.inputstyle = "apply"
-function gmrenderxigua.write(self, section)
-	luci.util.exec("/usr/share/gmediarender/gmrxigua >/dev/null 2>&1 &")
-end
-
-gmrenderxiguastop = s:taboption("gmrender_xigua", Button, "gmrenderxiguastop", translate("One-click STOP ixigua.com"))
-gmrenderxiguastop:depends("gmrenderextra", "1")
-gmrenderxiguastop.rmempty = true
-gmrenderxiguastop.inputstyle = "apply"
-function gmrenderxiguastop.write(self, section)
-	luci.util.exec("/usr/share/gmediarender/gmrxiguastop >/dev/null 2>&1 &")
-end
-
-
-s:tab("gmrender_bilibili", translate("BiliBili menu"))
-gmrenderbilibilimp4 = s:taboption("gmrender_bilibili", Button, "gmrenderbilibilimp4", translate("One-click flv to mp4"))
+gmrenderbilibilimp4 = s:taboption("gmrender_init", Button, "gmrenderbilibilimp4", translate("One-click flv to mp4"))
 gmrenderbilibilimp4:depends("gmrenderextra", "1")
 gmrenderbilibilimp4.inputstyle = "apply"
-gmrenderbilibilimp4.description = translate("ffmpeg needs to be installed")
+gmrenderbilibilimp4.description = translate("ffmpeg needs to be installed（哔哩哔哩专用）")
 function gmrenderbilibilimp4.write(self, section)
     luci.util.exec("/usr/share/gmediarender/flvtomp4 >/dev/null 2>&1 &")
 end
 
-gmrenderbilibili = s:taboption("gmrender_bilibili", Button, "gmrenderbilibili", translate("One-click download bilibili.com"))
-gmrenderbilibili:depends("gmrenderextra", "1")
-gmrenderbilibili.rmempty = true
-gmrenderbilibili.inputstyle = "apply"
-function gmrenderbilibili.write(self, section)
-	luci.util.exec("/usr/share/gmediarender/gmrbilibili >/dev/null 2>&1 &")
-end
-
-gmrenderbilibilistop = s:taboption("gmrender_bilibili", Button, "gmrenderbilibilistop", translate("One-click STOP bilibili.com"))
-gmrenderbilibilistop:depends("gmrenderextra", "1")
-gmrenderbilibilistop.rmempty = true
-gmrenderbilibilistop.inputstyle = "apply"
-function gmrenderbilibilistop.write(self, section)
-	luci.util.exec("/usr/share/gmediarender/gmrbilibilistop >/dev/null 2>&1 &")
-end
-
-
-s:tab("gmrender_iqiyi", translate("iqiyi.com menu"))
-gmrenderiqiyi = s:taboption("gmrender_iqiyi", Button, "gmrenderiqiyi", translate("One-click download iqiyi.com"))
-gmrenderiqiyi:depends("gmrenderextra", "1")
-gmrenderiqiyi.rmempty = true
-gmrenderiqiyi.inputstyle = "apply"
-function gmrenderiqiyi.write(self, section)
-	luci.util.exec("/usr/share/gmediarender/gmriqiyi >/dev/null 2>&1 &")
-end
-
-gmrenderiqiyistop = s:taboption("gmrender_iqiyi", Button, "gmrenderiqiyistop", translate("One-click STOP iqiyi.com"))
-gmrenderiqiyistop:depends("gmrenderextra", "1")
-gmrenderiqiyistop.rmempty = true
-gmrenderiqiyistop.inputstyle = "apply"
-function gmrenderiqiyistop.write(self, section)
-	luci.util.exec("/usr/share/gmediarender/gmriqiyistop >/dev/null 2>&1 &")
-end
-
-
-s:tab("gmrender_youku", translate("youku.com menu"))
-gmrenderyouku = s:taboption("gmrender_youku", Button, "gmrenderyouku", translate("One-click download youku.com"))
-gmrenderyouku:depends("gmrenderextra", "1")
-gmrenderyouku.rmempty = true
-gmrenderyouku.inputstyle = "apply"
-function gmrenderyouku.write(self, section)
-	luci.util.exec("/usr/share/gmediarender/gmryouku >/dev/null 2>&1 &")
-end
-
-gmrenderyoukustop = s:taboption("gmrender_youku", Button, "gmrenderyoukustop", translate("One-click STOP youku.com"))
-gmrenderyoukustop:depends("gmrenderextra", "1")
-gmrenderyoukustop.rmempty = true
-gmrenderyoukustop.inputstyle = "apply"
-function gmrenderyoukustop.write(self, section)
-	luci.util.exec("/usr/share/gmediarender/gmryoukustop >/dev/null 2>&1 &")
-end
-
-
 return m
+
