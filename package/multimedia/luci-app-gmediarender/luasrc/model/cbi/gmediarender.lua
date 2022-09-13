@@ -54,7 +54,7 @@ gmrenderdownload = s:taboption("gmrender_init", Button, "gmrenderdownload", tran
 gmrenderdownload:depends("gmrenderextra", "1")
 gmrenderdownload.rmempty = true
 gmrenderdownload.inputstyle = "apply"
-gmrenderdownload.description = translate("支持腾讯、爱奇艺、哔哩哔哩、优酷、西瓜、酷我等.")
+gmrenderdownload.description = translate("支持腾讯、爱奇艺、哔哩哔哩、优酷、西瓜、酷我、酷狗、网易云等.")
 function gmrenderdownload.write(self, section)
 	luci.util.exec("/usr/share/gmediarender/gmrd >/dev/null 2>&1 &")
 end
