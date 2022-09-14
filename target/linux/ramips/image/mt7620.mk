@@ -88,12 +88,12 @@ define Device/xiaomi-miwifi-mini
 endef
 TARGET_DEVICES += xiaomi-miwifi-mini
 
-define Device/daishuyun
-  DTS := DAISHUYUN
+define Device/dsbox-dsr1
+  DTS := DSBOX-DSR1
   IMAGE_SIZE := $(ralink_default_fw_size_32M)
-  DEVICE_TITLE := DAISHUYUN
+  DEVICE_TITLE := Dsbox DSR1
   DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci kmod-sdhci-mt7620 kmod-usb-ledtrig-usbport \
 		     kmod-mt76x2
 endef
-TARGET_DEVICES += daishuyun
+TARGET_DEVICES += dsbox-dsr1
 

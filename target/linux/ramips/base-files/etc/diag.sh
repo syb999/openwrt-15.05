@@ -261,8 +261,8 @@ get_status_led() {
 	newifi-d2)
 		status_led="newifi-d2:blue:power"
 		;;
-	daishuyun)
-		status_led="daishuyun:green:wifi"
+	dsbox-dsr1)
+		status_led="dsr1:green:status"
 		;;
 	psg1208)
 		status_led="phicomm:white:wps"

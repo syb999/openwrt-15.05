@@ -294,8 +294,8 @@ case $board in
 		ucidef_set_led_netdev "wifi5g" "WIFI5G" "$board:blue:wifi" "wlan0"
 		ucidef_set_led_netdev "wan" "WAN" "$board:blue:internet" "eth0.2" "tx rx"
 		;;
-	daishuyun)
-		ucidef_set_led_default "wifi" "WIFI" "daishuyun:green:wifi" "wlan1"
+	dsbox-dsr1)
+		ucidef_set_led_netdev "wan" "WAN" "dsr1:green:status" "eth0.2" "tx rx"
 		;;
 	jcg-y2)
 		ucidef_set_led_netdev "internet" "internet" "jcg:blue:internet" "eth0.2"

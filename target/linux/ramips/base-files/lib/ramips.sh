@@ -436,8 +436,8 @@ ramips_board_detect() {
 	*"Lenovo Y1S")
 		name="y1s"
 		;;
-	*"Daishuyun")
-		name="daishuyun"
+	*"Dsbox DSR1")
+		name="dsbox-dsr1"
 		;;
 	*"GHL-R-001-E")
 		name="ghl-r-001-e"

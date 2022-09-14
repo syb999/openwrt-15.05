@@ -132,7 +132,7 @@ platform_check_image() {
 	miwifi-nano |\
 	y1 |\
 	y1s |\
-	daishuyun |\
+	dsbox-dsr1 |\
 	zbt-wa05 |\
 	zbt-we1226 |\
 	zbt-wg2626 |\

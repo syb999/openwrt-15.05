@@ -3,8 +3,8 @@
 /include/ "mt7620a.dtsi"
 
 / {
-	compatible = "DAISHUYUN", "ralink,mt7620a-soc";
-	model = "Daishuyun";
+	compatible = "dsbox-dsr1", "ralink,mt7620a-soc";
+	model = "Dsbox DSR1";
 
 	chosen {
 		bootargs = "console=ttyS0,115200";
@@ -109,7 +109,7 @@
 	pinctrl {
 		state_default: pinctrl0 {
 			default {
-				ralink,group = "i2c", "uartf", "rgmii1", "rgmii2", "ephy", "wled", "nd_sd";
+				ralink,group = "i2c", "uartf", "rgmii1", "rgmii2", "wled", "nd_sd";
 				ralink,function = "gpio";
 			};
 
@@ -122,10 +122,12 @@
 
 	gpio-leds {
 		compatible = "gpio-leds";
-		wifi {
-			label = "daishuyun:green:wifi";
+
+		green {
+			label = "dsr1:green:status";
 			gpios = <&gpio3 0 1>;
 		};
+
 	};
 
 	gpio-keys-polled {

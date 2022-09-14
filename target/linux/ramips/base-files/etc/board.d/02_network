@@ -330,7 +330,7 @@ ramips_setup_interfaces()
 		ucidef_add_switch_vlan "switch0" "2" "4 6t"
 		;;
 
-	daishuyun)
+	dsbox-dsr1)
 		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
 		ucidef_add_switch "switch0" "1" "1"
 		ucidef_add_switch_vlan "switch0" "1" "1 6t"
@@ -460,7 +460,7 @@ ramips_setup_macs()
 		;;
 
 	fwr200-v2 | \
-	daishuyun)
+	dsbox-dsr1)
 		lan_mac=$(mtd_get_mac_binary factory 4)
 		wan_mac=$(macaddr_add "$lan_mac" -1)
 		;;
