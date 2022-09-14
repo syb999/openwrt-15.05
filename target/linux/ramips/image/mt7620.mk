@@ -73,7 +73,7 @@ endef
 TARGET_DEVICES += youku-yk-l1
 
 define Device/youku-yk-l1c
-  DTS := YOUKU-YK-L1c
+  DTS := YOUKU-YK-L1C
   IMAGE_SIZE := $(ralink_default_fw_size_16M)
   DEVICE_TITLE := Youku YK-L1c
   DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci kmod-sdhci-mt7620 kmod-usb-ledtrig-usbport
