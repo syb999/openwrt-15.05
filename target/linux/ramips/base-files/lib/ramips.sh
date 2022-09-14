@@ -466,8 +466,11 @@ ramips_board_detect() {
 			name="linkits7688"
 		fi
 		;;
-	*"Youku Yk1")
-		name="youku-yk1"
+	*"Youku YK-L1")
+		name="youku-yk-l1"
+		;;
+	*"Youku YK-L1c")
+		name="youku-yk-l1c"
 		;;
 	*"Phicomm PSG1208")
 		name="psg1208"

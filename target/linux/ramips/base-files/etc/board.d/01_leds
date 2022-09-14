@@ -332,11 +332,12 @@ case $board in
 	zte-q7)
 		set_wifi_led "zte:blue:status"
 		;;
-	youku-yk1)
-		ucidef_set_led_default "power" "power" "youku-yk1:blue:power" "1"
-		ucidef_set_led_netdev "wifi" "WIFI" "youku-yk1:blue:air" "wlan0"
-		set_usb_led "youku-yk1:blue:usb"
-		ucidef_set_led_netdev "wan" "WAN" "youku-yk1:blue:wan" "eth0.2" "tx rx"
+	youku-yk-l1|\
+	youku-yk-l1c)
+		ucidef_set_led_default "power" "power" "youku:blue:power" "1"
+		ucidef_set_led_netdev "wifi" "WIFI" "youku:blue:air" "wlan0"
+		set_usb_led "youku:blue:usb"
+		ucidef_set_led_netdev "wan" "WAN" "youku:blue:wan" "eth0.2" "tx rx"
 		;;
 	ghl-r-001-e|\
 	ghl-r-001-f)

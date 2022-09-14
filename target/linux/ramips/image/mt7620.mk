@@ -64,13 +64,21 @@ define Device/y1s
 endef
 TARGET_DEVICES += y1s
 
-define Device/youku-yk1
-  DTS := YOUKU-YK1
+define Device/youku-yk-l1
+  DTS := YOUKU-YK-L1
   IMAGE_SIZE := $(ralink_default_fw_size_32M)
-  DEVICE_TITLE := YOUKU YK1
+  DEVICE_TITLE := Youku YK-L1
   DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci kmod-sdhci-mt7620 kmod-usb-ledtrig-usbport
 endef
-TARGET_DEVICES += youku-yk1
+TARGET_DEVICES += youku-yk-l1
+
+define Device/youku-yk-l1c
+  DTS := YOUKU-YK-L1c
+  IMAGE_SIZE := $(ralink_default_fw_size_16M)
+  DEVICE_TITLE := Youku YK-L1c
+  DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci kmod-sdhci-mt7620 kmod-usb-ledtrig-usbport
+endef
+TARGET_DEVICES += youku-yk-l1c
 
 define Device/fwr200-v2
   DTS := FWR200_V2

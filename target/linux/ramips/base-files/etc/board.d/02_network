@@ -154,7 +154,8 @@ ramips_setup_interfaces()
 	wt1520 | \
 	hc5661a | \
 	miwifi-nano |\
-	youku-yk1|\
+	youku-yk-l1|\
+	youku-yk-l1c|\
 	psg1208|\
 	psg1218|\
 	jcg-y2|\

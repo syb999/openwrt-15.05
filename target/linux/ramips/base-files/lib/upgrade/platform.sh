@@ -151,7 +151,8 @@ platform_check_image() {
 	ghl-r-001-e |\
 	ghl-r-001-f |\
 	jdcloud-1 |\
-	youku-yk1)
+	youku-yk-l1 |\
+	youku-yk-l1c)
 		[ "$magic" != "27051956" ] && {
 			echo "Invalid image type."
 			return 1
