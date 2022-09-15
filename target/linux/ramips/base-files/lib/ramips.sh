@@ -445,8 +445,8 @@ ramips_board_detect() {
 	*"GHL-R-001-F")
 		name="ghl-r-001-f"
 		;;
-	*"JDCloud-1")
-		name="jdcloud-1"
+	*"JDCloud RE-SP-01B")
+		name="jdcloud-re-sp-01b"
 		;;
 	*"K2P")
 		name="k2p"

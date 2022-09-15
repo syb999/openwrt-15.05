@@ -3,13 +3,8 @@
 /include/ "mt7621.dtsi"
 
 / {
-	compatible = "jdcloud-1", "mediatek,mt7621-soc";
-	model = "JDCloud-1";
-
-	memory@0 {
-		device_type = "memory";
-		reg = <0x0 0x1c000000>, <0x20000000 0x4000000>;
-	};
+	compatible = "jdcloud-re-sp-01b", "mediatek,mt7621-soc";
+	model = "JDCloud RE-SP-01B";
 
 	chosen {
 		bootargs = "console=ttyS0,115200";
@@ -121,7 +116,6 @@
 			gpios = <&gpio0 12 1>;
 		};
 	};
-
 
 	pinctrl {
 		state_default: pinctrl0 {

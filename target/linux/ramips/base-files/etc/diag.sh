@@ -270,7 +270,7 @@ get_status_led() {
 	psg1218)
 		status_led="psg1218:blue:status"
 		;;
-	jdcloud-1)
+	jdcloud-re-sp-01b)
 		status_led="jdcloud:green:sysg"
 		;;
 	k2p)

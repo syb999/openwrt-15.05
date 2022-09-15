@@ -346,7 +346,7 @@ ramips_setup_interfaces()
 		ucidef_add_switch_vlan "switch0" "2" "4 6t"
 		;;
 
-	jdcloud-1)
+	jdcloud-re-sp-01b)
 		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
 		ucidef_add_switch "switch0" "1" "1"
 		ucidef_add_switch_vlan "switch0" "1" "1 2 6t"
@@ -472,7 +472,7 @@ ramips_setup_macs()
 		wan_mac=$(macaddr_add "$lan_mac" -1)
 		;;
 
-	jdcloud-1)
+	jdcloud-re-sp-01b)
 		lan_mac=$(mtd_get_mac_binary factory 57344)
 		wan_mac=$(macaddr_add "$lan_mac" -1)
 		;;

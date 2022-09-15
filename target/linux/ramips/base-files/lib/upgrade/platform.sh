@@ -150,7 +150,7 @@ platform_check_image() {
 	360p2 |\
 	ghl-r-001-e |\
 	ghl-r-001-f |\
-	jdcloud-1 |\
+	jdcloud-re-sp-01b |\
 	youku-yk-l1 |\
 	youku-yk-l1c)
 		[ "$magic" != "27051956" ] && {
