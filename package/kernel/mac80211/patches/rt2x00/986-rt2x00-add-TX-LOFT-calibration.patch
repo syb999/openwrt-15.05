@@ -630,7 +630,7 @@
 +
 +				if (vga_gain[ch_idx] < 0)
 +					vga_gain[ch_idx] = 0;
-+		 	}
++			}
 +
 +			rfvalue = rfvga_gain_table[vga_gain[ch_idx]];
 +
