@@ -388,6 +388,9 @@ ramips_board_detect() {
 	*"XDX RN502J")
 		name="xdxrn502j"
 		;;
+	*"Xiaomi Mi Router 3G")
+		name="mir3g"
+		;;
 	*"Xiaomi Mi Router AC2100")
 		name="mi-router-ac2100"
 		;;

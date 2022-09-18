@@ -258,6 +258,9 @@ get_status_led() {
 	y1s)
 		status_led="lenovo:blue:power"
 		;;
+	mir3g)
+		status_led="mir3g:yellow:status"
+		;;
 	newifi-d2)
 		status_led="newifi-d2:blue:power"
 		;;

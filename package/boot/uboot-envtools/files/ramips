@@ -19,6 +19,9 @@ all0256n | \
 all5002)
 	ubootenv_add_uci_config "/dev/mtd1" "0x0" "0x10000" "0x10000"
 	;;
+c-life-xg1)
+	ubootenv_add_uci_config "/dev/mtd1" "0x0" "0x20000" "0x20000"
+	;;
 linkits7688 | \
 linkits7688d | \
 wsr-600 | \
@@ -31,6 +34,7 @@ br6425 | \
 miwifi-nano)
 	ubootenv_add_uci_config "/dev/mtd1" "0x0" "0x1000" "0x10000"
 	;;
+mir3g | \
 mi-router-ac2100 | \
 redmi-router-ac2100)
 	ubootenv_add_uci_config "/dev/mtd1" "0x0" "0x1000" "0x20000"
