@@ -128,7 +128,7 @@
 
 		led_status_red: status_red {
 			label = "mir3g:red:status";
-			gpios = <&gpio0 6 1;
+			gpios = <&gpio0 6 1>;
 		};
 
 		led_status_blue: status_blue {
