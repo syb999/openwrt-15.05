@@ -567,20 +567,18 @@ endef
 TARGET_DEVICES += nokia-a040wq
 
 define Device/mir3g
-  DTS := MI-R3G
+  DTS := MIR3G
   BLOCKSIZE := 128KiB
+  IMAGES := factory.bin
   PAGESIZE := 2048
   KERNEL_SIZE := 4096k
   IMAGE_SIZE := 120320k
   UBINIZE_OPTS := -E 5
-  IMAGES := kernel1.bin rootfs0.bin
+  FILESYSTEMS := squashfs
+  IMAGES += kernel1.bin rootfs0.bin
   IMAGE/kernel1.bin := append-kernel
   IMAGE/rootfs0.bin := append-ubi | check-size $$$$(IMAGE_SIZE)
   IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
-  DEVICE_TITLE := Xiaomi Mi Router 3G
-  DEVICE_PACKAGES := \
-	kmod-mt7603 kmod-mt76x2 kmod-usb3 kmod-usb-ledtrig-usbport wpad-mini \
-	uboot-envtools
 endef
 TARGET_DEVICES += mir3g
 
