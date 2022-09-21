@@ -22,63 +22,32 @@ msgstr "行动"
 msgid "One-click initialize gmediarender"
 msgstr "一键初始化gmediarender"
 
-msgid "Wanna download while Listening"
-msgstr "开启边听边下"
+msgid "Wanna download while Playing"
+msgstr "开启边播边下"
 
 msgid "Please type log file's name"
 msgstr "请输入日志文件名"
 
-msgid "One-click download while Listening"
-msgstr "一键启动-播放时自动下载音乐"
+msgid "One-click download while Playing"
+msgstr "一键启动-投屏时自动下载"
+
+msgid "Support v.qq.com,iqiyi.com,bilibili.com,youku.com,music..."
+msgstr "支持腾讯、爱奇艺、哔哩哔哩、优酷、西瓜、酷我、酷狗、网易云等"
 
 msgid "One-click STOP download"
 msgstr "停止自动下载"
 
-msgid "One-click download v.qq.com"
-msgstr "投屏后自动下载该节目(腾讯视频)"
-
-msgid "One-click STOP v.qq.com"
-msgstr "停止腾讯视频节目下载"
-
-msgid "One-click download ixigua.com"
-msgstr "投屏后自动下载该节目(西瓜视频)"
-
-msgid "One-click STOP ixigua.com"
-msgstr "停止西瓜视频节目下载"
-
-msgid "v.qq.com menu"
-msgstr "腾讯视频菜单"
-
-msgid "ixigua.com menu"
-msgstr "西瓜视频菜单"
-
-msgid "BiliBili menu"
-msgstr "哔哩哔哩菜单"
-
-msgid "iqiyi.com menu"
-msgstr "爱奇艺菜单"
-
-msgid "youku.com menu"
-msgstr "优酷菜单"
-
 msgid "One-click flv to mp4"
-msgstr "一键转换成MP4"
+msgstr "flv格式一键转换成mp4"
 
-msgid "One-click download bilibili.com"
-msgstr "投屏后自动下载该节目(哔哩哔哩)"
+msgid "One-click ts to mp4"
+msgstr "ts格式一键转换成mp4"
 
-msgid "One-click STOP bilibili.com"
-msgstr "停止哔哩哔哩节目下载"
+msgid "One-click m4a to mp3"
+msgstr "m4a格式一键转换成mp3"
 
-msgid "One-click download iqiyi.com"
-msgstr "投屏后自动下载该节目(爱奇艺)"
+msgid "ffmpeg needs to be installed(only for bilibili)"
+msgstr "需要安装ffmpeg（哔哩哔哩专用）"
 
-msgid "One-click STOP iqiyi.com"
-msgstr "停止爱奇艺节目下载"
 
-msgid "One-click download youku.com"
-msgstr "投屏后自动下载该节目(优酷)"
-
-msgid "One-click STOP youku.com"
-msgstr "停止优酷节目下载"
 

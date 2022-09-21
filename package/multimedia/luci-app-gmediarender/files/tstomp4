@@ -1,0 +1,20 @@
+#!/bin/sh
+
+gmrdir="$(uci get gmediarender.@gmediarender[0].gmrenderdir)"
+
+testffmpeg=$(opkg list-installed | grep ffmpeg)
+
+if [ ! "$testffmpeg" ];then
+	echo "No ffmpeg. Stop script."
+else
+	cd $gmrdir
+
+	num=1
+	for f in $(ls $gmrdir/*/*.ts | sort);do 
+		mp4ffmpeg=$(echo $f | sed "s/\.ts//")
+		ffmpeg -v quiet -i "$f" -vcodec copy "$mp4ffmpeg.mp4"
+	done
+
+	rm $gmrdir/*/*.ts
+fi
+

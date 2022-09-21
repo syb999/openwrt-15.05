@@ -1,0 +1,24 @@
+<script type="text/javascript">//<![CDATA[
+XHR.poll(5, '<%=luci.dispatcher.build_url("admin", "services", "gmediarender", "status")%>', null,
+	function(x, data) {
+		var tb = document.getElementById('gmrender_status');
+		if (data && tb) {
+			if (data.running && data.gmrd != '') {
+				tb.innerHTML = '<font color=green>gmediarender <%:运行中%>'  + '</br>' + '<font color=green>投屏时自动下载<%:运行中%></font>';
+			} else if (data.running && data.gmrd == '') {
+				tb.innerHTML = '<font color=green>gmediarender <%:运行中%>'  + '</br>' + '<font color=red>投屏时自动下载<%:未运行%></font>';
+			} else {
+				tb.innerHTML = '<font color=red>gmediarender&nbsp&nbsp<%:未运行%>'  + '</br>' + '<font color=red>投屏时自动下载 <%:未运行%></font>';
+			}
+		}
+	}
+);
+//]]>
+</script>
+<style>.mar-10 {margin-left: 50px; margin-right: 10px;}</style>
+<fieldset class="cbi-section">
+	<p id="gmrender_status">
+		<em><%:Collecting data...%></em>
+	</p>
+</fieldset>
+

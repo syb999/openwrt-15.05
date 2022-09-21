@@ -1,5 +1,7 @@
 m = Map("gmediarender", translate("gmediarender server"))
 
+m:section(SimpleSection).template  = "gmrender_status"
+
 s = m:section(TypedSection, "gmediarender", "")
 
 s:tab("gmrender_set", translate("Basic setting"))
@@ -23,8 +25,7 @@ gmrendersuffix.placeholder = "hello"
 gmrendersuffix.default = "hello"
 gmrendersuffix.rmempty = false
 
-
-gmrenderextra=s:taboption("gmrender_set", Flag, "gmrenderextra", translate("Wanna download while Listening"))
+gmrenderextra=s:taboption("gmrender_set", Flag, "gmrenderextra", translate("Wanna download while Playing"))
 
 gmrenderdir = s:taboption("gmrender_set", Value, "gmrenderdir", translate("Download directory"))
 gmrenderdir:depends("gmrenderextra", "1")
@@ -50,11 +51,11 @@ function gmrenderinit.write(self, section)
 	luci.util.exec("/etc/init.d/gmediarender restart >/dev/null 2>&1 &")
 end
 
-gmrenderdownload = s:taboption("gmrender_init", Button, "gmrenderdownload", translate("One-click download while Listening"))
+gmrenderdownload = s:taboption("gmrender_init", Button, "gmrenderdownload", translate("One-click download while Playing"))
 gmrenderdownload:depends("gmrenderextra", "1")
 gmrenderdownload.rmempty = true
 gmrenderdownload.inputstyle = "apply"
-gmrenderdownload.description = translate("支持腾讯、爱奇艺、哔哩哔哩、优酷、西瓜、酷我、酷狗、网易云等.")
+gmrenderdownload.description = translate("Support v.qq.com,iqiyi.com,bilibili.com,youku.com,music...")
 function gmrenderdownload.write(self, section)
 	luci.util.exec("/usr/share/gmediarender/gmrd >/dev/null 2>&1 &")
 end
@@ -62,9 +63,25 @@ end
 gmrenderbilibilimp4 = s:taboption("gmrender_init", Button, "gmrenderbilibilimp4", translate("One-click flv to mp4"))
 gmrenderbilibilimp4:depends("gmrenderextra", "1")
 gmrenderbilibilimp4.inputstyle = "apply"
-gmrenderbilibilimp4.description = translate("ffmpeg needs to be installed（哔哩哔哩专用）")
+gmrenderbilibilimp4.description = translate("ffmpeg needs to be installed(only for bilibili)")
 function gmrenderbilibilimp4.write(self, section)
     luci.util.exec("/usr/share/gmediarender/flvtomp4 >/dev/null 2>&1 &")
+end
+
+gmrendertsmp4 = s:taboption("gmrender_init", Button, "gmrendertsmp4", translate("One-click ts to mp4"))
+gmrendertsmp4:depends("gmrenderextra", "1")
+gmrendertsmp4.inputstyle = "apply"
+gmrendertsmp4.description = translate("ffmpeg needs to be installed")
+function gmrendertsmp4.write(self, section)
+    luci.util.exec("/usr/share/gmediarender/tstomp4 >/dev/null 2>&1 &")
+end
+
+gmrenderm4amp3 = s:taboption("gmrender_init", Button, "gmrenderm4amp3", translate("One-click m4a to mp3"))
+gmrenderm4amp3:depends("gmrenderextra", "1")
+gmrenderm4amp3.inputstyle = "apply"
+gmrenderm4amp3.description = translate("ffmpeg needs to be installed")
+function gmrenderm4amp3.write(self, section)
+    luci.util.exec("/usr/share/gmediarender/m4atomp3 >/dev/null 2>&1 &")
 end
 
 return m

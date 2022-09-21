@@ -1,0 +1,19 @@
+#!/bin/sh
+
+gmrdir="$(uci get gmediarender.@gmediarender[0].gmrenderdir)"
+
+testffmpeg=$(opkg list-installed | grep ffmpeg)
+
+if [ ! "$testffmpeg" ];then
+	echo "No ffmpeg. Stop script."
+else
+	cd $gmrdir
+
+	num=1
+	for f in $(ls $gmrdir/*/*.m4a | sort);do 
+		mp3ffmpeg=$(echo $f | sed "s/\.m4a//")
+		ffmpeg -v quiet -i "$f" -acodec mp3 "$mp3ffmpeg.mp3"
+	done
+
+	rm $gmrdir/*/*.m4a
+fi

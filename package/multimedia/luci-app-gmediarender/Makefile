@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 
 PKG_NAME:=luci-app-gmediarender
-PKG_VERSION:=2022-09-12
+PKG_VERSION:=2022-09-22
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -35,6 +35,8 @@ define Package/luci-app-gmediarender/install
 	$(INSTALL_DIR) $(1)/usr/share/gmediarender/
 	$(INSTALL_BIN) ./files/gmr* $(1)/usr/share/gmediarender
 	$(INSTALL_BIN) ./files/flvtomp4 $(1)/usr/share/gmediarender
+	$(INSTALL_BIN) ./files/tstomp4 $(1)/usr/share/gmediarender
+	$(INSTALL_BIN) ./files/m4atomp3 $(1)/usr/share/gmediarender
 endef
 
 $(eval $(call BuildPackage,luci-app-gmediarender))
