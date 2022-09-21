@@ -1,0 +1,30 @@
+<script type="text/javascript">//<![CDATA[
+XHR.poll(5, '<%=luci.dispatcher.build_url("admin", "services", "autodl", "status")%>', null,
+	function(x, data) {
+		var tb = document.getElementById('autodl_status');
+		if (data && tb) {
+			if (data.running) {
+				if (data.mpg123) {
+					tb.innerHTML = '<font color=green>online_server <%:提供在线服务中%></font>' + '</br>' + '<font color=green><%:正在播放：%>' + data.mpg123 + '</font>';
+				} else {
+					tb.innerHTML = '<font color=green>online_server <%:提供在线服务中%></font>';
+				}
+			} else {
+				if (data.mpg123) {
+					tb.innerHTML = '<font color=red>online_server <%:未运行%></font>' + '</br>' + '<font color=green><%:正在播放：%>' + data.mpg123 + '</font>';
+				} else {
+					tb.innerHTML = '<font color=red>online_server <%:未运行%></font>';
+				}
+			}
+		}
+	}
+);
+//]]>
+</script>
+<style>.mar-10 {margin-left: 50px; margin-right: 10px;}</style>
+<fieldset class="cbi-section">
+	<p id="autodl_status">
+		<em><%:Collecting data...%></em>
+	</p>
+</fieldset>
+
