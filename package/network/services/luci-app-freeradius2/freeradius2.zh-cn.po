@@ -1,0 +1,33 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Basic Setting"
+msgstr "基本设置"
+
+msgid "Authentication Interface"
+msgstr "认证接口"
+
+msgid "Authentication port"
+msgstr "认证端口"
+
+msgid "Accounting port"
+msgstr "计费端口"
+
+msgid "Server Secret"
+msgstr "认证密钥"
+
+msgid "Client IP Segment"
+msgstr "认证客户端IP段"
+
+msgid "Users conf"
+msgstr "认证用户账号配置"
+
+msgid "You can add new users according with the default format"
+msgstr "您可以根据默认格式添加新用户"
+
+msgid "Action"
+msgstr "应用配置"
+
+msgid "Restart Radius Server"
+msgstr "重新启动Radius服务器"
+

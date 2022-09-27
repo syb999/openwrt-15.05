@@ -1,0 +1,22 @@
+<script type="text/javascript">//<![CDATA[
+XHR.poll(5, '<%=luci.dispatcher.build_url("admin", "services", "freeradius2", "status")%>', null,
+	function(x, data) {
+		var tb = document.getElementById('freeradius2_status');
+		if (data && tb) {
+			if (data.running) {
+				tb.innerHTML = '<font color=green> radiusd <%:正在运行!%>' + '</br>' + '</br>' + '<%:Radius认证服务器：%>' + data.interface + '</font>';
+			} else {
+				tb.innerHTML = '<font color=red> radiusd <%:未运行%></font>';
+			}
+		}
+	}
+);
+//]]>
+</script>
+<style>.mar-10 {margin-left: 50px; margin-right: 10px;font-size:5px;}</style>
+<fieldset class="cbi-section">
+	<p id="freeradius2_status">
+		<em><%:Collecting data...%></em>
+	</p>
+</fieldset>
+

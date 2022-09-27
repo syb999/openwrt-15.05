@@ -1,0 +1,21 @@
+#!/bin/sh
+
+secret=$(uci get freeradius2.server.s_secret)
+sed -i "s/secret.*=.*/secret = $secret/g" /etc/freeradius2/clients.conf
+
+client=$(uci get freeradius2.server.client)
+cip=$(echo $client | cut -d '/' -f1)
+cmask=$(echo $client | cut -d '/' -f2)
+sed -i "s/client.*[0-9].*/client $cip\/$cmask {/" /etc/freeradius2/clients.conf
+
+auth_interface=$(uci get freeradius2.server.auth_interface)
+if [ "$auth_interface" = "wan" ]; then
+	auth_interface=$(uci show network.$auth_interface.ifname | cut -d "'" -f2)
+fi
+auth_port=$(uci get freeradius2.server.auth_port)
+acct_port=$(uci get freeradius2.server.acct_port)
+sed -i "s/auth_interface=.*/auth_interface=$auth_interface/;s/auth_port=.*/auth_port=$auth_port/;s/acct_port=.*/acct_port=$acct_port/" /etc/init.d/radiusd
+
+sleep 1
+/etc/init.d/radiusd restart
+
