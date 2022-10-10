@@ -4,7 +4,6 @@ gmrdir="$(uci get gmediarender.@gmediarender[0].gmrenderdir)"
 gmrlog="/tmp/$(uci get gmediarender.@gmediarender[0].gmrenderlog)"
 saferom="$(df -h | grep tmpfs | sed -e "s/[ ][ ]* / /g" | head -n 1 | cut -d ' ' -f 5 | cut -d '%' -f 1)"
 
-
 wget-ssl -q -c $(uci get network.lan.ipaddr) -O /tmp/xgmrender.tmp.testwget > /dev/null 2>&1
 if [ -s /tmp/xgmrender.tmp.testwget ];then
 	wget=wget-ssl
@@ -117,15 +116,19 @@ function gmr_vqqdownload(){
 			echo skip
 		else
 			$wget --timeout=10 -q -c $geturl -O $them3u8
-			cat $them3u8 | grep .ts > /tmp/xgmrender.tmp.m3u8$rdsuffix
-			tmpm3u8=$(cat /tmp/xgmrender.tmp.m3u8$rdsuffix)
-			for i in $tmpm3u8
-			do
-				theprefix=$(cat /tmp/xgmrender.tmp.url | sed "s/${thesuffix}//")
-				tsfragment="${theprefix}${i}"
-				$wget --timeout=3 -q $tsfragment -O /tmp/xgmrender.tmp.fragment$rdsuffix
-				cat /tmp/xgmrender.tmp.fragment$rdsuffix >> $gmrdir/$thename.ts.downloading$rdsuffix
-			done
+			if [ ! -n "$(echo $them3u8 | grep m3u8)" ];then
+				echo get mp4
+			else
+				cat $them3u8 | grep .ts > /tmp/xgmrender.tmp.m3u8$rdsuffix
+				tmpm3u8=$(cat /tmp/xgmrender.tmp.m3u8$rdsuffix)
+				for i in $tmpm3u8
+				do
+					theprefix=$(cat /tmp/xgmrender.tmp.url | sed "s/${thesuffix}//")
+					tsfragment="${theprefix}${i}"
+					$wget --timeout=3 -q $tsfragment -O /tmp/xgmrender.tmp.fragment$rdsuffix
+					cat /tmp/xgmrender.tmp.fragment$rdsuffix >> $gmrdir/$thename.ts.downloading$rdsuffix
+				done
+			fi
 		fi
 		if [ -s $thename.ts.downloading$rdsuffix ];then
 			mv $gmrdir/$thename.ts.downloading$rdsuffix $gmrdir/$thedirname/$thename.ts
