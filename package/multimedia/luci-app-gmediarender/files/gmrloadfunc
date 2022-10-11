@@ -92,6 +92,19 @@ function gmr_youkuinit(){
 	thename="$(echo ${getname0%%</dc:title>*} | sed 's/[ ][ ]*//g')"
 }
 
+function gmr_mangotvinit(){
+	thedirname="mangotv"
+	findurlinfo=$(cat $gmrlog | grep ".ts" | grep http | tail -n1 | sed 's/&gt;/\n/g')
+	thetitle="$(cat $gmrlog | grep ".ts" | grep http | tail -n1 | sed 's/&gt;/\n/g' | grep "$lt;/dc:title" | sed 's/\&lt;\/dc:title//;s/ /-/g')"
+	findnum=$(echo $thetitle | sed 's/第/\n/g;s/集/\n/g' | tail -n2 | head -n1)
+	if [ $findnum -lt 10 ];then
+		thetitle=$(echo $thetitle | sed "s/第$findnum集/第00$findnum集/")
+	elif [ $findnum -lt 100 ];then
+		thetitle=$(echo $thetitle | sed "s/第$findnum集/第0$findnum集/")
+	fi
+	#theurl="$(echo $findurlinfo | grep http | tail -n1 | sed 's/\&amp;/\n/g' | head -n1)"
+}
+
 function gmr_dirinit(){
 	if [ ! -d "$gmrdir/$thedirname" ]; then
 		mkdir -p $gmrdir/$thedirname
@@ -208,6 +221,16 @@ function gmr_youkudownload(){
 			rm $gmrdir/$thename.ts.downloading$rdsuffix
 		fi
 		rm xgmrender.tmp.m3u8$rdsuffix /tmp/xgmrender.tmp.fragment$rdsuffix /tmp/xgmrender.tmp.mtmp
+	fi
+}
+
+function gmr_mangotvdownload(){
+	if [ $saferom -gt 80 ];then
+		logger -t gmediarender ☆☆☆☆☆☆☆ Not enough diskspace! ☆☆☆☆☆☆☆
+	else
+		rdsuffix=$(head -n 1 /dev/urandom | tr -dc "0-9a-z" | head -c8)
+		$wget --timeout=3 -q $geturl -O $gmrdir/$thetitle.downloading$rdsuffix
+		mv $gmrdir/$thetitle.downloading$rdsuffix $gmrdir/$thedirname/$thetitle.ts
 	fi
 }
 
