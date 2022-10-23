@@ -1,7 +1,7 @@
 #!/bin/sh
 
 function stopaudio() {
-	ps | grep mp3a.sh | grep -v grep | cut -d 'r' -f 1 > /tmp/tmpmp3124.tmp
+	busybox ps | grep mp3a.sh | grep -v grep | cut -d 'r' -f 1 > /tmp/tmpmp3124.tmp
 	astopmp3="/tmp/tmpmp3124.tmp"
 	countfiles=$(awk 'END{print NR}' $astopmp3)
 	for i in $(seq 1 $countfiles)
@@ -18,7 +18,7 @@ function stopaudio() {
 		sed "1d" -i ${runnext}
 	done
 
-	ps | grep mpg123 | grep -v grep | cut -d 'r' -f 1 > /tmp/tmpmpg123.mtmp
+	busybox ps | grep mpg123 | grep -v grep | cut -d 'r' -f 1 > /tmp/tmpmpg123.mtmp
 	runmpg123="/tmp/tmpmpg123.mtmp"
 	countfiles=$(awk 'END{print NR}' $runmpg123)
 	for i in $(seq 1 $countfiles)
@@ -27,7 +27,7 @@ function stopaudio() {
 		sed "1d" -i ${runmpg123}
 	done
 
-	ps | grep gst-play-1.0 | grep -v grep | cut -d 'r' -f 1 > /tmp/tmpmpg123.gtmp
+	busybox ps | grep gst-play-1.0 | grep -v grep | cut -d 'r' -f 1 > /tmp/tmpmpg123.gtmp
 	rungst="/tmp/tmpmpg123.gtmp"
 	countfiles=$(awk 'END{print NR}' $rungst)
 	for i in $(seq 1 $countfiles)
