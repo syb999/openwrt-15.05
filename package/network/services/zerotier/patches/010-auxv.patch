@@ -9,3 +9,14 @@
  #include <sys/auxv.h>
  #endif
  #endif
+--- a/ext/arm32-neon-salsa2012-asm/salsa2012.h
++++ b/ext/arm32-neon-salsa2012-asm/salsa2012.h
+@@ -1,7 +1,7 @@
+ #ifndef ZT_SALSA2012_ARM32NEON_ASM
+ #define ZT_SALSA2012_ARM32NEON_ASM
+ 
+-#if defined(__linux__) || defined(linux) || defined(__LINUX__) || defined(__linux)
++#if 0
+ #include <sys/auxv.h>
+ #include <asm/hwcap.h>
+ #define zt_arm_has_neon() ((getauxval(AT_HWCAP) & HWCAP_NEON) != 0)
