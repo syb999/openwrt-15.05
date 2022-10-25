@@ -24,6 +24,16 @@ function get_apk(ip,port)
 	return "checking"
 end
 
+function get_screensize(ip,port)
+	local whsize = io.popen("adb -s " .. ip .. ":" .. port .." shell dumpsys display | grep real | head -n1 | awk -F 'real' '{print$2}' | cut -d ',' -f1 | sed 's/ //g' 2>/dev/null")
+	if whsize then
+		local screensize = whsize:read("*l")
+		whsize:close()
+		return screensize
+	end
+	return "checking"
+end
+
 function get_pid(ip)
 	local pid = luci.sys.exec("busybox ps | grep ADBRUN$(uci show adbrun | grep " ..ip .. " | cut -d '.' -f 2) | grep -v grep | head -n 1 | awk '{print $1}' 2>/dev/null")
 	return pid
@@ -107,6 +117,7 @@ function xact_status()
 							end
 						end
 					end)
+					screensize = get_screensize(deviceid,port)
 					apk = get_apk(deviceid,port)
 					pid = get_pid(deviceid)
 				end
@@ -116,6 +127,7 @@ function xact_status()
 				if num and deviceid then
 					num = num + 1
 					name = "Android"
+					screensize = "unknown"
 					apk = "init_adbrun"
 					pid = ""
 					runtime = ""
@@ -130,6 +142,7 @@ function xact_status()
 				name = name,
 				deviceid = deviceid,
 				port = port,
+				screensize = screensize,
 				apk = apk,
 				pid = pid,
 				uhttpd = webport,

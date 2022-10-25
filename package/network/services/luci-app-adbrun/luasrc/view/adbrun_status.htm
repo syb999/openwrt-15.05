@@ -23,7 +23,7 @@
 									var devname = st[i].name;
 									return String.format('<font color="blueviolet">') + devname + String.format('</font>');
 									})();
-					tr.insertCell(-1).innerHTML = st[i].deviceid + ":" + st[i].port;
+					tr.insertCell(-1).innerHTML = st[i].deviceid + ":" + st[i].port + "(" + st[i].screensize + ")";
 					tr.insertCell(-1).innerHTML = (function(){
 									var apkid = st[i].apk;
 									if(apkid == "com.ss.android.article.lite"){
