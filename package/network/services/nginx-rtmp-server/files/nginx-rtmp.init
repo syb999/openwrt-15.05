@@ -1,0 +1,17 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2015 OpenWrt.org
+
+START=80
+
+USE_PROCD=1
+
+start_service() {
+	[ -d /var/log/nginx-rtmp ] || mkdir -p /var/log/nginx-rtmp
+	[ -d /var/lib/nginx-rtmp ] || mkdir -p /var/lib/nginx-rtmp
+
+	procd_open_instance
+	procd_set_param command /usr/sbin/nginx-rtmp -c /etc/nginx/nginx-rtmp.conf -g 'daemon off;'
+	procd_set_param file /etc/nginx/nginx-rtmp.conf
+	procd_set_param respawn
+	procd_close_instance
+}
