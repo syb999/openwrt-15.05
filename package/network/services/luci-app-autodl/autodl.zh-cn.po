@@ -1,8 +1,8 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8\n"
 
-msgid "Assistant for automatic download m3u8 videos"
-msgstr "m3u8视频自动下载助手"
+msgid "Assistant for automatic download"
+msgstr "自动下载助手"
 
 msgid "Basic Setting for Video"
 msgstr "视频基本设置"
@@ -106,8 +106,8 @@ msgstr "想要获取VIP音频"
 msgid "You must have VIP accout"
 msgstr "你必须有VIP账户"
 
-msgid "The value with Account Cookie name:1&_token"
-msgstr "帐户Cookie名称为1&_token的值"
+msgid "The value with Account Cookie name: 1＆_token"
+msgstr "帐户Cookie名称为1＆_token的值"
 
 msgid "Using The Cookie of VIP account to get VIP audios"
 msgstr "使用VIP账号Cookie获取VIP音频"
