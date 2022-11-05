@@ -6,7 +6,7 @@ function stopaudio() {
 	countfiles=$(awk 'END{print NR}' $astopmp3)
 	for i in $(seq 1 $countfiles)
 	do
-		kill $(cat $astopmp3 | head -n 1) > /dev/null 2>&1
+		kill -9 $(cat $astopmp3 | head -n 1) > /dev/null 2>&1
 		sed "1d" -i ${astopmp3}
 	done
 
@@ -14,7 +14,7 @@ function stopaudio() {
 	countfiles=$(awk 'END{print NR}' $runnext)
 	for i in $(seq 1 $countfiles)
 	do
-		kill $(cat $runnext | head -n 1) > /dev/null 2>&1
+		kill -9 $(cat $runnext | head -n 1) > /dev/null 2>&1
 		sed "1d" -i ${runnext}
 	done
 
@@ -23,7 +23,7 @@ function stopaudio() {
 	countfiles=$(awk 'END{print NR}' $runmpg123)
 	for i in $(seq 1 $countfiles)
 	do
-		kill $(cat $runmpg123 | head -n 1) > /dev/null 2>&1
+		kill -9 $(cat $runmpg123 | head -n 1) > /dev/null 2>&1
 		sed "1d" -i ${runmpg123}
 	done
 
@@ -32,7 +32,7 @@ function stopaudio() {
 	countfiles=$(awk 'END{print NR}' $rungst)
 	for i in $(seq 1 $countfiles)
 	do
-		kill $(cat $rungst | head -n 1) > /dev/null 2>&1
+		kill -9 $(cat $rungst | head -n 1) > /dev/null 2>&1
 		sed "1d" -i ${rungst}
 	done
 

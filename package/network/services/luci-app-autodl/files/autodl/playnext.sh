@@ -15,7 +15,7 @@ if [ ! "$testplayer" ];then
 	for i in $(seq 1 $countfiles)
 	do
 		sed "1d" -i ${getfiles}
-		mpg123 -q $(cat $getfiles | head -n 1)
+		mpg123 $(cat $getfiles | head -n 1)
 	done
 else
 	getfiles="/tmp/pdtmp.playnext"
@@ -23,6 +23,6 @@ else
 	for i in $(seq 1 $countfiles)
 	do
 		sed "1d" -i ${getfiles}
-		gst-play-1.0 -q $(cat $getfiles | head -n 1)
+		gst-play-1.0 $(cat $getfiles | head -n 1)
 	done
 fi

@@ -16,7 +16,7 @@ if [ ! "$testplayer" ];then
 	for i in $(seq 1 $countfiles)
 	do
 		cat $getfiles > /tmp/pdtmp.playnext
-		mpg123 -q $(cat $getfiles | head -n 1)
+		mpg123 $(cat $getfiles | head -n 1)
 		sed "1d" -i ${getfiles}
 	done
 else
