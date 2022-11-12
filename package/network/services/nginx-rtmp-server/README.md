@@ -3,9 +3,11 @@
 # About MP3 files:
 ffmpeg -re -i input1.mp3 -acodec copy -f flv rtmp://ip:1935/mp3-1
 
-ffmpeg -re -i input2.mp3 -ac 1 -b:a 32k -f flv rtmp://ip:1935/mp3-2
+ffmpeg -re -i input2.mp3 -ac 1 -ar 11025 -f flv rtmp://ip:1935/mp3-2
 
-ffmpeg -re -i input3.mp3 -ac 2 -b:a 128k -f flv rtmp://ip:1935/mp3-3
+ffmpeg -re -i input.mp3 -ac 1 -ar 22050 -f flv rtmp://ip:1935/mp3-3
+
+ffmpeg -re -i input.mp3 -ac 2 -ar 44100 -f flv rtmp://ip:1935/mp3
 
 # Test with mt7621:
 Running ffmpeg with -codec copy, consumes 1.9%~2.8% CPU (single thread).
