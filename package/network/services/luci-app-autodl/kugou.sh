@@ -1,9 +1,31 @@
 #!/bin/bash
 
+[[ "$1" == "" ]] && echo -e "Usage: ./kugou.sh playall\n       ./kugou.sh play" && exit 1
+
+thelist="8888 6666 59703 52144 52767 24971 31308 31310 21101 33162 33160 46910 33163 33166"
+
+if [ "$1" == "playall" ];then
+	echo -n ""
+elif [ "$1" == "play" ];then
+	randomnum="$(head -n 5 /dev/urandom | tr -dc '123456789' | head -c 1)"
+	count=1
+	for r in $thelist;do
+		if [ "$randomnum" == "$count" ];then
+			thelist=$r
+			break
+		fi
+		count=$(expr $count + 1)
+	done
+else
+	exit 1
+fi
+
 function mixsonglist() {
 	rm /tmp/kugou.mixlist > /dev/null 2>&1
-	for kgp in $(seq 1 23);do
-		curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 https://www.kugou.com/yy/rank/home/1-8888.html?p=$kgp | grep mixsong | cut -d '"' -f 2 | cut -d '"' -f 1 >> /tmp/kugou.mixlist
+	for kgp in $thelist;do
+		for pp in $(seq 3);do
+			curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 https://www.kugou.com/yy/rank/home/1-$kgp.html?p=$pp | grep mixsong | cut -d '"' -f 2 | cut -d '"' -f 1 >> /tmp/kugou.mixlist
+		done
 	done
 }
 
@@ -38,7 +60,7 @@ function kugouplay() {
 	kgmixid=$(cat $thetmpfile1 | head -n 3 | tail -n 1 | cut -d '}' -f 1 | cut -d ',' -f 1)
 	mp3prefix="https://wwwapi.kugou.com/yy/index.php?r=play/getdata"
 	mp3hash="&hash=${kghash}"
-	mp3mid="&mid=9d77842dfdc04ea02e7ba982b3552263"
+	mp3mid="&mid=cb6010e84a1298873dfe9adcf4943d33"
 	mp3id="&album_audio_id=${kgmixid}"
 	mp3url=${mp3prefix}${mp3hash}${mp3mid}${mp3id}
 	curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 $mp3url > $thetmpfile2
@@ -83,4 +105,3 @@ while true;do
 	done
 	rm /tmp/kugou.*
 done
-
