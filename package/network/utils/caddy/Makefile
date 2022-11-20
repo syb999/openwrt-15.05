@@ -39,7 +39,7 @@ endif
 ifeq ($(ARCH),mipsel)
 ifdef CONFIG_TARGET_ramips_mt7621
 	caddy_ARCH:=mt7621
-	PKG_MD5SUM:=19d6fdc61eb47e06a67e6b241e70d602
+	PKG_MD5SUM:=c4d2ae4c57a38769444ab069323db81d
 else
 	caddy_ARCH:=mt7620
 	PKG_MD5SUM:=b1abdf596133430fd89a80f3a6038a70
