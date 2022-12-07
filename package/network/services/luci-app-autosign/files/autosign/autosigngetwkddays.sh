@@ -11,9 +11,9 @@ for i in $(seq 1 12)
 do
 	if [ $i -lt 10 ];then
 		i=0$i
-		curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -d "$tmpgettianapidaytype2-$i" http://api.tianapi.com/txapi/jiejiari/index? > /tmp/atsdaydetail.tmp
+		curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -d "$tmpgettianapidaytype2-$i" https://apis.tianapi.com/jiejiari/index > /tmp/atsdaydetail.tmp
 	else
-		curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -d "$tmpgettianapidaytype2-$i" http://api.tianapi.com/txapi/jiejiari/index? > /tmp/atsdaydetail.tmp
+		curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -d "$tmpgettianapidaytype2-$i" https://apis.tianapi.com/jiejiari/index > /tmp/atsdaydetail.tmp
 	fi
 
 	sed -i 's/{\"date\":/\n/g' /tmp/atsdaydetail.tmp
