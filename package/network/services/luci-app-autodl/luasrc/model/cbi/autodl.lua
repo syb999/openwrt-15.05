@@ -114,6 +114,37 @@ isynumber.default = "1"
 isynumber.rmempty = true
 isynumber.description = translate("Please enter the total number")
 
+kugoudl = s:taboption("basic2", Flag, "wanna_get_kugou_audios", translate("Wanna get https://www.kugou.com/ts/ audios"))
+
+kugouurl=s:taboption("basic2", Value, "kugouurl", translate("Audios URL"))
+kugouurl:depends("wanna_get_kugou_audios", "1")
+kugouurl.rmempty = true
+kugouurl.datatype = "string"
+kugouurl.default = "https://www.kugou.com/ts/xiaoshuo/x76gwaa/"
+kugouurl.description = translate("URL for downloading https://www.kugou.com/ts/ Audios")
+
+kugouname=s:taboption("basic2", Value, "kugouname", translate("Audios Name"))
+kugouname:depends("wanna_get_kugou_audios", "1")
+kugouname.datatype = "string"
+kugouname.placeholder = "story"
+kugouname.default = "宇宙职业选手"
+kugouname.rmempty = true
+
+kugoupath=s:taboption("basic2", Value, "kugoupath", translate("Download Audios directory"))
+kugoupath:depends("wanna_get_kugou_audios", "1")
+kugoupath.datatype = "string"
+kugoupath.default = "/mnt/sda3/audios"
+kugoupath.rmempty = true
+kugoupath.description = translate("Please enter a valid directory")
+
+kugounumber=s:taboption("basic2", Value, "kugounumber", translate("Download Audios numbers"))
+kugounumber:depends("wanna_get_kugou_audios", "1")
+kugounumber.datatype = "uinteger"
+kugounumber.default = "10"
+kugounumber.rmempty = true
+kugounumber.description = translate("Please enter the total number")
+
+
 s:tab("basic3", translate("Basic Setting for docin"))
 
 docinurl=s:taboption("basic3", Value, "docinurl", translate("docin.com doc URL"))
@@ -162,6 +193,22 @@ au3t.inputstyle = "apply"
 au3t.description = translate("ffmpeg needs to be installed")
 function au3t.write(self, section)
     luci.util.exec("/usr/autodl/m4atomp3.sh >/dev/null 2>&1 &")
+end
+
+au3isy = s:taboption("audioxmly", Button, "_audioisy", translate("www.ishuyin.com One-click download"))
+au3isy:depends("wanna_get_ishuyin_audios", "1")
+au3isy.inputstyle = "apply"
+au3isy.description = translate("Audios download from https://www.ishuyin.com")
+function au3isy.write(self, section)
+    luci.util.exec("/usr/autodl/autodlisy.sh >/dev/null 2>&1 &")
+end
+
+au3kugou = s:taboption("audioxmly", Button, "_audiokugou", translate("https://www.kugou.com/ts/ One-click download"))
+au3kugou:depends("wanna_get_kugou_audios", "1")
+au3kugou.inputstyle = "apply"
+au3kugou.description = translate("Audios download from https://www.kugou.com/ts/")
+function au3kugou.write(self, section)
+    luci.util.exec("/usr/autodl/autodlkugou.sh >/dev/null 2>&1 &")
 end
 
 
@@ -290,14 +337,6 @@ olstop:depends("ollist", "olremote")
 olstop.inputstyle = "apply"
 function olstop.write(self, section)
     luci.util.exec("/usr/autodl/ols/onlinestop.sh >/dev/null 2>&1 &")
-end
-
-au3isy = s:taboption("audioxmly", Button, "_audioisy", translate("www.ishuyin.com One-click download"))
-au3isy:depends("wanna_get_ishuyin_audios", "1")
-au3isy.inputstyle = "apply"
-au3isy.description = translate("Audios download from https://www.ishuyin.com")
-function au3isy.write(self, section)
-    luci.util.exec("/usr/autodl/autodlisy.sh >/dev/null 2>&1 &")
 end
 
 s:tab("autodldocin", translate("Download from https://www.docin.com"))

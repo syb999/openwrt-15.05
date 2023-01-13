@@ -145,6 +145,9 @@ msgstr "选择音频"
 msgid "Wanna get www.ishuyin.com audios"
 msgstr "开启下载 www.ishuyin.com 音频功能"
 
+msgid "Wanna get https://www.kugou.com/ts/ audios"
+msgstr "开启下载 酷狗音乐听书 音频功能"
+
 msgid "Download Audios numbers"
 msgstr "下载音频集数"
 
@@ -211,6 +214,12 @@ msgstr "一键下载ishuyin.com"
 msgid "Audios download from https://www.ishuyin.com"
 msgstr "下载ishuyin.com音频"
 
+msgid "https://www.kugou.com/ts/ One-click download"
+msgstr "一键下载-酷狗音乐听书音频"
+
+msgid "Audios download from https://www.kugou.com/ts/"
+msgstr "下载酷狗音乐听书音频"
+
 msgid "alsa-utils needs to be installed"
 msgstr "需要已安装好alsa-utils"
 
@@ -243,6 +252,9 @@ msgstr "获取自豆丁网的文档"
 
 msgid "URL for downloading https://docin.com documents"
 msgstr "豆丁网文档的URL页面地址"
+
+msgid "URL for downloading https://www.kugou.com/ts/ Audios"
+msgstr "酷狗音乐听书的URL页面地址"
 
 msgid "xuexila.com doc URL"
 msgstr "获取自学习啦网站的文档"
