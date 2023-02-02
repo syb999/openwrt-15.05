@@ -38,6 +38,12 @@ elif [ "$thecase" == "hifuntv.com" ];then
 	echo "clear" > $gmrlog
 	gmr_dirinit
 	gmr_mangotvdownload
+elif [ "$thecase" == "xiaoniangao" ];then
+	gmr_init
+	gmr_xiaoniangaoinit
+	echo "clear" > $gmrlog
+	gmr_dirinit
+	gmr_xiaoniangaodownload
 else
 	gmr_init
 	gmr_musicinit

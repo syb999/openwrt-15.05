@@ -81,7 +81,12 @@ function gmr_xiguainit(){
 function gmr_iqiyiinit(){
 	thedirname="iqiyi"
 	them3u8=$(cat /tmp/xgmrender.tmp.url | cut -d '/' -f $(expr $(grep -o '/' /tmp/xgmrender.tmp.url | wc -l) + 1) | cut -d '?' -f 1)
-	thename="$(date +%m%d)"
+	thename="$(cat /tmp/gmrender.tmp.log | grep "item id=" | sed 's/item id=\"/\n/' | sed '1d' | head -n1 | cut -d '"' -f1)"
+	if [ "$thename" = "" ];then
+		thename="$(date +%H-%M)"
+	else
+		thedirname="$(echo "$thename" | sed 's/\ /-/g;s/第[0-9]*集//;s/-$//')"
+	fi
 }
 
 function gmr_youkuinit(){
@@ -103,6 +108,13 @@ function gmr_mangotvinit(){
 		thetitle=$(echo $thetitle | sed "s/第$findnum集/第0$findnum集/")
 	fi
 	#theurl="$(echo $findurlinfo | grep http | tail -n1 | sed 's/\&amp;/\n/g' | head -n1)"
+}
+
+function gmr_xiaoniangaoinit(){
+	thedirname="小年糕"
+	thename="$(date +%m%d)"
+	echo ${geturl#*CurrentTrackURI: } > /tmp/xgmrender.tmp.url
+	geturl=$(cat /tmp/xgmrender.tmp.url)
 }
 
 function gmr_dirinit(){
@@ -188,14 +200,14 @@ function gmr_iqiyidownload(){
 			for i in $tmpm3u8
 			do
 				$wget --timeout=3 -q $i -O /tmp/xgmrender.tmp.fragment$rdsuffix
-				cat /tmp/xgmrender.tmp.fragment$rdsuffix >> $gmrdir/$thename.ts.downloading$rdsuffix
+				cat /tmp/xgmrender.tmp.fragment$rdsuffix >> "$gmrdir/$thename.ts.downloading$rdsuffix"
 			done
 		fi
-		if [ -s $thename.ts.downloading$rdsuffix ];then
-			mv $gmrdir/$thename.ts.downloading$rdsuffix $gmrdir/$thedirname/$thename-$(date +%s).ts
+		if [ -s "$thename.ts.downloading$rdsuffix" ];then
+			mv "$gmrdir/$thename.ts.downloading$rdsuffix" "$gmrdir/$thedirname/$thename.ts"
 		else
-			mv $gmrdir/$them3u8 $gmrdir/$thedirname/$thename-$(date +%s).mp4
-			rm $gmrdir/$thename.ts.downloading$rdsuffix
+			mv "$gmrdir/$them3u8" "$gmrdir/$thedirname/$thename-$(date +%s).mp4"
+			rm "$gmrdir/$thename.ts.downloading$rdsuffix"
 		fi
 		rm /tmp/xgmrender.tmp.m3u8$rdsuffix /tmp/xgmrender.tmp.fragment$rdsuffix $them3u8
 	fi
@@ -234,8 +246,17 @@ function gmr_mangotvdownload(){
 	fi
 }
 
+function gmr_xiaoniangaodownload(){
+       if [ $saferom -gt 80 ];then
+               logger -t gmediarender ☆☆☆☆☆☆☆ Not enough diskspace! ☆☆☆☆☆☆☆
+       else
+               rdsuffix=$(head -n 1 /dev/urandom | tr -dc "0-9a-z" | head -c8)
+               $wget --timeout=3 -q $geturl -O $gmrdir/$thedirname/$thename.mp4.fragment$rdsuffix
+               mv $gmrdir/$thedirname/$thename.mp4.fragment$rdsuffix $gmrdir/$thedirname/$thename-$(date +%s).mp4
+       fi
+}
+
 function gmr_clear(){
 	rm /tmp/xgmrender.tmp.* $gmrdir/$them3u8 $gmrdir/$thename.ts
 	echo "clear" > $gmrlog
 }
-
