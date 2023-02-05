@@ -204,9 +204,9 @@ function gmr_iqiyidownload(){
 			done
 		fi
 		if [ -s "$thename.ts.downloading$rdsuffix" ];then
-			mv "$gmrdir/$thename.ts.downloading$rdsuffix" "$gmrdir/$thedirname/$thename.ts"
+			mv "$gmrdir/$thename.ts.downloading$rdsuffix" "$gmrdir/$thedirname/$(echo $thename | sed 's/ //g').ts"
 		else
-			mv "$gmrdir/$them3u8" "$gmrdir/$thedirname/$thename-$(date +%s).mp4"
+			mv "$gmrdir/$them3u8" "$gmrdir/$thedirname/$(echo $thename | sed 's/ //g')-$(date +%s).mp4"
 			rm "$gmrdir/$thename.ts.downloading$rdsuffix"
 		fi
 		rm /tmp/xgmrender.tmp.m3u8$rdsuffix /tmp/xgmrender.tmp.fragment$rdsuffix $them3u8
