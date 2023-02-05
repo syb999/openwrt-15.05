@@ -11,10 +11,19 @@ function index()
 end
 
 function autodl_status()
+	local mpg123 = luci.sys.exec("busybox ps | grep mpg123 | grep -v grep | awk '{print$6}' ")
+	if string.match(mpg123, "http") == nil then
+		mpg123 = luci.sys.exec("busybox ps | grep curl | grep -v grep | awk '{print$7}'")
+		if mpg123 == "" then
+			mpg123 = luci.sys.exec("busybox ps | grep mpg123 | grep -v grep | awk '{print$6}'")
+		end
+	end
+
 	local e = {
 		running = luci.sys.exec("busybox ps | grep \/usr\/online_server\/dexmly.py | grep -v grep | awk '{print $1}' "),
-		mpg123 = luci.sys.exec("busybox ps | grep mpg123 | grep -v grep | awk '{print$6}' ")
+		mpg123 = mpg123
 	}
+
 
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
