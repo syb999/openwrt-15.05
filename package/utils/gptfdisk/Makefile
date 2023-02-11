@@ -27,7 +27,7 @@ include $(INCLUDE_DIR)/host-build.mk
 define Package/gptfdisk/Default
   SECTION:=utils
   CATEGORY:=Utilities
-  SUBMENU:=Disc
+  SUBMENU:=disc
   URL:=https://www.rodsbooks.com/gdisk
   DEPENDS:=+libstdcpp
 endef
@@ -35,7 +35,7 @@ endef
 define Package/gdisk
 $(call Package/gptfdisk/Default)
   TITLE:=GPT aware disk manipulation utility for interactive use
-  DEPENDS+= +libuuid
+  DEPENDS+= +libuuid +libncurses
 endef
 
 define Package/gdisk/description
