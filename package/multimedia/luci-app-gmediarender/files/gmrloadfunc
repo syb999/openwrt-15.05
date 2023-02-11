@@ -42,6 +42,9 @@ function gmr_musicinit(){
 		urlsuffix="m4a"
 		thename="$(cat /tmp/xgmrender.tmp.url | cut -d '/' -f $(expr $(grep -o '/' /tmp/xgmrender.tmp.url | wc -l) + 1) | cut -d '.' -f 1 | sed 's/?/？/g').$urlsuffix"
 	fi
+	if [ "$(echo $thename | wc -c)" -gt 80 ];then
+		thename="$(echo $thename  | sed 's/^mp3.*-//;s/\.mp3$/\.m4a/')"
+	fi
 	findurl2="$(expr $(cat $gmrlog | grep -n "CurrentTrackURI: http" | head -n 1 | cut -d ':' -f 1) + 1)"
 	informaudio="$(grep -n $findurl2 $gmrlog)"
 	gettitle0="$(echo ${informaudio#*&lt;dc:title&gt;})"
@@ -127,7 +130,7 @@ function gmr_musicdownload(){
 	if [ $saferom -gt 80 ];then
 		logger -t gmediarender ☆☆☆☆☆☆☆ Not enough diskspace! ☆☆☆☆☆☆☆
 	else
-		$wget --timeout=3 -q $geturl -O $gmrdir/$thedirname/$thename
+		$wget --timeout=3 -q $geturl -O $gmrdir/$thedirname/"$thename"
 	fi
 }
 

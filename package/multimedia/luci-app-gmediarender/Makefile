@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 
 PKG_NAME:=luci-app-gmediarender
-PKG_VERSION:=2023-02-05
+PKG_VERSION:=2023-02-11
 
 include $(INCLUDE_DIR)/package.mk
 
