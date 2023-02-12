@@ -18,7 +18,7 @@ define Package/$(PKG_NAME)
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
-  DEPENDS:=@(TARGET_kirkwood||TARGET_mvebu||TARGET_ar71xx||TARGET_ramips||TARGET_x86_64||TARGET_x86)
+  DEPENDS:=@(TARGET_kirkwood||TARGET_mvebu||TARGET_armvirt||TARGET_ar71xx||TARGET_ramips||TARGET_x86_64||TARGET_x86)
 endef
 
 define Package/$(PKG_NAME)/description
@@ -53,6 +53,9 @@ endif
 
 ifeq ($(ARCH),arm)
 ifdef CONFIG_TARGET_kirkwood
+	caddy_ARCH:=kirkwood
+	PKG_MD5SUM:=d6d9b3a67c1dc1c64c0a598b78c4a7c7
+else ifdef CONFIG_TARGET_armvirt
 	caddy_ARCH:=kirkwood
 	PKG_MD5SUM:=d6d9b3a67c1dc1c64c0a598b78c4a7c7
 else
