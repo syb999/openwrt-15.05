@@ -50,6 +50,10 @@ endif
 
 TARGET_CFLAGS += -flto
 
+ifdef CONFIG_USE_UCLIBC
+  TARGET_CFLAGS += -std=gnu99
+endif
+
 define Package/libwebp/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libwebp.s* $(1)/usr/lib/
