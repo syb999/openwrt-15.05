@@ -1,0 +1,27 @@
+fix  multiple definition of `__lll_lock_wait_private'
+from uClibc-ng
+
+--- a/libpthread/nptl/sysdeps/unix/sysv/linux/arm/lowlevellock.c
++++ b/libpthread/nptl/sysdeps/unix/sysv/linux/arm/lowlevellock.c
+@@ -24,6 +24,9 @@
+ #include <tls.h>
+ 
+ void
++#ifndef IS_IN_libpthread
++__attribute__((weak))
++#endif
+ __lll_lock_wait_private (int *futex)
+ {
+   do
+--- a/libpthread/nptl/sysdeps/unix/sysv/linux/lowlevellock.c
++++ b/libpthread/nptl/sysdeps/unix/sysv/linux/lowlevellock.c
+@@ -27,6 +27,9 @@
+ 
+ 
+ void
++#ifndef IS_IN_libpthread
++__attribute__((weak))
++#endif
+ __lll_lock_wait_private (int *futex)
+ {
+   if (*futex == 2)
