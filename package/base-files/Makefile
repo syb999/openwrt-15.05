@@ -139,11 +139,13 @@ define Package/base-files/install
 
 	$(VERSION_SED) \
 		$(1)/etc/banner \
-		$(1)/etc/openwrt_version
+		$(1)/etc/openwrt_version \
+		$(1)/usr/lib/os-release
 
 	$(VERSION_SED_SCRIPT) \
 		$(1)/etc/openwrt_release \
-		$(1)/etc/device_info
+		$(1)/etc/device_info \
+		$(1)/usr/lib/os-release
 
 	mkdir -p $(1)/CONTROL
 	mkdir -p $(1)/dev
