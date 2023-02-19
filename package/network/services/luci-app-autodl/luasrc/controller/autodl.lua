@@ -11,12 +11,9 @@ function index()
 end
 
 function autodl_status()
-	local mpg123 = luci.sys.exec("busybox ps | grep mpg123 | grep -v grep | awk '{print$6}' ")
-	if string.match(mpg123, "http") == nil then
-		mpg123 = luci.sys.exec("busybox ps | grep curl | grep -v grep | awk '{print$7}'")
-		if mpg123 == "" then
-			mpg123 = luci.sys.exec("busybox ps | grep mpg123 | grep -v grep | awk '{print$6}'")
-		end
+	local mpg123 = luci.sys.exec("busybox ps | grep mpg123 | grep -v grep | head -n 1 | awk '{print$6}' ")
+	if not mpg123 or string.match(mpg123, "timeout") or string.match(mpg123, "-") then
+		mpg123 = luci.sys.exec("busybox ps | grep curl | grep -v grep | head -n 1 | awk '{print$6}' ")
 	end
 
 	local e = {
@@ -24,8 +21,6 @@ function autodl_status()
 		mpg123 = mpg123
 	}
 
-
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
 end
-

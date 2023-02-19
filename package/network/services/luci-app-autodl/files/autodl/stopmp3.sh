@@ -1,6 +1,12 @@
 #!/bin/sh
 
 function stopaudio() {
+	if [ -n "$(ps | grep curl | grep -v grep | grep mp3)" ];then
+		kill -9 $(busybox ps | grep weburlplay.sh | grep -v grep | awk '{print$1}')
+		kill -9 $(busybox ps | grep curl | grep -v grep | awk '{print$1}') $(busybox ps | grep "mpg123 --timeout" | grep -v grep | awk '{print$1}')
+		exit 0
+	fi
+
 	busybox ps | grep mp3a.sh | grep -v grep | cut -d 'r' -f 1 > /tmp/tmpmp3124.tmp
 	astopmp3="/tmp/tmpmp3124.tmp"
 	countfiles=$(awk 'END{print NR}' $astopmp3)
