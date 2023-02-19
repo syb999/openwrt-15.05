@@ -1,0 +1,23 @@
+<script type="text/javascript">//<![CDATA[
+XHR.poll(5, '<%=luci.dispatcher.build_url("admin", "services", "automail", "status")%>', null,
+	function(x, data) {
+		var tb = document.getElementById('automail_status');
+		if ( data && tb) {
+			if (data.mailtest) {
+				tb.innerHTML = '<font color=green><%:最近一次发送邮件时间：%>' + data.mailtest + '</font>';
+			} else {
+				tb.innerHTML = '<font color=red><%:没有获取到发送邮件的时间%></font>';
+			}
+		}
+	}
+);
+
+//]]>
+</script>
+<style>.mar-10 {margin-left: 50px; margin-right: 10px;}</style>
+<fieldset class="cbi-section">
+	<p id="automail_status">
+		<em><%:Collecting data...%></em>
+	</p>
+</fieldset>
+

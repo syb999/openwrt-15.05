@@ -1,0 +1,75 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "An easy config mailsender server"
+msgstr "一个易于配置的邮件发送服务器"
+
+msgid "Basic Setting"
+msgstr "基本设置"
+
+msgid "information"
+msgstr "信息"
+
+msgid "Please configure msmtp and mutt first"
+msgstr "请先配置msmtp和mutt"
+
+msgid "Recipient mailbox"
+msgstr "收件人邮箱"
+
+msgid "One-click init"
+msgstr "一键初始化"
+
+msgid "After configuration, please initialize first"
+msgstr "配置完成后，请先初始化"
+
+msgid "One-click send mail"
+msgstr "一键发送邮件"
+
+msgid "Mail script"
+msgstr "邮件脚本"
+
+msgid "msmtp Setting"
+msgstr "msmtp设置"
+
+msgid "Mailbox host address"
+msgstr "邮箱主机地址"
+
+msgid "Use SMTP smarthost, viewed in mailbox settings"
+msgstr "请使用SMTP服务器，可以在邮箱设置中查看"
+
+msgid "Sender mailbox"
+msgstr "发件人邮箱"
+
+msgid "Please type your email address"
+msgstr "请输入您的电子邮件地址"
+
+msgid "Mailbox username"
+msgstr "邮箱用户名"
+
+msgid "Please type your mailbox username"
+msgstr "请输入您的邮箱用户名"
+
+msgid "Mailbox password"
+msgstr "邮箱密码"
+
+msgid "Please type your mailbox password, viewed in mailbox settings"
+msgstr "请输入您的邮箱密码，可以在邮箱设置中查看"
+
+msgid "Setup ready"
+msgstr "配置完毕"
+
+msgid "mutt Setting"
+msgstr "mutt设置"
+
+msgid "Program path"
+msgstr "程序路径"
+
+msgid "Sender's Name"
+msgstr "发件人姓名"
+
+msgid "Mutt editor"
+msgstr ""
+
+msgid "Mutt editor"
+msgstr "mutt编辑器"
+
