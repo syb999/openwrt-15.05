@@ -29,6 +29,9 @@ function gmr_init(){
 		findurl=$(cat /tmp/xgmrender.tmp.find)
 	done
 	theurl=$(echo ${findurl#*CurrentTrackURI: } > /tmp/xgmrender.tmp.url)
+	if [ -n $(cat $geturl) ];then
+		theurl=$(echo ${findurl#*CurrentTrackURI val=} > /tmp/xgmrender.tmp.url)
+	fi
 	geturl=$(cat /tmp/xgmrender.tmp.url)
 }
 
@@ -54,11 +57,28 @@ function gmr_musicinit(){
 	theaudio="${thetitle} ${theartist}"
 }
 
-function gmr_vqqinit(){
-	thedirname=$(cat $gmrlog | grep "<dc:title>" | head -n 1 | tr -d '<:>/dctile' | sed 's/^[ ][ ]*//g' | cut -d ' ' -f 1)
-	them3u8=$(cat /tmp/xgmrender.tmp.url | cut -d '/' -f $(expr $(grep -o '/' /tmp/xgmrender.tmp.url | wc -l) + 1) | cut -d '?' -f 1)
-	thesuffix=$(cat /tmp/xgmrender.tmp.url | cut -d '/' -f $(expr $(grep -o '/' /tmp/xgmrender.tmp.url | wc -l) + 1))
-	thename=$(cat $gmrlog | grep "<dc:title>" | head -n 1 | tr -d '<:>/dctile' | sed 's/^[ ][ ]*//g;s/ /-/g')
+function gmr_avqqinit(){
+	if [ -n $(echo $geturl | grep music.tc) ];then
+		#echo download audio
+		thedirname="qqmusic"
+		thename="$(cat $gmrlog | grep "<dc:title>" | head -n 1 | tr -d '<:>/dctile' | sed 's/^[ ][ ]*//g' | cut -d '=' -f8 | cut -d '"' -f 2 | sed 's/^[ ][ ]*//g;s/ /-/g')"
+		if [ -n $(cat $thename) ];then
+			thename="$(date +%s).mp3"
+		fi
+	elif [ -n $(echo $geturl | grep qqmusic) ];then
+		#echo download audio
+		thedirname="qqmusic"
+		thename="$(cat $gmrlog | grep "<dc:title>" | head -n 1 | tr -d '<:>/dctile' | sed 's/^[ ][ ]*//g' | cut -d '=' -f8 | cut -d '"' -f 2 | sed 's/^[ ][ ]*//g;s/ /-/g')"
+		if [ -n $(cat $thename) ];then
+			thename="$(date +%s).mp3"
+		fi
+	else
+		#echo download video
+		thedirname=$(cat $gmrlog | grep "<dc:title>" | head -n 1 | tr -d '<:>/dctile' | sed 's/^[ ][ ]*//g' | cut -d ' ' -f 1)
+		them3u8=$(cat /tmp/xgmrender.tmp.url | cut -d '/' -f $(expr $(grep -o '/' /tmp/xgmrender.tmp.url | wc -l) + 1) | cut -d '?' -f 1)
+		thesuffix=$(cat /tmp/xgmrender.tmp.url | cut -d '/' -f $(expr $(grep -o '/' /tmp/xgmrender.tmp.url | wc -l) + 1))
+		thename=$(cat $gmrlog | grep "<dc:title>" | head -n 1 | tr -d '<:>/dctile' | sed 's/^[ ][ ]*//g;s/ /-/g')
+	fi
 }
 
 function gmr_bilibiliinit(){
@@ -134,37 +154,53 @@ function gmr_musicdownload(){
 	fi
 }
 
-function gmr_vqqdownload(){
+function gmr_avqqdownload(){
 	if [ $saferom -gt 80 ];then
 		logger -t gmediarender ☆☆☆☆☆☆☆ Not enough diskspace! ☆☆☆☆☆☆☆
 	else
-		rdsuffix=$(head -n 1 /dev/urandom | tr -dc "0-9a-z" | head -c8)
-		isbin=$(file /tmp/xgmrender.tmp.m3u8)
-		if [ "$isbin" == "/tmp/xgmrender.tmp.m3u8: data" ];then
-			echo skip
-		else
-			$wget --timeout=10 -q -c $geturl -O $them3u8
-			if [ ! -n "$(echo $them3u8 | grep m3u8)" ];then
-				echo get mp4
+		if [ -n $(echo $geturl | grep music.tc) ];then
+			if [ ! -n $(echo $geturl | cut -d ' ' -f7);then
+				$wget --timeout=3 -q $geturl -O $gmrdir/$thedirname/"$thename"	
 			else
-				cat $them3u8 | grep .ts > /tmp/xgmrender.tmp.m3u8$rdsuffix
-				tmpm3u8=$(cat /tmp/xgmrender.tmp.m3u8$rdsuffix)
-				for i in $tmpm3u8
-				do
-					theprefix=$(cat /tmp/xgmrender.tmp.url | sed "s/${thesuffix}//")
-					tsfragment="${theprefix}${i}"
-					$wget --timeout=3 -q $tsfragment -O /tmp/xgmrender.tmp.fragment$rdsuffix
-					cat /tmp/xgmrender.tmp.fragment$rdsuffix >> $gmrdir/$thename.ts.downloading$rdsuffix
-				done
+				geturl=$(echo $geturl | cut -d ' ' -f7)
+				$wget --timeout=3 -q $geturl -O $gmrdir/$thedirname/"$thename"	
 			fi
-		fi
-		if [ -s $thename.ts.downloading$rdsuffix ];then
-			mv $gmrdir/$thename.ts.downloading$rdsuffix $gmrdir/$thedirname/$thename.ts
+		elif [ -n $(echo $geturl | grep qqmusic) ];then
+			if [ ! -n $(echo $geturl | cut -d ' ' -f7);then
+				$wget --timeout=3 -q $geturl -O $gmrdir/$thedirname/"$thename"	
+			else
+				geturl=$(echo $geturl | cut -d ' ' -f7)
+				$wget --timeout=3 -q $geturl -O $gmrdir/$thedirname/"$thename"	
+			fi
 		else
-			mv $gmrdir/$them3u8 $gmrdir/$thedirname/$thename.mp4
-			rm $gmrdir/$thename.ts.downloading$rdsuffix
+			rdsuffix=$(head -n 1 /dev/urandom | tr -dc "0-9a-z" | head -c8)
+			isbin=$(file /tmp/xgmrender.tmp.m3u8)
+			if [ "$isbin" == "/tmp/xgmrender.tmp.m3u8: data" ];then
+				echo skip
+			else
+				$wget --timeout=10 -q -c $geturl -O $them3u8
+				if [ ! -n "$(echo $them3u8 | grep m3u8)" ];then
+					echo get mp4
+				else
+					cat $them3u8 | grep .ts > /tmp/xgmrender.tmp.m3u8$rdsuffix
+					tmpm3u8=$(cat /tmp/xgmrender.tmp.m3u8$rdsuffix)
+					for i in $tmpm3u8
+					do
+						theprefix=$(cat /tmp/xgmrender.tmp.url | sed "s/${thesuffix}//")
+						tsfragment="${theprefix}${i}"
+						$wget --timeout=3 -q $tsfragment -O /tmp/xgmrender.tmp.fragment$rdsuffix
+						cat /tmp/xgmrender.tmp.fragment$rdsuffix >> $gmrdir/$thename.ts.downloading$rdsuffix
+					done
+				fi
+			fi
+			if [ -s $thename.ts.downloading$rdsuffix ];then
+				mv $gmrdir/$thename.ts.downloading$rdsuffix $gmrdir/$thedirname/$thename.ts
+			else
+				mv $gmrdir/$them3u8 $gmrdir/$thedirname/$thename.mp4
+				rm $gmrdir/$thename.ts.downloading$rdsuffix
+			fi
+			rm /tmp/xgmrender.tmp.m3u8$rdsuffix /tmp/xgmrender.tmp.fragment$rdsuffix $them3u8
 		fi
-		rm /tmp/xgmrender.tmp.m3u8$rdsuffix /tmp/xgmrender.tmp.fragment$rdsuffix $them3u8
 	fi
 }
 

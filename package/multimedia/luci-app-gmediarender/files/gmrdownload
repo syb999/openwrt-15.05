@@ -10,10 +10,10 @@ if [ "$thecase" == "iqiyi" ];then
 	gmr_iqiyidownload
 elif [ "$thecase" == "qq.com" ];then
 	gmr_init
-	gmr_vqqinit
+	gmr_avqqinit
 	echo "clear" > $gmrlog
 	gmr_dirinit
-	gmr_vqqdownload
+	gmr_avqqdownload
 elif [ "$thecase" == "bilivideo" ];then
 	gmr_init
 	gmr_bilibiliinit
