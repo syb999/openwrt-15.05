@@ -16,6 +16,10 @@ recipient.datatype = "string"
 recipient.default = "??????@163.com"
 recipient.rmempty = true
 
+schedules = s:taboption("basic", Flag, "schedules", translate("Scheduled tasks"))
+schedules:depends({ msmtp_ready = "1", mutt_ready = "1" })
+schedules.default = 0
+
 init = s:taboption("basic", Button, "init", translate("One-click init"))
 init.rmempty = true
 init.inputstyle = "apply"
@@ -108,5 +112,81 @@ mutt_editor.rmempty = true
 
 mutt_ready = s:taboption("mutt", Flag, "mutt_ready", translate("Setup ready"))
 mutt_ready.default = 0
+
+s:tab("schedule", translate("Schedule Setting"))
+defdes = s:taboption("schedule", DummyValue, "defdes", translate("Default schedule description"))
+defdes:depends("schedules", "1")
+defdes.description = translate("Automatically send email at 8:15 a.m. every day from Monday to Friday")
+
+f1_list = s:taboption("schedule", ListValue, "f1_list", translate("Minutes List(F1)"))
+f1_list:depends("schedules", "1")
+f1_list.placeholder = "0 ~ 59"
+f1_list:value("0 ~ 59")
+f1_list:value("*")
+f1_list.default = "0 ~ 59"
+f1_list.rempty  = true
+
+sch_f1 = s:taboption("schedule", Value, "sch_f1", translate("The Minute(F1)"))
+sch_f1:depends({ schedules = "1", f1_list = "0 ~ 59" })
+sch_f1.datatype = "range(0,59)"
+sch_f1.placeholder = "15"
+sch_f1.default = "15"
+sch_f1.rmempty = true
+
+f2_list = s:taboption("schedule", ListValue, "f2_list", translate("Hours List(F2)"))
+f2_list:depends("schedules", "1")
+f2_list.placeholder = "0 ~ 23"
+f2_list:value("0 ~ 23")
+f2_list:value("*")
+f2_list.default = "0 ~ 23"
+f2_list.rempty  = true
+
+sch_f2 = s:taboption("schedule", Value, "sch_f2", translate("The Hour(F2)"))
+sch_f2:depends({ schedules = "1", f2_list = "0 ~ 23" })
+sch_f2.datatype = "range(0,23)"
+sch_f2.placeholder = "8"
+sch_f2.default = "8"
+sch_f2.rmempty = true
+
+f3_list = s:taboption("schedule", ListValue, "f3_list", translate("Days List(F3)"))
+f3_list:depends("schedules", "1")
+f3_list.placeholder = "*"
+f3_list:value("*")
+f3_list:value("1 ~ 31")
+f3_list.default = "*"
+f3_list.rempty  = true
+
+
+sch_f3 = s:taboption("schedule", Value, "sch_f3", translate("The day of the month(F3)"))
+sch_f3:depends({ schedules = "1", f3_list = "1 ~ 31" })
+sch_f3.datatype = "range(1,31)"
+sch_f3.placeholder = "1"
+sch_f3.default = "1"
+sch_f3.rmempty = true
+
+f4_list = s:taboption("schedule", ListValue, "f4_list", translate("Months List(F4)"))
+f4_list:depends("schedules", "1")
+f4_list.placeholder = "*"
+f4_list:value("*")
+f4_list:value("1 ~ 12")
+f4_list.default = "*"
+f4_list.rempty  = true
+
+sch_f4 = s:taboption("schedule", Value, "sch_f4", translate("The Month(F4)"))
+sch_f4:depends({ schedules = "1", f4_list = "1 ~ 12" })
+sch_f4.datatype = "range(1,12)"
+sch_f4.placeholder = "1"
+sch_f4.default = "1"
+sch_f4.rmempty = true
+
+f5_list = s:taboption("schedule", ListValue, "f5_list", translate("The Days of the week(F5)"))
+f5_list:depends("schedules", "1")
+f5_list.placeholder = "1-5"
+f5_list:value("*")
+f5_list:value("1-5", translate("Monday to Friday"))
+f5_list:value("6,0", translate("Weekend"))
+f5_list.default = "1-5"
+f5_list.rempty  = true
+
 
 return mp

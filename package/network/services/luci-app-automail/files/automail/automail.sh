@@ -1,5 +1,5 @@
 #!/bin/sh
-#我是Auto Maile Sender发送邮件脚本,请修改我来发送具体邮件信息
+#我是Auto Mail Sender发送邮件脚本,请修改我来发送具体邮件信息
 
 #收件人邮箱
 target=$(uci get automail.@automail[0].recipient)

@@ -24,3 +24,6 @@ if [ ! -f "/etc/Muttrc" ];then
 	mutt_conf
 fi
 
+/etc/init.d/automail enable
+/etc/init.d/automail start
+

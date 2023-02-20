@@ -68,8 +68,50 @@ msgid "Sender's Name"
 msgstr "发件人姓名"
 
 msgid "Mutt editor"
-msgstr ""
-
-msgid "Mutt editor"
 msgstr "mutt编辑器"
+
+msgid "Scheduled tasks"
+msgstr "自动发邮件计划任务"
+
+msgid "Default schedule description"
+msgstr "默认计划说明"
+
+msgid "Automatically send email at 8:15 a.m. every day from Monday to Friday"
+msgstr "下面的默认配置为：每周一到周五上午8点15分自动发送邮件"
+
+msgid "Schedule Setting"
+msgstr "日程计划设置"
+
+msgid "Minutes List(F1)"
+msgstr "分钟选择列表(F1)"
+
+msgid "The Minute(F1)"
+msgstr "第几分钟(F1)"
+
+msgid "Hours List(F2)"
+msgstr "小时选择列表(F2)"
+
+msgid "The Hour(F2)"
+msgstr "几时(F2)"
+
+msgid "Days List(F3)"
+msgstr "天数选择列表(F3)"
+
+msgid "The day of the month(F3)"
+msgstr "当月的第几天(F3)"
+
+msgid "Months List(F4)"
+msgstr "月份列表(F4)"
+
+msgid "The Month(F4)"
+msgstr "几月(F4)"
+
+msgid "The Days of the week(F5)"
+msgstr "一星期中的哪几天(F5)"
+
+msgid "Monday to Friday"
+msgstr "星期一至星期五"
+
+msgid "Weekend"
+msgstr "周末"
 

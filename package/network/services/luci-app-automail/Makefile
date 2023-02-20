@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-automail
-PKG_VERSION:=20230219
+PKG_VERSION:=20230220
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -29,6 +29,8 @@ define Package/luci-app-automail/install
 	$(INSTALL_BIN) ./files/automail/* $(1)/usr/automail
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/automail.conf $(1)/etc/config/automail
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/automail.init $(1)/etc/init.d/automail
 endef
 
 $(eval $(call BuildPackage,luci-app-automail))

@@ -1,0 +1,39 @@
+#!/bin/sh
+
+function _crontest() {
+	if [ "$(uci get automail.@automail[0].f1_list)" != "*" ];then
+		_cron_f1="$(uci get automail.@automail[0].sch_f1)"
+	else
+		_cron_f1="*"
+	fi
+	if [ "$(uci get automail.@automail[0].f2_list)" != "*" ];then
+		_cron_f2="$(uci get automail.@automail[0].sch_f2)"
+	else
+		_cron_f2="*"
+	fi
+	if [ "$(uci get automail.@automail[0].f3_list)" != "*" ];then
+		_cron_f3="$(uci get automail.@automail[0].sch_f3)"
+	else
+		_cron_f3="*"
+	fi
+	if [ "$(uci get automail.@automail[0].f4_list)" != "*" ];then
+		_cron_f4="$(uci get automail.@automail[0].sch_f4)"
+	else
+		_cron_f4="*"
+	fi
+	if [ "$(uci get automail.@automail[0].f5_list)" != "*" ];then
+		_cron_f5="$(uci get automail.@automail[0].f5_list)"
+	else
+		_cron_f5="*"
+	fi
+
+	if [ ! -n "$(cat /etc/crontabs/root | grep automail.sh)" ];then
+		echo "$_cron_f1 $_cron_f2 $_cron_f3 $_cron_f4 $_cron_f5 /usr/automail/automail.sh" >> /etc/crontabs/root
+		/etc/init.d/cron restart
+	fi
+}
+
+if [ "$(uci get automail.@automail[].schedules)" == "1" ];then
+	_crontest
+fi
+
