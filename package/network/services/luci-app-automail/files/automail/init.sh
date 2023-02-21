@@ -1,11 +1,11 @@
 #!/bin/sh
 
 function msmtp_conf() {
-	echo -e "account default\nhost $(uci get automail.@automail[0].msmtp_host)\ntls off\nfrom $(uci get automail.@automail[0].msmtp_from)\nauth login\nuser $(uci get automail.@automail[0].msmtp_user)\npassword $(uci get automail.@automail[0].msmtp_password)\nsyslog LOG_MAIL\nlogfile /tmp/msmtp.log\n" > /etc/msmtprc
+	echo -e "account default\nhost $(uci get automail.@automail[0].msmtp_host)\ntls off\nfrom $(uci get automail.@automail[0].msmtp_from)\nauth login\nuser $(uci get automail.@automail[0].msmtp_user)\npassword $(uci get automail.@automail[0].msmtp_password)\n#syslog LOG_MAIL\nlogfile /tmp/msmtp.log\n" > /etc/msmtprc
 }
 
 function mutt_conf() {
-	echo -e "set sendmail=\"/usr/bin/msmtp\"\nset use_from=yes\nset from=\"$(uci get automail.@automail[0].mutt_from)\"\nset realname=\"$(uci get automail.@automail[0].mutt_realname)\"\nset editor=\"vi\"\n" > /etc/Muttrc
+	echo -e "set sendmail=\"/usr/bin/msmtp\"\nset use_from=yes\nset from=\"$(uci get automail.@automail[0].mutt_from)\"\nset realname=\"$(uci get automail.@automail[0].mutt_realname)\"\nset editor=\"vi\"\nset charset=\"utf-8\"\nset send_charset=\"utf-8\"\n" > /etc/Muttrc
 }
 
 if [ -f "/etc/msmtprc" ];then

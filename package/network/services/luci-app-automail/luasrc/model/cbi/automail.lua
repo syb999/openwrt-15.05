@@ -32,7 +32,7 @@ senderbuttion = s:taboption("basic", Button, "senderbuttion", translate("One-cli
 senderbuttion.rmempty = true
 senderbuttion.inputstyle = "apply"
 function senderbuttion.write(self, section)
-	luci.util.exec("/usr/automail/automail.sh >/dev/null 2>&1 &")
+	luci.util.exec("/usr/automail/automail.sh >/dev/null 2>&1")
 end
 
 local auto_mail = "/usr/automail/automail.sh"
@@ -99,8 +99,8 @@ mutt_from.description = translate("Please type your email address")
 
 mutt_realname = s:taboption("mutt", Value, "mutt_realname", translate("Sender's Name"))
 mutt_realname.datatype = "string"
-mutt_realname.placeholder = "My_Openwrt"
-mutt_realname.default = "My_Openwrt"
+mutt_realname.placeholder = "AutoMail"
+mutt_realname.default = "AutoMail"
 mutt_realname:depends("mutt_use_from", "1")
 mutt_realname.rmempty = true
 

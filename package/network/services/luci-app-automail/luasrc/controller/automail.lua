@@ -16,7 +16,7 @@ function automail_status()
 	if not nixio.fs.access("/tmp/msmtp.log") then
 		mailtest = nil	
 	else
-		mailtest = luci.sys.exec("cat /tmp/msmtp.log | tail -n 1 | cut -d '=' -f1 2>/dev/null ")
+		mailtest = luci.sys.exec("cat /tmp/msmtp.log | grep -v EX_NO | tail -n 1 | cut -d '=' -f1 2>/dev/null ")
 	end
 
 	local e = {
