@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-automail
-PKG_VERSION:=20230221
+PKG_VERSION:=20230223
 
 include $(INCLUDE_DIR)/package.mk
 

@@ -29,11 +29,26 @@ function _crontest() {
 
 	if [ ! -n "$(cat /etc/crontabs/root | grep automail.sh)" ];then
 		echo "$_cron_f1 $_cron_f2 $_cron_f3 $_cron_f4 $_cron_f5 /usr/automail/automail.sh" >> /etc/crontabs/root
-		/etc/init.d/cron restart
+	else
+		sed -i "$(cat /etc/crontabs/root | grep -n automail.sh | tail -n1 | cut -d ':' -f1)d" /etc/crontabs/root
+		echo "$_cron_f1 $_cron_f2 $_cron_f3 $_cron_f4 $_cron_f5 /usr/automail/automail.sh" >> /etc/crontabs/root
 	fi
+	/etc/init.d/cron restart
 }
 
 if [ "$(uci get automail.@automail[].schedules)" == "1" ];then
+	if [ -n "$(cat /etc/crontabs/root | grep automail.sh | grep -n "^#" | cut -d ':' -f1)" ];then
+		for i in $(cat /etc/crontabs/root | grep -n automail.sh | cut -d ':' -f1);do
+			sed -i "${i}s/^#//" /etc/crontabs/root
+		done
+	fi
 	_crontest
+else
+	if [ ! -n "$(cat /etc/crontabs/root | grep automail.sh | grep -n "^#" | cut -d ':' -f1)" ];then
+		for i in $(cat /etc/crontabs/root | grep -n automail.sh | cut -d ':' -f1);do
+			sed -i "${i}s/^/#/" /etc/crontabs/root
+		done
+		/etc/init.d/cron restart
+	fi
 fi
 

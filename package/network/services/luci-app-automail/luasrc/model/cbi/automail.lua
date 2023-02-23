@@ -24,7 +24,7 @@ init = s:taboption("basic", Button, "init", translate("One-click init"))
 init.rmempty = true
 init.inputstyle = "apply"
 function init.write(self, section)
-	luci.util.exec("/usr/automail/init.sh >/dev/null 2>&1 &")
+	luci.util.exec("sh /usr/automail/init.sh >/dev/null 2>&1 &")
 end
 init.description = translate("After configuration, please initialize first")
 
@@ -32,7 +32,7 @@ senderbuttion = s:taboption("basic", Button, "senderbuttion", translate("One-cli
 senderbuttion.rmempty = true
 senderbuttion.inputstyle = "apply"
 function senderbuttion.write(self, section)
-	luci.util.exec("/usr/automail/automail.sh >/dev/null 2>&1")
+	luci.util.exec("sh /usr/automail/automail.sh >/dev/null 2>&1")
 end
 
 local auto_mail = "/usr/automail/automail.sh"
