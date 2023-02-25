@@ -1,0 +1,126 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Assistant for FFMPEG"
+msgstr "FFMPEG助手"
+
+msgid "Basic Setting"
+msgstr "基本设置"
+
+msgid "Source Select"
+msgstr "选择输入源"
+
+msgid "one file"
+msgstr "单个文件"
+
+msgid "all files in the directory"
+msgstr "整个目录的文件"
+
+msgid "Source File Path"
+msgstr "输入源文件路径"
+
+msgid "Source Directory Path"
+msgstr "输入源目录路径"
+
+msgid "Destination Select"
+msgstr "选择输出目标"
+
+msgid "directory"
+msgstr "输出到目录"
+
+msgid "Sound Card"
+msgstr "输出到声卡"
+
+msgid "Destination Directory Path"
+msgstr "输出目录路径"
+
+msgid "One-click Get infomation"
+msgstr "一键获取输入源信息"
+
+msgid "Audio Setting"
+msgstr "音频设置"
+
+msgid "Audio format"
+msgstr "音频格式"
+
+msgid "Sampling rate"
+msgstr "采样率"
+
+msgid "Audio channel"
+msgstr "音频声道"
+
+msgid "mono"
+msgstr "单声道"
+
+msgid "stereo"
+msgstr "双声道"
+
+msgid "Modify duration"
+msgstr "修改音频时间"
+
+msgid "do not modify"
+msgstr "不修改"
+
+msgid "specific time period"
+msgstr "特定时间段"
+
+msgid "cut head and tail"
+msgstr "去除片头、片尾"
+
+msgid "Start time"
+msgstr "起始时间"
+
+msgid "End time"
+msgstr "终止时间"
+
+msgid "cut head"
+msgstr "去片头时间（秒）"
+
+msgid "cut tail"
+msgstr "去片尾时间（秒）"
+
+msgid "Rising-Falling tone"
+msgstr "改变声调"
+
+msgid "sharp"
+msgstr "升半音"
+
+msgid "rasing whole tone"
+msgstr "升全音"
+
+msgid "flat"
+msgstr "降半音"
+
+msgid "falling whole tone"
+msgstr "降全音"
+
+msgid "increase CPU loading"
+msgstr "该功能会增加CPU负载"
+
+msgid "Speed governing"
+msgstr "速率调整（倍速）"
+
+msgid "Volume"
+msgstr "音量调节"
+
+msgid "about title"
+msgstr "标题相关"
+
+msgid "set title"
+msgstr "文件名设置为标题"
+
+msgid "replace filename with title"
+msgstr "用标题替换文件名"
+
+msgid "Fast copy"
+msgstr "快速复制"
+
+msgid "Setup ready"
+msgstr "设置完毕"
+
+msgid "One-click Convert Audio"
+msgstr "一键转换音频"
+
+msgid "One-click STOP"
+msgstr "一键停止"
+

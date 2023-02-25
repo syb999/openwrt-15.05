@@ -1,0 +1,10 @@
+#!/bin/sh
+
+if [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "one file" ];then
+	srctarget="$(uci get ffmpegtool.@ffmpegtool[0].src_file_path)"
+	ffprobe "$srctarget" > /tmp/ffmpeg.log 2>&1
+else
+	srctarget="$(ls $(uci get ffmpegtool.@ffmpegtool[0].src_directory_path) | head -n1)"
+	ffprobe "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$srctarget" > /tmp/ffmpeg.log 2>&1
+fi
+

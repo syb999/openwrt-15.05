@@ -1,0 +1,96 @@
+#!/bin/sh
+
+function ucidefault() {
+	rm /tmp/ffmpeg.log 2>&1 >/dev/null
+	uci set ffmpegtool.@ffmpegtool[0].sampling_rate="none" 2>&1 >/dev/null
+	uci set ffmpegtool.@ffmpegtool[0].audio_channel="none" 2>&1 >/dev/null
+	uci set ffmpegtool.@ffmpegtool[0].a_modify_duration="do not modify" 2>&1 >/dev/null
+	uci set ffmpegtool.@ffmpegtool[0].risingfalling_tone="none" 2>&1 >/dev/null
+	uci set ffmpegtool.@ffmpegtool[0].a_speed_governing="none" 2>&1 >/dev/null
+	uci set ffmpegtool.@ffmpegtool[0].volume="none" 2>&1 >/dev/null
+	uci set ffmpegtool.@ffmpegtool[0].audio_ready="0" 2>&1 >/dev/null
+	uci commit ffmpegtool 2>&1 >/dev/null
+}
+
+function testdestpath() {
+	if [ ! -d "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)" ]; then
+		mkdir -p "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)"
+	fi
+}
+
+function inittime() {
+	hourtime="$(echo $totaltime | cut -d ':' -f1)"
+	mintime="$(echo $totaltime | cut -d ':' -f2)"
+	sectime="$(echo $totaltime | cut -d ':' -f3)"
+	hourtosec="$(expr $hourtime \* 60 \* 60)"
+	mintosec="$(expr $mintime \* 60)"
+	totalsec="$(expr $hourtosec + $mintosec + $sectime)"
+}
+
+function switchtime() {
+	if [ "$(expr $endsec / 3600)" -gt 0 ];then
+		thehour="$(expr $endsec / 3600)"
+		newsec="$(expr $endsec - $(expr $thehour \* 3600))"
+		if [ "$newsec" -gt 59 ];then
+			themin="$(expr $newsec / 60)"
+			thesec="$(expr $newsec - $(expr $themin \* 60))"
+			if [ "$themin" -lt 10 ];then
+				themin="0$themin"
+			fi
+			if [ "$thesec" -lt 10 ];then
+				thesec="0$thesec"
+			fi
+		else
+			themin="00"
+			thesec="$newsec"
+			if [ "$thesec" -lt 10 ];then
+				thesec="0$thesec"
+			fi
+		fi
+		if [ "$thehour" -lt 10 ];then
+			thehour="0$thehour"
+		fi
+	else
+		thehour="00"
+		themin=$(expr $endsec / 60)
+		thesec=$(expr $endsec - $themin \* 60)
+		if [ "$themin" -lt 10 ];then
+			themin="0$themin"
+		fi
+		if [ "$thesec" -lt 10 ];then
+			thesec="0$thesec"
+		fi
+	fi
+}
+
+function getheadtime() {
+	totaltime="$1"
+	audio_headtime="$2"
+	inittime
+	endsec="$audio_headtime"
+	switchtime
+	param_starttime="-ss $thehour:$themin:$thesec"
+}
+
+function gettailtime() {
+	totaltime="$1"
+	audio_tailtime="$2"
+	inittime
+	endsec="$(expr $totalsec - $audio_tailtime)"
+	switchtime
+	param_endtime="-to $thehour:$themin:$thesec"
+}
+
+function time_work() {
+	if [ "$(uci get ffmpegtool.@ffmpegtool[0].a_modify_duration)" == "specific time period" ];then
+		param_starttime="-ss $(uci get ffmpegtool.@ffmpegtool[0].audio_starttime)"
+		param_endtime="-to $(uci get ffmpegtool.@ffmpegtool[0].audio_endtime)"
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].a_modify_duration)" == "cut head and tail" ];then
+		totaltime="$(cat /tmp/ffmpeg.log | grep Duration | cut -d '.' -f1 | awk '{print$2}')"
+		headtime="$(uci get ffmpegtool.@ffmpegtool[0].audio_headtime)"
+		tailtime="$(uci get ffmpegtool.@ffmpegtool[0].audio_tailtime)"
+		getheadtime "$totaltime" "$headtime"
+		gettailtime "$totaltime" "$tailtime"
+	fi
+}
+

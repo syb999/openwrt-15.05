@@ -1,0 +1,22 @@
+<script type="text/javascript">//<![CDATA[
+XHR.poll(5, '<%=luci.dispatcher.build_url("admin", "services", "ffmpegtool", "status")%>', null,
+	function(x, data) {
+		var tb = document.getElementById('ffmpegtool_status');
+		if ( data && tb) {
+			if (data.duration && data.streaminfo ) {
+				tb.innerHTML = '<font color=green><%:源文件信息为：%>' + '</br>' + '<%:播放时长：%>' + data.duration + '<%: (时:分:秒.厘秒)%>' + '</br>' + data.streaminfo + '</br>' + data.workinfo + '</font>' ;
+			} else {
+				tb.innerHTML = '<font color=red><%:没有获取到文件信息！%></font>';
+			}
+		}
+	}
+);
+
+//]]>
+</script>
+<style>.mar-10 {margin-left: 50px; margin-right: 10px;}</style>
+<fieldset class="cbi-section">
+	<p id="ffmpegtool_status">
+		<em><%:Collecting data...%></em>
+	</p>
+</fieldset>
