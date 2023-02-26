@@ -12,6 +12,7 @@ src_select=s:taboption("ffmpegbasic", ListValue, "src_select", translate("Source
 src_select.placeholder = "one file"
 src_select:value("one file",translate("one file"))
 src_select:value("all files in the directory",translate("all files in the directory"))
+src_select:value("rtmp stream",translate("rtmp stream"))
 src_select.default = "one file"
 src_select.rempty  = false
 
@@ -26,6 +27,12 @@ src_directory_path:depends( "src_select", "all files in the directory" )
 src_directory_path.rmempty = true
 src_directory_path.datatype = "string"
 src_directory_path.default = "/mnt/sda1"
+
+src_rtmp_path=s:taboption("ffmpegbasic", Value, "src_rtmp_path", translate("RTMP stream url"))
+src_rtmp_path:depends( "src_select", "rtmp stream" )
+src_rtmp_path.rmempty = true
+src_rtmp_path.datatype = "string"
+src_rtmp_path.default = "rtmp://ip:1935/stream"
 
 dest_select=s:taboption("ffmpegbasic", ListValue, "dest_select", translate("Destination Select"))
 dest_select.placeholder = "directory"
@@ -47,7 +54,6 @@ srcinfo.inputstyle = "apply"
 function srcinfo.write(self, section)
 	luci.util.exec("sh /usr/ffmpegtool/getinfo >/dev/null 2>&1 &")
 end
-
 
 s:tab("audio_setting", translate("Audio Setting"))
 
@@ -162,9 +168,61 @@ audio_copy:depends({ risingfalling_tone = "none", a_speed_governing = "none", vo
 
 audio_ready = s:taboption("audio_setting", Flag, "audio_ready", translate("Setup ready"))
 
+s:tab("video_setting", translate("Video Setting"))
+video_format=s:taboption("video_setting", ListValue, "video_format", translate("Video format"))
+video_format.placeholder = "mp4"
+video_format:value("mp4")
+video_format:value("mkv")
+video_format:value("avi")
+video_format:value("wmv")
+video_format:value("ts")
+video_format:value("3gp")
+video_format.default = "mp4"
+video_format.rempty  = false
+
+v_modify_duration=s:taboption("video_setting", ListValue, "v_modify_duration", translate("Modify duration"))
+v_modify_duration.placeholder = "do not modify"
+v_modify_duration:value("do not modify",translate("do not modify"))
+v_modify_duration:value("specific time period",translate("specific time period"))
+v_modify_duration:value("cut head and tail",translate("cut head and tail"))
+v_modify_duration.default = "do not modify"
+v_modify_duration.rempty  = false
+
+video_starttime=s:taboption("video_setting", Value, "video_starttime", translate("Start time"))
+video_starttime:depends( "v_modify_duration", "specific time period" )
+video_starttime.datatype = "string"
+video_starttime.placeholder = "00:00:00.00"
+video_starttime.default = "00:00:00.00"
+video_starttime.rmempty = true
+
+video_endtime=s:taboption("video_setting", Value, "video_endtime", translate("End time"))
+video_endtime:depends( "v_modify_duration", "specific time period" )
+video_endtime.datatype = "string"
+video_endtime.placeholder = "00:01:30.00"
+video_endtime.default = "00:01:30.00"
+video_endtime.rmempty = true
+
+video_headtime=s:taboption("video_setting", Value, "video_headtime", translate("cut head"))
+video_headtime:depends( "v_modify_duration", "cut head and tail" )
+video_headtime.datatype = "string"
+video_headtime.placeholder = "15"
+video_headtime.default = "15"
+video_headtime.rmempty = true
+
+video_tailtime=s:taboption("video_setting", Value, "video_tailtime", translate("cut tail"))
+video_tailtime:depends( "v_modify_duration", "cut head and tail" )
+video_tailtime.datatype = "string"
+video_tailtime.placeholder = "10"
+video_tailtime.default = "10"
+video_tailtime.rmempty = true
+
+video_copy = s:taboption("video_setting", Flag, "video_copy", translate("Fast copy"))
+
+video_ready = s:taboption("video_setting", Flag, "video_ready", translate("Setup ready"))
+
 s:tab("action", translate("Action"))
 
-audioaction = s:taboption("action", Button, "audioaction", translate("One-click Convert Audio"))
+audioaction = s:taboption("action", Button, "audioaction", translate("One-click Convert/Play/Output Audio"))
 audioaction:depends( "audio_ready", "1" )
 audioaction.rmempty = true
 audioaction.inputstyle = "apply"
@@ -178,6 +236,25 @@ audiostop.rmempty = true
 audiostop.inputstyle = "apply"
 function audiostop.write(self, section)
 	luci.util.exec("kill -9 $(busybox ps | grep audioaction | grep -v grep | awk '{print$1}') >/dev/null 2>&1 ")
+	luci.util.exec("kill $(busybox ps | grep ffmpeg | grep -v grep | awk '{print$1}') >/dev/null 2>&1 ")
+	luci.util.exec("rm /tmp/ffmpeg.log 2>&1")
+end
+
+videoaction = s:taboption("action", Button, "videoaction", translate("One-click Convert/Play/Output Video"))
+videoaction:depends( "video_ready", "1" )
+videoaction.rmempty = true
+videoaction.inputstyle = "apply"
+function videoaction.write(self, section)
+	luci.util.exec("sh /usr/ffmpegtool/videoaction >/dev/null 2>&1 &")
+end
+
+videostop = s:taboption("action", Button, "videostop", translate("One-click STOP"))
+videostop:depends( "video_ready", "1" )
+videostop.rmempty = true
+videostop.inputstyle = "apply"
+function videostop.write(self, section)
+	luci.util.exec("kill -9 $(busybox ps | grep videoaction | grep -v grep | awk '{print$1}') >/dev/null 2>&1 ")
+	luci.util.exec("kill $(busybox ps | grep ffmpeg | grep -v grep | awk '{print$1}') >/dev/null 2>&1 ")
 	luci.util.exec("rm /tmp/ffmpeg.log 2>&1")
 end
 

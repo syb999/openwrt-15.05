@@ -16,11 +16,17 @@ msgstr "单个文件"
 msgid "all files in the directory"
 msgstr "整个目录的文件"
 
+msgid "rtmp stream"
+msgstr "rtmp流"
+
 msgid "Source File Path"
 msgstr "输入源文件路径"
 
 msgid "Source Directory Path"
 msgstr "输入源目录路径"
+
+msgid "RTMP stream url"
+msgstr "RTMP流URL"
 
 msgid "Destination Select"
 msgstr "选择输出目标"
@@ -56,7 +62,7 @@ msgid "stereo"
 msgstr "双声道"
 
 msgid "Modify duration"
-msgstr "修改音频时间"
+msgstr "修改时间"
 
 msgid "do not modify"
 msgstr "不修改"
@@ -118,8 +124,17 @@ msgstr "快速复制"
 msgid "Setup ready"
 msgstr "设置完毕"
 
-msgid "One-click Convert Audio"
-msgstr "一键转换音频"
+msgid "Video Setting"
+msgstr "视频设置"
+
+msgid "Video format"
+msgstr "视频格式"
+
+msgid "One-click Convert/Play/Output Audio"
+msgstr "一键转换/播放/导出音频"
+
+msgid "One-click Convert/Play/Output Video"
+msgstr "一键转换/播放/导出视频"
 
 msgid "One-click STOP"
 msgstr "一键停止"

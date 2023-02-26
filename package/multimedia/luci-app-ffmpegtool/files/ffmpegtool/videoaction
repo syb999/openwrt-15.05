@@ -1,0 +1,46 @@
+#!/bin/sh
+. /usr/ffmpegtool/commonfunc
+
+testdestpath
+
+param_format="$(uci get ffmpegtool.@ffmpegtool[0].video_format)"
+param_starttime=""
+param_endtime=""
+param_copy=""
+
+if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_copy)" == "1" ];then
+	param_copy="-vcodec copy"
+fi
+
+if [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "one file" ];then
+	srctarget="$(uci get ffmpegtool.@ffmpegtool[0].src_file_path)"
+	ffprobe "$srctarget" > /tmp/ffmpeg.log 2>&1
+	time_work_v
+	echo "$srctarget ---- 转换中..." >> /tmp/ffmpeg.log
+	ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1).$param_format" -y
+	echo "转换完成!" >> /tmp/ffmpeg.log
+elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "all files in the directory" ];then
+	srctarget="$(ls $(uci get ffmpegtool.@ffmpegtool[0].src_directory_path))"
+	for i in $srctarget;do
+		ffprobe "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" > /tmp/ffmpeg.log 2>&1
+		time_work_v
+		echo "$i ---- 转换中..." >> /tmp/ffmpeg.log
+		ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1).$param_format" -y
+		echo "转换完成!" >> /tmp/ffmpeg.log
+	done
+elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "rtmp stream" ];then
+	srctarget="$(uci get ffmpegtool.@ffmpegtool[0].src_rtmp_path)"
+	ffprobe "$srctarget" > /tmp/ffmpeg.log 2>&1
+	if [ "$(uci get ffmpegtool.@ffmpegtool[0].dest_select)" == "Sound Card" ];then
+		echo "$i ---- 播放中..." >> /tmp/ffmpeg.log
+		ffmpeg -i "$srctarget" -f alsa default
+		echo "播放完毕!" >> /tmp/ffmpeg.log
+	else
+		echo "$i ---- 导出中..." >> /tmp/ffmpeg.log
+		ffmpeg -i "$srctarget" "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(date +%s).$param_format" -y
+		echo "导出完毕!" >> /tmp/ffmpeg.log
+	fi
+fi
+
+ucidefault
+

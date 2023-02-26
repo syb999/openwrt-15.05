@@ -9,6 +9,8 @@ function ucidefault() {
 	uci set ffmpegtool.@ffmpegtool[0].a_speed_governing="none" 2>&1 >/dev/null
 	uci set ffmpegtool.@ffmpegtool[0].volume="none" 2>&1 >/dev/null
 	uci set ffmpegtool.@ffmpegtool[0].audio_ready="0" 2>&1 >/dev/null
+	uci set ffmpegtool.@ffmpegtool[0].v_modify_duration="do not modify" 2>&1 >/dev/null
+	uci set ffmpegtool.@ffmpegtool[0].video_ready="0" 2>&1 >/dev/null
 	uci commit ffmpegtool 2>&1 >/dev/null
 }
 
@@ -63,7 +65,7 @@ function switchtime() {
 	fi
 }
 
-function getheadtime() {
+function getheadtime_a() {
 	totaltime="$1"
 	audio_headtime="$2"
 	inittime
@@ -72,7 +74,7 @@ function getheadtime() {
 	param_starttime="-ss $thehour:$themin:$thesec"
 }
 
-function gettailtime() {
+function gettailtime_a() {
 	totaltime="$1"
 	audio_tailtime="$2"
 	inittime
@@ -81,7 +83,25 @@ function gettailtime() {
 	param_endtime="-to $thehour:$themin:$thesec"
 }
 
-function time_work() {
+function getheadtime_v() {
+	totaltime="$1"
+	video_headtime="$2"
+	inittime
+	endsec="$audio_headtime"
+	switchtime
+	param_starttime="-ss $thehour:$themin:$thesec"
+}
+
+function gettailtime_v() {
+	totaltime="$1"
+	video_tailtime="$2"
+	inittime
+	endsec="$(expr $totalsec - $audio_tailtime)"
+	switchtime
+	param_endtime="-to $thehour:$themin:$thesec"
+}
+
+function time_work_a() {
 	if [ "$(uci get ffmpegtool.@ffmpegtool[0].a_modify_duration)" == "specific time period" ];then
 		param_starttime="-ss $(uci get ffmpegtool.@ffmpegtool[0].audio_starttime)"
 		param_endtime="-to $(uci get ffmpegtool.@ffmpegtool[0].audio_endtime)"
@@ -89,8 +109,21 @@ function time_work() {
 		totaltime="$(cat /tmp/ffmpeg.log | grep Duration | cut -d '.' -f1 | awk '{print$2}')"
 		headtime="$(uci get ffmpegtool.@ffmpegtool[0].audio_headtime)"
 		tailtime="$(uci get ffmpegtool.@ffmpegtool[0].audio_tailtime)"
-		getheadtime "$totaltime" "$headtime"
-		gettailtime "$totaltime" "$tailtime"
+		getheadtime_a "$totaltime" "$headtime"
+		gettailtime_a "$totaltime" "$tailtime"
+	fi
+}
+
+function time_work_v() {
+	if [ "$(uci get ffmpegtool.@ffmpegtool[0].v_modify_duration)" == "specific time period" ];then
+		param_starttime="-ss $(uci get ffmpegtool.@ffmpegtool[0].video_starttime)"
+		param_endtime="-to $(uci get ffmpegtool.@ffmpegtool[0].video_endtime)"
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].a_modify_duration)" == "cut head and tail" ];then
+		totaltime="$(cat /tmp/ffmpeg.log | grep Duration | cut -d '.' -f1 | awk '{print$2}')"
+		headtime="$(uci get ffmpegtool.@ffmpegtool[0].video_headtime)"
+		tailtime="$(uci get ffmpegtool.@ffmpegtool[0].video_tailtime)"
+		getheadtime_v "$totaltime" "$headtime"
+		gettailtime_v "$totaltime" "$tailtime"
 	fi
 }
 

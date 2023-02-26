@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-ffmpegtool
-PKG_VERSION:=20230225
+PKG_VERSION:=20230226
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -11,7 +11,7 @@ define Package/luci-app-ffmpegtool
 	SUBMENU:=3. Applications
 	TITLE:=LuCI Support for ffmpeg
 	PKGARCH:=all
-	DEPENDS:=+ffmpeg
+	DEPENDS:=+ffmpeg +ffprobe
 endef
 
 define Build/Prepare
