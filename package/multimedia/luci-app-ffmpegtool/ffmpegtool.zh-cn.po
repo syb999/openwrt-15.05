@@ -124,11 +124,32 @@ msgstr "快速复制"
 msgid "Setup ready"
 msgstr "设置完毕"
 
+msgid "Save/apply first please"
+msgstr "请先保存/应用"
+
 msgid "Video Setting"
 msgstr "视频设置"
 
 msgid "Video format"
 msgstr "视频格式"
+
+msgid "using libx264 for mp4"
+msgstr "使用libx264转码(可以解决某些mp4视频无法在浏览器播放的问题)"
+
+msgid "Mute"
+msgstr "静音"
+
+msgid "Save to picture"
+msgstr "导出为图片"
+
+msgid "Set the number of frames"
+msgstr "设置帧数"
+
+msgid "The number of frames"
+msgstr "每秒取几帧"
+
+msgid "black-and-white"
+msgstr "输出为黑白色"
 
 msgid "One-click Convert/Play/Output Audio"
 msgstr "一键转换/播放/导出音频"

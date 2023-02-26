@@ -4,9 +4,29 @@
 testdestpath
 
 param_format="$(uci get ffmpegtool.@ffmpegtool[0].video_format)"
+param_libx264=""
 param_starttime=""
 param_endtime=""
+param_mute=""
+param_frames_num=""
+param_blackandwhite=""
 param_copy=""
+
+if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_x264)" == "1" ];then
+	param_libx264="-vcodec libx264"
+fi
+
+if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_mute)" == "1" ];then
+	param_mute="-an"
+fi
+
+if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_frames)" == "1" ];then
+	param_frames_num="-r $(uci get ffmpegtool.@ffmpegtool[0].video_frames_num)"
+fi
+
+if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_blackandwhite)" == "1" ];then
+	param_blackandwhite="-vf hue=s=0"
+fi
 
 if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_copy)" == "1" ];then
 	param_copy="-vcodec copy"
@@ -16,16 +36,22 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "one file" ];then
 	srctarget="$(uci get ffmpegtool.@ffmpegtool[0].src_file_path)"
 	ffprobe "$srctarget" > /tmp/ffmpeg.log 2>&1
 	time_work_v
-	echo "$srctarget ---- 转换中..." >> /tmp/ffmpeg.log
-	ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1).$param_format" -y
-	echo "转换完成!" >> /tmp/ffmpeg.log
+	if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_picture)" == "1" ];then 
+		echo "$srctarget ---- 导出图片中..." >> /tmp/ffmpeg.log
+		ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num $param_blackandwhite $param_libx264 $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-%03d.jpg" -y
+		echo "导出完毕!" >> /tmp/ffmpeg.log
+	else
+		echo "$srctarget ---- 转换中..." >> /tmp/ffmpeg.log
+		ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num $param_blackandwhite $param_libx264 $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1).$param_format" -y
+		echo "转换完成!" >> /tmp/ffmpeg.log
+	fi
 elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "all files in the directory" ];then
 	srctarget="$(ls $(uci get ffmpegtool.@ffmpegtool[0].src_directory_path))"
 	for i in $srctarget;do
 		ffprobe "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" > /tmp/ffmpeg.log 2>&1
 		time_work_v
 		echo "$i ---- 转换中..." >> /tmp/ffmpeg.log
-		ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1).$param_format" -y
+		ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_mute $param_frames_num $param_blackandwhite $param_libx264 $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1).$param_format" -y
 		echo "转换完成!" >> /tmp/ffmpeg.log
 	done
 elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "rtmp stream" ];then

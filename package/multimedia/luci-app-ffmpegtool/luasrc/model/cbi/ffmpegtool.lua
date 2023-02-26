@@ -130,7 +130,7 @@ risingfalling_tone:value("flat",translate("flat"))
 risingfalling_tone:value("falling whole tone",translate("falling whole tone"))
 risingfalling_tone.default = "none"
 risingfalling_tone.rempty  = false
-risingfalling_tone = translate("increase CPU loading")
+risingfalling_tone.description = translate("increase CPU loading")
 
 a_speed_governing=s:taboption("audio_setting", ListValue, "a_speed_governing", translate("Speed governing"))
 a_speed_governing.placeholder = "none"
@@ -141,7 +141,7 @@ a_speed_governing:value("1.5")
 a_speed_governing:value("2.0")
 a_speed_governing.default = "none"
 a_speed_governing.rempty  = false
-a_speed_governing = translate("increase CPU loading")
+a_speed_governing.description = translate("increase CPU loading")
 
 volume=s:taboption("audio_setting", ListValue, "volume", translate("Volume"))
 volume.placeholder = "none"
@@ -151,7 +151,7 @@ volume:value("+5dB")
 volume:value("-5dB")
 volume.default = "none"
 volume.rempty  = false
-volume = translate("increase CPU loading")
+volume.description = translate("increase CPU loading")
 
 audio_title = s:taboption("audio_setting", Flag, "audio_title", translate("about title"))
 
@@ -167,6 +167,7 @@ audio_copy = s:taboption("audio_setting", Flag, "audio_copy", translate("Fast co
 audio_copy:depends({ risingfalling_tone = "none", a_speed_governing = "none", volume = "none", audio_title = "", sampling_rate = "none", audio_channel = "none" })
 
 audio_ready = s:taboption("audio_setting", Flag, "audio_ready", translate("Setup ready"))
+audio_ready.description = translate("Save/apply first please")
 
 s:tab("video_setting", translate("Video Setting"))
 video_format=s:taboption("video_setting", ListValue, "video_format", translate("Video format"))
@@ -179,6 +180,10 @@ video_format:value("ts")
 video_format:value("3gp")
 video_format.default = "mp4"
 video_format.rempty  = false
+
+video_x264 = s:taboption("video_setting", Flag, "video_x264", translate("using libx264 for mp4"))
+video_x264:depends( "video_format", "mp4" )
+video_x264.description = translate("increase CPU loading")
 
 v_modify_duration=s:taboption("video_setting", ListValue, "v_modify_duration", translate("Modify duration"))
 v_modify_duration.placeholder = "do not modify"
@@ -216,9 +221,28 @@ video_tailtime.placeholder = "10"
 video_tailtime.default = "10"
 video_tailtime.rmempty = true
 
+video_mute = s:taboption("video_setting", Flag, "video_mute", translate("Mute"))
+
+video_picture = s:taboption("video_setting", Flag, "video_picture", translate("Save to picture"))
+video_picture:depends({ src_select = "one file", video_x264 = "" })
+
+video_frames = s:taboption("video_setting", Flag, "video_frames", translate("Set the number of frames"))
+
+video_frames_num = s:taboption("video_setting", Value, "video_frames_num", translate("The number of frames"))
+video_frames_num:depends( "video_frames", "1" )
+video_frames_num.datatype = "range(1,25)"
+video_frames_num.placeholder = "1"
+video_frames_num.default = "1"
+video_frames_num.rmempty = true
+
+video_blackandwhite = s:taboption("video_setting", Flag, "video_blackandwhite", translate("black-and-white"))
+video_blackandwhite.description = translate("increase CPU loading")
+
 video_copy = s:taboption("video_setting", Flag, "video_copy", translate("Fast copy"))
+video_copy:depends({ video_blackandwhite = "", video_x264 = "", video_picture = "" })
 
 video_ready = s:taboption("video_setting", Flag, "video_ready", translate("Setup ready"))
+video_ready.description = translate("Save/apply first please")
 
 s:tab("action", translate("Action"))
 
