@@ -185,6 +185,41 @@ video_x264 = s:taboption("video_setting", Flag, "video_x264", translate("using l
 video_x264:depends( "video_format", "mp4" )
 video_x264.description = translate("increase CPU loading")
 
+image_effects=s:taboption("video_setting", Flag, "image_effects", translate("image effects"))
+image_effects.description = translate("increase CPU loading when open")
+
+video_horizontally = s:taboption("video_setting", Flag, "video_horizontally", translate("flip image horizontally"))
+video_horizontally:depends( "image_effects", "1" )
+
+video_upanddown = s:taboption("video_setting", Flag, "video_upanddown", translate("flip image up and down"))
+video_upanddown:depends( "image_effects", "1" )
+
+video_rotation = s:taboption("video_setting", Flag, "video_rotation", translate("image rotation 90 degrees"))
+video_rotation:depends( "image_effects", "1" )
+
+fuzzy_processing = s:taboption("video_setting", Flag, "fuzzy_processing", translate("fuzzy processing"))
+fuzzy_processing:depends( "image_effects", "1" )
+
+crisp_enhancement = s:taboption("video_setting", Flag, "crisp_enhancement", translate("crisp enhancement"))
+crisp_enhancement:depends( "image_effects", "1" )
+
+video_halfsize = s:taboption("video_setting", Flag, "video_halfsize", translate("a half of screensize"))
+video_halfsize:depends( "image_effects", "1" )
+
+video_clipping = s:taboption("video_setting", Flag, "video_clipping", translate("screen clipping"))
+video_clipping:depends( "image_effects", "1" )
+
+video_crop = s:taboption("video_setting", Value, "video_crop", translate("capture the screen of the specified size and location"))
+video_crop:depends( "video_clipping", "1" )
+video_crop.datatype = "string"
+video_crop.placeholder = "crop=iw:ih/2:0:100"
+video_crop.default = "crop=iw:ih/2:0:100"
+video_crop.rmempty = true
+video_crop.description = translate("default set is capture 100% width and 50% heigh from the topleft (0,100) pixel")
+
+video_blackandwhite = s:taboption("video_setting", Flag, "video_blackandwhite", translate("black-and-white"))
+video_blackandwhite:depends( "image_effects", "1" )
+
 v_modify_duration=s:taboption("video_setting", ListValue, "v_modify_duration", translate("Modify duration"))
 v_modify_duration.placeholder = "do not modify"
 v_modify_duration:value("do not modify",translate("do not modify"))
@@ -235,11 +270,8 @@ video_frames_num.placeholder = "1"
 video_frames_num.default = "1"
 video_frames_num.rmempty = true
 
-video_blackandwhite = s:taboption("video_setting", Flag, "video_blackandwhite", translate("black-and-white"))
-video_blackandwhite.description = translate("increase CPU loading")
-
 video_copy = s:taboption("video_setting", Flag, "video_copy", translate("Fast copy"))
-video_copy:depends({ video_blackandwhite = "", video_x264 = "", video_picture = "" })
+video_copy:depends({ image_effects = "", video_x264 = "", video_picture = "" })
 
 video_ready = s:taboption("video_setting", Flag, "video_ready", translate("Setup ready"))
 video_ready.description = translate("Save/apply first please")

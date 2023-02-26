@@ -136,6 +136,36 @@ msgstr "视频格式"
 msgid "using libx264 for mp4"
 msgstr "使用libx264转码(可以解决某些mp4视频无法在浏览器播放的问题)"
 
+msgid "image effects"
+msgstr "开启图像特效"
+
+msgid "flip image horizontally"
+msgstr "水平翻转图像"
+
+msgid "flip image up and down"
+msgstr "上下翻转图像"
+
+msgid "image rotation 90 degrees"
+msgstr "图像旋转90度"
+
+msgid "fuzzy processing"
+msgstr "模糊处理"
+
+msgid "crisp enhancement"
+msgstr "清晰增强"
+
+msgid "a half of screensize"
+msgstr "变为原屏幕大小的一半"
+
+msgid "screen clipping"
+msgstr "屏幕剪辑"
+
+msgid "capture the screen of the specified size and location"
+msgstr "获取指定大小和位置的屏幕"
+
+msgid "default set is capture 100% width and 50% heigh from the topleft (0,100) pixel"
+msgstr "默认设置为从左上角（0,100）像素捕获100%宽度和50%高度的画面"
+
 msgid "Mute"
 msgstr "静音"
 

@@ -56,6 +56,12 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].volume)" != "none" ];then
 	fi
 fi
 
+if [ "$param_tone" == "" -a "$param_speed" == "" -a "$param_volume" == "" ];then
+	audios_param="$param_tone$param_speed$param_volume"
+else
+	audios_param="$(echo $param_tone$param_speed$param_volume | sed 's/,$//')"
+fi
+
 if [ "$(uci get ffmpegtool.@ffmpegtool[0].audio_copy)" == "1" ];then
 	param_copy="-acodec copy"
 fi
@@ -71,16 +77,16 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "one file" ];then
 	if [ "$param_tone" == "" -a "$param_speed" == "" -a "$param_volume" == "" ];then
 		if [ "$(uci get ffmpegtool.@ffmpegtool[0].audio_titleisname)" == "1" ];then
 			param_title="$(cat /tmp/ffmpeg.log | grep title | awk '{print$3}')"
-			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_rate $param_channel $param_tone$param_speed$param_volume $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$param_title.$param_format" -y
+			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_rate $param_channel $audios_param $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$param_title.$param_format" -y
 		else
-			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_rate $param_channel $param_tone$param_speed$param_volume $param_copy $param_title "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1).$param_format" -y
+			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_rate $param_channel $audios_param $param_copy $param_title "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1).$param_format" -y
 		fi
 	else
 		if [ "$(uci get ffmpegtool.@ffmpegtool[0].audio_titleisname)" == "1" ];then
 			param_title="$(cat /tmp/ffmpeg.log | grep title | awk '{print$3}')"
-			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_rate $param_channel -filter_complex:a $param_tone$param_speed$param_volume "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$param_title.$param_format" -y
+			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_rate $param_channel -filter_complex:a $audios_param "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$param_title.$param_format" -y
 		else
-			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_rate $param_channel -filter_complex:a $param_tone$param_speed$param_volume $param_title "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1).$param_format" -y
+			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_rate $param_channel -filter_complex:a $audios_param $param_title "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1).$param_format" -y
 		fi
 	fi
 	echo "转换完成!" >> /tmp/ffmpeg.log
@@ -95,16 +101,16 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "all files in the di
 		echo "$i ---- 转换中..." >> /tmp/ffmpeg.log
 		if [ "$param_tone" == "" -a "$param_speed" == "" -a "$param_volume" == "" ];then
 			if [ "$(uci get ffmpegtool.@ffmpegtool[0].audio_titleisname)" == "1" ];then
-				ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_rate $param_channel $param_tone$param_speed$param_volume $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$param_title.$param_format" -y
+				ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_rate $param_channel $audios_param $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$param_title.$param_format" -y
 			else
-				ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_rate $param_channel $param_title $param_tone$param_speed$param_volume $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1).$param_format" -y
+				ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_rate $param_channel $param_title $audios_param $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1).$param_format" -y
 			fi
 		else
 			if [ "$(uci get ffmpegtool.@ffmpegtool[0].audio_titleisname)" == "1" ];then
 				param_title="$(cat /tmp/ffmpeg.log | grep title | awk '{print$3}')"
-				ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_rate $param_channel -filter_complex:a $param_tone$param_speed$param_volume "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$param_title.$param_format" -y
+				ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_rate $param_channel -filter_complex:a $audios_param "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$param_title.$param_format" -y
 			else
-				ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_rate $param_channel -filter_complex:a $param_tone$param_speed$param_volume $param_title "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1).$param_format" -y
+				ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_rate $param_channel -filter_complex:a $audios_param $param_title "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1).$param_format" -y
 			fi
 		fi
 		echo "转换完成!" >> /tmp/ffmpeg.log

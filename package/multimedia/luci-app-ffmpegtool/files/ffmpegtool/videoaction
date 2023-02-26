@@ -9,6 +9,13 @@ param_starttime=""
 param_endtime=""
 param_mute=""
 param_frames_num=""
+param_horizontally=""
+param_upanddown=""
+param_rotation=""
+param_fuzzy=""
+param_crisp=""
+param_halfsize=""
+param_crop=""
 param_blackandwhite=""
 param_copy=""
 
@@ -24,8 +31,39 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_frames)" == "1" ];then
 	param_frames_num="-r $(uci get ffmpegtool.@ffmpegtool[0].video_frames_num)"
 fi
 
+if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_horizontally)" == "1" ];then
+	param_horizontally="hflip,"
+fi
+
+if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_upanddown)" == "1" ];then
+	param_upanddown="vflip,"
+fi
+
+if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_rotation)" == "1" ];then
+	param_rotation="transpose=2,"
+fi
+
+if [ "$(uci get ffmpegtool.@ffmpegtool[0].fuzzy_processing)" == "1" ];then
+	param_fuzzy="boxblur=1:10:4:10,"
+fi
+
+if [ "$(uci get ffmpegtool.@ffmpegtool[0].crisp_enhancement)" == "1" ];then
+	param_crisp="unsharp=5:5:1.0:5:5:0.0,"
+fi
+
+if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_halfsize)" == "1" ];then
+	param_halfsize="scale=iw/2:ih/2,"
+fi
+
+if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_crop)" == "1" ];then
+	param_crop="$(uci get ffmpegtool.@ffmpegtool[0].video_crop),"
+fi
+
 if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_blackandwhite)" == "1" ];then
-	param_blackandwhite="-vf hue=s=0"
+	param_blackandwhite="hue=s=0"
+	effects_param="$param_horizontally$param_upanddown$param_rotation$param_fuzzy$param_crisp$param_halfsize$param_crop$param_blackandwhite"
+else
+	effects_param="$(echo $param_horizontally$param_upanddown$param_rotation$param_fuzzy$param_crisp$param_halfsize$param_crop$param_blackandwhite | sed 's/,$//')"
 fi
 
 if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_copy)" == "1" ];then
@@ -38,11 +76,19 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "one file" ];then
 	time_work_v
 	if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_picture)" == "1" ];then 
 		echo "$srctarget ---- 导出图片中..." >> /tmp/ffmpeg.log
-		ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num $param_blackandwhite $param_libx264 $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-%03d.jpg" -y
+		if [ "$(uci get ffmpegtool.@ffmpegtool[0].image_effects)" == "1" ];then
+			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num -vf $effects_param $param_libx264 $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-%03d.jpg" -y
+		else
+			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num $param_libx264 $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-%03d.jpg" -y
+		fi
 		echo "导出完毕!" >> /tmp/ffmpeg.log
 	else
 		echo "$srctarget ---- 转换中..." >> /tmp/ffmpeg.log
-		ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num $param_blackandwhite $param_libx264 $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1).$param_format" -y
+		if [ "$(uci get ffmpegtool.@ffmpegtool[0].image_effects)" == "1" ];then
+			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num -vf $effects_param $param_libx264 $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1).$param_format" -y
+		else
+			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num $param_libx264 $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1).$param_format" -y
+		fi
 		echo "转换完成!" >> /tmp/ffmpeg.log
 	fi
 elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "all files in the directory" ];then
@@ -51,7 +97,11 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "all files in the di
 		ffprobe "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" > /tmp/ffmpeg.log 2>&1
 		time_work_v
 		echo "$i ---- 转换中..." >> /tmp/ffmpeg.log
-		ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_mute $param_frames_num $param_blackandwhite $param_libx264 $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1).$param_format" -y
+		if [ "$(uci get ffmpegtool.@ffmpegtool[0].image_effects)" == "1" ];then
+			ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_mute $param_frames_num -vf $effects_param $param_libx264 $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1).$param_format" -y
+		else
+			ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_mute $param_frames_num $param_libx264 $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1).$param_format" -y
+		fi
 		echo "转换完成!" >> /tmp/ffmpeg.log
 	done
 elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "rtmp stream" ];then
