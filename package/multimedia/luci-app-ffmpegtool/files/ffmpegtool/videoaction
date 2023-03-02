@@ -20,9 +20,9 @@ param_crop=""
 param_blackandwhite=""
 param_copy=""
 
-if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_x2645)" == "1" ];then
+if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_x2645)" == "libx264" ];then
 	param_libx2645="-vcodec libx264"
-elif [ "$(uci get ffmpegtool.@ffmpegtool[0].video_x2645)" == "1" ];then
+elif [ "$(uci get ffmpegtool.@ffmpegtool[0].video_x2645)" == "libx265" ];then
 	param_libx2645="-vcodec libx265"
 fi
 
