@@ -10,6 +10,10 @@ function ucidefault() {
 	uci set ffmpegtool.@ffmpegtool[0].volume="none" 2>&1 >/dev/null
 	uci set ffmpegtool.@ffmpegtool[0].audio_ready="0" 2>&1 >/dev/null
 	uci set ffmpegtool.@ffmpegtool[0].image_effects="0" 2>&1 >/dev/null
+	uci set ffmpegtool.@ffmpegtool[0].video_frames="" 2>&1 >/dev/null
+	uci set ffmpegtool.@ffmpegtool[0].picture_tovideo="" 2>&1 >/dev/null
+	uci set ffmpegtool.@ffmpegtool[0].screen_merge="" 2>&1 >/dev/null
+	uci set ffmpegtool.@ffmpegtool[0].video_mute="" 2>&1 >/dev/null
 	uci set ffmpegtool.@ffmpegtool[0].v_modify_duration="do not modify" 2>&1 >/dev/null
 	uci set ffmpegtool.@ffmpegtool[0].video_ready="0" 2>&1 >/dev/null
 	uci commit ffmpegtool 2>&1 >/dev/null
@@ -119,7 +123,7 @@ function time_work_v() {
 	if [ "$(uci get ffmpegtool.@ffmpegtool[0].v_modify_duration)" == "specific time period" ];then
 		param_starttime="-ss $(uci get ffmpegtool.@ffmpegtool[0].video_starttime)"
 		param_endtime="-to $(uci get ffmpegtool.@ffmpegtool[0].video_endtime)"
-	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].a_modify_duration)" == "cut head and tail" ];then
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].v_modify_duration)" == "cut head and tail" ];then
 		totaltime="$(cat /tmp/ffmpeg.log | grep Duration | cut -d '.' -f1 | awk '{print$2}')"
 		headtime="$(uci get ffmpegtool.@ffmpegtool[0].video_headtime)"
 		tailtime="$(uci get ffmpegtool.@ffmpegtool[0].video_tailtime)"

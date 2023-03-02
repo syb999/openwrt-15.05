@@ -40,6 +40,9 @@ msgstr "输出到声卡"
 msgid "Destination Directory Path"
 msgstr "输出目录路径"
 
+msgid "do not be the same as the source directory"
+msgstr "不要与输入源的目录相同"
+
 msgid "One-click Get infomation"
 msgstr "一键获取输入源信息"
 
@@ -69,6 +72,9 @@ msgstr "不修改"
 
 msgid "specific time period"
 msgstr "特定时间段"
+
+msgid "only configure duration"
+msgstr "仅配置持续时间"
 
 msgid "cut head and tail"
 msgstr "去除片头、片尾"
@@ -133,26 +139,35 @@ msgstr "视频设置"
 msgid "Video format"
 msgstr "视频格式"
 
-msgid "using libx264 for mp4"
-msgstr "使用libx264转码(可以解决某些mp4视频无法在浏览器播放的问题)"
+msgid "using libx264/libx265"
+msgstr "使用libx264/libx265转码(可以解决某些mp4视频无法在浏览器播放的问题)"
 
 msgid "image effects"
 msgstr "开启图像特效"
 
+msgid "increase CPU loading when open"
+msgstr "打开时增加CPU负载"
+
 msgid "flip image horizontally"
-msgstr "水平翻转图像"
+msgstr "水平翻转视频图像"
 
 msgid "flip image up and down"
-msgstr "上下翻转图像"
+msgstr "上下翻转视频图像"
 
 msgid "image rotation 90 degrees"
 msgstr "图像旋转90度"
 
+msgid "image horizontal symmetrical"
+msgstr "图像水平对称"
+
+msgid "image vertically symmetrical"
+msgstr "图像垂直对称"
+
 msgid "fuzzy processing"
-msgstr "模糊处理"
+msgstr "图像模糊处理"
 
 msgid "crisp enhancement"
-msgstr "清晰增强"
+msgstr "图像清晰增强"
 
 msgid "a half of screensize"
 msgstr "变为原屏幕大小的一半"
@@ -180,6 +195,91 @@ msgstr "每秒取几帧"
 
 msgid "black-and-white"
 msgstr "输出为黑白色"
+
+msgid "screen merge"
+msgstr "视频融合"
+
+msgid "only modification duration is supported"
+msgstr "仅支持修改持续时间"
+
+msgid "enable merge"
+msgstr "启用融合"
+
+msgid "left and right"
+msgstr "左侧和右侧"
+
+msgid "top and bottom"
+msgstr "顶部和底部"
+
+msgid "overlay in the middle"
+msgstr "中间覆盖"
+
+msgid "one by one"
+msgstr "一个接一个"
+
+msgid "merge video and audio"
+msgstr "合并视频和音频"
+
+msgid "merge video to picture"
+msgstr "将视频合并到图片"
+
+msgid "one video and one picture"
+msgstr "一个视频和一张图片"
+
+msgid "two videos and one picture"
+msgstr "两个视频和一张图片"
+
+msgid "The picture file to be merged"
+msgstr "要合并的图片文件"
+
+msgid "modify the screen resolution of input1 video"
+msgstr "修改input1视频的屏幕分辨率"
+
+msgid "800:-1 means: width 800, height adaptive correction"
+msgstr "800:-1表示: 宽度800，高度自适应修正"
+
+msgid "vertex coordinates of superimposed input1 video"
+msgstr "叠加输入1视频的顶点坐标"
+
+msgid "100:0 means:the pixel at coordinates 100,0"
+msgstr "100:0表示：坐标100,0处的像素"
+
+msgid "vertex coordinates of superimposed input2 video"
+msgstr "叠加输入2视频的顶点坐标"
+
+msgid "120:20 means:the pixel at coordinates 120,20"
+msgstr "120:0表示：坐标120,0处的像素"
+
+
+msgid "The first file to be merged"
+msgstr "要合并的第一个文件"
+
+msgid "The second file to be merged"
+msgstr "要合并的第二个文件"
+
+msgid "modify the screen resolution of input2 video"
+msgstr "修改input2视频的屏幕分辨率"
+
+msgid "320:-1 means: width 320, height adaptive correction"
+msgstr "320:-1表示: 宽度320，高度自适应修正"
+
+msgid "vertex coordinates of superimposed video"
+msgstr "叠加视频的顶点坐标"
+
+msgid "20:20 means:the pixel at coordinates 20,20"
+msgstr "20:20表示：坐标20,20处的像素"
+
+msgid "picture to video"
+msgstr "图片转视频"
+
+msgid "picture path"
+msgstr "图片路径"
+
+msgid "please modify the file name in the format of : 1.jpg 2.jpg... 10.jpg"
+msgstr "请按以下格式修改图片的文件名: 1.jpg 2.jpg... 10.jpg"
+
+msgid "picture resolution"
+msgstr "图像分辨率"
 
 msgid "One-click Convert/Play/Output Audio"
 msgstr "一键转换/播放/导出音频"

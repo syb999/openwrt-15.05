@@ -46,6 +46,7 @@ dest_directory_path:depends( "dest_select", "directory" )
 dest_directory_path.rmempty = true
 dest_directory_path.datatype = "string"
 dest_directory_path.default = "/mnt/sda1"
+dest_directory_path.description = translate("do not be the same as the source directory")
 
 srcinfo = s:taboption("ffmpegbasic", Button, "srcinfo", translate("One-click Get infomation"))
 srcinfo:depends( "audio_ready", "1" )
@@ -177,15 +178,19 @@ video_format:value("mkv")
 video_format:value("avi")
 video_format:value("wmv")
 video_format:value("ts")
+video_format:value("flv")
 video_format:value("3gp")
 video_format.default = "mp4"
 video_format.rempty  = false
 
-video_x264 = s:taboption("video_setting", Flag, "video_x264", translate("using libx264 for mp4"))
-video_x264:depends( "video_format", "mp4" )
-video_x264.description = translate("increase CPU loading")
+video_x2645=s:taboption("video_setting", ListValue, "video_x2645", translate("using libx264/libx265"))
+video_x2645:value("none")
+video_x2645:value("libx264")
+video_x2645:value("libx265")
+video_x2645.description = translate("increase CPU loading")
 
 image_effects=s:taboption("video_setting", Flag, "image_effects", translate("image effects"))
+image_effects:depends( "screen_merge", "" )
 image_effects.description = translate("increase CPU loading when open")
 
 video_horizontally = s:taboption("video_setting", Flag, "video_horizontally", translate("flip image horizontally"))
@@ -196,6 +201,12 @@ video_upanddown:depends( "image_effects", "1" )
 
 video_rotation = s:taboption("video_setting", Flag, "video_rotation", translate("image rotation 90 degrees"))
 video_rotation:depends( "image_effects", "1" )
+
+horizontal_symmetrical = s:taboption("video_setting", Flag, "horizontal_symmetrical", translate("image horizontal symmetrical"))
+horizontal_symmetrical:depends( "image_effects", "1" )
+
+vertically_symmetrical = s:taboption("video_setting", Flag, "vertically_symmetrical", translate("image vertically symmetrical"))
+vertically_symmetrical:depends( "image_effects", "1" )
 
 fuzzy_processing = s:taboption("video_setting", Flag, "fuzzy_processing", translate("fuzzy processing"))
 fuzzy_processing:depends( "image_effects", "1" )
@@ -220,11 +231,105 @@ video_crop.description = translate("default set is capture 100% width and 50% he
 video_blackandwhite = s:taboption("video_setting", Flag, "video_blackandwhite", translate("black-and-white"))
 video_blackandwhite:depends( "image_effects", "1" )
 
+screen_merge=s:taboption("video_setting", Flag, "screen_merge", translate("screen merge"))
+screen_merge.default = ""
+screen_merge.description = translate("only modification duration is supported")
+
+enable_merge=s:taboption("video_setting", ListValue, "enable_merge", translate("enable merge"))
+enable_merge:depends( "screen_merge", "1" )
+enable_merge:value("left and right",translate("left and right"))
+enable_merge:value("top and bottom",translate("top and bottom"))
+enable_merge:value("one by one",translate("one by one"))
+enable_merge:value("merge video and audio",translate("merge video and audio"))
+enable_merge:value("merge video to picture",translate("merge video to picture"))
+enable_merge:value("overlay in the middle",translate("overlay in the middle"))
+enable_merge:value("custom overley",translate("custom overley"))
+enable_merge.default = "left and right"
+enable_merge.rempty  = true
+
+picture_merge=s:taboption("video_setting", ListValue, "picture_merge", translate("merge video to picture"))
+picture_merge:depends( "enable_merge", "merge video to picture" )
+picture_merge:value("none")
+picture_merge:value("one video and one picture",translate("one video and one picture"))
+picture_merge:value("two videos and one picture",translate("two videos and one picture"))
+picture_merge.default = "none"
+picture_merge.rempty  = true
+
+screen_input1 = s:taboption("video_setting", Value, "screen_input1", translate("The first file to be merged"))
+screen_input1:depends( "screen_merge", "1" )
+screen_input1.datatype = "string"
+screen_input1.placeholder = "/mnt/sda1/input1.mp4"
+screen_input1.default = "/mnt/sda1/input1.mp4"
+screen_input1.rmempty = true
+
+screen_input2 = s:taboption("video_setting", Value, "screen_input2", translate("The second file to be merged"))
+screen_input2:depends( "screen_merge", "1" )
+screen_input2.datatype = "string"
+screen_input2.placeholder = "/mnt/sda1/input2.mp4"
+screen_input2.default = "/mnt/sda1/input2.mp4"
+screen_input2.rmempty = true
+
+screen_picture = s:taboption("video_setting", Value, "screen_picture", translate("The picture file to be merged"))
+screen_picture:depends( "enable_merge", "merge video to picture" )
+screen_picture.datatype = "string"
+screen_picture.placeholder = "/mnt/sda1/input.jpg"
+screen_picture.default = "/mnt/sda1/input.jpg"
+screen_picture.rmempty = true
+
+picture_custom_1 = s:taboption("video_setting", Value, "picture_custom_1", translate("modify the screen resolution of input1 video"))
+picture_custom_1:depends( "enable_merge", "merge video to picture" )
+picture_custom_1.datatype = "string"
+picture_custom_1.placeholder = "800:-1"
+picture_custom_1.default = "800:-1"
+picture_custom_1.rmempty = true
+picture_custom_1.description = translate("800:-1 means: width 800, height adaptive correction")
+
+picture_custom_2 = s:taboption("video_setting", Value, "picture_custom_2", translate("modify the screen resolution of input2 video"))
+picture_custom_2:depends( "picture_merge", "two videos and one picture" )
+picture_custom_2.datatype = "string"
+picture_custom_2.placeholder = "320:-1"
+picture_custom_2.default = "320:-1"
+picture_custom_2.rmempty = true
+picture_custom_2.description = translate("320:-1 means: width 320, height adaptive correction")
+
+picture_custom_3 = s:taboption("video_setting", Value, "picture_custom_3", translate("vertex coordinates of superimposed input1 video"))
+picture_custom_3:depends( "enable_merge", "merge video to picture" )
+picture_custom_3.datatype = "string"
+picture_custom_3.placeholder = "100:0"
+picture_custom_3.default = "100:0"
+picture_custom_3.rmempty = true
+picture_custom_3.description = translate("100:0 means:the pixel at coordinates 100,0")
+
+picture_custom_4 = s:taboption("video_setting", Value, "picture_custom_4", translate("vertex coordinates of superimposed input2 video"))
+picture_custom_4:depends( "picture_merge", "two videos and one picture" )
+picture_custom_4.datatype = "string"
+picture_custom_4.placeholder = "120:20"
+picture_custom_4.default = "120:20"
+picture_custom_4.rmempty = true
+picture_custom_4.description = translate("120:20 means:the pixel at coordinates 120,20")
+
+video_custom_1 = s:taboption("video_setting", Value, "video_custom_1", translate("modify the screen resolution of input2 video"))
+video_custom_1:depends( "enable_merge", "custom overley" )
+video_custom_1.datatype = "string"
+video_custom_1.placeholder = "320:-1"
+video_custom_1.default = "320:-1"
+video_custom_1.rmempty = true
+video_custom_1.description = translate("320:-1 means: width 320, height adaptive correction")
+
+video_custom_2 = s:taboption("video_setting", Value, "video_custom_2", translate("vertex coordinates of superimposed video"))
+video_custom_2:depends( "enable_merge", "custom overley" )
+video_custom_2.datatype = "string"
+video_custom_2.placeholder = "20:20"
+video_custom_2.default = "20:20"
+video_custom_2.rmempty = true
+video_custom_2.description = translate("20:20 means:the pixel at coordinates 20,20")
+
 v_modify_duration=s:taboption("video_setting", ListValue, "v_modify_duration", translate("Modify duration"))
 v_modify_duration.placeholder = "do not modify"
 v_modify_duration:value("do not modify",translate("do not modify"))
 v_modify_duration:value("specific time period",translate("specific time period"))
 v_modify_duration:value("cut head and tail",translate("cut head and tail"))
+v_modify_duration:value("only configure duration",translate("only configure duration"))
 v_modify_duration.default = "do not modify"
 v_modify_duration.rempty  = false
 
@@ -256,12 +361,21 @@ video_tailtime.placeholder = "10"
 video_tailtime.default = "10"
 video_tailtime.rmempty = true
 
+vide_duration=s:taboption("video_setting", Value, "vide_duration", translate("only configure duration"))
+vide_duration:depends( "v_modify_duration", "only configure duration" )
+vide_duration.datatype = "string"
+vide_duration.placeholder = "5"
+vide_duration.default = "5"
+vide_duration.rmempty = true
+
 video_mute = s:taboption("video_setting", Flag, "video_mute", translate("Mute"))
+video_mute.default = ""
 
 video_picture = s:taboption("video_setting", Flag, "video_picture", translate("Save to picture"))
 video_picture:depends({ src_select = "one file", video_x264 = "" })
 
 video_frames = s:taboption("video_setting", Flag, "video_frames", translate("Set the number of frames"))
+video_frames.default = ""
 
 video_frames_num = s:taboption("video_setting", Value, "video_frames_num", translate("The number of frames"))
 video_frames_num:depends( "video_frames", "1" )
@@ -270,8 +384,40 @@ video_frames_num.placeholder = "1"
 video_frames_num.default = "1"
 video_frames_num.rmempty = true
 
+picture_tovideo = s:taboption("video_setting", Flag, "picture_tovideo", translate("picture to video"))
+picture_tovideo.default = ""
+
+picture_list=s:taboption("video_setting", ListValue, "picture_list", translate("picture list"))
+picture_list:depends( "picture_tovideo", "1" )
+picture_list:value("only one picture",translate("only one picture"))
+picture_list:value("multiple pictures",translate("multiple pictures"))
+picture_list.default = "only one picture"
+picture_list.rempty  = true
+
+picture1_path=s:taboption("video_setting", Value, "picture1_path", translate("picture path"))
+picture1_path:depends( "picture_list", "only one picture" )
+picture1_path.datatype = "string"
+picture1_path.placeholder = "/mnt/sda1/input.jpg"
+picture1_path.default = "/mnt/sda1/input.jpg"
+picture1_path.rmempty = true
+
+picture2_path=s:taboption("video_setting", Value, "picture2_path", translate("picture path"))
+picture2_path:depends( "picture_list", "multiple pictures" )
+picture2_path.datatype = "string"
+picture2_path.placeholder = "/mnt/sda1/%d.jpg"
+picture2_path.default = "/mnt/sda1/%d.jpg"
+picture2_path.rmempty = true
+picture2_path.description = translate("please modify the file name in the format of : 1.jpg 2.jpg... 10.jpg")
+
+picture_resolution=s:taboption("video_setting", Value, "picture_resolution", translate("picture resolution"))
+picture_resolution:depends( "picture_tovideo", "1" )
+picture_resolution.datatype = "string"
+picture_resolution.placeholder = "1280x720"
+picture_resolution.default = "1280x720"
+picture_resolution.rmempty = true
+
 video_copy = s:taboption("video_setting", Flag, "video_copy", translate("Fast copy"))
-video_copy:depends({ image_effects = "", video_x264 = "", video_picture = "" })
+video_copy:depends({ image_effects = "", video_x2645 = "none", video_picture = "", picture_tovideo = "" })
 
 video_ready = s:taboption("video_setting", Flag, "video_ready", translate("Setup ready"))
 video_ready.description = translate("Save/apply first please")
@@ -315,3 +461,4 @@ function videostop.write(self, section)
 end
 
 return m
+
