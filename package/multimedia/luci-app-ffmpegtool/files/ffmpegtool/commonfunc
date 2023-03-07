@@ -132,3 +132,28 @@ function time_work_v() {
 	fi
 }
 
+function pictovideo() {
+	resolution="-s $(uci get ffmpegtool.@ffmpegtool[0].picture_resolution)"
+	if [ ! -n "$(uci get ffmpegtool.@ffmpegtool[0].video_frames_num)" ];then
+		uci set ffmpegtool.@ffmpegtool[0].video_frames_num=1
+		uci commit ffmpegtool
+		param_frames_num="-r $(uci get ffmpegtool.@ffmpegtool[0].video_frames_num)"
+	fi
+	ffprobe "$input" > /tmp/ffmpeg.log 2>&1
+	echo " $input ----> 图片转换视频中... " >> /tmp/ffmpeg.log
+	if [ "$(uci get ffmpegtool.@ffmpegtool[0].image_effects)" == "1" ];then
+		if [ "$pic" == "" ];then
+			ffmpeg -loop 1 -f image2 $param_frames_num $param_duration -i "$input" -filter_complex $effects_param $resolution $param_libx2645 $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
+		else
+			ffmpeg -loop 1 -f image2 $param_frames_num $param_duration -i "$input" -filter_complex $effects_param $resolution $param_libx2645 $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$pic.tmp.ts" -y
+		fi
+	else
+		if [ "$pic" == "" ];then
+			ffmpeg -loop 1 -f image2 $param_frames_num $param_duration -i "$input" $resolution $param_libx2645 $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
+		else
+			ffmpeg -loop 1 -f image2 $param_frames_num $param_duration -i "$input" $resolution $param_libx2645 $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$pic.tmp.ts" -y
+		fi
+	fi
+	echo "转换完毕!" >> /tmp/ffmpeg.log
+}
+

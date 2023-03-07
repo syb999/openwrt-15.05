@@ -172,32 +172,23 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].enable_merge)" == "custom overley" ]
 	exit 0
 fi
 
-if [ "$(uci get ffmpegtool.@ffmpegtool[0].picture_list)" == "only one picture" ];then
-	input=$(uci get ffmpegtool.@ffmpegtool[0].picture1_path)
-	resolution="-s $(uci get ffmpegtool.@ffmpegtool[0].picture_resolution)"
-	if [ ! -n "$(uci get ffmpegtool.@ffmpegtool[0].video_frames_num)" ];then
-		uci set ffmpegtool.@ffmpegtool[0].video_frames_num=1
-		uci commit ffmpegtool
-		param_frames_num="-r $(uci get ffmpegtool.@ffmpegtool[0].video_frames_num)"
-	fi
-	ffprobe "$input" > /tmp/ffmpeg.log 2>&1
-	echo " $input ----> 图片合成视频中... " >> /tmp/ffmpeg.log
-	ffmpeg -loop 1 -f image2 $param_frames_num $param_duration -i "$input" $resolution $param_libx2645 $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
-	echo "合并完毕!" >> /tmp/ffmpeg.log
+if [ "$(uci get ffmpegtool.@ffmpegtool[0].ptv_one)" == "1" ];then
+	input=$(uci get ffmpegtool.@ffmpegtool[0].src_file_path)
+	pictovideo
 	ucidefault
 	exit 0
-elif [ "$(uci get ffmpegtool.@ffmpegtool[0].picture_list)" == "multiple pictures" ];then
-	input=$(uci get ffmpegtool.@ffmpegtool[0].picture2_path)
-	resolution="-s $(uci get ffmpegtool.@ffmpegtool[0].picture_resolution)"
-	if [ ! -n "$(uci get ffmpegtool.@ffmpegtool[0].video_frames_num)" ];then
-		uci set ffmpegtool.@ffmpegtool[0].video_frames_num=1
-		uci commit ffmpegtool
-		param_frames_num="-r $(uci get ffmpegtool.@ffmpegtool[0].video_frames_num)"
-	fi
-	ffprobe "$input" > /tmp/ffmpeg.log 2>&1
-	echo " $input ----> 图片合成视频中... " >> /tmp/ffmpeg.log
-	ffmpeg -loop 1 -f image2 $param_frames_num $param_duration -i "$input" $resolution $param_libx2645 $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
-	echo "合并完毕!" >> /tmp/ffmpeg.log
+elif [ "$(uci get ffmpegtool.@ffmpegtool[0].ptv_multi)" == "1" ];then
+	mergtime="$(date +%s)"
+	for pic in $(ls $(uci get ffmpegtool.@ffmpegtool[0].src_directory_path));do
+		input="$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$pic"
+		pictovideo
+		cat $(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$pic.tmp.ts >> $(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$mergtime.tmp.ts
+		rm $(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$pic.tmp.ts >/dev/null 2>&1
+	done
+	echo " 视频流更新中，请等待... " >> /tmp/ffmpeg.log
+	ffmpeg -i "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$mergtime.tmp.ts" "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$mergtime.$param_format"
+	echo " 更新完毕! " >> /tmp/ffmpeg.log
+	rm $(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$mergtime.tmp.ts >/dev/null 2>&1
 	ucidefault
 	exit 0
 fi

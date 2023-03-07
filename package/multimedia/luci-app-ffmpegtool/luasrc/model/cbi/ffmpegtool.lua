@@ -21,12 +21,14 @@ src_file_path:depends( "src_select", "one file" )
 src_file_path.rmempty = true
 src_file_path.datatype = "string"
 src_file_path.default = "/mnt/sda1/input.mp3"
+src_file_path.description = translate("please input audio/video/picture file fullpath")
 
 src_directory_path=s:taboption("ffmpegbasic", Value, "src_directory_path", translate("Source Directory Path"))
 src_directory_path:depends( "src_select", "all files in the directory" )
 src_directory_path.rmempty = true
 src_directory_path.datatype = "string"
 src_directory_path.default = "/mnt/sda1"
+src_directory_path.description = translate("please input directory path")
 
 src_rtmp_path=s:taboption("ffmpegbasic", Value, "src_rtmp_path", translate("RTMP stream url"))
 src_rtmp_path:depends( "src_select", "rtmp stream" )
@@ -372,7 +374,7 @@ video_mute = s:taboption("video_setting", Flag, "video_mute", translate("Mute"))
 video_mute.default = ""
 
 video_picture = s:taboption("video_setting", Flag, "video_picture", translate("Save to picture"))
-video_picture:depends({ src_select = "one file", video_x264 = "" })
+video_picture:depends({ src_select = "one file", video_x2645= "" })
 
 video_frames = s:taboption("video_setting", Flag, "video_frames", translate("Set the number of frames"))
 video_frames.default = ""
@@ -387,27 +389,13 @@ video_frames_num.rmempty = true
 picture_tovideo = s:taboption("video_setting", Flag, "picture_tovideo", translate("picture to video"))
 picture_tovideo.default = ""
 
-picture_list=s:taboption("video_setting", ListValue, "picture_list", translate("picture list"))
-picture_list:depends( "picture_tovideo", "1" )
-picture_list:value("only one picture",translate("only one picture"))
-picture_list:value("multiple pictures",translate("multiple pictures"))
-picture_list.default = "only one picture"
-picture_list.rempty  = true
+ptv_one=s:taboption("video_setting", Flag, "ptv_one", translate("only one picture"))
+ptv_one:depends({ src_select ="one file", picture_tovideo = "1" })
+ptv_one.default = ""
 
-picture1_path=s:taboption("video_setting", Value, "picture1_path", translate("picture path"))
-picture1_path:depends( "picture_list", "only one picture" )
-picture1_path.datatype = "string"
-picture1_path.placeholder = "/mnt/sda1/input.jpg"
-picture1_path.default = "/mnt/sda1/input.jpg"
-picture1_path.rmempty = true
-
-picture2_path=s:taboption("video_setting", Value, "picture2_path", translate("picture path"))
-picture2_path:depends( "picture_list", "multiple pictures" )
-picture2_path.datatype = "string"
-picture2_path.placeholder = "/mnt/sda1/%d.jpg"
-picture2_path.default = "/mnt/sda1/%d.jpg"
-picture2_path.rmempty = true
-picture2_path.description = translate("please modify the file name in the format of : 1.jpg 2.jpg... 10.jpg")
+ptv_multi=s:taboption("video_setting", Flag, "ptv_multi", translate("multiple pictures"))
+ptv_multi:depends({ src_select ="all files in the directory", picture_tovideo = "1" })
+ptv_multi.default = ""
 
 picture_resolution=s:taboption("video_setting", Value, "picture_resolution", translate("picture resolution"))
 picture_resolution:depends( "picture_tovideo", "1" )

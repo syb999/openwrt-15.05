@@ -19,11 +19,17 @@ msgstr "整个目录的文件"
 msgid "rtmp stream"
 msgstr "rtmp流"
 
-msgid "Source File Path"
-msgstr "输入源文件路径"
+msgid "Source File"
+msgstr "输入源文件"
 
-msgid "Source Directory Path"
-msgstr "输入源目录路径"
+msgid "please input audio/video/picture file fullpath"
+msgstr "请输入音频/视频/图片文件完整路径"
+
+msgid "Source Directory"
+msgstr "输入源目录"
+
+msgid "please input directory path"
+msgstr "请输入目录路径"
 
 msgid "RTMP stream url"
 msgstr "RTMP流URL"
@@ -271,6 +277,12 @@ msgstr "20:20表示：坐标20,20处的像素"
 
 msgid "picture to video"
 msgstr "图片转视频"
+
+msgid "one picture"
+msgstr "单张照片转换成单个视频"
+
+msgid "multiple pictures"
+msgstr "多张照片转换成单个视频"
 
 msgid "picture path"
 msgstr "图片路径"
