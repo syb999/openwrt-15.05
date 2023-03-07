@@ -16,8 +16,8 @@ msgstr "单个文件"
 msgid "all files in the directory"
 msgstr "整个目录的文件"
 
-msgid "rtmp stream"
-msgstr "rtmp流"
+msgid "streaming media"
+msgstr "流媒体"
 
 msgid "Source File"
 msgstr "输入源文件"
@@ -31,8 +31,11 @@ msgstr "输入源目录"
 msgid "please input directory path"
 msgstr "请输入目录路径"
 
-msgid "RTMP stream url"
-msgstr "RTMP流URL"
+msgid "Streaming media url"
+msgstr "流媒体url"
+
+msgid "like rtmp,m3u8 and so on"
+msgstr "如rtmp、m3u8等"
 
 msgid "Destination Select"
 msgstr "选择输出目标"
@@ -278,7 +281,7 @@ msgstr "20:20表示：坐标20,20处的像素"
 msgid "picture to video"
 msgstr "图片转视频"
 
-msgid "one picture"
+msgid "only one picture"
 msgstr "单张照片转换成单个视频"
 
 msgid "multiple pictures"
@@ -286,9 +289,6 @@ msgstr "多张照片转换成单个视频"
 
 msgid "picture path"
 msgstr "图片路径"
-
-msgid "please modify the file name in the format of : 1.jpg 2.jpg... 10.jpg"
-msgstr "请按以下格式修改图片的文件名: 1.jpg 2.jpg... 10.jpg"
 
 msgid "picture resolution"
 msgstr "图像分辨率"

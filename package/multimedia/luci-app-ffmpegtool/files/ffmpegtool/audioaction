@@ -115,15 +115,15 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "all files in the di
 		fi
 		echo "转换完成!" >> /tmp/ffmpeg.log
 	done
-elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "rtmp stream" ];then
-	srctarget="$(uci get ffmpegtool.@ffmpegtool[0].src_rtmp_path)"
+elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "streaming media" ];then
+	srctarget="$(uci get ffmpegtool.@ffmpegtool[0].src_stream_path)"
 	ffprobe "$srctarget" > /tmp/ffmpeg.log 2>&1
 	if [ "$(uci get ffmpegtool.@ffmpegtool[0].dest_select)" == "Sound Card" ];then
-		echo "$i ---- 播放中..." >> /tmp/ffmpeg.log
+		echo "$srctarget ---- 播放中..." >> /tmp/ffmpeg.log
 		ffmpeg -i "$srctarget" -f alsa default
 		echo "播放完毕!" >> /tmp/ffmpeg.log
 	else
-		echo "$i ---- 导出中..." >> /tmp/ffmpeg.log
+		echo "$srctarget ---- 导出中..." >> /tmp/ffmpeg.log
 		ffmpeg -i "$srctarget" "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(date +%s).$param_format" -y
 		echo "导出完毕!" >> /tmp/ffmpeg.log
 	fi

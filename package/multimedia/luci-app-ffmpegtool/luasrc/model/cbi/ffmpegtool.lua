@@ -12,29 +12,30 @@ src_select=s:taboption("ffmpegbasic", ListValue, "src_select", translate("Source
 src_select.placeholder = "one file"
 src_select:value("one file",translate("one file"))
 src_select:value("all files in the directory",translate("all files in the directory"))
-src_select:value("rtmp stream",translate("rtmp stream"))
+src_select:value("streaming media",translate("streaming media"))
 src_select.default = "one file"
 src_select.rempty  = false
 
-src_file_path=s:taboption("ffmpegbasic", Value, "src_file_path", translate("Source File Path"))
+src_file_path=s:taboption("ffmpegbasic", Value, "src_file_path", translate("Source File"))
 src_file_path:depends( "src_select", "one file" )
 src_file_path.rmempty = true
 src_file_path.datatype = "string"
 src_file_path.default = "/mnt/sda1/input.mp3"
 src_file_path.description = translate("please input audio/video/picture file fullpath")
 
-src_directory_path=s:taboption("ffmpegbasic", Value, "src_directory_path", translate("Source Directory Path"))
+src_directory_path=s:taboption("ffmpegbasic", Value, "src_directory_path", translate("Source Directory"))
 src_directory_path:depends( "src_select", "all files in the directory" )
 src_directory_path.rmempty = true
 src_directory_path.datatype = "string"
 src_directory_path.default = "/mnt/sda1"
 src_directory_path.description = translate("please input directory path")
 
-src_rtmp_path=s:taboption("ffmpegbasic", Value, "src_rtmp_path", translate("RTMP stream url"))
-src_rtmp_path:depends( "src_select", "rtmp stream" )
-src_rtmp_path.rmempty = true
-src_rtmp_path.datatype = "string"
-src_rtmp_path.default = "rtmp://ip:1935/stream"
+src_stream_path=s:taboption("ffmpegbasic", Value, "src_stream_path", translate("Streaming media url"))
+src_stream_path:depends( "src_select", "streaming media" )
+src_stream_path.rmempty = true
+src_stream_path.datatype = "string"
+src_stream_path.default = "rtmp://ip:1935/stream"
+src_stream_path.description = translate("like rtmp,m3u8 and so on")
 
 dest_select=s:taboption("ffmpegbasic", ListValue, "dest_select", translate("Destination Select"))
 dest_select.placeholder = "directory"
@@ -374,7 +375,7 @@ video_mute = s:taboption("video_setting", Flag, "video_mute", translate("Mute"))
 video_mute.default = ""
 
 video_picture = s:taboption("video_setting", Flag, "video_picture", translate("Save to picture"))
-video_picture:depends({ src_select = "one file", video_x2645= "" })
+video_picture:depends({ video_x2645 ="none", picture_tovideo = "" })
 
 video_frames = s:taboption("video_setting", Flag, "video_frames", translate("Set the number of frames"))
 video_frames.default = ""
@@ -387,6 +388,7 @@ video_frames_num.default = "1"
 video_frames_num.rmempty = true
 
 picture_tovideo = s:taboption("video_setting", Flag, "picture_tovideo", translate("picture to video"))
+picture_tovideo:depends( "video_x2645", "none" )
 picture_tovideo.default = ""
 
 ptv_one=s:taboption("video_setting", Flag, "ptv_one", translate("only one picture"))
