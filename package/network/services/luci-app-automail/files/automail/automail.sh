@@ -8,6 +8,6 @@ target=$(uci get automail.@automail[0].recipient)
 echo -e "邮件发送时间:$(date +%Y-%m-%d\ %H:%M)\n你好，我是一封测试邮件！" | mutt -s "来自AutoMail的邮件" -- $target
 
 
-echo "clear" > /root/sent
+rm /root/sent >/dev/null 2>&1
 
 
