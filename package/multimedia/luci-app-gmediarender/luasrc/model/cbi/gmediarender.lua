@@ -49,6 +49,7 @@ gmrenderinit.rmempty = true
 gmrenderinit.inputstyle = "apply"
 function gmrenderinit.write(self, section)
 	luci.util.exec("/etc/init.d/gmediarender restart >/dev/null 2>&1 &")
+	luci.util.exec("kill -9 $(busybox ps | grep \"gmediarender/gmrd\" | grep -v grep | awk '{print$1}') >/dev/null 2>&1 &")
 end
 
 gmrenderdownload = s:taboption("gmrender_init", Button, "gmrenderdownload", translate("One-click download while Playing"))
