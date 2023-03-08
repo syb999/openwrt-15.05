@@ -46,6 +46,21 @@ msgstr "输出到目录"
 msgid "Sound Card"
 msgstr "输出到声卡"
 
+msgid "streaming media server"
+msgstr "流媒体服务器"
+
+msgid "Select stream server"
+msgstr "选择流媒体服务器"
+
+msgid "rtmp server url"
+msgstr "rtmp服务器url"
+
+msgid "icecast server url"
+msgstr "icecast服务器url"
+
+msgid "recurrently push to stream media server"
+msgstr "循环推送到流媒体服务器"
+
 msgid "Destination Directory Path"
 msgstr "输出目录路径"
 

@@ -2,6 +2,7 @@
 
 function ucidefault() {
 	rm /tmp/ffmpeg.log 2>&1 >/dev/null
+	uci set ffmpegtool.@ffmpegtool[0].streamserver_select="none" 2>&1 >/dev/null
 	uci set ffmpegtool.@ffmpegtool[0].sampling_rate="none" 2>&1 >/dev/null
 	uci set ffmpegtool.@ffmpegtool[0].audio_channel="none" 2>&1 >/dev/null
 	uci set ffmpegtool.@ffmpegtool[0].a_modify_duration="do not modify" 2>&1 >/dev/null

@@ -74,6 +74,45 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].audio_copy)" == "1" ];then
 	param_copy="-acodec copy"
 fi
 
+if [ "$(uci get ffmpegtool.@ffmpegtool[0].dest_select)" == "streaming media server" ];then
+	if [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "one file" ];then
+		while true;do
+			srctarget="$(uci get ffmpegtool.@ffmpegtool[0].src_file_path)"
+			ffprobe "$srctarget" > /tmp/ffmpeg.log 2>&1
+			echo "$srctarget ---- 推流中..." >> /tmp/ffmpeg.log
+			if [ "$(uci get ffmpegtool.@ffmpegtool[0].streamserver_select)" == "rtmp server" ];then
+				ffmpeg -re -i "$srctarget" -vn $param_rate $param_channel $param_copy -f flv "$(uci get ffmpegtool.@ffmpegtool[0].rtmp_server_url)"
+			elif [ "$(uci get ffmpegtool.@ffmpegtool[0].streamserver_select)" == "icecast server" ];then
+				ffmpeg -re -i "$srctarget" -vn $param_rate $param_channel $param_copy -f mp3 "$(uci get ffmpegtool.@ffmpegtool[0].icecast_server_url)"
+			fi
+		done
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "all files in the directory" ];then
+		srctarget="$(ls $(uci get ffmpegtool.@ffmpegtool[0].src_directory_path))"
+		while true;do
+			for i in $srctarget;do
+				ffprobe "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" > /tmp/ffmpeg.log 2>&1
+				echo "$i ---- 推流中..." >> /tmp/ffmpeg.log
+				if [ "$(uci get ffmpegtool.@ffmpegtool[0].streamserver_select)" == "rtmp server" ];then
+					ffmpeg -re -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" -vn $param_rate $param_channel $param_copy -f flv "$(uci get ffmpegtool.@ffmpegtool[0].rtmp_server_url)"
+				elif [ "$(uci get ffmpegtool.@ffmpegtool[0].streamserver_select)" == "icecast server" ];then
+					ffmpeg -re -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" -vn $param_rate $param_channel $param_copy -f mp3 "$(uci get ffmpegtool.@ffmpegtool[0].icecast_server_url)"
+				fi
+			done
+		done
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "streaming media" ];then
+		while true;do
+			srctarget="$(uci get ffmpegtool.@ffmpegtool[0].src_stream_path)"
+			ffprobe "$srctarget" > /tmp/ffmpeg.log 2>&1
+			echo "$srctarget ---- 推流中..." >> /tmp/ffmpeg.log
+			if [ "$(uci get ffmpegtool.@ffmpegtool[0].streamserver_select)" == "rtmp server" ];then
+				ffmpeg -i "$srctarget" -vn $param_rate $param_channel $param_copy -f flv "$(uci get ffmpegtool.@ffmpegtool[0].rtmp_server_url)"
+			elif [ "$(uci get ffmpegtool.@ffmpegtool[0].streamserver_select)" == "icecast server" ];then
+				ffmpeg -i "$srctarget" -vn $param_rate $param_channel $param_copy -f mp3 "$(uci get ffmpegtool.@ffmpegtool[0].icecast_server_url)"
+			fi
+		done
+	fi
+fi
+
 if [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "one file" ];then
 	srctarget="$(uci get ffmpegtool.@ffmpegtool[0].src_file_path)"
 	ffprobe "$srctarget" > /tmp/ffmpeg.log 2>&1

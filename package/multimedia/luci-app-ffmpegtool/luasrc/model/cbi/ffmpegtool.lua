@@ -41,8 +41,32 @@ dest_select=s:taboption("ffmpegbasic", ListValue, "dest_select", translate("Dest
 dest_select.placeholder = "directory"
 dest_select:value("directory",translate("directory"))
 dest_select:value("Sound Card",translate("Sound Card"))
+dest_select:value("streaming media server",translate("streaming media server"))
 dest_select.default = "directory"
 dest_select.rempty  = false
+
+streamserver_select=s:taboption("ffmpegbasic", ListValue, "streamserver_select", translate("Select stream server"))
+streamserver_select:depends( "dest_select", "streaming media server" )
+streamserver_select:value("none")
+streamserver_select:value("rtmp server",translate("rtmp server"))
+streamserver_select:value("icecast server",translate("icecast server"))
+streamserver_select.default = "none"
+streamserver_select.rempty  = false
+streamserver_select.description = translate("recurrently push to stream media server")
+
+rtmp_server_url=s:taboption("ffmpegbasic", Value, "rtmp_server_url", translate("rtmp server url"))
+rtmp_server_url:depends( "streamserver_select", "rtmp server" )
+rtmp_server_url.rmempty = true
+rtmp_server_url.datatype = "string"
+rtmp_server_url.placeholder = "rtmp://ip:1935/stream"
+rtmp_server_url.default = "rtmp://ip:1935/stream"
+
+icecast_server_url=s:taboption("ffmpegbasic", Value, "icecast_server_url", translate("icecast server url"))
+icecast_server_url:depends( "streamserver_select", "icecast server" )
+icecast_server_url.rmempty = true
+icecast_server_url.datatype = "string"
+icecast_server_url.placeholder = "icecast://source:hackme@ip:port/stream"
+icecast_server_url.default = "icecast://source:hackme@ip:port/stream"
 
 dest_directory_path=s:taboption("ffmpegbasic", Value, "dest_directory_path", translate("Destination Directory Path"))
 dest_directory_path:depends( "dest_select", "directory" )
