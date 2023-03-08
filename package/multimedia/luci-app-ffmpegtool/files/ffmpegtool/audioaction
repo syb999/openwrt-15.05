@@ -23,14 +23,22 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].audio_channel)" != "none" ];then
 fi
 
 if [ "$(uci get ffmpegtool.@ffmpegtool[0].risingfalling_tone)" != "none" ];then
-	if [ "$(uci get ffmpegtool.@ffmpegtool[0].risingfalling_tone)" == "sharp" ];then
-		param_tone="asetrate=48000*2^(1/12),atempo=1/2^(1/12),"
-	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].risingfalling_tone)" == "rasing whole tone" ];then
-		param_tone="asetrate=48000*2^(2/12),atempo=1/2^(2/12),"
-	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].risingfalling_tone)" == "flat" ];then
-		param_tone="asetrate=48000*2^(-1/12),atempo=1/2^(-1/12),"
-	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].risingfalling_tone)" == "falling whole tone" ];then
-		param_tone="asetrate=48000*2^(-2/12),atempo=1/2^(-2/12),"
+	if [ "$(uci get ffmpegtool.@ffmpegtool[0].risingfalling_tone)" == "sharp(44100Hz)" ];then
+		param_tone="asetrate=44100*2^(1/12),atempo=1/2^(1/12),"
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].risingfalling_tone)" == "sharp(22050Hz)" ];then
+		param_tone="asetrate=22050*2^(1/12),atempo=1/2^(1/12),"
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].risingfalling_tone)" == "rasing whole tone(44100Hz)" ];then
+		param_tone="asetrate=44100*2^(2/12),atempo=1/2^(2/12),"
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].risingfalling_tone)" == "rasing whole tone(22050Hz)" ];then
+		param_tone="asetrate=22050*2^(2/12),atempo=1/2^(1/12),"
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].risingfalling_tone)" == "flat(44100Hz)" ];then
+		param_tone="asetrate=44100*2^(-1/12),atempo=1/2^(-1/12),"
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].risingfalling_tone)" == "flat(22050Hz)" ];then
+		param_tone="asetrate=22050*2^(-1/12),atempo=1/2^(1/12),"
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].risingfalling_tone)" == "falling whole tone(44100Hz)" ];then
+		param_tone="asetrate=44100*2^(-2/12),atempo=1/2^(-2/12),"
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].risingfalling_tone)" == "falling whole tone(22050Hz)" ];then
+		param_tone="asetrate=22050*2^(-2/12),atempo=1/2^(1/12),"
 	fi
 fi
 
@@ -120,11 +128,19 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "streaming media" ];
 	ffprobe "$srctarget" > /tmp/ffmpeg.log 2>&1
 	if [ "$(uci get ffmpegtool.@ffmpegtool[0].dest_select)" == "Sound Card" ];then
 		echo "$srctarget ---- 播放中..." >> /tmp/ffmpeg.log
-		ffmpeg -i "$srctarget" -f alsa default
+		if [ "$param_tone" == "" -a "$param_speed" == "" -a "$param_volume" == "" ];then
+			ffmpeg -i "$srctarget" $param_rate $param_channel $audios_param -f alsa default
+		else
+			ffmpeg -i "$srctarget" $param_rate $param_channel -filter_complex:a $audios_param -f alsa default
+		fi
 		echo "播放完毕!" >> /tmp/ffmpeg.log
 	else
 		echo "$srctarget ---- 导出中..." >> /tmp/ffmpeg.log
-		ffmpeg -i "$srctarget" "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(date +%s).$param_format" -y
+		if [ "$param_tone" == "" -a "$param_speed" == "" -a "$param_volume" == "" ];then
+			ffmpeg -i "$srctarget" $param_rate $param_channel $audios_param "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(date +%s).$param_format" -y
+		else
+			ffmpeg -i "$srctarget" $param_rate $param_channel -filter_complex:a $audios_param "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(date +%s).$param_format" -y
+		fi
 		echo "导出完毕!" >> /tmp/ffmpeg.log
 	fi
 fi

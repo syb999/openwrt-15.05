@@ -103,17 +103,29 @@ msgstr "去片尾时间（秒）"
 msgid "Rising-Falling tone"
 msgstr "改变声调"
 
-msgid "sharp"
-msgstr "升半音"
+msgid "sharp(44100Hz)"
+msgstr "升半音(44100Hz)"
 
-msgid "rasing whole tone"
-msgstr "升全音"
+msgid "sharp(22050Hz)"
+msgstr "升半音(22050Hz)"
 
-msgid "flat"
-msgstr "降半音"
+msgid "rasing whole tone(44100Hz)"
+msgstr "升全音(44100Hz)"
 
-msgid "falling whole tone"
-msgstr "降全音"
+msgid "rasing whole tone(22050Hz)"
+msgstr "升全音(22050Hz)"
+
+msgid "flat(44100Hz)"
+msgstr "降半音(44100Hz)"
+
+msgid "flat(22050Hz)"
+msgstr "降半音(22050Hz)"
+
+msgid "falling whole tone(44100Hz)"
+msgstr "降全音(44100Hz)"
+
+msgid "falling whole tone(22050Hz)"
+msgstr "降全音(22050Hz)"
 
 msgid "increase CPU loading"
 msgstr "该功能会增加CPU负载"

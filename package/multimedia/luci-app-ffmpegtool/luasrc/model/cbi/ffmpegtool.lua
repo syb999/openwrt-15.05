@@ -128,10 +128,14 @@ audio_tailtime.rmempty = true
 risingfalling_tone=s:taboption("audio_setting", ListValue, "risingfalling_tone", translate("Rising-Falling tone"))
 risingfalling_tone.placeholder = "none"
 risingfalling_tone:value("none")
-risingfalling_tone:value("sharp",translate("sharp"))
-risingfalling_tone:value("rasing whole tone",translate("rasing whole tone"))
-risingfalling_tone:value("flat",translate("flat"))
-risingfalling_tone:value("falling whole tone",translate("falling whole tone"))
+risingfalling_tone:value("sharp(44100Hz)",translate("sharp(44100Hz)"))
+risingfalling_tone:value("sharp(22050Hz)",translate("sharp(22050Hz)"))
+risingfalling_tone:value("rasing whole tone(44100Hz)",translate("rasing whole tone(44100Hz)"))
+risingfalling_tone:value("rasing whole tone(22050Hz)",translate("rasing whole tone(22050Hz)"))
+risingfalling_tone:value("flat(44100Hz)",translate("flat(44100Hz)"))
+risingfalling_tone:value("flat(22050Hz)",translate("flat(22050Hz)"))
+risingfalling_tone:value("falling whole tone(44100Hz)",translate("falling whole tone(44100Hz)"))
+risingfalling_tone:value("falling whole tone(22050Hz)",translate("falling whole tone(22050Hz)"))
 risingfalling_tone.default = "none"
 risingfalling_tone.rempty  = false
 risingfalling_tone.description = translate("increase CPU loading")
