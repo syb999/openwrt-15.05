@@ -182,6 +182,22 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "streaming media" ];
 		fi
 		echo "导出完毕!" >> /tmp/ffmpeg.log
 	fi
+elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "microphone" ];then
+	if [ "$(uci get ffmpegtool.@ffmpegtool[0].dest_select)" == "directory" ];then
+		theoutput="$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/output-$(date +%s).wav"
+		echo "麦克风录音： 保存到$theoutput... " >> /tmp/ffmpeg.log
+		arecord -D default -f cd -c 1 "$theoutput"
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].dest_select)" == "Sound Card" ];then
+		echo "麦克风本地边录边放： 进行中... " >> /tmp/ffmpeg.log
+		arecord -D default -f cd -c 1 | aplay
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].dest_select)" == "streaming media server" ];then
+		echo "麦克风推流: 进行中... 目标：$(uci get ffmpegtool.@ffmpegtool[0].rtmp_server_url) " >> /tmp/ffmpeg.log
+		if [ "$(uci get ffmpegtool.@ffmpegtool[0].streamserver_select)" == "rtmp server" ];then
+			ffmpeg -f alsa -i default -ar 22050 -ac 1 -f flv "$(uci get ffmpegtool.@ffmpegtool[0].rtmp_server_url)"
+		elif [ "$(uci get ffmpegtool.@ffmpegtool[0].streamserver_select)" == "icecast server" ];then
+			ffmpeg -f alsa -i default -ar 22050 -ac 1 -vn -f mp3 "$(uci get ffmpegtool.@ffmpegtool[0].icecast_server_url)"
+		fi
+	fi
 fi
 
 ucidefault

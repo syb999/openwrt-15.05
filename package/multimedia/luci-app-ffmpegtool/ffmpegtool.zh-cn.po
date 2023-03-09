@@ -19,6 +19,24 @@ msgstr "整个目录的文件"
 msgid "streaming media"
 msgstr "流媒体"
 
+msgid "microphone"
+msgstr "麦克风"
+
+msgid "About microphone"
+msgstr "关于麦克风"
+
+msgid "The same sound card needs to be selected for simultaneous acquisition and playback"
+msgstr "同时采集和播放时需要选择相同的声卡"
+
+msgid "switch to card1"
+msgstr "切换到第二张声卡"
+
+msgid "switch to card0"
+msgstr "切换到默认声卡"
+
+msgid "switch the sound card connected to the microphone"
+msgstr "切换连接到麦克风的声卡"
+
 msgid "Source File"
 msgstr "输入源文件"
 
@@ -320,11 +338,11 @@ msgstr "图片路径"
 msgid "picture resolution"
 msgstr "图像分辨率"
 
-msgid "One-click Convert/Play/Output Audio"
-msgstr "一键转换/播放/导出音频"
+msgid "One-click Convert/Play/Push/Output Audio"
+msgstr "一键转换/播放/推送/导出音频"
 
-msgid "One-click Convert/Play/Output Video"
-msgstr "一键转换/播放/导出视频"
+msgid "One-click Convert/Play/Push/Output Video"
+msgstr "一键转换/播放/推送/导出视频"
 
 msgid "One-click STOP"
 msgstr "一键停止"

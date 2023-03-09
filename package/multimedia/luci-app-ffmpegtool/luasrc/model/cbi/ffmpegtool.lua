@@ -13,8 +13,31 @@ src_select.placeholder = "one file"
 src_select:value("one file",translate("one file"))
 src_select:value("all files in the directory",translate("all files in the directory"))
 src_select:value("streaming media",translate("streaming media"))
+src_select:value("microphone",translate("microphone"))
 src_select.default = "one file"
 src_select.rempty  = false
+
+micro_about = s:taboption("ffmpegbasic", DummyValue, "micro_about", translate("About microphone"))
+micro_about:depends( "src_select", "microphone" )
+micro_about.description = translate("The same sound card needs to be selected for simultaneous acquisition and playback")
+
+switchcard1 = s:taboption("ffmpegbasic", Button, "switchcard1", translate("switch to card1"))
+switchcard1:depends( "src_select", "microphone" )
+switchcard1.rmempty = true
+switchcard1.inputstyle = "apply"
+function switchcard1.write(self, section)
+	luci.util.exec("echo \"defaults.pcm.card 1\" > /etc/asound.conf &")
+end
+switchcard1.description = translate("switch the sound card connected to the microphone")
+
+switchcard0 = s:taboption("ffmpegbasic", Button, "switchcard0", translate("switch to card0"))
+switchcard0:depends( "src_select", "microphone" )
+switchcard0.rmempty = true
+switchcard0.inputstyle = "apply"
+function switchcard0.write(self, section)
+	luci.util.exec("echo \"defaults.pcm.card 0\" > /etc/asound.conf &")
+end
+switchcard0.description = translate("switch the sound card connected to the microphone")
 
 src_file_path=s:taboption("ffmpegbasic", Value, "src_file_path", translate("Source File"))
 src_file_path:depends( "src_select", "one file" )
@@ -442,7 +465,7 @@ video_ready.description = translate("Save/apply first please")
 
 s:tab("action", translate("Action"))
 
-audioaction = s:taboption("action", Button, "audioaction", translate("One-click Convert/Play/Output Audio"))
+audioaction = s:taboption("action", Button, "audioaction", translate("One-click Convert/Play/Push/Output Audio"))
 audioaction:depends( "audio_ready", "1" )
 audioaction.rmempty = true
 audioaction.inputstyle = "apply"
@@ -457,10 +480,11 @@ audiostop.inputstyle = "apply"
 function audiostop.write(self, section)
 	luci.util.exec("kill -9 $(busybox ps | grep audioaction | grep -v grep | awk '{print$1}') >/dev/null 2>&1 ")
 	luci.util.exec("kill $(busybox ps | grep ffmpeg | grep -v grep | awk '{print$1}') >/dev/null 2>&1 ")
+	luci.util.exec("kill $(busybox ps | grep arecord | grep -v grep | awk '{print$1}') >/dev/null 2>&1 ")
 	luci.util.exec("rm /tmp/ffmpeg.log 2>&1")
 end
 
-videoaction = s:taboption("action", Button, "videoaction", translate("One-click Convert/Play/Output Video"))
+videoaction = s:taboption("action", Button, "videoaction", translate("One-click Convert/Play/Push/Output Video"))
 videoaction:depends( "video_ready", "1" )
 videoaction.rmempty = true
 videoaction.inputstyle = "apply"
