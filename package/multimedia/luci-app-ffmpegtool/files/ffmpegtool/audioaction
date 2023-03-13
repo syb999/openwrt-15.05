@@ -65,9 +65,9 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].volume)" != "none" ];then
 fi
 
 if [ "$param_tone" == "" -a "$param_speed" == "" -a "$param_volume" == "" ];then
-	audios_param="$param_tone$param_speed$param_volume"
+	audios_param=""
 else
-	audios_param="$(echo $param_tone$param_speed$param_volume | sed 's/,$//')"
+	audios_param="$(echo "-filter_complex:a $param_tone$param_speed$param_volume" | sed 's/,$//')"
 fi
 
 if [ "$(uci get ffmpegtool.@ffmpegtool[0].audio_copy)" == "1" ];then
@@ -81,17 +81,9 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].dest_select)" == "streaming media serv
 			ffprobe "$srctarget" > /tmp/ffmpeg.log 2>&1
 			echo "$srctarget ---- 推流中..." >> /tmp/ffmpeg.log
 			if [ "$(uci get ffmpegtool.@ffmpegtool[0].streamserver_select)" == "rtmp server" ];then
-				if [ "$param_tone" == "" -a "$param_speed" == "" -a "$param_volume" == "" ];then
-					ffmpeg -re -i "$srctarget" -vn $param_rate $param_channel $param_copy -f flv "$(uci get ffmpegtool.@ffmpegtool[0].rtmp_server_url)"
-				else
-					ffmpeg -re -i "$srctarget" -filter_complex:a $audios_param -vn $param_rate $param_channel $param_copy -f flv "$(uci get ffmpegtool.@ffmpegtool[0].rtmp_server_url)"
-				fi
+				ffmpeg -re -i "$srctarget" $audios_param -vn $param_rate $param_channel $param_copy -f flv "$(uci get ffmpegtool.@ffmpegtool[0].rtmp_server_url)"
 			elif [ "$(uci get ffmpegtool.@ffmpegtool[0].streamserver_select)" == "icecast server" ];then
-				if [ "$param_tone" == "" -a "$param_speed" == "" -a "$param_volume" == "" ];then
-					ffmpeg -re -i "$srctarget" -vn $param_rate $param_channel $param_copy -f mp3 "$(uci get ffmpegtool.@ffmpegtool[0].icecast_server_url)"
-				else
-					ffmpeg -re -i "$srctarget" -filter_complex:a $audios_param -vn $param_rate $param_channel $param_copy -f mp3 "$(uci get ffmpegtool.@ffmpegtool[0].icecast_server_url)"
-				fi
+				ffmpeg -re -i "$srctarget" $audios_param -vn $param_rate $param_channel $param_copy -f mp3 "$(uci get ffmpegtool.@ffmpegtool[0].icecast_server_url)"
 			fi
 		done
 	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "all files in the directory" ];then
@@ -101,17 +93,9 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].dest_select)" == "streaming media serv
 				ffprobe "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" > /tmp/ffmpeg.log 2>&1
 				echo "$i ---- 推流中..." >> /tmp/ffmpeg.log
 				if [ "$(uci get ffmpegtool.@ffmpegtool[0].streamserver_select)" == "rtmp server" ];then
-					if [ "$param_tone" == "" -a "$param_speed" == "" -a "$param_volume" == "" ];then
-						ffmpeg -re -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" -vn $param_rate $param_channel $param_copy -f flv "$(uci get ffmpegtool.@ffmpegtool[0].rtmp_server_url)"
-					else
-						ffmpeg -re -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" -filter_complex:a $audios_param -vn $param_rate $param_channel $param_copy -f flv "$(uci get ffmpegtool.@ffmpegtool[0].rtmp_server_url)"
-					fi
+					ffmpeg -re -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $audios_param -vn $param_rate $param_channel $param_copy -f flv "$(uci get ffmpegtool.@ffmpegtool[0].rtmp_server_url)"
 				elif [ "$(uci get ffmpegtool.@ffmpegtool[0].streamserver_select)" == "icecast server" ];then
-					if [ "$param_tone" == "" -a "$param_speed" == "" -a "$param_volume" == "" ];then
-						ffmpeg -re -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" -vn $param_rate $param_channel $param_copy -f mp3 "$(uci get ffmpegtool.@ffmpegtool[0].icecast_server_url)"
-					else
-						ffmpeg -re -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" -filter_complex:a $audios_param -vn $param_rate $param_channel $param_copy -f mp3 "$(uci get ffmpegtool.@ffmpegtool[0].icecast_server_url)"
-					fi
+					ffmpeg -re -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $audios_param -vn $param_rate $param_channel $param_copy -f mp3 "$(uci get ffmpegtool.@ffmpegtool[0].icecast_server_url)"
 				fi
 			done
 		done
@@ -121,18 +105,9 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].dest_select)" == "streaming media serv
 			ffprobe "$srctarget" > /tmp/ffmpeg.log 2>&1
 			echo "$srctarget ---- 推流中..." >> /tmp/ffmpeg.log
 			if [ "$(uci get ffmpegtool.@ffmpegtool[0].streamserver_select)" == "rtmp server" ];then
-				if [ "$param_tone" == "" -a "$param_speed" == "" -a "$param_volume" == "" ];then
-					ffmpeg -i "$srctarget" -vn $param_rate $param_channel $param_copy -f flv "$(uci get ffmpegtool.@ffmpegtool[0].rtmp_server_url)"
-				else
-					ffmpeg -i "$srctarget" -filter_complex:a $audios_param -vn $param_rate $param_channel $param_copy -f flv "$(uci get ffmpegtool.@ffmpegtool[0].rtmp_server_url)"
-				fi
+				ffmpeg -re -i "$srctarget" $audios_param -vn $param_rate $param_channel $param_copy -f flv "$(uci get ffmpegtool.@ffmpegtool[0].rtmp_server_url)"
 			elif [ "$(uci get ffmpegtool.@ffmpegtool[0].streamserver_select)" == "icecast server" ];then
-				if [ "$param_tone" == "" -a "$param_speed" == "" -a "$param_volume" == "" ];then
-					ffmpeg -i "$srctarget" -vn $param_rate $param_channel $param_copy -f mp3 "$(uci get ffmpegtool.@ffmpegtool[0].icecast_server_url)"
-				else
-					ffmpeg -i "$srctarget" -filter_complex:a $audios_param -vn $param_rate $param_channel $param_copy -f mp3 "$(uci get ffmpegtool.@ffmpegtool[0].icecast_server_url)"
-
-				fi
+				ffmpeg -re -i "$srctarget" $audios_param -vn $param_rate $param_channel $param_copy -f mp3 "$(uci get ffmpegtool.@ffmpegtool[0].icecast_server_url)"
 			fi
 		done
 	fi
@@ -146,20 +121,11 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "one file" ];then
 		param_title="-metadata title=$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1)"
 	fi
 	echo "$srctarget ---- 转换中..." >> /tmp/ffmpeg.log
-	if [ "$param_tone" == "" -a "$param_speed" == "" -a "$param_volume" == "" ];then
-		if [ "$(uci get ffmpegtool.@ffmpegtool[0].audio_titleisname)" == "1" ];then
-			param_title="$(cat /tmp/ffmpeg.log | grep title | awk '{print$3}')"
-			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_rate $param_channel $audios_param $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$param_title.$param_format" -y
-		else
-			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_rate $param_channel $audios_param $param_copy $param_title "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1).$param_format" -y
-		fi
+	if [ "$(uci get ffmpegtool.@ffmpegtool[0].audio_titleisname)" == "1" ];then
+		param_title="$(cat /tmp/ffmpeg.log | grep title | awk '{print$3}')"
+		ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_rate $param_channel $audios_param $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$param_title.$param_format" -y
 	else
-		if [ "$(uci get ffmpegtool.@ffmpegtool[0].audio_titleisname)" == "1" ];then
-			param_title="$(cat /tmp/ffmpeg.log | grep title | awk '{print$3}')"
-			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_rate $param_channel -filter_complex:a $audios_param "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$param_title.$param_format" -y
-		else
-			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_rate $param_channel -filter_complex:a $audios_param $param_title "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1).$param_format" -y
-		fi
+		ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_rate $param_channel $audios_param $param_copy $param_title "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1).$param_format" -y
 	fi
 	echo "转换完成!" >> /tmp/ffmpeg.log
 elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "all files in the directory" ];then
@@ -171,19 +137,10 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "all files in the di
 			param_title="-metadata title="$(echo "$i" | cut -d '.' -f1)""
 		fi
 		echo "$i ---- 转换中..." >> /tmp/ffmpeg.log
-		if [ "$param_tone" == "" -a "$param_speed" == "" -a "$param_volume" == "" ];then
-			if [ "$(uci get ffmpegtool.@ffmpegtool[0].audio_titleisname)" == "1" ];then
-				ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_rate $param_channel $audios_param $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$param_title.$param_format" -y
-			else
-				ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_rate $param_channel $param_title $audios_param $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1).$param_format" -y
-			fi
+		if [ "$(uci get ffmpegtool.@ffmpegtool[0].audio_titleisname)" == "1" ];then
+			ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_rate $param_channel $audios_param $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$param_title.$param_format" -y
 		else
-			if [ "$(uci get ffmpegtool.@ffmpegtool[0].audio_titleisname)" == "1" ];then
-				param_title="$(cat /tmp/ffmpeg.log | grep title | awk '{print$3}')"
-				ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_rate $param_channel -filter_complex:a $audios_param "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$param_title.$param_format" -y
-			else
-				ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_rate $param_channel -filter_complex:a $audios_param $param_title "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1).$param_format" -y
-			fi
+			ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_rate $param_channel $audios_param $param_title $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1).$param_format" -y
 		fi
 		echo "转换完成!" >> /tmp/ffmpeg.log
 	done
@@ -192,19 +149,11 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "streaming media" ];
 	ffprobe "$srctarget" > /tmp/ffmpeg.log 2>&1
 	if [ "$(uci get ffmpegtool.@ffmpegtool[0].dest_select)" == "Sound Card" ];then
 		echo "$srctarget ---- 播放中..." >> /tmp/ffmpeg.log
-		if [ "$param_tone" == "" -a "$param_speed" == "" -a "$param_volume" == "" ];then
-			ffmpeg -i "$srctarget" $param_rate $param_channel $audios_param -f alsa default
-		else
-			ffmpeg -i "$srctarget" $param_rate $param_channel -filter_complex:a $audios_param -f alsa default
-		fi
+		ffmpeg -i "$srctarget" $param_rate $param_channel $audios_param $param_copy -f alsa default
 		echo "播放完毕!" >> /tmp/ffmpeg.log
 	else
 		echo "$srctarget ---- 导出中..." >> /tmp/ffmpeg.log
-		if [ "$param_tone" == "" -a "$param_speed" == "" -a "$param_volume" == "" ];then
-			ffmpeg -i "$srctarget" $param_rate $param_channel $audios_param "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(date +%s).$param_format" -y
-		else
-			ffmpeg -i "$srctarget" $param_rate $param_channel -filter_complex:a $audios_param "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(date +%s).$param_format" -y
-		fi
+		ffmpeg -i "$srctarget" $param_rate $param_channel $audios_param $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(date +%s).$param_format" -y
 		echo "导出完毕!" >> /tmp/ffmpeg.log
 	fi
 elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "microphone" ];then
@@ -218,18 +167,9 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "microphone" ];then
 	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].dest_select)" == "streaming media server" ];then
 		echo "麦克风推流: 进行中... 目标：$(uci get ffmpegtool.@ffmpegtool[0].rtmp_server_url) " >> /tmp/ffmpeg.log
 		if [ "$(uci get ffmpegtool.@ffmpegtool[0].streamserver_select)" == "rtmp server" ];then
-			if [ "$param_tone" == "" -a "$param_speed" == "" -a "$param_volume" == "" ];then
-				ffmpeg -f alsa -i default -ar 22050 -ac 1 -f flv "$(uci get ffmpegtool.@ffmpegtool[0].rtmp_server_url)"
-			else
-				ffmpeg -f alsa -i default -ar 22050 -ac 1 -filter_complex:a $audios_param -f flv "$(uci get ffmpegtool.@ffmpegtool[0].rtmp_server_url)"
-			fi
-
+			ffmpeg -f alsa -i default $param_rate $param_channel $audios_param $param_copy -f flv "$(uci get ffmpegtool.@ffmpegtool[0].rtmp_server_url)"
 		elif [ "$(uci get ffmpegtool.@ffmpegtool[0].streamserver_select)" == "icecast server" ];then
-			if [ "$param_tone" == "" -a "$param_speed" == "" -a "$param_volume" == "" ];then
-				ffmpeg -f alsa -i default -ac 1 -vn -f mp3 "$(uci get ffmpegtool.@ffmpegtool[0].icecast_server_url)"
-			else
-				ffmpeg -f alsa -i default -ac 1 -filter_complex:a $audios_param -vn -f mp3 "$(uci get ffmpegtool.@ffmpegtool[0].icecast_server_url)"
-			fi
+			ffmpeg -f alsa -i default $param_rate $param_channel $audios_param $param_copy -f mp3 "$(uci get ffmpegtool.@ffmpegtool[0].icecast_server_url)"
 		fi
 	fi
 fi
