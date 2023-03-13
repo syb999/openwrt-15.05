@@ -183,6 +183,10 @@ risingfalling_tone:value("flat(44100Hz)",translate("flat(44100Hz)"))
 risingfalling_tone:value("flat(22050Hz)",translate("flat(22050Hz)"))
 risingfalling_tone:value("falling whole tone(44100Hz)",translate("falling whole tone(44100Hz)"))
 risingfalling_tone:value("falling whole tone(22050Hz)",translate("falling whole tone(22050Hz)"))
+risingfalling_tone:value("special-1(44100Hz)",translate("special-1(44100Hz)"))
+risingfalling_tone:value("special-1(22050Hz)",translate("special-1(22050Hz)"))
+risingfalling_tone:value("special-2(44100Hz)",translate("special-2(44100Hz)"))
+risingfalling_tone:value("special-2(22050Hz)",translate("special-2(22050Hz)"))
 risingfalling_tone.default = "none"
 risingfalling_tone.rempty  = false
 risingfalling_tone.description = translate("increase CPU loading")

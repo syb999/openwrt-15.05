@@ -39,6 +39,14 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].risingfalling_tone)" != "none" ];then
 		param_tone="asetrate=44100*2^(-2/12),"
 	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].risingfalling_tone)" == "falling whole tone(22050Hz)" ];then
 		param_tone="asetrate=22050*2^(-2/12),"
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].risingfalling_tone)" == "special-1(44100Hz)" ];then
+		param_tone="asetrate=44100*2^(4/12),"
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].risingfalling_tone)" == "special-1(22050Hz)" ];then
+		param_tone="asetrate=22050*2^(4/12),"
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].risingfalling_tone)" == "special-2(44100Hz)" ];then
+		param_tone="asetrate=44100*2^(-4/12),"
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].risingfalling_tone)" == "special-2(22050Hz)" ];then
+		param_tone="asetrate=22050*2^(-4/12),"
 	fi
 fi
 
