@@ -158,12 +158,14 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "streaming media" ];
 	fi
 elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "microphone" ];then
 	if [ "$(uci get ffmpegtool.@ffmpegtool[0].dest_select)" == "directory" ];then
-		theoutput="$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/output-$(date +%s).wav"
+		theoutput="$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/output-$(date +%s).$param_format"
 		echo "麦克风录音： 保存到$theoutput... " >> /tmp/ffmpeg.log
-		arecord -D default -f cd -c 1 "$theoutput"
+		#arecord -D default -f cd -c 1 "$theoutput"
+		ffmpeg -f alsa -i default $param_rate $param_channel $audios_param "$theoutput" -y
 	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].dest_select)" == "Sound Card" ];then
 		echo "麦克风本地边录边放： 进行中... " >> /tmp/ffmpeg.log
-		arecord -D default -f cd -c 1 | aplay
+		#arecord -D default -f cd -c 1 | aplay
+		ffmpeg -f alsa -i default $param_rate $param_channel $audios_param -f alsa default
 	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].dest_select)" == "streaming media server" ];then
 		echo "麦克风推流: 进行中... 目标：$(uci get ffmpegtool.@ffmpegtool[0].rtmp_server_url) " >> /tmp/ffmpeg.log
 		if [ "$(uci get ffmpegtool.@ffmpegtool[0].streamserver_select)" == "rtmp server" ];then
