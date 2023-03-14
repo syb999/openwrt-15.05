@@ -9,6 +9,8 @@ adb connect ${adbclient}:5555
 screensize=$(adb -s ${adbclient}:5555 shell wm size | cut -d ':' -f 2 | sed -e "s/ //g;s/\n//g;s/\r//g")
 
 case $adbcommand in
+	push-and-install-apk) adbcd="push and install apk"
+	;;
 	turn-offon-the-screen) adbcd="shell input keyevent 26"
 	;;
 	turn-on-the-screen) adbcd="shell input keyevent 224"
@@ -69,7 +71,7 @@ case $adbcommand in
 	;;
 esac
 
-if [ $adbcd == "scripts" ];then
+if [ "$adbcd" == "scripts" ];then
 	if [ ${adbsh} ==  "takephoto" ];then
 		cp ${spath}${adbsh} /tmp/ADBRUN${sectionname}_.sh
 		sed -i "s/starttime=.*/starttime=$(date +%s)/" /tmp/ADBRUN${sectionname}_.sh
@@ -157,7 +159,7 @@ if [ $adbcd == "scripts" ];then
 		elif [ ${screensize} == "1080x2244" ];then
 			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=1050/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=1060/' > /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "1080x1920" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=850/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=860/' > /tmp/ADBRUN${sectionname}_.sh
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=850/;s/dosedbasex=/basex=950/;s/dosedbasey=/basey=1160/' > /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "1080x2280" ];then
 			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=835/;s/dosedystart=/ystart=1050/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=1060/;s/dosedbasecx=/basecx=980/;s/dosedbasecy=/basecy=220/' > /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "1080x2340" ];then
@@ -213,6 +215,10 @@ if [ $adbcd == "scripts" ];then
 		chmod +x /tmp/ADBRUN${sectionname}_.sh
 		exec sh /tmp/ADBRUN${sectionname}_.sh
 	fi
+elif  [ "$adbcd" == "push and install apk" ];then
+	adb -s ${adbclient}:5555 push "$(uci get adbrun.$sectionname.adb_src_path)" /sdcard/
+	sleep 10
+	adb -s ${adbclient}:5555 shell pm install /sdcard/$(echo $(uci get adbrun.$sectionname.adb_src_path) | cut -d '/' -f $(expr $(echo $(uci get adbrun.$sectionname.adb_src_path) | grep -o '/' | wc -l) + 1))
 else
 	adb -s ${adbclient}:5555 ${adbcd}
 fi

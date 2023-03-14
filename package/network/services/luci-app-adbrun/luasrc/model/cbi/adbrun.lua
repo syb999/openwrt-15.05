@@ -69,7 +69,8 @@ end)
 
 adbcommandlist = s:taboption("adb_set", ListValue, "adbcommandlist", translate("Command list"), translate("adbrun command list"))
 adbcommandlist.placeholder = "none"
-adbcommandlist:value("none", translate("none"))
+adbcommandlist:value("none")
+adbcommandlist:value("push-and-install-apk", translate("push and install apk"))
 adbcommandlist:value("turn-offon-the-screen", translate("Turn off/on the screen"))
 adbcommandlist:value("turn-on-the-screen", translate("Turn on screen"))
 adbcommandlist:value("increase-screen-brightness", translate("Increase screen brightness"))
@@ -94,9 +95,15 @@ adbcommandlist:value("diantaolive", translate("Automatically diantaolive"))
 adbcommandlist:value("autodiantao", translate("Automatically taobao live"))
 adbcommandlist:value("autojdlite", translate("Automatically jdlite"))
 adbcommandlist:value("tbbbfarm", translate("Automatically taobao baba farm"))
-adbcommandlist.default     = "none"
-adbcommandlist.rempty      = false
+adbcommandlist.default = "none"
+adbcommandlist.rempty = true
 
+adb_src_path = s:taboption("adb_set", Value, "adb_src_path", translate("apk path"))
+adb_src_path:depends( "adbcommandlist", "push-and-install-apk" )
+adb_src_path.datatype = "string"
+adb_src_path.default = "/tmp/xxx.apk"
+adb_src_path.rmempty = true
+adb_src_path.description = translate("push to /sdcard directory")
 
 s:tab("adb_action", translate("Action"))
 
