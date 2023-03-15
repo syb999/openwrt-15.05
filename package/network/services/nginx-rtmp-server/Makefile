@@ -81,6 +81,8 @@ define Package/nginx-rtmp-server/install
 	$(INSTALL_DATA) ./files/nginx-rtmp.conf $(1)/etc/nginx/nginx-rtmp.conf
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/nginx-rtmp.init $(1)/etc/init.d/nginx-rtmp
+	$(INSTALL_DIR) $(1)/usr/local/nginx-rtmp-module
+	$(INSTALL_DATA) ./files/stat.xsl $(1)/usr/local/nginx-rtmp-module/stat.xsl
 endef
 
 define Build/Prepare
