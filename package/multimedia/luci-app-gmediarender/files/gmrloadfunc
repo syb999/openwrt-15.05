@@ -208,7 +208,6 @@ function gmr_bilibilidownload(){
 	else
 		rdsuffix=$(head -n 1 /dev/urandom | tr -dc "0-9a-z" | head -c8)
 		$wget --timeout=3 -q "$geturl" -O "$gmrdir/$thename.downloading$rdsuffix"
-		echo $thename $rdsuffix
 		mv "$gmrdir/$thename.downloading$rdsuffix" "$gmrdir/$thedirname/$thename.$thesuffix"
 	fi
 }
@@ -257,8 +256,8 @@ function gmr_youkudownload(){
 	else
 		rdsuffix=$(head -n 1 /dev/urandom | tr -dc "0-9a-z" | head -c8)
 		$wget --timeout=10 -q $geturl -O /tmp/xgmrender.tmp.mtmp
-		cat /tmp/xgmrender.tmp.mtmp | grep .ts | sed 's/\r$//' | cut -d ' ' -f 1 > xgmrender.tmp.m3u8$rdsuffix
-		tmpm3u8=$(cat xgmrender.tmp.m3u8$rdsuffix)
+		cat /tmp/xgmrender.tmp.mtmp | grep .ts | sed 's/\r$//' | cut -d ' ' -f 1 > /tmp/xgmrender.tmp.m3u8$rdsuffix
+		tmpm3u8=$(cat /tmp/xgmrender.tmp.m3u8$rdsuffix)
 		for i in $tmpm3u8
 		do
 			$wget --timeout=3 -q $i -O /tmp/xgmrender.tmp.fragment$rdsuffix
@@ -270,7 +269,7 @@ function gmr_youkudownload(){
 			mv $gmrdir/$them3u8 $gmrdir/$thedirname/$thename.mp4
 			rm $gmrdir/$thename.ts.downloading$rdsuffix
 		fi
-		rm xgmrender.tmp.m3u8$rdsuffix /tmp/xgmrender.tmp.fragment$rdsuffix /tmp/xgmrender.tmp.mtmp
+		rm /tmp/xgmrender.tmp.m3u8$rdsuffix /tmp/xgmrender.tmp.fragment$rdsuffix /tmp/xgmrender.tmp.mtmp
 	fi
 }
 
