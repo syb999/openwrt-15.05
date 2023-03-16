@@ -14,6 +14,9 @@
         <head>
             <title>RTMP statistics</title>
         </head>
+        <script type="text/javascript">
+	        setTimeout(function(){location.reload()},5000);
+        </script>
         <body>
             <xsl:apply-templates select="rtmp"/>
             <hr/>
