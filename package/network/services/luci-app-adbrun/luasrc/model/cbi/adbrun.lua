@@ -71,6 +71,10 @@ adbcommandlist = s:taboption("adb_set", ListValue, "adbcommandlist", translate("
 adbcommandlist.placeholder = "none"
 adbcommandlist:value("none")
 adbcommandlist:value("push-and-install-apk", translate("push and install apk"))
+adbcommandlist:value("reboot-bootloader", translate("entry bootloader mode"))
+adbcommandlist:value("reboot-recovery", translate("entry recovery mode"))
+adbcommandlist:value("reboot-fastboot", translate("entry fastboot mode"))
+adbcommandlist:value("input-chinese", translate("input chinese"))
 adbcommandlist:value("turn-offon-the-screen", translate("Turn off/on the screen"))
 adbcommandlist:value("turn-on-the-screen", translate("Turn on screen"))
 adbcommandlist:value("increase-screen-brightness", translate("Increase screen brightness"))
@@ -104,6 +108,13 @@ adb_src_path.datatype = "string"
 adb_src_path.default = "/tmp/xxx.apk"
 adb_src_path.rmempty = true
 adb_src_path.description = translate("push to /sdcard directory")
+
+adb_input_ch = s:taboption("adb_set", Value, "adb_input_ch", translate("input text"))                                 
+adb_input_ch:depends( "adbcommandlist", "input-chinese" )                                                                
+adb_input_ch.datatype = "string"                                                                           
+adb_input_ch.default = "你好啊"                                                                                     
+adb_input_ch.rmempty = true 
+adb_input_ch.description = translate("please install ADBKeyboard.apk first")
 
 s:tab("adb_action", translate("Action"))
 
