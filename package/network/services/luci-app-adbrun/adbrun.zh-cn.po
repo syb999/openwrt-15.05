@@ -82,6 +82,15 @@ msgstr "重启进入recovery模式"
 msgid "entry fastboot mode"
 msgstr "重启进入fastboot模式"
 
+msgid "reboot"
+msgstr "重启设备"
+
+msgid "poweroff"
+msgstr "关机"
+
+msgid "auto-install ADBKeyboard"
+msgstr "自动安装ADBKeyboard"
+
 msgid "input chinese"
 msgstr "输入中文"
 
