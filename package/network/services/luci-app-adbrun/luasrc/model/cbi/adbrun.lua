@@ -70,6 +70,7 @@ end)
 adbcommandlist = s:taboption("adb_set", ListValue, "adbcommandlist", translate("Command list"), translate("adbrun command list"))
 adbcommandlist.placeholder = "none"
 adbcommandlist:value("none")
+adbcommandlist:value("update-preview-picture", translate("update preview picture"))
 adbcommandlist:value("push-and-install-apk", translate("push and install apk"))
 adbcommandlist:value("reboot-bootloader", translate("entry bootloader mode"))
 adbcommandlist:value("reboot-recovery", translate("entry recovery mode"))

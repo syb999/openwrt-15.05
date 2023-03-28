@@ -5,8 +5,6 @@ adbclient=$(uci get adbrun.$sectionname.adbiplist)
 photopath=$(uci get adbrun.@adbinit[0].adbphotopath)
 rm /tmp/adb_ADBRUN${sectionname}_.sh
 
-adb connect ${adbclient}:5555
-
 if [ $(adb -s ${adbclient}:5555 shell getprop ro.build.version.release | cut -d '.' -f 1) -lt 6 ];then
 	adb -s ${adbclient}:5555 shell screencap -p /data/local/tmp/screenshot.png
 	adb -s ${adbclient}:5555 pull /data/local/tmp/screenshot.png $(uci get adbrun.@adbinit[0].adbphotopath)/screenshot${adbclient}.png

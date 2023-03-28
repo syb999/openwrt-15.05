@@ -25,13 +25,18 @@ function get_apk(ip,port)
 end
 
 function get_screensize(ip,port)
-	local whsize = io.popen("adb -s " .. ip .. ":" .. port .." shell dumpsys display | grep real | head -n1 | awk -F 'real' '{print$2}' | cut -d ',' -f1 | sed 's/ //g' 2>/dev/null")
-	if whsize then
-		local screensize = whsize:read("*l")
-		whsize:close()
-		return screensize
+	if not nixio.fs.access("/tmp/" .. ip .. ".screeninfo") then
+		local whsize = io.popen("adb -s " .. ip .. ":" .. port .." shell dumpsys display | grep real | head -n1 | awk -F 'real' '{print$2}' | cut -d ',' -f1 | sed 's/ //g' 2>/dev/null")
+		if whsize then
+			local screensize = whsize:read("*l")
+			whsize:close()
+			nixio.fs.writefile("/tmp/" .. ip .. ".screeninfo", screensize)
+		end
+		return "checking"
 	end
-	return "checking"
+
+	local screensize = nixio.fs.readfile("/tmp/" .. ip .. ".screeninfo")
+	return screensize
 end
 
 function get_pid(ip)
@@ -166,9 +171,10 @@ function getscreen()
 		if gettime % 3 == 1 then
 			if luci.http.formvalue('screenid') ~= "" then
 				local vid = luci.http.formvalue('screenid')
-				luci.sys.call("adb -s " .. vid .. ":5555 exec-out screencap -p > /tmp/" .. vid .. ".png 2>/dev/null && ln -s /tmp/" .. vid .. ".png /www 2>/dev/null")
+				if not nixio.fs.access("/tmp/" .. vid .. ".png") then
+					luci.sys.call("adb -s " .. vid .. ":5555 exec-out screencap -p > /tmp/" .. vid .. ".png 2>/dev/null && ln -s /tmp/" .. vid .. ".png /www 2>/dev/null")
+				end
 			end
 		end
 	end
 end
-

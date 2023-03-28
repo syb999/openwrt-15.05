@@ -5,8 +5,6 @@ adbclient=$(uci get adbrun.$sectionname.adbiplist)
 photopath=$(uci get adbrun.@adbinit[0].adbphotopath)
 rm /tmp/adb_ADBRUN${sectionname}_.sh
 
-adb connect ${adbclient}:5555
-
 function getphoto3() {
 	adb -s ${adbclient}:5555 shell am start -n com.android.camera/.Camera
 	sleep 3

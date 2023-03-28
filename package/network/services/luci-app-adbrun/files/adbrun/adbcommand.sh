@@ -5,10 +5,11 @@ sectionname=$(echo $0 | cut -d '_' -f 2 | sed 's/^ADBRUN//')
 adbclient=$(uci get adbrun.$sectionname.adbiplist)
 adbcommand=$(uci get adbrun.$sectionname.adbcommandlist)
 
-adb connect ${adbclient}:5555
 screensize=$(adb -s ${adbclient}:5555 shell wm size | cut -d ':' -f 2 | sed -e "s/ //g;s/\n//g;s/\r//g")
 
 case $adbcommand in
+	update-preview-picture) adbcd="update preview picture"
+	;;
 	push-and-install-apk) adbcd="push and install apk"
 	;;
 	reboot-bootloader) adbcd="reboot bootloader"
@@ -229,6 +230,8 @@ if [ "$adbcd" == "scripts" ];then
 		chmod +x /tmp/ADBRUN${sectionname}_.sh
 		exec sh /tmp/ADBRUN${sectionname}_.sh
 	fi
+elif [ "$adbcd" == "update preview picture" ];then
+	rm /tmp/${adbclient}.png
 elif [ "$adbcd" == "push and install apk" ];then
 	adb -s ${adbclient}:5555 push "$(uci get adbrun.$sectionname.adb_src_path)" /sdcard/
 	sleep 5

@@ -70,6 +70,9 @@ msgstr "命令列表"
 msgid "adbrun command list"
 msgstr "adbrun命令列表"
 
+msgid "update preview picture"
+msgstr "更新预览图片"
+
 msgid "push and install apk"
 msgstr "上传并安装apk"
 
