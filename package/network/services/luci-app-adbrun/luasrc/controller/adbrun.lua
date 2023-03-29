@@ -36,6 +36,10 @@ function get_screensize(ip,port)
 	end
 
 	local screensize = nixio.fs.readfile("/tmp/" .. ip .. ".screeninfo")
+	if screensize == "nil" then
+		luci.sys.exec("rm /tmp/" .. ip .. ".screeninfo")
+		return "checking"
+	end
 	return screensize
 end
 
@@ -171,8 +175,8 @@ function getscreen()
 		if gettime % 3 == 1 then
 			if luci.http.formvalue('screenid') ~= "" then
 				local vid = luci.http.formvalue('screenid')
-				if not nixio.fs.access("/tmp/" .. vid .. ".png") then
-					luci.sys.call("adb -s " .. vid .. ":5555 exec-out screencap -p > /tmp/" .. vid .. ".png 2>/dev/null && ln -s /tmp/" .. vid .. ".png /www 2>/dev/null")
+				if not nixio.fs.access("/tmp/" .. vid .. ".screen.png") then
+					luci.sys.call("adb -s " .. vid .. ":5555 shell screencap -p /sdcard/screen.png && adb -s " .. vid .. ":5555 pull /sdcard/screen.png /tmp/" .. vid .. ".screen.png 2>/dev/null && ln -s /tmp/" .. vid .. ".screen.png /www 2>/dev/null")
 				end
 			end
 		end

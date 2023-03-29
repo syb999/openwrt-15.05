@@ -5,6 +5,13 @@ m:section(SimpleSection).template  = "adbrun_status"
 a = m:section(TypedSection, "adbinit", "")
 
 a:tab("adb_init", translate("init devices"))
+refresh_pic = a:taboption("adb_init", Button, "refresh_pic", translate("refresh all preview pics"))
+refresh_pic.rmempty = true
+refresh_pic.inputstyle = "apply"
+function refresh_pic.write(self, section)
+	luci.util.exec("rm /tmp/*.screen.png >/dev/null 2>&1 &")
+end
+
 adbinit = a:taboption("adb_init", Button, "_adbinit", translate("One-click initialize devices"))
 adbinit.rmempty = true
 adbinit.inputstyle = "apply"

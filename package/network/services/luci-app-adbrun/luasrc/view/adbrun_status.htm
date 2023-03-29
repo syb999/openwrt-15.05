@@ -189,7 +189,7 @@
 									var kvid = st[i].deviceid
 									new XHR().post('<%=luci.dispatcher.build_url("admin", "services", "adbrun", "getscreen")%>', {sctime: myDate.getSeconds(),screenid : kvid},
 									function(x,data){});
-									return '<button type=\"button\" onclick=\"window.open(\'http:\/\/' + window.location.hostname + ":" + st[i].uhttpd + '/' + kvid + '\.png \')\">预览</button>';
+									return '<button type=\"button\" onclick=\"window.open(\'http:\/\/' + window.location.hostname + ":" + st[i].uhttpd + '/' + kvid + '\.screen.png \')\">预览</button>';
 									})();
 				}
 			}

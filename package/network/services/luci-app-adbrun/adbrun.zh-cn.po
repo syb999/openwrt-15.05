@@ -7,6 +7,9 @@ msgstr "ADB服务器"
 msgid "Assistant for automatic control android devices."
 msgstr "android设备自动控制助手"
 
+msgid "refresh all preview pics"
+msgstr "刷新所有预览图片"
+
 msgid "init devices"
 msgstr "设备初始化"
 
