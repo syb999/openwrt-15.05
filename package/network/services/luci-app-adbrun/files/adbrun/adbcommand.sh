@@ -8,6 +8,12 @@ adbcommand=$(uci get adbrun.$sectionname.adbcommandlist)
 screensize=$(adb -s ${adbclient}:5555 shell wm size | cut -d ':' -f 2 | sed -e "s/ //g;s/\n//g;s/\r//g")
 
 case $adbcommand in
+	get-input-event) adbcd="get input event"
+	;;
+	record-tap) adbcd="record tap"
+	;;
+	crazy-tap) adbcd="crazy tap"
+	;;
 	update-preview-picture) adbcd="update preview picture"
 	;;
 	push-and-install-apk) adbcd="push and install apk"
@@ -230,6 +236,30 @@ if [ "$adbcd" == "scripts" ];then
 		chmod +x /tmp/ADBRUN${sectionname}_.sh
 		exec sh /tmp/ADBRUN${sectionname}_.sh
 	fi
+elif [ "$adbcd" == "get input event" ];then
+	adb -s ${adbclient}:5555 shell getevent -l | grep -v add | grep -v name | awk '{print$1}' | cut -d ':' -f1 > /tmp/${adbclient}.getevent &
+	while true;do
+		if [ ! -z "$(cat "/tmp/${adbclient}.getevent" | grep input)" ];then
+			kill -9 $(busybox ps | grep "${adbclient}:5555 shell getevent" | grep -v grep | awk '{print$1}')
+			break
+		fi
+	done
+	adb -s ${adbclient}:5555 shell touch "/sdcard/event$(cat /tmp/${adbclient}.getevent | tail -n1 | sed 's/.*[^0-9]//')"
+elif [ "$adbcd" == "record tap" ];then
+	theevent=$(cat /tmp/${adbclient}.getevent | tail -n1)
+	sleep 2
+	adb -s ${adbclient}:5555 shell dd if=${theevent} of=/sdcard/recordtap &
+	sleep 2
+	kill -9 $(busybox ps | grep "if=${theevent}" | grep -v grep | awk '{print$1}')
+elif [ "$adbcd" == "crazy tap" ];then
+	if [ -z "$(adb -s ${adbclient}:5555 shell cat /sdcard/crazytap.sh | grep -v "No such file")" ];then
+		cat /usr/adbrun/input/crazytap.sh | sed "s/\/event/\/event$(cat /tmp/${adbclient}.getevent | tail -n1 | sed 's/.*[^0-9]//')/" > /tmp/crazytap.sh
+		adb -s ${adbclient}:5555 push /tmp/crazytap.sh /sdcard/
+	fi
+	if [ -z "$(adb -s ${adbclient}:5555 shell cat /sdcard/recordtap | grep -v "No such file")" ];then
+		adb -s ${adbclient}:5555 push /usr/adbrun/input/recordtap /sdcard/
+	fi
+	adb -s ${adbclient}:5555 shell sh /sdcard/crazytap.sh
 elif [ "$adbcd" == "update preview picture" ];then
 	rm /tmp/${adbclient}.png
 elif [ "$adbcd" == "push and install apk" ];then

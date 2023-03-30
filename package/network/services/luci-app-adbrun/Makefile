@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 
 PKG_NAME:=luci-app-adbrun
-PKG_VERSION:=20230328
+PKG_VERSION:=20230330
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -32,6 +32,8 @@ define Package/luci-app-adbrun/install
 	cp -pR ./luasrc/* $(1)/usr/lib/lua/luci
 	$(INSTALL_DIR) $(1)/usr/adbrun
 	$(INSTALL_BIN) ./files/adbrun/* $(1)/usr/adbrun
+	$(INSTALL_DIR) $(1)/usr/adbrun/input
+	$(INSTALL_BIN) ./files/input/* $(1)/usr/adbrun/input
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/adbrun.conf $(1)/etc/config/adbrun
 	$(INSTALL_DIR) $(1)/etc/init.d

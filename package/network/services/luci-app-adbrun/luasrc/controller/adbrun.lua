@@ -172,7 +172,7 @@ end
 function getscreen()
 	if luci.http.formvalue('sctime') ~= "" then
 		local gettime= luci.http.formvalue('sctime')
-		if gettime % 3 == 1 then
+		if gettime % 2 == 0 then
 			if luci.http.formvalue('screenid') ~= "" then
 				local vid = luci.http.formvalue('screenid')
 				if not nixio.fs.access("/tmp/" .. vid .. ".screen.png") then

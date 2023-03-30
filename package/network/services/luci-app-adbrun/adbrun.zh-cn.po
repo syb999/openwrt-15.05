@@ -73,6 +73,15 @@ msgstr "命令列表"
 msgid "adbrun command list"
 msgstr "adbrun命令列表"
 
+msgid "get input event"
+msgstr "获取点击屏幕的event(录制点击屏幕前，请先获取)"
+
+msgid "record tap"
+msgstr "录制点击屏幕动作"
+
+msgid "crazy tap"
+msgstr "疯狂的点击屏幕(运行录制好的动作)"
+
 msgid "update preview picture"
 msgstr "更新预览图片"
 
