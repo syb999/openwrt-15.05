@@ -4,44 +4,17 @@ msgstr "Content-Type: text/plain; charset=UTF-8\n"
 msgid "Assistant for automatic download"
 msgstr "自动下载助手"
 
-msgid "Basic Setting for Video"
-msgstr "视频基本设置"
-
 msgid "Basic Setting for Audio"
 msgstr "音频基本设置"
 
 msgid "Basic Setting for docin"
-msgstr "docin.com基本设置"
-
-msgid "Basic Setting for xuexila"
-msgstr "xuexila.com基本设置"
-
-msgid "Basic Setting for book"
-msgstr "小说基本设置"
-
-msgid "Videos Download Page"
-msgstr "视频下载页面"
+msgstr "豆丁网基本设置"
 
 msgid "Download Audio from https://www.ximalaya.com"
 msgstr "喜马拉雅音频下载页面"
 
 msgid "Download from https://www.docin.com"
-msgstr "docin.com下载页面"
-
-msgid "Download from https://xuexila.com"
-msgstr "xuexila.com下载页面"
-
-msgid "One-click download txt"
-msgstr "一键下载为TXT文件"
-
-msgid "xuexila.com documents download"
-msgstr "学习啦文档下载"
-
-msgid "Video URL"
-msgstr "视频 URL"
-
-msgid "URL for downloading videos"
-msgstr "下载视频的网页地址"
+msgstr "豆丁网下载页面"
 
 msgid "Download directory"
 msgstr "下载目录"
@@ -54,15 +27,6 @@ msgstr "同步下载地址(同步后先保存&应用)"
 
 msgid "One-click download"
 msgstr "一键下载"
-
-msgid "Download Videos directory"
-msgstr "视频下载目录"
-
-msgid "Videos Name"
-msgstr "视频名称"
-
-msgid "Videos from dy10000.com or xgys.net"
-msgstr "当前从dy10000.com和xgys.net下载的视频名称"
 
 msgid "Total number of video files"
 msgstr "该节目的总集数"
@@ -256,36 +220,6 @@ msgstr "豆丁网文档的URL页面地址"
 msgid "URL for downloading https://www.kugou.com/ts/ Audios"
 msgstr "酷狗音乐听书的URL页面地址"
 
-msgid "xuexila.com doc URL"
-msgstr "获取自学习啦网站的文档"
-
-msgid "URL for downloading https://xuexila.com documents"
-msgstr "学习啦网站文档的URL页面地址"
-
-msgid "Book contents URL"
-msgstr "小说目录网址"
-
-msgid "Book URL"
-msgstr "小说URL"
-
-msgid "The title of a book"
-msgstr "书名"
-
-msgid "One-click download book"
-msgstr "一键下载小说"
-
-msgid "Download book directory"
-msgstr "小说下载目录"
-
-msgid "Books Download Page"
-msgstr "小说下载页面"
-
-msgid "Download a book from http://book.zongheng.com"
-msgstr "从纵横中文网下载小说"
-
-msgid "Download a book from https://www.biquge5200.cc"
-msgstr "从笔趣阁下载小说"
-
 msgid "Network radio"
 msgstr "网络电台"
 
@@ -297,6 +231,33 @@ msgstr "播放"
 
 msgid "STOP"
 msgstr "停止"
+
+msgid "Network Music"
+msgstr "网络音乐"
+
+msgid "Music list"
+msgstr "音乐列表"
+
+msgid "hummingbird pop music chart"
+msgstr "蜂鸟流行音乐排行榜"
+
+msgid "tiktok hot song chart"
+msgstr "抖音热歌榜"
+
+msgid "kwai hot song chart"
+msgstr "快手热歌榜"
+
+msgid "western golden melody chart"
+msgstr "欧美金曲榜"
+
+msgid "kugou top500"
+msgstr "酷狗TOP500"
+
+msgid "acg new song chart"
+msgstr "ACG新歌榜"
+
+msgid "billboard chart"
+msgstr "美国BillBoard榜"
 
 msgid "Background Music of Event"
 msgstr "活动背景音乐"
