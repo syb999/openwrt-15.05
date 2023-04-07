@@ -238,6 +238,9 @@ msgstr "网络音乐"
 msgid "Music list"
 msgstr "音乐列表"
 
+msgid "Next Song"
+msgstr "下一首歌"
+
 msgid "hummingbird pop music chart"
 msgstr "蜂鸟流行音乐排行榜"
 
@@ -255,6 +258,15 @@ msgstr "酷狗TOP500"
 
 msgid "acg new song chart"
 msgstr "ACG新歌榜"
+
+msgid "mainland song chart"
+msgstr "内地歌曲榜"
+
+msgid "hongkong song chart"
+msgstr "香港歌曲榜"
+
+msgid "japanese song chart"
+msgstr "日语歌曲榜"
 
 msgid "billboard chart"
 msgstr "美国BillBoard榜"

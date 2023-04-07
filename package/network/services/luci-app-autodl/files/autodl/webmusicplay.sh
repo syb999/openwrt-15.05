@@ -14,9 +14,15 @@ case $musiclist in
 	;;
 	acg-new-song-chart) theid="33162"
 	;;
+	mainland-song-chart) theid="31308"
+	;;
+	hongkong-song-chart) theid="31313"
+	;;
+	japanese-song-chart) theid="31312"
+	;;
 	billboard-chart) theid="4681"
 	;;
-	all) theid="59703 52144 52767 33166 8888 33162 4681"
+	all) theid="59703 52144 52767 33166 8888 33162 31308 31313 31312 4681"
 	;;
 	none) exit 0
 	;;
