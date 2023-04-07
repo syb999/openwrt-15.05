@@ -249,13 +249,12 @@ elif [ "$adbcd" == "record tap" ];then
 	theevent=$(cat /tmp/${adbclient}.getevent | tail -n1)
 	sleep 2
 	adb -s ${adbclient}:5555 shell dd if=${theevent} of=/sdcard/recordtap &
-	sleep 2
+	sleep $(uci get adbrun.$sectionname.adb_recordtime)
 	kill -9 $(busybox ps | grep "if=${theevent}" | grep -v grep | awk '{print$1}')
 elif [ "$adbcd" == "crazy tap" ];then
-	if [ -z "$(adb -s ${adbclient}:5555 shell cat /sdcard/crazytap.sh | grep -v "No such file")" ];then
-		cat /usr/adbrun/input/crazytap.sh | sed "s/\/event/\/event$(cat /tmp/${adbclient}.getevent | tail -n1 | sed 's/.*[^0-9]//')/" > /tmp/crazytap.sh
-		adb -s ${adbclient}:5555 push /tmp/crazytap.sh /sdcard/
-	fi
+	cat /usr/adbrun/input/crazytap.sh | sed "s/\/event/\/event$(cat /tmp/${adbclient}.getevent | tail -n1 | sed 's/.*[^0-9]//')/" > /tmp/crazytap.sh
+	sed -i "s/_looptime=/_looptime=$(uci get adbrun.$sectionname.adb_looptime)/" /tmp/crazytap.sh
+	adb -s ${adbclient}:5555 push /tmp/crazytap.sh /sdcard/
 	if [ -z "$(adb -s ${adbclient}:5555 shell cat /sdcard/recordtap | grep -v "No such file")" ];then
 		adb -s ${adbclient}:5555 push /usr/adbrun/input/recordtap /sdcard/
 	fi
@@ -288,4 +287,3 @@ else
 		done
 	fi
 fi
-

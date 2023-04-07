@@ -116,6 +116,19 @@ adbcommandlist:value("tbbbfarm", translate("Automatically taobao baba farm"))
 adbcommandlist.default = "none"
 adbcommandlist.rempty = true
 
+adb_recordtime = s:taboption("adb_set", Value, "adb_recordtime", translate("recording duration"))
+adb_recordtime:depends( "adbcommandlist", "record-tap" )
+adb_recordtime.datatype = "uinteger"
+adb_recordtime.default = "2"
+adb_recordtime.rmempty = true
+adb_recordtime.description = translate("in seconds")
+
+adb_looptime = s:taboption("adb_set", Value, "adb_looptime", translate("looping times"))
+adb_looptime:depends( "adbcommandlist", "crazy-tap" )
+adb_looptime.datatype = "uinteger"
+adb_looptime.default = "150"
+adb_looptime.rmempty = true
+
 adb_src_path = s:taboption("adb_set", Value, "adb_src_path", translate("apk path"))
 adb_src_path:depends( "adbcommandlist", "push-and-install-apk" )
 adb_src_path.datatype = "string"
