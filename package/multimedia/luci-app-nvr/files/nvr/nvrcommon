@@ -16,8 +16,10 @@ function test_loopwrite() {
 			for i in $_action_dir;do
 				rm "$_directory/$_first_dir/$i/$(ls -l $_directory/$_first_dir/$i | grep "^-" | head -n1 | awk '{print$9}')"
 			done
-			if [ "$(du -s $_directory/$_first_dir | awk '{print$1}')" -eq 0 ];then
-				rm -rf $_directory/$_first_dir
+			if [ "$(ls -l $_directory | grep "^d" | wc -l )" -gt 1 ];then
+				if [ "$(du -s $_directory/$_first_dir | awk '{print$1}')" -eq 0 ];then
+					rm -rf $_directory/$_first_dir
+				fi
 			fi
 			_dir_space="$(du -s $_directory | awk '{print$1}')"
 		done
