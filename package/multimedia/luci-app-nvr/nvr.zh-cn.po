@@ -1,0 +1,96 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "NVR"
+msgstr "网络视频录像机"
+
+msgid "The luci-app for instead of network video recorder hardware."
+msgstr "代替网络录像机硬件的luci应用程序"
+
+msgid "Network Video Recorder"
+msgstr "网络视频录像机"
+
+msgid "Basic setting"
+msgstr "基本设置"
+
+msgid "camera source"
+msgstr "摄像机源"
+
+msgid "hikvision"
+msgstr "海康威视"
+
+msgid "rtmp url"
+msgstr "rtmp视频源url"
+
+msgid "hikvision camera list"
+msgstr "hikvision摄像机列表"
+
+msgid "one by one"
+msgstr "逐个添加"
+
+msgid "batch add"
+msgstr "批量添加"
+
+msgid "camera ip address"
+msgstr "摄像机ip地址"
+
+msgid "click + to continue"
+msgstr "单击+继续"
+
+msgid "start of the ip address"
+msgstr "起始的ip地址"
+
+msgid "end of the ip address"
+msgstr "结尾的ip地址"
+
+msgid "hikvision camera username"
+msgstr "hikvision摄像机用户名"
+
+msgid "hikvision camera password"
+msgstr "hikvision摄像机密码"
+
+msgid "rtmp url address"
+msgstr "rtmp视频源url地址"
+
+msgid "adding one by one"
+msgstr "逐个添加"
+
+msgid "data storage directory"
+msgstr "数据存储目录"
+
+msgid "single file duration"
+msgstr "每个文件的时长"
+
+msgid "in seconds"
+msgstr "以秒为单位"
+
+msgid "allocate total storage space"
+msgstr "分配总存储空间"
+
+msgid "in megabytes"
+msgstr "以兆字节为单位（M）"
+
+msgid "looping writting to disk"
+msgstr "开启循环写入磁盘"
+
+msgid "whether to push stream"
+msgstr "是否推流"
+
+msgid "rtmp server application url"
+msgstr "rtmp服务器应用程序url"
+
+msgid "Action"
+msgstr "动作"
+
+msgid "One-click Record"
+msgstr "一键录制监控视频"
+
+msgid "One-click STOP Record"
+msgstr "一键停止录制"
+
+msgid "One-click Push stream"
+msgstr "一键推流"
+
+msgid "One-click STOP Push"
+msgstr "一键停止推流"
+

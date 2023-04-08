@@ -1,0 +1,21 @@
+#!/bin/sh
+. /usr/nvr/nvrcommon
+
+while true;do
+	test_loopwrite
+	for a in $_all_clients;do
+		theday="$(date +%Y-%m-%d)"
+		thedir=$(echo $a | sed 's/\///g')
+		if [ ! -d "$_directory/$theday/$thedir" ];then
+			mkdir -p "$_directory/$theday/$thedir"
+		fi
+		thename="$(date +%Y-%m-%d-%H:%M:%S).mp4"
+		if [ "$_source" = "hikvision" ];then
+			_input="rtsp://${_hik_user}:${_hik_pass}@${a}:554/h264/ch1/main/av_stream"
+		elif [ "$_source" = "rtmp-url" ];then
+			_input="$a"
+		fi
+		ffmpeg -i "${_input}" -c copy -t ${_rec_time} "${_directory}/${theday}/${thedir}/${thename}" &
+	done
+	sleep $(expr ${_rec_time} - 12)
+done

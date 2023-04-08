@@ -1,0 +1,127 @@
+m = Map("nvr", translate("The luci-app for instead of network video recorder hardware."))
+
+m:section(SimpleSection).template  = "nvr_status"
+
+s = m:section(TypedSection, "nvr", "", translate("Network Video Recorder"))
+s.anonymous = true
+s.addremove = false
+
+s:tab("nvr", translate("Basic setting"))
+nvr_sourcelist = s:taboption("nvr", ListValue, "nvr_sourcelist", translate("camera source"))
+nvr_sourcelist.placeholder = "none"
+nvr_sourcelist:value("none")
+nvr_sourcelist:value("hikvision",translate("hikvision"))
+nvr_sourcelist:value("rtmp-url",translate("rtmp url"))
+nvr_sourcelist.default = "none"
+nvr_sourcelist.rempty  = true
+
+hik_list = s:taboption("nvr", ListValue, "hik_list", translate("hikvision camera list"))
+hik_list:depends( "nvr_sourcelist", "hikvision" )
+hik_list.placeholder = "none"
+hik_list:value("none")
+hik_list:value("one-by-one",translate("one by one"))
+hik_list:value("batch-add",translate("batch add"))
+hik_list.default = "none"
+hik_list.rempty  = true
+
+hik_addonebyone = s:taboption("nvr", DynamicList, "hikpush")
+hik_addonebyone:depends( "hik_list", "one-by-one" )
+hik_addonebyone.title = translate("camera ip address")
+hik_addonebyone.datatype = "ipaddr"
+hik_addonebyone.placeholder = "192.168.1.64"
+hik_addonebyone.description = translate("click + to continue")
+
+hik_batch_start=s:taboption("nvr", Value, "hik_batch_start", translate("start of the ip address"))
+hik_batch_start:depends( "hik_list", "batch-add" )
+hik_batch_start.datatype = "ipaddr"
+hik_batch_start.placeholder = "192.168.1.64"
+hik_batch_start.rmempty = true
+
+hik_batch_end=s:taboption("nvr", Value, "hik_batch_end", translate("end of the ip address"))
+hik_batch_end:depends( "hik_list", "batch-add" )
+hik_batch_end.datatype = "ipaddr"
+hik_batch_end.placeholder = "192.168.1.200"
+hik_batch_end.rmempty = true
+
+hik_user=s:taboption("nvr", Value, "hik_user", translate("hikvision camera username"))
+hik_user:depends( "nvr_sourcelist", "hikvision" ) 
+hik_user.datatype = "string"                                                      
+hik_user.placeholder = "username"                                   
+hik_user.rmempty = true
+
+hik_pass=s:taboption("nvr", Value, "hik_pass", translate("hikvision camera password"))
+hik_pass:depends( "nvr_sourcelist", "hikvision" )                                     
+hik_pass.datatype = "string"                                                          
+hik_pass.placeholder = "password"                                                           
+hik_pass.rmempty = true 
+
+rtmpurl_add = s:taboption("nvr", DynamicList, "rtmppush")
+rtmpurl_add:depends( "nvr_sourcelist", "rtmp-url" )
+rtmpurl_add.title = translate("rtmp url address")
+rtmpurl_add.datatype = "string"
+rtmpurl_add.placeholder = "rtmp://ip:1935/live/camera001"
+rtmpurl_add.description = translate("adding one by one")
+
+storage_directory=s:taboption("nvr", Value, "storage_directory", translate("data storage directory"))
+storage_directory.rmempty = false
+storage_directory.datatype = "string"
+storage_directory.placeholder = "/mnt/sda1/camera"
+storage_directory.default = "/mnt/sda1/camera"
+
+rec_time=s:taboption("nvr", Value, "rec_time", translate("single file duration"))
+rec_time.rmempty = false
+rec_time.datatype = "uinteger"
+rec_time.placeholder = "300"
+rec_time.default = "300"
+rec_time.description = translate("in seconds")
+
+storage_size=s:taboption("nvr", Value, "storage_size", translate("allocate total storage space"))
+storage_size.rmempty = false
+storage_size.datatype = "uinteger"
+storage_size.placeholder = "1000"
+storage_size.default = "1000"
+storage_size.description = translate("in megabytes")
+
+loop_write=s:taboption("nvr", Flag, "loop_write", translate("looping writting to disk"))
+
+do_push=s:taboption("nvr", Flag, "do_push", translate("whether to push stream"))
+
+rtmp_server_app=s:taboption("nvr", Value, "rtmp_server_app", translate("rtmp server application url"))
+rtmp_server_app:depends( "do_push", "1" )
+rtmp_server_app.rmempty = true
+rtmp_server_app.datatype = "string"
+rtmp_server_app.placeholder = "rtmp://ip:1935/application_name"
+
+s:tab("action", translate("Action"))
+
+recordaction=s:taboption("action", Button, "recoredaction", translate("One-click Record"))
+recordaction.rmempty = true
+recordaction.inputstyle = "apply"                
+function recordaction.write(self, section)                                                                        
+	luci.util.exec("/usr/nvr/nvrrecord >/dev/null 2>&1 &")                                          
+end  
+
+recordstop=s:taboption("action", Button, "recordstop", translate("One-click STOP Record"))
+recordstop.rmempty = true
+recordstop.inputstyle = "apply"
+function recordstop.write(self, section)
+	luci.util.exec("kill -9 $(busybox ps | grep nvrrecord | grep -v grep | awk '{print$1}' 2>&1 &)")
+end
+
+pushaction=s:taboption("action", Button, "pushaction", translate("One-click Push stream"))
+pushaction:depends( "do_push", "1" )
+pushaction.rmempty = true
+pushaction.inputstyle = "apply"
+function pushaction.write(self, section)
+	luci.util.exec("/usr/nvr/nvrpush >/dev/null 2>&1 &")
+end
+
+pushstop = s:taboption("action", Button, "pushstop", translate("One-click STOP Push"))
+pushstop:depends( "do_push", "1" )
+pushstop.rmempty = true
+pushstop.inputstyle = "apply"
+function pushstop.write(self, section)
+	luci.util.exec("kill -9 $(ps -w | grep 'f flv rtmp' | grep -v grep | awk '{print$1}' 2>&1 &)")
+end
+
+return m

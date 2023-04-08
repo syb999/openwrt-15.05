@@ -1,0 +1,51 @@
+#!/bin/sh
+
+_source="$(uci get nvr.@nvr[0].nvr_sourcelist)"
+_directory="$(uci get nvr.@nvr[0].storage_directory | sed 's/\/$//')"
+_rec_time="$(uci get nvr.@nvr[0].rec_time)"
+_size="$(expr $(uci get nvr.@nvr[0].storage_size) \* 1024)"
+_loop_write="$(uci get nvr.@nvr[0].loop_write)"
+_all_clients=""
+
+function test_loopwrite() {
+	if [ "$_loop_write" -eq 1 ];then
+		_dir_space="$(du -s $_directory | awk '{print$1}')"
+		while [ "$_dir_space" -ge "$_size" ];do
+			_first_dir="$(ls -l $_directory | grep "^d" | head -n1 | awk '{print$9}')"
+			_action_dir="$(ls -l $_directory/$_first_dir | grep "^d" | awk '{print$9}')"	
+			for i in $_action_dir;do
+				rm "$_directory/$_first_dir/$i/$(ls -l $_directory/$_first_dir/$i | grep "^-" | head -n1 | awk '{print$9}')"
+			done
+			if [ "$(du -s $_directory/$_first_dir | awk '{print$1}')" -eq 0 ];then
+				rm -rf $_directory/$_first_dir
+			fi
+			_dir_space="$(du -s $_directory | awk '{print$1}')"
+		done
+	else
+		echo "do not test looping write!"
+	fi
+}
+
+case $_source in
+	hikvision)
+		_hik_user="$(uci get nvr.@nvr[0].hik_user)"
+		_hik_pass="$(uci get nvr.@nvr[0].hik_pass)"
+		if [ "$(uci get nvr.@nvr[0].hik_list)" = "one-by-one" ];then
+			_all_clients=$(uci get nvr.@nvr[0].hikpush)
+		else
+			_ipstart="$(uci get nvr.@nvr[0].hik_batch_start)"
+			_ipend="$(uci get nvr.@nvr[0].hik_batch_end)"
+			_startnum="$(echo $_ipstart | cut -d '.' -f4)"
+			_totalnum=$(expr $(echo $_ipend | cut -d '.' -f4) - $(echo $_ipstart | cut -d '.' -f4) + 1)
+			for i in $(seq 1 $_totalnum);do
+				_all_clients="$_all_clients $(echo $_ipstart | sed 's/[0-9]*$//')$(expr $_startnum + $i - 1)"
+			done
+		fi
+	;;
+	rtmp-url)
+			_all_clients=$(uci get nvr.@nvr[0].rtmppush)
+	;;
+	none)
+		exit 0
+	;;
+esac
