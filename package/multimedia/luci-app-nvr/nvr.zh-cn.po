@@ -22,8 +22,8 @@ msgstr "海康威视"
 msgid "rtmp url"
 msgstr "rtmp视频源url"
 
-msgid "hikvision camera list"
-msgstr "hikvision摄像机列表"
+msgid "camera list"
+msgstr "摄像机列表"
 
 msgid "one by one"
 msgstr "逐个添加"
@@ -43,11 +43,11 @@ msgstr "起始的ip地址"
 msgid "end of the ip address"
 msgstr "结尾的ip地址"
 
-msgid "hikvision camera username"
-msgstr "hikvision摄像机用户名"
+msgid "camera username"
+msgstr "摄像机用户名"
 
-msgid "hikvision camera password"
-msgstr "hikvision摄像机密码"
+msgid "camera password"
+msgstr "摄像机密码"
 
 msgid "rtmp url address"
 msgstr "rtmp视频源url地址"

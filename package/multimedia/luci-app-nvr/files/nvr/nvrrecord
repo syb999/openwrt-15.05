@@ -12,6 +12,8 @@ while true;do
 		thename="$(date +%Y-%m-%d-%H:%M:%S).mp4"
 		if [ "$_source" = "hikvision" ];then
 			_input="rtsp://${_hik_user}:${_hik_pass}@${a}:554/h264/ch1/main/av_stream"
+		elif [ "$_source" = "tplink" ];then
+			_input="rtsp://${_tplink_user}:${_tplink_pass}@${a}:554/stream1"
 		elif [ "$_source" = "rtmp-url" ];then
 			_input="$a"
 		fi

@@ -11,11 +11,12 @@ nvr_sourcelist = s:taboption("nvr", ListValue, "nvr_sourcelist", translate("came
 nvr_sourcelist.placeholder = "none"
 nvr_sourcelist:value("none")
 nvr_sourcelist:value("hikvision",translate("hikvision"))
+nvr_sourcelist:value("tplink",translate("tplink"))
 nvr_sourcelist:value("rtmp-url",translate("rtmp url"))
 nvr_sourcelist.default = "none"
 nvr_sourcelist.rempty  = true
 
-hik_list = s:taboption("nvr", ListValue, "hik_list", translate("hikvision camera list"))
+hik_list = s:taboption("nvr", ListValue, "hik_list", translate("camera list"))
 hik_list:depends( "nvr_sourcelist", "hikvision" )
 hik_list.placeholder = "none"
 hik_list:value("none")
@@ -43,17 +44,57 @@ hik_batch_end.datatype = "ipaddr"
 hik_batch_end.placeholder = "192.168.1.200"
 hik_batch_end.rmempty = true
 
-hik_user=s:taboption("nvr", Value, "hik_user", translate("hikvision camera username"))
+hik_user=s:taboption("nvr", Value, "hik_user", translate("camera username"))
 hik_user:depends( "nvr_sourcelist", "hikvision" ) 
 hik_user.datatype = "string"                                                      
 hik_user.placeholder = "username"                                   
 hik_user.rmempty = true
 
-hik_pass=s:taboption("nvr", Value, "hik_pass", translate("hikvision camera password"))
+hik_pass=s:taboption("nvr", Value, "hik_pass", translate("camera password"))
 hik_pass:depends( "nvr_sourcelist", "hikvision" )                                     
 hik_pass.datatype = "string"                                                          
 hik_pass.placeholder = "password"                                                           
 hik_pass.rmempty = true 
+
+tplink_list = s:taboption("nvr", ListValue, "tplink_list", translate("camera list"))
+tplink_list:depends( "nvr_sourcelist", "tplink" )
+tplink_list.placeholder = "none"
+tplink_list:value("none")
+tplink_list:value("one-by-one",translate("one by one"))
+tplink_list:value("batch-add",translate("batch add"))
+tplink_list.default = "none"
+tplink_list.rempty  = true
+
+tplink_addonebyone = s:taboption("nvr", DynamicList, "tplinkpush")
+tplink_addonebyone:depends( "tplink_list", "one-by-one" )
+tplink_addonebyone.title = translate("camera ip address")
+tplink_addonebyone.datatype = "ipaddr"
+tplink_addonebyone.placeholder = "192.168.1.60"
+tplink_addonebyone.description = translate("click + to continue")
+
+tplink_batch_start=s:taboption("nvr", Value, "tplink_batch_start", translate("start of the ip address"))
+tplink_batch_start:depends( "tplink_list", "batch-add" )
+tplink_batch_start.datatype = "ipaddr"
+tplink_batch_start.placeholder = "192.168.1.60"
+tplink_batch_start.rmempty = true
+
+tplink_batch_end=s:taboption("nvr", Value, "tplink_batch_end", translate("end of the ip address"))
+tplink_batch_end:depends( "tplink_list", "batch-add" )
+tplink_batch_end.datatype = "ipaddr"
+tplink_batch_end.placeholder = "192.168.1.200"
+tplink_batch_end.rmempty = true
+
+tplink_user=s:taboption("nvr", Value, "tplink_user", translate("camera username"))
+tplink_user:depends( "nvr_sourcelist", "tplink" ) 
+tplink_user.datatype = "string"                                                      
+tplink_user.placeholder = "username"                                   
+tplink_user.rmempty = true
+
+tplink_pass=s:taboption("nvr", Value, "tplink_pass", translate("camera password"))
+tplink_pass:depends( "nvr_sourcelist", "tplink" )                                     
+tplink_pass.datatype = "string"                                                          
+tplink_pass.placeholder = "password"                                                           
+tplink_pass.rmempty = true 
 
 rtmpurl_add = s:taboption("nvr", DynamicList, "rtmppush")
 rtmpurl_add:depends( "nvr_sourcelist", "rtmp-url" )

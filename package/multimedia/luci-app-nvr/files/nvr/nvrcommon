@@ -44,6 +44,21 @@ case $_source in
 			done
 		fi
 	;;
+	tplink)
+		_tplink_user="$(uci get nvr.@nvr[0].tplink_user)"
+		_tplink_pass="$(uci get nvr.@nvr[0].tplink_pass)"
+		if [ "$(uci get nvr.@nvr[0].tplink_list)" = "one-by-one" ];then
+			_all_clients=$(uci get nvr.@nvr[0].tplinkpush)
+		else
+			_ipstart="$(uci get nvr.@nvr[0].tplink_batch_start)"
+			_ipend="$(uci get nvr.@nvr[0].tplink_batch_end)"
+			_startnum="$(echo $_ipstart | cut -d '.' -f4)"
+			_totalnum=$(expr $(echo $_ipend | cut -d '.' -f4) - $(echo $_ipstart | cut -d '.' -f4) + 1)
+			for i in $(seq 1 $_totalnum);do
+				_all_clients="$_all_clients $(echo $_ipstart | sed 's/[0-9]*$//')$(expr $_startnum + $i - 1)"
+			done
+		fi
+	;;
 	rtmp-url)
 			_all_clients=$(uci get nvr.@nvr[0].rtmppush)
 	;;
