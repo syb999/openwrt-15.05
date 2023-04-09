@@ -1,10 +1,11 @@
 #!/bin/sh
 
-_source="$(uci get nvr.@nvr[0].nvr_sourcelist)"
-_directory="$(uci get nvr.@nvr[0].storage_directory | sed 's/\/$//')"
-_rec_time="$(uci get nvr.@nvr[0].rec_time)"
-_size="$(expr $(uci get nvr.@nvr[0].storage_size) \* 1024)"
-_loop_write="$(uci get nvr.@nvr[0].loop_write)"
+_source="$(uci get nvr.config.nvr_sourcelist)"
+_directory="$(uci get nvr.config.storage_directory | sed 's/\/$//')"
+_rec_time="$(uci get nvr.config.rec_time)"
+_size="$(expr $(uci get nvr.config.storage_size) \* 1024)"
+_loop_write="$(uci get nvr.config.loop_write)"
+_enable_audio="$(uci get nvr.config.enable_audio)"
 _all_clients=""
 
 function test_loopwrite() {
@@ -30,13 +31,13 @@ function test_loopwrite() {
 
 case $_source in
 	hikvision)
-		_hik_user="$(uci get nvr.@nvr[0].hik_user)"
-		_hik_pass="$(uci get nvr.@nvr[0].hik_pass)"
-		if [ "$(uci get nvr.@nvr[0].hik_list)" = "one-by-one" ];then
-			_all_clients=$(uci get nvr.@nvr[0].hikpush)
+		_hik_user="$(uci get nvr.config.hik_user)"
+		_hik_pass="$(uci get nvr.config.hik_pass)"
+		if [ "$(uci get nvr.config.hik_list)" = "one-by-one" ];then
+			_all_clients=$(uci get nvr.config.hikpush)
 		else
-			_ipstart="$(uci get nvr.@nvr[0].hik_batch_start)"
-			_ipend="$(uci get nvr.@nvr[0].hik_batch_end)"
+			_ipstart="$(uci get nvr.config.hik_batch_start)"
+			_ipend="$(uci get nvr.config.hik_batch_end)"
 			_startnum="$(echo $_ipstart | cut -d '.' -f4)"
 			_totalnum=$(expr $(echo $_ipend | cut -d '.' -f4) - $(echo $_ipstart | cut -d '.' -f4) + 1)
 			for i in $(seq 1 $_totalnum);do
@@ -45,13 +46,13 @@ case $_source in
 		fi
 	;;
 	tplink)
-		_tplink_user="$(uci get nvr.@nvr[0].tplink_user)"
-		_tplink_pass="$(uci get nvr.@nvr[0].tplink_pass)"
-		if [ "$(uci get nvr.@nvr[0].tplink_list)" = "one-by-one" ];then
-			_all_clients=$(uci get nvr.@nvr[0].tplinkpush)
+		_tplink_user="$(uci get nvr.config.tplink_user)"
+		_tplink_pass="$(uci get nvr.config.tplink_pass)"
+		if [ "$(uci get nvr.config.tplink_list)" = "one-by-one" ];then
+			_all_clients=$(uci get nvr.config.tplinkpush)
 		else
-			_ipstart="$(uci get nvr.@nvr[0].tplink_batch_start)"
-			_ipend="$(uci get nvr.@nvr[0].tplink_batch_end)"
+			_ipstart="$(uci get nvr.config.tplink_batch_start)"
+			_ipend="$(uci get nvr.config.tplink_batch_end)"
 			_startnum="$(echo $_ipstart | cut -d '.' -f4)"
 			_totalnum=$(expr $(echo $_ipend | cut -d '.' -f4) - $(echo $_ipstart | cut -d '.' -f4) + 1)
 			for i in $(seq 1 $_totalnum);do
@@ -60,7 +61,7 @@ case $_source in
 		fi
 	;;
 	rtmp-url)
-			_all_clients=$(uci get nvr.@nvr[0].rtmppush)
+			_all_clients=$(uci get nvr.config.rtmppush)
 	;;
 	none)
 		exit 0

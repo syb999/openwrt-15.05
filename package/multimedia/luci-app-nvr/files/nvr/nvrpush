@@ -1,7 +1,7 @@
 #!/bin/sh
 . /usr/nvr/nvrcommon
 
-_app_prefix="$(uci get nvr.@nvr[0].rtmp_server_app)"
+_app_prefix="$(uci get nvr.config.rtmp_server_app)"
 
 for a in $_all_clients;do
 	if [ "$_source" = "hikvision" ];then

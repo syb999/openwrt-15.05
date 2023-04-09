@@ -7,6 +7,9 @@ s.anonymous = true
 s.addremove = false
 
 s:tab("nvr", translate("Basic setting"))
+enabled = s:taboption("nvr", Flag, "enabled", translate("Record daemon"))
+enabled.rmempty = false
+
 nvr_sourcelist = s:taboption("nvr", ListValue, "nvr_sourcelist", translate("camera source"))
 nvr_sourcelist.placeholder = "none"
 nvr_sourcelist:value("none")
@@ -14,7 +17,7 @@ nvr_sourcelist:value("hikvision",translate("hikvision"))
 nvr_sourcelist:value("tplink",translate("tplink"))
 nvr_sourcelist:value("rtmp-url",translate("rtmp url"))
 nvr_sourcelist.default = "none"
-nvr_sourcelist.rempty  = true
+nvr_sourcelist.rmempty  = true
 
 hik_list = s:taboption("nvr", ListValue, "hik_list", translate("camera list"))
 hik_list:depends( "nvr_sourcelist", "hikvision" )
@@ -23,7 +26,7 @@ hik_list:value("none")
 hik_list:value("one-by-one",translate("one by one"))
 hik_list:value("batch-add",translate("batch add"))
 hik_list.default = "none"
-hik_list.rempty  = true
+hik_list.rmempty  = true
 
 hik_addonebyone = s:taboption("nvr", DynamicList, "hikpush")
 hik_addonebyone:depends( "hik_list", "one-by-one" )
@@ -63,7 +66,7 @@ tplink_list:value("none")
 tplink_list:value("one-by-one",translate("one by one"))
 tplink_list:value("batch-add",translate("batch add"))
 tplink_list.default = "none"
-tplink_list.rempty  = true
+tplink_list.rmempty  = true
 
 tplink_addonebyone = s:taboption("nvr", DynamicList, "tplinkpush")
 tplink_addonebyone:depends( "tplink_list", "one-by-one" )
@@ -124,6 +127,10 @@ storage_size.default = "1000"
 storage_size.description = translate("in megabytes")
 
 loop_write=s:taboption("nvr", Flag, "loop_write", translate("looping writting to disk"))
+loop_write.rmempty = false
+
+enable_audio=s:taboption("nvr", Flag, "enable_audio", translate("enable audio"))
+enable_audio.rmempty = false
 
 do_push=s:taboption("nvr", Flag, "do_push", translate("whether to push stream"))
 

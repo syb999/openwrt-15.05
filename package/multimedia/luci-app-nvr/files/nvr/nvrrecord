@@ -9,7 +9,7 @@ while true;do
 		if [ ! -d "$_directory/$theday/$thedir" ];then
 			mkdir -p "$_directory/$theday/$thedir"
 		fi
-		thename="$(date +%Y-%m-%d-%H:%M:%S).mp4"
+		thename="$(date +%Y-%m-%d-%H:%M:%S)"
 		if [ "$_source" = "hikvision" ];then
 			_input="rtsp://${_hik_user}:${_hik_pass}@${a}:554/h264/ch1/main/av_stream"
 		elif [ "$_source" = "tplink" ];then
@@ -17,7 +17,11 @@ while true;do
 		elif [ "$_source" = "rtmp-url" ];then
 			_input="$a"
 		fi
-		ffmpeg -i "${_input}" -c copy -t ${_rec_time} "${_directory}/${theday}/${thedir}/${thename}" &
+		if [ "$_enable_audio" -eq 1 ];then
+			ffmpeg -i "${_input}" -c copy -t ${_rec_time} "${_directory}/${theday}/${thedir}/${thename}.mkv" &
+		else
+			ffmpeg -i "${_input}" -vcodec copy -an -t ${_rec_time} "${_directory}/${theday}/${thedir}/${thename}.mp4" &
+		fi
 	done
 	sleep $(expr ${_rec_time} - 12)
 done

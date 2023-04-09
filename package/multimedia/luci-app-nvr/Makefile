@@ -29,6 +29,8 @@ define Package/luci-app-nvr/install
 	$(INSTALL_BIN) ./files/nvr/* $(1)/usr/nvr
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/nvr.conf $(1)/etc/config/nvr
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/nvr.init $(1)/etc/init.d/nvr
 endef
 
 $(eval $(call BuildPackage,luci-app-nvr))
