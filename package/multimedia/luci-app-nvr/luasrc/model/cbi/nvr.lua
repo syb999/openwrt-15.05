@@ -146,14 +146,14 @@ recordaction=s:taboption("action", Button, "recoredaction", translate("One-click
 recordaction.rmempty = true
 recordaction.inputstyle = "apply"                
 function recordaction.write(self, section)                                                                        
-	luci.util.exec("/usr/nvr/nvrrecord >/dev/null 2>&1 &")                                          
+	luci.util.exec("/usr/nvr/nvrstart 2>&1 &")                                          
 end  
 
 recordstop=s:taboption("action", Button, "recordstop", translate("One-click STOP Record"))
 recordstop.rmempty = true
 recordstop.inputstyle = "apply"
 function recordstop.write(self, section)
-	luci.util.exec("kill -9 $(busybox ps | grep nvrrecord | grep -v grep | awk '{print$1}' 2>&1 &)")
+	luci.util.exec("/etc/init.d/nvr stop && kill -9 $(busybox ps | grep nvrrecord | grep -v grep | awk '{print$1}') 2>&1 & ")
 end
 
 pushaction=s:taboption("action", Button, "pushaction", translate("One-click Push stream"))
