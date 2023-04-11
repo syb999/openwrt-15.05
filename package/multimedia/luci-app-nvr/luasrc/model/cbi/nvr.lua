@@ -126,6 +126,12 @@ storage_size.placeholder = "1000"
 storage_size.default = "1000"
 storage_size.description = translate("in megabytes")
 
+total_days=s:taboption("nvr", Value, "total_days", translate("total days of videos"))
+total_days.rmempty = false
+total_days.datatype = "uinteger"
+total_days.placeholder = "30"
+total_days.default = "30"
+
 loop_write=s:taboption("nvr", Flag, "loop_write", translate("looping writting to disk"))
 loop_write.rmempty = false
 
@@ -153,7 +159,7 @@ recordstop=s:taboption("action", Button, "recordstop", translate("One-click STOP
 recordstop.rmempty = true
 recordstop.inputstyle = "apply"
 function recordstop.write(self, section)
-	luci.util.exec("/etc/init.d/nvr stop && kill -9 $(busybox ps | grep nvrrecord | grep -v grep | awk '{print$1}') 2>&1 & ")
+	luci.util.exec("/usr/nvr/nvrstop 2>&1 & ")
 end
 
 pushaction=s:taboption("action", Button, "pushaction", translate("One-click Push stream"))

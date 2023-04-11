@@ -73,6 +73,9 @@ msgstr "分配总存储空间"
 msgid "in megabytes"
 msgstr "以兆字节为单位（M）"
 
+msgid "total days of videos"
+msgstr "保存视频的总天数"
+
 msgid "looping writting to disk"
 msgstr "开启循环写入磁盘"
 

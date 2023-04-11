@@ -4,13 +4,31 @@ _source="$(uci get nvr.config.nvr_sourcelist)"
 _directory="$(uci get nvr.config.storage_directory | sed 's/\/$//')"
 _rec_time="$(uci get nvr.config.rec_time)"
 _size="$(expr $(uci get nvr.config.storage_size) \* 1024)"
+_total_days="$(uci get nvr.config.total_days)"
 _loop_write="$(uci get nvr.config.loop_write)"
 _enable_audio="$(uci get nvr.config.enable_audio)"
 _all_clients=""
 
+function test_totaldays() {
+	_dir_nums="$(ls -l $_directory | grep "^d" | wc -l)"
+	if [ "$_total_days" -lt "$_dir_nums" ];then
+		_first_dir="$(ls -l $_directory | grep "^d" | head -n1 | awk '{print$9}')"
+		rm -rf $_directory/$_first_dir
+	fi
+}
+
+function test_dir_space() {
+	_first_dir="$(ls -l $_directory | grep "^d" | head -n1 | awk '{print$9}')"
+	_first_secdir="$(ls -l $_directory/$_first_dir | grep "^d" | head -n1 | awk '{print$9}')"
+	_single_filesize="$(du -a $_directory/$_first_dir/$_first_secdir | head -n1 | awk '{print$1}')"
+	_nums_secdir_file="$(ls -l $_directory/$_first_dir/$_first_secdir | grep "^-" | wc -l)"
+	_nums_firstdir_file="$(expr $_nums_secdir_file \* $_totalnum)"
+	_dir_space="$(expr $_single_filesize \* $_nums_firstdir_file)"
+}
+
 function test_loopwrite() {
 	if [ "$_loop_write" -eq 1 ];then
-		_dir_space="$(du -s $_directory | awk '{print$1}')"
+		test_dir_space
 		while [ "$_dir_space" -ge "$_size" ];do
 			_first_dir="$(ls -l $_directory | grep "^d" | head -n1 | awk '{print$9}')"
 			_action_dir="$(ls -l $_directory/$_first_dir | grep "^d" | awk '{print$9}')"	
@@ -22,7 +40,7 @@ function test_loopwrite() {
 					rm -rf $_directory/$_first_dir
 				fi
 			fi
-			_dir_space="$(du -s $_directory | awk '{print$1}')"
+			test_dir_space
 		done
 	else
 		echo "do not test looping write!"
@@ -35,6 +53,7 @@ case $_source in
 		_hik_pass="$(uci get nvr.config.hik_pass)"
 		if [ "$(uci get nvr.config.hik_list)" = "one-by-one" ];then
 			_all_clients=$(uci get nvr.config.hikpush)
+			_totalnum="$(echo $_all_clients | sed 's/ /\n/g' | wc -l)"
 		else
 			_ipstart="$(uci get nvr.config.hik_batch_start)"
 			_ipend="$(uci get nvr.config.hik_batch_end)"
@@ -50,6 +69,7 @@ case $_source in
 		_tplink_pass="$(uci get nvr.config.tplink_pass)"
 		if [ "$(uci get nvr.config.tplink_list)" = "one-by-one" ];then
 			_all_clients=$(uci get nvr.config.tplinkpush)
+			_totalnum="$(echo $_all_clients | sed 's/ /\n/g' | wc -l)"
 		else
 			_ipstart="$(uci get nvr.config.tplink_batch_start)"
 			_ipend="$(uci get nvr.config.tplink_batch_end)"
@@ -62,6 +82,7 @@ case $_source in
 	;;
 	rtmp-url)
 			_all_clients=$(uci get nvr.config.rtmppush)
+			_totalnum="$(echo $_all_clients | sed 's/ /\n/g' | wc -l)"
 	;;
 	none)
 		exit 0
