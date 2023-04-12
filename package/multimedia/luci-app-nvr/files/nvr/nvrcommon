@@ -21,7 +21,11 @@ function count_filesize() {
 	_client_dir="$(ls -l $_directory/$_day_target | grep "^d" | awk '{print$9}')"
 	for c in $_client_dir;do
 		_single_filesize="$(ls -l $_directory/$_day_target/$c | head -n1 | awk '{print$5}')"
-		_single_filesize="$(expr $_single_filesize / 1024)"
+		if [ "$_single_filesize" = "" ];then
+			_single_filesize=0
+		else
+			_single_filesize="$(expr $_single_filesize / 1024)"
+		fi
 		_nums_clientdir_file="$(ls -l $_directory/$_day_target/$c | grep "^-" | wc -l)"
 		_total_filesize="$(expr $_single_filesize \* $_nums_clientdir_file + $_total_filesize)"
 	done
@@ -69,14 +73,14 @@ function test_loopwrite() {
 			_action_dir="$(ls -l $_directory/$_first_dir | grep "^d" | awk '{print$9}')"	
 			for i in $_action_dir;do
 				rm "$_directory/$_first_dir/$i/$(ls -l $_directory/$_first_dir/$i | grep "^-" | head -n1 | awk '{print$9}')"
-				if [ "$(ls -l $_directory | grep "^d" | wc -l )" -gt 1 ];then
-					if [ "$(ls -l $_directory/$_first_dir/$i | grep "^-")" = "" ];then
-						rm -rf $_directory/$_first_dir/$i
-					fi
+				if [ "$(ls -l $_directory/$_first_dir/$i | grep "^-")" = "" ];then
+					rm -rf $_directory/$_first_dir/$i
 				fi
-				if [ "$(du -s $_directory/$_first_dir | awk '{print$1}')" -le "$(expr $_totalnum \* 4 + 4)" ];then
-					rm -rf $_directory/$_first_dir
-					break
+				if [ "$(ls -l $_directory | grep "^d" | wc -l )" -gt 1 ];then 
+					if [ "$(du -s $_directory/$_first_dir | awk '{print$1}')" -le "$(expr $_totalnum \* 4 + 4)" ];then
+						rm -rf $_directory/$_first_dir
+						break
+					fi
 				fi
 			done
 			_total_filesize=0
