@@ -8,7 +8,6 @@ _total_days="$(uci get nvr.config.total_days)"
 _loop_write="$(uci get nvr.config.loop_write)"
 _enable_audio="$(uci get nvr.config.enable_audio)"
 _all_clients=""
-_total_filesize=0
 
 function test_totaldays() {
 	_dir_nums="$(ls -l $_directory | grep "^d" | wc -l)"
@@ -62,6 +61,7 @@ function test_dir_space() {
 
 function test_loopwrite() {
 	if [ "$_loop_write" -eq 1 ];then
+		_total_filesize=0
 		test_dir_space
 		while [ "$_dir_space" -ge "$_size" ];do
 			_first_dir="$(ls -l $_directory | grep "^d" | head -n1 | awk '{print$9}')"
@@ -70,10 +70,11 @@ function test_loopwrite() {
 				rm "$_directory/$_first_dir/$i/$(ls -l $_directory/$_first_dir/$i | grep "^-" | head -n1 | awk '{print$9}')"
 			done
 			if [ "$(ls -l $_directory | grep "^d" | wc -l )" -gt 1 ];then
-				if [ "$(du -s $_directory/$_first_dir | awk '{print$1}')" -eq 0 ];then
+				if [ "$(du -s $_directory/$_first_dir | awk '{print$1}')" -le "$(expr $_totalnum \* 4 + 4)" ];then
 					rm -rf $_directory/$_first_dir
 				fi
 			fi
+			_total_filesize=0
 			test_dir_space
 		done
 	else
