@@ -8,6 +8,7 @@ _total_days="$(uci get nvr.config.total_days)"
 _loop_write="$(uci get nvr.config.loop_write)"
 _enable_audio="$(uci get nvr.config.enable_audio)"
 _all_clients=""
+_total_filesize=0
 
 function test_totaldays() {
 	_dir_nums="$(ls -l $_directory | grep "^d" | wc -l)"
@@ -17,13 +18,46 @@ function test_totaldays() {
 	fi
 }
 
+function count_filesize() {
+	_client_dir="$(ls -l $_directory/$_day_target | grep "^d" | awk '{print$9}')"
+	for c in $_client_dir;do
+		_single_filesize="$(du -a $_directory/$_day_target/$c | head -n1 | awk '{print$1}')"
+		_nums_clientdir_file="$(ls -l $_directory/$_day_target/$c | grep "^-" | wc -l)"
+		_total_filesize="$(expr $_single_filesize \* $_nums_clientdir_file + $_total_filesize)"
+	done
+}
+
+function search_daydir_head() {
+	_day_target="$(ls -l $_directory | grep "^d" | head -n1 | awk '{print$9}')"
+	count_filesize
+}
+
+function search_daydir_tail() {                                                                            
+	_day_target="$(ls -l $_directory | grep "^d" | tail -n1 | awk '{print$9}')"
+	count_filesize
+}
+
+function search_daydir_midone() {
+	_day_target="$(ls -l $_directory | grep "^d" | head -n2 | tail -n1 | awk '{print$9}')"
+	count_filesize
+}
+
 function test_dir_space() {
-	_first_dir="$(ls -l $_directory | grep "^d" | head -n1 | awk '{print$9}')"
-	_first_secdir="$(ls -l $_directory/$_first_dir | grep "^d" | head -n1 | awk '{print$9}')"
-	_single_filesize="$(du -a $_directory/$_first_dir/$_first_secdir | head -n1 | awk '{print$1}')"
-	_nums_secdir_file="$(ls -l $_directory/$_first_dir/$_first_secdir | grep "^-" | wc -l)"
-	_nums_firstdir_file="$(expr $_nums_secdir_file \* $_totalnum)"
-	_dir_space="$(expr $_single_filesize \* $_nums_firstdir_file)"
+	_daydir_num="$(ls -l $_directory | grep "^d" | wc -l)"
+	if [ "$_daydir_num" -ge 3 ];then
+		_day_target="$(ls -l $_directory | grep "^d" | head -n2 | tail -n1 | awk '{print$9}')"
+		_mid_daydir_num="$(expr $_daydir_num - 2)"
+		search_daydir_midone
+		_total_filesize="$(expr $_total_filesize \* $_mid_daydir_num)"
+		search_daydir_head
+		search_daydir_tail
+	elif [ "$_daydir_num" -eq 2 ];then
+		search_daydir_head
+		search_daydir_tail
+	else
+		search_daydir_head
+	fi
+	_dir_space=$_total_filesize
 }
 
 function test_loopwrite() {
