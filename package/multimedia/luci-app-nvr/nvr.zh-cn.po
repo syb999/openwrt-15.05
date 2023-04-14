@@ -25,6 +25,9 @@ msgstr "海康威视"
 msgid "rtmp url"
 msgstr "rtmp视频源url"
 
+msgid "multiple types"
+msgstr "多种类型视频源"
+
 msgid "camera list"
 msgstr "摄像机列表"
 
@@ -54,6 +57,15 @@ msgstr "摄像机密码"
 
 msgid "rtmp url address"
 msgstr "rtmp视频源url地址"
+
+msgid "hikvision: rtsp://username:password@ip:554/h264/ch1/main/av_stream"
+msgstr "海康威视监控url视频源格式: rtsp://username:password@ip:554/h264/ch1/main/av_stream"
+
+msgid "tplink: rtsp://username:password@ip:554/stream1"
+msgstr "tplink监控url视频源格式: rtsp://username:password@ip:554/stream1"
+
+msgid "rtsp/rtmp/http url address"
+msgstr "rtsp/rtmp/http视频源url地址"
 
 msgid "adding one by one"
 msgstr "逐个添加"

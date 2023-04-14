@@ -16,6 +16,7 @@ nvr_sourcelist:value("none")
 nvr_sourcelist:value("hikvision",translate("hikvision"))
 nvr_sourcelist:value("tplink",translate("tplink"))
 nvr_sourcelist:value("rtmp-url",translate("rtmp url"))
+nvr_sourcelist:value("multiple-types",translate("multiple types"))
 nvr_sourcelist.default = "none"
 nvr_sourcelist.rmempty  = true
 
@@ -105,6 +106,20 @@ rtmpurl_add.title = translate("rtmp url address")
 rtmpurl_add.datatype = "string"
 rtmpurl_add.placeholder = "rtmp://ip:1935/live/camera001"
 rtmpurl_add.description = translate("adding one by one")
+
+multi_info1 = s:taboption("nvr", DummyValue, "multi_info1", translate("information"))
+multi_info1:depends( "nvr_sourcelist", "multiple-types" )
+multi_info1.description = translate("hikvision: rtsp://username:password@ip:554/h264/ch1/main/av_stream")
+multi_info2 = s:taboption("nvr", DummyValue, "multi_info2", translate("information"))
+multi_info2:depends( "nvr_sourcelist", "multiple-types" )
+multi_info2.description = translate("tplink: rtsp://username:password@ip:554/stream1")
+
+multi_add = s:taboption("nvr", DynamicList, "multipush")
+multi_add:depends( "nvr_sourcelist", "multiple-types" )
+multi_add.title = translate("rtsp/rtmp/http url address")
+multi_add.datatype = "string"
+multi_add.placeholder = "rtmp://ip:1935/live/camera001"
+multi_add.description = translate("adding one by one")
 
 storage_directory=s:taboption("nvr", Value, "storage_directory", translate("data storage directory"))
 storage_directory.rmempty = false

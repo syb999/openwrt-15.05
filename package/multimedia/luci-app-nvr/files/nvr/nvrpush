@@ -10,5 +10,7 @@ for a in $_all_clients;do
 		ffmpeg -i "rtsp://${_tplink_user}:${_tplink_pass}@${a}:554/stream1" -c copy -f flv "${_app_prefix}/${a}" &
 	elif [ "$_source" = "rtmp-url" ];then
 		ffmpeg -i $a -c copy -f flv "${_app_prefix}/${a}" &
+	elif [ "$_source" = "multiple-types" ];then
+		ffmpeg -i $a -c copy -f flv "${_app_prefix}/${a}" &
 	fi
 done
