@@ -127,6 +127,16 @@ storage_directory.datatype = "string"
 storage_directory.placeholder = "/mnt/sda1/camera"
 storage_directory.default = "/mnt/sda1/camera"
 
+disk_name=s:taboption("nvr", Value, "disk_name", translate("storage disk name"))
+disk_name.rmempty = false
+disk_name.datatype = "string"
+disk_name.placeholder = "sda1"
+
+disk_usage=s:taboption("nvr", Value, "disk_usage", translate("set maximum disk space usage"))
+disk_usage.rmempty = false
+disk_usage.datatype = "string"
+disk_usage.placeholder = "85%"
+
 rec_time=s:taboption("nvr", Value, "rec_time", translate("single file duration"))
 rec_time.rmempty = false
 rec_time.datatype = "uinteger"
@@ -149,6 +159,9 @@ total_days.default = "30"
 
 loop_write=s:taboption("nvr", Flag, "loop_write", translate("looping writting to disk"))
 loop_write.rmempty = false
+
+fulldisk=s:taboption("nvr", Flag, "fulldisk", translate("only detect disk space"))
+fulldisk.rmempty = false
 
 enable_audio=s:taboption("nvr", Flag, "enable_audio", translate("enable audio"))
 enable_audio.rmempty = false

@@ -73,6 +73,12 @@ msgstr "逐个添加"
 msgid "data storage directory"
 msgstr "数据存储目录"
 
+msgid "storage disk name"
+msgstr "存储数据的磁盘名"
+
+msgid "set maximum disk space usage"
+msgstr "设置最大磁盘空间占用率"
+
 msgid "single file duration"
 msgstr "每个文件的时长"
 
@@ -86,10 +92,13 @@ msgid "in megabytes"
 msgstr "以兆字节为单位（M）"
 
 msgid "total days of videos"
-msgstr "保存视频的总天数"
+msgstr "循环保存视频的总天数"
 
 msgid "looping writting to disk"
 msgstr "开启循环写入磁盘"
+
+msgid "only detect disk space"
+msgstr "仅检测整个磁盘空间"
 
 msgid "enable audio"
 msgstr "开启录音"

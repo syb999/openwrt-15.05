@@ -2,10 +2,13 @@
 
 _source="$(uci get nvr.config.nvr_sourcelist)"
 _directory="$(uci get nvr.config.storage_directory | sed 's/\/$//')"
+_disk_name="$(uci get nvr.config.disk_name)"
 _rec_time="$(uci get nvr.config.rec_time)"
 _size="$(expr $(uci get nvr.config.storage_size) \* 1024)"
 _total_days="$(uci get nvr.config.total_days)"
 _loop_write="$(uci get nvr.config.loop_write)"
+_fulldisk="$(uci get nvr.config.fulldisk)"
+_disk_usage="$(echo $(uci get nvr.config.disk_usage) | cut -d '%' -f1)"
 _enable_audio="$(uci get nvr.config.enable_audio)"
 _all_clients=""
 
@@ -47,27 +50,39 @@ function search_daydir_midone() {
 }
 
 function test_dir_space() {
-	_daydir_num="$(ls -l $_directory | grep "^d" | wc -l)"
-	if [ "$_daydir_num" -ge 3 ];then
-		_day_target="$(ls -l $_directory | grep "^d" | head -n2 | tail -n1 | awk '{print$9}')"
-		_mid_daydir_num="$(expr $_daydir_num - 2)"
-		search_daydir_midone
-		_total_filesize="$(expr $_total_filesize \* $_mid_daydir_num)"
-		search_daydir_head
-		search_daydir_tail
-	elif [ "$_daydir_num" -eq 2 ];then
-		search_daydir_head
-		search_daydir_tail
+	if [ "$(df -h | grep $_disk_name | awk '{print$5}' | head -n 1 | cut -d '%' -f1)" -ge "$_disk_usage" ];then
+		_dir_space="$(expr $_size + 9999)"
 	else
-		search_daydir_head
+		_daydir_num="$(ls -l $_directory | grep "^d" | wc -l)"
+		if [ "$_daydir_num" -ge 3 ];then
+			_day_target="$(ls -l $_directory | grep "^d" | head -n2 | tail -n1 | awk '{print$9}')"
+			_mid_daydir_num="$(expr $_daydir_num - 2)"
+			search_daydir_midone
+			_total_filesize="$(expr $_total_filesize \* $_mid_daydir_num)"
+			search_daydir_head
+			search_daydir_tail
+		elif [ "$_daydir_num" -eq 2 ];then
+			search_daydir_head
+			search_daydir_tail
+		else
+			search_daydir_head
+		fi
+		_dir_space=$_total_filesize
 	fi
-	_dir_space=$_total_filesize
 }
 
 function test_loopwrite() {
 	if [ "$_loop_write" -eq 1 ];then
 		_total_filesize=0
-		test_dir_space
+		if [ "$_fulldisk" -eq 1 ];then
+			if [ "$(df -h | grep $_disk_name | awk '{print$5}' | head -n 1 | cut -d '%' -f1)" -ge "$_disk_usage" ];then
+				_dir_space="$(expr $_size + 9999)"
+			else
+				_dir_space=1
+			fi
+		else
+			test_dir_space
+		fi
 		while [ "$_dir_space" -ge "$_size" ];do
 			_first_dir="$(ls -l $_directory | grep "^d" | head -n1 | awk '{print$9}')"
 			_action_dir="$(ls -l $_directory/$_first_dir | grep "^d" | awk '{print$9}')"	
@@ -84,7 +99,15 @@ function test_loopwrite() {
 				fi
 			done
 			_total_filesize=0
-			test_dir_space
+			if [ "$_fulldisk" -eq 1 ];then
+				if [ "$(df -h | grep $_disk_name | awk '{print$5}' | head -n 1 | cut -d '%' -f1)" -ge "$_disk_usage" ];then
+					_dir_space="$(expr $_size + 9999)"
+				else
+					_dir_space=1
+				fi
+			else
+				test_dir_space
+			fi
 		done
 	else
 		echo "do not test looping write!"
