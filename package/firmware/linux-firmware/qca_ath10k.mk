@@ -7,7 +7,7 @@ define Download/qca99x0-board
   FILE:=$(QCA99X0_BOARD_FILE)
 #  HASH:=03711ac21e60ef59d3815e235eb721c0c22851b5410299411085aa6f2af45401
 endef
-$(eval $(call Download,qca99x0-board))
+#$(eval $(call Download,qca99x0-board))
 
 Package/ath10k-firmware-qca4019 = $(call Package/firmware-default,ath10k qca4019 firmware)
 define Package/ath10k-firmware-qca4019/install
