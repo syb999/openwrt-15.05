@@ -1,0 +1,11 @@
+--- a/lib/blkid/blkidP.h
++++ b/lib/blkid/blkidP.h
+@@ -16,6 +16,8 @@
+ #include <sys/types.h>
+ #include <stdio.h>
+ 
++#include <sys/sysmacros.h>
++
+ #include <blkid/blkid.h>
+ 
+ #include <blkid/list.h>
