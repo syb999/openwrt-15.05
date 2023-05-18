@@ -40,10 +40,10 @@ The modofications solve two problems regarding issues https://github.com/hzeller
  }
  
  static int output_gstreamer_seek(gint64 position_nanos) {
-+	Log_info("gstreamer", "SEEK requested");
- 	if (gst_element_seek(player_, 1.0, GST_FORMAT_TIME,
- 			     GST_SEEK_FLAG_FLUSH,
- 			     GST_SEEK_TYPE_SET, position_nanos,
++	Log_info("gstreamer", "PAUSE requested");
+ 	if (gst_element_seek_simple(player_, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH,
+ 								position_nanos)) {
+ 		return 0;
 @@ -284,14 +296,28 @@
  			free(gsuri_);
  			gsuri_ = gs_next_uri_;
