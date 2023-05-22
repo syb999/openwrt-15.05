@@ -241,6 +241,39 @@ msgstr "音乐列表"
 msgid "Next Song"
 msgstr "下一首歌"
 
+msgid "manual download"
+msgstr "手动下载"
+
+msgid "automatic download while playing"
+msgstr "播放时自动下载"
+
+msgid "kuwo"
+msgstr "酷我音乐"
+
+msgid "kugou"
+msgstr "酷狗音乐"
+
+msgid "kuwo soaring chart"
+msgstr "酷我飙升榜"
+
+msgid "kuwo new song chart"
+msgstr "酷我新歌榜"
+
+msgid "kuwo hot song chart"
+msgstr "酷我热歌榜"
+
+msgid "DJ list chart"
+msgstr "万物DJ榜"
+
+msgid "member chart"
+msgstr "会员畅听榜"
+
+msgid "Download current music"
+msgstr "下载当前歌曲"
+
+msgid "Download mode"
+msgstr "下载模式"
+
 msgid "hummingbird pop music chart"
 msgstr "蜂鸟流行音乐排行榜"
 

@@ -494,44 +494,86 @@ end
 
 
 s:tab("webmusictab", translate("Network Music"))
-webmusiclist = s:taboption("webmusictab", ListValue, "webmusiclist", translate("Music list"))
-webmusiclist.placeholder = "none"
-webmusiclist:value("none")
-webmusiclist:value("hummingbird-pop-music-chart", translate("hummingbird pop music chart"))
-webmusiclist:value("tiktok-hot-song-chart", translate("tiktok hot song chart"))
-webmusiclist:value("kwai-hot-song-chart", translate("kwai hot song chart"))
-webmusiclist:value("western-golden-melody-chart", translate("western golden melody chart"))
-webmusiclist:value("kugou-top500", translate("kugou top500"))
-webmusiclist:value("acg-new-song-chart", translate("acg new song chart"))
-webmusiclist:value("mainland-song-chart", translate("mainland song chart"))
-webmusiclist:value("hongkong-song-chart", translate("hongkong song chart"))
-webmusiclist:value("japanese-song-chart", translate("japanese song chart"))
-webmusiclist:value("acg-new-song-chart", translate("acg new song chart"))
-webmusiclist:value("billboard-chart", translate("billboard chart"))
-webmusiclist:value("all", translate("all"))
-webmusiclist.default = "none"
-webmusiclist.rempty = true
+webmusicsrc = s:taboption("webmusictab", ListValue, "webmusicsrc", translate("Music list"))
+webmusicsrc.placeholder = "kuwo"
+webmusicsrc:value("kuwo", translate("kuwo"))
+webmusicsrc:value("kugou", translate("kugou"))
+webmusicsrc.default = "kuwo"
+webmusicsrc.rempty = true
 
-webmusicplay = s:taboption("webmusictab", Button, "webmusicplay", translate("PLAY"))          
-webmusicplay.rmempty = true                                                                   
-webmusicplay.inputstyle = "apply"                                                             
-function webmusicplay.write(self, section)                                                     
-    luci.util.exec("/usr/autodl/webmusicplay.sh >/dev/null 2>&1 &")                             
-end                                                                                            
+webkuwolist = s:taboption("webmusictab", ListValue, "webkuwolist", translate("Music list"))
+webkuwolist:depends("webmusicsrc", "kuwo")
+webkuwolist.placeholder = "none"
+webkuwolist:value("none")
+webkuwolist:value("kuwo-soaring-chart", translate("kuwo soaring chart"))
+webkuwolist:value("kuwo-new-song-chart", translate("kuwo new song chart"))
+webkuwolist:value("kuwo-hot-song-chart", translate("kuwo hot song chart"))
+webkuwolist:value("kuwo-tiktok-hot-song-chart", translate("tiktok hot song chart"))
+webkuwolist:value("DJ-list-chart", translate("DJ list chart"))
+webkuwolist:value("member-chart", translate("member chart"))
+webkuwolist:value("all", translate("all"))
+webkuwolist.default = "none"
+webkuwolist.rempty = true
+
+webkugoulist = s:taboption("webmusictab", ListValue, "webkugoulist", translate("Music list"))
+webkugoulist:depends("webmusicsrc", "kugou")
+webkugoulist.placeholder = "none"
+webkugoulist:value("none")
+webkugoulist:value("hummingbird-pop-music-chart", translate("hummingbird pop music chart"))
+webkugoulist:value("tiktok-hot-song-chart", translate("tiktok hot song chart"))
+webkugoulist:value("kwai-hot-song-chart", translate("kwai hot song chart"))
+webkugoulist:value("western-golden-melody-chart", translate("western golden melody chart"))
+webkugoulist:value("kugou-top500", translate("kugou top500"))
+webkugoulist:value("acg-new-song-chart", translate("acg new song chart"))
+webkugoulist:value("mainland-song-chart", translate("mainland song chart"))
+webkugoulist:value("hongkong-song-chart", translate("hongkong song chart"))
+webkugoulist:value("japanese-song-chart", translate("japanese song chart"))
+webkugoulist:value("acg-new-song-chart", translate("acg new song chart"))
+webkugoulist:value("billboard-chart", translate("billboard chart"))
+webkugoulist:value("all", translate("all"))
+webkugoulist.default = "none"
+webkugoulist.rempty = true
+
+webmusicplay = s:taboption("webmusictab", Button, "webmusicplay", translate("PLAY"))
+webmusicplay.rmempty = true
+webmusicplay.inputstyle = "apply"
+function webmusicplay.write(self, section)
+    luci.util.exec("/usr/autodl/webmusicplay.sh >/dev/null 2>&1 &")
+end
 
 webmusicstop = s:taboption("webmusictab", Button, "webmusicstop", translate("STOP"))         
-webmusicstop.inputstyle = "apply"                                                             
-function webmusicstop.write(self, section)                                                    
+webmusicstop.inputstyle = "apply"
+function webmusicstop.write(self, section)
     luci.util.exec("kill -9 $(busybox ps | grep webmusicplay.sh | grep -v grep | awk '{print$1}') >/dev/null 2>&1 &")
     luci.util.exec("kill -9 $(busybox ps | grep mpg123 | grep -v grep | awk '{print$1}') >/dev/null 2>&1 &")
 end
 
 webmusicnext = s:taboption("webmusictab", Button, "webmusicnext", translate("Next Song"))         
-webmusicnext.inputstyle = "apply"                                                             
-function webmusicnext.write(self, section)                                                    
+webmusicnext.inputstyle = "apply"
+function webmusicnext.write(self, section)
     luci.util.exec("kill -9 $(busybox ps | grep mpg123 | grep -v grep | awk '{print$1}') >/dev/null 2>&1 &")
 end
 
+webmusicpath = s:taboption("webmusictab", Value, "webmusicpath", translate("Download Audios directory"))
+webmusicpath.datatype = "string"
+webmusicpath.default = "/mnt/sda3/webmusic"
+webmusicpath.rmempty = true
+webmusicpath.description = translate("Please enter a valid directory")
+
+webmusic_dl_mode = s:taboption("webmusictab", ListValue, "webmusic_dl_mode", translate("Download mode"))
+webmusic_dl_mode.placeholder = "manual-download"
+webmusic_dl_mode:value("manual-download", translate("manual download"))
+webmusic_dl_mode:value("automatic-download", translate("automatic download while playing"))
+webmusic_dl_mode.default = "manual-download"
+webmusic_dl_mode.rempty = true
+
+webmusicdownload = s:taboption("webmusictab", Button, "webmusicdownload", translate("Download current music"))          
+webmusicdownload:depends("webmusic_dl_mode", "manual-download")
+webmusicdownload.rmempty = true
+webmusicdownload.inputstyle = "apply"
+function webmusicdownload.write(self, section)
+    luci.util.exec("wget-ssl -t 5 -q -c $(cat /tmp/webmusic.tmp.url) -O $(uci get autodl.@autodl[0].webmusicpath)/$(cat /tmp/webmusic.tmp.info).mp3 >/dev/null 2>&1 &")
+end
                                                                                               
 s:tab("eventradiotab", translate("Background Music of Event"))
 eventname1=s:taboption("eventradiotab", Value, "eventname1", translate("FileName1"))
