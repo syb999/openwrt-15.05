@@ -7,13 +7,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cmake
-PKG_VERSION:=3.16.5
+PKG_VERSION:=3.20.3
+PKG_RELEASE:=1
 PKG_CPE_ID:=cpe:/a:kitware:cmake
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/Kitware/CMake/releases/download/v$(PKG_VERSION)/ \
-		https://cmake.org/files/v3.16/
-PKG_HASH:=5f760b50b8ecc9c0c37135fae5fbf00a2fef617059aa9d61c1bb91653e5a8bfc
+		https://cmake.org/files/v3.20/
+PKG_MD5SUM:=57ddb91cd14cb7e58a34f1f1066bf8c2
 
 HOST_BUILD_PARALLEL:=1
 HOST_CONFIGURE_PARALLEL:=1
@@ -38,7 +39,20 @@ HOST_CONFIGURE_VARS :=
 
 HOST_CONFIGURE_ARGS := \
 	$(if $(MAKE_JOBSERVER),--parallel="$(MAKE_JOBSERVER)") \
-	--prefix=$(STAGING_DIR_HOST)
+	--prefix="$(STAGING_DIR_HOST)" \
+	--generator=Ninja
+
+define Host/Compile/Default
+	+$(NINJA) -C $(HOST_BUILD_DIR) $(1)
+endef
+
+define Host/Install/Default
+	+$(NINJA) -C $(HOST_BUILD_DIR) install
+endef
+
+define Host/Uninstall/Default
+	+$(NINJA) -C $(HOST_BUILD_DIR) uninstall
+endef
 
 ifneq ($(findstring c,$(OPENWRT_VERBOSE)),)
   HOST_MAKE_FLAGS += VERBOSE=1
