@@ -18,6 +18,14 @@ function get_apk(ip,port)
 	local apk = io.popen("adb -s " .. ip .. ":" .. port .." shell dumpsys activity activities | grep mResumedActivity: | cut -d '/' -f 1 | awk '{print $4}' 2>/dev/null")
 	if apk then
 		local name = apk:read("*l")
+		if not name then
+			apk = io.popen("adb -s " .. ip .. ":" .. port .." shell dumpsys activity activities | grep topResumedActivity | cut -d '/' -f 1 | awk '{print $3}' 2>/dev/null")
+			if apk then
+				local name = apk:read("*l")
+				apk:close()
+				return name
+			end
+		end
 		apk:close()
 		return name
 	end
