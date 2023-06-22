@@ -37,25 +37,25 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
 UNTAR_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
 define Build/Prepare
-	#mkdir -vp $(UNTAR_DIR)
-	#tar -zxvf $(DL_DIR)/$(PKG_SOURCE) -C $(UNTAR_DIR)
+	mkdir -vp $(UNTAR_DIR)
+	tar -zxvf $(DL_DIR)/$(PKG_SOURCE) -C $(UNTAR_DIR)
 endef
 
 define Build/Compile
 endef
 
 define Package/docker/install
-	#$(INSTALL_DIR) $(1)/usr/bin/
-	#$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(PKG_NAME)/docker $(1)/usr/bin/docker
-	#$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(PKG_NAME)/dockerd $(1)/usr/bin/
-	#$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(PKG_NAME)/docker-init $(1)/usr/bin/
-	#$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(PKG_NAME)/docker-proxy $(1)/usr/bin/
-	#$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(PKG_NAME)/containerd $(1)/usr/bin/
-	#$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(PKG_NAME)/containerd-shim $(1)/usr/bin/
-	#$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(PKG_NAME)/ctr $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/bin/
+	$(INSTALL_BIN) $(UNTAR_DIR)/docker/docker $(1)/usr/bin/docker
+	$(INSTALL_BIN) $(UNTAR_DIR)/docker/dockerd $(1)/usr/bin/
+	$(INSTALL_BIN) $(UNTAR_DIR)/docker/docker-init $(1)/usr/bin/
+	$(INSTALL_BIN) $(UNTAR_DIR)/docker/docker-proxy $(1)/usr/bin/
+	$(INSTALL_BIN) $(UNTAR_DIR)/docker/containerd $(1)/usr/bin/
+	$(INSTALL_BIN) $(UNTAR_DIR)/docker/containerd-shim $(1)/usr/bin/
+	$(INSTALL_BIN) $(UNTAR_DIR)/docker/ctr $(1)/usr/bin/
 
-	#$(INSTALL_DIR) $(1)/usr/sbin/
-	#$(CP) $(PKG_BUILD_DIR)/$(PKG_NAME)/runc $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/usr/sbin/
+	$(CP) $(UNTAR_DIR)/docker/runc $(1)/usr/sbin/
 
 	$(INSTALL_DIR) $(1)/opt/docker/
 	$(INSTALL_DIR) $(1)/usr/share/docker/
