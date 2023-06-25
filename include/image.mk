@@ -323,6 +323,10 @@ define BuildImage/mkfs
 endef
 
 # Build commands that can be called from Device/* templates
+
+IMAGE_KERNEL = $(word 1,$^)
+IMAGE_ROOTFS = $(word 2,$^)
+
 define Build/uImage
 	mkimage -A $(LINUX_KARCH) \
 		-O linux -T kernel \
