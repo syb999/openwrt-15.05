@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014-2021 OpenWrt.org
+# Copyright (C) 2014-2023 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -12,9 +12,9 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_URL=https://git.openwrt.org/project/mdnsd.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE:=2021-05-13
-PKG_SOURCE_VERSION:=b777a0b53f7d89ab2a60e3eed7d98036806da9a4
-PKG_MD5SUM:=6d4d0fe01381ba7935bd7db4ccae3664
+PKG_SOURCE_DATE:=2023-01-16
+PKG_SOURCE_VERSION:=65b3308d13de7d7975444d34389651612e2a4d38
+PKG_MD5SUM:=970643814f9ec14b2c10bfab1b3ef2ae
 
 PKG_MAINTAINER:=John Crispin <john@phrozen.org>
 PKG_LICENSE:=LGPL-2.1
