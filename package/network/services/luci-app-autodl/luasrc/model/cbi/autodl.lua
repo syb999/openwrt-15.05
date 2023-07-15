@@ -496,9 +496,9 @@ end
 s:tab("webmusictab", translate("Network Music"))
 webmusicsrc = s:taboption("webmusictab", ListValue, "webmusicsrc", translate("Music list"))
 webmusicsrc.placeholder = "kuwo"
-webmusicsrc:value("kuwo", translate("kuwo"))
+webmusicsrc:value("kuwo(BROKEN)", translate("kuwo(BROKEN)"))
 webmusicsrc:value("kugou", translate("kugou"))
-webmusicsrc.default = "kuwo"
+webmusicsrc.default = "kugou"
 webmusicsrc.rempty = true
 
 webkuwolist = s:taboption("webmusictab", ListValue, "webkuwolist", translate("Music list"))
