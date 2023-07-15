@@ -69,6 +69,12 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].volume)" != "none" ];then
 		param_volume="volume=5dB"
 	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].volume)" == "-5dB" ];then
 		param_volume="volume=-5dB"
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].volume)" == "0.2" ];then
+		param_volume="volume=0.2"
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].volume)" == "0.5" ];then
+		param_volume="volume=0.5"
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].volume)" == "1.5" ];then
+		param_volume="volume=1.5"
 	fi
 fi
 
@@ -80,6 +86,16 @@ fi
 
 if [ "$(uci get ffmpegtool.@ffmpegtool[0].audio_copy)" == "1" ];then
 	param_copy="-acodec copy"
+fi
+
+if [ "$(uci get ffmpegtool.@ffmpegtool[0].audio_merge)" == "1" ];then
+	input1=$(uci get ffmpegtool.@ffmpegtool[0].audio_input1)
+	input2=$(uci get ffmpegtool.@ffmpegtool[0].audio_input2)
+	echo " $input1 ----> 音频合并中 <---- $input2 " >> /tmp/ffmpeg.log
+	ffmpeg -i "${input1}" -i "${input2}" -filter_complex "[0:0][1:0] concat=n=2:v=0:a=1[a]" -map [a] "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
+	echo "合并完毕!" >> /tmp/ffmpeg.log
+	ucidefault
+	exit 0
 fi
 
 if [ "$(uci get ffmpegtool.@ffmpegtool[0].dest_select)" == "streaming media server" ];then

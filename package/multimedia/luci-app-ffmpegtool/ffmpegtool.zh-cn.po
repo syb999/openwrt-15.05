@@ -4,6 +4,12 @@ msgstr "Content-Type: text/plain; charset=UTF-8\n"
 msgid "Assistant for FFMPEG"
 msgstr "FFMPEG助手"
 
+msgid "Tips 1: add LOGO command\(for PC\): ffmpeg -i input.mp4 -vf \"movie=logo.png[wm];[in][wm]overlay=30:15[out]\" output.mp4"
+msgstr "提示1：添加LOGO命令（适用于PC）: ffmpeg -i input.mp4 -vf "movie=logo.png[wm];[in][wm]overlay=30:15[out]" output.mp4"
+
+msgid "Tips 2: add subtitles command\(for PC\): ffmpeg -i input.mp4 -vf subtitles=1.srt output.mp4"
+msgstr "提示2：添加字幕命令（适用于PC）: ffmpeg -i input.mp4 -vf "movie=logo.png[wm];[in][wm]overlay=30:15[out]" output.mp4"
+
 msgid "Basic Setting"
 msgstr "基本设置"
 
@@ -90,6 +96,9 @@ msgstr "一键获取输入源信息"
 
 msgid "Audio Setting"
 msgstr "音频设置"
+
+msgid "combine audio"
+msgstr "合并音频"
 
 msgid "Audio format"
 msgstr "音频格式"
@@ -192,6 +201,21 @@ msgstr "视频设置"
 
 msgid "Video format"
 msgstr "视频格式"
+
+msgid "adjust the playback speed"
+msgstr "调整播放速度"
+
+msgid "speed list"
+msgstr "速度列表"
+
+msgid "speed up by two times"
+msgstr "加速两倍(减少播放时间)"
+
+msgid "reduce the speed by two times"
+msgstr "减速两倍(延长播放时间)"
+
+msgid "reduce the speed by three times"
+msgstr "减速三倍(延长播放时间)"
 
 msgid "using libx264/libx265"
 msgstr "使用libx264/libx265转码(可以解决某些mp4视频无法在浏览器播放的问题)"

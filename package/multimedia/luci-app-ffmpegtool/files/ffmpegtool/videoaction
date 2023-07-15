@@ -246,6 +246,11 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "one file" ];then
 			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-$(date +%s).gif" -y
 		fi
 		echo "导出完毕!" >> /tmp/ffmpeg.log
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].video_adjustspeed)" == "1" ];then 
+		video_speed="setpts=$(uci get ffmpegtool.@ffmpegtool[0].list_adjustspeed)*PTS"
+		echo "$srctarget ---- 调速中..." >> /tmp/ffmpeg.log
+		ffmpeg -i "$srctarget" -filter:v "${video_speed}" "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1)-$(uci get ffmpegtool.@ffmpegtool[0].list_adjustspeed).$param_format" -y
+		echo "执行完毕!" >> /tmp/ffmpeg.log
 	else
 		echo "$srctarget ---- 转换中..." >> /tmp/ffmpeg.log
 		if [ "$(uci get ffmpegtool.@ffmpegtool[0].image_effects)" == "1" ];then
@@ -267,6 +272,10 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "all files in the di
 		echo "$i ---- 转换中..." >> /tmp/ffmpeg.log
 		if [ "$(uci get ffmpegtool.@ffmpegtool[0].image_effects)" == "1" ];then
 			ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1).$param_format" -y
+		elif [ "$(uci get ffmpegtool.@ffmpegtool[0].video_adjustspeed)" == "1" ];then 
+			video_speed="setpts=$(uci get ffmpegtool.@ffmpegtool[0].list_adjustspeed)*PTS"
+			echo "$srctarget ---- 调速中..." >> /tmp/ffmpeg.log
+			ffmpeg -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" -filter:v "${video_speed}" "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1)-$(uci get ffmpegtool.@ffmpegtool[0].list_adjustspeed).$param_format" -y
 		else
 			ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_mute $param_frames_num $param_libx2645 $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1).$param_format" -y
 		fi
