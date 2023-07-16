@@ -1,8 +1,6 @@
 m = Map("ffmpegtool", translate("FFMPEG-Tool"))
 m.description = translate("Tips 1: add LOGO command\(for PC\): ffmpeg -i input.mp4 -vf \"movie=logo.png[wm];[in][wm]overlay=30:15[out]\" output.mp4")
 
-
-
 m:section(SimpleSection).template  = "ffmpegtool_status"
 
 s = m:section(TypedSection, "ffmpegtool", "", translate("Assistant for FFMPEG"))
@@ -123,9 +121,26 @@ audio_format:value("wav")
 audio_format.default = "mp3"
 audio_format.rempty  = false
 
-
 audio_merge=s:taboption("audio_setting", Flag, "audio_merge", translate("combine audio"))
+audio_merge:depends( "audio_copy", "" )
 audio_merge.default = ""
+
+enable_amix=s:taboption("audio_setting", ListValue, "enable_amix", translate("enable merge"))
+enable_amix:depends( "audio_merge", "1" )
+enable_amix:value("one by one",translate("one by one"))
+enable_amix:value("mix1",translate("Mixes 2 audio inputs into a single output"))
+enable_amix:value("mix2",translate("After merging the two stereo audio channels into single channels, mix them according to the left and right channels"))
+enable_amix:value("mix3",translate("Merge 2 single channel audio into one stereo by combining left and right channels"))
+enable_amix:value("mix4",translate("When splicing two audio tracks, add a silent track in the middle (default 5 seconds)"))
+enable_amix.default = "one by one"
+enable_amix.rempty  = true
+
+audio_null = s:taboption("audio_setting", Value, "audio_null", translate("Silent track duration in seconds"))
+audio_null:depends( "enable_amix", "mix4" )
+audio_null.datatype = "uinteger"
+audio_null.placeholder = "5"
+audio_null.default = "5"
+audio_null.rmempty = true
 
 audio_input1 = s:taboption("audio_setting", Value, "audio_input1", translate("The first file to be merged"))
 audio_input1:depends( "audio_merge", "1" )

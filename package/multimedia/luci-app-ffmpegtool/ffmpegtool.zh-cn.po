@@ -100,6 +100,21 @@ msgstr "音频设置"
 msgid "combine audio"
 msgstr "合并音频"
 
+msgid "Mixes 2 audio inputs into a single output"
+msgstr "将2个声音频混合为一个"
+
+msgid "After merging the two stereo audio channels into single channels, mix them according to the left and right channels"
+msgstr "将2个立体声音频各自合并为单声道后，按照左右声道混音"
+
+msgid "Merge 2 single channel audio into one stereo by combining left and right channels"
+msgstr "将2个单声道音频按照左右声道合并为一个立体声"
+
+msgid "When splicing two audio tracks, add a silent track in the middle (default 5 seconds)"
+msgstr "拼接2个音频时，中间加入无声音轨(默认5秒)"
+
+msgid "Silent track duration in seconds"
+msgstr "无声音轨持续时间（秒）"
+
 msgid "Audio format"
 msgstr "音频格式"
 

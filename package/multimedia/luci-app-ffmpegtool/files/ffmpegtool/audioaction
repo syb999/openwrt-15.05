@@ -92,7 +92,17 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].audio_merge)" == "1" ];then
 	input1=$(uci get ffmpegtool.@ffmpegtool[0].audio_input1)
 	input2=$(uci get ffmpegtool.@ffmpegtool[0].audio_input2)
 	echo " $input1 ----> 音频合并中 <---- $input2 " >> /tmp/ffmpeg.log
-	ffmpeg -i "${input1}" -i "${input2}" -filter_complex "[0:0][1:0] concat=n=2:v=0:a=1[a]" -map [a] "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
+	if [ "$(uci get ffmpegtool.@ffmpegtool[0].enable_amix)" == "one by one" ];then
+		ffmpeg -i "${input1}" -i "${input2}" -filter_complex "[0:0][1:0] concat=n=2:v=0:a=1[a]" -map [a] "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].enable_amix)" == "mix1" ];then
+		ffmpeg -i "${input1}" -i "${input2}" -filter_complex amix=inputs=2:duration=longest "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].enable_amix)" == "mix2" ];then
+		ffmpeg -i "${input1}" -i "${input2}" -filter_complex "amerge=inputs=2,pan=stereo|c0<c0+c1|c1<c2+c3" "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].enable_amix)" == "mix3" ];then
+		ffmpeg -i "${input1}" -i "${input2}" -filter_complex amerge=inputs=2 "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].enable_amix)" == "mix4" ];then
+		ffmpeg -i "${input1}" -t $(uci get ffmpegtool.@ffmpegtool[0].audio_null) -f s16le -acodec pcm_s16le -i /dev/zero -i "${input2}" -filter_complex "[0:0][1:0][2:0] concat=n=3:v=0:a=1[a]" -map [a] "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
+	fi
 	echo "合并完毕!" >> /tmp/ffmpeg.log
 	ucidefault
 	exit 0
