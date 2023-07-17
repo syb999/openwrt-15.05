@@ -8,37 +8,31 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=json-c
-PKG_VERSION:=0.12.1
-PKG_RELEASE:=3
+PKG_VERSION:=0.15
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-nodoc.tar.gz
 PKG_SOURCE_URL:=https://s3.amazonaws.com/json-c_releases/releases/
-PKG_HASH:=5a617da9aade997938197ef0f8aabd7f97b670c216dc173977e1d56eef9e1291
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
+PKG_MD5SUM:=e6353ee906a552b203caa1cd569406c4
 
+PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:json-c_project:json-c
 
-PKG_FIXUP:=autoreconf
-PKG_INSTALL:=1
-
-PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
+PKG_BUILD_PARALLEL:=1
+HOST_BUILD_PREFIX:=$(STAGING_DIR_HOST)
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
-
-TARGET_CFLAGS += $(FPIC) -Wno-implicit-fallthrough
-HOST_CFLAGS += -Wno-implicit-fallthrough
-HOST_BUILD_PREFIX:=$(STAGING_DIR_HOST)
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libjson-c
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=javascript object notation
   URL:=https://json-c.github.io/json-c/
-  ABI_VERSION:=2
+  ABI_VERSION:=5
 endef
 
 define Package/libjson-c/description
@@ -46,17 +40,15 @@ define Package/libjson-c/description
 endef
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/json-c $(1)/usr/include/
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libjson-c.{a,so*} $(1)/usr/lib/
-	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/json-c.pc $(1)/usr/lib/pkgconfig/
+	$(call Build/InstallDev/cmake,$(1))
+	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/json-c.pc
+	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/json-c.pc
 endef
 
 define Package/libjson-c/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libjson-c.so.* $(1)/usr/lib/
+	ln -s $(PKG_INSTALL_DIR)/usr/lib/libjson-c.so.5.1.0 $(1)/usr/lib/libjson-c.so.2
 endef
 
 $(eval $(call BuildPackage,libjson-c))
