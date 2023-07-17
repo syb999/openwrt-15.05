@@ -1,15 +1,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libubox
-PKG_VERSION:=2020-05-25
-PKG_RELEASE:=1
+PKG_RELEASE=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://git.openwrt.org/project/libubox.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_SOURCE_VERSION:=66195aee50424cbda0c2d858014e4cc58a2dc029
-PKG_MD5SUM:=2129f372d9e3703128df93f264012c10
+PKG_SOURCE_URL:=https://git.openwrt.org/project/libubox.git
+PKG_MD5SUM:=34d6ad1d3e8ee2e6d11c68007c23f8a4
+PKG_SOURCE_DATE:=2021-05-16
+PKG_SOURCE_VERSION:=b14c4688612c05c78ce984d7bde633bce8703b1e
+PKG_ABI_VERSION:=$(call abi_version_str,$(PKG_SOURCE_DATE))
 CMAKE_INSTALL:=1
 
 PKG_LICENSE:=ISC
@@ -18,7 +17,7 @@ PKG_LICENSE_FILES:=
 PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
 
 PKG_BUILD_DEPENDS:=lua
-HOST_BUILD_DEPENDS:=libjson-c
+HOST_BUILD_DEPENDS:=libjson-c/host
 HOST_BUILD_PREFIX:=$(STAGING_DIR_HOST)
 
 include $(INCLUDE_DIR)/package.mk
@@ -29,7 +28,7 @@ define Package/libubox
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Basic utility library
-  ABI_VERSION:=20191228
+  ABI_VERSION:=$(PKG_ABI_VERSION)
   DEPENDS:=
 endef
 
@@ -37,6 +36,7 @@ define Package/libblobmsg-json
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=blobmsg <-> json conversion library
+  ABI_VERSION:=$(PKG_ABI_VERSION)
   DEPENDS:=+libjson-c +libubox
 endef
 
@@ -55,6 +55,7 @@ define Package/libjson-script
   SECTION:=utils
   CATEGORY:=Utilities
   DEPENDS:=+libubox
+  ABI_VERSION:=$(PKG_ABI_VERSION)
   TITLE:=Minimalistic JSON based scripting engine
 endef
 
@@ -66,8 +67,9 @@ define Package/libubox-lua
 endef
 
 TARGET_CFLAGS += -I$(STAGING_DIR)/usr/include
-CMAKE_OPTIONS = \
-	-DLUAPATH=/usr/lib/lua
+CMAKE_OPTIONS += \
+	-DLUAPATH=/usr/lib/lua \
+	-DABIVERSION="$(PKG_ABI_VERSION)"
 
 define Package/libubox/install
 	$(INSTALL_DIR) $(1)/lib/
