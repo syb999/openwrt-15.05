@@ -8,14 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fstools
-PKG_VERSION:=2020-05-12
-
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
+PKG_VERSION:=2021-03-05
+PKG_RELEASE=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL=$(OPENWRT_GIT)/project/fstools.git
+PKG_SOURCE_URL:=https://git.openwrt.org/project/fstools.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=84269037b75de93bdd4ea75b7f50ba77ba976377
+PKG_MD5SUM:=8c4ce1824bb9cdc1893fcc49217317d4
+PKG_SOURCE_DATE:=2021-03-05
+PKG_SOURCE_VERSION:=3c38f0c889177dfac51fa7213c567a110709be71
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 CMAKE_INSTALL:=1
 
@@ -35,6 +36,8 @@ include $(INCLUDE_DIR)/cmake.mk
 
 TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-lrt)
 CMAKE_OPTIONS += $(if $(CONFIG_FSTOOLS_UBIFS_EXTROOT),-DCMAKE_UBIFS_EXTROOT=y)
+CMAKE_OPTIONS += $(if $(CONFIG_FSTOOLS_OVL_MOUNT_FULL_ACCESS_TIME),-DCMAKE_OVL_MOUNT_FULL_ACCESS_TIME=y)
+CMAKE_OPTIONS += $(if $(CONFIG_FSTOOLS_OVL_MOUNT_COMPRESS_ZLIB),-DCMAKE_OVL_MOUNT_COMPRESS_ZLIB=y)
 
 define Package/fstools
   SECTION:=base
@@ -52,6 +55,20 @@ define Package/fstools/config
 		default y
 		help
 			This option makes it possible to use extroot functionality if the root filesystem resides on an UBIFS partition
+
+	config FSTOOLS_OVL_MOUNT_FULL_ACCESS_TIME
+		depends on PACKAGE_fstools
+		bool "Full access time accounting"
+		default n
+		help
+			This option enables the full access time accounting (warning: it will increase the flash writes).
+
+	config FSTOOLS_OVL_MOUNT_COMPRESS_ZLIB
+		depends on PACKAGE_fstools
+		bool "Compress using zlib"
+		default n
+		help
+			This option enables the compression using zlib on the storage device.
 endef
 
 define Package/block-mount
@@ -59,6 +76,13 @@ define Package/block-mount
   CATEGORY:=Base system
   TITLE:=Block device mounting and checking
   DEPENDS:=+ubox +libubox +libuci +libblobmsg-json +libjson-c
+endef
+
+define Package/blockd
+  SECTION:=base
+  CATEGORY:=Base system
+  TITLE:=Block device automounting
+  DEPENDS:=+block-mount +fstools +libubus +kmod-fs-autofs4
 endef
 
 define Package/fstools/install
@@ -74,14 +98,21 @@ define Package/block-mount/install
 	$(INSTALL_DIR) $(1)/sbin $(1)/lib $(1)/usr/sbin $(1)/etc/hotplug.d/block $(1)/etc/init.d/ $(1)/etc/uci-defaults/
 
 	$(INSTALL_BIN) ./files/fstab.init $(1)/etc/init.d/fstab
-	$(INSTALL_DATA) ./files/fstab.default $(1)/etc/uci-defaults/10-fstab
-	$(INSTALL_DATA) ./files/mount.hotplug $(1)/etc/hotplug.d/block/10-mount
+	$(INSTALL_CONF) ./files/fstab.default $(1)/etc/uci-defaults/10-fstab
+	$(INSTALL_CONF) ./files/mount.hotplug $(1)/etc/hotplug.d/block/10-mount
+	$(INSTALL_CONF) ./files/media-change.hotplug  $(1)/etc/hotplug.d/block/00-media-change
 
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/block $(1)/sbin/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libblkid-tiny.so $(1)/lib/
 	$(LN) ../../sbin/block $(1)/usr/sbin/swapon
 	$(LN) ../../sbin/block $(1)/usr/sbin/swapoff
 
+endef
+
+define Package/blockd/install
+	$(INSTALL_DIR) $(1)/sbin $(1)/etc/init.d/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/blockd $(1)/sbin/
+	$(INSTALL_BIN) ./files/blockd.init $(1)/etc/init.d/blockd
 endef
 
 define Build/InstallDev
@@ -93,3 +124,4 @@ endef
 
 $(eval $(call BuildPackage,fstools))
 $(eval $(call BuildPackage,block-mount))
+$(eval $(call BuildPackage,blockd))
