@@ -40,7 +40,7 @@
 #   Send a signal to a service instance (or all instances)
 #
 
-. $IPKG_INSTROOT/usr/share/libubox/jshn.sh
+. "$IPKG_INSTROOT/usr/share/libubox/jshn.sh"
 
 PROCD_RELOAD_DELAY=1000
 _PROCD_SERVICE=
@@ -51,7 +51,7 @@ procd_lock() {
 
 	flock -n 1000 &> /dev/null
 	if [ "$?" != "0" ]; then
-		exec 1000>/var/lock/procd_${service_name}.lock
+		exec 1000>"$IPKG_INSTROOT/var/lock/procd_${service_name}.lock"
 		flock 1000
 		if [ "$?" != "0" ]; then
 			logger "warning: procd flock for $service_name failed"
@@ -195,6 +195,10 @@ _procd_add_jail() {
 		sysfs)	json_add_boolean "sysfs" "1";;
 		ronly)	json_add_boolean "ronly" "1";;
 		requirejail)	json_add_boolean "requirejail" "1";;
+		netns)	json_add_boolean "netns" "1";;
+		userns)	json_add_boolean "userns" "1";;
+		cgroupsns)	json_add_boolean "cgroupsns" "1";;
+		console)	json_add_boolean "console" "1";;
 		esac
 	done
 	json_add_object "mount"
@@ -243,7 +247,7 @@ _procd_set_param() {
 		env|data|limits)
 			_procd_add_table "$type" "$@"
 		;;
-		command|netdev|file|respawn|watch)
+		command|netdev|file|respawn|watch|watchdog)
 			_procd_add_array "$type" "$@"
 		;;
 		error)
@@ -257,7 +261,8 @@ _procd_set_param() {
 		reload_signal)
 			json_add_int "$type" $(kill -l "$1")
 		;;
-		pidfile|user|group|seccomp|capabilities|facility)
+		pidfile|user|group|seccomp|capabilities|facility|\
+		extroot|overlaydir|tmpoverlaysize)
 			json_add_string "$type" "$1"
 		;;
 		stdout|stderr|no_new_privs)
@@ -373,7 +378,7 @@ _procd_append_param() {
 		env|data|limits)
 			_procd_add_table_data "$@"
 		;;
-		command|netdev|file|respawn|watch)
+		command|netdev|file|respawn|watch|watchdog)
 			_procd_add_array_data "$@"
 		;;
 		error)
@@ -524,10 +529,10 @@ uci_validate_section()
 	local _result
 	local _error
 	shift; shift; shift
-	_result=`/sbin/validate_data "$_package" "$_type" "$_name" "$@" 2> /dev/null`
+	_result=$(/sbin/validate_data "$_package" "$_type" "$_name" "$@" 2> /dev/null)
 	_error=$?
 	eval "$_result"
-	[ "$_error" = "0" ] || `/sbin/validate_data "$_package" "$_type" "$_name" "$@" 1> /dev/null`
+	[ "$_error" = "0" ] || $(/sbin/validate_data "$_package" "$_type" "$_name" "$@" 1> /dev/null)
 	return $_error
 }
 

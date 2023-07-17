@@ -1,0 +1,38 @@
+--- a/plug/hotplug.c
++++ b/plug/hotplug.c
+@@ -23,6 +23,7 @@
+ #include <libubox/blobmsg_json.h>
+ #include <libubox/json_script.h>
+ #include <libubox/uloop.h>
++#include <libubox/utils.h>
+ #include <json-c/json.h>
+ 
+ #include <errno.h>
+@@ -108,18 +109,6 @@ static char *hotplug_msg_find_var(struct
+ 	return NULL;
+ }
+ 
+-static void mkdir_p(char *dir)
+-{
+-	char *l = strrchr(dir, '/');
+-
+-	if (l) {
+-		*l = '\0';
+-		mkdir_p(dir);
+-		*l = '/';
+-		mkdir(dir, 0755);
+-	}
+-}
+-
+ static void chgrp_error(const char *group, const char *target, const char *failed)
+ {
+ 	ERROR("cannot set group %s for %s (%s: %d)\n",
+@@ -163,7 +152,7 @@ static void handle_makedev(struct blob_a
+ 		char *d = strdup(blobmsg_get_string(tb[0]));
+ 
+ 		d = dirname(d);
+-		mkdir_p(d);
++		mkdir_p(d, 0755);
+ 		free(d);
+ 
+ 		if (!strcmp(subsystem, "block"))

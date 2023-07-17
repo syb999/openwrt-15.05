@@ -11,10 +11,10 @@ PKG_NAME:=procd
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL=http://git.openwrt.org/project/procd.git
-PKG_SOURCE_DATE:=2017-08-08
-PKG_SOURCE_VERSION:=66be6a23d71fcc068d6b813f0e0be2f8f0b6aa88
-PKG_MD5SUM:=ce449a82fb52fac88f84d4c8ff872ec7
+PKG_SOURCE_URL:=https://git.openwrt.org/project/procd.git
+PKG_SOURCE_DATE:=2020-03-07
+PKG_SOURCE_VERSION:=09b9bd828981a4f9271f8906f7b6f5af04e1a6f9
+PKG_MD5SUM:=ef0730637caa8c7727ace9c684d032b7
 CMAKE_INSTALL:=1
 
 PKG_LICENSE:=GPL-2.0
@@ -22,8 +22,7 @@ PKG_LICENSE_FILES:=
 
 PKG_MAINTAINER:=John Crispin <john@phrozen.org>
 
-PKG_FLAGS:=nonshared
-
+PKG_ASLR_PIE_REGULAR:=1
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_TARGET_INIT_PATH CONFIG_KERNEL_SECCOMP \
 	CONFIG_NAND_SUPPORT CONFIG_PROCD_SHOW_BOOT CONFIG_PROCD_ZRAM_TMPFS \
@@ -39,18 +38,29 @@ endif
 CMAKE_OPTIONS += -DEARLY_PATH="$(TARGET_INIT_PATH)"
 TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-lrt)
 
+TARGET_CFLAGS += -flto
+TARGET_LDFLAGS += -flto
+
 define Package/procd
   SECTION:=base
   CATEGORY:=Base system
-  DEPENDS:=+ubusd +ubus +libjson-script +ubox +USE_GLIBC:librt +libubox +libubus +NAND_SUPPORT:procd-nand +libblobmsg-json +libjson-c
+  DEPENDS:=+ubusd +ubus +libjson-script +ubox +USE_GLIBC:librt +libubox +libubus +NAND_SUPPORT:procd-nand +libblobmsg-json +libjson-c +jshn
   TITLE:=OpenWrt system process manager
+  USERID:=:dialout=20 :audio=29
 endef
 
 define Package/procd-ujail
   SECTION:=base
   CATEGORY:=Base system
-  DEPENDS:=@KERNEL_NAMESPACES +@KERNEL_UTS_NS +@KERNEL_IPC_NS +@KERNEL_PID_NS +libubox +libblobmsg-json
+  DEPENDS:=@KERNEL_NAMESPACES +@KERNEL_UTS_NS +@KERNEL_IPC_NS +@KERNEL_PID_NS +libubox +libubus +libblobmsg-json
   TITLE:=OpenWrt process jail helper
+endef
+
+define Package/procd-ujail-console
+  SECTION:=base
+  CATEGORY:=Base system
+  DEPENDS:=+procd-ujail +libubus +libubox
+  TITLE:=OpenWrt process jail console
 endef
 
 define Package/procd-seccomp
@@ -58,6 +68,14 @@ define Package/procd-seccomp
   CATEGORY:=Base system
   DEPENDS:=@arm||@armeb||@mips||@mipsel||@i386||@x86_64 @!TARGET_uml @KERNEL_SECCOMP +libubox +libblobmsg-json
   TITLE:=OpenWrt process seccomp helper + utrace
+endef
+
+define Package/uxc
+  SECTION:=base
+  CATEGORY:=Base system
+  DEPENDS:=+procd-ujail +libubus +libubox +libblobmsg-json
+  TITLE:=OpenWrt container management
+  MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 endef
 
 define Package/procd-nand
@@ -107,9 +125,8 @@ ifdef CONFIG_PACKAGE_procd-ujail
   CMAKE_OPTIONS += -DJAIL_SUPPORT=1
 endif
 
-ifdef CONFIG_PACKAGE_procd-seccomp
-  CMAKE_OPTIONS += -DSECCOMP_SUPPORT=1 -DUTRACE_SUPPORT=1
-endif
+SECCOMP=$(if $(CONFIG_PACKAGE_procd-seccomp),1,0)
+CMAKE_OPTIONS += -DSECCOMP_SUPPORT=$(SECCOMP) -DUTRACE_SUPPORT=$(SECCOMP)
 
 define Package/procd/install
 	$(INSTALL_DIR) $(1)/sbin $(1)/etc $(1)/lib/functions
@@ -117,7 +134,7 @@ define Package/procd/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/{init,procd,askfirst,udevtrigger} $(1)/sbin/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libsetlbf.so $(1)/lib
 	$(INSTALL_BIN) ./files/reload_config $(1)/sbin/
-	$(INSTALL_DATA) ./files/hotplug*.json $(1)/etc/
+	$(INSTALL_CONF) ./files/hotplug*.json $(1)/etc/
 	$(INSTALL_DATA) ./files/procd.sh $(1)/lib/functions/
 endef
 
@@ -126,10 +143,16 @@ define Package/procd-ujail/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ujail $(1)/sbin/
 endef
 
+define Package/procd-ujail-console/install
+	$(INSTALL_DIR) $(1)/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ujail-console $(1)/sbin/
+endef
+
 define Package/procd-seccomp/install
 	$(INSTALL_DIR) $(1)/sbin $(1)/lib
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libpreload-seccomp.so $(1)/lib
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/utrace $(1)/sbin/
+	$(LN) utrace $(1)/sbin/seccomp-trace
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libpreload-trace.so $(1)/lib
 endef
 
@@ -146,8 +169,21 @@ define Package/procd-nand-firstboot/install
 	$(INSTALL_DATA) ./files/nand-preinit.sh $(1)/lib/preinit/60-nand-firstboot.sh
 endef
 
+define Package/uxc/conffiles
+/etc/uxc
+endef
+
+define Package/uxc/install
+	$(INSTALL_DIR) $(1)/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/uxc $(1)/sbin/
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/uxc.init $(1)/etc/init.d/uxc
+endef
+
 $(eval $(call BuildPackage,procd))
 $(eval $(call BuildPackage,procd-ujail))
+$(eval $(call BuildPackage,procd-ujail-console))
 $(eval $(call BuildPackage,procd-seccomp))
 $(eval $(call BuildPackage,procd-nand))
 $(eval $(call BuildPackage,procd-nand-firstboot))
+$(eval $(call BuildPackage,uxc))

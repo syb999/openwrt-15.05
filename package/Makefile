@@ -107,6 +107,7 @@ $(curdir)/install: $(TMP_DIR)/.build
 		$(call file_copy,$(TOPDIR)/files/.,$(TARGET_DIR)); \
 	fi
 	@mkdir -p $(TARGET_DIR)/etc/rc.d
+	@mkdir -p $(TARGET_DIR)/var/lock
 	@( \
 		cd $(TARGET_DIR); \
 		for script in ./usr/lib/opkg/info/*.postinst; do \
@@ -122,6 +123,7 @@ $(curdir)/install: $(TMP_DIR)/.build
 	@-find $(TARGET_DIR) -name '.#*' | $(XARGS) rm -f
 	rm -f $(TARGET_DIR)/usr/lib/opkg/info/*.postinst*
 	rm -f $(TARGET_DIR)/usr/lib/opkg/info/*.prerm*
+	rm -f $(TARGET_DIR)/var/lock/*.lock
 	$(if $(CONFIG_CLEAN_IPKG),rm -rf $(TARGET_DIR)/usr/lib/opkg)
 	$(call mklibs)
 
