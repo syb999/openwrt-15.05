@@ -1,12 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=procmail
-PKG_VERSION:=3.22
+PKG_VERSION:=3.24
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://www.procmail.org/
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=1678ea99b973eb77eda4ecf6acae53f1
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/BuGlessRB/procmail.git
+PKG_SOURCE_VERSION:=07e769f07102767242edf835e995db6646bba373
+PKG_MD5SUM:=7d0d877dc481bb86f6ea3baa19530b06
 
 include $(INCLUDE_DIR)/package.mk
 
