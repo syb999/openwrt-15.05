@@ -235,6 +235,9 @@ struct rtl8367b_initval {
 	u16 val;
 };
 
+#define RTL8367B_MIB_RXB_ID		0	/* IfInOctets */
+#define RTL8367B_MIB_TXB_ID		28	/* IfOutOctets */
+
 static struct rtl8366_mib_counter
 rtl8367b_mib_counters[RTL8367B_NUM_MIB_COUNTERS] = {
 	{0,   0, 4, "ifInOctets"			},
@@ -1302,6 +1305,13 @@ static int rtl8367b_sw_reset_port_mibs(struct switch_dev *dev,
 				RTL8367B_MIB_CTRL0_PORT_RESET_MASK(port % 8));
 }
 
+static int rtl8367b_sw_get_port_stats(struct switch_dev *dev, int port,
+                                        struct switch_port_stats *stats)
+{
+	return (rtl8366_sw_get_port_stats(dev, port, stats,
+				RTL8367B_MIB_TXB_ID, RTL8367B_MIB_RXB_ID));
+}
+
 static struct switch_attr rtl8367b_globals[] = {
 	{
 		.type = SWITCH_TYPE_INT,
@@ -1382,6 +1392,7 @@ static const struct switch_dev_ops rtl8367b_sw_ops = {
 	.set_port_pvid = rtl8366_sw_set_port_pvid,
 	.reset_switch = rtl8366_sw_reset_switch,
 	.get_port_link = rtl8367b_sw_get_port_link,
+	.get_port_stats = rtl8367b_sw_get_port_stats,
 };
 
 static int rtl8367b_switch_init(struct rtl8366_smi *smi)
@@ -1390,7 +1401,7 @@ static int rtl8367b_switch_init(struct rtl8366_smi *smi)
 	int err;
 
 	dev->name = "RTL8367B";
-	dev->cpu_port = RTL8367B_CPU_PORT_NUM;
+	dev->cpu_port = smi->cpu_port;
 	dev->ports = RTL8367B_NUM_PORTS;
 	dev->vlans = RTL8367B_NUM_VIDS;
 	dev->ops = &rtl8367b_sw_ops;
@@ -1516,15 +1527,17 @@ static int  rtl8367b_probe(struct platform_device *pdev)
 	int err;
 
 	smi = rtl8366_smi_probe(pdev);
-	if (!smi)
-		return -ENODEV;
+	if (IS_ERR(smi))
+		return PTR_ERR(smi);
 
 	smi->clk_delay = 1500;
 	smi->cmd_read = 0xb9;
 	smi->cmd_write = 0xb8;
 	smi->ops = &rtl8367b_smi_ops;
-	smi->cpu_port = RTL8367B_CPU_PORT_NUM;
 	smi->num_ports = RTL8367B_NUM_PORTS;
+	if (of_property_read_u32(pdev->dev.of_node, "cpu_port", &smi->cpu_port)
+	    || smi->cpu_port >= smi->num_ports)
+		smi->cpu_port = RTL8367B_CPU_PORT_NUM;
 	smi->num_vlan_mc = RTL8367B_NUM_VLANS;
 	smi->mib_counters = rtl8367b_mib_counters;
 	smi->num_mib_counters = ARRAY_SIZE(rtl8367b_mib_counters);
@@ -1574,7 +1587,6 @@ static void rtl8367b_shutdown(struct platform_device *pdev)
 #ifdef CONFIG_OF
 static const struct of_device_id rtl8367b_match[] = {
 	{ .compatible = "realtek,rtl8367b" },
-	{ .compatible = "rtl8367b" },
 	{},
 };
 MODULE_DEVICE_TABLE(of, rtl8367b_match);
@@ -1595,7 +1607,7 @@ static struct platform_driver rtl8367b_driver = {
 
 module_platform_driver(rtl8367b_driver);
 
-MODULE_DESCRIPTION(RTL8367B_DRIVER_DESC);
+MODULE_DESCRIPTION("Realtek RTL8367B ethernet switch driver");
 MODULE_AUTHOR("Gabor Juhos <juhosg@openwrt.org>");
 MODULE_LICENSE("GPL v2");
 MODULE_ALIAS("platform:" RTL8367B_DRIVER_NAME);
