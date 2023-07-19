@@ -56,6 +56,12 @@ define Device/zbt-wg2626
   IMAGE_SIZE := $(ralink_default_fw_size_16M)
 endef
 
+define Device/mt7621-rtl8367s
+  DTS := MT7621-RTL8367S
+  IMAGE_SIZE := $(ralink_default_fw_size_16M)
+endef
+TARGET_DEVICES += mt7621-rtl8367s
+
 define Device/newifi-d1
   DTS := Newifi-D1
   IMAGE_SIZE := $(ralink_default_fw_size_32M)

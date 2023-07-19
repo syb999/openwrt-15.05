@@ -157,6 +157,10 @@ case $board in
 		set_wifi_led "mr-102n:green:wlan"
 		set_usb_led "mr-102n:green:usb"
 		;;
+	mt7621-rtl8367s)
+		ucidef_set_led_switch "lan" "lan" "green:lan" "switch1" "0x0f"
+		ucidef_set_led_switch "wan" "wan" "green:wan" "switch1" "0x10"
+		;;
 	mzk-w300nh2)
 		set_wifi_led "mzkw300nh2:amber:wlan"
 		;;

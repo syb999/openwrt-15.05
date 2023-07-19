@@ -502,6 +502,9 @@ ramips_board_detect() {
 	*"HiWiFi HC5962")
 		name="hc5962"
 		;;
+	*"MT7621-RTL8367S")
+		name="mt7621-rtl8367s"
+		;;
 	*"Newifi-D1")
 		name="newifi-d1"
 		;;
