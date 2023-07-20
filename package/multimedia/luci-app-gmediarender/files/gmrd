@@ -4,12 +4,14 @@
 while true
 do
 	gmr_init
-	todolist="iqiyi qq.com bilivideo youku bdxiguavod hifuntv.com xiaoniangao music upgcxcode"
+	todolist="iqiyi qq.com bilivideo youku bdxiguavod hifuntv.com xiaoniangao music upgcxcode gtimg.com"
 	for t in $todolist;do
 		gotod=$t
 		if [ ! -z "$(cat /tmp/xgmrender.tmp.find | grep $t)" ];then
 			if [ $t == "upgcxcode" ];then
 				gotod="bilivideo"
+			elif [ $t == "gtimg.com" ];then
+				gotod="qq.com"
 			fi
 			break
 		fi
