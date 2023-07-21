@@ -32,6 +32,7 @@ platform_check_image() {
 	awm003-evb | \
 	bc2 | \
 	broadway | \
+	bussiness-router | \
 	carambola | \
 	cf-wr800n | \
 	d105 | \

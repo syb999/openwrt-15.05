@@ -1,0 +1,85 @@
+/dts-v1/;
+
+/include/ "mt7621.dtsi"
+
+/ {
+	compatible = "bussiness-router", "mediatek,mt7621-soc";
+	model = "Bussiness Router";
+
+	chosen {
+		bootargs = "console=ttyS0,57600";
+	};
+
+	palmbus@1E000000 {
+		spi@b00 {
+			status = "okay";
+
+			m25p80@0 {
+				#address-cells = <1>;
+				#size-cells = <1>;
+				compatible = "jedec,spi-nor";
+				reg = <0 0>;
+				spi-max-frequency = <10000000>;
+
+				partition@0 {
+					label = "u-boot";
+					reg = <0x0 0x30000>;
+				};
+
+				partition@30000 {
+					label = "u-boot-env";
+					reg = <0x30000 0x10000>;
+				};
+
+				factory: partition@40000 {
+					label = "factory";
+					reg = <0x40000 0x10000>;
+				};
+
+				partition@50000 {
+					label = "firmware";
+					reg = <0x50000 0x1fb0000>;
+				};
+
+			};
+		};
+
+		i2c@900 {
+			compatible = "ralink,i2c-mt7621";
+			reg = <0x900 0x100>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&i2c_pins>;
+			status = "okay";
+		};
+	};
+
+	ethernet@1e100000 {
+		mtd-mac-address = <&factory 0xe000>;
+	};
+
+	gpio-keys-polled {
+		compatible = "gpio-keys-polled";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		poll-interval = <20>;
+
+		reset {
+			label = "reset";
+			gpios = <&gpio0 3 1>;
+			linux,code = <0x198>;
+		};
+
+	};
+
+	pinctrl {
+		state_default: pinctrl0 {
+			gpio {
+				ralink,group = "i2c", "jtag", "uart2", "uart3";
+				ralink,function = "gpio";
+			};
+		};
+	};
+
+};
