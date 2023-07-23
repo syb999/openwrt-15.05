@@ -25,7 +25,7 @@ endif
 
 tools-$(BUILD_TOOLCHAIN) += gmp mpfr mpc libelf
 tools-y += m4 libtool autoconf autoconf-archive automake flex bison pkgconf sed mklibs
-tools-y += sstrip make-ext4fs e2fsprogs mtd-utils mkimage
+tools-y += sstrip make-ext4fs e2fsprogs expat mtd-utils mkimage
 tools-y += firmware-utils patch-image patch quilt yaffs2 flock padjffs2
 tools-y += mm-macros meson missing-macros xz ninja cmake scons bc findutils gengetopt patchelf
 tools-$(CONFIG_TARGET_orion_generic) += wrt350nv2-builder upslug2
