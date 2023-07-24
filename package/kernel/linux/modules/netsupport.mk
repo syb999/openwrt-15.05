@@ -1006,3 +1006,24 @@ define KernelPackage/rxrpc/description
 endef
 
 $(eval $(call KernelPackage,rxrpc))
+
+define KernelPackage/inet-diag
+  SUBMENU:=$(NETWORK_SUPPORT_MENU)
+  TITLE:=INET diag support for ss utility
+  KCONFIG:= \
+	CONFIG_INET_DIAG \
+	CONFIG_INET_TCP_DIAG \
+	CONFIG_INET_UDP_DIAG
+  FILES:= \
+	$(LINUX_DIR)/net/ipv4/inet_diag.ko \
+	$(LINUX_DIR)/net/ipv4/tcp_diag.ko \
+	$(LINUX_DIR)/net/ipv4/udp_diag.ko
+  AUTOLOAD:=$(call AutoLoad,31,inet_diag tcp_diag udp_diag)
+endef
+
+define KernelPackage/inet-diag/description
+Support for INET (TCP, DCCP, etc) socket monitoring interface used by
+native Linux tools such as ss.
+endef
+
+$(eval $(call KernelPackage,inet-diag))
