@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=alist
-PKG_VERSION:=2.6.1
+PKG_VERSION:=3.23.0
 PKG_RELEASE:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -25,47 +25,34 @@ define Package/$(PKG_NAME)/description
   A file list program that supports multiple storage.
 endef
 
-define Package/$(PKG_NAME)/conffiles
-/etc/alist/
-/etc/config/alist
-endef
-
-define Package/$(PKG_NAME)/postinst
-#!/bin/sh
-if [ -z "$${IPKG_INSTROOT}" ]; then
-	[ -f /etc/uci-defaults/alist ] && /etc/uci-defaults/alist && rm -f /etc/uci-defaults/alist
-fi
-endef
-
-
 ifeq ($(ARCH),x86_64)
 	alist_ARCH:=x86_64
-	PKG_MD5SUM:=bdeeaa18b2010be1a99eca57ab79b53d
+	PKG_MD5SUM:=dd6c954014586fb87528f27d4700bbac
 endif
 
 ifeq ($(ARCH),mipsel)
 ifdef CONFIG_TARGET_ramips_mt7621
 	alist_ARCH:=mt7621
-	PKG_MD5SUM:=e12692c8357f18bc9350803b002a567a
+	PKG_MD5SUM:=bf2f4f386ce505c572c8c9ae6b838295
 else
 	alist_ARCH:=mt7620
-	PKG_MD5SUM:=b531d9b084327c057ab107a45e8b9330
+	PKG_MD5SUM:=9923eab4f1fccaa66f36a93eff341a5d
 endif
 endif
 
 ifeq ($(ARCH),mips)
 	alist_ARCH:=ar71xx
-	PKG_MD5SUM:=de69fe2997b0c805cc4b74ca4946ad00
+	PKG_MD5SUM:=4f243a6ebb901f1c41847bda893b94ae
 endif
 
 ifeq ($(ARCH),arm)
 ifdef CONFIG_TARGET_kirkwood
 	alist_ARCH:=kirkwood
-	PKG_MD5SUM:=dc50bec06b90c9214a6dda65479b0d69
+	PKG_MD5SUM:=2b9a3a4777b1cbf61686a88da243c86a
 endif
 endif
 
-PKG_SOURCE_URL:=https://raw.githubusercontent.com/syb999/cc-upx/master/alist/$(alist_ARCH)
+PKG_SOURCE_URL:=https://raw.githubusercontent.com/syb999/cc-upx/master/alist3/$(alist_ARCH)
 PKG_SOURCE:=alist
 
 define Build/Prepare
@@ -76,12 +63,8 @@ define Build/Compile
 endef
 
 define Package/$(PKG_NAME)/install
-	$(INSTALL_DIR) $(1)/etc/alist $(1)/etc/config $(1)/etc/init.d $(1)/etc/uci-defaults $(1)/usr/bin
+	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/alist $(1)/usr/bin
-	$(INSTALL_CONF) ./files/alist.config $(1)/etc/config/alist
-	$(INSTALL_BIN) ./files/alist.init $(1)/etc/init.d/alist
-	$(INSTALL_BIN) ./files/alist.uci-default $(1)/etc/uci-defaults/alist
-	$(INSTALL_CONF) ./files/data.db $(1)/etc/alist/data.db
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
