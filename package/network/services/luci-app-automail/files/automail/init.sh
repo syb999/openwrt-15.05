@@ -54,6 +54,7 @@ fi
 
 if [ ! -f "/etc/fetchmailrc" ];then
 	fetchmail_conf
+	chmod 0700 /etc/fetchmailrc
 fi
 
 /etc/init.d/automail enable

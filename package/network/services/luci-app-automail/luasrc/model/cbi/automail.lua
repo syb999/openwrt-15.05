@@ -10,26 +10,33 @@ s:tab("basic", translate("Basic Setting"))
 information = s:taboption("basic", DummyValue, "information", translate("information"))
 information.description = translate("Please configure msmtp,mutt and fetchmail first")
 
-recipient = s:taboption("basic", Value, "recipient", translate("Recipient mailbox"))
-recipient:depends({ msmtp_ready = "1", mutt_ready = "1", fetchmail_ready = "1" })
-recipient.datatype = "string"
-recipient.default = "??????@163.com"
-recipient.rmempty = true
-
-schedules = s:taboption("basic", Flag, "schedules", translate("Scheduled tasks"))
-schedules:depends({ msmtp_ready = "1", mutt_ready = "1" })
-schedules.default = 0
-
 init = s:taboption("basic", Button, "init", translate("One-click init"))
 init.rmempty = true
 init.inputstyle = "apply"
 function init.write(self, section)
 	luci.util.exec("sh /usr/automail/init.sh >/dev/null 2>&1 &")
+	luci.util.exec("uci set automail.@automail[0].init_ok=ok >/dev/null 2>&1 &")
+	luci.util.exec("uci commit automail >/dev/null 2>&1 &")
 end
 init.description = translate("After configuration, please initialize first")
 
+init_ok = s:taboption("basic", Value, "init_ok", translate("      "))
+init_ok.rmempty = true
+init_ok.datatype = "string"
+init_ok.default = ""
+
+recipient = s:taboption("basic", Value, "recipient", translate("Recipient mailbox"))
+recipient:depends("init_ok", "ok")
+recipient.datatype = "string"
+recipient.default = "??????@163.com"
+recipient.rmempty = true
+
+schedules = s:taboption("basic", Flag, "schedules", translate("Scheduled tasks"))
+schedules:depends("init_ok", "ok")
+schedules.default = 0
+
 sendbuttion = s:taboption("basic", Button, "sendbuttion", translate("One-click send mail"))
-sendbuttion:depends({ msmtp_ready = "1", mutt_ready = "1" })
+sendbuttion:depends("init_ok", "ok")
 sendbuttion.rmempty = true
 sendbuttion.inputstyle = "apply"
 function sendbuttion.write(self, section)
@@ -37,7 +44,7 @@ function sendbuttion.write(self, section)
 end
 
 receivebutton = s:taboption("basic", Button, "receivebutton", translate("One-click receive mail"))
-receivebutton:depends("fetchmail_ready", "1")
+receivebutton:depends("init_ok", "ok")
 receivebutton.rmempty = true
 receivebutton.inputstyle = "apply"
 function receivebutton.write(self, section)
@@ -47,9 +54,9 @@ end
 local auto_mail = "/usr/automail/automail.sh"
 local amnxfs = require "nixio.fs"
 script = s:taboption("basic", TextValue, "auto_mail")
-script:depends({ msmtp_ready = "1", mutt_ready = "1" })
+script:depends("init_ok", "ok")
 script.description = translate("Mail script")
-script.rows = 10
+script.rows = 12
 script.wrap = "off"
 script.cfgvalue = function(self, section)
 	return amnxfs.readfile(auto_mail) or ""
