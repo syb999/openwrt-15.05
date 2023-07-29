@@ -8,6 +8,26 @@ function mutt_conf() {
 	echo -e "set sendmail=\"/usr/bin/msmtp\"\nset use_from=yes\nset from=\"$(uci get automail.@automail[0].mutt_from)\"\nset realname=\"$(uci get automail.@automail[0].mutt_realname)\"\nset editor=\"vi\"\nset charset=\"utf-8\"\nset send_charset=\"utf-8\"\n" > /etc/Muttrc
 }
 
+function fetchmail_conf() {
+	F_pollset=""
+	F_limit=""
+	if [ "$(uci get automail.@automail[0].fetchmail_maillist)" = "mail.163.com" ];then
+		if [ "$(uci get automail.@automail[0].fetchmail_protocollist)" = "pop3" ];then
+			F_pollset="pop.163.com"
+		fi
+	fi
+	if [ "$(uci get automail.@automail[0].fetchmail_highrisk 2>&1)" = "1" ];then
+		F_keep="no keep"
+	else
+		F_keep="keep"
+	fi
+	if [ "$(uci get automail.@automail[0].fetchmail_limit)" != "" ];then
+		F_limit="limit $(uci get automail.@automail[0].fetchmail_limit)"
+	fi
+	echo -e "poll ${F_pollset}\nprotocol $(uci get automail.@automail[0].fetchmail_protocollist)\nuser \"$(uci get automail.@automail[0].fetchmail_user)\"\npassword \"$(uci get automail.@automail[0].fetchmail_password)\"\nsslproto \"\"\n${F_keep}\n\nmda \"/usr/bin/procmail -d %T \"\n${F_limit}\n" > /etc/fetchmailrc
+
+}
+
 if [ -f "/etc/msmtprc" ];then
 	mv /etc/msmtprc /etc/msmtprc.backup
 fi
@@ -16,12 +36,20 @@ if [ -f "/etc/Muttrc" ];then
 	mv /etc/Muttrc /etc/Muttrc.backup
 fi
 
+if [ -f "/etc/fetchmailrc" ];then
+	mv /etc/fetchmailrc /etc/fetchmailrc.backup
+fi
+
 if [ ! -f "/etc/msmtprc" ];then
 	msmtp_conf
 fi
 
 if [ ! -f "/etc/Muttrc" ];then
 	mutt_conf
+fi
+
+if [ ! -f "/etc/fetchmailrc" ];then
+	fetchmail_conf
 fi
 
 /etc/init.d/automail enable

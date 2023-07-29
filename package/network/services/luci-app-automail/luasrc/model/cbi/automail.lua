@@ -2,13 +2,13 @@ mp = Map("automail", "Auto Mail Sender","")
 
 mp:section(SimpleSection).template  = "automail_status"
 
-s = mp:section(TypedSection, "automail", "", translate("An easy config mailsender server"))
+s = mp:section(TypedSection, "automail", "", translate("An easy-to-configure mail server for sending and receiving emails"))
 s.anonymous = true
 s.addremove = false
 
 s:tab("basic", translate("Basic Setting"))
 information = s:taboption("basic", DummyValue, "information", translate("information"))
-information.description = translate("Please configure msmtp and mutt first")
+information.description = translate("Please configure msmtp,mutt and fetchmail first")
 
 recipient = s:taboption("basic", Value, "recipient", translate("Recipient mailbox"))
 recipient:depends({ msmtp_ready = "1", mutt_ready = "1" })
@@ -28,11 +28,20 @@ function init.write(self, section)
 end
 init.description = translate("After configuration, please initialize first")
 
-senderbuttion = s:taboption("basic", Button, "senderbuttion", translate("One-click send mail"))
-senderbuttion.rmempty = true
-senderbuttion.inputstyle = "apply"
-function senderbuttion.write(self, section)
+sendbuttion = s:taboption("basic", Button, "sendbuttion", translate("One-click send mail"))
+sendbuttion:depends({ msmtp_ready = "1", mutt_ready = "1" })
+sendbuttion.rmempty = true
+sendbuttion.inputstyle = "apply"
+function sendbuttion.write(self, section)
 	luci.util.exec("sh /usr/automail/automail.sh >/dev/null 2>&1")
+end
+
+receivebutton = s:taboption("basic", Button, "receivebutton", translate("One-click receive mail"))
+receivebutton:depends("fetchmail_ready", "1")
+receivebutton.rmempty = true
+receivebutton.inputstyle = "apply"
+function receivebutton.write(self, section)
+	luci.util.exec("fetchmail -f /etc/fetchmailrc >/dev/null 2>&1")
 end
 
 local auto_mail = "/usr/automail/automail.sh"
@@ -40,7 +49,7 @@ local amnxfs = require "nixio.fs"
 script = s:taboption("basic", TextValue, "auto_mail")
 script:depends({ msmtp_ready = "1", mutt_ready = "1" })
 script.description = translate("Mail script")
-script.rows = 20
+script.rows = 10
 script.wrap = "off"
 script.cfgvalue = function(self, section)
 	return amnxfs.readfile(auto_mail) or ""
@@ -188,5 +197,53 @@ f5_list:value("6,0", translate("Weekend"))
 f5_list.default = "1-5"
 f5_list.rempty  = true
 
+s:tab("fetchmail", translate("fetchmail setting"))
+fetchmail_info = s:taboption("fetchmail", DummyValue, "fetchmail_info", translate("information"))
+fetchmail_info.description = translate("Fetchmail is a Open-source software used to download e-mail from a remote mail server")
+
+fetchmail_info2 = s:taboption("fetchmail", DummyValue, "fetchmail2_info", translate("information"))
+fetchmail_info2.description = translate("Please check the email in the/var/spool/mail directory")
+
+fetchmail_maillist = s:taboption("fetchmail", ListValue, "fetchmail_maillist", translate("Email Server List"))
+fetchmail_maillist.placeholder = "mail.163.com"
+fetchmail_maillist:value("mail.163.com", translate("Email 163"))
+fetchmail_maillist.default = "mail.163.com"
+fetchmail_maillist.rempty  = true
+
+fetchmail_protocollist = s:taboption("fetchmail", ListValue, "fetchmail_protocollist", translate("email protocol"))
+fetchmail_protocollist.placeholder = "pop3"
+fetchmail_protocollist:value("pop3")
+fetchmail_protocollist.default = "pop3"
+fetchmail_protocollist.rempty  = true
+
+fetchmail_user = s:taboption("fetchmail", Value, "fetchmail_user", translate("Mailbox username"))
+fetchmail_user.datatype = "string"
+fetchmail_user.default = "??????"
+fetchmail_user.rmempty = false
+fetchmail_user.description = translate("Please type your mailbox username")
+
+fetchmail_password = s:taboption("fetchmail", Value, "fetchmail_password", translate("Mailbox password"))
+fetchmail_password.datatype = "string"
+fetchmail_password.password = false
+fetchmail_password.default = "??????"
+fetchmail_password.rmempty = false
+fetchmail_password.description = translate("Please type your mailbox password, viewed in mailbox settings")
+
+fetchmail_highrisk = s:taboption("fetchmail", Flag, "fetchmail_highrisk", translate("High risk setting"))
+fetchmail_highrisk.rmempty = true
+
+fetchmail_nokeep = s:taboption("fetchmail", Flag, "fetchmail_nokeep", translate("After downloading the email, the original email on the server will be deleted"))
+fetchmail_nokeep:depends("fetchmail_highrisk", "1")
+fetchmail_nokeep.rmempty = true
+fetchmail_nokeep.default = 0
+
+fetchmail_limit = s:taboption("fetchmail", Value, "fetchmail_limit", translate("Limit the data size of messages"))
+fetchmail_limit.datatype = "uinteger"
+fetchmail_limit.default = 30720
+fetchmail_limit.rmempty = false
+fetchmail_limit.description = translate("The default value of 30720, means that every email larger than 30KB will not be downloaded")
+
+fetchmail_ready = s:taboption("fetchmail", Flag, "fetchmail_ready", translate("Setup ready"))
+fetchmail_ready.default = 0
 
 return mp

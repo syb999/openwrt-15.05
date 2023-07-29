@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-automail
-PKG_VERSION:=20230223
+PKG_VERSION:=20230729
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -9,9 +9,9 @@ define Package/luci-app-automail
  	SECTION:=luci
 	CATEGORY:=LuCI
 	SUBMENU:=3. Applications
-	TITLE:=LuCI Support for automail sender
+	TITLE:=LuCI Support for automail
 	PKGARCH:=all
-	DEPENDS:=+mutt +msmtp
+	DEPENDS:=+mutt +msmtp +fetchmail
 endef
 
 define Build/Prepare
