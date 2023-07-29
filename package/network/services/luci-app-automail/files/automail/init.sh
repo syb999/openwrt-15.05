@@ -15,6 +15,10 @@ function fetchmail_conf() {
 		if [ "$(uci get automail.@automail[0].fetchmail_protocollist)" = "pop3" ];then
 			F_pollset="pop.163.com"
 		fi
+	elif [ "$(uci get automail.@automail[0].fetchmail_maillist)" = "mail.qq.com" ];then
+		if [ "$(uci get automail.@automail[0].fetchmail_protocollist)" = "pop3" ];then
+			F_pollset="pop.qq.com"
+		fi
 	fi
 	if [ "$(uci get automail.@automail[0].fetchmail_highrisk 2>&1)" = "1" ];then
 		F_keep="no keep"

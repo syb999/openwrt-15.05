@@ -130,6 +130,12 @@ msgstr "电子邮件服务器列表"
 msgid "Email 163"
 msgstr "163邮箱"
 
+msgid "Email QQ"
+msgstr "QQ邮箱"
+
+msgid "Please login to mail.qq.com first to set an authorization code"
+msgstr "请先登录mail.qq.com设置登录授权码（代替密码）"
+
 msgid "email protocol"
 msgstr "邮件协议"
 
@@ -137,7 +143,7 @@ msgid "High risk setting"
 msgstr "高风险设置"
 
 msgid "Limit the data size of messages"
-msgstr "限制邮件的数据大小(单位：字节)"
+msgstr "限制邮件的数据大小（单位：字节）"
 
 msgid "The default value of 30720, means that every email larger than 30KB will not be downloaded"
 msgstr "默认值30720，意味着不会下载每封大于30KB的电子邮件"

@@ -11,7 +11,7 @@ information = s:taboption("basic", DummyValue, "information", translate("informa
 information.description = translate("Please configure msmtp,mutt and fetchmail first")
 
 recipient = s:taboption("basic", Value, "recipient", translate("Recipient mailbox"))
-recipient:depends({ msmtp_ready = "1", mutt_ready = "1" })
+recipient:depends({ msmtp_ready = "1", mutt_ready = "1", fetchmail_ready = "1" })
 recipient.datatype = "string"
 recipient.default = "??????@163.com"
 recipient.rmempty = true
@@ -207,8 +207,13 @@ fetchmail_info2.description = translate("Please check the email in the/var/spool
 fetchmail_maillist = s:taboption("fetchmail", ListValue, "fetchmail_maillist", translate("Email Server List"))
 fetchmail_maillist.placeholder = "mail.163.com"
 fetchmail_maillist:value("mail.163.com", translate("Email 163"))
+fetchmail_maillist:value("mail.qq.com", translate("Email QQ"))
 fetchmail_maillist.default = "mail.163.com"
 fetchmail_maillist.rempty  = true
+
+fetchmail_infoqq = s:taboption("fetchmail", DummyValue, "fetchmail_infoqq", translate("information"))
+fetchmail_infoqq:depends("fetchmail_maillist", "mail.qq.com")
+fetchmail_infoqq.description = translate("Please login to mail.qq.com first to set an authorization code")
 
 fetchmail_protocollist = s:taboption("fetchmail", ListValue, "fetchmail_protocollist", translate("email protocol"))
 fetchmail_protocollist.placeholder = "pop3"
