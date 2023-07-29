@@ -30,14 +30,8 @@ define Package/zbar/description
   for reading barcodes from various sources.
 endef
 
-TARGET_CFLAGS += \
-	$(FPIC) \
-	-I$(STAGING_DIR)/usr/include \
-	-I$(STAGING_DIR)/include \
-
-TARGET_LDFLAGS += \
-	-L$(STAGING_DIR)/usr/lib \
-	-L$(STAGING_DIR)/lib \
+TARGET_CFLAGS += -fPIC
+TARGET_LDFLAGS += -liconv
 
 define Build/Configure
 	$(call Build/Configure/Default, \
