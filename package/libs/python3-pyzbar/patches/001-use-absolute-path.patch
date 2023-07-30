@@ -1,0 +1,13 @@
+The 'ldd /usr/lib/libzbar.so' command in Chaos Calmer version causes a Segmentation fault error, which prevents pyzbar from running. This issue can be resolved by using the absolute path."
+
+--- a/pyzbar/zbar_library.py
++++ b/pyzbar/zbar_library.py
+@@ -60,7 +60,7 @@ def load():
+             dependencies, libzbar = load_objects(Path(__file__).parent)
+     else:
+         # Assume a shared library on the path
+-        path = find_library('zbar')
++        path = "/usr/lib/libzbar.so"
+         if not path:
+             raise ImportError('Unable to find zbar shared library')
+         libzbar = cdll.LoadLibrary(path)
