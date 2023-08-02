@@ -1,0 +1,9 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2023 OpenWrt.org
+
+START=99
+
+start() {
+        service_start /usr/bin/fetchmail_set
+}
+

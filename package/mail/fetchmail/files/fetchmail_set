@@ -1,0 +1,10 @@
+#!/bin/sh
+
+mkdir -p /var/spool/mail
+
+if [ ! -d "/root/Mail" ];then
+	mkdir -p /root/Mail
+fi
+
+chmod 0700 /etc/fetchmailrc
+

@@ -28,7 +28,7 @@ function fetchmail_conf() {
 	if [ "$(uci get automail.@automail[0].fetchmail_limit)" != "" ];then
 		F_limit="limit $(uci get automail.@automail[0].fetchmail_limit)"
 	fi
-	echo -e "poll ${F_pollset}\nprotocol $(uci get automail.@automail[0].fetchmail_protocollist)\nuser \"$(uci get automail.@automail[0].fetchmail_user)\"\npassword \"$(uci get automail.@automail[0].fetchmail_password)\"\nsslproto \"\"\n${F_keep}\n\nmda \"/usr/bin/procmail -d %T \"\n${F_limit}\n" > /etc/fetchmailrc
+	echo -e "poll ${F_pollset}\nprotocol $(uci get automail.@automail[0].fetchmail_protocollist)\nuser \"$(uci get automail.@automail[0].fetchmail_user)\"\npassword \"$(uci get automail.@automail[0].fetchmail_password)\"\nsslproto \"\"\n${F_keep}\n\nmda \"/usr/bin/process_mail\"\n${F_limit}\n" > /etc/fetchmailrc
 
 }
 

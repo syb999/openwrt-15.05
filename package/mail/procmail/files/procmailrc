@@ -1,0 +1,4 @@
+CHARSET="utf-8"
+MAILDIR=$HOME/Mail
+
+

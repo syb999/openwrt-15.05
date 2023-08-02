@@ -36,6 +36,8 @@ define Package/procmail/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/procmail $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/formail $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/etc
+	$(INSTALL_CONF) ./files/procmailrc $(1)/etc
 endef
 
 $(eval $(call BuildPackage,procmail))

@@ -1,0 +1,45 @@
+#!/bin/sh
+
+output_dir="/var/spool/mail"
+
+write_to_file() {
+    if [ -n "$output_file" ]; then
+        echo -e "$output" > "$output_file"
+    fi
+}
+
+decode_mime_string() {
+    local decoded_string
+    decoded_string=$(echo "$1" | sed -E 's/=\?([^?]+)\?([BQbq])\?([^?]+)\?=/\3/g')
+
+    if echo "$1" | grep -qE '^=\?[^?]+\?[Bb]\?'; then
+        decoded_string=$(echo "$decoded_string" | tr -d '\n' | base64 -d)
+    elif echo "$1" | grep -qE '^=\?[^?]+\?[Qq]\?'; then
+        decoded_string=$(echo "$decoded_string" | sed -E 's/=([0-9A-Fa-f]{2})/\\x\1/g' | xxd -r -p)
+    fi
+
+    echo "$decoded_string"
+}
+
+while IFS= read -r line; do
+    if echo "$line" | grep -q "^From: "; then
+        if [ -n "$from_line" ]; then
+            write_to_file
+        fi
+        from_line=$(echo "$line" | sed -E 's/^From: .*<(.+)>$/\1/')
+        from_line=$(decode_mime_string "$from_line")
+        output=""
+    elif echo "$line" | grep -q "^Date: "; then
+        date_str=$(echo "$line" | sed -E 's/^Date: .+ ([0-9]{1,2} [A-Za-z]{3} [0-9]{4} [0-9]{2}:[0-9]{2}:[0-9]{2}).*$/\1/')
+        date_str=$(echo "$date_str" | sed 's/ /-/g')
+    fi
+
+    output="$output$line\n"
+done
+
+if [ -n "$from_line" ]; then
+    output_file="$output_dir/mail_${date_str}_From_${from_line}.txt"
+fi
+
+write_to_file
+
