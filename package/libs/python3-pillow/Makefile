@@ -7,19 +7,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python3-pillow
-PKG_VERSION:=7.2.0
+PKG_VERSION:=8.2.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=Pillow-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/3e/02/b09732ca4b14405ff159c470a612979acfc6e8645dc32f83ea0129709f7a
-PKG_MD5SUM:=3da1c992ce9fcc67597d83036f591712
+PYPI_NAME:=Pillow
+PKG_HASH:=21c03274a9f59b9c00419852a8faebe7
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/python3-pillow-$(PKG_VERSION)
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
+PKG_LICENSE:=HPND
+PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:python:pillow
 
+include $(TOPDIR)/feeds/packages/lang/python/pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include $(TOPDIR)/feeds/packages/lang/python/python3-package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 define Package/python3-pillow
   SUBMENU:=Python
@@ -27,24 +28,25 @@ define Package/python3-pillow
   CATEGORY:=Languages
   TITLE:=The friendly PIL fork
   URL:=https://python-pillow.org/
-  DEPENDS:=+libfreetype +libjpeg-turbo +libtiff +zlib +libxcb +libwebp +python3-light
+  DEPENDS:=+libfreetype +libjpeg-turbo +libtiff +libwebp +libxcb +zlib +python3
 endef
 
 define Package/python3-pillow/description
   The friendly PIL fork
 endef
 
-define Build/Compile
-	$(call Build/Compile/Py3Mod,., \
-		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)", \
-	)
-endef
+PYTHON3_PKG_SETUP_GLOBAL_ARGS += build_ext \
+	--enable-zlib \
+	--enable-jpeg \
+	--enable-tiff \
+	--enable-webp \
+	--enable-freetype \
+	--disable-lcms \
+	--disable-webpmux \
+	--disable-jpeg2000 \
+	--disable-imagequant \
+	--disable-platform-guessing
 
-define Package/python3-pillow/install
-	$(INSTALL_DIR) $(1)$(PYTHON3_PKG_DIR)
-	$(CP) \
-	    $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/* \
-	    $(1)$(PYTHON3_PKG_DIR)
-endef
-
+$(eval $(call Py3Package,python3-pillow))
 $(eval $(call BuildPackage,python3-pillow))
+$(eval $(call BuildPackage,python3-pillow-src))
