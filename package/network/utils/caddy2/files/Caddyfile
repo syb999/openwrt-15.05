@@ -4,13 +4,8 @@ encode gzip
 basicauth {
 admin JDJhJDEwJFRKOUM1eVZKbkg4LzA0OWMvRElsbi5sSmx1TFpXcExaNmV2ajRFUGkvSUkuYTY5S05JOUlt
 }
-root * /mnt/sda1
+root * /mnt
 
 route {
-	rewrite /webdav /webdav/
-	webdav /webdav/* {
-		prefix /webdav
-	}
 	file_server browse
-}
 }
