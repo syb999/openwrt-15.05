@@ -1,0 +1,31 @@
+--- a/cmd/caddy/main.go
++++ b/cmd/caddy/main.go
+@@ -33,6 +33,7 @@ import (
+ 
+ 	// plug in Caddy modules here
+ 	_ "github.com/caddyserver/caddy/v2/modules/standard"
++	_ "github.com/mholt/caddy-webdav"
+ )
+ 
+ func main() {
+--- a/go.mod
++++ 2/go.mod
+@@ -16,6 +16,7 @@ require (
+ 	github.com/klauspost/cpuid/v2 v2.2.5
+ 	github.com/mastercactapus/proxyprotocol v0.0.4
+ 	github.com/mholt/acmez v1.2.0
++	github.com/mholt/caddy-webdav v0.0.0-20221206035947-75a603bc6978
+ 	github.com/prometheus/client_golang v1.14.0
+ 	github.com/quic-go/quic-go v0.37.3
+ 	github.com/smallstep/certificates v0.24.3-rc.5
+--- a/go.sum
++++ b/go.sum
+@@ -718,6 +718,8 @@ github.com/mgutz/ansi v0.0.0-20200706080
+ github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d/go.mod h1:01TrycV0kFyexm33Z7vhZRXopbI8J3TDReVlkTgMUxE=
+ github.com/mholt/acmez v1.2.0 h1:1hhLxSgY5FvH5HCnGUuwbKY2VQVo8IU7rxXKSnZ7F30=
+ github.com/mholt/acmez v1.2.0/go.mod h1:VT9YwH1xgNX1kmYY89gY8xPJC84BFAisjo8Egigt4kE=
++github.com/mholt/caddy-webdav v0.0.0-20221206035947-75a603bc6978 h1:+yiDdLr2PPZZHSwuOBYf8ACRA4waDw+YVp/Jgbeuo0Y=
++github.com/mholt/caddy-webdav v0.0.0-20221206035947-75a603bc6978/go.mod h1:h8j63EKifhmpIwrWcCVjsqCKEal6WIHKL5QAOvpLRCk=
+ github.com/micromdm/scep/v2 v2.1.0 h1:2fS9Rla7qRR266hvUoEauBJ7J6FhgssEiq2OkSKXmaU=
+ github.com/micromdm/scep/v2 v2.1.0/go.mod h1:BkF7TkPPhmgJAMtHfP+sFTKXmgzNJgLQlvvGoOExBcc=
+ github.com/miekg/dns v1.0.14/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=
