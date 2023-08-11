@@ -325,6 +325,14 @@ OPENSSL_TARGET:=linux-$(call qstrip,$(CONFIG_ARCH))-openwrt
 
 STAMP_CONFIGURED := $(STAMP_CONFIGURED)_$(shell echo $(OPENSSL_OPTIONS) | mkhash md5)
 
+define Package/openssl-dev
+  SECTION:=devel
+  CATEGORY:=Development
+  SUBMENU:=Libraries
+  DEPENDS:=libopenssl
+  TITLE:=Development files for the openssl library
+endef
+
 define Build/Configure
 	(cd $(PKG_BUILD_DIR); \
 		./Configure $(OPENSSL_TARGET) \
@@ -395,9 +403,22 @@ define Package/openssl-util/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/openssl $(1)/usr/bin/
 endef
 
+define Package/openssl-dev/install
+	$(INSTALL_DIR) $(1)/usr/include/openssl
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/include/openssl/* \
+	  $(1)/usr/include/openssl
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libcrypto.a $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libssl.a $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc \
+	  $(1)/usr/lib/pkgconfig/
+endef
+
 $(eval $(call BuildPackage,libopenssl))
 $(eval $(call BuildPackage,libopenssl-conf))
 $(eval $(call BuildPackage,libopenssl-afalg))
 $(eval $(call BuildPackage,libopenssl-devcrypto))
 $(eval $(call BuildPackage,libopenssl-padlock))
 $(eval $(call BuildPackage,openssl-util))
+$(eval $(call BuildPackage,openssl-dev))
