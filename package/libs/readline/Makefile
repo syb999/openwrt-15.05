@@ -43,6 +43,14 @@ define Package/libreadline/description
 	history expansion on previous commands.
 endef
 
+define Package/libreadline-dev
+  SECTION:=devel
+  CATEGORY:=Development
+  SUBMENU:=Libraries
+  DEPENDS:=libreadline
+  TITLE:=Development files for the libreadline library
+endef
+
 CONFIGURE_ARGS += --with-curses --disable-install-examples
 
 CONFIGURE_VARS += \
@@ -64,5 +72,18 @@ define Package/libreadline/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{history,readline}.so.* $(1)/usr/lib/
 endef
 
+define Package/libreadline-dev/install
+	$(INSTALL_DIR) $(1)/usr/include/readline
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/include/readline/*.h \
+	  $(1)/usr/include/readline
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libhistory.a $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libreadline.a $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/readline.pc \
+	  $(1)/usr/lib/pkgconfig/
+endef
+
 $(eval $(call HostBuild))
 $(eval $(call BuildPackage,libreadline))
+$(eval $(call BuildPackage,libreadline-dev))
