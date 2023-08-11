@@ -51,6 +51,14 @@ define Package/libncursesw
   VARIANT:=libncursesw
 endef
 
+define Package/libncurses-dev
+  SECTION:=devel
+  CATEGORY:=Development
+  SUBMENU:=Libraries
+  DEPENDS:=zlib
+  TITLE:=Development files for the ncurses library
+endef
+
 TARGET_CFLAGS += $(FPIC)
 
 CONFIGURE_ARGS += \
@@ -165,6 +173,18 @@ define Build/InstallDev
 endef
 endif
 
+define Package/libncurses-dev/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/include
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/*.h $(1)/usr/include/
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.a $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(INSTALL_DATA) ./pkgconfig/*.pc \
+	  $(1)/usr/lib/pkgconfig/
+endef
+
 define Host/Compile
 	$(MAKE) -C $(HOST_BUILD_DIR) libs
 	$(MAKE) -C $(HOST_BUILD_DIR)/progs tic
@@ -177,4 +197,5 @@ endef
 $(eval $(call HostBuild))
 $(eval $(call BuildPackage,terminfo))
 $(eval $(call BuildPackage,libncurses))
+$(eval $(call BuildPackage,libncurses-dev))
 $(eval $(call BuildPackage,libncursesw))
