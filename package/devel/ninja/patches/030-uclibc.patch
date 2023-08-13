@@ -1,0 +1,40 @@
+--- a/src/subprocess-posix.cc
++++ b/src/subprocess-posix.cc
+@@ -66,7 +66,6 @@ bool Subprocess::Start(SubprocessSet* se
+   if (err != 0)
+     Fatal("posix_spawn_file_actions_init: %s", strerror(err));
+ 
+-  err = posix_spawn_file_actions_addclose(&action, output_pipe[0]);
+   if (err != 0)
+     Fatal("posix_spawn_file_actions_addclose: %s", strerror(err));
+ 
+@@ -91,19 +90,14 @@ bool Subprocess::Start(SubprocessSet* se
+     // No need to posix_spawnattr_setpgroup(&attr, 0), it's the default.
+ 
+     // Open /dev/null over stdin.
+-    err = posix_spawn_file_actions_addopen(&action, 0, "/dev/null", O_RDONLY,
+-          0);
+     if (err != 0) {
+       Fatal("posix_spawn_file_actions_addopen: %s", strerror(err));
+     }
+ 
+-    err = posix_spawn_file_actions_adddup2(&action, output_pipe[1], 1);
+     if (err != 0)
+       Fatal("posix_spawn_file_actions_adddup2: %s", strerror(err));
+-    err = posix_spawn_file_actions_adddup2(&action, output_pipe[1], 2);
+     if (err != 0)
+       Fatal("posix_spawn_file_actions_adddup2: %s", strerror(err));
+-    err = posix_spawn_file_actions_addclose(&action, output_pipe[1]);
+     if (err != 0)
+       Fatal("posix_spawn_file_actions_addclose: %s", strerror(err));
+     // In the console case, output_pipe is still inherited by the child and
+@@ -117,9 +111,6 @@ bool Subprocess::Start(SubprocessSet* se
+   if (err != 0)
+     Fatal("posix_spawnattr_setflags: %s", strerror(err));
+ 
+-  const char* spawned_args[] = { "/bin/sh", "-c", command.c_str(), NULL };
+-  err = posix_spawn(&pid_, "/bin/sh", &action, &attr,
+-        const_cast<char**>(spawned_args), environ);
+   if (err != 0)
+     Fatal("posix_spawn: %s", strerror(err));
+ 
