@@ -1,7 +1,7 @@
 #!/bin/sh
 . /usr/nvr/nvrcommon
 
-while true;do
+function main() {
 	test_totaldays
 	test_loopwrite
 	for a in $_all_clients;do
@@ -30,4 +30,13 @@ while true;do
 		fi
 	done
 	sleep $(expr ${_rec_time} - 6)
+}
+
+while true;do
+	detect_disk
+	if [ "${_disk}" = "" ];then
+		main
+	else
+		sleep 10
+	fi
 done

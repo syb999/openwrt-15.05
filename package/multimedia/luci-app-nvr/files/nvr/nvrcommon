@@ -11,6 +11,15 @@ _fulldisk="$(uci get nvr.config.fulldisk)"
 _disk_usage="$(echo $(uci get nvr.config.disk_usage) | cut -d '%' -f1)"
 _enable_audio="$(uci get nvr.config.enable_audio)"
 _all_clients=""
+_disk=""
+
+function detect_disk() {
+	if [ "$(df -hT | grep "${_disk_name}")" = "" ];then
+		_disk="X"
+	else
+		_disk=""
+	fi
+}
 
 function test_totaldays() {
 	_dir_nums="$(ls -l $_directory | grep "^d" | wc -l)"
