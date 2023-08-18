@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-ffmpegtool
-PKG_VERSION:=20230716
+PKG_VERSION:=20230819
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -12,11 +12,6 @@ define Package/luci-app-ffmpegtool
 	TITLE:=LuCI Support for ffmpeg
 	PKGARCH:=all
 	DEPENDS:=+ffmpeg +ffprobe
-endef
-
-define Build/Prepare
-	$(foreach po,$(wildcard ${CURDIR}/luasrc/i18n/*.po), \
-		po2lmo $(po) $(PKG_BUILD_DIR)/$(patsubst %.po,%.lmo,$(notdir $(po)));)
 endef
 
 define Build/Compile

@@ -13,6 +13,7 @@ function ucidefault() {
 	uci set ffmpegtool.@ffmpegtool[0].audio_ready="0" 2>&1 >/dev/null
 	uci set ffmpegtool.@ffmpegtool[0].image_effects="0" 2>&1 >/dev/null
 	uci set ffmpegtool.@ffmpegtool[0].video_frames="" 2>&1 >/dev/null
+	uci set ffmpegtool.@ffmpegtool[0].vide_duration="" 2>&1 >/dev/null
 	uci set ffmpegtool.@ffmpegtool[0].picture_tovideo="" 2>&1 >/dev/null
 	uci set ffmpegtool.@ffmpegtool[0].screen_merge="" 2>&1 >/dev/null
 	uci set ffmpegtool.@ffmpegtool[0].video_mute="" 2>&1 >/dev/null
@@ -140,8 +141,13 @@ function pictovideo() {
 	if [ ! -n "$(uci get ffmpegtool.@ffmpegtool[0].video_frames_num)" ];then
 		uci set ffmpegtool.@ffmpegtool[0].video_frames_num=1
 		uci commit ffmpegtool
-		param_frames_num="-r $(uci get ffmpegtool.@ffmpegtool[0].video_frames_num)"
 	fi
+	param_frames_num="-r $(uci get ffmpegtool.@ffmpegtool[0].video_frames_num)"
+	if [ ! -n "$(uci get ffmpegtool.@ffmpegtool[0].vide_duration)" ];then
+		uci set ffmpegtool.@ffmpegtool[0].vide_duration=10
+		uci commit ffmpegtool
+	fi
+	param_duration="-t $(uci get ffmpegtool.@ffmpegtool[0].vide_duration)"
 	ffprobe "$input" > /tmp/ffmpeg.log 2>&1
 	echo " $input ----> 图片转换视频中... " >> /tmp/ffmpeg.log
 	if [ "$(uci get ffmpegtool.@ffmpegtool[0].image_effects)" == "1" ];then
