@@ -33,29 +33,21 @@ function fetchmail_conf() {
 }
 
 if [ -f "/etc/msmtprc" ];then
-	mv /etc/msmtprc /etc/msmtprc.backup
+	mv -f /etc/msmtprc /etc/msmtprc.backup
 fi
 
 if [ -f "/etc/Muttrc" ];then
-	mv /etc/Muttrc /etc/Muttrc.backup
+	mv -f /etc/Muttrc /etc/Muttrc.backup
 fi
 
 if [ -f "/etc/fetchmailrc" ];then
-	mv /etc/fetchmailrc /etc/fetchmailrc.backup
+	mv -f /etc/fetchmailrc /etc/fetchmailrc.backup
 fi
 
-if [ ! -f "/etc/msmtprc" ];then
-	msmtp_conf
-fi
-
-if [ ! -f "/etc/Muttrc" ];then
-	mutt_conf
-fi
-
-if [ ! -f "/etc/fetchmailrc" ];then
-	fetchmail_conf
-	chmod 0700 /etc/fetchmailrc
-fi
+msmtp_conf
+mutt_conf
+fetchmail_conf
+chmod 0700 /etc/fetchmailrc
 
 /etc/init.d/automail enable
 /etc/init.d/automail start

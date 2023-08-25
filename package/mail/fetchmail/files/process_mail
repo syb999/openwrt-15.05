@@ -38,7 +38,7 @@ while IFS= read -r line; do
 done
 
 if [ -n "$from_line" ]; then
-    output_file="$output_dir/mail_${date_str}_From_${from_line}.txt"
+    output_file="$output_dir/mail_${date_str}_From_${from_line}.md"
 fi
 
 write_to_file

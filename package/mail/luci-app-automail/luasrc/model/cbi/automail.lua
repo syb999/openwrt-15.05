@@ -48,7 +48,7 @@ receivebutton:depends("init_ok", "ok")
 receivebutton.rmempty = true
 receivebutton.inputstyle = "apply"
 function receivebutton.write(self, section)
-	luci.util.exec("fetchmail -f /etc/fetchmailrc >/dev/null 2>&1")
+	luci.util.exec("fetchmail -f /etc/fetchmailrc >/dev/null 2>&1 &")
 end
 
 local auto_mail = "/usr/automail/automail.sh"

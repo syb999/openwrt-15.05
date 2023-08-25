@@ -23,7 +23,7 @@ define Package/fetchmail
   SECTION:=mail
   CATEGORY:=Mail
   TITLE:=Remote mail retriever
-  DEPENDS:=+libopenssl +libpcre +libcrypt +libbz2 +procmail
+  DEPENDS:=+libopenssl +libpcre +libbz2 +procmail
 endef
 
 define Package/fetchmail/description
