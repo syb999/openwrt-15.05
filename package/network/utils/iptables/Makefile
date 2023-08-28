@@ -12,10 +12,9 @@ PKG_NAME:=iptables
 PKG_VERSION:=1.6.2
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://git.netfilter.org/iptables
-PKG_SOURCE_VERSION:=c16bdec15137b241586310d0e61bc88cc3726004
-PKG_MD5SUM:=ce11fa0cb9188765987e7adc39e21ee1
+PKG_SOURCE_URL:=https://netfilter.org/projects/iptables/files
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_MD5SUM:=7d2b7847e4aa8832a18437b8a4c1873d
 
 PKG_FIXUP:=autoreconf
 PKG_FLAGS:=nonshared
@@ -37,7 +36,7 @@ define Package/iptables/Default
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=Firewall
-  URL:=http://netfilter.org/
+  URL:=https://netfilter.org/
 endef
 
 define Package/iptables/Module
