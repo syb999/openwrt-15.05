@@ -10,7 +10,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=iptables
 PKG_VERSION:=1.6.2
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=https://netfilter.org/projects/iptables/files
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -88,6 +88,7 @@ IP firewall administration tool.
   - DNAT
   - DROP
   - REJECT
+  - FLOWOFFLOAD
   - LOG
   - MARK
   - MASQUERADE
@@ -105,7 +106,7 @@ IP firewall administration tool.
 endef
 
 define Package/iptables-mod-conntrack-extra
-$(call Package/iptables/Module, +kmod-ipt-conntrack-extra)
+$(call Package/iptables/Module, +kmod-ipt-conntrack-extra +kmod-ipt-raw)
   TITLE:=Extra connection tracking extensions
 endef
 
