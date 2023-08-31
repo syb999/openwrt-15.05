@@ -1,0 +1,19 @@
+--- a/ext/prometheus-cpp-lite-1.0/core/include/prometheus/text_serializer.h
++++ b/ext/prometheus-cpp-lite-1.0/core/include/prometheus/text_serializer.h
+@@ -18,11 +18,12 @@ class TextSerializer {
+ 
+   // Write a double as a string, with proper formatting for infinity and NaN
+   static void WriteValue (std::ostream& out, double value) {
+-    if (std::isnan(value))
++    if (value != value)
+       out << "Nan";
+-    else if (std::isinf(value))
+-      out << (value < 0 ? "-Inf" : "+Inf");
+-
++    else if (value == std::numeric_limits<double>::infinity())
++      out << "+Inf";
++    else if (value == -std::numeric_limits<double>::infinity())
++      out << "-Inf";
+     else {
+ 
+       std::array<char, 128> buffer;

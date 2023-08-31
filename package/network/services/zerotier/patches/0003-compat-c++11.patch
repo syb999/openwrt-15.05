@@ -1,0 +1,49 @@
+--- a/make-linux.mk
++++ b/make-linux.mk
+@@ -59,7 +59,7 @@ ifeq ($(ZT_SANITIZE),1)
+ endif
+ ifeq ($(ZT_DEBUG),1)
+ 	override CFLAGS+=-Wall -Wno-deprecated -g -O -pthread $(INCLUDES) $(DEFS)
+-	override CXXFLAGS+=-Wall -Wno-deprecated -g -O -std=c++17 -pthread $(INCLUDES) $(DEFS)
++	override CXXFLAGS+=-Wall -Wno-deprecated -g -O -std=c++11 -pthread $(INCLUDES) $(DEFS)
+ 	ZT_TRACE=1
+ 	RUSTFLAGS=
+ 	# The following line enables optimization for the crypto code, since
+@@ -69,7 +69,7 @@ else
+ 	CFLAGS?=-O3 -fstack-protector
+ 	override CFLAGS+=-Wall -Wno-deprecated -pthread $(INCLUDES) -DNDEBUG $(DEFS)
+ 	CXXFLAGS?=-O3 -fstack-protector
+-	override CXXFLAGS+=-Wall -Wno-deprecated -std=c++17 -pthread $(INCLUDES) -DNDEBUG $(DEFS)
++	override CXXFLAGS+=-Wall -Wno-deprecated -std=c++11 -pthread $(INCLUDES) -DNDEBUG $(DEFS)
+ 	LDFLAGS=-Wl,-z,relro,-z,now
+ 	RUSTFLAGS=--release
+ endif
+@@ -309,7 +309,7 @@ ifeq ($(ZT_OFFICIAL),1)
+ endif
+ 
+ ifeq ($(ZT_CONTROLLER),1)
+-	override CXXFLAGS+=-Wall -Wno-deprecated -std=c++17 -pthread $(INCLUDES) -DNDEBUG $(DEFS)
++	override CXXFLAGS+=-Wall -Wno-deprecated -std=c++11 -pthread $(INCLUDES) -DNDEBUG $(DEFS)
+ 	override LDLIBS+=-Lext/libpqxx-7.7.3/install/ubuntu22.04/lib -lpqxx -lpq ext/hiredis-1.0.2/lib/ubuntu22.04/libhiredis.a ext/redis-plus-plus-1.3.3/install/ubuntu22.04/lib/libredis++.a -lssl -lcrypto
+ 	override DEFS+=-DZT_CONTROLLER_USE_LIBPQ
+ 	override INCLUDES+=-I/usr/include/postgresql -Iext/libpqxx-7.7.3/install/ubuntu22.04/include -Iext/hiredis-1.0.2/include/ -Iext/redis-plus-plus-1.3.3/install/ubuntu22.04/include/sw/
+@@ -368,7 +368,7 @@ zerotier-cli: zerotier-one
+ $(ONE_OBJS): zeroidc
+ 
+ libzerotiercore.a:	FORCE
+-	make CFLAGS="-O3 -fstack-protector -fPIC" CXXFLAGS="-O3 -std=c++17 -fstack-protector -fPIC" $(CORE_OBJS)
++	make CFLAGS="-O3 -fstack-protector -fPIC" CXXFLAGS="-O3 -std=c++11 -fstack-protector -fPIC" $(CORE_OBJS)
+ 	ar rcs libzerotiercore.a $(CORE_OBJS)
+ 	ranlib libzerotiercore.a
+ 
+--- a/service/OneService.cpp
++++ b/service/OneService.cpp
+@@ -93,8 +93,7 @@ extern "C" {
+ }
+ #endif
+ 
+ #include <nlohmann/json.hpp>
+-#include <inja/inja.hpp>
+ 
+ using json = nlohmann::json;
+ 
