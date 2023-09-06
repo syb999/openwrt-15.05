@@ -1,0 +1,29 @@
+#!/bin/sh /etc/rc.common
+
+START=79
+
+boot() {
+	. /lib/panel_ap/panel_ap.sh
+
+	local base panel_ap_init
+
+	base=`uci get panel_ap_config.@status[0].base 2>/dev/null`
+	base=$((base+0))
+	panel_ap_init=`uci get panel_ap_config.@status[0].panel_ap_init 2>/dev/null`
+	panel_ap_init=$((panel_ap_init+0))
+
+	test $base -lt 1 && {
+		panel_ap_init=1
+	}
+
+	test $panel_ap_init -lt 1 && {
+		panel_ap_first_init
+
+		panel_ap_init=1
+	}
+
+	uci set panel_ap_config.@status[0].panel_ap_init=$panel_ap_init
+	uci commit panel_ap_config
+
+	/etc/init.d/panel_ap-init disable
+}

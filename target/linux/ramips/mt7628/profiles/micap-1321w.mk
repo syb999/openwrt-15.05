@@ -8,7 +8,7 @@
 define Profile/MICAP-1321W
 	NAME:=ZYXEL MiCAP-1321W
 	PACKAGES:=\
-		kmod-mt7603
+		kmod-mt7603 panel-ap-setup
 endef
 
 define Profile/MICAP-1321W/Description
