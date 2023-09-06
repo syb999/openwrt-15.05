@@ -1,0 +1,215 @@
+https://github.com/openwrt/mt76/commit/256789bb400fee67bb34f3595fff5693e1292083
+https://github.com/openwrt/mt76/commit/0664d39039c2973014a36ef831a4b71e798a4c61
+https://github.com/openwrt/mt76/commit/3ef66fc7c714d2dc1db3c0f599b25be567a209fa
+https://github.com/openwrt/mt76/commit/d70546462b7b51ebc2bcdd5c534fdf3465be62a4
+https://github.com/openwrt/mt76/commit/72b87836d368685a093b927229209b61d8272541
+https://github.com/openwrt/mt76/commit/53edfc7aaa3466da53b2833d254c4bd2f814fa3f
+https://github.com/openwrt/mt76/commit/93e3fce916c62d06892d41bf00d0f4c2926c9a0b
+
+--- a/mac80211.c
++++ b/mac80211.c
+@@ -324,8 +324,8 @@ mt76_phy_init(struct mt76_phy *phy, stru
+ 	wiphy_ext_feature_set(wiphy, NL80211_EXT_FEATURE_AIRTIME_FAIRNESS);
+ 	wiphy_ext_feature_set(wiphy, NL80211_EXT_FEATURE_AQL);
+ 
+-	wiphy->available_antennas_tx = dev->phy.antenna_mask;
+-	wiphy->available_antennas_rx = dev->phy.antenna_mask;
++	wiphy->available_antennas_tx = phy->antenna_mask;
++	wiphy->available_antennas_rx = phy->antenna_mask;
+ 
+ 	hw->txq_data_size = sizeof(struct mt76_txq);
+ 	hw->uapsd_max_sp_len = IEEE80211_WMM_IE_STA_QOSINFO_SP_ALL;
+@@ -340,8 +340,12 @@ mt76_phy_init(struct mt76_phy *phy, stru
+ 	ieee80211_hw_set(hw, SUPPORTS_CLONED_SKBS);
+ 	ieee80211_hw_set(hw, SUPPORTS_AMSDU_IN_AMPDU);
+ 	ieee80211_hw_set(hw, SUPPORTS_REORDERING_BUFFER);
+-	ieee80211_hw_set(hw, TX_AMSDU);
+-	ieee80211_hw_set(hw, TX_FRAG_LIST);
++
++	if (!(dev->drv->drv_flags & MT_DRV_AMSDU_OFFLOAD)) {
++		ieee80211_hw_set(hw, TX_AMSDU);
++		ieee80211_hw_set(hw, TX_FRAG_LIST);
++	}
++
+ 	ieee80211_hw_set(hw, MFP_CAPABLE);
+ 	ieee80211_hw_set(hw, AP_LINK_PS);
+ 	ieee80211_hw_set(hw, REPORTS_TX_ACK_STATUS);
+@@ -808,10 +812,11 @@ mt76_rx_signal(struct mt76_rx_status *st
+ 	for (chains = status->chains; chains; chains >>= 1, chain_signal++) {
+ 		int cur, diff;
+ 
+-		if (!(chains & BIT(0)))
++		cur = *chain_signal;
++		if (!(chains & BIT(0)) ||
++		    cur > 0)
+ 			continue;
+ 
+-		cur = *chain_signal;
+ 		if (cur > signal)
+ 			swap(cur, signal);
+ 
+@@ -878,6 +883,9 @@ mt76_check_ccmp_pn(struct sk_buff *skb)
+ 	if (!(status->flag & RX_FLAG_DECRYPTED))
+ 		return 0;
+ 
++	if (status->flag & RX_FLAG_ONLY_MONITOR)
++		return 0;
++
+ 	if (!wcid || !wcid->rx_check_pn)
+ 		return 0;
+ 
+--- a/mt76.h
++++ b/mt76.h
+@@ -196,8 +196,8 @@ struct mt76_queue_ops {
+ 		     u32 ring_base);
+ 
+ 	int (*tx_queue_skb)(struct mt76_dev *dev, struct mt76_queue *q,
+-			    struct sk_buff *skb, struct mt76_wcid *wcid,
+-			    struct ieee80211_sta *sta);
++			    enum mt76_txq_id qid, struct sk_buff *skb,
++			    struct mt76_wcid *wcid, struct ieee80211_sta *sta);
+ 
+ 	int (*tx_queue_skb_raw)(struct mt76_dev *dev, struct mt76_queue *q,
+ 				struct sk_buff *skb, u32 tx_info);
+@@ -347,6 +347,7 @@ struct mt76_hw_cap {
+ #define MT_DRV_SW_RX_AIRTIME		BIT(2)
+ #define MT_DRV_RX_DMA_HDR		BIT(3)
+ #define MT_DRV_HW_MGMT_TXQ		BIT(4)
++#define MT_DRV_AMSDU_OFFLOAD		BIT(5)
+ 
+ struct mt76_driver_ops {
+ 	u32 drv_flags;
+--- a/mt7603/beacon.c
++++ b/mt7603/beacon.c
+@@ -24,8 +24,8 @@ mt7603_update_beacon_iter(void *priv, u8
+ 	if (!skb)
+ 		return;
+ 
+-	mt76_tx_queue_skb(dev, dev->mphy.q_tx[MT_TXQ_BEACON], skb,
+-			  &mvif->sta.wcid, NULL);
++	mt76_tx_queue_skb(dev, dev->mphy.q_tx[MT_TXQ_BEACON],
++			  MT_TXQ_BEACON, skb, &mvif->sta.wcid, NULL);
+ 
+ 	spin_lock_bh(&dev->ps_lock);
+ 	mt76_wr(dev, MT_DMA_FQCR0, MT_DMA_FQCR0_BUSY |
+@@ -123,7 +123,7 @@ void mt7603_pre_tbtt_tasklet(struct task
+ 		struct ieee80211_vif *vif = info->control.vif;
+ 		struct mt7603_vif *mvif = (struct mt7603_vif *)vif->drv_priv;
+ 
+-		mt76_tx_queue_skb(dev, q, skb, &mvif->sta.wcid, NULL);
++		mt76_tx_queue_skb(dev, q, MT_TXQ_CAB, skb, &mvif->sta.wcid, NULL);
+ 	}
+ 	mt76_queue_kick(dev, q);
+ 	spin_unlock_bh(&q->lock);
+@@ -182,7 +182,8 @@ void mt7603_beacon_set_timer(struct mt76
+ 		return;
+ 	}
+ 
+-	dev->mt76.beacon_int = intval;
++	if (intval)
++		dev->mt76.beacon_int = intval;
+ 	mt76_wr(dev, MT_TBTT,
+ 		FIELD_PREP(MT_TBTT_PERIOD, intval) | MT_TBTT_CAL_ENABLE);
+ 
+--- a/dma.c
++++ b/dma.c
+@@ -347,8 +347,8 @@ error:
+ 
+ static int
+ mt76_dma_tx_queue_skb(struct mt76_dev *dev, struct mt76_queue *q,
+-		      struct sk_buff *skb, struct mt76_wcid *wcid,
+-		      struct ieee80211_sta *sta)
++		      enum mt76_txq_id qid, struct sk_buff *skb,
++		      struct mt76_wcid *wcid, struct ieee80211_sta *sta)
+ {
+ 	struct ieee80211_tx_status status = {
+ 		.sta = sta,
+@@ -404,7 +404,7 @@ mt76_dma_tx_queue_skb(struct mt76_dev *d
+ 
+ 	dma_sync_single_for_cpu(dev->dev, t->dma_addr, dev->drv->txwi_size,
+ 				DMA_TO_DEVICE);
+-	ret = dev->drv->tx_prepare_skb(dev, txwi, q->qid, wcid, sta, &tx_info);
++	ret = dev->drv->tx_prepare_skb(dev, txwi, qid, wcid, sta, &tx_info);
+ 	dma_sync_single_for_device(dev->dev, t->dma_addr, dev->drv->txwi_size,
+ 				   DMA_TO_DEVICE);
+ 	if (ret < 0)
+--- a/mt76x02_mmio.c
++++ b/mt76x02_mmio.c
+@@ -59,7 +59,8 @@ static void mt76x02_pre_tbtt_tasklet(str
+ 		struct ieee80211_vif *vif = info->control.vif;
+ 		struct mt76x02_vif *mvif = (struct mt76x02_vif *)vif->drv_priv;
+ 
+-		mt76_tx_queue_skb(dev, q, skb, &mvif->group_wcid, NULL);
++		mt76_tx_queue_skb(dev, q, MT_TXQ_PSD, skb, &mvif->group_wcid,
++				  NULL);
+ 	}
+ 	spin_unlock_bh(&q->lock);
+ }
+--- a/sdio.c
++++ b/sdio.c
+@@ -243,8 +243,8 @@ static void mt76s_tx_status_data(struct
+ 
+ static int
+ mt76s_tx_queue_skb(struct mt76_dev *dev, struct mt76_queue *q,
+-		   struct sk_buff *skb, struct mt76_wcid *wcid,
+-		   struct ieee80211_sta *sta)
++		   enum mt76_txq_id qid, struct sk_buff *skb,
++		   struct mt76_wcid *wcid, struct ieee80211_sta *sta)
+ {
+ 	struct mt76_tx_info tx_info = {
+ 		.skb = skb,
+@@ -256,7 +256,7 @@ mt76s_tx_queue_skb(struct mt76_dev *dev,
+ 		return -ENOSPC;
+ 
+ 	skb->prev = skb->next = NULL;
+-	err = dev->drv->tx_prepare_skb(dev, NULL, q->qid, wcid, sta, &tx_info);
++	err = dev->drv->tx_prepare_skb(dev, NULL, qid, wcid, sta, &tx_info);
+ 	if (err < 0)
+ 		return err;
+ 
+--- a/testmode.c
++++ b/testmode.c
+@@ -50,8 +50,8 @@ void mt76_testmode_tx_pending(struct mt7
+ 	       q->queued < q->ndesc / 2) {
+ 		int ret;
+ 
+-		ret = dev->queue_ops->tx_queue_skb(dev, q, skb_get(skb), wcid,
+-						   NULL);
++		ret = dev->queue_ops->tx_queue_skb(dev, q, qid, skb_get(skb),
++						   wcid, NULL);
+ 		if (ret < 0)
+ 			break;
+ 
+--- a/tx.c
++++ b/tx.c
+@@ -237,7 +237,7 @@ __mt76_tx_queue_skb(struct mt76_phy *phy
+ 	int idx;
+ 
+ 	non_aql = !info->tx_time_est;
+-	idx = dev->queue_ops->tx_queue_skb(dev, q, skb, wcid, sta);
++	idx = dev->queue_ops->tx_queue_skb(dev, q, qid, skb, wcid, sta);
+ 	if (idx < 0 || !sta)
+ 		return idx;
+ 
+--- a/usb.c
++++ b/usb.c
+@@ -898,8 +898,8 @@ mt76u_tx_setup_buffers(struct mt76_dev *
+ 
+ static int
+ mt76u_tx_queue_skb(struct mt76_dev *dev, struct mt76_queue *q,
+-		   struct sk_buff *skb, struct mt76_wcid *wcid,
+-		   struct ieee80211_sta *sta)
++		   enum mt76_txq_id qid, struct sk_buff *skb,
++		   struct mt76_wcid *wcid, struct ieee80211_sta *sta)
+ {
+ 	struct mt76_tx_info tx_info = {
+ 		.skb = skb,
+@@ -911,7 +911,7 @@ mt76u_tx_queue_skb(struct mt76_dev *dev,
+ 		return -ENOSPC;
+ 
+ 	skb->prev = skb->next = NULL;
+-	err = dev->drv->tx_prepare_skb(dev, NULL, q->qid, wcid, sta, &tx_info);
++	err = dev->drv->tx_prepare_skb(dev, NULL, qid, wcid, sta, &tx_info);
+ 	if (err < 0)
+ 		return err;
+ 
