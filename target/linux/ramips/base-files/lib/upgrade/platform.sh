@@ -130,6 +130,7 @@ platform_check_image() {
 	x8 |\
 	xiaomi-miwifi-mini |\
 	xiaoyu-xy-c5 |\
+	micap-1321w |\
 	miwifi-nano |\
 	y1 |\
 	y1s |\

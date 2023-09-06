@@ -139,6 +139,11 @@ case $board in
 	hw550-3g)
 		set_usb_led "hw550-3g:green:usb"
 		;;
+	#default configuration 1 is LED off state, 0 is on.
+	micap-1321w)
+		ucidef_set_led_default "power" "power" "micap-1321w:white:power" "1"
+		ucidef_set_led_default "wifi" "wifi" "micap-1321w:white:wlan" "1"
+		;;
 	mlw221|\
 	mlwg2)
 		set_wifi_led "kingston:blue:wifi"
