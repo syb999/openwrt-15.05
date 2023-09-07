@@ -17,9 +17,9 @@ start_service() {
 	sleep 5
 
 	[ -e /etc/samba/smb.conf ] && {
-		if [ -e /etc/init.d/samba4 ] && /etc/init.d/samba4 running; then
+		if [ -e /etc/init.d/samba4 ] && /etc/init.d/samba4 status | grep running; then
 			SMB_CONF="/etc/samba/smb.conf"
-		elif [ -e /etc/init.d/samba ] && /etc/init.d/samba running; then
+		elif [ -e /etc/init.d/samba ] && /etc/init.d/samba status | grep running; then
 			SMB_CONF="/etc/samba/smb.conf"
 		fi
 	}
