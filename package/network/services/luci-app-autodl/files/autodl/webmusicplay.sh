@@ -145,7 +145,7 @@ function kugou_main() {
 	for mu in $(seq 1 $(cat /tmp/kugou.mixlist | wc -l));do
 		mixsongurl=$(cat /tmp/kugou.mixlist | head -n $mu |  tail -n 1)
 		curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 $mixsongurl | grep hash | sed 's/\"hash\":\"/\n/;s/\"audio_name\":\"/\n/;s/\"mixsongid\":/\n/' | sed '1d' > $thetmpfile1
-		curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 $mixsongurl | grep "<title>" | cut -d '<' -f2 | cut -d ">" -f2 | cut -d '_' -f1,2 > $thetmpinfo
+		curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 $mixsongurl | grep "<title>" | cut -d '<' -f2 | cut -d ">" -f2 | cut -d '_' -f1,2 | sed 's/ /_/g' > $thetmpinfo
 		kugouplay
 	done
 	rm /tmp/kugou.*
