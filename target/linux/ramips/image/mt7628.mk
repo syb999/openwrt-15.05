@@ -35,6 +35,12 @@ define Device/micap-1321w
 endef
 TARGET_DEVICES += micap-1321w
 
+define Device/wna4320v2
+  DTS := WNA4320V2
+  IMAGE_SIZE := $(ralink_default_fw_size_8M)
+endef
+TARGET_DEVICES += wna4320v2
+
 define Device/wdr5640v1
   DTS := WDR5640V1
   IMAGE_SIZE := $(ralink_default_fw_size_16M)

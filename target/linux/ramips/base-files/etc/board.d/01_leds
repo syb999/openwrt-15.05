@@ -140,6 +140,7 @@ case $board in
 		set_usb_led "hw550-3g:green:usb"
 		;;
 	#default configuration 1 is LED off state, 0 is on.
+	wna4320v2|\
 	micap-1321w)
 		ucidef_set_led_default "power" "power" "micap-1321w:white:power" "1"
 		ucidef_set_led_default "wifi" "wifi" "micap-1321w:white:wlan" "1"
