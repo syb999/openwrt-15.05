@@ -145,6 +145,10 @@ case $board in
 		ucidef_set_led_default "power" "power" "micap-1321w:white:power" "1"
 		ucidef_set_led_default "wifi" "wifi" "micap-1321w:white:wlan" "1"
 		;;
+	#default configuration 1 is LED on state, 0 is off.
+	ytxc-oem-ap)
+		ucidef_set_led_default "wifi" "wifi" "ytxc-oem-ap:blue:wifi" "1"
+		;;
 	mlw221|\
 	mlwg2)
 		set_wifi_led "kingston:blue:wifi"

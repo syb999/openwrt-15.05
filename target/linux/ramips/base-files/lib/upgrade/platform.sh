@@ -133,6 +133,7 @@ platform_check_image() {
 	wna4320v2 |\
 	micap-1321w |\
 	miwifi-nano |\
+	ytxc-oem-ap |\
 	y1 |\
 	y1s |\
 	dsbox-dsr1 |\

@@ -220,6 +220,9 @@ ramips_board_detect() {
 	*"Planex MZK-750DHP")
 		name="mzk-750dhp"
 		;;
+	*"YTXC OEM AP")
+		name="ytxc-oem-ap"
+		;;
 	*"ZYXEL MiCAP-1321W")
 		name="micap-1321w"
 		;;
