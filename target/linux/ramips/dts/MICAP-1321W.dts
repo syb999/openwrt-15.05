@@ -54,12 +54,12 @@
 	ethernet@10100000 {
 		status = "okay";
 		mtd-mac-address = <&factory 0x4>;
-		mediatek,portmap = "llllw";
+		mediatek,portmap = "wllll";
 	};
 
 	esw@10110000 {
 		status = "okay";
-		ralink,portmap = <0x2f>;
+		ralink,portmap = <0x3e>;
 	};
 
 	wmac@10300000 {

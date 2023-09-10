@@ -142,8 +142,8 @@ case $board in
 	#default configuration 1 is LED off state, 0 is on.
 	wna4320v2|\
 	micap-1321w)
-		ucidef_set_led_default "power" "power" "micap-1321w:white:power" "1"
-		ucidef_set_led_default "wifi" "wifi" "micap-1321w:white:wlan" "1"
+		ucidef_set_led_default "power" "power" "$board:white:power" "1"
+		ucidef_set_led_default "wifi" "wifi" "$board:white:wlan" "1"
 		;;
 	#default configuration 1 is LED on state, 0 is off.
 	ytxc-oem-ap)
