@@ -30,6 +30,12 @@
 		#size-cells = <0>;
 		poll-interval = <20>;
 
+		wps {
+			label = "wps";
+			gpios = <&gpio1 14 1>;
+			linux,code = <0x211>;
+		};
+
 		reset {
 			label = "reset";
 			gpios = <&gpio1 6 1>;
@@ -40,9 +46,14 @@
 	gpio-leds {
 		compatible = "gpio-leds";
 
-		power {
+		led_power_white: white {
 			label = "wna4320v2:white:power";
 			gpios = <&gpio0 4 1>;
+		};
+
+		led_power_red: red {
+			label = "wna4320v2:red:power";
+			gpios = <&gpio0 5 1>;
 		};
 
 		wlan {
@@ -59,7 +70,7 @@
 
 	esw@10110000 {
 		status = "okay";
-		ralink,portmap = <0x3e>;
+		mediatek,portmap = <0x3e>;
 	};
 
 	wmac@10300000 {

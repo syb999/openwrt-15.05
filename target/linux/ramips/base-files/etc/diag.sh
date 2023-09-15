@@ -216,6 +216,9 @@ get_status_led() {
 	wsr-1166)
 		status_led="buffalo:orange:diag"
 		;;
+	wna4320v2)
+		status_led="wna4320v2:red:power"
+		;;
 	wnce2001)
 		status_led="netgear:green:power"
 		;;
