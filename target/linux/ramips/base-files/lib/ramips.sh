@@ -235,6 +235,9 @@ ramips_board_detect() {
 	*"NBG-419N")
 		name="nbg-419n"
 		;;
+	*"NEOTel MB 0002")
+		name="mb-0002"
+		;;
 	*"Netgear WNCE2001")
 		name="wnce2001"
 		;;

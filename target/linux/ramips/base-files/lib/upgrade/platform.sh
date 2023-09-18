@@ -141,6 +141,7 @@ platform_check_image() {
 	zbt-we1226 |\
 	zbt-wg2626 |\
 	zte-q7 |\
+	mb-0002 |\
 	newifi-d1 |\
 	newifi-d2 |\
 	jcg-y2 |\

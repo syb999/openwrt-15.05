@@ -1,0 +1,87 @@
+/dts-v1/;
+
+/include/ "mt7620n.dtsi"
+
+/ {
+	compatible = "neotel,mb-0002", "ralink,mt7620n-soc";
+	model = "NEOTel MB 0002";
+
+	palmbus@10000000 {
+		gpio2: gpio@660 {
+			status = "okay";
+		};
+
+		gpio3: gpio@688 {
+			status = "okay";
+		};
+
+		spi@b00 {
+			status = "okay";
+
+			m25p80@0 {
+				#address-cells = <1>;
+				#size-cells = <1>;
+				compatible = "jedec,spi-nor";
+				reg = <0 0>;
+				linux,modalias = "m25p80";
+				spi-max-frequency = <10000000>;
+				m25p,chunked-io = <32>;
+
+				partition@0 {
+					label = "u-boot";
+					reg = <0x0 0x30000>;
+				};
+
+				partition@30000 {
+					label = "u-boot-env";
+					reg = <0x30000 0x10000>;
+				};
+
+				factory: partition@40000 {
+					label = "factory";
+					reg = <0x40000 0x10000>;
+				};
+
+				partition@50000 {
+					label = "firmware";
+					reg = <0x50000 0x7b0000>;
+				};
+			};
+		};
+	};
+
+	ethernet@10100000 {
+		mtd-mac-address = <&factory 0x28>;
+		ralink,port-map = "llllw";
+	};
+
+	wmac@10180000 {
+		ralink,mtd-eeprom = <&factory 0>;
+	};
+
+	pinctrl {
+		state_default: pinctrl0 {
+			gpio {
+				ralink,group = "ephy", "wled", "i2c";
+				ralink,function = "gpio";
+			};
+
+			pa {
+				ralink,group = "pa";
+				ralink,function = "pa";
+			};
+		};
+	};
+
+	gpio-keys-polled {
+		compatible = "gpio-keys-polled";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		poll-interval = <20>;
+		reset {
+			label = "reset";
+			gpios = <&gpio0 1 1>;
+			linux,code = <0x198>;
+		};
+	};
+};
