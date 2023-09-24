@@ -27,6 +27,17 @@ endef
 $(eval $(call Profile,CPE510))
 
 
+define Profile/ikuai-ap
+	NAME:=iKuai Panel AP
+	PACKAGES:=panel-ap-setup
+endef
+
+define Profile/ikuai-ap/Description
+	Package set optimized for the ikuai Panel AP.
+endef
+$(eval $(call Profile,ikuai-ap))
+
+
 define Profile/TLMR10U
 	NAME:=TP-LINK TL-MR10U
 	PACKAGES:=kmod-usb-core kmod-usb2

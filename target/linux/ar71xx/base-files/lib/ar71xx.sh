@@ -524,6 +524,9 @@ ar71xx_board_detect() {
 			name="hornet-ub-x2"
 		fi
 		;;
+	*"iKuai Panel AP")
+		name="ikuai-ap"
+		;;
 	*LS-SR71)
 		name="ls-sr71"
 		;;
