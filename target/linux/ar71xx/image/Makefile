@@ -613,6 +613,13 @@ define Device/tl-wr743nd-v2
 endef
 TARGET_DEVICES += tl-wr740n-v4 tl-wr740n-v5 tl-wr740n-v6 tl-wr741nd-v1 tl-wr741nd-v2 tl-wr741nd-v4 tl-wr741nd-v5 mw153r tl-wr743nd-v2
 
+define Device/fap-022wld
+    $(Device/tplink-16mlzma)
+    BOARDNAME := FAP-022WLD
+    DEVICE_PROFILE := fap-022wld
+    TPLINK_HWID := 0x08410017
+endef
+
 define Device/ikuai-ap
     $(Device/tplink-16mlzma)
     BOARDNAME := iKuai-Panel-AP
@@ -675,7 +682,7 @@ define Device/tl-wr847n-v8
     DEVICE_PROFILE := TLWR841
     TPLINK_HWID := 0x08470008
 endef
-TARGET_DEVICES += ikuai-ap tl-wr841n-v8 tl-wr841n-v9 tl-wr841n-v10 tl-wr841n-v11 tl-mw300-r4 tl-wr842n-v2 tl-wr843nd-v1 tl-wr847n-v8
+TARGET_DEVICES += fap-022wld ikuai-ap tl-wr841n-v8 tl-wr841n-v9 tl-wr841n-v10 tl-wr841n-v11 tl-mw300-r4 tl-wr842n-v2 tl-wr843nd-v1 tl-wr847n-v8
 
 define Device/pisen-wfr101n
     $(Device/tplink-16mlzma)

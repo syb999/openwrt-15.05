@@ -527,6 +527,9 @@ ar71xx_board_detect() {
 	*"iKuai Panel AP")
 		name="ikuai-ap"
 		;;
+	*"PHICOMM FAP-022WLD")
+		name="fap-022wld"
+		;;
 	*LS-SR71)
 		name="ls-sr71"
 		;;

@@ -40,6 +40,12 @@ ikuai-ap)
 	ucidef_add_switch_vlan "switch0" "2" "0t 1"
 	;;
 
+fap-022wld)
+	ucidef_set_interfaces_lan_wan "eth1" "eth0"
+	ucidef_add_switch "switch0" "1" "1"
+	ucidef_add_switch_vlan "switch0" "1" "0 2 3"
+	;;
+
 letv)
 	ucidef_set_interfaces_lan_wan "eth0" "eth1"
 	ucidef_add_switch "switch0" "1" "1"

@@ -27,6 +27,17 @@ endef
 $(eval $(call Profile,CPE510))
 
 
+define Profile/fap-022wld
+	NAME:=PHICOMM FAP-022WLD
+	PACKAGES:=panel-ap-setup
+endef
+
+define Profile/fap-022wld/Description
+	Package set optimized for the PHICOMM FAP-022WLD Panel AP.
+endef
+$(eval $(call Profile,fap-022wld))
+
+
 define Profile/ikuai-ap
 	NAME:=iKuai Panel AP
 	PACKAGES:=panel-ap-setup

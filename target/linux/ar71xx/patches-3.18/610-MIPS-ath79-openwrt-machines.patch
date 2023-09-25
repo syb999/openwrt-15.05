@@ -1,6 +1,6 @@
 --- a/arch/mips/ath79/machtypes.h
 +++ b/arch/mips/ath79/machtypes.h
-@@ -16,22 +16,214 @@
+@@ -16,22 +16,215 @@
  
  enum ath79_mach_type {
  	ATH79_MACH_GENERIC = 0,
@@ -57,6 +57,7 @@
 +	ATH79_MACH_EL_MINI,		/* EasyLink EL-MINI */
 +	ATH79_MACH_ESR1750,		/* EnGenius ESR1750 */
 +	ATH79_MACH_F9K1115V2,		/* Belkin AC1750DB */
++	ATH79_MACH_FAP_022WLD,		/* PHICOMM FAP-022WLD Panel AP */
 +	ATH79_MACH_GL_INET,		/* GL-CONNECT GL-INET */
 +	ATH79_MACH_GS_OOLITE,           /* GS OOLITE V1.0 */
 +	ATH79_MACH_HIWIFI_HC6361,	/* HiWiFi HC6361 */
@@ -348,7 +349,7 @@
  config ATH79_MACH_AP121
  	bool "Atheros AP121 reference board"
  	select SOC_AR933X
-@@ -11,62 +124,1081 @@ config ATH79_MACH_AP121
+@@ -11,62 +124,1090 @@ config ATH79_MACH_AP121
  	select ATH79_DEV_M25P80
  	select ATH79_DEV_USB
  	select ATH79_DEV_WMAC
@@ -784,6 +785,15 @@
 +
 +config ATH79_MACH_EAP300V2
 +	bool "EnGenius EAP300 v2 support"
++	select SOC_AR934X
++	select ATH79_DEV_ETH
++	select ATH79_DEV_GPIO_BUTTONS
++	select ATH79_DEV_LEDS_GPIO
++	select ATH79_DEV_M25P80
++	select ATH79_DEV_WMAC
++
++config ATH79_MACH_FAP_022WLD
++	bool "PHICOMM FAP-022WLD Panel AP board support"
 +	select SOC_AR934X
 +	select ATH79_DEV_ETH
 +	select ATH79_DEV_GPIO_BUTTONS
@@ -1458,7 +1468,7 @@
  
  config ATH79_MACH_UBNT_XM
  	bool "Ubiquiti Networks XM/UniFi boards"
-@@ -83,6 +1205,168 @@ config ATH79_MACH_UBNT_XM
+@@ -83,6 +1224,168 @@ config ATH79_MACH_UBNT_XM
  	  Say 'Y' here if you want your kernel to support the
  	  Ubiquiti Networks XM (rev 1.0) board.
  
@@ -1627,7 +1637,7 @@
  endmenu
  
  config SOC_AR71XX
-@@ -124,7 +1378,10 @@ config ATH79_DEV_DSA
+@@ -124,7 +1397,10 @@ config ATH79_DEV_DSA
  config ATH79_DEV_ETH
  	def_bool n
  
@@ -1639,7 +1649,7 @@
  	def_bool n
  
  config ATH79_DEV_GPIO_BUTTONS
-@@ -154,6 +1411,11 @@ config ATH79_PCI_ATH9K_FIXUP
+@@ -154,6 +1430,11 @@ config ATH79_PCI_ATH9K_FIXUP
  	def_bool n
  
  config ATH79_ROUTERBOOT
@@ -1653,7 +1663,7 @@
  endif
 --- a/arch/mips/ath79/Makefile
 +++ b/arch/mips/ath79/Makefile
-@@ -38,9 +38,142 @@ obj-$(CONFIG_ATH79_ROUTERBOOT)		+= route
+@@ -38,9 +38,143 @@ obj-$(CONFIG_ATH79_ROUTERBOOT)		+= route
  #
  # Machines
  #
@@ -1699,6 +1709,7 @@
 +obj-$(CONFIG_ATH79_MACH_EL_MINI)	+= mach-el-mini.o
 +obj-$(CONFIG_ATH79_MACH_ESR1750)	+= mach-esr1750.o
 +obj-$(CONFIG_ATH79_MACH_F9K1115V2)	+= mach-f9k1115v2.o
++obj-$(CONFIG_ATH79_MACH_FAP_022WLD)	+= mach-fap-022wld.o
 +obj-$(CONFIG_ATH79_MACH_GL_INET)	+= mach-gl-inet.o
 +obj-$(CONFIG_ATH79_MACH_GS_OOLITE)	+= mach-gs-oolite.o
 +obj-$(CONFIG_ATH79_MACH_HIWIFI_HC6361)	+= mach-hiwifi-hc6361.o

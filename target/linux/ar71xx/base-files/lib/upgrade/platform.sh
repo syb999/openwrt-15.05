@@ -322,6 +322,7 @@ platform_check_image() {
 	archer-c7 | \
 	el-m150 | \
 	el-mini | \
+	fap-022wld | \
 	gl-inet | \
 	ikuai-ap | \
 	mc-mac1200r | \
