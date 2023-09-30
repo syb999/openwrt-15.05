@@ -22,12 +22,3 @@ Date:   Thu Jan 27 06:39:16 2011 +0300
  #include <sys/timerfd.h>
  #endif
  
-@@ -1141,7 +1142,7 @@ int usbi_io_init(struct libusb_context *
- 
- #ifdef USBI_TIMERFD_AVAILABLE
- 	ctx->timerfd = timerfd_create(usbi_backend->get_timerfd_clockid(),
--		TFD_NONBLOCK);
-+		O_NONBLOCK);
- 	if (ctx->timerfd >= 0) {
- 		usbi_dbg("using timerfd for timeouts");
- 		r = usbi_add_pollfd(ctx, ctx->timerfd, POLLIN);
