@@ -11,17 +11,17 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=wireguard
 
-PKG_VERSION:=0.0.20171017
+PKG_VERSION:=0.0.20171221
 PKG_RELEASE:=1
 
 PKG_SOURCE:=WireGuard-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://git.zx2c4.com/WireGuard/snapshot/
-PKG_MD5SUM:=1184c5734f7cd3b5895157835a336b3d
+PKG_MD5SUM:=39bb99fe11356423fb1ab45ae2d938bb
 
 PKG_LICENSE:=GPL-2.0 Apache-2.0
 PKG_LICENSE_FILES:=COPYING
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/WireGuard-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/WireGuard-$(PKG_VERSION)
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
@@ -36,7 +36,6 @@ define Package/wireguard/Default
   SUBMENU:=VPN
   URL:=https://www.wireguard.com
   MAINTAINER:=Baptiste Jonglez <openwrt@bitsofnetworks.org>, \
-              Kevin Darbyshire-Bryant <ldir@darbyshire-bryant.me.uk>, \
               Dan Luedtke <mail@danrl.com>, \
               Jason A. Donenfeld <Jason@zx2c4.com>
 endef
@@ -100,7 +99,7 @@ define KernelPackage/wireguard
   CATEGORY:=Kernel modules
   SUBMENU:=Network Support
   TITLE:=WireGuard kernel module
-  DEPENDS:=+IPV6:kmod-udptunnel6 +IPV6:kmod-ipv6 +kmod-udptunnel4 +kmod-crypto-core
+  DEPENDS:=+IPV6:kmod-udptunnel6 +kmod-udptunnel4 +kmod-crypto-core
   FILES:= $(PKG_BUILD_DIR)/src/wireguard.$(LINUX_KMOD_SUFFIX)
   AUTOLOAD:=$(call AutoProbe,wireguard)
 endef
