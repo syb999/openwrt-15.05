@@ -2,24 +2,24 @@
 
 _musicsrc="$(uci get autodl.@autodl[0].webmusicsrc)"
 
-if [ "${_musicsrc}" = "kuwo" ];then
-	musiclist="$(uci get autodl.@autodl[0].webkuwolist)"
+if [ "${_musicsrc}" = "9ku" ];then
+	musiclist="$(uci get autodl.@autodl[0].web9kulist)"
 else
 	musiclist="$(uci get autodl.@autodl[0].webkugoulist)"
 fi
 
 case $musiclist in
-	kuwo-soaring-chart) theid="93"
+	9ku-top500) theid="music/t_m_hits.htm"
 	;;
-	kuwo-new-song-chart) theid="17"
+	9ku-wangluo) theid="wangluo/"
 	;;
-	kuwo-hot-song-chart) theid="16"
+	9ku-laoge) theid="laoge/"
 	;;
-	kuwo-tiktok-hot-song-chart) theid="158"
+	9ku-yingwen) theid="yingwen/"
 	;;
-	DJ-list-chart) theid="176"
+	9ku-chaqu) theid="laoge/chaqu.htm"
 	;;
-	member-chart) theid="145"
+	9ku-ktv) theid="zhuanji/75.htm"
 	;;
 	hummingbird-pop-music-chart) theid="59703"
 	;;
@@ -42,8 +42,8 @@ case $musiclist in
 	billboard-chart) theid="4681"
 	;;
 	all) 
-		if [ "${_musicsrc}" = "kuwo" ];then
-			theid="93 17 16 158 176 145"
+		if [ "${_musicsrc}" = "9ku" ];then
+			theid="music/t_m_hits.htm wangluo/ laoge/ yingwen/ laoge/chaqu.htm zhuanji/75.htm"
 		else
 			theid="59703 52144 52767 33166 8888 33162 31308 31313 31312 4681"
 		fi
@@ -59,48 +59,109 @@ function test_dir() {
 	fi
 }
 
-function kuwo_get_token(){
-	url="https://kuwo.cn/"
-	curl -s -c /tmp/kuwo.cookie.tmp $url >/dev/null 2>&1
-	thetoken="$(cat /tmp/kuwo.cookie.tmp | grep kw_token | awk '{print$7}')"
+function ku9_get_times() {
+	_num=$(curl -s "https://www.9ku.com/${the_a}" | grep "class=\"songName" | wc -l)
+	if [ ${_num} = 0 ];then
+		_num=$(curl -s "https://www.9ku.com/${the_a}" | grep "target=_1" | wc -l)
+	fi
+	if [ ${_num} = 0 ];then
+		_num=$(curl -s "https://www.9ku.com/${the_a}" | grep "target=\"_blank" | wc -l)
+	fi
 }
 
-function mixsonglist_kuwo() {
-	rm /tmp/kuwo.list.tmp.2 >/dev/null 2>&1
-	for p in $(seq 1 5);do
-		url="https://kuwo.cn/api/www/bang/bang/musicList?pn=${p}&rn=20&bangId=${a}"
-		curl -s -H ""Accept":"application/json"" -H ""Cookie":"kw_token=${thetoken}"" -H ""csrf":"${thetoken}"" -H ""Referer":"https://kuwo.cn/rankList"" -H ""User-Agent":"Mozilla/5.0"" $url > /tmp/kuwo.list.tmp
-		cat /tmp/kuwo.list.tmp | sed "s/musicrid\":\"/\n/g" | grep MUSIC_  >> /tmp/kuwo.list.tmp.2
-		rm /tmp/kuwo.list.tmp
-	done
+function ku9_gen_num() {
+	head -n6 /dev/urandom | tr -dc "0-$1" | head -c1
 }
 
-function kuwoplay() {
-	_id_list="$(cat /tmp/kuwo.list.tmp.2 | cut -d '"' -f1 | cut -d '_' -f2)"
-	_singer_list="$(cat /tmp/kuwo.list.tmp.2 | cut -d '"' -f13)"
-	url="https://bd.kuwo.cn/api/v1/www/music/playUrl?type=url_3&mid="
-	for i in $(seq 1 $(cat /tmp/kuwo.list.tmp.2 | cut -d '"' -f73 | wc -l));do
-		if [ "$(cat /tmp/kuwo.list.tmp.2 | cut -d '"' -f73 | head -n$i | tail -n1)" = "artistid" ];then
-			_song="$(cat /tmp/kuwo.list.tmp.2 | cut -d '"' -f93 | head -n$i | tail -n1)"
+function ku9_split_num() {
+	for i in $(seq 1 ${_length});do
+		if [ ${i} -eq 1 ];then
+			ku9_gen_num $(echo ${_num} | cut -c1)  > /tmp/split_num.tmp.mpt_$i
+		elif [ ${i} -eq 2 ];then
+			if [ "$(cat /tmp/split_num.tmp.mpt_1 | grep 0)" != "" ];then
+				ku9_gen_num 9 > /tmp/split_num.tmp.mpt_$i
+			else
+				echo ${_num} | cut -c${i} > /tmp/split_num.tmp.mpt_$i
+			fi
 		else
-			_song="$(cat /tmp/kuwo.list.tmp.2 | cut -d '"' -f97 | head -n$i | tail -n1)"
+			if [ "$(echo $(cat /tmp/split_num.tmp.mpt_1)$(cat /tmp/split_num.tmp.mpt_2))" = "$(echo ${_num} | cut -c1,2)" ];then
+				echo ${_num} | cut -c${i} > /tmp/split_num.tmp.mpt_$i
+			else
+				ku9_gen_num 9 > /tmp/split_num.tmp.mpt_$i
+			fi
 		fi
-		_id="$(echo ${_id_list} | cut -d ' ' -f$i)"
-		_singer="$(echo ${_singer_list} | cut -d ' ' -f$i)"
-		curl -s -H ""Cookie":"kw_token=${thetoken}"" "${url}${_id}" | cut -d '"' -f20 > $thetmpurl
-		echo "${_singer}-${_song}" | sed 's/ //g' > $thetmpinfo
-		if [ "$(uci get autodl.@autodl[0].webmusic_dl_mode)" = "automatic-download" ];then
-			wget-ssl -t 5 -q -c $(cat $thetmpurl) -O $(uci get autodl.@autodl[0].webmusicpath)/$(cat $thetmpinfo).mp3
-		fi
-		curl $(cat $thetmpurl) | mpg123 -
 	done
 }
 
-function kuwo_main() {
-	kuwo_get_token
+function ku9_gen_id() {
+	ku9_split_num
+	for n in $(seq 1 ${_length});do
+		_new="$(cat /tmp/split_num.tmp.mpt_$n)"
+		_target="${_target}${_new}"
+	done
+
+	_target=$(expr ${_target} + 0)
+	rm /tmp/split_num.tmp.mpt_*
+}
+
+function ku9_geturl() {
+	ku9_gen_id
+	if [ ${the_a} == "zhuanji/75.htm" ];then
+		thesuffix="$(curl -s https://www.9ku.com/${the_a} | grep "target=_1" | head -n${_target} | tail -n1 | cut -d '"' -f2 | cut -d '/' -f3)"
+	elif [ ${the_a} == "wangluo/" ];then
+		thesuffix="$(curl -s https://www.9ku.com/${the_a} | grep "target=\"_blank" | head -n${_target} | tail -n1 | cut -d '"' -f22 | cut -d '/' -f3)"
+	elif [ ${the_a} == "yingwen/" ];then
+		thesuffix="$(curl -s https://www.9ku.com/${the_a} | grep "songName" | head -n${_target} | tail -n1 | cut -d '"' -f14 | cut -d '/' -f3)"
+	else
+		thesuffix="$(curl -s https://www.9ku.com/${the_a} | grep "class=\"songName" | head -n${_target} | tail -n1 | cut -d '"' -f4 | cut -d '/' -f3)"
+	fi
+	theurl="${theprefix}${thesuffix}"
+	real_id="$(curl -s $theurl | grep "Mp3下载" | cut -d '"' -f2 | grep https)"
+	real_title="$(curl -s $theurl | grep "Mp3下载" | grep https | cut -d '>' -f2| sed "s/Mp3下载//" | cut -d '<' -f1 | sed 's/ /_/g' )"
+}
+
+function mixsonglist_9ku() {
+	_num=""
+	_target=""
+	real_id=""
+	theprefix="https://www.9ku.com/down/"
+	_random=$(head -n6 /dev/urandom | tr -dc "1-6" | head -c1)
+
+	if [ "$(uci get autodl.@autodl[0].web9kulist)" = "all" ];then
+		xcount=1
+		for a in ${theid};do
+			the_a=${a}
+			if [ ${xcount} -eq ${_random} ];then
+				break
+			else
+				xcount=$(expr $xcount + 1)
+			fi
+		done
+	else
+		the_a=${theid}
+	fi
+
+	ku9_get_times
+	_length=${#_num}
+
+	while [ "$real_id" == "" ];do
+		ku9_geturl
+		_target=""
+	done
+}
+
+function ku9_play() {
+	if [ "$(uci get autodl.@autodl[0].webmusic_dl_mode)" = "automatic-download" ];then
+		wget-ssl -t 5 -q -c ${real_id} -O $(uci get autodl.@autodl[0].webmusicpath)/${real_title}.mp3
+	else
+		curl -s ${real_id} --connect-timeout 5  | mpg123 --timeout 2 --no-resync -
+	fi
+}
+
+function ku9_main() {
 	for a in ${theid};do
-		mixsonglist_kuwo
-		kuwoplay
+		mixsonglist_9ku
+		ku9_play
 	done
 }
 
@@ -130,8 +191,8 @@ function kugouplay() {
 	if [ "$(uci get autodl.@autodl[0].webmusic_dl_mode)" = "automatic-download" ];then
 		wget-ssl -t 5 -q -c $(cat $thetmpurl) -O $(uci get autodl.@autodl[0].webmusicpath)/$(cat $thetmpinfo).mp3
 	fi
-	curl $(cat $thetmpurl) | mpg123 -
-	while [ "$(busybox ps | grep mpg123 | grep -v grep | awk '{print$1}')" ];do
+	curl -s $(cat $thetmpurl) --connect-timeout 5 | mpg123 --timeout 2 --no-resync -
+	while [ "$(ps -w | grep mpg123 | grep -v grep | awk '{print$1}')" ];do
 		sleep 2
 	done
 	rm /tmp/kugou.tmp.*
@@ -155,8 +216,8 @@ thetmpurl="/tmp/webmusic.tmp.url"
 thetmpinfo="/tmp/webmusic.tmp.info"
 while true;do
 	test_dir
-	if [ "${_musicsrc}" = "kuwo" ];then
-		kuwo_main
+	if [ "${_musicsrc}" = "9ku" ];then
+		ku9_main
 	else
 		kugou_main
 	fi

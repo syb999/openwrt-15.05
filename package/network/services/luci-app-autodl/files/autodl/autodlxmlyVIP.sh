@@ -128,8 +128,8 @@ function getxmlyaudios(){
 	do
 		xmlyfilename=$(echo $LINE)
 		xtmpcounthead=$tmpcounthead
-		xmlyturenum=$(tail -n $xtmpcounthead /tmp/tmp.XMV.xmlyhttp2num | head -n 1)
-		xmlyturename=$(cat /tmp/tmp.XMV.filenamelist | head -n 1)
+		xmlyturenum=$(tail -n $xtmpcounthead /tmp/tmp.XMV.xmlyhttp2num | head -n1)
+		xmlyturename=$(cat /tmp/tmp.XMV.filenamelist | head -n1)
 		if [ "$xmlyturename" = "$paudioname" ];then
 			xmlyturename=""
 		fi

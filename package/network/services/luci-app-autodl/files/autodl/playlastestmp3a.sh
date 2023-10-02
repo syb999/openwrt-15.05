@@ -17,7 +17,7 @@ if [ ! "$testplayer" ];then
 	for i in $(seq 1 $countfiles)
 	do
 		cat $getfiles > /tmp/pdtmp.playnext
-		mpg123 $(cat $getfiles | head -n 1)
+		curl -s $(cat $getfiles | head -n 1) --connect-timeout 5  | mpg123 --timeout 2 --no-resync -
 		sed "1d" -i ${getfiles}
 	done
 else

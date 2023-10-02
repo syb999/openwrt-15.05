@@ -42,11 +42,11 @@ function getxmlyaudios(){
 		echo -n $xmvvmd5 | md5sum > /tmp/tmp.XM.md5s
 		cat /tmp/tmp.XM.md5s | cut -d ' ' -f 1 > /tmp/tmp.XM.md5ss
 		xmsign1=$(cat /tmp/tmp.XM.md5ss)
-		head -n 6 /dev/urandom | tr -dc "123456789" | head -c2 > /tmp/tmp.XM.randum1
+		head -n6 /dev/urandom | tr -dc "123456789" | head -c2 > /tmp/tmp.XM.randum1
 		rnum1=\($(cat /tmp/tmp.XM.randum1)\)
-		head -n 6 /dev/urandom | tr -dc "123456789" | head -c2 > /tmp/tmp.XM.randum2
+		head -n6 /dev/urandom | tr -dc "123456789" | head -c2 > /tmp/tmp.XM.randum2
 		rnum2=\($(cat /tmp/tmp.XM.randum2)\)
-		head -n 6 /dev/urandom | tr -dc "012345" | head -c3 > /tmp/tmp.XM.randum3
+		head -n6 /dev/urandom | tr -dc "012345" | head -c3 > /tmp/tmp.XM.randum3
 		bnum=$(cat /tmp/tmp.XM.randum3)
 		date +"%s" > /tmp/tmp.XM.datelst
 		optimestamp=$(cat /tmp/tmp.XM.datelst)
@@ -76,8 +76,8 @@ function getxmlyaudios(){
 	cat /tmp/tmpXM.filelist | while read LINE
 	do
 		xtmpcounthead=$tmpcounthead
-		xmlyturenum=$(tail -n $xtmpcounthead /tmp/tmpXM.xmlyhttp2num | head -n 1)
-		xmlyturename=$(cat /tmp/tmpXM.filenamelist | head -n 1)
+		xmlyturenum=$(tail -n $xtmpcounthead /tmp/tmpXM.xmlyhttp2num | head -n1)
+		xmlyturename=$(cat /tmp/tmpXM.filenamelist | head -n1)
 		if [ "$xmlyturename" = "$paudioname" ];then
 			xmlyturename=""
 		fi

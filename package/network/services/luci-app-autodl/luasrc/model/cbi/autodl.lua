@@ -492,28 +492,27 @@ function webaudiovdown.write(self, section)
     luci.util.exec("/usr/autodl/volumedown.sh >/dev/null 2>&1 &")
 end
 
-
 s:tab("webmusictab", translate("Network Music"))
 webmusicsrc = s:taboption("webmusictab", ListValue, "webmusicsrc", translate("Music list"))
-webmusicsrc.placeholder = "kuwo"
-webmusicsrc:value("kuwo(BROKEN)", translate("kuwo(BROKEN)"))
+webmusicsrc.placeholder = "9ku"
+webmusicsrc:value("9ku", translate("9ku"))
 webmusicsrc:value("kugou", translate("kugou"))
 webmusicsrc.default = "kugou"
 webmusicsrc.rempty = true
 
-webkuwolist = s:taboption("webmusictab", ListValue, "webkuwolist", translate("Music list"))
-webkuwolist:depends("webmusicsrc", "kuwo")
-webkuwolist.placeholder = "none"
-webkuwolist:value("none")
-webkuwolist:value("kuwo-soaring-chart", translate("kuwo soaring chart"))
-webkuwolist:value("kuwo-new-song-chart", translate("kuwo new song chart"))
-webkuwolist:value("kuwo-hot-song-chart", translate("kuwo hot song chart"))
-webkuwolist:value("kuwo-tiktok-hot-song-chart", translate("tiktok hot song chart"))
-webkuwolist:value("DJ-list-chart", translate("DJ list chart"))
-webkuwolist:value("member-chart", translate("member chart"))
-webkuwolist:value("all", translate("all"))
-webkuwolist.default = "none"
-webkuwolist.rempty = true
+web9kulist = s:taboption("webmusictab", ListValue, "web9kulist", translate("Music list"))
+web9kulist:depends("webmusicsrc", "9ku")
+web9kulist.placeholder = "none"
+web9kulist:value("none")
+web9kulist:value("9ku-top500", translate("9ku top 500"))
+web9kulist:value("9ku-wangluo", translate("9ku net music"))
+web9kulist:value("9ku-laoge", translate("9ku old music"))
+web9kulist:value("9ku-yingwen", translate("9ku english music"))
+web9kulist:value("9ku-chaqu", translate("9ku movie music"))
+web9kulist:value("9ku-ktv", translate("9ku ktv music"))
+web9kulist:value("all", translate("all"))
+web9kulist.default = "none"
+web9kulist.rempty = true
 
 webkugoulist = s:taboption("webmusictab", ListValue, "webkugoulist", translate("Music list"))
 webkugoulist:depends("webmusicsrc", "kugou")
@@ -544,14 +543,14 @@ end
 webmusicstop = s:taboption("webmusictab", Button, "webmusicstop", translate("STOP"))         
 webmusicstop.inputstyle = "apply"
 function webmusicstop.write(self, section)
-    luci.util.exec("kill -9 $(busybox ps | grep webmusicplay.sh | grep -v grep | awk '{print$1}') >/dev/null 2>&1 &")
-    luci.util.exec("kill -9 $(busybox ps | grep mpg123 | grep -v grep | awk '{print$1}') >/dev/null 2>&1 &")
+    luci.util.exec("kill -9 $(ps -w | grep webmusicplay.sh | grep -v grep | awk '{print$1}') >/dev/null 2>&1 &")
+    luci.util.exec("kill -9 $(ps -w | grep mpg123 | grep -v grep | awk '{print$1}') >/dev/null 2>&1 &")
 end
 
 webmusicnext = s:taboption("webmusictab", Button, "webmusicnext", translate("Next Song"))         
 webmusicnext.inputstyle = "apply"
 function webmusicnext.write(self, section)
-    luci.util.exec("kill -9 $(busybox ps | grep mpg123 | grep -v grep | awk '{print$1}') >/dev/null 2>&1 &")
+    luci.util.exec("kill -9 $(ps -w | grep mpg123 | grep -v grep | awk '{print$1}') >/dev/null 2>&1 &")
 end
 
 webmusicpath = s:taboption("webmusictab", Value, "webmusicpath", translate("Download Audios directory"))
@@ -617,4 +616,3 @@ end
 
 
 return m
-

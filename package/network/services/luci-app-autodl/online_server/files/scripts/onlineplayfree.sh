@@ -33,11 +33,11 @@ function gettmpm4a() {
 		echo -n $xmvvmd5 | md5sum > /tmp/online.$clientid.tmp.XM.md5s
 		cat /tmp/online.$clientid.tmp.XM.md5s | cut -d ' ' -f 1 > /tmp/online.$clientid.tmp.XM.md5ss
 		xmsign1=$(cat /tmp/online.$clientid.tmp.XM.md5ss)
-		head -n 128 /dev/urandom | tr -dc "123456789" | head -c2 > /tmp/online.$clientid.tmp.XM.randum1
+		head -n6 /dev/urandom | tr -dc "123456789" | head -c2 > /tmp/online.$clientid.tmp.XM.randum1
 		rnum1=\($(cat /tmp/online.$clientid.tmp.XM.randum1)\)
-		head -n 128 /dev/urandom | tr -dc "123456789" | head -c2 > /tmp/online.$clientid.tmp.XM.randum2
+		head -n6 /dev/urandom | tr -dc "123456789" | head -c2 > /tmp/online.$clientid.tmp.XM.randum2
 		rnum2=\($(cat /tmp/online.$clientid.tmp.XM.randum2)\)
-		head -n 128 /dev/urandom | tr -dc "012345" | head -c3 > /tmp/online.$clientid.tmp.XM.randum3
+		head -n6 /dev/urandom | tr -dc "012345" | head -c3 > /tmp/online.$clientid.tmp.XM.randum3
 		bnum=$(cat /tmp/online.$clientid.tmp.XM.randum3)
 		date +"%s" > /tmp/online.$clientid.tmp.XM.datelst
 		optimestamp=$(cat /tmp/online.$clientid.tmp.XM.datelst)

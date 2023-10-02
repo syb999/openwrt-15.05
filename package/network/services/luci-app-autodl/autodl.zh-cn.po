@@ -247,26 +247,29 @@ msgstr "手动下载"
 msgid "automatic download while playing"
 msgstr "播放时自动下载"
 
-msgid "kuwo"
-msgstr "酷我音乐"
+msgid "9ku"
+msgstr "九酷网"
 
 msgid "kugou"
 msgstr "酷狗音乐"
 
-msgid "kuwo soaring chart"
-msgstr "酷我飙升榜"
+msgid "9ku top 500"
+msgstr "歌曲500首"
 
-msgid "kuwo new song chart"
-msgstr "酷我新歌榜"
+msgid "9ku net music"
+msgstr "网络歌曲"
 
-msgid "kuwo hot song chart"
-msgstr "酷我热歌榜"
+msgid "9ku old music"
+msgstr "经典老歌"
 
-msgid "DJ list chart"
-msgstr "万物DJ榜"
+msgid "9ku english music"
+msgstr "英文歌曲"
 
-msgid "member chart"
-msgstr "会员畅听榜"
+msgid "9ku movie music"
+msgstr "电影歌曲"
+
+msgid "9ku ktv music"
+msgstr "KTV歌曲"
 
 msgid "Download current music"
 msgstr "下载当前歌曲"

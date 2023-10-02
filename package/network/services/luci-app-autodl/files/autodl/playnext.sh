@@ -6,7 +6,7 @@ paudioname=$(uci get autodl.@autodl[0].xmlyname)
 
 stopaudio
 
-ps | grep playnext.sh | grep -v grep | cut -d 'r' -f 1 > /tmp/tmpmpg123.pid
+ps -w | grep playnext.sh | grep -v grep | awk '{print$1}' > /tmp/tmpmpg123.pid
 
 cd $paudiopath/$paudioname
 if [ ! "$testplayer" ];then
@@ -15,7 +15,7 @@ if [ ! "$testplayer" ];then
 	for i in $(seq 1 $countfiles)
 	do
 		sed "1d" -i ${getfiles}
-		mpg123 $(cat $getfiles | head -n 1)
+		curl -s $(cat $getfiles | head -n 1) --connect-timeout 5  | mpg123 --timeout 2 --no-resync -
 	done
 else
 	getfiles="/tmp/pdtmp.playnext"

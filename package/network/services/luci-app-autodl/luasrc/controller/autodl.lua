@@ -11,13 +11,13 @@ function index()
 end
 
 function autodl_status()
-	local mpg123 = luci.sys.exec("busybox ps | grep mpg123 | grep -v grep | head -n 1 | awk '{print$6}' ")
+	local mpg123 = luci.sys.exec("ps -w | grep mpg123 | grep -v grep | head -n1 | awk '{print$6}' ")
 	if not mpg123 or string.match(mpg123, "timeout") or string.match(mpg123, "-") then
-		mpg123 = luci.sys.exec("busybox ps | grep curl | grep -v grep | head -n 1 | awk '{print$6}' ")
+		mpg123 = luci.sys.exec("ps -w | grep curl | grep -v grep | head -n1 | awk '{print$7}' ")
 	end
 
 	local e = {
-		running = luci.sys.exec("busybox ps | grep \/usr\/online_server\/dexmly.py | grep -v grep | awk '{print $1}' "),
+		running = luci.sys.exec("ps -w | grep \/usr\/online_server\/dexmly.py | grep -v grep | awk '{print$1}' "),
 		mpg123 = mpg123
 	}
 

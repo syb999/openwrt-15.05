@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-autodl
-PKG_VERSION:=20230909
+PKG_VERSION:=20231002
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -25,11 +25,6 @@ define Package/luci-app-autodl
 	PKGARCH:=all
 	DEPENDS:=+curl +wget +urlencode \
 	+PACKAGE_$(PKG_NAME)_INCLUDE_Online_Server:online_server
-endef
-
-define Build/Prepare
-	$(foreach po,$(wildcard ${CURDIR}/luasrc/i18n/*.po), \
-		po2lmo $(po) $(PKG_BUILD_DIR)/$(patsubst %.po,%.lmo,$(notdir $(po)));)
 endef
 
 define Build/Compile
