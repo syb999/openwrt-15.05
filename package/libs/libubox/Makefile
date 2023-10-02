@@ -4,10 +4,10 @@ PKG_NAME:=libubox
 PKG_RELEASE=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://git.openwrt.org/project/libubox.git
-PKG_MD5SUM:=34d6ad1d3e8ee2e6d11c68007c23f8a4
-PKG_SOURCE_DATE:=2021-05-16
-PKG_SOURCE_VERSION:=b14c4688612c05c78ce984d7bde633bce8703b1e
+PKG_SOURCE_URL=https://git.openwrt.org/project/libubox.git
+PKG_MIRROR_HASH:=f22de22a784a0135cc2869fe81ff30e52136dca36863ee713503b4be5be01869
+PKG_SOURCE_DATE:=2023-05-23
+PKG_SOURCE_VERSION:=75a3b870cace1171faf57bd55e5a9a2f1564f757
 PKG_ABI_VERSION:=$(call abi_version_str,$(PKG_SOURCE_DATE))
 CMAKE_INSTALL:=1
 
@@ -73,12 +73,12 @@ CMAKE_OPTIONS += \
 
 define Package/libubox/install
 	$(INSTALL_DIR) $(1)/lib/
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libubox.so $(1)/lib/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libubox.so* $(1)/lib/
 endef
 
 define Package/libblobmsg-json/install
 	$(INSTALL_DIR) $(1)/lib/
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libblobmsg_json.so $(1)/lib/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libblobmsg_json.so* $(1)/lib/
 endef
 
 define Package/jshn/install
@@ -89,7 +89,7 @@ endef
 
 define Package/libjson-script/install
 	$(INSTALL_DIR) $(1)/lib/
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libjson_script.so $(1)/lib/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libjson_script.so* $(1)/lib/
 endef
 
 define Package/libubox-lua/install
