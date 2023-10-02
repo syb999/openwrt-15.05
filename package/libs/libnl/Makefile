@@ -1,20 +1,21 @@
+# SPDX-License-Identifier: GPL-2.0-only
 #
 # Copyright (C) 2006-2013 OpenWrt.org
-#
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
 #
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libnl
-PKG_VERSION:=3.4.0
-PKG_RELEASE:=2
+PKG_VERSION:=3.7.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/thom311/libnl/releases/download/libnl3_4_0
-#PKG_HASH:=b7287637ae71c6db6f89e1422c995f0407ff2fe50cecd61a312b6a9b0921f5bf
+PKG_SOURCE_URL:=https://github.com/thom311/libnl/releases/download/libnl$(subst .,_,$(PKG_VERSION))
+PKG_MD5SUM:=b381405afd14e466e35d29a112480333
+
 PKG_LICENSE:=LGPL-2.1
+PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:libnl_project:libnl
 
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
