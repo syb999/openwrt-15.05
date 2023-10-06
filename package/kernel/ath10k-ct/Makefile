@@ -1,21 +1,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ath10k-ct
-PKG_RELEASE=1
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILES:=
 
 PKG_SOURCE_URL:=https://github.com/greearb/ath10k-ct.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE:=2020-06-30
-PKG_SOURCE_VERSION:=edfbf9161ab75e4831981284ab2d5b1b9fb6ef72
-PKG_MIRROR_HASH:=98b7f88baea7314144fa8f8d141ad0dbbf2816f9606b0a89afb396761b558d14
+PKG_SOURCE_DATE:=2021-09-22
+PKG_SOURCE_VERSION:=e6a7d5b5b834737cd12e357b5efdc2e42d923bf6
+PKG_MD5SUM:=7b484f0421369c52867075be0b1890a9
 
-# Build the 5.4 ath10k-ct driver version.  Other option is "-4.19".
+# Build the 5.10 ath10k-ct driver version.
 # Probably this should match as closely as
 # possible to whatever mac80211 backports version is being used.
-CT_KVER="-5.4"
+CT_KVER="-5.10"
 
 PKG_MAINTAINER:=Ben Greear <greearb@candelatech.com>
 PKG_BUILD_PARALLEL:=1
@@ -44,7 +44,8 @@ $(call KernelPackage/ath10k-ct)
   VARIANT:=smallbuffers
 endef
 
-NOSTDINC_FLAGS = \
+NOSTDINC_FLAGS := \
+	$(KERNEL_NOSTDINC_FLAGS) \
 	-I$(PKG_BUILD_DIR) \
 	-I$(STAGING_DIR)/usr/include/mac80211-backport/uapi \
 	-I$(STAGING_DIR)/usr/include/mac80211-backport \
