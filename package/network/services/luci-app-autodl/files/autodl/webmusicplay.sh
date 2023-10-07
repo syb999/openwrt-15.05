@@ -153,9 +153,8 @@ function mixsonglist_9ku() {
 function ku9_play() {
 	if [ "$(uci get autodl.@autodl[0].webmusic_dl_mode)" = "automatic-download" ];then
 		wget-ssl -t 5 -q -c ${real_id} -O $(uci get autodl.@autodl[0].webmusicpath)/${real_title}.mp3
-	else
-		curl -s ${real_id} --connect-timeout 5  | mpg123 --timeout 2 --no-resync -
 	fi
+	curl -s ${real_id} --connect-timeout 5  | mpg123 --timeout 2 --no-resync -
 }
 
 function ku9_main() {
