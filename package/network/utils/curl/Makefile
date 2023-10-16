@@ -6,16 +6,18 @@
 #
 
 include $(TOPDIR)/rules.mk
+include $(INCLUDE_DIR)/nls.mk
 
 PKG_NAME:=curl
-PKG_VERSION:=7.79.1
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=8.4.0
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://dl.uxnr.de/mirror/curl/ \
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE_URL:=https://github.com/curl/curl/releases/download/curl-$(subst .,_,$(PKG_VERSION))/ \
+	https://dl.uxnr.de/mirror/curl/ \
 	https://curl.askapache.com/download/ \
 	https://curl.se/download/
-PKG_MD5SUM:=74d3c4ca8aaa6c0619806d6e246e65fb
+PKG_MD5SUM:=1a61fde1fe5c7db5c29c1196435188a5
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
@@ -77,7 +79,7 @@ define Package/curl/Default
   SECTION:=net
   CATEGORY:=Network
   URL:=http://curl.se/
-  MAINTAINER:=Stan Grishin <stangri@melmac.net>
+  MAINTAINER:=Stan Grishin <stangri@melmac.ca>
 endef
 
 define Package/curl
@@ -107,6 +109,10 @@ TARGET_CFLAGS += $(FPIC) -ffunction-sections -fdata-sections
 TARGET_CPPFLAGS += $(if $(CONFIG_LIBCURL_NTLM),,-DCURL_DISABLE_NTLM)
 TARGET_LDFLAGS += -Wl,--gc-sections
 
+ifdef CONFIG_USE_UCLIBC
+  TARGET_CFLAGS += -std=gnu99
+endif
+
 CONFIGURE_ARGS += \
 	--disable-debug \
 	--disable-ares \
@@ -115,7 +121,6 @@ CONFIGURE_ARGS += \
 	--disable-manual \
 	--without-nss \
 	--without-librtmp \
-	--without-libidn \
 	--without-ca-path \
 	--without-libpsl \
 	--without-zstd \
@@ -123,9 +128,10 @@ CONFIGURE_ARGS += \
 	\
 	$(call autoconf_bool,CONFIG_IPV6,ipv6) \
 	\
+	$(if $(CONFIG_LIBCURL_WOLFSSL)$(CONFIG_LIBCURL_GNUTLS)$(CONFIG_LIBCURL_OPENSSL)$(CONFIG_LIBCURL_MBEDTLS),,--without-ssl) \
 	$(if $(CONFIG_LIBCURL_WOLFSSL),--with-wolfssl="$(STAGING_DIR)/usr",--without-wolfssl) \
 	$(if $(CONFIG_LIBCURL_GNUTLS),--with-gnutls="$(STAGING_DIR)/usr",--without-gnutls) \
-	$(if $(CONFIG_LIBCURL_OPENSSL),--with-ssl="$(STAGING_DIR)/usr",--without-ssl) \
+	$(if $(CONFIG_LIBCURL_OPENSSL),--with-openssl="$(STAGING_DIR)/usr",--without-openssl) \
 	$(if $(CONFIG_LIBCURL_MBEDTLS),--with-mbedtls="$(STAGING_DIR)/usr",--without-mbedtls) \
 	\
 	$(if $(CONFIG_LIBCURL_LIBIDN2),--with-libidn2="$(STAGING_DIR)/usr",--without-libidn2) \

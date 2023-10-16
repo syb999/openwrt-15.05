@@ -103,7 +103,7 @@ config LIBCURL_TFTP
 
 config LIBCURL_NGHTTP2
 	bool "HTTP2 protocol"
-	default n
+	default y
 
 comment "Miscellaneous"
 
@@ -139,7 +139,7 @@ config LIBCURL_ZSTD
 
 config LIBCURL_UNIX_SOCKETS
 	bool "Enable unix domain socket support"
-	default n
+	default y
 	help
 		Enable HTTP over unix domain sockets.
 		To use this with the curl command line, you specify the socket path to the new --unix-domain option.
