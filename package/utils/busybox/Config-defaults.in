@@ -2215,7 +2215,7 @@ config BUSYBOX_DEFAULT_FEATURE_FTPGETPUT_LONG_OPTIONS
 	default n
 config BUSYBOX_DEFAULT_HOSTNAME
 	bool
-	default n
+	default y
 config BUSYBOX_DEFAULT_DNSDOMAINNAME
 	bool
 	default n
