@@ -62,6 +62,11 @@
 				device_type = "pci";
 				mediatek,mtd-eeprom = <&factory 0x0000>;
 				mediatek,2ghz = <0>;
+
+
+				led {
+					led-active-low;
+				};
 			};
 		};
 
@@ -114,7 +119,7 @@
 		wifi {
 			label = "wifi";
 			gpios = <&gpio0 10 1>;
-			linux,code = <247>;
+			linux,code = <0xf7>;
 		};
 	};
 
