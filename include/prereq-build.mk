@@ -65,12 +65,6 @@ $(eval $(call TestHostCommand,zlib, \
 	echo 'int main(int argc, char **argv) { gzdopen(0, "rb"); return 0; }' | \
 		gcc -include zlib.h -x c -o $(TMP_DIR)/a.out - -lz))
 
-$(eval $(call TestHostCommand,libssl, \
-	Please install the openssl library (with development headers), \
-	echo 'int main(int argc, char **argv) { SSL_library_init(); return 0; }' | \
-		gcc $(HOST_CFLAGS) -include openssl/ssl.h -x c -o $(TMP_DIR)/a.out - -lcrypto -lssl $(HOST_LDFLAGS)))
-
-
 $(eval $(call SetupHostCommand,tar,Please install GNU 'tar', \
 	gtar --version 2>&1 | grep GNU, \
 	gnutar --version 2>&1 | grep GNU, \
@@ -145,7 +139,8 @@ $(eval $(call SetupHostCommand,python,Please install Python >= 3.6, \
 	python3.8 -V 2>&1 | grep 'Python 3', \
 	python3.7 -V 2>&1 | grep 'Python 3', \
 	python3.6 -V 2>&1 | grep 'Python 3', \
-	python3 -V 2>&1 | grep -E 'Python 3\.[6-9]|[0-9][0-9]\.?'))
+	python3.5 -V 2>&1 | grep 'Python 3', \
+	python3 -V 2>&1 | grep -E 'Python 3\.[5-9]|[0-9][0-9]\.?'))
 
 $(eval $(call SetupHostCommand,python3,Please install Python >= 3.6, \
 	python3.11 -V 2>&1 | grep 'Python 3', \
@@ -154,7 +149,8 @@ $(eval $(call SetupHostCommand,python3,Please install Python >= 3.6, \
 	python3.8 -V 2>&1 | grep 'Python 3', \
 	python3.7 -V 2>&1 | grep 'Python 3', \
 	python3.6 -V 2>&1 | grep 'Python 3', \
-	python3 -V 2>&1 | grep -E 'Python 3\.[6-9]|[0-9][0-9]\.?'))
+	python3.5 -V 2>&1 | grep 'Python 3', \
+	python3 -V 2>&1 | grep -E 'Python 3\.[5-9]|[0-9][0-9]\.?'))
 
 $(eval $(call TestHostCommand,python3-distutils, \
 	Please install the Python3 distutils module, \
@@ -168,9 +164,6 @@ $(eval $(call SetupHostCommand,git,Please install Git (git-core) >= 1.6.5, \
 
 $(eval $(call SetupHostCommand,file,Please install the 'file' package, \
 	file --version 2>&1 | grep file))
-
-$(eval $(call SetupHostCommand,openssl,Please install the 'openssl' utility, \
-	openssl version | grep OpenSSL))
 
 $(STAGING_DIR_HOST)/bin/mkhash: $(SCRIPT_DIR)/mkhash.c
 	mkdir -p $(dir $@)
