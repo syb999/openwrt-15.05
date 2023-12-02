@@ -1,0 +1,11 @@
+--- a/src/mrib.c
++++ b/src/mrib.c
+@@ -383,8 +383,6 @@ static void mrib_receive_mrt6(struct ulo
+ 			inet_ntop(AF_INET6, &from.sin6_addr, addrbuf, sizeof(addrbuf));
+ 
+ 			if (!IN6_IS_ADDR_LINKLOCAL(&from.sin6_addr) || hlim != 1 || len < 24 || !alert) {
+-				L_WARN("mld: ignoring invalid MLD-message of type %d from %s on %d",
+-						mld->mld_icmp6_hdr.icmp6_type, addrbuf, ifindex);
+ 				continue;
+ 			}
+ 
