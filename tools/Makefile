@@ -29,7 +29,7 @@ tools-y += sstrip make-ext4fs e2fsprogs expat mtd-utils mkimage
 tools-y += firmware-utils patch-image patch quilt yaffs2 flock padjffs2
 tools-y += mm-macros meson missing-macros xz ninja cmake scons bc findutils gengetopt patchelf
 tools-$(CONFIG_TARGET_orion_generic) += wrt350nv2-builder upslug2
-tools-y += ucl upx
+#tools-y += ucl upx
 tools-$(CONFIG_TARGET_x86) += qemu
 tools-$(CONFIG_TARGET_mxs) += elftosb
 # tools-$(CONFIG_TARGET_brcm2708)$(CONFIG_TARGET_sunxi)$(CONFIG_TARGET_mxs) += mtools dosfstools
@@ -41,7 +41,7 @@ tools-$(BUILD_PPL_CLOOG) += ppl cloog
 tools-$(CONFIG_USE_SPARSE) += sparse
 
 # builddir dependencies
-$(curdir)/upx/compile := $(curdir)/upx/install
+#$(curdir)/upx/compile := $(curdir)/upx/install
 $(curdir)/bison/compile := $(curdir)/flex/install
 $(curdir)/flex/compile := $(curdir)/libtool/install
 $(curdir)/pkgconf/compile := $(curdir)/sed/install
