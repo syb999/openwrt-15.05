@@ -189,7 +189,12 @@ foreach my $mirror (@ARGV) {
 		}		
 		foreach my $dir (@extra) {
 			push @mirrors, "https://cdn.kernel.org/pub/$dir";
-			push @mirrors, "https://www.kernel.org/pub/$dir";
+			push @mirrors, "https://download.xs4all.nl/ftp.kernel.org/pub/$dir";
+			push @mirrors, "https://mirrors.mit.edu/kernel/$dir";
+			push @mirrors, "http://ftp.nara.wide.ad.jp/pub/kernel.org/$dir";
+			push @mirrors, "http://www.ring.gr.jp/archives/linux/kernel.org/$dir";
+			push @mirrors, "ftp://ftp.riken.jp/Linux/kernel.org/$dir";
+			push @mirrors, "ftp://www.mirrorservice.org/sites/ftp.kernel.org/pub/$dir";
 		}
     } elsif ($mirror =~ /^\@GNOME\/(.+)$/) {
 		push @mirrors, "http://ftp.gnome.org/pub/GNOME/sources/$1";
