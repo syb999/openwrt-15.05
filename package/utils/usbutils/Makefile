@@ -38,7 +38,7 @@ define Download/usb_ids
   FILE:=$(USB_IDS_FILE)
   URL_FILE:=usb.ids
   URL:=https://raw.githubusercontent.com/vcrhonek/hwdata/v$(USB_IDS_VER)
-  MD5SUM:=bca740ec2ed74928910938a83d64b84f
+  MD5SUM:=318b38825349d432ec9e6eee9321e2de
 endef
 $(eval $(call Download,usb_ids))
 
