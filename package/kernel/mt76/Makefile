@@ -173,14 +173,18 @@ define KernelPackage/mt7615e
   AUTOLOAD:=$(call AutoProbe,mt7615e)
 endef
 
-define KernelPackage/mt7663-firmware-ap
-  $(KernelPackage/mt76-default)
+define Package/mt7663-firmware-ap
+  SECTION:=firmware
+  CATEGORY:=Firmware
   TITLE:=MediaTek MT7663e firmware (optimized for AP)
+  DEPENDS+=@PCI_SUPPORT +kmod-mt7615-common +kmod-mt7615-firmware
 endef
 
-define KernelPackage/mt7663-firmware-sta
-  $(KernelPackage/mt76-default)
+define Package/mt7663-firmware-sta
+  SECTION:=firmware
+  CATEGORY:=Firmware
   TITLE:=MediaTek MT7663e firmware (client mode offload)
+  DEPENDS+=@PCI_SUPPORT +kmod-mt7615-common +kmod-mt7615-firmware
 endef
 
 define KernelPackage/mt7663-usb-sdio
@@ -384,7 +388,7 @@ define KernelPackage/mt7615e/install
 		$(1)/lib/firmware/mediatek
 endef
 
-define KernelPackage/mt7663-firmware-ap/install
+define Package/mt7663-firmware-ap/install
 	$(INSTALL_DIR) $(1)/lib/firmware/mediatek
 	cp \
 		$(PKG_BUILD_DIR)/firmware/mt7663_n9_rebb.bin \
@@ -392,7 +396,7 @@ define KernelPackage/mt7663-firmware-ap/install
 		$(1)/lib/firmware/mediatek
 endef
 
-define KernelPackage/mt7663-firmware-sta/install
+define Package/mt7663-firmware-sta/install
 	$(INSTALL_DIR) $(1)/lib/firmware/mediatek
 	cp \
 		$(PKG_BUILD_DIR)/firmware/mt7663_n9_v3.bin \
@@ -437,8 +441,8 @@ $(eval $(call KernelPackage,mt76-connac))
 $(eval $(call KernelPackage,mt7615-common))
 $(eval $(call KernelPackage,mt7615-firmware))
 $(eval $(call KernelPackage,mt7615e))
-$(eval $(call KernelPackage,mt7663-firmware-ap))
-$(eval $(call KernelPackage,mt7663-firmware-sta))
+$(eval $(call BuildPackage,mt7663-firmware-ap))
+$(eval $(call BuildPackage,mt7663-firmware-sta))
 #$(eval $(call KernelPackage,mt7663-usb-sdio))
 #$(eval $(call KernelPackage,mt7663u))
 #$(eval $(call KernelPackage,mt7663s))
