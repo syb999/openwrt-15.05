@@ -116,7 +116,7 @@ define Device/jdcloud-re-sp-01b
   DEVICE_TITLE := JDCloud RE-SP-01B
   DEVICE_PACKAGES := kmod-usb-core kmod-usb3 kmod-usb-hid kmod-sdhci-mt7620 \
 		     kmod-ledtrig-usbdev kmod-mt7603 \
-		     kmod-mt7615e wpad-mini fixjdcmac
+		     kmod-mt7615e wpad-mini fixwlanmac
 endef
 TARGET_DEVICES += jdcloud-re-sp-01b
 
