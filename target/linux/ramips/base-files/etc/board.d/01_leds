@@ -209,6 +209,10 @@ case $board in
 	sl-r7205)
 		set_wifi_led "rt2800pci-phy0::radio"
 		;;
+	todaair-in1251y)
+		ucidef_set_led_netdev "wi-fi" "Wi-Fi" "todaair-in1251y:amber:wifi" "wlan0"
+		ucidef_set_led_netdev "lan" "LAN" "todaair-in1251y:amber:lan" "br-lan" "tx rx"
+		;;
 	v11st-fe)
 		set_wifi_led "rt2800pci-phy0::radio"
 		;;

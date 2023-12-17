@@ -120,6 +120,14 @@ define Device/jdcloud-re-sp-01b
 endef
 TARGET_DEVICES += jdcloud-re-sp-01b
 
+define Device/todaair-in1251y
+  DTS := TodaAir-IN1251Y
+  IMAGE_SIZE := $(ralink_default_fw_size_16M)
+  DEVICE_TITLE := TodaAir IN1251Y
+  DEVICE_PACKAGES := kmod-mt7603 kmod-mt7615e mt7663-firmware-ap mt7663-firmware-sta
+endef
+TARGET_DEVICES += todaair-in1251y
+
 define Device/xiaoyu-xy-c5
   DTS := XIAOYU-XY-C5
   IMAGE_SIZE := $(ralink_default_fw_size_32M)

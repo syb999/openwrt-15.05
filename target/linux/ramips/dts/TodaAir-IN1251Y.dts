@@ -1,0 +1,120 @@
+/dts-v1/;
+
+/include/ "mt7621.dtsi"
+
+/ {
+	compatible = "todaair-in1251y", "mediatek,mt7621-soc";
+	model = "TodaAir IN1251Y";
+
+	chosen {
+		bootargs = "console=ttyS0,57600";
+	};
+
+	palmbus@1E000000 {
+		spi@b00 {
+			status = "okay";
+
+			m25p80@0 {
+				#address-cells = <1>;
+				#size-cells = <1>;
+				compatible = "jedec,spi-nor";
+				reg = <0 0>;
+				spi-max-frequency = <10000000>;
+
+				partition@0 {
+					label = "u-boot";
+					reg = <0x0 0x30000>;
+				};
+
+				partition@30000 {
+					label = "u-boot-env";
+					reg = <0x30000 0x10000>;
+				};
+
+				factory: partition@40000 {
+					label = "factory";
+					reg = <0x40000 0x10000>;
+				};
+
+				partition@50000 {
+					label = "firmware";
+					reg = <0x50000 0xfb0000>;
+				};
+
+			};
+		};
+
+		i2c@900 {
+			compatible = "ralink,i2c-mt7621";
+			reg = <0x900 0x100>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&i2c_pins>;
+			status = "okay";
+		};
+	};
+
+	pcie@1e140000 {
+		status = "okay";
+
+		pcie0 {
+			mt76@0,0 {
+				reg = <0x0000 0 0 0 0>;
+				device_type = "pci";
+				mediatek,mtd-eeprom = <&factory 0x0000>;
+				mediatek,2ghz = <0>;
+			};
+		};
+
+		pcie1 {
+			mt76@1,0 {
+				reg = <0x0000 0 0 0 0>;
+				device_type = "pci";
+				mediatek,mtd-eeprom = <&factory 0x8000>;
+				mediatek,5ghz = <0>;
+			};
+		};
+	};
+
+	ethernet@1e100000 {
+		mtd-mac-address = <&factory 0x4>;
+	};
+
+	gpio-keys-polled {
+		compatible = "gpio-keys-polled";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		poll-interval = <20>;
+
+		reset {
+			label = "reset";
+			gpios = <&gpio0 18 1>;
+			linux,code = <0x198>;
+		};
+	};
+
+	gpio-leds {
+		compatible = "gpio-leds";
+
+		wifi {
+			label = "todaair-in1251y:amber:wifi";
+			gpios = <&gpio0 3 1>;
+		};
+
+		lan {
+			label = "todaair-in1251y:amber:lan";
+			gpios = <&gpio0 4 1>;
+		};
+	};
+
+	pinctrl {
+		state_default: pinctrl0 {
+			gpio {
+				ralink,group = "i2c", "jtag", "uart2", "uart3";
+				ralink,function = "gpio";
+			};
+		};
+	};
+
+};

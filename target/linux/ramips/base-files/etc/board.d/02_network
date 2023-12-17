@@ -235,6 +235,13 @@ ramips_setup_interfaces()
 		ucidef_add_switch_vlan "switch0" "2" "0 6t"
 		;;
 
+	todaair-in1251y)
+		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
+		ucidef_add_switch "switch0" "1" "1"
+		ucidef_add_switch_vlan "switch0" "1" "4 6t"
+		ucidef_add_switch_vlan "switch0" "2" "0 6t"
+		;;
+
 	ytxc-oem-ap)
 		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
 		ucidef_add_switch "switch0" "1" "1"
@@ -579,6 +586,12 @@ ramips_setup_macs()
 		lan_mac=$(cat /sys/class/net/eth0/address)
 		lan_mac=$(macaddr_setbit_la "$lan_mac")
 		wan_mac=$(mtd_get_mac_binary factory 32772)
+		;;
+
+	todaair-in1251y)
+		load_mac=$(mtd_get_mac_binary factory 4)
+		lan_mac=$(macaddr_add "$load_mac" -1)
+		wan_mac=$(macaddr_add "$load_mac" -2)
 		;;
 
 	all0239-3g | \

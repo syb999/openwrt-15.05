@@ -99,6 +99,7 @@ platform_check_image() {
 	sl-r7205 | \
 	tew-691gr | \
 	tew-692gr | \
+	todaair-in1251y | \
 	ur-326n4g |\
 	ur-336un |\
 	v22rw-2x2 | \
