@@ -1,0 +1,65 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "WAN Emulation"
+msgstr "WAN仿真器"
+
+msgid "With WAN Emulation you can simulate various WAN network conditions."
+msgstr "使用WAN仿真器，您可以模拟各种WAN网络条件"
+
+msgid "These rules will apply to OUTGOING traffic on this physical interface."
+msgstr "这些规则将适用于此物理接口上传出的流量"
+
+msgid "Enable/Disable WAN Emulation on this interface."
+msgstr "在此接口上启用/禁用WAN仿真"
+
+msgid "Add a delay to all outgoing packets."
+msgstr "为所有传出的数据包添加延迟"
+
+msgid "The base amount of fixed delay to be added to every ougoing packet."
+msgstr "添加到每个输出数据包的固定延迟的数值"
+
+msgid "The amount of variation(jitter) that can be added or removed from the base fixed delay."
+msgstr "从基本固定延迟值中增加或降低延迟数值的变化量（抖动）"
+
+msgid "Probability that the variation will be the same as that of the previous packet."
+msgstr "与前一个数据包的延迟变化相同概率的可能性"
+
+msgid "If the inter-packet gap is less than the specified Delay (ms), then packets can be reordered."
+msgstr "如果数据包之间的间隔小于指定的延迟（毫秒），那么数据包可以被重新排序。"
+
+msgid "Probability that a packet will be delivered immediately."
+msgstr "立即传递数据包的概率"
+
+msgid "Probability that a packet will be delayed the same as the previous packet."
+msgstr "数据包被延迟与前一个数据包相同的概率"
+
+msgid "Packets can be randomly dropped."
+msgstr "配置随机丢弃数据包"
+
+msgid "Probability that a packet will be dropped."
+msgstr "数据包被丢弃的概率"
+
+msgid "Probability that a packet will do the same thing as the previous packet. Bursts of packet loss can be achieved with this parameter."
+msgstr "数据包与前一个数据包执行相同操作的概率。使用此参数可以实现突发数据包丢失"
+
+msgid "Packets can be randomly duplicated."
+msgstr "配置数据包随机复制"
+
+msgid "Probability that a packet will be duplicated."
+msgstr "数据包被复制的概率"
+
+msgid "Packets can be randomly corrupted with single-bit errors."
+msgstr "配置数据包单比特错误随机损坏"
+
+msgid "Probability that a packet will be corrupted."
+msgstr "数据包损坏的概率"
+
+msgid "OUTGOING traffic can be rate-limited."
+msgstr "配置传出流量速率限制"
+
+msgid "ratecontrol_rate"
+msgstr "速率控制率"
+
+msgid "Download Speed (kbit/s)"
+msgstr "下载速度（kbit/s）"

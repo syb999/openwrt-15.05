@@ -1,0 +1,49 @@
+#!/bin/sh /etc/rc.common
+USE_PROCD=1
+START=98
+STOP=01
+
+start_instance() {
+    local cfg="$1"
+    cfgnum = cfgnum + 1
+    #echo $cfg
+    local enabled
+    local ifname
+
+    config_get_bool enabled $cfg enabled
+    #echo $enabled
+
+    if [ $enabled == "0" ]; then
+		echo "Netem rule: $cfg disabled in config"
+		return 1
+	fi
+    # Reading config
+ 
+    config_get ifname $cfg ifname
+
+    procd_open_instance 
+    procd_set_param command /usr/bin/lua "/sbin/netem-control"
+    procd_set_param stdout 1
+    procd_set_param stderr 1
+    procd_close_instance 
+}
+
+start_service() {
+	#config_load 'netem'
+	#config_foreach start_instance interface
+    procd_open_instance 
+    procd_set_param command /usr/bin/lua "/sbin/netem-control"
+    procd_set_param stdout 1
+    procd_set_param stderr 1
+    procd_close_instance 
+}
+
+reload_service()
+{
+    stop
+    start
+}
+
+service_triggers() {
+	procd_add_reload_trigger 'netem'
+}
