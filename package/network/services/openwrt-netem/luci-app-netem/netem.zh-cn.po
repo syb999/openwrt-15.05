@@ -1,17 +1,17 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8\n"
 
-msgid "WAN Emulation"
-msgstr "WAN仿真器"
+msgid "Network Emulation"
+msgstr "网络仿真器"
 
-msgid "With WAN Emulation you can simulate various WAN network conditions."
-msgstr "使用WAN仿真器，您可以模拟各种WAN网络条件"
+msgid "With Network Emulation you can simulate various network conditions."
+msgstr "使用网络仿真器，您可以模拟各种网络条件"
 
 msgid "These rules will apply to OUTGOING traffic on this physical interface."
 msgstr "这些规则将适用于此物理接口上传出的流量"
 
-msgid "Enable/Disable WAN Emulation on this interface."
-msgstr "在此接口上启用/禁用WAN仿真"
+msgid "Enable/Disable Network Emulation on this interface."
+msgstr "在此接口上启用/禁用网络仿真器"
 
 msgid "Add a delay to all outgoing packets."
 msgstr "为所有传出的数据包添加延迟"

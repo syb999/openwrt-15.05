@@ -16,8 +16,8 @@ local ut = require "luci.util"
 local nw = require "luci.model.network"
 local fs = require "nixio.fs"
 
-m = Map("netem", translate("WAN Emulation"),
-    translate("With WAN Emulation you can simulate various WAN network conditions."))
+m = Map("netem", translate("Network Emulation"),
+    translate("With Network Emulation you can simulate various network conditions."))
 
 s = m:section(TypedSection, "interface", translate("Interfaces"))
 s.addremove = true
@@ -31,7 +31,7 @@ ifname.nobridges = false
 ifname.rmempty = false
 ifname.network = arg[1]
 
-e = s:option(Flag, "enabled", translate("Enable"), translate("Enable/Disable WAN Emulation on this interface."))
+e = s:option(Flag, "enabled", translate("Enable"), translate("Enable/Disable Network Emulation on this interface."))
 e.rmempty = false
 
 s:option(Flag, "delay", translate("Packet Delay"), translate("Add a delay to all outgoing packets."))

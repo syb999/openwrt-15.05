@@ -20,11 +20,11 @@ function index()
 
     local page
 
-    page = entry({"admin", "network", "netem"}, cbi("netem/netem"), _("WAN Emulation"))
+    page = entry({"admin", "network", "netem"}, cbi("netem/netem"), _("Network Emulation"))
     page.i18n = "netem"
     page.dependent = true
 
-    page = entry({"mini", "network", "netem"}, cbi("netem/netemmini", {autoapply=true}), _("WAN Emulation"))
+    page = entry({"mini", "network", "netem"}, cbi("netem/netemmini", {autoapply=true}), _("Network Emulation"))
     page.i18n = "netem"
     page.dependent = true
 end
