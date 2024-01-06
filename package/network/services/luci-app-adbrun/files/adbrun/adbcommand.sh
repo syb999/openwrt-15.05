@@ -264,7 +264,9 @@ elif [ "$adbcd" == "update preview picture" ];then
 elif [ "$adbcd" == "push and install apk" ];then
 	adb -s ${adbclient}:5555 push "$(uci get adbrun.$sectionname.adb_src_path)" /sdcard/
 	sleep 5
-	adb -s ${adbclient}:5555 shell pm install /sdcard/$(echo $(uci get adbrun.$sectionname.adb_src_path) | cut -d '/' -f $(expr $(echo $(uci get adbrun.$sectionname.adb_src_path) | grep -o '/' | wc -l) + 1))
+	adb -s ${adbclient}:5555 shell pm install "/sdcard/$(basename $(uci get adbrun.$sectionname.adb_src_path))"
+	sleep 5
+	adb -s ${adbclient}:5555 shell rm "/sdcard/$(basename $(uci get adbrun.$sectionname.adb_src_path))"
 elif [ "$adbcd" == "input chinese" ];then                                                                    
         ch_text="$(uci get adbrun.$sectionname.adb_input_ch)"                                                 
         adb -s ${adbclient}:5555 shell ime enable com.android.adbkeyboard/.AdbIME                             
