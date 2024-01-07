@@ -60,12 +60,12 @@ function test_dir() {
 }
 
 function ku9_get_times() {
-	_num=$(curl -s "https://www.9ku.com/${the_a}" | grep "class=\"songName" | wc -l)
+	_num=$(curl -k -s "https://www.9ku.com/${the_a}" | grep "class=\"songName" | wc -l)
 	if [ ${_num} = 0 ];then
-		_num=$(curl -s "https://www.9ku.com/${the_a}" | grep "target=_1" | wc -l)
+		_num=$(curl -k -s "https://www.9ku.com/${the_a}" | grep "target=_1" | wc -l)
 	fi
 	if [ ${_num} = 0 ];then
-		_num=$(curl -s "https://www.9ku.com/${the_a}" | grep "target=\"_blank" | wc -l)
+		_num=$(curl -k -s "https://www.9ku.com/${the_a}" | grep "target=\"_blank" | wc -l)
 	fi
 }
 
@@ -107,17 +107,17 @@ function ku9_gen_id() {
 function ku9_geturl() {
 	ku9_gen_id
 	if [ ${the_a} == "zhuanji/75.htm" ];then
-		thesuffix="$(curl -s https://www.9ku.com/${the_a} | grep "target=_1" | head -n${_target} | tail -n1 | cut -d '"' -f2 | cut -d '/' -f3)"
+		thesuffix="$(curl -k -s https://www.9ku.com/${the_a} | grep "target=_1" | head -n${_target} | tail -n1 | cut -d '"' -f2 | cut -d '/' -f3)"
 	elif [ ${the_a} == "wangluo/" ];then
-		thesuffix="$(curl -s https://www.9ku.com/${the_a} | grep "target=\"_blank" | head -n${_target} | tail -n1 | cut -d '"' -f22 | cut -d '/' -f3)"
+		thesuffix="$(curl -k -s https://www.9ku.com/${the_a} | grep "target=\"_blank" | head -n${_target} | tail -n1 | cut -d '"' -f22 | cut -d '/' -f3)"
 	elif [ ${the_a} == "yingwen/" ];then
-		thesuffix="$(curl -s https://www.9ku.com/${the_a} | grep "songName" | head -n${_target} | tail -n1 | cut -d '"' -f14 | cut -d '/' -f3)"
+		thesuffix="$(curl -k -s https://www.9ku.com/${the_a} | grep "songName" | head -n${_target} | tail -n1 | cut -d '"' -f14 | cut -d '/' -f3)"
 	else
-		thesuffix="$(curl -s https://www.9ku.com/${the_a} | grep "class=\"songName" | head -n${_target} | tail -n1 | cut -d '"' -f4 | cut -d '/' -f3)"
+		thesuffix="$(curl -k -s https://www.9ku.com/${the_a} | grep "class=\"songName" | head -n${_target} | tail -n1 | cut -d '"' -f4 | cut -d '/' -f3)"
 	fi
 	theurl="${theprefix}${thesuffix}"
-	real_id="$(curl -s $theurl | grep "Mp3下载" | cut -d '"' -f2 | grep https)"
-	real_title="$(curl -s $theurl | grep "Mp3下载" | grep https | cut -d '>' -f2| sed "s/Mp3下载//" | cut -d '<' -f1 | sed 's/ /_/g' )"
+	real_id="$(curl -k -s $theurl | grep "Mp3下载" | cut -d '"' -f2 | grep mp3)"
+	real_title="$(curl -k -s $theurl | grep "Mp3下载" | grep mp3 | cut -d '>' -f2| sed "s/Mp3下载//" | cut -d '<' -f1 | sed 's/ /_/g' )"
 }
 
 function mixsonglist_9ku() {
@@ -152,9 +152,9 @@ function mixsonglist_9ku() {
 
 function ku9_play() {
 	if [ "$(uci get autodl.@autodl[0].webmusic_dl_mode)" = "automatic-download" ];then
-		wget-ssl -t 5 -q -c ${real_id} -O $(uci get autodl.@autodl[0].webmusicpath)/${real_title}.mp3
+		wget-ssl -t 5 -q -c "https://music.jsbaidu.com${real_id}" -O $(uci get autodl.@autodl[0].webmusicpath)/${real_title}.mp3
 	fi
-	curl -s ${real_id} --connect-timeout 5  | mpg123 --timeout 2 --no-resync -
+	curl -s "https://music.jsbaidu.com${real_id}" --connect-timeout 5  | mpg123 --timeout 2 --no-resync -
 }
 
 function ku9_main() {
@@ -168,7 +168,7 @@ function mixsonglist_kugou() {
 	rm /tmp/kugou.mixlist > /dev/null 2>&1
 	for kgp in $theid;do
 		for pp in $(seq 1 5);do
-			curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 https://www.kugou.com/yy/rank/home/1-$kgp.html?p=$pp | grep mixsong | cut -d '"' -f 2 | cut -d '"' -f 1 >> /tmp/kugou.mixlist
+			curl -k -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 https://www.kugou.com/yy/rank/home/1-$kgp.html?p=$pp | grep mixsong | cut -d '"' -f 2 | cut -d '"' -f 1 >> /tmp/kugou.mixlist
 		done
 	done
 }
@@ -182,7 +182,7 @@ function kugouplay() {
 	mp3mid="&mid=bbb9daa22b64526961d305894db7ebb3"
 	mp3id="&album_audio_id=${kgmixid}"
 	mp3url=${mp3prefix}${mp3hash}${mp3mid}${mp3id}
-	curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 $mp3url > $thetmpfile2
+	curl -k -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 $mp3url > $thetmpfile2
 	urlinfo=$(cat $thetmpfile2)
 	echo ${urlinfo#*play_url\":\"} > $thetmpurl
 	themp3tmp=$(cat $thetmpurl)
@@ -190,7 +190,7 @@ function kugouplay() {
 	if [ "$(uci get autodl.@autodl[0].webmusic_dl_mode)" = "automatic-download" ];then
 		wget-ssl -t 5 -q -c $(cat $thetmpurl) -O $(uci get autodl.@autodl[0].webmusicpath)/$(cat $thetmpinfo).mp3
 	fi
-	curl -s $(cat $thetmpurl) --connect-timeout 5 | mpg123 --timeout 2 --no-resync -
+	curl -k -s $(cat $thetmpurl) --connect-timeout 5 | mpg123 --timeout 2 --no-resync -
 	while [ "$(ps -w | grep mpg123 | grep -v grep | awk '{print$1}')" ];do
 		sleep 2
 	done
@@ -204,8 +204,8 @@ function kugou_main() {
 	mixsonglist_kugou
 	for mu in $(seq 1 $(cat /tmp/kugou.mixlist | wc -l));do
 		mixsongurl=$(cat /tmp/kugou.mixlist | head -n $mu |  tail -n 1)
-		curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 $mixsongurl | grep hash | sed 's/\"hash\":\"/\n/;s/\"audio_name\":\"/\n/;s/\"mixsongid\":/\n/' | sed '1d' > $thetmpfile1
-		curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 $mixsongurl | grep "<title>" | cut -d '<' -f2 | cut -d ">" -f2 | cut -d '_' -f1,2 | sed 's/ /_/g' > $thetmpinfo
+		curl -k -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 $mixsongurl | grep hash | sed 's/\"hash\":\"/\n/;s/\"audio_name\":\"/\n/;s/\"mixsongid\":/\n/' | sed '1d' > $thetmpfile1
+		curl -k -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 $mixsongurl | grep "<title>" | cut -d '<' -f2 | cut -d ">" -f2 | cut -d '_' -f1,2 | sed 's/ /_/g' > $thetmpinfo
 		kugouplay
 	done
 	rm /tmp/kugou.*
