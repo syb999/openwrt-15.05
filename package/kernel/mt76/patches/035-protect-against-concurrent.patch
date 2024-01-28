@@ -1,0 +1,81 @@
+https://github.com/openwrt/mt76/commit/d63cb85c12fe0de6958143167e03c664fbdeeefd
+
+--- a/dma.c
++++ b/dma.c
+@@ -434,7 +434,9 @@ free:
+ free_skb:
+ 	status.skb = tx_info.skb;
+ 	hw = mt76_tx_status_get_hw(dev, tx_info.skb);
++	spin_lock_bh(&dev->rx_lock);
+ 	ieee80211_tx_status_ext(hw, &status);
++	spin_unlock_bh(&dev->rx_lock);
+ 
+ 	return ret;
+ }
+--- a/mt7603/mac.c
++++ b/mt7603/mac.c
+@@ -1273,8 +1273,11 @@ void mt7603_mac_add_txs(struct mt7603_de
+ 	if (wcidx >= MT7603_WTBL_STA || !sta)
+ 		goto out;
+ 
+-	if (mt7603_fill_txs(dev, msta, &info, txs_data))
++	if (mt7603_fill_txs(dev, msta, &info, txs_data)) {
++		spin_lock_bh(&dev->mt76.rx_lock);
+ 		ieee80211_tx_status_noskb(mt76_hw(dev), sta, &info);
++		spin_unlock_bh(&dev->mt76.rx_lock);
++	}
+ 
+ out:
+ 	rcu_read_unlock();
+--- a/mt7615/mac.c
++++ b/mt7615/mac.c
+@@ -1478,8 +1478,11 @@ static void mt7615_mac_add_txs(struct mt
+ 	if (wcid->ext_phy && dev->mt76.phy2)
+ 		mphy = dev->mt76.phy2;
+ 
+-	if (mt7615_fill_txs(dev, msta, &info, txs_data))
++	if (mt7615_fill_txs(dev, msta, &info, txs_data)) {
++		spin_lock_bh(&dev->mt76.rx_lock);
+ 		ieee80211_tx_status_noskb(mphy->hw, sta, &info);
++		spin_unlock_bh(&dev->mt76.rx_lock);
++	}
+ 
+ out:
+ 	rcu_read_unlock();
+--- a/mt76x02_mac.c
++++ b/mt76x02_mac.c
+@@ -631,8 +631,11 @@ void mt76x02_send_tx_status(struct mt76x
+ 
+ 	mt76_tx_status_unlock(mdev, &list);
+ 
+-	if (!status.skb)
++	if (!status.skb) {
++		spin_lock_bh(&dev->mt76.rx_lock);
+ 		ieee80211_tx_status_ext(mt76_hw(dev), &status);
++		spin_unlock_bh(&dev->mt76.rx_lock);
++	}
+ 
+ 	if (!len)
+ 		goto out;
+--- a/tx.c
++++ b/tx.c
+@@ -56,7 +56,9 @@ mt76_tx_status_unlock(struct mt76_dev *d
+ 
+ 	while ((skb = __skb_dequeue(list)) != NULL) {
+ 		hw = mt76_tx_status_get_hw(dev, skb);
++		spin_lock_bh(&dev->rx_lock);
+ 		ieee80211_tx_status(hw, skb);
++		spin_unlock_bh(&dev->rx_lock);
+ 	}
+ }
+ EXPORT_SYMBOL_GPL(mt76_tx_status_unlock);
+@@ -214,7 +216,9 @@ void mt76_tx_complete_skb(struct mt76_de
+ 
+ 	if (!skb->prev) {
+ 		hw = mt76_tx_status_get_hw(dev, skb);
++		spin_lock_bh(&dev->rx_lock);
+ 		ieee80211_free_txskb(hw, skb);
++		spin_unlock_bh(&dev->rx_lock);
+ 		return;
+ 	}
+ 
