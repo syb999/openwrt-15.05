@@ -1,0 +1,12 @@
+https://github.com/openwrt/mt76/commit/3e81173d9e2b3345beeb085d1e4abf545ef6c03c
+
+--- a/mt7603/eeprom.c
++++ b/mt7603/eeprom.c
+@@ -181,6 +181,7 @@ int mt7603_eeprom_init(struct mt7603_dev
+ 	    is_mt7688(dev))
+ 		dev->mphy.antenna_mask = 1;
+ 
++	dev->mphy.chainmask = dev->mphy.antenna_mask;
+ 	mt76_eeprom_override(&dev->mphy);
+ 
+ 	return 0;
