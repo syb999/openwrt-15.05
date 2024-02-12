@@ -1,0 +1,38 @@
+<!DOCTYPE html>  
+<html>  
+<head>  
+    <title>Multiple HLS Streams</title>  
+    <style>  
+        .video-container {  
+            display: grid;  
+            grid-template-columns: repeat(auto-fill, minmax(calc(50% - 20px), 1fr));  
+            grid-gap: 10px;  
+            justify-content: center;  
+        }  
+        .video-container video {  
+            width: 100%;  
+        }  
+        .video-container h2 {  
+            font-size: 12px;
+            margin: 0;
+            padding: 0;
+        }  
+        @media (max-width: 600px) {  
+            .video-container {  
+                grid-template-columns: 1fr;  
+            }  
+        }  
+    </style>  
+</head>  
+<body>  
+    <h1>Multiple HLS Streams</h1>  
+    <div class="video-container">  
+        {% for stream in streams %}  
+            <div>  
+                <h2>{{ stream.name }}</h2>  
+                <video src="{{ stream.url }}" controls></video>  
+            </div>  
+        {% endfor %}  
+    </div>  
+</body>  
+</html>

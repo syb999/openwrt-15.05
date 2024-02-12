@@ -53,6 +53,15 @@ ffmpeg -re -i input.mp4 -c copy -f flv rtmp://ip:1935/hls/mp4
 访问地址:
 http://ip:1936/hls/mp4.m3u8
 
+---------------------------------------------------------------------------
+
+添加手机平板端浏览器同时观看多路视频流方法。使用pyhon3的flask库来提供网页服务。
+pip install flask Jinja2
+复制http目录内容到路由器。并修改http.py里的ip为当前路由器的ip地址。
+执行python3 http.py后
+安卓手机或平板使用浏览器打开http://ip:82页面来观看多路视频流。
+
+
 
 
 
