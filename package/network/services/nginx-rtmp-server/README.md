@@ -45,3 +45,14 @@ Running ffmpeg,consumes 5%~10% CPU (if source use: ffmpeg -re -f alsa -ac 1 -ar 
 
 Running ffmpeg,consumes   100% CPU (if source use: ffmpeg -re -i input1.mp3 -acodec copy -f rtmp://...).
 
+
+--------------------------------------------------------------------------
+# About HLS stream
+hls推流方法:
+ffmpeg -re -i input.mp4 -c copy -f flv rtmp://ip:1935/hls/mp4
+访问地址:
+http://ip:1936/hls/mp4.m3u8
+
+
+
+
