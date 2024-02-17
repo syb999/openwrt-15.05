@@ -1,5 +1,4 @@
-# pip install flask Jinja2
-
+# pip install Flask Jinja2
 
 import os
 from flask import Flask, render_template

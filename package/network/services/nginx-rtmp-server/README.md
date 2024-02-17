@@ -57,11 +57,31 @@ http://ip:1936/hls/mp4.m3u8
 
 添加手机平板端浏览器同时观看多路视频流方法。使用pyhon3的flask库来提供网页服务。
 pip install flask Jinja2
-复制http目录内容到路由器。并修改http.py里的ip为当前路由器的ip地址。
-执行python3 http.py后
+复制http目录内容到路由器。并修改nhttp.py里的ip为当前路由器的ip地址。
+执行python3 nhttp.py后
 安卓手机或平板使用浏览器打开http://ip:82页面来观看多路视频流。
 
+--------------------------------------------------------------------------
 
+ffmpeg -re -i input源 -c copy -f flv rtmp://ip:1935/live
 
+live开启录像功能的配置(此配置为每分钟保存1个mp4文件):
+
+rtmp {
+	server {
+		application live {
+			live on;
+			allow publish all;
+			allow play all;
+                       
+			record all;
+			record_path /tmp;
+			record_append on;
+			record_max_size 128M;
+			record_suffix %Y%m%d-%H%M%S.mp4;
+			record_interval 1m;
+		}
+
+请根据实际修改record_path,record_max_size,record_suffix,record_interval的值。
 
 
