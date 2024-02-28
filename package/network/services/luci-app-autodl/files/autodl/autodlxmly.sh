@@ -33,36 +33,15 @@ function getxmlyaudios(){
 	cat /tmp/tmpXM.newlist2 | while read LINE
 	do
 		xmlytrackId=$(echo $LINE)
-		adurlprefix=$urlprefix
-		adurlsuffix=$urlsuffix
-		tmpgetaudiourl="${adurlprefix}${xmlytrackId}${adurlsuffix}"
-		curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 http://www.ximalaya.com/revision/time > /tmp/tmp.XM.xmtimestamp
-		xmtimestamp=$(cat /tmp/tmp.XM.xmtimestamp)
-		xmvvmd5=$(echo himalaya-$xmtimestamp)
-		echo -n $xmvvmd5 | md5sum > /tmp/tmp.XM.md5s
-		cat /tmp/tmp.XM.md5s | cut -d ' ' -f 1 > /tmp/tmp.XM.md5ss
-		xmsign1=$(cat /tmp/tmp.XM.md5ss)
-		head -n6 /dev/urandom | tr -dc "123456789" | head -c2 > /tmp/tmp.XM.randum1
-		rnum1=\($(cat /tmp/tmp.XM.randum1)\)
-		head -n6 /dev/urandom | tr -dc "123456789" | head -c2 > /tmp/tmp.XM.randum2
-		rnum2=\($(cat /tmp/tmp.XM.randum2)\)
-		head -n6 /dev/urandom | tr -dc "012345" | head -c3 > /tmp/tmp.XM.randum3
-		bnum=$(cat /tmp/tmp.XM.randum3)
-		date +"%s" > /tmp/tmp.XM.datelst
-		optimestamp=$(cat /tmp/tmp.XM.datelst)
-		cxmsign=${xmsign1}${rnum1}${xmtimestamp}${rnum2}${optimestamp}${bnum}
-		curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -H ""xm-sign": "$cxmsign"" -v $tmpgetaudiourl > /tmp/tmpXM.xmlyhttp6
-		sleep 1
-		tmpaudio=$(cat /tmp/tmpXM.xmlyhttp6)
-		echo ${tmpaudio#*src\":\"} > /tmp/tmpXM.xmlyhttp7
-		tmpaudio=$(cat /tmp/tmpXM.xmlyhttp7)
-		echo ${tmpaudio%\",\"albumIsSample*} > /tmp/tmpXM.xmlyhttp7
-		audiofile=$(cat /tmp/tmpXM.xmlyhttp7)
+		echo ${xmlytrackId} > /tmp/tmpXM.xmlysoundid
+		rm /tmp/tmpXM.xmlyhttp
+		python3 /usr/autodl/xmlyfree.py
+		audiofile=$(cat /tmp/tmpXM.xmlyhttp)
 		wget-ssl -q -c $(uci get network.lan.ipaddr) -O /tmp/tmp.XM.testwget > /dev/null 2>&1
 		if [ -s /tmp/tmp.XM.testwget ];then
-			wget-ssl -q -c $audiofile -O $paudionum.m4a
+			wget-ssl -q -c $audiofile -O $paudionum.mp3
 		else
-			wget -q -c $audiofile -O $paudionum.m4a
+			wget -q -c $audiofile -O $paudionum.mp3
 		fi
 		sleep 3
 		paudionum=$(echo `expr $paudionum - 1`)
@@ -83,15 +62,15 @@ function getxmlyaudios(){
 		fi
 		if [ $xmlyturenum -le 9 ];then
 			nxmlyturenum=000$xmlyturenum
-			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/${paudioname}${nxmlyturenum}-${xmlyturename}.m4a
+			mv -f /$paudiopath/$rpaudionum.mp3 /$paudiopath/${paudioname}${nxmlyturenum}-${xmlyturename}.mp3
 		elif [ $xmlyturenum -le 99 ];then
 			nnxmlyturenum=00$xmlyturenum
-			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/${paudioname}${nnxmlyturenum}-${xmlyturename}.m4a
+			mv -f /$paudiopath/$rpaudionum.mp3 /$paudiopath/${paudioname}${nnxmlyturenum}-${xmlyturename}.mp3
 		elif [ $xmlyturenum -le 999 ];then
 			nnnxmlyturenum=0$xmlyturenum
-			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/${paudioname}${nnnxmlyturenum}-${xmlyturename}.m4a
+			mv -f /$paudiopath/$rpaudionum.mp3 /$paudiopath/${paudioname}${nnnxmlyturenum}-${xmlyturename}.mp3
 		else
-			mv -f /$paudiopath/$rpaudionum.m4a /$paudiopath/${paudioname}${xmlyturenum}-${xmlyturename}.m4a
+			mv -f /$paudiopath/$rpaudionum.mp3 /$paudiopath/${paudioname}${xmlyturenum}-${xmlyturename}.mp3
 		fi
 		sed 1d -i /tmp/tmpXM.filenamelist
 		tmpcounthead=$(echo `expr $tmpcounthead + 1`)
@@ -102,7 +81,7 @@ function getxmlyaudios(){
 		mkdir $paudioname
 	fi
 
-	mv -f *.m4a $paudioname
+	mv -f *.mp3 $paudioname
 	rm /tmp/tmpXM.*
 }
 
