@@ -32,6 +32,14 @@ case $adbcommand in
 	;;
 	input-chinese) adbcd="input chinese"
 	;;
+	menu-key) adbcd="shell input keyevent 82"
+	;;
+	home-key) adbcd="shell input keyevent 3"
+	;;
+	return-key) adbcd="shell input keyevent 4"
+	;;
+	allow-unknown-sources) adbcd="shell settings put global install_non_market_apps 1"
+	;;
 	turn-offon-the-screen) adbcd="shell input keyevent 26"
 	;;
 	turn-on-the-screen) adbcd="shell input keyevent 224"

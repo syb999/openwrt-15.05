@@ -118,6 +118,18 @@ msgstr "自动安装ADBKeyboard"
 msgid "input chinese"
 msgstr "输入中文"
 
+msgid "menu key"
+msgstr "菜单键"
+
+msgid "home key"
+msgstr "HOME键"
+
+msgid "return key"
+msgstr "返回键"
+
+msgid "Allow installation of apps from unknown sources"
+msgstr "设置允许安装未知来源应用"
+
 msgid "input text"
 msgstr "输入文本"
 
