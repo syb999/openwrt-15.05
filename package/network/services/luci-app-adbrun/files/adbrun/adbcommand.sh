@@ -270,11 +270,12 @@ elif [ "$adbcd" == "crazy tap" ];then
 elif [ "$adbcd" == "update preview picture" ];then
 	rm /tmp/${adbclient}.png
 elif [ "$adbcd" == "push and install apk" ];then
-	adb -s ${adbclient}:5555 push "$(uci get adbrun.$sectionname.adb_src_path)" /sdcard/
+	adb -s ${adbclient}:5555 shell mkdir -p /data/local/tmp/
+	adb -s ${adbclient}:5555 push "$(uci get adbrun.$sectionname.adb_src_path)" /data/local/tmp/
 	sleep 5
-	adb -s ${adbclient}:5555 shell pm install "/sdcard/$(basename $(uci get adbrun.$sectionname.adb_src_path))"
+	adb -s ${adbclient}:5555 shell pm install "/data/local/tmp/$(basename $(uci get adbrun.$sectionname.adb_src_path))"
 	sleep 5
-	adb -s ${adbclient}:5555 shell rm "/sdcard/$(basename $(uci get adbrun.$sectionname.adb_src_path))"
+	adb -s ${adbclient}:5555 shell rm "/data/local/tmp/$(basename $(uci get adbrun.$sectionname.adb_src_path))"
 elif [ "$adbcd" == "input chinese" ];then                                                                    
         ch_text="$(uci get adbrun.$sectionname.adb_input_ch)"                                                 
         adb -s ${adbclient}:5555 shell ime enable com.android.adbkeyboard/.AdbIME                             
