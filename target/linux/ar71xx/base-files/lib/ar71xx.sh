@@ -324,6 +324,9 @@ ar71xx_board_detect() {
 	*"Oolite V1.0")
 		name="oolite"
 		;;
+	*"100mshBOX HQ65")
+		name="hq65"
+		;;
 	*"AC1750DB")
 		name="f9k1115v2"
 		;;

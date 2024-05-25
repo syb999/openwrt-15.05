@@ -256,6 +256,11 @@ hornet-ub-x2)
 	ucidef_set_led_usbdev "usb" "USB" "alfa:blue:usb" "1-1"
 	;;
 
+hq65)
+	ucidef_set_led_netdev "wan" "WAN" "hq65:green:wan" "eth0"
+	ucidef_set_led_wlan "wlan" "WLAN" "hq65:green:wlan" "phy0tpt"
+	;;
+
 mc-mac1200r)
 	ucidef_set_led_wlan "wlan2g" "WLAN2G" "mercury:green:wlan2g" "phy1tpt"
 	ucidef_set_led_wlan "wlan5g" "WLAN5G" "mercury:green:wlan5g" "phy0tpt"
