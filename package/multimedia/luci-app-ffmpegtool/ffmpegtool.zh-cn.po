@@ -97,6 +97,21 @@ msgstr "一键获取输入源信息"
 msgid "Audio Setting"
 msgstr "音频设置"
 
+msgid "separate audio"
+msgstr "分割音频"
+
+msgid "the original file to be separated"
+msgstr "需要分割的原文件"
+
+msgid "segment duration"
+msgstr "分割时长"
+
+msgid "timespinner"
+msgstr "时间微调"
+
+msgid "Please enter the duration of each segmented audio in sequence"
+msgstr "请依次输入需要分割出的音频的时长(格式为:分钟:秒钟或者小时:分钟:秒钟,用逗号或者空格隔开)"
+
 msgid "combine audio"
 msgstr "合并音频"
 

@@ -88,6 +88,43 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].audio_copy)" == "1" ];then
 	param_copy="-acodec copy"
 fi
 
+if [ "$(uci get ffmpegtool.@ffmpegtool[0].audio_separate)" == "1" ];then
+	input_file="$(uci get ffmpegtool.@ffmpegtool[0].audio_sept_input)"
+	start_time=0
+	durations=0
+	timespinner=$(uci get ffmpegtool.@ffmpegtool[0].audio_sept_timespinner)
+	output_file_prefix=1
+	segments=$(uci get ffmpegtool.@ffmpegtool[0].audio_sept_segment | sed 's/,/ /g')
+	for i in ${segments};do
+	    start_time="$(expr ${start_time} + ${durations})"
+	    if [ $(echo ${i} | tr -cd ':' | wc -c) -eq 2 ];then
+	    	hourtomin=$(expr $(echo ${i} | cut -d ':' -f1) \* 60)
+	    	mintosec=$(expr $(expr ${hourtomin} + $(echo ${i} | cut -d ':' -f2)) \* 60)
+	    	durations=$(expr $(echo ${i} | cut -d ':' -f3) + ${mintosec} + ${timespinner})
+	    elif [ $(echo ${i} | tr -cd ':' | wc -c) -eq 1 ];then
+	    	mintosec=$(expr $(echo ${i} | cut -d ':' -f1) \* 60)
+	    	durations=$(expr $(echo ${i} | cut -d ':' -f2) + ${mintosec} + ${timespinner})
+	    else
+	    	durations=$(expr ${i} + ${timespinner})
+	    fi
+	    if [ ! -z $(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path) ];then
+	    	output_file="$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/${output_file_prefix}.output_sept.$param_format" 
+	    else
+	    	output_file="$(dirname $input_file)/${output_file_prefix}.output_sept.$param_format"    
+	    fi
+	    echo "${input_file}文件分割处理中...，输出:$(basename ${output_file})" >> /tmp/ffmpeg.log
+	    if [ $(echo "${input_file##*.}") = $param_format ];then
+	    	ffmpeg -i "$input_file" -ss ${start_time} -t $durations -c copy "$output_file" -y
+	    else
+	    	ffmpeg -i "$input_file" -ss ${start_time} -t $durations "$output_file" -y
+	    fi
+	    output_file_prefix=$(expr $output_file_prefix + 1)
+	done 
+	echo "分割完毕!" >> /tmp/ffmpeg.log
+	ucidefault
+	exit 0
+fi
+
 if [ "$(uci get ffmpegtool.@ffmpegtool[0].audio_merge)" == "1" ];then
 	input1=$(uci get ffmpegtool.@ffmpegtool[0].audio_input1)
 	input2=$(uci get ffmpegtool.@ffmpegtool[0].audio_input2)

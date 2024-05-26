@@ -121,6 +121,31 @@ audio_format:value("wav")
 audio_format.default = "mp3"
 audio_format.rempty  = false
 
+audio_sept=s:taboption("audio_setting", Flag, "audio_separate", translate("separate audio"))
+audio_sept.default = ""
+
+audio_sept_input = s:taboption("audio_setting", Value, "audio_sept_input", translate("the original file to be separated"))
+audio_sept_input:depends( "audio_separate", "1" )
+audio_sept_input.datatype = "string"
+audio_sept_input.placeholder = "/mnt/sda1/input.mp3"
+audio_sept_input.default = "/mnt/sda1/input.mp3"
+audio_sept_input.rmempty = true
+
+audio_sept_segment = s:taboption("audio_setting", Value, "audio_sept_segment", translate("segment duration"))
+audio_sept_segment:depends( "audio_separate", "1" )
+audio_sept_segment.datatype = "string"
+audio_sept_segment.placeholder = "5:01,3:02,6:03"
+audio_sept_segment.default = ""
+audio_sept_segment.rmempty = true
+audio_sept_segment.description = translate("Please enter the duration of each segmented audio in sequence")
+
+audio_sept_timespinner = s:taboption("audio_setting", Value, "audio_sept_timespinner", translate("timespinner"))
+audio_sept_timespinner:depends( "audio_separate", "1" )
+audio_sept_timespinner.datatype = "uinteger"
+audio_sept_timespinner.placeholder = "0"
+audio_sept_timespinner.default = "0"
+audio_sept_timespinner.rmempty = true
+
 audio_merge=s:taboption("audio_setting", Flag, "audio_merge", translate("combine audio"))
 audio_merge:depends( "audio_copy", "" )
 audio_merge.default = ""
