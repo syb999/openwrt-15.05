@@ -25,7 +25,11 @@ define Package/panel-ap-setup/install
 	$(INSTALL_CONF) ./files/panel_ap_config $(1)/etc/config/panel_ap_config
 ifdef CONFIG_TARGET_ramips_mt7628_WNA4320V2
 	$(INSTALL_DIR) $(1)/etc/rc.button
-	$(INSTALL_BIN) ./files/wlan/wna4320v2 $(1)/etc/rc.button/wps
+	$(INSTALL_BIN) ./files/button/wna4320v2 $(1)/etc/rc.button/wps
+endif
+ifdef CONFIG_TARGET_ar71xx_generic_HQ65
+	$(INSTALL_DIR) $(1)/etc/rc.button
+	$(INSTALL_BIN) ./files/button/100msh $(1)/etc/rc.button/BTN_1
 endif
 endef
 
