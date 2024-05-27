@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-ffmpegtool
-PKG_VERSION:=20240526
+PKG_VERSION:=20240527
 
 include $(INCLUDE_DIR)/package.mk
 

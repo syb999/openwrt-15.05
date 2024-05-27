@@ -65,10 +65,16 @@ fi
 if [ "$(uci get ffmpegtool.@ffmpegtool[0].volume)" != "none" ];then
 	if [ "$(uci get ffmpegtool.@ffmpegtool[0].volume)" == "standard" ];then
 		param_volume="loudnorm=i=-14:tp=0.0"
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].volume)" == "+15dB" ];then
+		param_volume="volume=15dB"
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].volume)" == "+10dB" ];then
+		param_volume="volume=10dB"
 	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].volume)" == "+5dB" ];then
 		param_volume="volume=5dB"
 	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].volume)" == "-5dB" ];then
 		param_volume="volume=-5dB"
+	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].volume)" == "-10dB" ];then
+		param_volume="volume=-10dB"
 	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].volume)" == "0.2" ];then
 		param_volume="volume=0.2"
 	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].volume)" == "0.5" ];then
@@ -211,7 +217,12 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "all files in the di
 		if [ "$(uci get ffmpegtool.@ffmpegtool[0].audio_titleisname)" == "1" ];then
 			ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_rate $param_channel $audios_param $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$param_title.$param_format" -y
 		else
-			ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_rate $param_channel $audios_param $param_title $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1).$param_format" -y
+			if [ $(uci get ffmpegtool.@ffmpegtool[0].src_directory_path) = $(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path) ];then
+				output_name=$(echo $i | cut -d '.' -f1)
+			else
+				output_name=${i%.*}
+			fi
+			ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_rate $param_channel $audios_param $param_title $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/${output_name}.$param_format" -y
 		fi
 		echo "转换完成!" >> /tmp/ffmpeg.log
 	done
