@@ -59,6 +59,12 @@ define Device/miwifi-nano
 endef
 TARGET_DEVICES += miwifi-nano
 
+define Device/mi-router-4c
+  DTS := MI-ROUTER-4C
+  IMAGE_SIZE := 14976k
+endef
+TARGET_DEVICES += mi-router-4c
+
 define Device/360p2
   DTS := 360P2
   IMAGE_SIZE := $(ralink_default_fw_size_16M)

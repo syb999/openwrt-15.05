@@ -1,0 +1,14 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+boot() {
+	. /lib/ramips.sh
+
+	case $(ramips_board_name) in
+	mi-router-4c|\
+	miwifi-nano)
+		fw_setenv flag_boot_success 1
+		;;
+	esac
+}

@@ -1,0 +1,112 @@
+/dts-v1/;
+
+/include/ "mt7628an.dtsi"
+
+/ {
+	compatible = "xiaomi,mi-router-4c", "mediatek,mt7628an-soc";
+	model = "Xiaomi Mi Router 4C";
+
+	chosen {
+		bootargs = "console=ttyS0,115200";
+	};
+
+	memory@0 {
+		device_type = "memory";
+		reg = <0x0 0x4000000>;
+	};
+
+	pinctrl {
+		state_default: pinctrl0 {
+			gpio {
+				ralink,group = "gpio", "wdt", "wled_an";
+				ralink,function = "gpio";
+			};
+		};
+	};
+
+	gpio-keys-polled {
+		compatible = "gpio-keys-polled";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		poll-interval = <20>;
+
+		reset {
+			label = "reset";
+			gpios = <&gpio1 6 1>;
+			linux,code = <0x198>;
+		};
+	};
+
+	ethernet@10100000 {
+		status = "okay";
+		mtd-mac-address = <&factory 0x28>;
+		mediatek,portmap = "llllw";
+	};
+
+	esw@10110000 {
+		status = "okay";
+		ralink,portmap = <0x2f>;
+	};
+
+	wmac@10300000 {
+		status = "okay";
+		ralink,mtd-eeprom = <&factory 0>;
+	};
+
+	palmbus@10000000 {
+		spi@b00 {
+			status = "okay";
+
+			m25p80@0 {
+				#address-cells = <1>;
+				#size-cells = <1>;
+				compatible = "jedec,spi-nor";
+				reg = <0 0>;
+				linux,modalias = "m25p80";
+				spi-max-frequency = <10000000>;
+				m25p,chunked-io = <32>;
+
+				partition@0 {
+					label = "bootloader";
+					reg = <0x0 0x20000>;
+					read-only;
+				};
+
+				partition@20000 {
+					label = "config";
+					reg = <0x20000 0x10000>;
+					read-only;
+				};
+
+				factory: partition@30000 {
+					label = "factory";
+					reg = <0x30000 0x10000>;
+					read-only;
+				};
+
+				partition@40000 {
+					label = "crash";
+					reg = <0x40000 0x10000>;
+					read-only;
+				};
+
+				partition@50000 {
+					label = "cfg_bak";
+					reg = <0x50000 0x10000>;
+					read-only;
+				};
+
+				partition@60000 {
+					label = "overlay";
+					reg = <0x60000 0x100000>;
+					read-only;
+				};
+
+				partition@160000 {
+					label = "firmware";
+					reg = <0x160000 0xea0000>;
+				};
+			};
+		};
+	};
+};
