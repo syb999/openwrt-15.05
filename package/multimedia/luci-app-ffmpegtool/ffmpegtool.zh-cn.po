@@ -100,6 +100,15 @@ msgstr "音频设置"
 msgid "separate audio"
 msgstr "分割音频"
 
+msgid "separate audio by silencedetect"
+msgstr "通过静音检测自动分割音频"
+
+msgid "threshold level"
+msgstr "静音检测阈值"
+
+msgid "silence duration"
+msgstr "最小检测到的静音持续时间(单位:秒)"
+
 msgid "the original file to be separated"
 msgstr "需要分割的原文件"
 

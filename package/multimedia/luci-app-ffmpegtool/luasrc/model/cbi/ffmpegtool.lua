@@ -124,6 +124,31 @@ audio_format.rempty  = false
 audio_sept=s:taboption("audio_setting", Flag, "audio_separate", translate("separate audio"))
 audio_sept.default = ""
 
+audio_sept_silence=s:taboption("audio_setting", Flag, "audio_sept_silence", translate("separate audio by silencedetect"))
+audio_sept_silence:depends( "audio_separate", "" )
+audio_sept_silence = ""
+
+audio_sept_silence_input = s:taboption("audio_setting", Value, "audio_sept_silence_input", translate("the original file to be separated"))
+audio_sept_silence_input:depends( "audio_sept_silence", "1" )
+audio_sept_silence_input.datatype = "string"
+audio_sept_silence_input.placeholder = "/mnt/sda1/input.mp3"
+audio_sept_silence_input.default = "/mnt/sda1/input.mp3"
+audio_sept_silence_input.rmempty = true
+
+audio_sept_silence_threshold = s:taboption("audio_setting", Value, "audio_sept_silence_threshold", translate("threshold level"))
+audio_sept_silence_threshold:depends( "audio_sept_silence", "1" )
+audio_sept_silence_threshold.datatype = "string"
+audio_sept_silence_threshold.placeholder = "-45dB"
+audio_sept_silence_threshold.default = "-45dB"
+audio_sept_silence_threshold.rmempty = true
+
+audio_sept_silence_duration = s:taboption("audio_setting", Value, "audio_sept_silence_duration", translate("silence duration"))
+audio_sept_silence_duration:depends( "audio_sept_silence", "1" )
+audio_sept_silence_duration.datatype = "string"
+audio_sept_silence_duration.placeholder = "2.5"
+audio_sept_silence_duration.default = "2.5"
+audio_sept_silence_duration.rmempty = true
+
 audio_sept_input = s:taboption("audio_setting", Value, "audio_sept_input", translate("the original file to be separated"))
 audio_sept_input:depends( "audio_separate", "1" )
 audio_sept_input.datatype = "string"

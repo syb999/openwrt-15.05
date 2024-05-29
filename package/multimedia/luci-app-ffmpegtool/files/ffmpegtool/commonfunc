@@ -10,6 +10,7 @@ function ucidefault() {
 	uci set ffmpegtool.@ffmpegtool[0].a_speed_governing="none" 2>&1 >/dev/null
 	uci set ffmpegtool.@ffmpegtool[0].volume="none" 2>&1 >/dev/null
 	uci set ffmpegtool.@ffmpegtool[0].audio_separate="0" 2>&1 >/dev/null
+	uci set ffmpegtool.@ffmpegtool[0].audio_sept_silence="0" 2>&1 >/dev/null
 	uci set ffmpegtool.@ffmpegtool[0].audio_merge="0" 2>&1 >/dev/null
 	uci set ffmpegtool.@ffmpegtool[0].audio_ready="0" 2>&1 >/dev/null
 	uci set ffmpegtool.@ffmpegtool[0].image_effects="0" 2>&1 >/dev/null
