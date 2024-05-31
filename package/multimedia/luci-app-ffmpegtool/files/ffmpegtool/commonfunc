@@ -98,7 +98,7 @@ function getheadtime_v() {
 	totaltime="$1"
 	video_headtime="$2"
 	inittime
-	endsec="$audio_headtime"
+	endsec="$video_headtime"
 	switchtime
 	param_starttime="-ss $thehour:$themin:$thesec"
 }
@@ -107,7 +107,7 @@ function gettailtime_v() {
 	totaltime="$1"
 	video_tailtime="$2"
 	inittime
-	endsec="$(expr $totalsec - $audio_tailtime)"
+	endsec="$(expr $totalsec - $video_tailtime)"
 	switchtime
 	param_endtime="-to $thehour:$themin:$thesec"
 }
