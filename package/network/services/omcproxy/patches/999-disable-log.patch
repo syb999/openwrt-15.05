@@ -9,3 +9,21 @@
  				continue;
  			}
  
+--- a/src/groups.c
++++ b/src/groups.c
+@@ -260,7 +260,6 @@ void groups_update_timers(struct groups
+ 	inet_ntop(AF_INET6, groupaddr, addrbuf, sizeof(addrbuf));
+ 	struct group *group = groups_get_group(groups, groupaddr, NULL);
+ 	if (!group) {
+-		L_WARN("%s: failed to update timer: no such group %s", __FUNCTION__, addrbuf);
+ 		return;
+ 	}
+ 
+@@ -275,7 +274,6 @@ void groups_update_timers(struct groups
+ 		for (size_t i = 0; i < len; ++i) {
+ 			struct group_source *source = groups_get_source(groups, group, &addrs[i], NULL);
+ 			if (!source) {
+-				L_WARN("%s: failed to update timer: unknown sources for group %s", __FUNCTION__, addrbuf);
+ 				continue;
+ 			}
+ 
