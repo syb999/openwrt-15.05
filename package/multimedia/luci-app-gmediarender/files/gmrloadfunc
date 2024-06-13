@@ -138,6 +138,13 @@ function gmr_xiaoniangaoinit(){
 	geturl=$(cat /tmp/xgmrender.tmp.url)
 }
 
+function gmr_baidunetdiskinit(){
+	thedirname="BaiduNetdisk"
+	thename="$(date +%m%d)"
+	echo ${geturl#*CurrentTrackURI: } > /tmp/xgmrender.tmp.url
+	geturl=$(cat /tmp/xgmrender.tmp.url)
+}
+
 function gmr_dirinit(){
 	if [ ! -d "$gmrdir/$thedirname" ]; then
 		mkdir -p $gmrdir/$thedirname
@@ -291,6 +298,25 @@ function gmr_xiaoniangaodownload(){
                $wget --timeout=3 -q $geturl -O $gmrdir/$thedirname/$thename.mp4.fragment$rdsuffix
                mv $gmrdir/$thedirname/$thename.mp4.fragment$rdsuffix $gmrdir/$thedirname/$thename-$(date +%s).mp4
        fi
+}
+
+function gmr_baidunetdiskdownload(){
+	if [ $saferom -gt 80 ];then
+		logger -t gmediarender ☆☆☆☆☆☆☆ Not enough diskspace! ☆☆☆☆☆☆☆
+	else
+		rdsuffix=$(head -n 1 /dev/urandom | tr -dc "0-9a-z" | head -c8)
+		$wget --timeout=10 -q $geturl -O /tmp/xgmrender.tmp.mtmp
+		cat /tmp/xgmrender.tmp.mtmp | grep https | cut -d '/' -f5- > /tmp/xgmrender.tmp.m3u8$rdsuffix
+		theprefix="https://yqct06.baidupcs.com/video/"
+		tmpm3u8=$(cat /tmp/xgmrender.tmp.m3u8$rdsuffix)
+		for i in $tmpm3u8
+		do
+			$wget --timeout=3 -q $theprefix$i -O /tmp/xgmrender.tmp.fragment$rdsuffix
+			cat /tmp/xgmrender.tmp.fragment$rdsuffix >> $gmrdir/$thename.ts.downloading$rdsuffix
+		done
+		mv $gmrdir/$thename.ts.downloading$rdsuffix $gmrdir/$thedirname/$thename.$rdsuffix.ts
+		rm /tmp/xgmrender.tmp.m3u8$rdsuffix /tmp/xgmrender.tmp.fragment$rdsuffix /tmp/xgmrender.tmp.mtmp
+	fi
 }
 
 function gmr_clear(){

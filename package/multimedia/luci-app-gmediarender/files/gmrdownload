@@ -44,6 +44,12 @@ elif [ "$thecase" == "xiaoniangao" ];then
 	echo "clear" > $gmrlog
 	gmr_dirinit
 	gmr_xiaoniangaodownload
+elif [ "$thecase" == "baidu.com" ];then
+	gmr_init
+	gmr_baidunetdiskinit
+	echo "clear" > $gmrlog
+	gmr_dirinit
+	gmr_baidunetdiskdownload
 else
 	gmr_init
 	gmr_musicinit
