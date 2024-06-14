@@ -166,6 +166,18 @@ fulldisk.rmempty = false
 enable_audio=s:taboption("nvr", Flag, "enable_audio", translate("enable audio"))
 enable_audio.rmempty = false
 
+video_preset=s:taboption("nvr", ListValue, "video_preset", translate("Preset"))
+video_preset.placeholder = "ultrafast"
+video_preset:value("ultrafast")
+video_preset:value("fast")
+video_preset:value("medium")
+video_preset.default = "ultrafast"
+video_preset.rempty  = false
+video_preset.description = translate("Choseing ultrafast that can reduce CPU usage. PS: medium is default setting")
+
+fast_copy = s:taboption("nvr", Flag, "fast_copy", translate("Fast copy"))
+fast_copy.default = 1
+
 do_push=s:taboption("nvr", Flag, "do_push", translate("whether to push stream"))
 
 rtmp_server_app=s:taboption("nvr", Value, "rtmp_server_app", translate("rtmp server application url"))

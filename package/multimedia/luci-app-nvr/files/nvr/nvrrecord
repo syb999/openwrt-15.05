@@ -24,9 +24,9 @@ function main() {
 		fi
 		thename="$(date +%Y-%m-%d-%H:%M:%S)"
 		if [ "$_enable_audio" -eq 1 ];then
-			ffmpeg -i "${_input}" -c copy -t ${_rec_time} "${_directory}/${theday}/${thedir}/${thename}.mkv" &
+			ffmpeg -i "${_input}" $param_preset $param_copy -t ${_rec_time} "${_directory}/${theday}/${thedir}/${thename}.mkv" &
 		else
-			ffmpeg -i "${_input}" -vcodec copy -an -t ${_rec_time} "${_directory}/${theday}/${thedir}/${thename}.mp4" &
+			ffmpeg -i "${_input}" $param_preset $param_copy -t ${_rec_time} "${_directory}/${theday}/${thedir}/${thename}.mp4" &
 		fi
 	done
 	sleep $(expr ${_rec_time} - 6)

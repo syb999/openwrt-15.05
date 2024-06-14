@@ -5,12 +5,12 @@ _app_prefix="$(uci get nvr.config.rtmp_server_app)"
 
 for a in $_all_clients;do
 	if [ "$_source" = "hikvision" ];then
-		ffmpeg -i "rtsp://${_hik_user}:${_hik_pass}@${a}:554/h264/ch1/main/av_stream" -c copy -f flv "${_app_prefix}/${a}" &
+		ffmpeg -i "rtsp://${_hik_user}:${_hik_pass}@${a}:554/h264/ch1/main/av_stream" $param_preset $param_copy -f flv "${_app_prefix}/${a}" &
 	elif [ "$_source" = "tplink" ];then
-		ffmpeg -i "rtsp://${_tplink_user}:${_tplink_pass}@${a}:554/stream1" -c copy -f flv "${_app_prefix}/${a}" &
+		ffmpeg -i "rtsp://${_tplink_user}:${_tplink_pass}@${a}:554/stream1" $param_preset $param_copy -f flv "${_app_prefix}/${a}" &
 	elif [ "$_source" = "rtmp-url" ];then
-		ffmpeg -i $a -c copy -f flv "${_app_prefix}/${a}" &
+		ffmpeg -i $a $param_preset $param_copy -f flv "${_app_prefix}/${a}" &
 	elif [ "$_source" = "multiple-types" ];then
-		ffmpeg -i $a -c copy -f flv "${_app_prefix}/${a}" &
+		ffmpeg -i $a $param_preset $param_copy -f flv "${_app_prefix}/${a}" &
 	fi
 done

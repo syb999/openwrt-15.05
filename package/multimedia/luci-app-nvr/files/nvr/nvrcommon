@@ -13,6 +13,28 @@ _enable_audio="$(uci get nvr.config.enable_audio)"
 _all_clients=""
 _disk=""
 
+if [ "$(uci get nvr.@nvr[0].video_preset)" == "ultrafast" ];then
+	param_preset="-preset ultrafast"
+elif [ "$(uci get nvr.@nvr[0].video_preset)" == "fast" ];then
+	param_preset="-preset fast"
+elif [ "$(uci get nvr.@nvr[0].video_preset)" == "medium" ];then
+	param_preset="-preset medium"
+fi
+
+if [ "$(uci get nvr.@nvr[0].fast_copy)" == "1" ];then
+	if [ "$_enable_audio" -eq 1 ];then
+		param_copy="-c copy"
+	else
+		param_copy="-vcodec copy -an"
+	fi
+else
+	if [ "$_enable_audio" -eq 1 ];then
+		param_copy=""
+	else
+		param_copy="-an"
+	fi
+fi
+
 function detect_disk() {
 	if [ "$(df -hT | grep "${_disk_name}")" = "" ];then
 		_disk="X"

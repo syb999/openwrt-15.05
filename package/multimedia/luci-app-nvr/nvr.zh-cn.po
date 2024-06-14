@@ -103,6 +103,15 @@ msgstr "仅检测整个磁盘空间"
 msgid "enable audio"
 msgstr "开启录音"
 
+msgid "Preset"
+msgstr "编码器参数预配置"
+
+msgid "Choseing ultrafast that can reduce CPU usage. PS: medium is default setting"
+msgstr "选择ultrafast可以降低cpu使用率。PS：medium为默认设置"
+
+msgid "Fast copy"
+msgstr "快速复制"
+
 msgid "whether to push stream"
 msgstr "是否推流"
 
