@@ -334,6 +334,15 @@ video_format:value("3gp")
 video_format.default = "mp4"
 video_format.rempty  = false
 
+video_preset=s:taboption("video_setting", ListValue, "video_preset", translate("Preset"))
+video_preset.placeholder = "ultrafast"
+video_preset:value("ultrafast")
+video_preset:value("fast")
+video_preset:value("medium")
+video_preset.default = "ultrafast"
+video_preset.rempty  = false
+video_preset.description = translate("Choseing ultrafast that can reduce CPU usage. PS: medium is default setting")
+
 video_adjustspeed = s:taboption("video_setting", Flag, "video_adjustspeed", translate("adjust the playback speed"))
 video_adjustspeed:depends({ video_x2645 = "none", image_effects = "", screen_merge = "", video_picture = "", picture_tovideo = "" })
 

@@ -26,6 +26,14 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].video_x2645)" == "libx265" ];then
 	param_libx2645="-vcodec libx265"
 fi
 
+if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_preset)" == "ultrafast" ];then
+	param_preset="-preset ultrafast"
+elif [ "$(uci get ffmpegtool.@ffmpegtool[0].video_preset)" == "fast" ];then
+	param_preset="-preset fast"
+elif [ "$(uci get ffmpegtool.@ffmpegtool[0].video_preset)" == "medium" ];then
+	param_preset="-preset medium"
+fi
+
 if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_mute)" == "1" ];then
 	param_mute="-an"
 fi
@@ -92,9 +100,9 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].dest_select)" == "streaming media serv
 			ffprobe "$srctarget" > /tmp/ffmpeg.log 2>&1
 			echo "$srctarget ---- 推流中..." >> /tmp/ffmpeg.log
 			if [ "$(uci get ffmpegtool.@ffmpegtool[0].streamserver_select)" == "rtmp server" ];then
-				ffmpeg -re -i "$srctarget" -vcodec copy -f flv "$(uci get ffmpegtool.@ffmpegtool[0].rtmp_server_url)"
+				ffmpeg -re -i "$srctarget" $param_preset -vcodec copy -f flv "$(uci get ffmpegtool.@ffmpegtool[0].rtmp_server_url)"
 			elif [ "$(uci get ffmpegtool.@ffmpegtool[0].streamserver_select)" == "icecast server" ];then
-				ffmpeg -re -i "$srctarget" -vn -f mp3 "$(uci get ffmpegtool.@ffmpegtool[0].icecast_server_url)"
+				ffmpeg -re -i "$srctarget" $param_preset -vn -f mp3 "$(uci get ffmpegtool.@ffmpegtool[0].icecast_server_url)"
 			fi
 		done
 	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "all files in the directory" ];then
@@ -104,9 +112,9 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].dest_select)" == "streaming media serv
 				ffprobe "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" > /tmp/ffmpeg.log 2>&1
 				echo "$i ---- 推流中..." >> /tmp/ffmpeg.log
 				if [ "$(uci get ffmpegtool.@ffmpegtool[0].streamserver_select)" == "rtmp server" ];then
-					ffmpeg -re -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" -vcodec copy -f flv "$(uci get ffmpegtool.@ffmpegtool[0].rtmp_server_url)"
+					ffmpeg -re -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_preset -vcodec copy -f flv "$(uci get ffmpegtool.@ffmpegtool[0].rtmp_server_url)"
 				elif [ "$(uci get ffmpegtool.@ffmpegtool[0].streamserver_select)" == "icecast server" ];then
-					ffmpeg -re -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" -vn -f mp3 "$(uci get ffmpegtool.@ffmpegtool[0].icecast_server_url)"
+					ffmpeg -re -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_preset -vn -f mp3 "$(uci get ffmpegtool.@ffmpegtool[0].icecast_server_url)"
 				fi
 			done
 		done
@@ -116,9 +124,9 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].dest_select)" == "streaming media serv
 			ffprobe "$srctarget" > /tmp/ffmpeg.log 2>&1
 			echo "$srctarget ---- 推流中..." >> /tmp/ffmpeg.log
 			if [ "$(uci get ffmpegtool.@ffmpegtool[0].streamserver_select)" == "rtmp server" ];then
-				ffmpeg -i "$srctarget" -vcodec copy -f flv "$(uci get ffmpegtool.@ffmpegtool[0].rtmp_server_url)"
+				ffmpeg -i "$srctarget" $param_preset -vcodec copy -f flv "$(uci get ffmpegtool.@ffmpegtool[0].rtmp_server_url)"
 			elif [ "$(uci get ffmpegtool.@ffmpegtool[0].streamserver_select)" == "icecast server" ];then
-				ffmpeg -i "$srctarget" -vn -f mp3 "$(uci get ffmpegtool.@ffmpegtool[0].icecast_server_url)"
+				ffmpeg -i "$srctarget" $param_preset -vn -f mp3 "$(uci get ffmpegtool.@ffmpegtool[0].icecast_server_url)"
 			fi
 		done
 	fi
@@ -130,7 +138,7 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].enable_merge)" == "left and right" ];t
 	ffprobe "$input1" > /tmp/ffmpeg.log 2>&1
 	time_work_v
 	echo " $input1 ----> 视频合并中 <---- $input2 " >> /tmp/ffmpeg.log
-	ffmpeg -i "$input1" -vf "[in] scale=iw/2:ih/2,pad=2*iw:ih [left];movie='${input2}',scale=iw/2:ih/2 [right];[left][right] overlay=main_w/2:0 [out]" $param_mute $param_frames_num $param_libx2645 $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
+	ffmpeg -i "$input1" -vf "[in] scale=iw/2:ih/2,pad=2*iw:ih [left];movie='${input2}',scale=iw/2:ih/2 [right];[left][right] overlay=main_w/2:0 [out]" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
 	echo "合并完毕!" >> /tmp/ffmpeg.log
 	ucidefault
 	exit 0
@@ -140,7 +148,7 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].enable_merge)" == "top and bottom" ]
 	ffprobe "$input1" > /tmp/ffmpeg.log 2>&1
 	time_work_v
 	echo " $input1 ----> 视频合并中 <---- $input2 " >> /tmp/ffmpeg.log
-	ffmpeg -i "$input1" -vf "[in] scale=iw/2:ih/2,pad=iw:2*ih [top];movie='${input2}',scale=iw/2:ih/2 [bottom];[top][bottom] overlay=0:main_h/2 [out]" $param_mute $param_frames_num $param_libx2645 $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
+	ffmpeg -i "$input1" -vf "[in] scale=iw/2:ih/2,pad=iw:2*ih [top];movie='${input2}',scale=iw/2:ih/2 [bottom];[top][bottom] overlay=0:main_h/2 [out]" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
 	echo "合并完毕!" >> /tmp/ffmpeg.log
 	ucidefault
 	exit 0
@@ -150,7 +158,7 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].enable_merge)" == "merge video and a
 	ffprobe "$input1" > /tmp/ffmpeg.log 2>&1
 	time_work_v
 	echo " $input1 ----> 视音频合并中 <---- $input2 " >> /tmp/ffmpeg.log
-	ffmpeg -i $input1 -i $input2 -map 0:v -map 1:a $param_libx2645 "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
+	ffmpeg -i $input1 -i $input2 -map 0:v -map 1:a $param_libx2645 $param_preset "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
 	echo "合并完毕!" >> /tmp/ffmpeg.log
 	ucidefault
 	exit 0
@@ -164,14 +172,14 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].enable_merge)" == "merge video to pi
 		customresolution="$(uci get ffmpegtool.@ffmpegtool[0].picture_custom_1)"
 		custompixel="$(uci get ffmpegtool.@ffmpegtool[0].picture_custom_3)"
 		echo " $input1 ----> 视频合并到图片上 <---- $inputpic " >> /tmp/ffmpeg.log
-		ffmpeg -loop 1 -i "$inputpic" -i "$input1" -filter_complex "[1:0]scale=${customresolution}[a];[0:0][a]overlay=${custompixel}" $param_mute $param_frames_num $param_libx2645 $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
+		ffmpeg -loop 1 -i "$inputpic" -i "$input1" -filter_complex "[1:0]scale=${customresolution}[a];[0:0][a]overlay=${custompixel}" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
 	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].picture_merge)" == "two videos and one picture" ];then
 		customresolution="$(uci get ffmpegtool.@ffmpegtool[0].picture_custom_1)"
 		customresolution2="$(uci get ffmpegtool.@ffmpegtool[0].picture_custom_2)"
 		custompixel="$(uci get ffmpegtool.@ffmpegtool[0].picture_custom_3)"
 		custompixel2="$(uci get ffmpegtool.@ffmpegtool[0].picture_custom_4)"
 		echo " $input1 ----> 视频合并到图片上 <---- $inputpic " >> /tmp/ffmpeg.log
-		ffmpeg -loop 1 -i "$inputpic" -i "$input1" -i "$input2" -filter_complex "[1:0]scale=${customresolution}[a];[2:0]scale=${customresolution2}[b];[0:0][a]overlay=${custompixel}[c];[c][b]overlay=${custompixel2}" $param_mute $param_frames_num $param_libx2645 $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
+		ffmpeg -loop 1 -i "$inputpic" -i "$input1" -i "$input2" -filter_complex "[1:0]scale=${customresolution}[a];[2:0]scale=${customresolution2}[b];[0:0][a]overlay=${custompixel}[c];[c][b]overlay=${custompixel2}" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
 	fi
 	echo "合并完毕!" >> /tmp/ffmpeg.log
 	ucidefault
@@ -183,7 +191,7 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].enable_merge)" == "one by one" ];the
 	time_work_v
 	echo " $input1 ----> 视频合并中 <---- $input2 " >> /tmp/ffmpeg.log
 	echo -e "file '$input1'\nfile '$input2'\n" > /tmp/ffmpeg.filelist
-	ffmpeg -f concat -safe 0 -i /tmp/ffmpeg.filelist -c copy $param_mute $param_libx2645 $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
+	ffmpeg -f concat -safe 0 -i /tmp/ffmpeg.filelist -c copy $param_mute $param_libx2645 $param_preset $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
 	echo "合并完毕!" >> /tmp/ffmpeg.log
 	ucidefault
 	exit 0
@@ -193,7 +201,7 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].enable_merge)" == "overlay in the mi
 	ffprobe "$input1" > /tmp/ffmpeg.log 2>&1
 	time_work_v
 	echo " $input1 ----> 视频合并中 <---- $input2 " >> /tmp/ffmpeg.log
-	ffmpeg -i "$input1" -i "$input2" -filter_complex "[0:v]pad=w=iw[a];[1:v]scale=iw/2:-1[b];[a][b]overlay=w/2:h/2" $param_mute $param_frames_num $param_libx2645 $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
+	ffmpeg -i "$input1" -i "$input2" -filter_complex "[0:v]pad=w=iw[a];[1:v]scale=iw/2:-1[b];[a][b]overlay=w/2:h/2" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
 	echo "合并完毕!" >> /tmp/ffmpeg.log
 	ucidefault
 	exit 0
@@ -205,7 +213,7 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].enable_merge)" == "custom overley" ]
 	ffprobe "$input1" > /tmp/ffmpeg.log 2>&1
 	time_work_v
 	echo " $input1 ----> 视频合并中 <---- $input2 " >> /tmp/ffmpeg.log
-	ffmpeg -i "$input1" -i "$input2" -filter_complex "[0:v]pad=w=iw[a];[1:v]scale=${customresolution}[b];[a][b]overlay=${custompixel}" $param_mute $param_frames_num $param_libx2645 $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
+	ffmpeg -i "$input1" -i "$input2" -filter_complex "[0:v]pad=w=iw[a];[1:v]scale=${customresolution}[b];[a][b]overlay=${custompixel}" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
 	echo "合并完毕!" >> /tmp/ffmpeg.log
 	ucidefault
 	exit 0
@@ -225,7 +233,7 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].ptv_multi)" == "1" ];then
 		rm $(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$pic.tmp.ts >/dev/null 2>&1
 	done
 	echo " 视频流更新中，请等待... " >> /tmp/ffmpeg.log
-	ffmpeg -i "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$mergtime.tmp.ts" "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$mergtime.$param_format"
+	ffmpeg -i "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$mergtime.tmp.ts" $param_preset "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$mergtime.$param_format"
 	echo " 更新完毕! " >> /tmp/ffmpeg.log
 	rm $(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$mergtime.tmp.ts >/dev/null 2>&1
 	ucidefault
@@ -239,24 +247,24 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "one file" ];then
 	if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_picture)" == "1" ];then 
 		echo "$srctarget ---- 导出图片中..." >> /tmp/ffmpeg.log
 		if [ "$(uci get ffmpegtool.@ffmpegtool[0].image_effects)" == "1" ];then
-			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-%03d.jpg" -y
-			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-$(date +%s).gif" -y
+			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_preset $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-%03d.jpg" -y
+			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_preset $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-$(date +%s).gif" -y
 		else
-			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-%03d.jpg" -y
-			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-$(date +%s).gif" -y
+			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-%03d.jpg" -y
+			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-$(date +%s).gif" -y
 		fi
 		echo "导出完毕!" >> /tmp/ffmpeg.log
 	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].video_adjustspeed)" == "1" ];then 
 		video_speed="setpts=$(uci get ffmpegtool.@ffmpegtool[0].list_adjustspeed)*PTS"
 		echo "$srctarget ---- 调速中..." >> /tmp/ffmpeg.log
-		ffmpeg -i "$srctarget" -filter:v "${video_speed}" "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1)-$(uci get ffmpegtool.@ffmpegtool[0].list_adjustspeed).$param_format" -y
+		ffmpeg -i "$srctarget" -filter:v "${video_speed}" $param_preset "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1)-$(uci get ffmpegtool.@ffmpegtool[0].list_adjustspeed).$param_format" -y
 		echo "执行完毕!" >> /tmp/ffmpeg.log
 	else
 		echo "$srctarget ---- 转换中..." >> /tmp/ffmpeg.log
 		if [ "$(uci get ffmpegtool.@ffmpegtool[0].image_effects)" == "1" ];then
-			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1).$param_format" -y
+			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_preset $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1).$param_format" -y
 		else
-			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1).$param_format" -y
+			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1).$param_format" -y
 		fi
 		echo "转换完成!" >> /tmp/ffmpeg.log
 	fi
@@ -271,13 +279,13 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "all files in the di
 		time_work_v
 		echo "$i ---- 转换中..." >> /tmp/ffmpeg.log
 		if [ "$(uci get ffmpegtool.@ffmpegtool[0].image_effects)" == "1" ];then
-			ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1).$param_format" -y
+			ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_preset $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1).$param_format" -y
 		elif [ "$(uci get ffmpegtool.@ffmpegtool[0].video_adjustspeed)" == "1" ];then 
 			video_speed="setpts=$(uci get ffmpegtool.@ffmpegtool[0].list_adjustspeed)*PTS"
 			echo "$srctarget ---- 调速中..." >> /tmp/ffmpeg.log
-			ffmpeg -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" -filter:v "${video_speed}" "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1)-$(uci get ffmpegtool.@ffmpegtool[0].list_adjustspeed).$param_format" -y
+			ffmpeg -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" -filter:v "${video_speed}" $param_preset "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1)-$(uci get ffmpegtool.@ffmpegtool[0].list_adjustspeed).$param_format" -y
 		else
-			ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_mute $param_frames_num $param_libx2645 $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1).$param_format" -y
+			ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1).$param_format" -y
 		fi
 		echo "转换完成!" >> /tmp/ffmpeg.log
 	done
@@ -292,19 +300,19 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "streaming media" ];
 		if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_picture)" == "1" ];then 
 			echo "$srctarget ---- 导出图片中..." >> /tmp/ffmpeg.log
 			if [ "$(uci get ffmpegtool.@ffmpegtool[0].image_effects)" == "1" ];then
-				ffmpeg -i "$srctarget" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-%03d.jpg" -y
-				ffmpeg -i "$srctarget" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-$(date +%s).gif" -y
+				ffmpeg -i "$srctarget" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_preset $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-%03d.jpg" -y
+				ffmpeg -i "$srctarget" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_preset $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-$(date +%s).gif" -y
 			else
-				ffmpeg -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-%03d.jpg" -y
-				ffmpeg -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-$(date +%s).gif" -y
+				ffmpeg -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-%03d.jpg" -y
+				ffmpeg -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-$(date +%s).gif" -y
 			fi
 			echo "导出完毕!" >> /tmp/ffmpeg.log
 		else
 			echo "$srctarget ---- 导出中..." >> /tmp/ffmpeg.log
 			if [ "$(uci get ffmpegtool.@ffmpegtool[0].image_effects)" == "1" ];then
-				ffmpeg -i "$srctarget" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/output-$(date +%s).$param_format" -y
+				ffmpeg -i "$srctarget" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_preset $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/output-$(date +%s).$param_format" -y
 			else
-				ffmpeg -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_copy $param_duration  "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/output-$(date +%s).$param_format" -y
+				ffmpeg -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_duration  "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/output-$(date +%s).$param_format" -y
 			fi
 			echo "导出完毕!" >> /tmp/ffmpeg.log
 		fi
