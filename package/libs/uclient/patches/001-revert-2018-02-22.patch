@@ -1,0 +1,11 @@
+--- a/uclient-utils.c
++++ b/uclient-utils.c
+@@ -178,7 +178,7 @@ char *uclient_get_url_filename(const cha
+ 	len -= str - url;
+ 
+ 	if (len > 0)
+-		return strndup(str, len);
++		return strncpy(calloc(1, len + 1), str, len);
+ 
+ 	return strdup(default_name);
+ }

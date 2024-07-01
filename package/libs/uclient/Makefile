@@ -5,9 +5,9 @@ PKG_RELEASE=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://git.openwrt.org/project/uclient.git
-PKG_SOURCE_DATE:=2016-12-09
-PKG_SOURCE_VERSION:=52d955fd802a4d990b7ff9116f02ff52aa63ffec
-PKG_MD5SUM:=8bec577e187f8b5257af16b85a3307d8
+PKG_SOURCE_DATE:=2021-05-14
+PKG_SOURCE_VERSION:=6a6011df3429ffa5958d12b1327eeda4fd9daa47
+PKG_MD5SUM:=8cfc63791355c0dc02692a36d9e393d8
 CMAKE_INSTALL:=1
 
 PKG_BUILD_DEPENDS:=ustream-ssl
@@ -32,6 +32,8 @@ define Package/uclient-fetch
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Tiny wget replacement using libuclient
+  ALTERNATIVES:=200:/usr/bin/wget:/bin/uclient-fetch
+  PROVIDES:=wget
   DEPENDS:=+libuclient
 endef
 
@@ -43,7 +45,6 @@ endef
 define Package/uclient-fetch/install
 	$(INSTALL_DIR) $(1)/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/uclient-fetch $(1)/bin/
-	ln -s uclient-fetch $(1)/bin/wget
 endef
 
 $(eval $(call BuildPackage,libuclient))
