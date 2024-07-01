@@ -80,7 +80,7 @@ ifneq ($(CONFIG_DRIVER_11AX_SUPPORT),)
   HOSTAPD_IEEE80211AX:=y
 endif
 
-OPENSSL_DEPENDS = +PACKAGE_$(1):libopenssl +PACKAGE_$(1):libopenssl-legacy
+OPENSSL_DEPENDS = +PACKAGE_$(1):libopenssl
 
 DRIVER_MAKEOPTS= \
 	CONFIG_ACS=$(CONFIG_PACKAGE_kmod-cfg80211) \
