@@ -22,7 +22,7 @@ define Package/libustream/default
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=ustream SSL Library
-  DEPENDS:=+libubox
+  DEPENDS:=+libubox +libmbedtls
   ABI_VERSION:=20201210
 endef
 
