@@ -135,7 +135,7 @@
 		};
 
 		i2c@900 {
-			compatible = "link,rt5350-i2c", "ralink,rt2880-i2c";
+			compatible = "ralink,rt2880-i2c";
 			reg = <0x900 0x100>;
 
 			resets = <&rstctrl 16>;
@@ -189,6 +189,23 @@
 			interrupt-parent = <&cpuintc>;
 			interrupts = <7>;
 		};
+
+		gdma: gdma@2800 {
+			compatible = "ralink,rt3883-gdma";
+			reg = <0x2800 0x800>;
+
+			resets = <&rstctrl 14>;
+			reset-names = "dma";
+
+			interrupt-parent = <&intc>;
+			interrupts = <7>;
+
+			#dma-cells = <1>;
+			#dma-channels = <16>;
+			#dma-requests = <16>;
+
+			status = "disabled";
+		};
 	};
 
 	pinctrl {
@@ -200,18 +217,20 @@
 		state_default: pinctrl0 {
 		};
 
-		spi_pins: spi {
-			spi {
-				ralink,group = "spi";
-				ralink,function = "spi";
-			};
-		};
 		i2c_pins: i2c {
 			i2c {
 				ralink,group = "i2c";
 				ralink,function = "i2c";
 			};
 		};
+
+		spi_pins: spi {
+			spi {
+				ralink,group = "spi";
+				ralink,function = "spi";
+			};
+		};
+
 		phy_led_pins: phy_led {
 			phy_led {
 				ralink,group = "led";

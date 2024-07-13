@@ -59,13 +59,14 @@ Signed-off-by: John Crispin <blogic@openwrt.org>
  obj-$(CONFIG_SND_SOC)	+= sirf/
 --- /dev/null
 +++ b/sound/soc/ralink/Kconfig
-@@ -0,0 +1,15 @@
+@@ -0,0 +1,16 @@
 +config SND_MT7620_SOC_I2S
-+	depends on SOC_MT7620 && SND_SOC
++	depends on RALINK && SND_SOC && !SOC_RT288X
 +	select SND_SOC_GENERIC_DMAENGINE_PCM
-+	tristate "SoC Audio (I2S protocol) for Ralink MT7620 SoC"
++	select REGMAP_MMIO
++	tristate "SoC Audio (I2S protocol) for Ralink SoC"
 +	help
-+	  Say Y if you want to use I2S protocol and I2S codec on Ingenic MT7620
++	  Say Y if you want to use I2S protocol and I2S codec on Ralink/MediaTek
 +	  based boards.
 +
 +config SND_MT7620_SOC_WM8960

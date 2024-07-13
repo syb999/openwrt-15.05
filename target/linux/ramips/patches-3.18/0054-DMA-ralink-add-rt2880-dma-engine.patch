@@ -21,7 +21,7 @@ Signed-off-by: John Crispin <blogic@openwrt.org>
  
 +config DMA_RALINK
 +	tristate "RALINK DMA support"
-+	depends on RALINK && SOC_MT7620
++	depends on RALINK && !SOC_RT288X
 +	select DMA_ENGINE
 +	select DMA_VIRTUAL_CHANNELS
 +
@@ -37,7 +37,7 @@ Signed-off-by: John Crispin <blogic@openwrt.org>
 +obj-$(CONFIG_DMA_RALINK) += ralink-gdma.o
 --- /dev/null
 +++ b/drivers/dma/ralink-gdma.c
-@@ -0,0 +1,577 @@
+@@ -0,0 +1,564 @@
 +/*
 + *  Copyright (C) 2013, Lars-Peter Clausen <lars@metafoo.de>
 + *  GDMA4740 DMAC support
@@ -462,7 +462,7 @@ Signed-off-by: John Crispin <blogic@openwrt.org>
 +	unsigned long flags;
 +
 +	status = dma_cookie_status(c, cookie, state);
-+	if (status == DMA_SUCCESS || !state)
++	if (status == DMA_COMPLETE || !state)
 +		return status;
 +
 +	spin_lock_irqsave(&chan->vchan.lock, flags);
@@ -494,19 +494,6 @@ Signed-off-by: John Crispin <blogic@openwrt.org>
 +static void gdma_dma_desc_free(struct virt_dma_desc *vdesc)
 +{
 +	kfree(container_of(vdesc, struct gdma_dma_desc, vdesc));
-+}
-+
-+static struct dma_chan *
-+of_dma_xlate_by_chan_id(struct of_phandle_args *dma_spec,
-+			struct of_dma *ofdma)
-+{
-+	struct gdma_dma_dev *dma_dev = ofdma->of_dma_data;
-+	unsigned int request = dma_spec->args[0];
-+
-+	if (request >= GDMA_NR_CHANS)
-+		return NULL;
-+
-+	return dma_get_slave_channel(&(dma_dev->chan[request].vchan.chan));
 +}
 +
 +static int gdma_dma_probe(struct platform_device *pdev)
@@ -614,7 +601,7 @@ Signed-off-by: John Crispin <blogic@openwrt.org>
 +
 +MODULE_AUTHOR("Lars-Peter Clausen <lars@metafoo.de>");
 +MODULE_DESCRIPTION("GDMA4740 DMA driver");
-+MODULE_LICENSE("GPLv2");
++MODULE_LICENSE("GPL v2");
 --- a/include/linux/dmaengine.h
 +++ b/include/linux/dmaengine.h
 @@ -1058,6 +1058,7 @@ struct dma_chan *dma_request_slave_chann

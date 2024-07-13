@@ -170,7 +170,7 @@
 		};
 
 		i2c@900 {
-			compatible = "link,mt7620a-i2c", "ralink,rt2880-i2c";
+			compatible = "ralink,rt2880-i2c";
 			reg = <0x900 0x100>;
 
 			resets = <&rstctrl 16>;
@@ -195,8 +195,11 @@
 			interrupt-parent = <&intc>;
 			interrupts = <10>;
 
+			txdma-req = <2>;
+			rxdma-req = <3>;
+
 			dmas = <&gdma 4>,
-				<&gdma 5>;
+				<&gdma 6>;
 			dma-names = "tx", "rx";
 
 			status = "disabled";
@@ -259,7 +262,7 @@
 		};
 
 		gdma: gdma@2800 {
-			compatible = "ralink,mt7620a-gdma", "ralink,rt2880-gdma";
+			compatible = "ralink,mt7620a-gdma", "ralink,rt3883-gdma";
 			reg = <0x2800 0x800>;
 
 			resets = <&rstctrl 14>;

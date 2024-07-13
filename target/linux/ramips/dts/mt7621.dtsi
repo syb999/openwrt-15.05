@@ -85,6 +85,42 @@
 			interrupts = <5>;
 		};
 
+		i2c: i2c@900 {
+			compatible = "ralink,i2c-mt7621";
+			reg = <0x900 0x100>;
+
+			resets = <&rstctrl 16>;
+			reset-names = "i2c";
+
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			status = "disabled";
+
+			pinctrl-names = "default";
+			pinctrl-0 = <&i2c_pins>;
+		};
+
+		i2s: i2s@a00 {
+			compatible = "ralink,mt7620a-i2s";
+			reg = <0xa00 0x100>;
+
+			resets = <&rstctrl 17>;
+			reset-names = "i2s";
+
+			interrupt-parent = <&gic>;
+			interrupts = <16>;
+
+			txdma-req = <2>;
+			rxdma-req = <3>;
+
+			dmas = <&gdma 4>,
+				<&gdma 6>;
+			dma-names = "tx", "rx";
+
+			status = "disabled";
+		};
+
 		memc: memc@5000 {
 			compatible = "mtk,mt7621-memc";
 			reg = <0x5000 0x1000>;
@@ -167,6 +203,23 @@
 				m25p,chunked-io = <32>;
 			};
 		};
+
+		gdma: gdma@2800 {
+			compatible = "ralink,rt3883-gdma";
+			reg = <0x2800 0x800>;
+
+			resets = <&rstctrl 14>;
+			reset-names = "dma";
+
+			interrupt-parent = <&gic>;
+			interrupts = <0 13 4>;
+
+			#dma-cells = <1>;
+			#dma-channels = <16>;
+			#dma-requests = <16>;
+
+			status = "disabled";
+		};
 	};
 
 	pinctrl {
@@ -176,17 +229,17 @@
 		state_default: pinctrl0 {
 		};
 
-		spi_pins: spi_pins {
-			spi_pins {
-				ralink,group = "spi";
-				ralink,function = "spi";
-			};
-		};
-
 		i2c_pins: i2c {
 			i2c {
 				ralink,group = "i2c";
 				ralink,function = "i2c";
+			};
+		};
+
+		spi_pins: spi {
+			spi {
+				ralink,group = "spi";
+				ralink,function = "spi";
 			};
 		};
 
