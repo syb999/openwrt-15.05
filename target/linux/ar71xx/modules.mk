@@ -110,7 +110,7 @@ define KernelPackage/sound-uda1334
 	CONFIG_SND_SOC=y \
 	CONFIG_SND_SOC_UDA1334=y \
 	CONFIG_SND_TIMER=y \
-	CONFIG_SOUND=y \
+	CONFIG_SOUND=y
   FILES:= \
 	$(LINUX_DIR)/sound/soc/codecs/snd-soc-uda1334.ko
   AUTOLOAD:=$(call AutoLoad,70,snd-soc-uda1334)
