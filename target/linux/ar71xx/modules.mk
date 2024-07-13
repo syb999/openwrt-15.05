@@ -96,3 +96,29 @@ define KernelPackage/sound-ak4430/description
 endef
 
 $(eval $(call KernelPackage,sound-ak4430))
+
+
+define KernelPackage/sound-uda1334
+  SUBMENU:=$(SOUND_MENU)
+  TITLE:=ar71xx I2S Audio Driver uda1334
+  DEPENDS:=@TARGET_ar71xx +kmod-sound-core +kmod-sound-soc-core
+  KCONFIG:= \
+	CONFIG_MIGRATION=y \
+	CONFIG_SND=y \
+	CONFIG_SND_COMPRESS_OFFLOAD=y \
+	CONFIG_SND_PCM=y \
+	CONFIG_SND_SOC=y \
+	CONFIG_SND_SOC_UDA1334=y \
+	CONFIG_SND_TIMER=y \
+	CONFIG_SOUND=y \
+  FILES:= \
+	$(LINUX_DIR)/sound/soc/codecs/snd-soc-uda1334.ko
+  AUTOLOAD:=$(call AutoLoad,70,snd-soc-uda1334)
+  $(call AddDepends/sound)
+endef
+
+define KernelPackage/sound-uda1334/description
+ Audio modules for ar71xx uda1334 i2s controller.
+endef
+
+$(eval $(call KernelPackage,sound-uda1334))
