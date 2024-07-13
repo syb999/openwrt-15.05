@@ -105,15 +105,22 @@ define KernelPackage/sound-uda1334
   KCONFIG:= \
 	CONFIG_MIGRATION=y \
 	CONFIG_SND=y \
+	CONFIG_SND_ATH79_SOC=y \
+	CONFIG_SND_ATH79_SOC_CODEC=y \
+	CONFIG_SND_ATH79_SOC_I2S=y \
 	CONFIG_SND_COMPRESS_OFFLOAD=y \
 	CONFIG_SND_PCM=y \
 	CONFIG_SND_SOC=y \
 	CONFIG_SND_SOC_UDA1334=y \
 	CONFIG_SND_TIMER=y \
-	CONFIG_SOUND=y
+	CONFIG_SOUND=y \
+	CONFIG_ATH79_DEV_AUDIO=y
   FILES:= \
+	$(LINUX_DIR)/sound/soc/ath79/snd-soc-ath79-i2s.ko \
+	$(LINUX_DIR)/sound/soc/ath79/snd-soc-ath79-pcm.ko \
+	$(LINUX_DIR)/sound/soc/ath79/snd-soc-ath79-codec.ko \
 	$(LINUX_DIR)/sound/soc/codecs/snd-soc-uda1334.ko
-  AUTOLOAD:=$(call AutoLoad,70,snd-soc-uda1334)
+  AUTOLOAD:=$(call AutoLoad,65,snd-soc-ath79-i2s snd-soc-ath79-pcm snd-soc-ath79-codec snd-soc-uda1334)
   $(call AddDepends/sound)
 endef
 

@@ -15,16 +15,15 @@
 
 config SND_ATH79_SOC
 	tristate "SoC Audio for ath79"
-	depends on SOC_AR934X
 	help
 	  Say Y or M if you want to add support for ath79 platforms
 	  You will also need to select the board in the options below.
 
 config SND_ATH79_SOC_I2S
-	tristate
+	tristate "SoC Audio for ath79 i2s-bus"
 
 config SND_ATH79_SOC_CODEC
-	tristate
+	tristate "SoC Audio for ath79 codec"
 
 config SND_ATH79_SOC_DB120
 	tristate "SoC Audio support for QCA Reference design DB120"

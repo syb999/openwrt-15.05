@@ -1,0 +1,125 @@
+--- a/arch/mips/ath79/gpio.c
++++ b/arch/mips/ath79/gpio.c
+@@ -178,15 +178,31 @@ void __init ath79_gpio_input_select(unsi
+ {
+ 	void __iomem *base = ath79_gpio_base;
+ 	unsigned long flags;
+-	unsigned int reg;
++	unsigned int reg, reg_base_in;
++	unsigned long gpio_count;
+ 	u32 t, s;
+ 
+-	BUG_ON(!soc_is_ar934x());
++	BUG_ON(!soc_is_ar934x() && !soc_is_qca953x() && !soc_is_qca955x() && !soc_is_qca956x());
++	if (soc_is_ar934x()) {
++		gpio_count = AR934X_GPIO_COUNT;
++		reg_base_in = AR934X_GPIO_REG_IN_ENABLE0;
++	} else if (soc_is_qca953x()) {
++		gpio_count = QCA953X_GPIO_COUNT;
++		reg_base_in = QCA953X_GPIO_REG_IN_ENABLE0;
++	} else if (soc_is_qca955x()) {
++		gpio_count = QCA955X_GPIO_COUNT;
++		reg_base_in = QCA955X_GPIO_REG_IN_ENABLE0;
++	} else if (soc_is_qca956x()) {
++		gpio_count = QCA956X_GPIO_COUNT;
++		reg_base_in = QCA956X_GPIO_REG_IN_ENABLE0;
++	} else {
++		BUG();
++	}
+ 
+-	if (gpio >= AR934X_GPIO_COUNT)
++	if (gpio >= gpio_count)
+ 		return;
+ 
+-	reg = AR934X_GPIO_REG_IN_ENABLE0 + 4 * (val / 4);
++	reg = reg_base_in + 4 * (val / 4);
+ 	s = 8 * (val % 4);
+ 
+ 	spin_lock_irqsave(&ath79_gpio_lock, flags);
+@@ -220,7 +236,7 @@ void __init ath79_gpio_output_select(uns
+ 	unsigned long gpio_count;
+ 	u32 t, s;
+ 
+-	BUG_ON(!soc_is_ar934x() && !soc_is_qca953x() && !soc_is_qca956x());
++	BUG_ON(!soc_is_ar934x() && !soc_is_qca953x() && !soc_is_qca955x() && !soc_is_qca956x());
+ 	if (soc_is_ar934x()) {
+ 		gpio_count = AR934X_GPIO_COUNT;
+ 		reg_base = AR934X_GPIO_REG_OUT_FUNC0;
+--- a/arch/mips/include/asm/mach-ath79/ar71xx_regs.h
++++ b/arch/mips/include/asm/mach-ath79/ar71xx_regs.h
+@@ -632,6 +632,9 @@
+ #define QCA953X_RESET_USB_HOST		BIT(5)
+ #define QCA953X_RESET_USB_PHY		BIT(4)
+ #define QCA953X_RESET_USBSUS_OVERRIDE	BIT(3)
++#define QCA953X_RESET_LUT		BIT(2)
++#define QCA953X_RESET_MBOX		BIT(1)
++#define QCA953X_RESET_I2S		BIT(0)
+ 
+ #define QCA955X_RESET_HOST		BIT(31)
+ #define QCA955X_RESET_SLIC		BIT(30)
+@@ -666,6 +669,10 @@
+ #define QCA955X_RESET_MBOX		BIT(1)
+ #define QCA955X_RESET_I2S		BIT(0)
+ 
++#define QCA956X_RESET_LUT		BIT(2)
++#define QCA956X_RESET_MBOX		BIT(1)
++#define QCA956X_RESET_I2S		BIT(0)
++
+ #define AR933X_BOOTSTRAP_MDIO_GPIO_EN	BIT(18)
+ #define AR933X_BOOTSTRAP_EEPBUSY	BIT(4)
+ #define AR933X_BOOTSTRAP_REF_CLK_40	BIT(0)
+@@ -919,16 +926,35 @@
+ #define QCA955X_GPIO_REG_OUT_FUNC3	0x38
+ #define QCA955X_GPIO_REG_OUT_FUNC4	0x3c
+ #define QCA955X_GPIO_REG_OUT_FUNC5	0x40
++#define QCA955X_GPIO_REG_IN_ENABLE0	0x44
++#define QCA955X_GPIO_REG_IN_ENABLE1	0x48
++#define QCA955X_GPIO_REG_IN_ENABLE2	0x4C
++#define QCA955X_GPIO_REG_IN_ENABLE3	0x50
++#define QCA955X_GPIO_REG_IN_ENABLE4	0x54
+ #define QCA955X_GPIO_REG_FUNC		0x6c
+ 
++#define QCA955X_GPIO_OUT_MUX_I2S_CLK	12
++#define QCA955X_GPIO_OUT_MUX_I2S_WS	13
++#define QCA955X_GPIO_OUT_MUX_I2S_SD	14
++#define QCA955X_GPIO_OUT_MUX_I2S_MCK	15
++
+ #define QCA953X_GPIO_REG_OUT_FUNC0	0x2c
+ #define QCA953X_GPIO_REG_OUT_FUNC1	0x30
+ #define QCA953X_GPIO_REG_OUT_FUNC2	0x34
+ #define QCA953X_GPIO_REG_OUT_FUNC3	0x38
+ #define QCA953X_GPIO_REG_OUT_FUNC4	0x3c
+ #define QCA953X_GPIO_REG_IN_ENABLE0	0x44
++#define QCA953X_GPIO_REG_IN_ENABLE1	0x48
++#define QCA953X_GPIO_REG_IN_ENABLE2	0x4C
++#define QCA953X_GPIO_REG_IN_ENABLE3	0x50
++#define QCA953X_GPIO_REG_IN_ENABLE4	0x54
+ #define QCA953X_GPIO_REG_FUNC		0x6c
+ 
++#define QCA953X_GPIO_OUT_MUX_I2S_CLK	12
++#define QCA953X_GPIO_OUT_MUX_I2S_WS	13
++#define QCA953X_GPIO_OUT_MUX_I2S_SD	14
++#define QCA953X_GPIO_OUT_MUX_I2S_MCK	15
++
+ #define QCA953X_GPIO_OUT_MUX_SPI_CS1		10
+ #define QCA953X_GPIO_OUT_MUX_SPI_CS2		11
+ #define QCA953X_GPIO_OUT_MUX_SPI_CS0		9
+@@ -947,9 +973,18 @@
+ #define QCA956X_GPIO_REG_OUT_FUNC4	0x3c
+ #define QCA956X_GPIO_REG_OUT_FUNC5	0x40
+ #define QCA956X_GPIO_REG_IN_ENABLE0	0x44
++#define QCA956X_GPIO_REG_IN_ENABLE1	0x48
++#define QCA956X_GPIO_REG_IN_ENABLE2	0x4C
+ #define QCA956X_GPIO_REG_IN_ENABLE3	0x50
++#define QCA956X_GPIO_REG_IN_ENABLE4	0x54
++#define QCA956X_GPIO_REG_IN_ENABLE9	0x68
+ #define QCA956X_GPIO_REG_FUNC		0x6c
+ 
++#define QCA956X_GPIO_OUT_MUX_I2S_CLK	12
++#define QCA956X_GPIO_OUT_MUX_I2S_WS	13
++#define QCA956X_GPIO_OUT_MUX_I2S_SD	14
++#define QCA956X_GPIO_OUT_MUX_I2S_MCK	15
++
+ #define QCA956X_GPIO_OUT_MUX_GE0_MDO	32
+ #define QCA956X_GPIO_OUT_MUX_GE0_MDC	33
+ 
