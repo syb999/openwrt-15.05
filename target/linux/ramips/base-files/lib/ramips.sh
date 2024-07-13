@@ -304,6 +304,9 @@ ramips_board_detect() {
 	*"Asus RP-N53")
 		name="rp-n53"
 		;;
+	*"RAISECOM MSG1501")
+		name="raisecom-msg1501"
+		;;
 	*"Ralink MT7620a + MT7530 evaluation board")
 		name="mt7620a_mt7530"
 		;;

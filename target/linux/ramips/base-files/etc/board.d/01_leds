@@ -258,6 +258,9 @@ case $board in
 	mi-router-ac2100)
 		ucidef_set_led_netdev "wan" "wan" "mi-router-ac2100:blue:wan" "eth0.2"
 		;;
+	raisecom-msg1501)
+		ucidef_set_led_netdev "internet" "internet" "msg1501:blue:internet" "eth0.2"
+		;;
 	redmi-router-ac2100)
 		ucidef_set_led_default "system" "system" "rm2100:white:system" "1"
 		ucidef_set_led_netdev "wan" "wan" "rm2100:white:wan" "eth0.2"

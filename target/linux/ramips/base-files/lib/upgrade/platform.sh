@@ -86,6 +86,7 @@ platform_check_image() {
 	olinuxino-rt5350f-evb | \
 	psr-680w | \
 	px4885 | \
+	raisecom-msg1501 | \
 	re6500 | \
 	rp-n53 | \
 	rt-g32-b1 | \

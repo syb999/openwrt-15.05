@@ -11,6 +11,14 @@ define Device/wsr-600
   DTS := WSR-600
 endef
 
+define Device/raisecom-msg1501
+  DTS := RAISECOM-MSG1501
+  IMAGE_SIZE := $(ralink_default_fw_size_8M)
+  DEVICE_TITLE := RAISECOM MSG1501
+  DEVICE_PACKAGES := kmod-mt7603 kmod-mt76x2
+endef
+TARGET_DEVICES += raisecom-msg1501
+
 define Device/re6500
   DTS := RE6500
   IMAGE_SIZE := $(ralink_default_fw_size_8M)
