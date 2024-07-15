@@ -7,7 +7,7 @@
 
 define Profile/HQ65
         NAME:=100mshBOX HQ65
-        PACKAGES:= panel-ap-setup
+        PACKAGES:= panel-ap-setup kmod-i2c-gpio-custom i2c-tools fm_tea5767
 endef
 
 define Profile/HQ65/Description

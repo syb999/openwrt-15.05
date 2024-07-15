@@ -1,3 +1,7 @@
+#include <linux/i2c.h>
+#include <linux/i2c-gpio.h>
+#include <linux/platform_device.h>
+
 #include <linux/gpio.h>
 #include <linux/pci.h>
 
@@ -16,6 +20,9 @@
 #include "machtypes.h"
 #include "pci.h"
 
+#define HQ65_GPIO_I2C_SDA		17
+#define HQ65_GPIO_I2C_SLC		16
+
 #define HQ65_GPIO_LED_WLAN		14
 #define HQ65_GPIO_LED_WAN		13
 #define HQ65_GPIO_LED_SYSTEM	        12
@@ -30,6 +37,19 @@
 #define HQ65_MAC1_OFFSET   6
 #define HQ65_WMAC_CALDATA_OFFSET   0x1000
 #define HQ65_PCIE_CALDATA_OFFSET   0x5000
+
+static struct i2c_gpio_platform_data hq65_i2c_gpio_data = {
+	.sda_pin	= HQ65_GPIO_I2C_SDA,
+	.scl_pin	= HQ65_GPIO_I2C_SLC,
+};
+
+static struct platform_device hq65_i2c_gpio_device = {
+	.name		= "i2c-gpio",
+	.id		= 0,
+	.dev = {
+		.platform_data  = &hq65_i2c_gpio_data,
+	}
+};
 
 static struct gpio_led hq65_leds_gpio[] __initdata = {
     {
@@ -112,6 +132,8 @@ static void __init hq65_setup(void)
 
     ath79_init_mac(tmpmac, art + HQ65_WMAC_CALDATA_OFFSET + 2, 0);
     ath79_register_wmac(art + HQ65_WMAC_CALDATA_OFFSET, tmpmac);
+
+	platform_device_register(&hq65_i2c_gpio_device);
 
     /* enable usb */
     ath79_register_usb();
