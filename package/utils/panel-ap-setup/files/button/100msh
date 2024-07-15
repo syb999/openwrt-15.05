@@ -7,11 +7,13 @@ if [ $(cat /sys/devices/platform/leds-gpio/leds/hq65:red:system/brightness) = 1 
 	echo 0 > /sys/devices/platform/leds-gpio/leds/hq65:red:system/brightness
 	echo 0 > /sys/devices/platform/leds-gpio/leds/hq65:green:wan/brightness
 	echo 0 > /sys/devices/platform/leds-gpio/leds/hq65:green:wlan/brightness
+	fm_tea5767 /dev/i2c-0 87.5
 else
 	# tune on leds
 	echo 1 > /sys/devices/platform/leds-gpio/leds/hq65:red:system/brightness
 	echo 1 > /sys/devices/platform/leds-gpio/leds/hq65:green:wan/brightness
 	echo 1 > /sys/devices/platform/leds-gpio/leds/hq65:green:wlan/brightness
+	fm_tea5767 /dev/i2c-0 103.7
 fi
 
 return 0
