@@ -1,157 +1,96 @@
 #include <stdio.h>
-#include <stdlib.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
+#include <stdlib.h>
+#include <string.h>
 
-#define TEA5767_ADDR 0x60
-#define MAX_FREQ 108000
-#define MIN_FREQ 87500
+#define TEA5767_I2C_ADDR 0x60
+#define MAX_FREQ 108.0
+#define MIN_FREQ 87.5
 
-static unsigned char radio_write_data[5] = {0x29, 0xc2, 0x20, 0x11, 0x00};
-static unsigned char radio_read_data[5];
-static unsigned long frequency = MIN_FREQ;
-static unsigned int pll;
+// Function to set frequency on TEA5767
+void set_frequency(int i2c_fd, float frequency_MHz) {
+    uint16_t frequency = (uint16_t)((4 * (frequency_MHz * 1000000 + 225000)) / 32768);
+    uint8_t buffer[5];
 
-// 打开 I2C 设备
-int open_i2c_device(const char *device) {
-    int fd = open(device, O_RDWR);
-    if (fd < 0) {
-        perror("Failed to open I2C device");
-        exit(1);
-    }
-    return fd;
-}
+    buffer[0] = (frequency >> 8) & 0xFF;
+    buffer[1] = frequency & 0xFF;
+    buffer[2] = 0xB0;  // Mono, No Mute, No PLL
+    buffer[3] = 0x10;  // Search Mode Off, No Port 1 High-Z
+    buffer[4] = 0x00;  // No specific options set
 
-// 选择 I2C 设备地址
-void set_i2c_address(int fd, int addr) {
-    if (ioctl(fd, I2C_SLAVE, addr) < 0) {
-        perror("Failed to set I2C address");
-        exit(1);
+    if (write(i2c_fd, buffer, 5) != 5) {
+        perror("Failed to write to the I2C bus.");
     }
 }
 
-// I2C 写入函数
-void radio_write(int fd) {
-    if (write(fd, radio_write_data, sizeof(radio_write_data)) != sizeof(radio_write_data)) {
-        perror("Failed to write to I2C device");
-        exit(1);
+// Function to get the current frequency from TEA5767
+float get_frequency(int i2c_fd) {
+    uint8_t buffer[5];
+    if (read(i2c_fd, buffer, 5) != 5) {
+        perror("Failed to read from the I2C bus.");
+        return -1;
     }
+
+    uint16_t frequency = ((buffer[0] & 0x3F) << 8) | buffer[1];
+    return ((frequency * 32768) / 4 - 225000) / 1000000.0;
 }
 
-// I2C 读取函数
-void radio_read(int fd) {
-    if (write(fd, &radio_write_data[0], 1) != 1) {
-        perror("Failed to write to I2C device");
-        exit(1);
-    }
-    if (read(fd, radio_read_data, sizeof(radio_read_data)) != sizeof(radio_read_data)) {
-        perror("Failed to read from I2C device");
-        exit(1);
-    }
-}
-
-// 由频率计算 PLL
-void get_pll(void) {
-    unsigned char hlsi = radio_write_data[2] & 0x10;
-    if (hlsi) {
-        pll = (unsigned int)(((float)(frequency + 225) * 4) / 32.768);
-    } else {
-        pll = (unsigned int)(((float)(frequency - 225) * 4) / 32.768);
-    }
-}
-
-// 由 PLL 计算频率
-void get_frequency(void) {
-    unsigned char hlsi = radio_write_data[2] & 0x10;
-    if (hlsi) {
-        frequency = (unsigned long)((float)pll * 8.192 - 225);
-    } else {
-        frequency = (unsigned long)((float)pll * 8.192 + 225);
-    }
-}
-
-// 手动设置频率, mode=1, +0.1MHz; mode=0, -0.1MHz
-void search(int fd, int mode) {
-    radio_read(fd);
-    if (mode) {
-        frequency += 100;
-        if (frequency > MAX_FREQ) {
-            frequency = MIN_FREQ;
-        }
-    } else {
-        frequency -= 100;
-        if (frequency < MIN_FREQ) {
-            frequency = MAX_FREQ;
-        }
-    }
-    get_pll();
-    radio_write_data[0] = pll >> 8;
-    radio_write_data[1] = pll & 0xff;
-    radio_write_data[2] = 0x20;
-    radio_write_data[3] = 0x11;
-    radio_write_data[4] = 0x00;
-    radio_write(fd);
-}
-
-// 自动搜索, mode=1, 频率增加搜索; mode=0, 频率减小搜索
-void auto_search(int fd, int mode) {
-    radio_read(fd);
-    get_pll();
-    if (mode) {
-        radio_write_data[2] = 0xa0;
-    } else {
-        radio_write_data[2] = 0x20;
-    }
-    radio_write_data[0] = (pll >> 8) | 0x40;
-    radio_write_data[1] = pll & 0xff;
-    radio_write_data[3] = 0x11;
-    radio_write_data[4] = 0x00;
-    radio_write(fd);
-    do {
-        radio_read(fd);
-        usleep(100000); // 延迟以允许收音机处理
-    } while (!(radio_read_data[0] & 0x80)); // 搜索成功标志
-}
-
-// 检查是否接收到可用的 FM 信号
-int is_signal_available(int fd) {
-    radio_read(fd);
-    return (radio_read_data[0] & 0x80); // 信号检测标志
+void print_usage(const char *prog_name) {
+    fprintf(stderr, "Usage: %s <i2c_device> [frequency]\n", prog_name);
+    fprintf(stderr, "Examples:\n");
+    fprintf(stderr, "  Get current frequency: %s /dev/i2c-0\n", prog_name);
+    fprintf(stderr, "  Set frequency to 93.4 MHz: %s /dev/i2c-0 93.4\n", prog_name);
 }
 
 int main(int argc, char *argv[]) {
-    if (argc != 2) {
-        fprintf(stderr, "Usage: %s <i2c_device>\n", argv[0]);
+    int i2c_fd;
+    char *i2c_device;
+    float frequency_MHz;
+
+    if (argc < 2 || argc > 3) {
+        print_usage(argv[0]);
         return 1;
     }
 
-    const char *i2c_device = argv[1];
-    int fd = open_i2c_device(i2c_device);
-    set_i2c_address(fd, TEA5767_ADDR);
+    i2c_device = argv[1];
 
-    // 自动调频搜索
-    int found = 0;
-    while (!found) {
-        auto_search(fd, 1); // 自动搜索上升频率
-        if (is_signal_available(fd)) {
-            printf("FM signal found at frequency: %lu kHz\n", frequency);
-            found = 1;
+    // Open I2C bus
+    if ((i2c_fd = open(i2c_device, O_RDWR)) < 0) {
+        perror("Failed to open the I2C bus.");
+        return 1;
+    }
+
+    // Set I2C device address
+    if (ioctl(i2c_fd, I2C_SLAVE, TEA5767_I2C_ADDR) < 0) {
+        perror("Failed to acquire bus access and/or talk to slave.");
+        close(i2c_fd);
+        return 1;
+    }
+
+    if (argc == 3) {
+        // Set frequency provided by user
+        frequency_MHz = atof(argv[2]);
+        if (frequency_MHz < MIN_FREQ || frequency_MHz > MAX_FREQ) {
+            fprintf(stderr, "Frequency out of range. Please enter a frequency between %.1f and %.1f MHz.\n", MIN_FREQ, MAX_FREQ);
         } else {
-            auto_search(fd, 0); // 自动搜索下降频率
-            if (is_signal_available(fd)) {
-                printf("FM signal found at frequency: %lu kHz\n", frequency);
-                found = 1;
-            }
+            set_frequency(i2c_fd, frequency_MHz);
+            printf("Frequency set to: %.2f MHz\n", frequency_MHz);
         }
-        // 如果没有找到信号，继续搜索
-        if (!found) {
-            search(fd, 1); // 手动搜索增加频率
+    } else {
+        // Get current frequency
+        frequency_MHz = get_frequency(i2c_fd);
+        if (frequency_MHz != -1) {
+            printf("Current frequency: %.2f MHz\n", frequency_MHz);
         }
     }
 
-    close(fd);
+    // Close I2C bus
+    close(i2c_fd);
+
     return 0;
 }
 
