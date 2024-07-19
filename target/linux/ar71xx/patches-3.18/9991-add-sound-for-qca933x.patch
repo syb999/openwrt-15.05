@@ -1,0 +1,11 @@
+--- a/arch/mips/include/asm/mach-ath79/ar71xx_regs.h
++++ b/arch/mips/include/asm/mach-ath79/ar71xx_regs.h
+@@ -578,6 +578,8 @@
+ #define AR933X_RESET_USB_HOST		BIT(5)
+ #define AR933X_RESET_USB_PHY		BIT(4)
+ #define AR933X_RESET_USBSUS_OVERRIDE	BIT(3)
++#define AR933X_RESET_MBOX		BIT(1)
++#define AR933X_RESET_I2S		BIT(0)
+ 
+ #define AR934X_RESET_HOST		BIT(31)
+ #define AR934X_RESET_SLIC		BIT(30)
