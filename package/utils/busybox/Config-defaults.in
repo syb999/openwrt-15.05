@@ -1569,7 +1569,7 @@ config BUSYBOX_DEFAULT_HD
 	default n
 config BUSYBOX_DEFAULT_XXD
 	bool
-	default n
+	default y
 config BUSYBOX_DEFAULT_HWCLOCK
 	bool
 	default y
