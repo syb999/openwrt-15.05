@@ -1,0 +1,43 @@
+--- a/drivers/usb/storage/uas.c
++++ b/drivers/usb/storage/uas.c
+@@ -818,6 +818,10 @@ static int uas_slave_configure(struct sc
+ 	if (devinfo->flags & US_FL_NO_REPORT_OPCODES)
+ 		sdev->no_report_opcodes = 1;
+ 
++	/* A few buggy USB-ATA bridges don't understand FUA */
++	if (devinfo->flags & US_FL_BROKEN_FUA)
++		sdev->broken_fua = 1;
++
+ 	scsi_set_tag_type(sdev, MSG_ORDERED_TAG);
+ 	scsi_activate_tcq(sdev, devinfo->qdepth - 2);
+ 	return 0;
+--- a/drivers/usb/storage/unusual_devs.h
++++ b/drivers/usb/storage/unusual_devs.h
+@@ -2012,7 +2012,7 @@ UNUSUAL_DEV(  0x14cd, 0x6600, 0x0201, 0x
+ 		US_FL_IGNORE_RESIDUE ),
+ 
+ /* Reported by Michael Büsch <m@bues.ch> */
+-UNUSUAL_DEV(  0x152d, 0x0567, 0x0114, 0x0114,
++UNUSUAL_DEV(  0x152d, 0x0567, 0x0114, 0x0116,
+ 		"JMicron",
+ 		"USB to ATA/ATAPI Bridge",
+ 		USB_SC_DEVICE, USB_PR_DEVICE, NULL,
+@@ -2111,6 +2111,17 @@ UNUSUAL_DEV(  0x1b1c, 0x1ab5, 0x0200, 0x
+ 		USB_SC_DEVICE, USB_PR_DEVICE, NULL,
+ 		US_FL_INITIAL_READ10 ),
+ 
++/* Reported by Hans de Goede <hdegoede@redhat.com>
++ * These are mini projectors using USB for both power and video data transport
++ * The usb-storage interface is a virtual windows driver CD, which the gm12u320
++ * driver automatically converts into framebuffer & kms dri device nodes.
++ */
++UNUSUAL_DEV( 0x1de1, 0xc102, 0x0000, 0xffff,
++		"Grain-media Technology Corp.",
++		"USB3.0 Device GM12U320",
++		USB_SC_DEVICE, USB_PR_DEVICE, NULL,
++		US_FL_IGNORE_DEVICE ),
++
+ /* Patch by Richard Schütz <r.schtz@t-online.de>
+  * This external hard drive enclosure uses a JMicron chip which
+  * needs the US_FL_IGNORE_RESIDUE flag to work properly. */
+
