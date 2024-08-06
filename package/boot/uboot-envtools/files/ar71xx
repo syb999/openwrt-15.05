@@ -32,6 +32,7 @@ nbg6716 | \
 om5p-an | \
 om5p | \
 tube2h | \
+wap750 | \
 wndr3700)
 	ubootenv_add_uci_config "/dev/mtd1" "0x0" "0x10000" "0x10000"
 	;;
