@@ -51,6 +51,10 @@ case "$FIRMWARE" in
 		ath9k_patch_firmware_mac $(macaddr_add $(cat /sys/class/net/eth0/address) +2)
 		;;
 	r6100 | \
+	wap750)
+		ath9k_eeprom_extract "art" 4096 1088
+		ath9k_patch_firmware_mac $(macaddr_add $(cat /sys/class/net/eth0/address) +2)
+		;;
 	wndr3700v4 | \
 	wndr4300)
 		ath9k_eeprom_extract "caldata" 4096 2048

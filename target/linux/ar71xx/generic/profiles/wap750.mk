@@ -7,7 +7,7 @@
 
 define Profile/WAP750
         NAME:=WAP750
-        PACKAGES:=uboot-envtools kmod-ath10k-ct ath10k-firmware-qca9887-ct-full-htt
+        PACKAGES:=uboot-envtools kmod-ath10k-smallbuffers ath10k-firmware-qca9887 panel-ap-setup
 endef
 
 define Profile/WAP750/Description

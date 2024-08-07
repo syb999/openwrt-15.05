@@ -9,7 +9,7 @@
 
 #include <linux/platform_device.h>
 #include <linux/ar8216_platform.h>
-
+#include <linux/ath9k_platform.h>
 #include <asm/mach-ath79/ar71xx_regs.h>
 #include <asm/mach-ath79/ath79.h>
 
@@ -22,7 +22,6 @@
 #include "dev-wmac.h"
 #include "machtypes.h"
 #include "pci.h"
-
 
 #define WAP750_GPIO_LED_STATUS	13
 
@@ -65,10 +64,6 @@ static void __init wap750_setup(void)
 					ARRAY_SIZE(wap750_gpio_keys),
 					wap750_gpio_keys);
 
-	ath79_register_pci();
-
-	ath79_register_wmac(art + WAP750_MAC0_OFFSET, NULL);
-
 	ath79_setup_ar933x_phy4_switch(false, false);
 
 	ath79_register_mdio(0, 0x0);
@@ -89,6 +84,9 @@ static void __init wap750_setup(void)
 	ath79_eth0_data.speed = SPEED_100;
 	ath79_init_mac(ath79_eth0_data.mac_addr, art, 0);
 	ath79_register_eth(0);
+
+	ath79_register_wmac(art + WAP750_MAC0_OFFSET, NULL);
+	ath79_register_pci();
 }
 
 MIPS_MACHINE(ATH79_MACH_WAP750, "WAP750", "WAP750", wap750_setup);
