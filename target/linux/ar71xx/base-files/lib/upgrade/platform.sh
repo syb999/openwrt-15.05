@@ -190,7 +190,7 @@ platform_check_image() {
 	hornet-ub | \
 	mr12 | \
 	mr16 | \
-	wap750 | \
+	xinxang-x-wap750 | \
 	wpj558 | \
 	zcn-1523h-2 | \
 	zcn-1523h-5)

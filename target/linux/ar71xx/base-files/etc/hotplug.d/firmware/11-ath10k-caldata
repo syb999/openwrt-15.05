@@ -129,7 +129,7 @@ case "$FIRMWARE" in
 	unifiac)
 		ath10kcal_extract "EEPROM" 20480 2116
 		;;
-	wap750)
+	xinxang-x-wap750)
 		ath10kcal_extract "art" 20480 2116
 		;;
 	esac

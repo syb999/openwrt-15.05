@@ -394,8 +394,8 @@ get_status_led() {
 	wlr8100)
 		status_led="sitecom:amber:status"
 		;;
-	wap750)
-		status_led="wap750:green:status"
+	xinxang-x-wap750)
+		status_led="x-wap750:green:status"
 		;;
 	esac
 }

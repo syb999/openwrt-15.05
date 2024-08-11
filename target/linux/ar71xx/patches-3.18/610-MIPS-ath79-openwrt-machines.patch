@@ -178,7 +178,7 @@
  	ATH79_MACH_UBNT_UNIFI_OUTDOOR,	/* Ubiquiti UnifiAP Outdoor */
 +	ATH79_MACH_UBNT_UNIFI_OUTDOOR_PLUS, /* Ubiquiti UnifiAP Outdoor+ */
  	ATH79_MACH_UBNT_XM,		/* Ubiquiti Networks XM board rev 1.0 */
-+	ATH79_MACH_WAP750,		/* XINXANG WAP750 Panel AP */
++	ATH79_MACH_XINXANG_X_WAP750,		/* XINXANG X-WAP750 Panel AP */
 +	ATH79_MACH_WEIO,			/* WeIO board */
 +	ATH79_MACH_WHR_G301N,		/* Buffalo WHR-G301N */
 +	ATH79_MACH_WHR_HP_G300N,	/* Buffalo WHR-HP-G300N */
@@ -1505,8 +1505,8 @@
 +	select ATH79_DEV_USB
 +	select ATH79_DEV_WMAC
 +
-+config ATH79_MACH_WAP750
-+	bool "XinXiang WAP750 Panel AP support"
++config ATH79_MACH_XINXANG_X_WAP750
++	bool "XinXang X-WAP750 Panel AP support"
 +	select SOC_QCA953X
 +	select ATH79_DEV_GPIO_BUTTONS
 +	select ATH79_DEV_LEDS_GPIO
@@ -1797,7 +1797,7 @@
 +obj-$(CONFIG_ATH79_MACH_TUBE2H)		+= mach-tube2h.o
 +obj-$(CONFIG_ATH79_MACH_UBNT)		+= mach-ubnt.o
  obj-$(CONFIG_ATH79_MACH_UBNT_XM)	+= mach-ubnt-xm.o
-+obj-$(CONFIG_ATH79_MACH_WAP750)	+= mach-wap750.o
++obj-$(CONFIG_ATH79_MACH_XINXANG_X_WAP750)	+= mach-xinxang-x-wap750.o
 +obj-$(CONFIG_ATH79_MACH_WEIO)		+= mach-weio.o
 +obj-$(CONFIG_ATH79_MACH_WHR_HP_G300N)	+= mach-whr-hp-g300n.o
 +obj-$(CONFIG_ATH79_MACH_WLAE_AG300N)	+= mach-wlae-ag300n.o

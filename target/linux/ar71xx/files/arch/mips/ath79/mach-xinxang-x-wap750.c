@@ -1,5 +1,5 @@
 /*
- *  XinXiang WAP750 Panel AP support
+ *  XinXang X-WAP750 Panel AP support
  *
  *
  *  This program is free software; you can redistribute it and/or modify it
@@ -23,46 +23,46 @@
 #include "machtypes.h"
 #include "pci.h"
 
-#define WAP750_GPIO_LED_STATUS	13
+#define X_WAP750_GPIO_LED_STATUS	13
 
-#define WAP750_GPIO_BTN_RESET	17
+#define X_WAP750_GPIO_BTN_RESET	17
 
-#define WAP750_KEYS_POLL_INTERVAL	20	/* msecs */
-#define WAP750_KEYS_DEBOUNCE_INTERVAL	(3 * WAP750_KEYS_POLL_INTERVAL)
+#define X_WAP750_KEYS_POLL_INTERVAL	20	/* msecs */
+#define X_WAP750_KEYS_DEBOUNCE_INTERVAL	(3 * X_WAP750_KEYS_POLL_INTERVAL)
 
-#define WAP750_MAC0_OFFSET	0x1000
+#define X_WAP750_MAC0_OFFSET	0x1000
 
-static struct gpio_led wap750_leds_gpio[] __initdata = {
+static struct gpio_led x_wap750_leds_gpio[] __initdata = {
 	{
-		.name		= "wap750:green:status",
-		.gpio		= WAP750_GPIO_LED_STATUS,
+		.name		= "x-wap750:green:status",
+		.gpio		= X_WAP750_GPIO_LED_STATUS,
 		.active_low	= 1,
 	},
 };
 
-static struct gpio_keys_button wap750_gpio_keys[] __initdata = {
+static struct gpio_keys_button x_wap750_gpio_keys[] __initdata = {
 	{
 		.desc		= "reset button",
 		.type		= EV_KEY,
 		.code		= KEY_WPS_BUTTON,
-		.debounce_interval = WAP750_KEYS_DEBOUNCE_INTERVAL,
-		.gpio		= WAP750_GPIO_BTN_RESET,
+		.debounce_interval = X_WAP750_KEYS_DEBOUNCE_INTERVAL,
+		.gpio		= X_WAP750_GPIO_BTN_RESET,
 		.active_low	= 1,
 	}
 };
 
-static void __init wap750_setup(void)
+static void __init x_wap750_setup(void)
 {
 	u8 *art = (u8 *)KSEG1ADDR(0x1fff0000);
 
 	ath79_register_m25p80(NULL);
 
-	ath79_register_leds_gpio(-1, ARRAY_SIZE(wap750_leds_gpio),
-				 wap750_leds_gpio);
+	ath79_register_leds_gpio(-1, ARRAY_SIZE(x_wap750_leds_gpio),
+				 x_wap750_leds_gpio);
 
-	ath79_register_gpio_keys_polled(-1, WAP750_KEYS_POLL_INTERVAL,
-					ARRAY_SIZE(wap750_gpio_keys),
-					wap750_gpio_keys);
+	ath79_register_gpio_keys_polled(-1, X_WAP750_KEYS_POLL_INTERVAL,
+					ARRAY_SIZE(x_wap750_gpio_keys),
+					x_wap750_gpio_keys);
 
 	ath79_setup_ar933x_phy4_switch(false, false);
 
@@ -85,8 +85,8 @@ static void __init wap750_setup(void)
 	ath79_init_mac(ath79_eth0_data.mac_addr, art, 0);
 	ath79_register_eth(0);
 
-	ath79_register_wmac(art + WAP750_MAC0_OFFSET, NULL);
+	ath79_register_wmac(art + X_WAP750_MAC0_OFFSET, NULL);
 	ath79_register_pci();
 }
 
-MIPS_MACHINE(ATH79_MACH_WAP750, "WAP750", "WAP750", wap750_setup);
+MIPS_MACHINE(ATH79_MACH_XINXANG_X_WAP750, "XINXANG-X-WAP750", "XinXanG X-WAP750", x_wap750_setup);

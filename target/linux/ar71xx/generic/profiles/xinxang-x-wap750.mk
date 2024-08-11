@@ -5,13 +5,13 @@
 # See /LICENSE for more information.
 #
 
-define Profile/WAP750
-        NAME:=WAP750
+define Profile/XINXANG-X-WAP750
+        NAME:=XINXANG-X-WAP750
         PACKAGES:=uboot-envtools kmod-ath10k-smallbuffers ath10k-firmware-qca9887 panel-ap-setup
 endef
 
-define Profile/WAP750/Description
-        Package set optimized for the XinXang WAP750 Panel AP.
+define Profile/XINXANG-X-WAP750/Description
+        Package set optimized for the XinXang X-WAP750 Panel AP.
 endef
 
-$(eval $(call Profile,WAP750))
+$(eval $(call Profile,XINXANG-X-WAP750))

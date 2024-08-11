@@ -908,8 +908,8 @@ ar71xx_board_detect() {
 	*"UniFi AP Pro")
 		name="uap-pro"
 		;;
-	"WAP750"*)
-		name="wap750"
+	*"XinXanG X-WAP750")
+		name="xinxang-x-wap750"
 		;;
 	"WeIO"*)
 		name="weio"
