@@ -11,7 +11,7 @@ define Package/pppwn-cpp
   URL:=https://github.com/xfangfang/PPPwn_cpp
   SECTION:=multimedia
   CATEGORY:=Multimedia
-  DEPENDS:=@(TARGET_kirkwood||TARGET_mvebu||TARGET_armvirt||TARGET_ramips||TARGET_x86_64)
+  DEPENDS:=@(TARGET_kirkwood||TARGET_mvebu||TARGET_armvirt||TARGET_ar71xx||TARGET_ramips||TARGET_x86_64)
 endef
 
 define Package/pppwn-cpp/description
@@ -25,6 +25,9 @@ define Package/pppwn-cpp/install
 	$(INSTALL_DIR) $(1)/etc/pppwn
 	$(INSTALL_DATA) ./files/* $(1)/etc/pppwn/
 	$(INSTALL_DIR) $(1)/usr/bin
+ifeq ($(ARCH),mips)
+	$(INSTALL_BIN) ./bin/mips $(1)/usr/bin/pppwn
+endif
 ifeq ($(ARCH),mipsel)
 	$(INSTALL_BIN) ./bin/mipsel $(1)/usr/bin/pppwn
 endif
