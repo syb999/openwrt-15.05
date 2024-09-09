@@ -23,10 +23,11 @@ end
 fwver=s:option(Value, "fwver", translate("PlayStation 4 System Version"))
 fwver.default = "1100"
 fwver.rmempty = false
-fwver:value("700", translate("7.00"))
 fwver:value("900", translate("9.00"))
+fwver:value("960", translate("9.60"))
+fwver:value("1000", translate("10.00"))
 fwver:value("1100", translate("11.00"))
-fwver.description = translate("1100 means Ver 11.00 etc.")
+fwver.description = translate("900 means Ver 9.00 etc.")
 
 goldhen = s:option(DummyValue, "goldhen", translate("Download GoldHEN Payload BIN"))
 goldhen.description = translate("<a class='btn cbi-button cbi-button-apply' type='button' href=\"../../../../../goldhen.bin\" target=\"_blank\" />"..translate("Copy goldhen.bin to the root directory of an exfat/fat32 USB and insert it into your PS4.").."</a>")
