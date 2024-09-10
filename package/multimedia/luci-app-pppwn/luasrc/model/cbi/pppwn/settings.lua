@@ -2,7 +2,7 @@ local sys = require "luci.sys"
 
 m = Map("pppwn", "PPPwn - PlayStation 4 PPPoE RCE", translate("PPPwn is a kernel remote code execution exploit for PlayStation 4 up to FW 11.00."))
 
-m:section(SimpleSection).template  = "pppwn_status"
+m:section(SimpleSection).template  = "pppwn/pppwn_status"
 
 s = m:section(TypedSection, "pppwn")
 s.addremove = false
