@@ -28,6 +28,7 @@ function ucidefault() {
 function testdestpath() {
 	if [ ! -d "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)" ]; then
 		mkdir -p "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)"
+		chmod 777 -R "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)"
 	fi
 }
 
