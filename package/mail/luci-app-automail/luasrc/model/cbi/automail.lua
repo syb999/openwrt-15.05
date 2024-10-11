@@ -225,6 +225,7 @@ fetchmail_infoqq.description = translate("Please login to mail.qq.com first to s
 fetchmail_protocollist = s:taboption("fetchmail", ListValue, "fetchmail_protocollist", translate("email protocol"))
 fetchmail_protocollist.placeholder = "pop3"
 fetchmail_protocollist:value("pop3")
+fetchmail_protocollist:value("IMAP")
 fetchmail_protocollist.default = "pop3"
 fetchmail_protocollist.rempty  = true
 
