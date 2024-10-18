@@ -30,7 +30,12 @@ function getxmlyaudios(){
 	newlistpagenumprefix="&pageNum="
 	newlistpagesuffix="&sort=0"
 	thenewlist="${newlistprefix}${newlistalbumId}${newlistpagenumprefix}${newlistpagenum}${newlistpagesuffix}"
-	curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -H ""user-agent": "Mozilla/5.0"" $thenewlist > /tmp/tmp.XMV.newlist
+	if [ ! "$paudiocookie" ];then
+		curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -H ""user-agent": "Mozilla/5.0"" $thenewlist > /tmp/tmp.XMV.newlist
+	else
+		xmlycookie="$(echo ${paudiocookie} | sed 's/ //g')"
+		curl -b "$xmlycookie" -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -H ""user-agent": "Mozilla/5.0"" $thenewlist > /tmp/tmp.XMV.newlist
+	fi
 	cat /tmp/tmp.XMV.newlist | sed 's/\/sound\//\n/g' | sed '1d' | cut -d '"' -f 1 > /tmp/tmp.XMV.newlist2
 	cat /tmp/tmp.XMV.newlist | sed 's/\"title\"/\n/g' | sed '1d' | cut -d '"' -f 2 | sed 's/[ ][ ]*/-/g' | sed -e 's/\\/＼/g' | sed -e 's/\//／/g' | sed -e 's/</《/g' | sed -e 's/>/》/g' | sed -e 's/:/：/g' | sed -e 's/*//g' | sed -e 's/?/？/g' | sed -e 's/\"/“/g'  | sed -e 's/\ /-/g' | sed -e 's/|/-/g'  > /tmp/tmp.XMV.filenamelist
 	cat /tmp/tmp.XMV.newlist | sed 's/\"index\":/\n/g' | sed '1d'| cut -d ',' -f 1 > /tmp/tmp.XMV.newlist3
@@ -45,8 +50,6 @@ function getxmlyaudios(){
 			curl -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -H ""user-agent": "Mozilla/5.0\ \(Linux\;\ Android\ 10\)"" -v $tmpgetaudiourl > /tmp/tmpXMVIP.xmlyhttp6
 		else
 			sleep $psleeptime
-			xmlycookieprefix="1&_token="
-			xmlycookie="${xmlycookieprefix}${paudiocookie}"
 			curl -b "$xmlycookie" -s --retry 3 --retry-delay 2 --connect-timeout 10 -m 20 -H ""user-agent": "Mozilla/5.0"" -v $tmpgetaudiourl > /tmp/tmpXMVIP.xmlyhttp6
 		fi
 

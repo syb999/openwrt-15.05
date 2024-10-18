@@ -36,7 +36,7 @@ xmlyname.description = translate("Audios from https://www.ximalaya.com")
 xmlycvip = s:taboption("basic2", Flag, "wanna_get_VIP_audios", translate("Wanna get VIP audios"))
 xmlycvip.description = translate("You must have VIP accout")
 
-xmlycookie=s:taboption("basic2", Value, "xmlycookie", translate("The value with Account Cookie name: 1＆_token"))
+xmlycookie=s:taboption("basic2", Value, "xmlycookie", translate("All the values associated with a cookie"))
 xmlycookie:depends("wanna_get_VIP_audios", "1")
 xmlycookie.datatype = "string"
 xmlycookie.default = ""

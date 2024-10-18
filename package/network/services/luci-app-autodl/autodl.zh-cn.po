@@ -70,8 +70,8 @@ msgstr "想要获取VIP音频"
 msgid "You must have VIP accout"
 msgstr "你必须有VIP账户"
 
-msgid "The value with Account Cookie name: 1＆_token"
-msgstr "帐户Cookie名称为1＆_token的值"
+msgid "All the values associated with a cookie"
+msgstr "帐户Cookie内所有的值"
 
 msgid "Using The Cookie of VIP account to get VIP audios"
 msgstr "使用VIP账号Cookie获取VIP音频"
