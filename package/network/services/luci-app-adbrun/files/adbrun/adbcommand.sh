@@ -96,6 +96,9 @@ case $adbcommand in
 	tbbbfarm) adbcd="scripts"
 		adbsh="tbbbfarm"
 	;;
+	event1111) adbcd="scripts"
+		adbsh="event1111"
+	;;
 	none) adbcd=""
 	;;
 esac
@@ -239,6 +242,16 @@ if [ "$adbcd" == "scripts" ];then
 			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=300/;s/dosedystart=/ystart=1200/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=680/;s/dosedysetp1=/ysetp1=185/;s/dosedentbbx=/entbbx=550/;s/dosedentbby=/entbby=460/' > /tmp/ADBRUN${sectionname}_.sh
 		elif [ ${screensize} == "1080x2340" ];then
 			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=300/;s/dosedystart=/ystart=1295/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=775/;s/dosedysetp1=/ysetp1=185/;s/dosedentbbx=/entbbx=550/;s/dosedentbby=/entbby=555/' > /tmp/ADBRUN${sectionname}_.sh
+		fi
+		sed -i "s/starttime=.*/starttime=$(date +%s)/" /tmp/ADBRUN${sectionname}_.sh
+		chmod +x /tmp/ADBRUN${sectionname}_.sh
+		exec sh /tmp/ADBRUN${sectionname}_.sh
+	elif [ ${adbsh} == "event1111" ];then
+		echo event1111
+		if [ ${screensize} == "720x1280" ];then
+			echo "unsupport now"
+		elif [ ${screensize} == "1080x2400" ];then
+			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=530/;s/dosedystart=/ystart=1655/;s/dosedbasex=/basex=950/;s/dosedbasey=/basey=860/' > /tmp/ADBRUN${sectionname}_.sh
 		fi
 		sed -i "s/starttime=.*/starttime=$(date +%s)/" /tmp/ADBRUN${sectionname}_.sh
 		chmod +x /tmp/ADBRUN${sectionname}_.sh

@@ -117,6 +117,7 @@ adbcommandlist:value("diantaolive", translate("Automatically diantaolive"))
 adbcommandlist:value("autodiantao", translate("Automatically taobao live"))
 adbcommandlist:value("autojdlite", translate("Automatically jdlite"))
 adbcommandlist:value("tbbbfarm", translate("Automatically taobao baba farm"))
+adbcommandlist:value("event1111", translate("Automatically taobao event1111"))
 adbcommandlist.default = "none"
 adbcommandlist.rempty = true
 

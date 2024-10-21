@@ -1,0 +1,53 @@
+#!/bin/sh
+#自动进入淘宝--金币双11--做任务攒钱--点击任务
+starttime=
+dosedxstart=
+dosedystart=
+dosedbasex=
+dosedbasey=
+
+eventy=1195
+
+sectionname=$(echo $0 | cut -d '/' -f 3 | cut -d '_' -f 1 | sed 's/^ADBRUN//')
+adbclient=$(uci get adbrun.$sectionname.adbiplist)
+rm /tmp/adb_ADBRUN${sectionname}_.sh
+
+function swipe3s() {
+	sleep 3
+	for i in $(seq 1 6) ;do
+		adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(expr $ystart - 600)
+		sleep 1
+	done
+	sleep 3
+}
+
+function goto11() {
+	adb -s ${adbclient}:5555 shell am force-stop com.taobao.taobao
+	sleep 5
+	adb -s ${adbclient}:5555 shell am start -n com.taobao.taobao/com.taobao.tao.TBMainActivity
+	sleep 18
+	adb -s ${adbclient}:5555 shell input tap 509 390
+	sleep 3
+	adb -s ${adbclient}:5555 shell input tap 500 877
+	sleep 3
+	adb -s ${adbclient}:5555 shell input tap 950 1080
+	sleep 3
+}
+
+adb -s ${adbclient}:5555 shell input keyevent 4
+sleep 5
+goto11
+
+ltimes=0
+while [ $ltimes -lt 21 ]
+do
+	adb -s ${adbclient}:5555 shell input tap 950 $eventy
+	sleep 3
+	swipe3s
+	sleep 3
+	swipe3s
+	sleep 3
+	adb -s ${adbclient}:5555 shell input keyevent 4
+	sleep 3
+	ltimes=$(expr $ltimes + 1)
+done
