@@ -178,33 +178,40 @@ function gmr_avqqdownload(){
 				$wget --timeout=3 -q $geturl -O $gmrdir/$thedirname/"$thename"	
 			fi
 		else
-			$wget --timeout=10 -q -c $geturl -O $them3u8
 			rdsuffix=$(head -n 1 /dev/urandom | tr -dc "0-9a-z" | head -c8)
-			isbin=$(file /tmp/xgmrender.tmp.m3u8)
-			if [ "$isbin" == "/tmp/xgmrender.tmp.m3u8: data" ];then
-				echo skip
-			else
-				if [ ! -n "$(echo $them3u8 | grep m3u8)" ];then
-					echo get mp4
+			if [ ! -z $(cat /tmp/xgmrender.tmp.m3u8) ];then
+				$wget --timeout=10 -q -c $geturl -O $them3u8
+				isbin=$(file /tmp/xgmrender.tmp.m3u8)
+				if [ "$isbin" == "/tmp/xgmrender.tmp.m3u8: data" ];then
+					echo skip
 				else
-					cat $them3u8 | grep .ts > /tmp/xgmrender.tmp.m3u8$rdsuffix
-					tmpm3u8=$(cat /tmp/xgmrender.tmp.m3u8$rdsuffix)
-					theprefix=$(cat /tmp/xgmrender.tmp.url | sed "s/${thesuffix}//")
-					for i in $tmpm3u8
-					do
-						tsfragment="${theprefix}${i}"
-						$wget --timeout=3 -q $tsfragment -O /tmp/xgmrender.tmp.fragment$rdsuffix
-						cat /tmp/xgmrender.tmp.fragment$rdsuffix >> $gmrdir/$thename.ts.downloading$rdsuffix
-					done
+					if [ ! -n "$(echo $them3u8 | grep m3u8)" ];then
+						echo get mp4
+					else
+						cat $them3u8 | grep .ts > /tmp/xgmrender.tmp.m3u8$rdsuffix
+						tmpm3u8=$(cat /tmp/xgmrender.tmp.m3u8$rdsuffix)
+						theprefix=$(cat /tmp/xgmrender.tmp.url | sed "s/${thesuffix}//")
+						for i in $tmpm3u8
+						do
+							tsfragment="${theprefix}${i}"
+							$wget --timeout=3 -q $tsfragment -O /tmp/xgmrender.tmp.fragment$rdsuffix
+							cat /tmp/xgmrender.tmp.fragment$rdsuffix >> $gmrdir/$thename.ts.downloading$rdsuffix
+						done
+					fi
 				fi
-			fi
-			if [ -s $thename.ts.downloading$rdsuffix ];then
-				mv $gmrdir/$thename.ts.downloading$rdsuffix "$gmrdir/$thedirname/$thename.ts"
+				if [ -s $thename.ts.downloading$rdsuffix ];then
+					mv $gmrdir/$thename.ts.downloading$rdsuffix "$gmrdir/$thedirname/$thename.ts"
+				else
+					mv "$gmrdir/$them3u8 $gmrdir/$thedirname/$thename.mp4"
+					rm "$gmrdir/$thename.ts.downloading$rdsuffix"
+				fi
+				rm /tmp/xgmrender.tmp.m3u8$rdsuffix /tmp/xgmrender.tmp.fragment$rdsuffix $them3u8
 			else
-				mv "$gmrdir/$them3u8 $gmrdir/$thedirname/$thename.mp4"
-				rm "$gmrdir/$thename.ts.downloading$rdsuffix"
+				thedirname="wechat_video"
+				geturl="$(echo $geturl | awk '{print$7}')"
+				gmr_dirinit
+				$wget --timeout=10 -q -c $geturl -O "$gmrdir/$thedirname/$rdsuffix.mp4"
 			fi
-			rm /tmp/xgmrender.tmp.m3u8$rdsuffix /tmp/xgmrender.tmp.fragment$rdsuffix $them3u8
 		fi
 	fi
 }
