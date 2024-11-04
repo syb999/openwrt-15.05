@@ -375,6 +375,9 @@ ar71xx_board_detect() {
 	*"CSAC reference board")
 		name="csac"
 		;;
+	*"ZTE E8820")
+		name="e8820"
+		;;
 	*"XiaoMi4-PRO")
 		name="mi4pro"
 		;;

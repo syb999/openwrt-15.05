@@ -107,6 +107,9 @@ get_status_led() {
 	dw33d)
 		status_led="dw33d:blue:status"
 		;;
+	e8820)
+		status_led="e8820:green:system"
+		;;
 	eap300v2)
 		status_led="engenius:blue:power"
 		;;

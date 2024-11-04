@@ -52,6 +52,10 @@ belair20e11)
 	ucidef_set_led_switch "internet" "INTERNET" "belair:blue:internet" "switch0" "0x20"
 	;;
 
+e8820)
+	ucidef_set_led_wlan "wlan2g" "WLAN2G" "e8820:green:wlan2g" "phy1tpt"
+	;;
+
 k2t)
 	ucidef_set_led_default "yellow" "STATUS(yellow)" "k2t:yellow:lan" "1"
 	;;
