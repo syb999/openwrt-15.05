@@ -53,11 +53,11 @@ static struct gpio_keys_button e8820_gpio_keys[] __initdata = {
 	{
 		.desc		= "reset button",
 		.type		= EV_KEY,
-		.code		= KEY_WPS_BUTTON,
+		.code		= KEY_RESTART,
 		.debounce_interval = E8820_KEYS_DEBOUNCE_INTERVAL,
 		.gpio		= E8820_GPIO_BTN_RESET,
 		.active_low	= 1,
-	}
+	},
 };
 
 static struct ar8327_pad_cfg e8820_ar8337_pad0_cfg = {
