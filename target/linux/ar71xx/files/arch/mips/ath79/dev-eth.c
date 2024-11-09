@@ -1152,7 +1152,7 @@ void __init ath79_register_eth(unsigned int id)
 			if (pdata->phy_if_mode == PHY_INTERFACE_MODE_SGMII)
 				pdata->set_speed = qca956x_set_speed_sgmii;
 			else
-				pdata->set_speed = ath79_set_speed_ge0;
+				pdata->set_speed = ar934x_set_speed_ge0;
 
 			pdata->disable_inline_checksum_engine = 1;
 		} else {
