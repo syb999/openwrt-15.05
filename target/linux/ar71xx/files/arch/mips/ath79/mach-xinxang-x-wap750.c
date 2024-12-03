@@ -44,7 +44,7 @@ static struct gpio_keys_button x_wap750_gpio_keys[] __initdata = {
 	{
 		.desc		= "reset button",
 		.type		= EV_KEY,
-		.code		= KEY_WPS_BUTTON,
+		.code		= KEY_RESTART,
 		.debounce_interval = X_WAP750_KEYS_DEBOUNCE_INTERVAL,
 		.gpio		= X_WAP750_GPIO_BTN_RESET,
 		.active_low	= 1,
