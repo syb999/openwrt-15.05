@@ -39,7 +39,7 @@ case "$FIRMWARE" in
 "soc_wmac.eeprom")
 	case $board in
 	e8820)
-		ath9k_eeprom_extract "caldata" 4096 1088
+		ath9k_eeprom_extract "art" 4096 1088
 		ath9k_patch_firmware_mac $(macaddr_add $(cat /sys/class/net/eth0/address) +2)
 		;;
 	k2t)
