@@ -183,6 +183,7 @@ platform_check_image() {
 	ap136-020 | \
 	ap135-020 | \
 	ap96 | \
+	ap210-at-lte9x07 | \
 	bxu2000n-2-a1 | \
 	db120 | \
 	dw33d | \

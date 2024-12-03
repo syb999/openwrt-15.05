@@ -152,6 +152,9 @@ get_status_led() {
 	ls-sr71)
 		status_led="ubnt:green:d22"
 		;;
+	ap210-at-lte9x07)
+		status_led="lte9x07:green:status"
+		;;
 	mc-mac1200r)
 		status_led="mercury:green:system"
 		;;
