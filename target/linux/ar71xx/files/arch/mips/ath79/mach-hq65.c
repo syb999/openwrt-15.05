@@ -34,7 +34,6 @@
 #define HQ65_KEYS_DEBOUNCE_INTERVAL    (3 * HQ65_KEYS_POLL_INTERVAL)
 
 #define HQ65_MAC0_OFFSET   0
-#define HQ65_MAC1_OFFSET   6
 #define HQ65_WMAC_CALDATA_OFFSET   0x1000
 #define HQ65_PCIE_CALDATA_OFFSET   0x5000
 
@@ -122,7 +121,7 @@ static void __init hq65_setup(void)
     ath79_register_eth(0);
 
     /* LAN */
-    ath79_init_mac(ath79_eth1_data.mac_addr, art + HQ65_MAC1_OFFSET, 0);
+    ath79_init_mac(ath79_eth1_data.mac_addr, art + HQ65_MAC0_OFFSET, 1);
     ath79_eth1_data.phy_if_mode = PHY_INTERFACE_MODE_GMII;
     ath79_eth1_data.speed = SPEED_1000;
     ath79_eth1_data.duplex = DUPLEX_FULL;
@@ -133,7 +132,7 @@ static void __init hq65_setup(void)
     ath79_init_mac(tmpmac, art + HQ65_WMAC_CALDATA_OFFSET + 2, 0);
     ath79_register_wmac(art + HQ65_WMAC_CALDATA_OFFSET, tmpmac);
 
-	platform_device_register(&hq65_i2c_gpio_device);
+    platform_device_register(&hq65_i2c_gpio_device);
 
     /* enable usb */
     ath79_register_usb();
