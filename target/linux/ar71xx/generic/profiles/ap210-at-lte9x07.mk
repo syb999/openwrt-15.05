@@ -7,7 +7,10 @@
 
 define Profile/AP210-AT-LTE9X07
         NAME:=AP210-AT-LTE9X07
-        PACKAGES:=kmod-ath10k-smallbuffers ath10k-firmware-qca9887 kmod-mtd-rw panel-ap-setup quectel-CM
+        PACKAGES:= kmod-ath10k-smallbuffers ath10k-firmware-qca9887 panel-ap-setup \
+		kmod-mtd-rw panel-ap-setup kmod-usb2 kmod-usb-ohci \
+		kmod-usb-uhci kmod-usb-net kmod-usb-net-qmi-wwan kmod-usb-serial \
+		kmod-usb-serial-option luci-proto-3g luci-proto-ncm
 endef
 
 define Profile/AP210-AT-LTE9X07/Description
