@@ -154,6 +154,10 @@ cpe510)
 	ucidef_add_switch_vlan "switch0" "2" "0t 4"
 	;;
 
+cn6619)
+	ucidef_set_interfaces_lan_wan "eth0" "eth1";
+	;;
+
 db120 |\
 rb-2011l | \
 rb-2011uas |\
