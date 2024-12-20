@@ -1,6 +1,6 @@
 --- a/arch/mips/ath79/machtypes.h
 +++ b/arch/mips/ath79/machtypes.h
-@@ -16,22 +16,220 @@
+@@ -16,22 +16,221 @@
  
  enum ath79_mach_type {
  	ATH79_MACH_GENERIC = 0,
@@ -69,6 +69,7 @@
 +	ATH79_MACH_JWAP003,		/* jjPlus JWAP003 */
 +	ATH79_MACH_HORNET_UB,		/* ALFA Networks Hornet-UB */
 +	ATH79_MACH_AP210_AT_LTE9X07,	/* AP210-AT-LTE9X07 board */
++	ATH79_MACH_AP220,		/* AP220 board */
 +	ATH79_MACH_MR600V2,		/* OpenMesh MR600v2 */
 +	ATH79_MACH_MR600,		/* OpenMesh MR600 */
 +	ATH79_MACH_MR900,		/* OpenMesh MR900 */
@@ -1493,7 +1494,7 @@
  
  config ATH79_MACH_UBNT_XM
  	bool "Ubiquiti Networks XM/UniFi boards"
-@@ -83,6 +1244,199 @@ config ATH79_MACH_UBNT_XM
+@@ -83,6 +1244,211 @@ config ATH79_MACH_UBNT_XM
  	  Say 'Y' here if you want your kernel to support the
  	  Ubiquiti Networks XM (rev 1.0) board.
  
@@ -1507,6 +1508,18 @@
 +	select ATH79_DEV_USB
 +	select ATH79_DEV_WMAC
 +	select ATH79_DEV_AP9X_PCI if PCI
++
++config ATH79_MACH_AP220
++	bool "AP220 POE AP support"
++	select SOC_QCA955X
++	select ATH79_DEV_AP9X_PCI if PCI
++	select ATH79_DEV_ETH
++	select ATH79_DEV_GPIO_BUTTONS
++	select ATH79_DEV_LEDS_GPIO
++	select ATH79_DEV_NFC
++	select ATH79_DEV_M25P80
++	select ATH79_DEV_USB
++	select ATH79_DEV_WMAC
 +
 +config ATH79_MACH_TL_MW300_R4
 +	bool "TL-MW300_R4"
@@ -1693,7 +1706,7 @@
  endmenu
  
  config SOC_AR71XX
-@@ -124,7 +1438,10 @@ config ATH79_DEV_DSA
+@@ -124,7 +1450,10 @@ config ATH79_DEV_DSA
  config ATH79_DEV_ETH
  	def_bool n
  
@@ -1705,7 +1718,7 @@
  	def_bool n
  
  config ATH79_DEV_GPIO_BUTTONS
-@@ -154,6 +1471,11 @@ config ATH79_PCI_ATH9K_FIXUP
+@@ -154,6 +1493,11 @@ config ATH79_PCI_ATH9K_FIXUP
  	def_bool n
  
  config ATH79_ROUTERBOOT
@@ -1719,7 +1732,7 @@
  endif
 --- a/arch/mips/ath79/Makefile
 +++ b/arch/mips/ath79/Makefile
-@@ -38,9 +38,148 @@ obj-$(CONFIG_ATH79_ROUTERBOOT)		+= route
+@@ -38,9 +38,149 @@ obj-$(CONFIG_ATH79_ROUTERBOOT)		+= route
  #
  # Machines
  #
@@ -1776,6 +1789,7 @@
 +obj-$(CONFIG_ATH79_MACH_JWAP003)	+= mach-jwap003.o
 +obj-$(CONFIG_ATH79_MACH_HORNET_UB)	+= mach-hornet-ub.o
 +obj-$(CONFIG_ATH79_MACH_AP210_AT_LTE9X07)	+= mach-ap210-at-lte9x07.o
++obj-$(CONFIG_ATH79_MACH_AP220)	+= mach-ap220.o
 +obj-$(CONFIG_ATH79_MACH_MR600)		+= mach-mr600.o
 +obj-$(CONFIG_ATH79_MACH_MR900)		+= mach-mr900.o
 +obj-$(CONFIG_ATH79_MACH_MYNET_N600)	+= mach-mynet-n600.o

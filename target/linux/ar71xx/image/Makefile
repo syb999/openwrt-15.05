@@ -193,6 +193,17 @@ define Device/ap210-at-lte9x07
 endef
 TARGET_DEVICES += ap210-at-lte9x07
 
+define Device/ap220
+  BOARDNAME = AP220
+  CONSOLE = ttyS0,115200
+  KERNEL_SIZE := 1472k
+  ROOTFS_SIZE := 14528k
+  IMAGE_SIZE := 16000k
+  MTDPARTS := spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,14528k(rootfs),1472k(kernel),64k(art)ro,16000k@0x50000(firmware)
+  IMAGE/sysupgrade.bin := append-rootfs | pad-rootfs | pad-to $$$$(ROOTFS_SIZE) | append-kernel | check-size $$$$(IMAGE_SIZE)
+endef
+TARGET_DEVICES += ap220
+
 define Device/MI4PRO
   BOARDNAME = MI4PRO
   CONSOLE = ttyATH0,115200

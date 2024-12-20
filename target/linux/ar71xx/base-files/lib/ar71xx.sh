@@ -411,6 +411,9 @@ ar71xx_board_detect() {
 	*"AP210-AT-LTE9X07")
 		name="ap210-at-lte9x07"
 		;;
+	*"AP220")
+		name="ap220"
+		;;
 	*"Archer C5")
 		name="archer-c5"
 		;;
