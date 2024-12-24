@@ -542,6 +542,18 @@ endif
 
 ifeq ($(SUBTARGET),mt7621-nand)
 
+define Device/an1201l
+  DTS := AN1201L
+  BLOCKSIZE := 128KiB
+  PAGESIZE := 2048
+  KERNEL_SIZE := 2097152
+  IMAGE_SIZE := 127232k
+  FILESYSTEMS := squashfs
+  IMAGES := factory.bin
+  IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
+endef
+TARGET_DEVICES += an1201l
+
 define Device/hc5962
   DTS := HC5962
   BLOCKSIZE := 128KiB

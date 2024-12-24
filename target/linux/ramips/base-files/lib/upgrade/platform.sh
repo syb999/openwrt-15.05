@@ -221,6 +221,7 @@ platform_do_upgrade() {
 	local board=$(ramips_board_name)
 
 	case "$board" in
+	an1201l|\
 	mir3g|\
 	mi-router-ac2100|\
 	nokia-a040wq |\

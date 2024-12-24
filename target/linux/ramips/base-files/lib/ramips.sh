@@ -31,6 +31,9 @@ ramips_board_detect() {
 	*"Aigale Ai-BR100")
 		name="ai-br100"
 		;;
+	*"AN1201L")
+		name="an1201l"
+		;;
 	*"Airlink101 AR670W")
 		name="ar670w"
 		;;
