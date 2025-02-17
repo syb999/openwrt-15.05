@@ -85,6 +85,11 @@ else
 	effects_param="$(echo $param_horizontally$param_upanddown$param_rotation$param_fuzzy$param_crisp$param_halfsize$param_crop$param_blackandwhite | sed 's/,$//')"
 fi
 
+if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_expan)" == "1" ];then
+	expand_size="$(uci get ffmpegtool.@ffmpegtool[0].video_expand_size)"
+	expand_color="$(uci get ffmpegtool.@ffmpegtool[0].video_expand_color)"
+fi
+
 if [ "$(uci get ffmpegtool.@ffmpegtool[0].v_modify_duration)" == "only configure duration" ];then
 	param_duration="-t $(uci get ffmpegtool.@ffmpegtool[0].vide_duration)"
 fi
@@ -263,6 +268,12 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "one file" ];then
 		echo "$srctarget ---- 转换中..." >> /tmp/ffmpeg.log
 		if [ "$(uci get ffmpegtool.@ffmpegtool[0].image_effects)" == "1" ];then
 			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_preset $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1).$param_format" -y
+		elif [ "$(uci get ffmpegtool.@ffmpegtool[0].video_expan)" == "1" ];then
+			if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_expand_direction)" == "left and right" ];then
+				ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num -vf "pad=iw+${expand_size}:ih:(ow-iw)/2:0:color=${expand_color}" $param_libx2645 $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/output-$(date +%s).$param_format" -y
+			else
+				ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num -vf "pad=iw:ih+${expand_size}:0:(oh-ih)/2:color=${expand_color}" $param_libx2645 $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/output-$(date +%s).$param_format" -y
+			fi
 		else
 			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1).$param_format" -y
 		fi
@@ -285,7 +296,15 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "all files in the di
 			echo "$srctarget ---- 调速中..." >> /tmp/ffmpeg.log
 			ffmpeg -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" -filter:v "${video_speed}" $param_preset "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1)-$(uci get ffmpegtool.@ffmpegtool[0].list_adjustspeed).$param_format" -y
 		else
-			ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1).$param_format" -y
+			if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_expan)" == "1" ];then
+				if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_expand_direction)" == "left and right" ];then
+					ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_mute $param_frames_num -vf "pad=iw+${expand_size}:ih:(ow-iw)/2:0:color=${expand_color}" $param_libx2645 $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1)-new.$param_format" -y
+				else
+					ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_mute $param_frames_num -vf "pad=iw:ih+${expand_size}:0:(oh-ih)/2:color=${expand_color}" $param_libx2645 $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1)-new.$param_format" -y
+				fi
+			else
+				ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1).$param_format" -y
+			fi
 		fi
 		echo "转换完成!" >> /tmp/ffmpeg.log
 	done

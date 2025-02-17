@@ -14,6 +14,7 @@ function ucidefault() {
 	uci set ffmpegtool.@ffmpegtool[0].audio_merge="0" 2>&1 >/dev/null
 	uci set ffmpegtool.@ffmpegtool[0].audio_ready="0" 2>&1 >/dev/null
 	uci set ffmpegtool.@ffmpegtool[0].image_effects="0" 2>&1 >/dev/null
+	uci set ffmpegtool.@ffmpegtool[0].video_expan="0" 2>&1 >/dev/null
 	uci set ffmpegtool.@ffmpegtool[0].video_frames="" 2>&1 >/dev/null
 	uci set ffmpegtool.@ffmpegtool[0].vide_duration="" 2>&1 >/dev/null
 	uci set ffmpegtool.@ffmpegtool[0].picture_tovideo="" 2>&1 >/dev/null

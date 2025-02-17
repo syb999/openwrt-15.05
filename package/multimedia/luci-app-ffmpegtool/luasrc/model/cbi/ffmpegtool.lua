@@ -361,7 +361,7 @@ video_x2645:value("libx265")
 video_x2645.description = translate("increase CPU loading")
 
 image_effects=s:taboption("video_setting", Flag, "image_effects", translate("image effects"))
-image_effects:depends({ screen_merge = "", video_adjustspeed = "" })
+image_effects:depends({ screen_merge = "", video_adjustspeed = "", video_expan = "" })
 image_effects.description = translate("increase CPU loading when open")
 
 video_horizontally = s:taboption("video_setting", Flag, "video_horizontally", translate("flip image horizontally"))
@@ -401,6 +401,40 @@ video_crop.description = translate("default set is capture 100% width and 50% he
 
 video_blackandwhite = s:taboption("video_setting", Flag, "video_blackandwhite", translate("black-and-white"))
 video_blackandwhite:depends( "image_effects", "1" )
+
+video_expan = s:taboption("video_setting", Flag, "video_expan", translate("expand canvas"))
+video_expan:depends({ screen_merge = "", video_adjustspeed = "", image_effects = "" })
+video_expan.description = translate("significantly solves the scale imbalance caused by changing the resolution after filling with the extended canvas")
+
+video_expand_direction = s:taboption("video_setting", ListValue, "video_expand_direction", translate("expand direction"))
+video_expand_direction:depends( "video_expan", "1" )
+video_expand_direction:value("left and right",translate("left and right"))
+video_expand_direction:value("top and bottom",translate("top and bottom"))
+video_expand_direction.default = "left and right"
+video_expand_direction.rempty  = true
+
+video_expand_size = s:taboption("video_setting", Value, "video_expand_size", translate("increased pixels on the canvas"))
+video_expand_size:depends( "video_expan", "1" )
+video_expand_size.datatype = "uinteger"
+video_expand_size.placeholder = "420"
+video_expand_size.default = "420"
+video_expand_size.rmempty = true
+
+video_expand_color = s:taboption("video_setting", ListValue, "video_expand_color", translate("canvas color"))
+video_expand_color:depends( "video_expan", "1" )
+video_expand_color:value("black",translate("black"))
+video_expand_color:value("white",translate("white"))
+video_expand_color:value("red",translate("red"))
+video_expand_color:value("green",translate("green"))
+video_expand_color:value("blue",translate("blue"))
+video_expand_color:value("yellow",translate("yellow"))
+video_expand_color:value("pink",translate("pink"))
+video_expand_color:value("grey",translate("grey"))
+video_expand_color:value("orange",translate("orange"))
+video_expand_color:value("purple",translate("purple"))
+video_expand_color:value("cyan",translate("cyan"))
+video_expand_color.default = "black"
+video_expand_color.rempty  = true
 
 screen_merge=s:taboption("video_setting", Flag, "screen_merge", translate("screen merge"))
 screen_merge.default = ""
