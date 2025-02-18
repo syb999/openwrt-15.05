@@ -319,6 +319,42 @@ msgstr "每秒取几帧"
 msgid "black-and-white"
 msgstr "输出为黑白色"
 
+msgid "separate scenes"
+msgstr "分隔画面（从屏幕中间）"
+
+msgid "separate direction"
+msgstr "分隔方向"
+
+msgid "vertical"
+msgstr "垂直"
+
+msgid "horizontal"
+msgstr "水平"
+
+msgid "width of dividing line"
+msgstr "分隔线条的宽度"
+
+msgid "separate line color"
+msgstr "分隔线条的颜色"
+
+msgid "transparency list"
+msgstr "色彩透明度"
+
+msgid "expand canvas"
+msgstr "扩展画布"
+
+msgid "significantly solves the scale imbalance caused by changing the resolution after filling with the extended canvas"
+msgstr "显著解决了扩展画布后更改分辨率引起的显示比例问题"
+
+msgid "expand direction"
+msgstr "扩展方向"
+
+msgid "increased pixels on the canvas"
+msgstr "扩展画布需要增加的像素值"
+
+msgid "canvas color"
+msgstr "扩展画布使用的颜色"
+
 msgid "screen merge"
 msgstr "视频融合"
 
