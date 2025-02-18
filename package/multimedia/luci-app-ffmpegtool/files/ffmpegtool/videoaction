@@ -85,6 +85,12 @@ else
 	effects_param="$(echo $param_horizontally$param_upanddown$param_rotation$param_fuzzy$param_crisp$param_halfsize$param_crop$param_blackandwhite | sed 's/,$//')"
 fi
 
+if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_separate)" == "1" ];then
+	bar_size="$(uci get ffmpegtool.@ffmpegtool[0].video_separate_size)"
+	reduced_pixel="$(expr ${bar_size} / 2)"
+	bar_color="$(uci get ffmpegtool.@ffmpegtool[0].video_separate_color)$(uci get ffmpegtool.@ffmpegtool[0].video_separate_color_transparency)"
+fi
+
 if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_expan)" == "1" ];then
 	expand_size="$(uci get ffmpegtool.@ffmpegtool[0].video_expand_size)"
 	expand_color="$(uci get ffmpegtool.@ffmpegtool[0].video_expand_color)"
@@ -267,7 +273,15 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "one file" ];then
 	else
 		echo "$srctarget ---- 转换中..." >> /tmp/ffmpeg.log
 		if [ "$(uci get ffmpegtool.@ffmpegtool[0].image_effects)" == "1" ];then
-			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_preset $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1).$param_format" -y
+			if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_separate)" == "1" ];then
+				if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_separate_direction)" == "vertical" ];then
+					ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_duration -vf "drawbox=x=iw/2-${reduced_pixel}:y=0:w=${bar_size}:h=ih:color=${bar_color}:t=fill" "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/output-$(date +%s)-new.$param_format" -y
+				else	
+					ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_duration -vf "drawbox=x=0:y=ih/2-${reduced_pixel}:w=iw:h=${bar_size}:color=${bar_color}:t=fill" "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/output-$(date +%s)-new.$param_format" -y
+				fi
+			else
+				ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_preset $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1).$param_format" -y
+			fi
 		elif [ "$(uci get ffmpegtool.@ffmpegtool[0].video_expan)" == "1" ];then
 			if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_expand_direction)" == "left and right" ];then
 				ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num -vf "pad=iw+${expand_size}:ih:(ow-iw)/2:0:color=${expand_color}" $param_libx2645 $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/output-$(date +%s).$param_format" -y
@@ -290,7 +304,15 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "all files in the di
 		time_work_v
 		echo "$i ---- 转换中..." >> /tmp/ffmpeg.log
 		if [ "$(uci get ffmpegtool.@ffmpegtool[0].image_effects)" == "1" ];then
-			ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_preset $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1).$param_format" -y
+			if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_separate)" == "1" ];then
+				if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_separate_direction)" == "vertical" ];then
+					ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_mute $param_frames_num $param_libx2645 $param_duration -vf "drawbox=x=iw/2-${reduced_pixel}:y=0:w=${bar_size}:h=ih:color=${bar_color}:t=fill" "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1)-new.$param_format" -y
+				else
+					ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_mute $param_frames_num $param_libx2645 $param_duration -vf "drawbox=x=0:y=ih/2-${reduced_pixel}:w=iw:h=${bar_size}:color=${bar_color}:t=fill" "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1)-new.$param_format" -y
+				fi
+			else
+				ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_preset $param_copy $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1).$param_format" -y
+			fi
 		elif [ "$(uci get ffmpegtool.@ffmpegtool[0].video_adjustspeed)" == "1" ];then 
 			video_speed="setpts=$(uci get ffmpegtool.@ffmpegtool[0].list_adjustspeed)*PTS"
 			echo "$srctarget ---- 调速中..." >> /tmp/ffmpeg.log

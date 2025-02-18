@@ -402,6 +402,48 @@ video_crop.description = translate("default set is capture 100% width and 50% he
 video_blackandwhite = s:taboption("video_setting", Flag, "video_blackandwhite", translate("black-and-white"))
 video_blackandwhite:depends( "image_effects", "1" )
 
+video_separate = s:taboption("video_setting", Flag, "video_separate", translate("separate scenes"))
+video_separate:depends( "image_effects", "1" )
+
+video_separate_direction = s:taboption("video_setting", ListValue, "video_separate_direction", translate("separate direction"))
+video_separate_direction:depends( "video_separate", "1" )
+video_separate_direction:value("vertical",translate("vertical"))
+video_separate_direction:value("horizontal",translate("horizontal"))
+video_separate_direction.default = "vertical"
+video_separate_direction.rempty  = true
+
+video_separate_size = s:taboption("video_setting", Value, "video_separate_size", translate("width of dividing line"))
+video_separate_size:depends( "video_separate", "1" )
+video_separate_size.datatype = "uinteger"
+video_separate_size.placeholder = "20"
+video_separate_size.default = "20"
+video_separate_size.rmempty = true
+
+video_separate_color = s:taboption("video_setting", ListValue, "video_separate_color", translate("separate line color"))
+video_separate_color:depends( "video_separate", "1" )
+video_separate_color:value("black",translate("black"))
+video_separate_color:value("white",translate("white"))
+video_separate_color:value("red",translate("red"))
+video_separate_color:value("green",translate("green"))
+video_separate_color:value("blue",translate("blue"))
+video_separate_color:value("yellow",translate("yellow"))
+video_separate_color:value("pink",translate("pink"))
+video_separate_color:value("grey",translate("grey"))
+video_separate_color:value("orange",translate("orange"))
+video_separate_color:value("purple",translate("purple"))
+video_separate_color:value("cyan",translate("cyan"))
+video_separate_color.default = "black"
+video_separate_color.rempty  = true
+
+video_separate_color_transparency = s:taboption("video_setting", ListValue, "video_separate_color_transparency", translate("transparency list"))
+video_separate_color_transparency:depends( "video_separate", "1" )
+video_separate_color_transparency:value("@1",translate("off"))
+video_separate_color_transparency:value("@0.8",translate("little"))
+video_separate_color_transparency:value("@0.5",translate("half"))
+video_separate_color_transparency:value("@0.2",translate("almost"))
+video_separate_color_transparency.default = "@1"
+video_separate_color_transparency.rempty  = true
+
 video_expan = s:taboption("video_setting", Flag, "video_expan", translate("expand canvas"))
 video_expan:depends({ screen_merge = "", video_adjustspeed = "", image_effects = "" })
 video_expan.description = translate("significantly solves the scale imbalance caused by changing the resolution after filling with the extended canvas")
