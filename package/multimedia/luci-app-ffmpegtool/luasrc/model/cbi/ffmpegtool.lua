@@ -490,6 +490,7 @@ enable_merge:value("top and bottom",translate("top and bottom"))
 enable_merge:value("one by one",translate("one by one"))
 enable_merge:value("merge video and audio",translate("merge video and audio"))
 enable_merge:value("merge video to picture",translate("merge video to picture"))
+enable_merge:value("merge picture onto video",translate("merge picture onto video"))
 enable_merge:value("overlay in the middle",translate("overlay in the middle"))
 enable_merge:value("custom overley",translate("custom overley"))
 enable_merge.default = "left and right"
@@ -555,6 +556,35 @@ picture_custom_4.placeholder = "120:20"
 picture_custom_4.default = "120:20"
 picture_custom_4.rmempty = true
 picture_custom_4.description = translate("120:20 means:the pixel at coordinates 120,20")
+
+picture_merge_new=s:taboption("video_setting", ListValue, "picture_merge_new", translate("merge picture onto video"))
+picture_merge_new:depends( "enable_merge", "merge picture onto video" )
+picture_merge_new:value("one video and one picture",translate("one video and one picture"))
+picture_merge_new.default = "one video and one picture"
+picture_merge_new.rempty  = true
+picture_merge_new.description = translate("overlay the picture onto the designated coordinates of the video")
+
+merge_new_input1 = s:taboption("video_setting", Value, "merge_new_input1", translate("video file"))
+merge_new_input1:depends( "picture_merge_new", "one video and one picture" )
+merge_new_input1.datatype = "string"
+merge_new_input1.placeholder = "/mnt/sda1/input1.mp4"
+merge_new_input1.default = "/mnt/sda1/input1.mp4"
+merge_new_input1.rmempty = true
+
+merge_new_input2 = s:taboption("video_setting", Value, "merge_new_input2", translate("picture file"))
+merge_new_input2:depends( "picture_merge_new", "one video and one picture" )
+merge_new_input2.datatype = "string"
+merge_new_input2.placeholder = "/mnt/sda1/input2.png"
+merge_new_input2.default = "/mnt/sda1/input2.png"
+merge_new_input2.rmempty = true
+
+merge_new_coordinate = s:taboption("video_setting", Value, "merge_new_coordinate", translate("overlay coordinate"))
+merge_new_coordinate:depends( "picture_merge_new", "one video and one picture" )
+merge_new_coordinate.datatype = "string"
+merge_new_coordinate.placeholder = "120:20"
+merge_new_coordinate.default = "120:20"
+merge_new_coordinate.rmempty = true
+merge_new_coordinate.description = translate("120:20 means:the pixel at coordinates 120,20")
 
 video_custom_1 = s:taboption("video_setting", Value, "video_custom_1", translate("modify the screen resolution of input2 video"))
 video_custom_1:depends( "enable_merge", "custom overley" )

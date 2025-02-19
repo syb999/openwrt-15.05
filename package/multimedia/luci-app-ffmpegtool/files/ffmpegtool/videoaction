@@ -195,6 +195,17 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].enable_merge)" == "merge video to pi
 	echo "合并完毕!" >> /tmp/ffmpeg.log
 	ucidefault
 	exit 0
+elif [ "$(uci get ffmpegtool.@ffmpegtool[0].enable_merge)" == "merge picture onto video" ];then
+	video_input=$(uci get ffmpegtool.@ffmpegtool[0].merge_new_input1)
+	pic_input=$(uci get ffmpegtool.@ffmpegtool[0].merge_new_input2)
+	overlay_coordinate="$(uci get ffmpegtool.@ffmpegtool[0].merge_new_coordinate)"
+	ffprobe "$input1" > /tmp/ffmpeg.log 2>&1
+	time_work_v
+	echo " $input1 ----> 视频合并中 <---- $input2 " >> /tmp/ffmpeg.log
+	ffmpeg $param_starttime $param_endtime -i "${video_input}" -i "${pic_input}" -filter_complex "[0:v][1:v] overlay=${overlay_coordinate}" $param_mute $param_frames_num $param_libx2645 $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
+	echo "合并完毕!" >> /tmp/ffmpeg.log
+	ucidefault
+	exit 0
 elif [ "$(uci get ffmpegtool.@ffmpegtool[0].enable_merge)" == "one by one" ];then
 	input1=$(uci get ffmpegtool.@ffmpegtool[0].screen_input1)
 	input2=$(uci get ffmpegtool.@ffmpegtool[0].screen_input2)
