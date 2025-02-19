@@ -373,6 +373,15 @@ msgstr "顶部和底部"
 msgid "overlay in the middle"
 msgstr "中间覆盖"
 
+msgid "merge picture onto video"
+msgstr "将图片合并到视频中"
+
+msgid "overlay the picture onto the designated coordinates of the video"
+msgstr "将图片叠加到视频的指定坐标上"
+
+msgid "overlay coordinate"
+msgstr "叠加区域起始坐标"
+
 msgid "one by one"
 msgstr "一个接一个"
 
