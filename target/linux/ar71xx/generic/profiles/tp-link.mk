@@ -61,6 +61,16 @@ endef
 $(eval $(call Profile,ikuai-ap))
 
 
+define Profile/kisslink-nb1210
+	NAME:=Keewifi Kisslink NB1210
+	PACKAGES:=kmod-usb-core kmod-usb2 kmod-mtd-rw panel-ap-setup
+endef
+define Profile/kisslink-nb1210/Description
+	Package set optimized for the Keewifi Kisslink NB1210 router.
+endef
+$(eval $(call Profile,kisslink-nb1210))
+
+
 define Profile/TLMR10U
 	NAME:=TP-LINK TL-MR10U
 	PACKAGES:=kmod-usb-core kmod-usb2

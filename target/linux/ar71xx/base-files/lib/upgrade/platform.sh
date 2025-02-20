@@ -329,6 +329,7 @@ platform_check_image() {
 	el-mini | \
 	fap-022wld | \
 	gl-inet | \
+	kisslink-nb1210 | \
 	ikuai-ap | \
 	mc-mac1200r | \
 	minibox-v1 |\

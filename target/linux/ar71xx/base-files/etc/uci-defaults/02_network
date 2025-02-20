@@ -75,6 +75,10 @@ k2t)
 	[ -n "$mac_wan" ] && ucidef_set_interface_macaddr "wan" "$mac_wan"
 	;;
 
+kisslink-nb1210)
+	ucidef_set_interfaces_lan_wan "eth1" "eth0"
+	;;
+
 csac)
 	ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
 	ucidef_add_switch "switch0" "1" "1"

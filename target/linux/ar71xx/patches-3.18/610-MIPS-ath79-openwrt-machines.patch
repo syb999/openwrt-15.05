@@ -1,6 +1,6 @@
 --- a/arch/mips/ath79/machtypes.h
 +++ b/arch/mips/ath79/machtypes.h
-@@ -16,22 +16,221 @@
+@@ -16,22 +16,222 @@
  
  enum ath79_mach_type {
  	ATH79_MACH_GENERIC = 0,
@@ -67,6 +67,7 @@
 +	ATH79_MACH_JA76PF,		/* jjPlus JA76PF */
 +	ATH79_MACH_JA76PF2,		/* jjPlus JA76PF2 */
 +	ATH79_MACH_JWAP003,		/* jjPlus JWAP003 */
++	ATH79_MACH_KISSLINK_NB1210,	/* Keewifi Kisslink NB1210 */
 +	ATH79_MACH_HORNET_UB,		/* ALFA Networks Hornet-UB */
 +	ATH79_MACH_AP210_AT_LTE9X07,	/* AP210-AT-LTE9X07 board */
 +	ATH79_MACH_AP220,		/* AP220 board */
@@ -375,7 +376,7 @@
  config ATH79_MACH_AP121
  	bool "Atheros AP121 reference board"
  	select SOC_AR933X
-@@ -11,62 +144,1090 @@ config ATH79_MACH_AP121
+@@ -11,62 +144,1100 @@ config ATH79_MACH_AP121
  	select ATH79_DEV_M25P80
  	select ATH79_DEV_USB
  	select ATH79_DEV_WMAC
@@ -872,6 +873,16 @@
 +	select ATH79_DEV_ETH
 +	select ATH79_DEV_GPIO_BUTTONS
 +	select ATH79_DEV_M25P80
++	select ATH79_DEV_USB
++
++config ATH79_MACH_KISSLINK_NB1210
++	bool "Keewifi Kisslink NB1210 board support"
++	select SOC_AR934X
++	select ATH79_DEV_ETH
++	select ATH79_DEV_GPIO_BUTTONS
++	select ATH79_DEV_LEDS_GPIO
++	select ATH79_DEV_M25P80
++	select ATH79_DEV_WMAC
 +	select ATH79_DEV_USB
 +
 +config ATH79_MACH_WRT160NL
@@ -1494,7 +1505,7 @@
  
  config ATH79_MACH_UBNT_XM
  	bool "Ubiquiti Networks XM/UniFi boards"
-@@ -83,6 +1244,211 @@ config ATH79_MACH_UBNT_XM
+@@ -83,6 +1254,211 @@ config ATH79_MACH_UBNT_XM
  	  Say 'Y' here if you want your kernel to support the
  	  Ubiquiti Networks XM (rev 1.0) board.
  
@@ -1706,7 +1717,7 @@
  endmenu
  
  config SOC_AR71XX
-@@ -124,7 +1450,10 @@ config ATH79_DEV_DSA
+@@ -124,7 +1460,10 @@ config ATH79_DEV_DSA
  config ATH79_DEV_ETH
  	def_bool n
  
@@ -1718,7 +1729,7 @@
  	def_bool n
  
  config ATH79_DEV_GPIO_BUTTONS
-@@ -154,6 +1493,11 @@ config ATH79_PCI_ATH9K_FIXUP
+@@ -154,6 +1503,11 @@ config ATH79_PCI_ATH9K_FIXUP
  	def_bool n
  
  config ATH79_ROUTERBOOT
@@ -1732,7 +1743,7 @@
  endif
 --- a/arch/mips/ath79/Makefile
 +++ b/arch/mips/ath79/Makefile
-@@ -38,9 +38,149 @@ obj-$(CONFIG_ATH79_ROUTERBOOT)		+= route
+@@ -38,9 +38,150 @@ obj-$(CONFIG_ATH79_ROUTERBOOT)		+= route
  #
  # Machines
  #
@@ -1787,6 +1798,7 @@
 +obj-$(CONFIG_ATH79_MACH_IKUAI_AP)		+= mach-ikuai-ap.o
 +obj-$(CONFIG_ATH79_MACH_JA76PF)		+= mach-ja76pf.o
 +obj-$(CONFIG_ATH79_MACH_JWAP003)	+= mach-jwap003.o
++obj-$(CONFIG_ATH79_MACH_KISSLINK_NB1210)	+= mach-kisslink-nb1210.o
 +obj-$(CONFIG_ATH79_MACH_HORNET_UB)	+= mach-hornet-ub.o
 +obj-$(CONFIG_ATH79_MACH_AP210_AT_LTE9X07)	+= mach-ap210-at-lte9x07.o
 +obj-$(CONFIG_ATH79_MACH_AP220)	+= mach-ap220.o
