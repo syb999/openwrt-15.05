@@ -121,6 +121,18 @@ audio_format:value("wav")
 audio_format.default = "mp3"
 audio_format.rempty  = false
 
+audio_add_silence=s:taboption("audio_setting", Flag, "audio_add_silence", translate("add silence at the beginning"))
+audio_add_silence.default = ""
+audio_add_silence.rmempty = true
+
+audio_silence_duration = s:taboption("audio_setting", Value, "audio_silence_duration", translate("silent duration"))
+audio_silence_duration:depends( "audio_add_silence", "1" )
+audio_silence_duration.datatype = "uinteger"
+audio_silence_duration.placeholder = "5000"
+audio_silence_duration.default = "5000"
+audio_silence_duration.rmempty = true
+audio_silence_duration.description = translate("5000 is 5 seconds")
+
 audio_sept=s:taboption("audio_setting", Flag, "audio_separate", translate("separate audio"))
 audio_sept.default = ""
 
