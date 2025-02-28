@@ -51,15 +51,8 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].risingfalling_tone)" != "none" ];then
 fi
 
 if [ "$(uci get ffmpegtool.@ffmpegtool[0].a_speed_governing)" != "none" ];then
-	if [ "$(uci get ffmpegtool.@ffmpegtool[0].a_speed_governing)" == "0.5" ];then
-		param_speed="atempo=0.5,"
-	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].a_speed_governing)" == "1.0" ];then
-		param_speed="atempo=1.0,"
-	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].a_speed_governing)" == "1.5" ];then
-		param_speed="atempo=1.5,"
-	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].a_speed_governing)" == "2.0" ];then
-		param_speed="atempo=2.0,"
-	fi
+	_speed="$(uci get ffmpegtool.@ffmpegtool[0].a_speed_governing)"
+	param_speed="atempo=${_speed},"
 fi
 
 if [ "$(uci get ffmpegtool.@ffmpegtool[0].volume)" != "none" ];then
