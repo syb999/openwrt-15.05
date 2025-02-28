@@ -29,6 +29,9 @@
 #define KISSLINK_NB1210_KEYS_POLL_INTERVAL	20	/* msecs */
 #define KISSLINK_NB1210_KEYS_DEBOUNCE_INTERVAL (3 * KISSLINK_NB1210_KEYS_POLL_INTERVAL)
 
+#define KISSLINK_NB1210_MAC0_OFFSET   0
+#define KISSLINK_NB1210_WMAC_CALDATA_OFFSET   0x1000
+
 static const char *kisslink_nb1210_part_probes[] = {
 	"tp-link",
 	NULL,
@@ -59,8 +62,7 @@ static struct gpio_keys_button kisslink_nb1210_gpio_keys[] __initdata = {
 
 static void __init tl_ap123_setup(void)
 {
-	u8 *mac = (u8 *) KSEG1ADDR(0x1f01fc00);
-	u8 *ee = (u8 *) KSEG1ADDR(0x1fff1000);
+	u8 *art = (u8 *) KSEG1ADDR(0x1fff0000);
 
 	/* Disable JTAG, enabling GPIOs 0-3 */
 	/* Configure OBS4 line, for GPIO 4*/
@@ -73,8 +75,8 @@ static void __init tl_ap123_setup(void)
 
 	ath79_register_mdio(1, 0x0);
 
-	ath79_init_mac(ath79_eth0_data.mac_addr, mac, -1);
-	ath79_init_mac(ath79_eth1_data.mac_addr, mac, 0);
+	ath79_init_mac(ath79_eth0_data.mac_addr, art + KISSLINK_NB1210_MAC0_OFFSET, 0);
+	ath79_init_mac(ath79_eth1_data.mac_addr, art + KISSLINK_NB1210_MAC0_OFFSET, 1);
 
 	/* GMAC0 is connected to the PHY0 of the internal switch */
 	ath79_switch_data.phy4_mii_en = 1;
@@ -88,7 +90,7 @@ static void __init tl_ap123_setup(void)
 	ath79_eth1_data.phy_if_mode = PHY_INTERFACE_MODE_GMII;
 	ath79_register_eth(1);
 
-	ath79_register_wmac(ee, mac);
+	ath79_register_wmac(art + KISSLINK_NB1210_WMAC_CALDATA_OFFSET, art);
 
 	ath79_register_usb();
 }
