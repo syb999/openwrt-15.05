@@ -97,6 +97,15 @@ msgstr "一键获取输入源信息"
 msgid "Audio Setting"
 msgstr "音频设置"
 
+msgid "add silence at the beginning"
+msgstr "在开头添加静音"
+
+msgid "silent duration"
+msgstr "静音持续时间"
+
+msgid "5000 is 5 seconds"
+msgstr "5000代表5秒"
+
 msgid "separate audio"
 msgstr "分割音频"
 

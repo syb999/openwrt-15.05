@@ -213,7 +213,7 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].enable_merge)" == "one by one" ];the
 	time_work_v
 	echo " $input1 ----> 视频合并中 <---- $input2 " >> /tmp/ffmpeg.log
 	echo -e "file '$input1'\nfile '$input2'\n" > /tmp/ffmpeg.filelist
-	ffmpeg -f concat -safe 0 -i /tmp/ffmpeg.filelist -c copy $param_mute $param_libx2645 $param_preset $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
+	ffmpeg -f concat -safe 0 -i /tmp/ffmpeg.filelist $param_mute $param_libx2645 $param_preset $param_copy "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
 	echo "合并完毕!" >> /tmp/ffmpeg.log
 	ucidefault
 	exit 0
