@@ -22,18 +22,21 @@
 #include "machtypes.h"
 
 #define CN6619_GPIO_LED_TEL	13
+#define CN6619_GPIO_LED_RSSIMAX	17
 #define CN6619_GPIO_LED_RSSIHIGH	22
 #define CN6619_GPIO_LED_RSSIMEDIUM	0
 #define CN6619_GPIO_LED_RSSILOW	14
 #define CN6619_GPIO_LED_LAN	15
-#define CN6619_GPIO_LED_WIFI	18
+#define CN6619_GPIO_LED_WPS	18
 
-#define CN6619_GPIO_BTN_RESET	17
+#define CN6619_GPIO_BTN_RESET	21
 #define CN6619_GPIO_BTN_WPS	19
-#define CN6619_GPIO_BTN_BTN1	21
 
 #define CN6619_KEYS_POLL_INTERVAL	20	/* msecs */
 #define CN6619_KEYS_DEBOUNCE_INTERVAL (3 * CN6619_KEYS_POLL_INTERVAL)
+
+#define CN6619_MAC0_OFFSET   0
+#define CN6619_WMAC_CALDATA_OFFSET   0x1000
 
 static const char *cn6619_part_probes[] = {
 	"tp-link",
@@ -50,9 +53,13 @@ static struct gpio_led cn6619_leds_gpio[] __initdata = {
 		.gpio		= CN6619_GPIO_LED_TEL,
 		.active_low	= 1,
 	}, {
+		.name		= "cn6619:green:rssimax",
+		.gpio		= CN6619_GPIO_LED_RSSIMAX,
+		.active_low	= 1,
+	}, {
 		.name		= "cn6619:green:rssihigh",
 		.gpio		= CN6619_GPIO_LED_RSSIHIGH,
-		.active_low	= 1,
+		.active_low	= 0,
 	}, {
 		.name		= "cn6619:green:rssimedium",
 		.gpio		= CN6619_GPIO_LED_RSSIMEDIUM,
@@ -66,8 +73,8 @@ static struct gpio_led cn6619_leds_gpio[] __initdata = {
 		.gpio		= CN6619_GPIO_LED_LAN,
 		.active_low	= 1,
 	}, {
-		.name		= "cn6619:green:wifi",
-		.gpio		= CN6619_GPIO_LED_WIFI,
+		.name		= "cn6619:green:wps",
+		.gpio		= CN6619_GPIO_LED_WPS,
 		.active_low	= 1,
 	},
 };
@@ -87,20 +94,12 @@ static struct gpio_keys_button cn6619_gpio_keys[] __initdata = {
 		.debounce_interval = CN6619_KEYS_DEBOUNCE_INTERVAL,
 		.gpio		= CN6619_GPIO_BTN_WPS,
 		.active_low	= 0,
-	}, {
-		.desc		= "button 1",
-		.type		= EV_KEY,
-		.code		= BTN_1,
-		.debounce_interval = CN6619_KEYS_DEBOUNCE_INTERVAL,
-		.gpio		=CN6619_GPIO_BTN_BTN1,
-		.active_low	= 0,
 	}, 
 };
 
 static void __init tl_ap123_setup(void)
 {
-	u8 *mac = (u8 *) KSEG1ADDR(0x1f01fc00);
-	u8 *ee = (u8 *) KSEG1ADDR(0x1fff1000);
+	u8 *art = (u8 *) KSEG1ADDR(0x1fff0000);
 
 	/* Disable JTAG, enabling GPIOs 0-3 */
 	/* Configure OBS4 line, for GPIO 4*/
@@ -113,8 +112,8 @@ static void __init tl_ap123_setup(void)
 
 	ath79_register_mdio(1, 0x0);
 
-	ath79_init_mac(ath79_eth0_data.mac_addr, mac, -1);
-	ath79_init_mac(ath79_eth1_data.mac_addr, mac, 0);
+	ath79_init_mac(ath79_eth0_data.mac_addr, art + CN6619_MAC0_OFFSET, 0);
+	ath79_init_mac(ath79_eth1_data.mac_addr, art + CN6619_MAC0_OFFSET, 1);
 
 	/* GMAC0 is connected to the PHY0 of the internal switch */
 	ath79_switch_data.phy4_mii_en = 1;
@@ -128,7 +127,7 @@ static void __init tl_ap123_setup(void)
 	ath79_eth1_data.phy_if_mode = PHY_INTERFACE_MODE_GMII;
 	ath79_register_eth(1);
 
-	ath79_register_wmac(ee, mac);
+	ath79_register_wmac(art + CN6619_WMAC_CALDATA_OFFSET, art);
 }
 
 static void __init cn6619_setup(void)
@@ -149,5 +148,5 @@ static void __init cn6619_setup(void)
 
 }
 
-MIPS_MACHINE(ATH79_MACH_CN6619, "CN6619", "CN6619",
+MIPS_MACHINE(ATH79_MACH_CN6619, "BAICELLS-CN6619", "BaiCells CN6619",
 	     cn6619_setup);

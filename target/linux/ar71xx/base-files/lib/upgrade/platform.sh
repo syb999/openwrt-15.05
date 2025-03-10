@@ -372,7 +372,7 @@ platform_check_image() {
 	tl-wa830re-v2 | \
 	tl-wr841n-v7 | \
 	tl-wr841n-v8 | \
-	cn6619 | \
+	baicells-cn6619 | \
 	tl-wr841n-v9 | \
 	tl-wr841n-v11 | \
 	tl-mw300-r4 | \

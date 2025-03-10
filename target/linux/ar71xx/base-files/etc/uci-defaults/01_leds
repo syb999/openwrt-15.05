@@ -127,14 +127,15 @@ cpe510)
 	ucidef_set_led_rssi "rssihigh" "RSSIHIGH" "tp-link:green:link4" "wlan0" "76" "100" "-75" "13"
 	;;
 
-cn6619)
+baicells-cn6619)
 	ucidef_set_led_default "tel" "TEL" "cn6619:green:tel" "0"
-	ucidef_set_led_wlan "wlan" "WLAN" "cn6619:green:wifi" "phy0tpt"
 	ucidef_set_rssimon "wlan0" "40000" "1"
 	ucidef_set_led_rssi "rssilow" "RSSILOW" "cn6619:green:rssilow" "wlan0" "1" "100" "0" "13"
-	ucidef_set_led_rssi "rssimedium" "RSSIMEDIUM" "cn6619:green:rssimedium" "wlan0" "33" "100" "-32" "13"
-	ucidef_set_led_rssi "rssihigh" "RSSIHIGH" "cn6619:green:rssihigh" "wlan0" "66" "100" "-65" "13"
+	ucidef_set_led_rssi "rssimedium" "RSSIMEDIUM" "cn6619:green:rssimedium" "wlan0" "26" "100" "-25" "13"
+	ucidef_set_led_rssi "rssihigh" "RSSIHIGH" "cn6619:green:rssihigh" "wlan0" "51" "100" "-50" "13"
+	ucidef_set_led_rssi "rssimax" "RSSIMAX" "cn6619:green:rssimax" "wlan0" "76" "100" "-75" "13"
 	ucidef_set_led_netdev "lan" "LAN" "cn6619:green:lan" "eth0"
+	ucidef_set_led_default "wps" "WPS" "cn6619:green:wps" "0"
 	;;
 
 db120)

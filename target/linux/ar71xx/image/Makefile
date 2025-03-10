@@ -665,10 +665,10 @@ define Device/tl-wr743nd-v2
 endef
 TARGET_DEVICES += tl-wr740n-v4 tl-wr740n-v5 tl-wr740n-v6 tl-wr741nd-v1 tl-wr741nd-v2 tl-wr741nd-v4 tl-wr741nd-v5 mw153r tl-wr743nd-v2
 
-define Device/cn6619
+define Device/baicells-cn6619
     $(Device/tplink-16mlzma)
-    BOARDNAME := CN6619
-    DEVICE_PROFILE := cn6619
+    BOARDNAME := BAICELLS-CN6619
+    DEVICE_PROFILE := baicells-cn6619
     TPLINK_HWID := 0x08410018
 endef
 
@@ -748,7 +748,7 @@ define Device/tl-wr847n-v8
     DEVICE_PROFILE := TLWR841
     TPLINK_HWID := 0x08470008
 endef
-TARGET_DEVICES += cn6619 fap-022wld ikuai-ap kisslink-nb1210 tl-wr841n-v8 tl-wr841n-v9 tl-wr841n-v10 tl-wr841n-v11 tl-mw300-r4 tl-wr842n-v2 tl-wr843nd-v1 tl-wr847n-v8
+TARGET_DEVICES += baicells-cn6619 fap-022wld ikuai-ap kisslink-nb1210 tl-wr841n-v8 tl-wr841n-v9 tl-wr841n-v10 tl-wr841n-v11 tl-mw300-r4 tl-wr842n-v2 tl-wr843nd-v1 tl-wr847n-v8
 
 define Device/pisen-wfr101n
     $(Device/tplink-16mlzma)

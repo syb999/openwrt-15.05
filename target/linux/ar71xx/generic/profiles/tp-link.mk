@@ -27,16 +27,16 @@ endef
 $(eval $(call Profile,CPE510))
 
 
-define Profile/cn6619
-	NAME:=CN6619
+define Profile/baicells-cn6619
+	NAME:=BaiCells CN6619
 	PACKAGES:= kmod-mtd-rw panel-ap-setup kmod-usb-acm kmod-usb2 kmod-usb-ohci \
 		kmod-usb-uhci kmod-usb-net kmod-usb-net-qmi-wwan kmod-usb-serial \
 		kmod-usb-serial-option luci-proto-3g luci-proto-ncm rssileds
 endef
-define Profile/cn6619/Description
+define Profile/baicells-cn6619/Description
 	Package set optimized for the BaiCells CN6619 LTE router.
 endef
-$(eval $(call Profile,cn6619))
+$(eval $(call Profile,baicells-cn6619))
 
 
 define Profile/fap-022wld
