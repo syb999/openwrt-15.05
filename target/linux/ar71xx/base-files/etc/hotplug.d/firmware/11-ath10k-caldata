@@ -109,7 +109,7 @@ case "$FIRMWARE" in
 		;;
 	ap220)
 		ath10kcal_extract "art" 20480 2116
-		ath10kcal_patch_mac $(macaddr_add $(cat /sys/class/net/eth0/address) +1)
+		ath10kcal_patch_mac $(macaddr_add $(cat /sys/class/net/eth0/address) +2)
 		;;
 	mc-mac1200r)
 		ath10kcal_extract "art" 20480 2116

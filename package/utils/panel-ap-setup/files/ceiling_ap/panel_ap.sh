@@ -8,5 +8,8 @@ panel_ap_first_init()
 	uci set firewall.@zone[1].input='ACCEPT'
 	uci set firewall.@zone[1].forward='ACCEPT'
 	uci commit firewall
+	uci set network.lan.proto='dhcp'
+	uci set network.lan.delegate='0'
+	uci commit network
 }
 

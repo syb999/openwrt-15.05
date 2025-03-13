@@ -155,6 +155,9 @@ get_status_led() {
 	ap210-at-lte9x07)
 		status_led="lte9x07:green:status"
 		;;
+	ap220)
+		status_led="ap220:red:status"
+		;;
 	mc-mac1200r)
 		status_led="mercury:green:system"
 		;;

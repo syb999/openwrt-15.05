@@ -49,6 +49,10 @@ ap113)
 ap210-at-lte9x07)
 	ucidef_set_led_default "status" "STATUS" "lte9x07:green:status" "0"
 	;;
+
+ap220)
+	ucidef_set_led_default "status" "STATUS" "ap220:green:status" "0"
+	;;
 	
 belair20e11)
 	ucidef_set_led_wlan "wlan2g" "WLAN2G" "belair:blue:wlan2g" "phy0tpt"

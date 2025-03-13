@@ -22,15 +22,29 @@
 #include "dev-wmac.h"
 #include "machtypes.h"
 
+#define AP220_GPIO_LED_GREEN	16
+#define AP220_GPIO_LED_RED	21
+
 #define AP220_GPIO_BTN_RESET	17
 
 #define AP220_KEYS_POLL_INTERVAL	20	/* msecs */
 #define AP220_KEYS_DEBOUNCE_INTERVAL (3 * AP220_KEYS_POLL_INTERVAL)
 
-#define AP220_WAN_MAC_OFFSET	0
-#define AP220_LAN_MAC_OFFSET	6
-#define AP220_WMAC_CALDATA_OFFSET	0x1000
-#define AP220_PCIE_CALDATA_OFFSET	0x5000
+#define AP220_MAC0_OFFSET               0
+#define AP220_WMAC_CALDATA_OFFSET       0x1000
+
+static struct gpio_led ap220_leds_gpio[] __initdata = {
+	{
+		.name		= "ap220:red:status",
+		.gpio		= AP220_GPIO_LED_RED,
+		.active_low	= 0,
+	},
+	{
+		.name		= "ap220:green:status",
+		.gpio		= AP220_GPIO_LED_GREEN,
+		.active_low	= 0,
+	}
+};
 
 static struct gpio_keys_button ap220_gpio_keys[] __initdata = {
 	{
@@ -93,11 +107,13 @@ static void __init ap220_setup(void)
 
 	ath79_register_m25p80(NULL);
 
+	ath79_register_leds_gpio(-1, ARRAY_SIZE(ap220_leds_gpio),
+				 ap220_leds_gpio);
 	ath79_register_gpio_keys_polled(-1, AP220_KEYS_POLL_INTERVAL,
 					ARRAY_SIZE(ap220_gpio_keys),
 					ap220_gpio_keys);
 
-	ath79_register_wmac(art + AP220_WMAC_CALDATA_OFFSET, NULL);
+	ath79_register_wmac(art + AP220_WMAC_CALDATA_OFFSET, art);
 
 	ath79_register_mdio(0, 0x0);
 	mdiobus_register_board_info(ap220_mdio0_info,
@@ -105,11 +121,9 @@ static void __init ap220_setup(void)
 
 	ath79_setup_qca955x_eth_cfg(QCA955X_ETH_CFG_RGMII_EN);
 
-	ath79_init_mac(ath79_eth0_data.mac_addr,
-		       art + AP220_WAN_MAC_OFFSET, 0);
+	ath79_init_mac(ath79_eth0_data.mac_addr, art + AP220_MAC0_OFFSET, -1);
 
-	ath79_init_mac(ath79_eth1_data.mac_addr,
-		       art + AP220_LAN_MAC_OFFSET, 0);
+	ath79_init_mac(ath79_eth1_data.mac_addr, art + AP220_MAC0_OFFSET, 0);
 
 	ath79_eth0_pll_data.pll_1000 = 0xae000000;
 	ath79_eth1_pll_data.pll_1000 = 0x03000101;
@@ -129,8 +143,6 @@ static void __init ap220_setup(void)
 	ath79_register_eth(1);
 
 	ath79_register_pci();
-
-	ath79_register_usb();
 }
 
 MIPS_MACHINE(ATH79_MACH_AP220, "AP220", "AP220", ap220_setup);
