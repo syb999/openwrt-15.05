@@ -37,12 +37,12 @@ static struct gpio_led ap220_leds_gpio[] __initdata = {
 	{
 		.name		= "ap220:red:status",
 		.gpio		= AP220_GPIO_LED_RED,
-		.active_low	= 0,
+		.active_low	= 1,
 	},
 	{
 		.name		= "ap220:green:status",
 		.gpio		= AP220_GPIO_LED_GREEN,
-		.active_low	= 0,
+		.active_low	= 1,
 	}
 };
 

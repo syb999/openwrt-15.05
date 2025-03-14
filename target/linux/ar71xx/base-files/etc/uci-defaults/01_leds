@@ -51,7 +51,8 @@ ap210-at-lte9x07)
 	;;
 
 ap220)
-	ucidef_set_led_default "status" "STATUS" "ap220:green:status" "0"
+	ucidef_set_led_default "red" "RED" "ap220:red:status" "0"
+	ucidef_set_led_default "green" "GREEN" "ap220:green:status" "1"
 	;;
 	
 belair20e11)
