@@ -308,25 +308,33 @@ ar8xxx_phy_dbg_write(struct ar8xxx_priv *priv, int phy_addr,
 	mutex_unlock(&bus->mdio_lock);
 }
 
+static inline void
+ar8xxx_phy_mmd_prep(struct mii_bus *bus, int phy_addr, u16 addr, u16 reg)
+{
+	bus->write(bus, phy_addr, MII_ATH_MMD_ADDR, addr);
+	bus->write(bus, phy_addr, MII_ATH_MMD_DATA, reg);
+	bus->write(bus, phy_addr, MII_ATH_MMD_ADDR, addr | 0x4000);
+}
+
 void
-ar8xxx_phy_mmd_write(struct ar8xxx_priv *priv, int phy_addr, u16 addr, u16 data)
+ar8xxx_phy_mmd_write(struct ar8xxx_priv *priv, int phy_addr, u16 addr, u16 reg, u16 data)
 {
 	struct mii_bus *bus = priv->mii_bus;
 
 	mutex_lock(&bus->mdio_lock);
-	bus->write(bus, phy_addr, MII_ATH_MMD_ADDR, addr);
+	ar8xxx_phy_mmd_prep(bus, phy_addr, addr, reg);
 	bus->write(bus, phy_addr, MII_ATH_MMD_DATA, data);
 	mutex_unlock(&bus->mdio_lock);
 }
 
 u16
-ar8xxx_phy_mmd_read(struct ar8xxx_priv *priv, int phy_addr, u16 addr)
+ar8xxx_phy_mmd_read(struct ar8xxx_priv *priv, int phy_addr, u16 addr, u16 reg)
 {
 	struct mii_bus *bus = priv->mii_bus;
 	u16 data;
 
 	mutex_lock(&bus->mdio_lock);
-	bus->write(bus, phy_addr, MII_ATH_MMD_ADDR, addr);
+	ar8xxx_phy_mmd_prep(bus, phy_addr, addr, reg);
 	data = bus->read(bus, phy_addr, MII_ATH_MMD_DATA);
 	mutex_unlock(&bus->mdio_lock);
 
@@ -528,7 +536,7 @@ ar8216_mangle_rx(struct net_device *dev, struct sk_buff *skb)
 	if ((buf[12 + 2] != 0x81) || (buf[13 + 2] != 0x00))
 		return;
 
-	port = buf[0] & 0xf;
+	port = buf[0] & 0x7;
 
 	/* no need to fix up packets coming from a tagged source */
 	if (priv->vlan_tagged & (1 << port))
@@ -598,10 +606,26 @@ ar8216_atu_flush(struct ar8xxx_priv *priv)
 {
 	int ret;
 
-	ret = ar8216_wait_bit(priv, AR8216_REG_ATU, AR8216_ATU_ACTIVE, 0);
+	ret = ar8216_wait_bit(priv, AR8216_REG_ATU_FUNC0, AR8216_ATU_ACTIVE, 0);
 	if (!ret)
-		ar8xxx_write(priv, AR8216_REG_ATU, AR8216_ATU_OP_FLUSH |
-						   AR8216_ATU_ACTIVE);
+		ar8xxx_write(priv, AR8216_REG_ATU_FUNC0, AR8216_ATU_OP_FLUSH |
+							 AR8216_ATU_ACTIVE);
+
+	return ret;
+}
+
+static int
+ar8216_atu_flush_port(struct ar8xxx_priv *priv, int port)
+{
+	u32 t;
+	int ret;
+
+	ret = ar8216_wait_bit(priv, AR8216_REG_ATU_FUNC0, AR8216_ATU_ACTIVE, 0);
+	if (!ret) {
+		t = (port << AR8216_ATU_PORT_NUM_S) | AR8216_ATU_OP_FLUSH_PORT;
+		t |= AR8216_ATU_ACTIVE;
+		ar8xxx_write(priv, AR8216_REG_ATU_FUNC0, t);
+	}
 
 	return ret;
 }
@@ -698,6 +722,77 @@ ar8216_init_port(struct ar8xxx_priv *priv, int port)
 	} else {
 		ar8xxx_write(priv, AR8216_REG_PORT_STATUS(port),
 			AR8216_PORT_STATUS_LINK_AUTO);
+	}
+}
+
+static void
+ar8216_wait_atu_ready(struct ar8xxx_priv *priv, u16 r2, u16 r1)
+{
+	int timeout = 20;
+
+	while (ar8xxx_mii_read32(priv, r2, r1) & AR8216_ATU_ACTIVE && --timeout)
+                udelay(10);
+
+	if (!timeout)
+		pr_err("ar8216: timeout waiting for atu to become ready\n");
+}
+
+static void ar8216_get_arl_entry(struct ar8xxx_priv *priv,
+				 struct arl_entry *a, u32 *status, enum arl_op op)
+{
+	struct mii_bus *bus = priv->mii_bus;
+	u16 r2, page;
+	u16 r1_func0, r1_func1, r1_func2;
+	u32 t, val0, val1, val2;
+	int i;
+
+	split_addr(AR8216_REG_ATU_FUNC0, &r1_func0, &r2, &page);
+	r2 |= 0x10;
+
+	r1_func1 = (AR8216_REG_ATU_FUNC1 >> 1) & 0x1e;
+	r1_func2 = (AR8216_REG_ATU_FUNC2 >> 1) & 0x1e;
+
+	switch (op) {
+	case AR8XXX_ARL_INITIALIZE:
+		/* all ATU registers are on the same page
+		* therefore set page only once
+		*/
+		bus->write(bus, 0x18, 0, page);
+		wait_for_page_switch();
+
+		ar8216_wait_atu_ready(priv, r2, r1_func0);
+
+		ar8xxx_mii_write32(priv, r2, r1_func0, AR8216_ATU_OP_GET_NEXT);
+		ar8xxx_mii_write32(priv, r2, r1_func1, 0);
+		ar8xxx_mii_write32(priv, r2, r1_func2, 0);
+		break;
+	case AR8XXX_ARL_GET_NEXT:
+		t = ar8xxx_mii_read32(priv, r2, r1_func0);
+		t |= AR8216_ATU_ACTIVE;
+		ar8xxx_mii_write32(priv, r2, r1_func0, t);
+		ar8216_wait_atu_ready(priv, r2, r1_func0);
+
+		val0 = ar8xxx_mii_read32(priv, r2, r1_func0);
+		val1 = ar8xxx_mii_read32(priv, r2, r1_func1);
+		val2 = ar8xxx_mii_read32(priv, r2, r1_func2);
+
+		*status = (val2 & AR8216_ATU_STATUS) >> AR8216_ATU_STATUS_S;
+		if (!*status)
+			break;
+
+		i = 0;
+		t = AR8216_ATU_PORT0;
+		while (!(val2 & t) && ++i < priv->dev.ports)
+			t <<= 1;
+
+		a->port = i;
+		a->mac[0] = (val0 & AR8216_ATU_ADDR5) >> AR8216_ATU_ADDR5_S;
+		a->mac[1] = (val0 & AR8216_ATU_ADDR4) >> AR8216_ATU_ADDR4_S;
+		a->mac[2] = (val1 & AR8216_ATU_ADDR3) >> AR8216_ATU_ADDR3_S;
+		a->mac[3] = (val1 & AR8216_ATU_ADDR2) >> AR8216_ATU_ADDR2_S;
+		a->mac[4] = (val1 & AR8216_ATU_ADDR1) >> AR8216_ATU_ADDR1_S;
+		a->mac[5] = (val1 & AR8216_ATU_ADDR0) >> AR8216_ATU_ADDR0_S;
+		break;
 	}
 }
 
@@ -854,7 +949,8 @@ ar8xxx_sw_set_pvid(struct switch_dev *dev, int port, int vlan)
 
 	/* make sure no invalid PVIDs get set */
 
-	if (vlan >= dev->vlans)
+	if (vlan < 0 || vlan >= dev->vlans ||
+	    port < 0 || port >= AR8X16_MAX_PORTS)
 		return -EINVAL;
 
 	priv->pvid[port] = vlan;
@@ -865,6 +961,10 @@ int
 ar8xxx_sw_get_pvid(struct switch_dev *dev, int port, int *vlan)
 {
 	struct ar8xxx_priv *priv = swdev_to_ar8xxx(dev);
+
+	if (port < 0 || port >= AR8X16_MAX_PORTS)
+		return -EINVAL;
+
 	*vlan = priv->pvid[port];
 	return 0;
 }
@@ -874,6 +974,10 @@ ar8xxx_sw_set_vid(struct switch_dev *dev, const struct switch_attr *attr,
 		  struct switch_val *val)
 {
 	struct ar8xxx_priv *priv = swdev_to_ar8xxx(dev);
+
+	if (val->port_vlan >= AR8X16_MAX_PORTS)
+		return -EINVAL;
+
 	priv->vlan_id[val->port_vlan] = val->value.i;
 	return 0;
 }
@@ -901,9 +1005,13 @@ static int
 ar8xxx_sw_get_ports(struct switch_dev *dev, struct switch_val *val)
 {
 	struct ar8xxx_priv *priv = swdev_to_ar8xxx(dev);
-	u8 ports = priv->vlan_table[val->port_vlan];
+	u8 ports;
 	int i;
 
+	if (val->port_vlan >= AR8X16_MAX_VLANS)
+		return -EINVAL;
+
+	ports = priv->vlan_table[val->port_vlan];
 	val->len = 0;
 	for (i = 0; i < dev->ports; i++) {
 		struct switch_port *p;
@@ -989,10 +1097,25 @@ ar8216_set_mirror_regs(struct ar8xxx_priv *priv)
 			   AR8216_PORT_CTRL_MIRROR_TX);
 }
 
+static inline u32
+ar8xxx_age_time_val(int age_time)
+{
+	return (age_time + AR8XXX_REG_ARL_CTRL_AGE_TIME_SECS / 2) /
+	       AR8XXX_REG_ARL_CTRL_AGE_TIME_SECS;
+}
+
+static inline void
+ar8xxx_set_age_time(struct ar8xxx_priv *priv, int reg)
+{
+	u32 age_time = ar8xxx_age_time_val(priv->arl_age_time);
+	ar8xxx_rmw(priv, reg, AR8216_ATU_CTRL_AGE_TIME, age_time << AR8216_ATU_CTRL_AGE_TIME_S);
+}
+
 int
 ar8xxx_sw_hw_apply(struct switch_dev *dev)
 {
 	struct ar8xxx_priv *priv = swdev_to_ar8xxx(dev);
+	const struct ar8xxx_chip *chip = priv->chip;
 	u8 portmask[AR8X16_MAX_PORTS];
 	int i, j;
 
@@ -1016,8 +1139,8 @@ ar8xxx_sw_hw_apply(struct switch_dev *dev)
 					portmask[i] |= vp & ~mask;
 			}
 
-			priv->chip->vtu_load_vlan(priv, priv->vlan_id[j],
-						 priv->vlan_table[j]);
+			chip->vtu_load_vlan(priv, priv->vlan_id[j],
+					    priv->vlan_table[j]);
 		}
 	} else {
 		/* vlan disabled:
@@ -1033,10 +1156,14 @@ ar8xxx_sw_hw_apply(struct switch_dev *dev)
 
 	/* update the port destination mask registers and tag settings */
 	for (i = 0; i < dev->ports; i++) {
-		priv->chip->setup_port(priv, i, portmask[i]);
+		chip->setup_port(priv, i, portmask[i]);
 	}
 
-	priv->chip->set_mirror_regs(priv);
+	chip->set_mirror_regs(priv);
+
+	/* set age time */
+	if (chip->reg_arl_ctrl)
+		ar8xxx_set_age_time(priv, chip->reg_arl_ctrl);
 
 	mutex_unlock(&priv->reg_mutex);
 	return 0;
@@ -1064,8 +1191,10 @@ ar8xxx_sw_reset_switch(struct switch_dev *dev)
 	priv->mirror_tx = false;
 	priv->source_port = 0;
 	priv->monitor_port = 0;
+	priv->arl_age_time = AR8XXX_DEFAULT_ARL_AGE_TIME;
 
 	chip->init_globals(priv);
+	chip->atu_flush(priv);
 
 	mutex_unlock(&priv->reg_mutex);
 
@@ -1230,6 +1359,31 @@ unlock:
 	return ret;
 }
 
+static void
+ar8xxx_byte_to_str(char *buf, int len, u64 byte)
+{
+	unsigned long b;
+	const char *unit;
+
+	if (byte >= 0x40000000) { /* 1 GiB */
+		b = byte * 10 / 0x40000000;
+		unit = "GiB";
+	} else if (byte >= 0x100000) { /* 1 MiB */
+		b = byte * 10 / 0x100000;
+		unit = "MiB";
+	} else if (byte >= 0x400) { /* 1 KiB */
+		b = byte * 10 / 0x400;
+		unit = "KiB";
+	} else {
+		b = byte;
+		unit = "Byte";
+	}
+	if (strcmp(unit, "Byte"))
+		snprintf(buf, len, "%lu.%lu %s", b / 10, b % 10, unit);
+	else
+		snprintf(buf, len, "%lu %s", b, unit);
+}
+
 int
 ar8xxx_sw_get_port_mib(struct switch_dev *dev,
 		       const struct switch_attr *attr,
@@ -1237,11 +1391,14 @@ ar8xxx_sw_get_port_mib(struct switch_dev *dev,
 {
 	struct ar8xxx_priv *priv = swdev_to_ar8xxx(dev);
 	const struct ar8xxx_chip *chip = priv->chip;
-	u64 *mib_stats;
-	int port;
+	u64 *mib_stats, mib_data;
+	unsigned int port;
 	int ret;
 	char *buf = priv->buf;
+	char buf1[64];
+	const char *mib_name;
 	int i, len = 0;
+	bool mib_stats_empty = true;
 
 	if (!ar8xxx_has_mib_counters(priv))
 		return -EOPNOTSUPP;
@@ -1258,15 +1415,28 @@ ar8xxx_sw_get_port_mib(struct switch_dev *dev,
 	ar8xxx_mib_fetch_port_stat(priv, port, false);
 
 	len += snprintf(buf + len, sizeof(priv->buf) - len,
-			"Port %d MIB counters\n",
-			port);
+			"MIB counters\n");
 
 	mib_stats = &priv->mib_stats[port * chip->num_mibs];
-	for (i = 0; i < chip->num_mibs; i++)
+	for (i = 0; i < chip->num_mibs; i++) {
+		mib_name = chip->mib_decs[i].name;
+		mib_data = mib_stats[i];
 		len += snprintf(buf + len, sizeof(priv->buf) - len,
-				"%-12s: %llu\n",
-				chip->mib_decs[i].name,
-				mib_stats[i]);
+				"%-12s: %llu\n", mib_name, mib_data);
+		if ((!strcmp(mib_name, "TxByte") ||
+		    !strcmp(mib_name, "RxGoodByte")) &&
+		    mib_data >= 1024) {
+			ar8xxx_byte_to_str(buf1, sizeof(buf1), mib_data);
+			--len; /* discard newline at the end of buf */
+			len += snprintf(buf + len, sizeof(priv->buf) - len,
+					" (%s)\n", buf1);
+		}
+		if (mib_stats_empty && mib_data)
+			mib_stats_empty = false;
+	}
+
+	if (mib_stats_empty)
+		len = snprintf(buf, sizeof(priv->buf), "No MIB data");
 
 	val->value.s = buf;
 	val->len = len;
@@ -1276,6 +1446,34 @@ ar8xxx_sw_get_port_mib(struct switch_dev *dev,
 unlock:
 	mutex_unlock(&priv->mib_lock);
 	return ret;
+}
+
+int
+ar8xxx_sw_set_arl_age_time(struct switch_dev *dev, const struct switch_attr *attr,
+			   struct switch_val *val)
+{
+	struct ar8xxx_priv *priv = swdev_to_ar8xxx(dev);
+	int age_time = val->value.i;
+	u32 age_time_val;
+
+	if (age_time < 0)
+		return -EINVAL;
+
+	age_time_val = ar8xxx_age_time_val(age_time);
+	if (age_time_val == 0 || age_time_val > 0xffff)
+		return -EINVAL;
+
+	priv->arl_age_time = age_time;
+	return 0;
+}
+
+int
+ar8xxx_sw_get_arl_age_time(struct switch_dev *dev, const struct switch_attr *attr,
+                   struct switch_val *val)
+{
+	struct ar8xxx_priv *priv = swdev_to_ar8xxx(dev);
+	val->value.i = priv->arl_age_time;
+	return 0;
 }
 
 int
@@ -1350,6 +1548,40 @@ ar8xxx_sw_get_arl_table(struct switch_dev *dev,
 }
 
 
+int
+ar8xxx_sw_set_flush_arl_table(struct switch_dev *dev,
+			      const struct switch_attr *attr,
+			      struct switch_val *val)
+{
+	struct ar8xxx_priv *priv = swdev_to_ar8xxx(dev);
+	int ret;
+
+	mutex_lock(&priv->reg_mutex);
+	ret = priv->chip->atu_flush(priv);
+	mutex_unlock(&priv->reg_mutex);
+
+	return ret;
+}
+
+int
+ar8xxx_sw_set_flush_port_arl_table(struct switch_dev *dev,
+				   const struct switch_attr *attr,
+				   struct switch_val *val)
+{
+	struct ar8xxx_priv *priv = swdev_to_ar8xxx(dev);
+	int port, ret;
+
+	port = val->port_vlan;
+	if (port >= dev->ports)
+		return -EINVAL;
+
+	mutex_lock(&priv->reg_mutex);
+	ret = priv->chip->atu_flush_port(priv, port);
+	mutex_unlock(&priv->reg_mutex);
+
+	return ret;
+}
+
 static const struct switch_attr ar8xxx_sw_attr_globals[] = {
 	{
 		.type = SWITCH_TYPE_INT,
@@ -1404,9 +1636,15 @@ static const struct switch_attr ar8xxx_sw_attr_globals[] = {
 		.set = NULL,
 		.get = ar8xxx_sw_get_arl_table,
 	},
+	{
+		.type = SWITCH_TYPE_NOVAL,
+		.name = "flush_arl_table",
+		.description = "Flush ARL table",
+		.set = ar8xxx_sw_set_flush_arl_table,
+	},
 };
 
-const struct switch_attr ar8xxx_sw_attr_port[2] = {
+const struct switch_attr ar8xxx_sw_attr_port[] = {
 	{
 		.type = SWITCH_TYPE_NOVAL,
 		.name = "reset_mib",
@@ -1419,6 +1657,12 @@ const struct switch_attr ar8xxx_sw_attr_port[2] = {
 		.description = "Get port's MIB counters",
 		.set = NULL,
 		.get = ar8xxx_sw_get_port_mib,
+	},
+	{
+		.type = SWITCH_TYPE_NOVAL,
+		.name = "flush_arl_table",
+		.description = "Flush port's ARL table entries",
+		.set = ar8xxx_sw_set_flush_port_arl_table,
 	},
 };
 
@@ -1460,6 +1704,7 @@ static const struct ar8xxx_chip ar8216_chip = {
 
 	.reg_port_stats_start = 0x19000,
 	.reg_port_stats_length = 0xa0,
+	.reg_arl_ctrl = AR8216_REG_ATU_CTRL,
 
 	.name = "Atheros AR8216",
 	.ports = AR8216_NUM_PORTS,
@@ -1472,9 +1717,11 @@ static const struct ar8xxx_chip ar8216_chip = {
 	.setup_port = ar8216_setup_port,
 	.read_port_status = ar8216_read_port_status,
 	.atu_flush = ar8216_atu_flush,
+	.atu_flush_port = ar8216_atu_flush_port,
 	.vtu_flush = ar8216_vtu_flush,
 	.vtu_load_vlan = ar8216_vtu_load_vlan,
 	.set_mirror_regs = ar8216_set_mirror_regs,
+	.get_arl_entry = ar8216_get_arl_entry,
 	.sw_hw_apply = ar8xxx_sw_hw_apply,
 
 	.num_mibs = ARRAY_SIZE(ar8216_mibs),
@@ -1487,6 +1734,7 @@ static const struct ar8xxx_chip ar8236_chip = {
 
 	.reg_port_stats_start = 0x20000,
 	.reg_port_stats_length = 0x100,
+	.reg_arl_ctrl = AR8216_REG_ATU_CTRL,
 
 	.name = "Atheros AR8236",
 	.ports = AR8216_NUM_PORTS,
@@ -1499,9 +1747,11 @@ static const struct ar8xxx_chip ar8236_chip = {
 	.setup_port = ar8236_setup_port,
 	.read_port_status = ar8216_read_port_status,
 	.atu_flush = ar8216_atu_flush,
+	.atu_flush_port = ar8216_atu_flush_port,
 	.vtu_flush = ar8216_vtu_flush,
 	.vtu_load_vlan = ar8216_vtu_load_vlan,
 	.set_mirror_regs = ar8216_set_mirror_regs,
+	.get_arl_entry = ar8216_get_arl_entry,
 	.sw_hw_apply = ar8xxx_sw_hw_apply,
 
 	.num_mibs = ARRAY_SIZE(ar8236_mibs),
@@ -1514,6 +1764,7 @@ static const struct ar8xxx_chip ar8316_chip = {
 
 	.reg_port_stats_start = 0x20000,
 	.reg_port_stats_length = 0x100,
+	.reg_arl_ctrl = AR8216_REG_ATU_CTRL,
 
 	.name = "Atheros AR8316",
 	.ports = AR8216_NUM_PORTS,
@@ -1526,9 +1777,11 @@ static const struct ar8xxx_chip ar8316_chip = {
 	.setup_port = ar8216_setup_port,
 	.read_port_status = ar8216_read_port_status,
 	.atu_flush = ar8216_atu_flush,
+	.atu_flush_port = ar8216_atu_flush_port,
 	.vtu_flush = ar8216_vtu_flush,
 	.vtu_load_vlan = ar8216_vtu_load_vlan,
 	.set_mirror_regs = ar8216_set_mirror_regs,
+	.get_arl_entry = ar8216_get_arl_entry,
 	.sw_hw_apply = ar8xxx_sw_hw_apply,
 
 	.num_mibs = ARRAY_SIZE(ar8236_mibs),
@@ -1651,7 +1904,7 @@ ar8xxx_mib_stop(struct ar8xxx_priv *priv)
 	if (!ar8xxx_has_mib_counters(priv))
 		return;
 
-	cancel_delayed_work(&priv->mib_work);
+	cancel_delayed_work_sync(&priv->mib_work);
 }
 
 static struct ar8xxx_priv *
@@ -1790,12 +2043,12 @@ ar8xxx_check_link_states(struct ar8xxx_priv *priv)
 
 		priv->link_up[i] = link_new;
 		changed = true;
+		/* flush ARL entries for this port if it went down*/
+		if (!link_new)
+			priv->chip->atu_flush_port(priv, i);
 		dev_info(&priv->phy->dev, "Port %d is %s\n",
 			 i, link_new ? "up" : "down");
 	}
-
-	if (changed)
-		priv->chip->atu_flush(priv);
 
 	mutex_unlock(&priv->reg_mutex);
 
@@ -1808,9 +2061,7 @@ ar8xxx_phy_read_status(struct phy_device *phydev)
 	struct ar8xxx_priv *priv = phydev->priv;
 	struct switch_port_link link;
 
-	/* check for link changes and flush ATU
-	 * if a change was detected
-	 */
+	/* check for switch port link changes */
 	if (phydev->state == PHY_CHANGELINK)
 		ar8xxx_check_link_states(priv);
 
@@ -1935,6 +2186,8 @@ ar8xxx_phy_probe(struct phy_device *phydev)
 		swdev->devname, swdev->name, priv->chip_rev,
 		dev_name(&priv->mii_bus->dev));
 
+	list_add(&priv->list, &ar8xxx_dev_list);
+
 found:
 	priv->use_count++;
 
@@ -1962,8 +2215,6 @@ found:
 	}
 
 	phydev->priv = priv;
-
-	list_add(&priv->list, &ar8xxx_dev_list);
 
 	mutex_unlock(&ar8xxx_dev_list_lock);
 
@@ -2005,10 +2256,14 @@ ar8xxx_phy_remove(struct phy_device *phydev)
 		return;
 
 	phydev->priv = NULL;
-	if (--priv->use_count > 0)
-		return;
 
 	mutex_lock(&ar8xxx_dev_list_lock);
+
+	if (--priv->use_count > 0) {
+		mutex_unlock(&ar8xxx_dev_list_lock);
+		return;
+	}
+
 	list_del(&priv->list);
 	mutex_unlock(&ar8xxx_dev_list_lock);
 
