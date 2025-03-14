@@ -10,6 +10,7 @@ panel_ap_first_init()
 	uci commit firewall
 	uci set network.lan.proto='dhcp'
 	uci set network.lan.delegate='0'
+	uci set network.lan.igmp_snooping='1'
 	uci commit network
 }
 
