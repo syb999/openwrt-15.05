@@ -7,7 +7,7 @@
 
 define Profile/CSAC
         NAME:=CSAC
-        PACKAGES:=kmod-ath10k ath10k-firmware-qca9888 kmod-usb2
+        PACKAGES:=kmod-ath10k-smallbuffers ath10k-firmware-qca9888 kmod-usb2
 endef
 
 define Profile/CSAC/Description
