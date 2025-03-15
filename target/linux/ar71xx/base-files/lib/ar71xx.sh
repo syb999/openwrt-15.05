@@ -530,6 +530,9 @@ ar71xx_board_detect() {
 	*"Keewifi Kisslink NB1210")
 		name="kisslink-nb1210"
 		;;
+	*"H3C WTU430H")
+		name="h3c-wtu430h"
+		;;
 	*"Hornet-UB")
 		local size
 		size=$(awk '/firmware/ { print $2 }' /proc/mtd)

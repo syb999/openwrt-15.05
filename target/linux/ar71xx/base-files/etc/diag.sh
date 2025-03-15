@@ -138,6 +138,9 @@ get_status_led() {
 	esr900)
 		status_led="engenius:amber:power"
 		;;
+	h3c-wtu430h)
+		status_led="wtu430h:orange:power"
+		;;
 	hiwifi-hc6361)
 		status_led="hiwifi:blue:system"
 		;;
