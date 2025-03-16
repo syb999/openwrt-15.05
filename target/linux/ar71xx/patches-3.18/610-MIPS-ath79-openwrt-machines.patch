@@ -1,6 +1,6 @@
 --- a/arch/mips/ath79/machtypes.h
 +++ b/arch/mips/ath79/machtypes.h
-@@ -16,22 +16,223 @@
+@@ -16,22 +16,224 @@
  
  enum ath79_mach_type {
  	ATH79_MACH_GENERIC = 0,
@@ -219,6 +219,7 @@
 +	ATH79_MACH_PISEN_WFR101N,       /* PISEN-WFR101N */
 +	ATH79_MACH_PISEN_WMB001N,       /* PISEN-WMB001N */
 +	ATH79_MACH_PISEN_WPR003N,       /* PISEN-WPR003N */
++	ATH79_MACH_PISEN_WMM003N,       /* PISEN WMM003N */
 +	ATH79_MACH_WB2000,       /* Winchannel WB2000 */
 +	ATH79_MACH_ZTE_E8820,       /* ZTE E8820 */
  };
@@ -1516,7 +1517,7 @@
  
  config ATH79_MACH_UBNT_XM
  	bool "Ubiquiti Networks XM/UniFi boards"
-@@ -83,6 +1264,211 @@ config ATH79_MACH_UBNT_XM
+@@ -83,6 +1264,221 @@ config ATH79_MACH_UBNT_XM
  	  Say 'Y' here if you want your kernel to support the
  	  Ubiquiti Networks XM (rev 1.0) board.
  
@@ -1703,6 +1704,16 @@
 +	select ATH79_DEV_USB
 +	select ATH79_DEV_WMAC
 +
++config ATH79_MACH_PISEN_WMM003N
++	bool "PISEN WMM003N support"
++	select SOC_AR933X
++	select ATH79_DEV_ETH
++	select ATH79_DEV_GPIO_BUTTONS
++	select ATH79_DEV_LEDS_GPIO
++	select ATH79_DEV_M25P80
++	select ATH79_DEV_USB
++	select ATH79_DEV_WMAC
++
 +config ATH79_MACH_WB2000
 +	bool "Winchannel WB2000 board support"
 +	select SOC_AR934X
@@ -1728,7 +1739,7 @@
  endmenu
  
  config SOC_AR71XX
-@@ -124,7 +1470,10 @@ config ATH79_DEV_DSA
+@@ -124,7 +1480,10 @@ config ATH79_DEV_DSA
  config ATH79_DEV_ETH
  	def_bool n
  
@@ -1740,7 +1751,7 @@
  	def_bool n
  
  config ATH79_DEV_GPIO_BUTTONS
-@@ -154,6 +1513,11 @@ config ATH79_PCI_ATH9K_FIXUP
+@@ -154,6 +1523,11 @@ config ATH79_PCI_ATH9K_FIXUP
  	def_bool n
  
  config ATH79_ROUTERBOOT
@@ -1754,7 +1765,7 @@
  endif
 --- a/arch/mips/ath79/Makefile
 +++ b/arch/mips/ath79/Makefile
-@@ -38,9 +38,151 @@ obj-$(CONFIG_ATH79_ROUTERBOOT)		+= route
+@@ -38,9 +38,152 @@ obj-$(CONFIG_ATH79_ROUTERBOOT)		+= route
  #
  # Machines
  #
@@ -1904,6 +1915,7 @@
 +obj-$(CONFIG_ATH79_MACH_PISEN_WFR101N)	+= mach-pisen-wfr101n.o
 +obj-$(CONFIG_ATH79_MACH_PISEN_WMB001N)	+= mach-pisen-wmb001n.o
 +obj-$(CONFIG_ATH79_MACH_PISEN_WPR003N)	+= mach-pisen-wpr003n.o
++obj-$(CONFIG_ATH79_MACH_PISEN_WMM003N)	+= mach-pisen-wmm003n.o
 +obj-$(CONFIG_ATH79_MACH_WB2000)	+= mach-wb2000.o
 +obj-$(CONFIG_ATH79_MACH_ZTE_E8820)	+= mach-e8820.o
 --- a/arch/mips/ath79/prom.c

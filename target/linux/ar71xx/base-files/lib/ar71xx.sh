@@ -887,6 +887,9 @@ ar71xx_board_detect() {
 	*"PISEN_WPR003N")
 		name="pisen-wpr003n"
 		;;
+	*"PISEN WMM003N")
+ 		name="pisen-wmm003n"
+ 		;;
 	*TL-WR941ND)
 		name="tl-wr941nd"
 		;;

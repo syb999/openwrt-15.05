@@ -606,6 +606,14 @@ define Device/tl-wr720n-v4
 endef
 TARGET_DEVICES += tl-wr703n-v1 tl-wr710n-v1 tl-wr710n-v2 tl-wr720n-v3 tl-wr720n-v4
 
+define Device/pisen-wmm003n
+    $(Device/tplink-8mlzma)
+    BOARDNAME := PISEN-WMM003N
+    DEVICE_PROFILE := PISEN-WMM003N
+    TPLINK_HWID := 0x07430003
+    CONSOLE := ttyATH0,115200
+endef
+
 define Device/tl-wr740n-v4
     $(Device/tplink-4mlzma)
     BOARDNAME := TL-WR741ND-v4
@@ -674,7 +682,7 @@ define Device/tl-wr743nd-v2
     TPLINK_HWID := 0x07430002
     CONSOLE := ttyATH0,115200
 endef
-TARGET_DEVICES += tl-wr740n-v4 tl-wr740n-v5 tl-wr740n-v6 tl-wr741nd-v1 tl-wr741nd-v2 tl-wr741nd-v4 tl-wr741nd-v5 mw153r tl-wr743nd-v2
+TARGET_DEVICES += pisen-wmm003n tl-wr740n-v4 tl-wr740n-v5 tl-wr740n-v6 tl-wr741nd-v1 tl-wr741nd-v2 tl-wr741nd-v4 tl-wr741nd-v5 mw153r tl-wr743nd-v2
 
 define Device/baicells-cn6619
     $(Device/tplink-16mlzma)

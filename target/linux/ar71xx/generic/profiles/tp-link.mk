@@ -398,6 +398,17 @@ endef
 $(eval $(call Profile,PISEN))
 
 
+define Profile/PISEN-WMM003N
+	NAME:=PISEN WMM003N
+	PACKAGES:=kmod-usb-core kmod-usb2
+endef
+
+define Profile/PISEN-WMM003N/Description
+	Package set optimized for the PISEN WMM003N.
+endef
+$(eval $(call Profile,PISEN-WMM003N))
+
+
 define Profile/TLWR842
 	NAME:=TP-LINK TL-WR842N/ND
 	PACKAGES:=kmod-usb-core kmod-usb2 kmod-ledtrig-usbdev

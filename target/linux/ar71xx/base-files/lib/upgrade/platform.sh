@@ -379,6 +379,7 @@ platform_check_image() {
 	pisen-wfr101n | \
 	pisen-wmb001n | \
 	pisen-wpr003n | \
+	pisen-wmm003n | \
 	tl-wr842n-v2 | \
 	tl-wr941nd | \
 	tl-wr941nd-v5 | \
