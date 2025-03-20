@@ -18,11 +18,7 @@ endef
 
 define Package/panel-ap-setup/install
 	$(INSTALL_DIR) $(1)/lib/panel_ap
-ifdef CONFIG_TARGET_ar71xx_generic_AP220
-	$(INSTALL_BIN) ./files/ceiling_ap/panel_ap.sh $(1)/lib/panel_ap
-else
 	$(INSTALL_BIN) ./files/panel_ap/panel_ap.sh $(1)/lib/panel_ap
-endif
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/init.d/panel_ap-init $(1)/etc/init.d/panel_ap-init
 	$(INSTALL_DIR) $(1)/etc/config
