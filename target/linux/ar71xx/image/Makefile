@@ -165,9 +165,11 @@ TARGET_DEVICES += hq65
 
 define Device/K2T
   BOARDNAME = K2T
-  IMAGE_SIZE = 15744k
   CONSOLE = ttyATH0,115200
+  IMAGE_SIZE := 15744k
   MTDPARTS := spi0.0:192k(u-boot)ro,64k(config)ro,320k(permanent),15744k(firmware),64k(art)ro
+  IMAGE/sysupgrade.bin := append-kernel | pad-to $$$$(BLOCKSIZE) | \
+	append-rootfs | pad-rootfs | append-metadata | check-size $$$$(IMAGE_SIZE)
 endef
 TARGET_DEVICES += K2T
 
