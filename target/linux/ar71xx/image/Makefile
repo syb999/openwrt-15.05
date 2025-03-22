@@ -239,6 +239,17 @@ define Device/LG-A291Q
 endef
 TARGET_DEVICES += LG-A291Q
 
+define Device/sj-wp35
+  BOARDNAME = SJ-WP35
+  CONSOLE = ttyS0,115200
+  KERNEL_SIZE := 1472k
+  ROOTFS_SIZE := 14528k
+  IMAGE_SIZE := 16000k
+  MTDPARTS := spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,14528k(rootfs),1472k(kernel),64k(art),16000k@0x50000(firmware)
+  IMAGE/sysupgrade.bin := append-rootfs | pad-rootfs | pad-to $$$$(ROOTFS_SIZE) | append-kernel | check-size $$$$(IMAGE_SIZE)
+endef
+TARGET_DEVICES += sj-wp35
+
 define Device/xinxang-x-wap750
   BOARDNAME := XINXANG-X-WAP750
   CONSOLE := ttyATH0,115200

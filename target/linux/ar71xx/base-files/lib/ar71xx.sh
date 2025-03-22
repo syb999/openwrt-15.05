@@ -746,6 +746,9 @@ ar71xx_board_detect() {
 	*RW2458N)
 		name="rw2458n"
 		;;
+	*"SJ-WP35")
+		name="sj-wp35"
+		;;
 	*"SMART-300")
 		name="smart-300"
 		;;

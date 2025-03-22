@@ -1,6 +1,6 @@
 --- a/arch/mips/ath79/machtypes.h
 +++ b/arch/mips/ath79/machtypes.h
-@@ -16,22 +16,224 @@
+@@ -16,22 +16,225 @@
  
  enum ath79_mach_type {
  	ATH79_MACH_GENERIC = 0,
@@ -117,6 +117,7 @@
 +	ATH79_MACH_RB_SXTLITE2ND,	/* Mikrotik RouterBOARD SXT Lite 2nD */
 +	ATH79_MACH_RB_SXTLITE5ND,	/* Mikrotik RouterBOARD SXT Lite 5nD */
 +	ATH79_MACH_RW2458N,		/* Redwave RW2458N */
++	ATH79_MACH_SJ_WP35,		/* SJ_WP35 */
 +	ATH79_MACH_SMART_300,		/* NC-LINK SMART-300 */
 +	ATH79_MACH_TEW_632BRP,		/* TRENDnet TEW-632BRP */
 +	ATH79_MACH_TEW_673GRU,		/* TRENDnet TEW-673GRU */
@@ -1517,7 +1518,7 @@
  
  config ATH79_MACH_UBNT_XM
  	bool "Ubiquiti Networks XM/UniFi boards"
-@@ -83,6 +1264,221 @@ config ATH79_MACH_UBNT_XM
+@@ -83,6 +1264,231 @@ config ATH79_MACH_UBNT_XM
  	  Say 'Y' here if you want your kernel to support the
  	  Ubiquiti Networks XM (rev 1.0) board.
  
@@ -1714,6 +1715,16 @@
 +	select ATH79_DEV_USB
 +	select ATH79_DEV_WMAC
 +
++config ATH79_MACH_SJ_WP35
++	bool "SJ-WP35 board support"
++	select SOC_QCA953X
++	select ATH79_DEV_GPIO_BUTTONS
++	select ATH79_DEV_LEDS_GPIO
++	select ATH79_DEV_M25P80
++	select ATH79_DEV_USB
++	select ATH79_DEV_WMAC
++	select ATH79_DEV_AP9X_PCI if PCI
++
 +config ATH79_MACH_WB2000
 +	bool "Winchannel WB2000 board support"
 +	select SOC_AR934X
@@ -1739,7 +1750,7 @@
  endmenu
  
  config SOC_AR71XX
-@@ -124,7 +1480,10 @@ config ATH79_DEV_DSA
+@@ -124,7 +1490,10 @@ config ATH79_DEV_DSA
  config ATH79_DEV_ETH
  	def_bool n
  
@@ -1751,7 +1762,7 @@
  	def_bool n
  
  config ATH79_DEV_GPIO_BUTTONS
-@@ -154,6 +1523,11 @@ config ATH79_PCI_ATH9K_FIXUP
+@@ -154,6 +1533,11 @@ config ATH79_PCI_ATH9K_FIXUP
  	def_bool n
  
  config ATH79_ROUTERBOOT
@@ -1765,7 +1776,7 @@
  endif
 --- a/arch/mips/ath79/Makefile
 +++ b/arch/mips/ath79/Makefile
-@@ -38,9 +38,152 @@ obj-$(CONFIG_ATH79_ROUTERBOOT)		+= route
+@@ -38,9 +38,153 @@ obj-$(CONFIG_ATH79_ROUTERBOOT)		+= route
  #
  # Machines
  #
@@ -1848,6 +1859,7 @@
 +obj-$(CONFIG_ATH79_MACH_RB2011)		+= mach-rb2011.o
 +obj-$(CONFIG_ATH79_MACH_RBSXTLITE)	+= mach-rbsxtlite.o
 +obj-$(CONFIG_ATH79_MACH_RW2458N)	+= mach-rw2458n.o
++obj-$(CONFIG_ATH79_MACH_SJ_WP35)	+= mach-sj-wp35.o
 +obj-$(CONFIG_ATH79_MACH_SMART_300)	+= mach-smart-300.o
 +obj-$(CONFIG_ATH79_MACH_TEW_632BRP)	+= mach-tew-632brp.o
 +obj-$(CONFIG_ATH79_MACH_TEW_673GRU)	+= mach-tew-673gru.o
