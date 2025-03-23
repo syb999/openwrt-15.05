@@ -1,9 +1,9 @@
 --- a/arch/mips/ath79/machtypes.h
 +++ b/arch/mips/ath79/machtypes.h
-@@ -24,6 +24,7 @@ enum ath79_mach_type {
- 	ATH79_MACH_ALL0315N,		/* Allnet ALL0315N */
+@@ -25,6 +25,7 @@ enum ath79_mach_type {
  	ATH79_MACH_CSAC,		/* CSAC-III board */
  	ATH79_MACH_MI4PRO,		/* XIAOMI4-PRO */
+ 	ATH79_MACH_NAP_3600_P,	/* NAP-3600-P Panel AP */
 +	ATH79_MACH_ANTMINER_S1,	/* Antminer-S1 */
  	ATH79_MACH_LETV,		/* LETV board */
  	ATH79_MACH_LG_A291Q,		/* LG-A291Q board *

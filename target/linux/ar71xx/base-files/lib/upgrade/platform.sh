@@ -431,6 +431,7 @@ platform_check_image() {
 		;;
 
 	h3c-wtu430h | \
+	nap-3600-p | \
 	csac)
 		[ "$magic_long" != "68737173" -a "$magic_long" != "19852003" ] && {
 			echo "Invalid image type."

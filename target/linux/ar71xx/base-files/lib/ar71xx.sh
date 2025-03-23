@@ -590,6 +590,9 @@ ar71xx_board_detect() {
 	*"My Net N750")
 		name="mynet-n750"
 		;;
+	*"NAP-3600-P Panel AP")
+ 		name="nap-3600-p"
+ 		;;
 	*"WD My Net Wi-Fi Range Extender")
 		name="mynet-rext"
 		;;

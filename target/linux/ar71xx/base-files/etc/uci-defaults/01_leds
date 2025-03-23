@@ -359,6 +359,11 @@ mzk-w300nh)
 	ucidef_set_led_wlan "wlan" "WLAN" "planex:green:wlan" "phy0tpt"
 	;;
 
+nap-3600-p)
+	ucidef_set_led_default "led1" "LED1" "nap:green:led1" "1"
+	ucidef_set_led_default "led2" "LED2" "nap:orange:led2" "1"
+	;;
+
 nbg460n_550n_550nh)
 	ucidef_set_led_wlan "wlan" "WLAN" "nbg460n:green:wlan" "phy0tpt"
 	;;
