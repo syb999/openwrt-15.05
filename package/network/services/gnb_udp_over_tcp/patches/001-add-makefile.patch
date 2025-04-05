@@ -1,0 +1,22 @@
+--- /dev/null
++++ b/Makefile
+@@ -0,0 +1,19 @@
++CC ?= gcc
++CFLAGS ?= -I./src -I./libs/hash
++LDFLAGS ?= -lpthread
++
++SRC_FILES := $(filter-out src/event/kqueue_event_handler.c,$(wildcard src/*.c src/*/*.c libs/*/*.c))
++OBJ_FILES := $(patsubst %.c,%.o,$(SRC_FILES))
++
++all: gnb_udp_over_tcp
++
++gnb_udp_over_tcp: $(OBJ_FILES)
++	$(CC) $(LDFLAGS) $^ -o $@
++
++%.o: %.c
++	$(CC) $(CFLAGS) -c $< -o $@
++
++clean:
++	rm -f $(OBJ_FILES) gnb_udp_over_tcp
++
++.PHONY: all clean
