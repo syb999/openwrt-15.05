@@ -7,7 +7,7 @@
 
 define Profile/H3C-WTU430H
         NAME:=H3C-WTU430H
-        PACKAGES:=kmod-ath10k-smallbuffers ath10k-firmware-qca9888
+        PACKAGES:=kmod-ath10k-ct-smallbuffers ath10k-firmware-qca9888-ct-full-htt
 endef
 
 define Profile/H3C-WTU430H/Description
