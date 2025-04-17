@@ -380,11 +380,11 @@ nanostation-m-xw)
 	;;
 
 nap-3600-p)
- 	ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
- 	ucidef_add_switch "switch0" "1" "1"
- 	ucidef_add_switch_vlan "switch0" "1" "0t 2 3 4"
- 	ucidef_add_switch_vlan "switch0" "2" "0t 1"
- 	;;
+	ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
+	ucidef_add_switch "switch0" "1" "1"
+	ucidef_add_switch_vlan "switch0" "1" "0t 2 3 4"
+	ucidef_add_switch_vlan "switch0" "2" "0t 1"
+	;;
 
 wrt160nl)
 	ucidef_set_interfaces_lan_wan "eth0" "eth1"

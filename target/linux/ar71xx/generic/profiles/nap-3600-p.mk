@@ -7,7 +7,7 @@
  
 define Profile/NAP-3600-P
         NAME:=NAP-3600-P
-        PACKAGES:=kmod-ath10k-smallbuffers ath10k-firmware-qca988x panel-ap-setup
+        PACKAGES:=kmod-ath10k-ct-smallbuffers ath10k-firmware-qca988x-ct-full-htt panel-ap-setup
 endef
 
 define Profile/NAP-3600-P/Description
