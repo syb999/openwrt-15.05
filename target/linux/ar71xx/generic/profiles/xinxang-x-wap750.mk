@@ -7,7 +7,7 @@
 
 define Profile/XINXANG-X-WAP750
         NAME:=XINXANG-X-WAP750
-        PACKAGES:=uboot-envtools kmod-ath10k-smallbuffers ath10k-firmware-qca9887 panel-ap-setup
+        PACKAGES:=uboot-envtools kmod-ath10k-ct-smallbuffers ath10k-firmware-qca9887-ct-full-htt panel-ap-setup
 endef
 
 define Profile/XINXANG-X-WAP750/Description
