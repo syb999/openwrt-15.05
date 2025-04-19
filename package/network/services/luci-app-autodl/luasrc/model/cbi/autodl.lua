@@ -6,6 +6,40 @@ s = m:section(TypedSection, "autodl", "", translate("Assistant for automatic dow
 s.anonymous = true
 s.addremove = false
 
+s:tab("basic", translate("Basic Setting for Video"))
+
+url=s:taboption("basic", Value, "url", translate("Video URL"))
+url.rmempty = true
+url.datatype = "string"
+url.placeholder = "https://www.qdm88.com/dongman/1548.html"
+url.default = "https://www.qdm88.com/dongman/1548.html"
+url.description = translate("require: pip install pycryptodome")
+
+path=s:taboption("basic", Value, "path", translate("Download Videos directory"))
+path.datatype = "string"
+path.default = "/mnt/sda3/videos"
+path.rmempty = false
+path.description = translate("Please enter a valid directory")
+
+name=s:taboption("basic", Value, "name", translate("Videos Name"))
+name.datatype = "string"
+name.default = "凡人修仙传"
+name.rmempty = false
+name.description = translate("Videos from www.qdm88.com")
+
+startnum=s:taboption("basic", Value, "startnum", translate("Start number of video files"))
+startnum.datatype = "string"
+startnum.default = "1"
+startnum.rmempty = false
+startnum.description = translate("Please enter a valid number")
+
+endnum=s:taboption("basic", Value, "endnum", translate("End number of video files"))
+endnum.datatype = "string"
+endnum.default = "1"
+endnum.rmempty = false
+endnum.description = translate("Please enter a valid number")
+
+
 s:tab("basic2", translate("Basic Setting for Audio"))
 
 xmlyurl=s:taboption("basic2", Value, "xmlyurl", translate("Audios URL"))
@@ -172,6 +206,14 @@ docinpath.default = "/mnt/sda3/docs"
 docinpath.rmempty = false
 docinpath.description = translate("Please enter a valid directory")
 
+
+s:tab("autodl1", translate("Videos Download Page"))
+au1 = s:taboption("autodl1", Button, "_autodl1", translate("One-click download"))
+au1.inputstyle = "apply"
+au1.description = translate("Download from https://www.qdm88.com")
+function au1.write(self, section)
+    luci.util.exec("/usr/autodl/qdm88.sh >/dev/null 2>&1 &")
+end
 
 s:tab("audioxmly", translate("Download Audio from https://www.ximalaya.com"))
 au3 = s:taboption("audioxmly", Button, "_audioxmly", translate("One-click download"))

@@ -4,6 +4,33 @@ msgstr "Content-Type: text/plain; charset=UTF-8\n"
 msgid "Assistant for automatic download"
 msgstr "自动下载助手"
 
+msgid "Basic Setting for Video"
+msgstr "视频基本设置"
+
+msgid "Video URL"
+msgstr "视频节目URL地址"
+
+msgid "require: pip install pycryptodome"
+msgstr "需要python3环境及pycryptodome库"
+
+msgid "Download Videos directory"
+msgstr "视频节目下载目录"
+
+msgid "Videos Name"
+msgstr "视频节目的名称"
+
+msgid "Start number of video files"
+msgstr "起始集数"
+
+msgid "End number of video files"
+msgstr "结束集数"
+
+msgid "Videos Download Page"
+msgstr "视频下载页面"
+
+msgid "Download from https://www.qdm88.com"
+msgstr "趣动漫下载页面"
+
 msgid "Basic Setting for Audio"
 msgstr "音频基本设置"
 
