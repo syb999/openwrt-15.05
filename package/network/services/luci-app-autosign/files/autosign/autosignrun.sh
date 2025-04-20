@@ -16,8 +16,13 @@ function test_addday() {
 }
 
 function sync_year() {
-	ntpd -p ntp.aliyun.com
-	sleep 3 
+	ping -c2 -W 1 223.5.5.5 >/dev/null 2>&1
+
+	if [ $? -eq 0 ];then
+		ntpd -p ntp.aliyun.com
+		sleep 3 
+	fi
+
 	sign_year="$(uci get autosign.@autosign[0].tianapidate)"
 	real_year="$(date +%Y)"
 
@@ -27,6 +32,7 @@ function sync_year() {
 		uci set autosign.@autosign[0].tianapidate=${real_year}
 		uci commit autosign
 	fi
+
 }
 
 sync_year
@@ -39,10 +45,14 @@ addday="off"
 test_addday
 
 if [ "${D31}" = "$(date +%m%d)" ];then
-	/usr/autosign/autosigngetdays.sh
-	sleep 10
-	/usr/autosign/autosigngetwkddays.sh
-	sleep 12
+	ping -c2 -W 1 223.5.5.5 >/dev/null 2>&1
+
+	if [ $? -eq 0 ];then
+		/usr/autosign/autosigngetdays.sh
+		sleep 10
+		/usr/autosign/autosigngetwkddays.sh
+		sleep 12
+	fi
 
 	if [ "${addday}" = "on" ];then
 		sed -i "s/^/${today} /" /etc/autosignvacationlist
