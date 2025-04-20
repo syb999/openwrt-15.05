@@ -421,6 +421,7 @@ platform_check_image() {
 		return 1
 		;;
 
+	nap-3600-p | \
 	k2t)
 		[ "$magic_long" != "27051956" ] && {
 			echo "Invalid image type."
@@ -431,7 +432,6 @@ platform_check_image() {
 		;;
 
 	h3c-wtu430h | \
-	nap-3600-p | \
 	csac)
 		[ "$magic_long" != "68737173" -a "$magic_long" != "19852003" ] && {
 			echo "Invalid image type."
