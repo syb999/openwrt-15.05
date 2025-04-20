@@ -13,7 +13,7 @@ tianapikey.description = translate("tianapi vacation days key(from https://www.t
 
 tianapidate=s:taboption("autosign", Value, "tianapidate", translate("date"))
 tianapidate.datatype = "string"
-tianapidate.default="2022"
+tianapidate.default="2025"
 tianapidate.description = translate("What year's vacation days")
 
 workhour=s:taboption("autosign", Value, "workhour", translate("hour"))
