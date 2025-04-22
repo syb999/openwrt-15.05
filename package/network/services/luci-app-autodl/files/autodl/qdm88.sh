@@ -7,6 +7,7 @@ autodlendnum="$(uci get autodl.@autodl[0].endnum)"
 
 if [ ! -d "$autodlgetpath/$autodlgetname" ]; then
 	mkdir -p "$autodlgetpath/$autodlgetname"
+	chmod 777 -R "$autodlgetpath/$autodlgetname"
 fi
 
 v_url="$(uci get autodl.@autodl[0].url)"
