@@ -30,6 +30,8 @@ for i in $(seq ${start_num} ${end_num});do
 
 	decrypto_url="$(python3 /usr/autodl/qdm88.py -e "${bt_url}" -i "${bt_token}")"
 	if [ "$i" -lt 10 ];then
+		num_v=00$i
+	elif [ "$i" -lt 100 ];then
 		num_v=0$i
 	else
 		num_v=$i
