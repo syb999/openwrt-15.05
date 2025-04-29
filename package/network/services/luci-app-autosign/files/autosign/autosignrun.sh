@@ -16,7 +16,7 @@ function test_addday() {
 }
 
 function sync_year() {
-	ping -c2 -W 1 223.5.5.5 >/dev/null 2>&1
+	ping -c1 -W 1 223.5.5.5 >/dev/null 2>&1
 
 	if [ $? -eq 0 ];then
 		ntpd -p ntp.aliyun.com
@@ -45,7 +45,7 @@ addday="off"
 test_addday
 
 if [ "${D31}" = "$(date +%m%d)" ];then
-	ping -c2 -W 1 223.5.5.5 >/dev/null 2>&1
+	ping -c1 -W 1 223.5.5.5 >/dev/null 2>&1
 
 	if [ $? -eq 0 ];then
 		/usr/autosign/autosigngetdays.sh
@@ -57,6 +57,12 @@ if [ "${D31}" = "$(date +%m%d)" ];then
 	if [ "${addday}" = "on" ];then
 		sed -i "s/^/${today} /" /etc/autosignvacationlist
 	fi
+fi
+
+if [ ! -z "$(logread | grep "time disparity of")" ];then
+	/etc/init.d/log restart
+	logger -t luci-app-autosign " Invalid time detected. Refresh log. "
+	exit 0
 fi
 
 for i in $holidaylist;
