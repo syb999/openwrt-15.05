@@ -62,6 +62,10 @@ fi
 if [ ! -z "$(logread | grep "time disparity of")" ];then
 	/etc/init.d/log restart
 	logger -t luci-app-autosign " Invalid time detected. Refresh log. "
+	/usr/autosign/autosigngetdays.sh
+	sleep 10
+	/usr/autosign/autosigngetwkddays.sh
+	sleep 12
 	exit 0
 fi
 
