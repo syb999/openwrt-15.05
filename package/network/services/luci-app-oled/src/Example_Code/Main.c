@@ -41,27 +41,28 @@ int main(int argc, char* argv[])
 {
     int date=atoi(argv[1]);
     int lanip=atoi(argv[2]);
-    int cputemp=atoi(argv[3]);
-    int cpufreq=atoi(argv[4]);
-    int netspeed=atoi(argv[5]);
-    int time=atoi(argv[6]);
-    int drawline=atoi(argv[7]);
-    int drawrect=atoi(argv[8]);
-    int fillrect=atoi(argv[9]);
-    int drawcircle=atoi(argv[10]);
-    int drawroundcircle=atoi(argv[11]);
-    int fillroundcircle=atoi(argv[12]);
-    int drawtriangle=atoi(argv[13]);
-    int filltriangle=atoi(argv[14]);
-    int displaybitmap=atoi(argv[15]);
-    int displayinvertnormal=atoi(argv[16]);
-    int drawbitmapeg=atoi(argv[17]);
-    int scroll=atoi(argv[18]);
-    char *text=argv[19];
-    char *eth=argv[20];
-    char *path=argv[21];
-    int rotate=atoi(argv[22]);
-    int needinit=atoi(argv[23]);
+    int wanip=atoi(argv[3]);
+    int cputemp=atoi(argv[4]);
+    int cpufreq=atoi(argv[5]);
+    int netspeed=atoi(argv[6]);
+    int time=atoi(argv[7]);
+    int drawline=atoi(argv[8]);
+    int drawrect=atoi(argv[9]);
+    int fillrect=atoi(argv[10]);
+    int drawcircle=atoi(argv[11]);
+    int drawroundcircle=atoi(argv[12]);
+    int fillroundcircle=atoi(argv[13]);
+    int drawtriangle=atoi(argv[14]);
+    int filltriangle=atoi(argv[15]);
+    int displaybitmap=atoi(argv[16]);
+    int displayinvertnormal=atoi(argv[17]);
+    int drawbitmapeg=atoi(argv[18]);
+    int scroll=atoi(argv[19]);
+    char *text=argv[20];
+    char *eth=argv[21];
+    char *path=argv[22];
+    int rotate=atoi(argv[23]);
+    int needinit=atoi(argv[24]);
 
     if(path == NULL)
         path = I2C_DEV0_PATH;
@@ -193,7 +194,7 @@ int main(int argc, char* argv[])
         setTextColor(WHITE);
 
         // info display
-        int sum = date+lanip+cpufreq+cputemp+netspeed;
+        int sum = date+lanip+wanip+cpufreq+cputemp+netspeed;
         if (sum == 0) {
             clearDisplay();
             return 0;
@@ -203,6 +204,7 @@ int main(int argc, char* argv[])
             if (sum == 1){//only one item for display
                 if (date) testdate(CENTER, 8);
                 if (lanip) testlanip(CENTER, 8);
+                if (wanip) testwanip(CENTER, 8);
                 if (cpufreq) testcpufreq(CENTER, 8);
                 if (cputemp) testcputemp(CENTER, 8);
                 if (netspeed) testnetspeed(SPLIT,0);
@@ -212,22 +214,25 @@ int main(int argc, char* argv[])
             }else if (sum == 2){//two items for display
                 if(date) {testdate(CENTER, 16*(date-1));}
                     if(lanip) {testlanip(CENTER, 16*(date+lanip-1));}
-                    if(cpufreq) {testcpufreq(CENTER, 16*(date+lanip+cpufreq-1));}
-                    if(cputemp) {testcputemp(CENTER, 16*(date+lanip+cpufreq+cputemp-1));}
-                    if(netspeed) {testnetspeed(MERGE, 16*(date+lanip+cpufreq+cputemp+netspeed-1));}
+                    if(wanip) {testwanip(CENTER, 16*(date+wanip-1));}
+                    if(cpufreq) {testcpufreq(CENTER, 16*(date+lanip+wanip+cpufreq-1));}
+                    if(cputemp) {testcputemp(CENTER, 16*(date+lanip+wanip+cpufreq+cputemp-1));}
+                    if(netspeed) {testnetspeed(MERGE, 16*(date+lanip+wanip+cpufreq+cputemp+netspeed-1));}
                 Display();
                 usleep(1000000);
                 clearDisplay();
             }else{//more than two items for display
                 if(date) {testdate(FULL, 8*(date-1));}
-                if(lanip) {testlanip(FULL, 8*(date+lanip-1));}
+                if(lanip) {testlanip(FULL, 8*(date+lanip-1));
+                }else if (wanip) {testwanip(FULL, 8*(date+wanip-1));}
+                if(lanip && wanip) {testwanip(FULL, 8*(date+lanip+wanip-1));}
                 if(cpufreq && cputemp) {
-                    testcpu(8*(date+lanip));
-                    if(netspeed) {testnetspeed(FULL, 8*(date+lanip+1+netspeed-1));}
+                    testcpu(8*(date+lanip+wanip));
+                    if(netspeed) {testnetspeed(FULL, 8*(date+lanip+wanip+1+netspeed-1));}
                 }else{
-                    if(cpufreq) {testcpufreq(FULL, 8*(date+lanip+cpufreq-1));}
-                    if(cputemp) {testcputemp(FULL, 8*(date+lanip+cpufreq+cputemp-1));}
-                    if(netspeed) {testnetspeed(FULL, 8*(date+lanip+cpufreq+cputemp+netspeed-1));}
+                    if(cpufreq) {testcpufreq(FULL, 8*(date+lanip+wanip+cpufreq-1));}
+                    if(cputemp) {testcputemp(FULL, 8*(date+lanip+wanip+cpufreq+cputemp-1));}
+                    if(netspeed) {testnetspeed(FULL, 8*(date+lanip+wanip+cpufreq+cputemp+netspeed-1));}
                 }
                 Display();
                 usleep(1000000);

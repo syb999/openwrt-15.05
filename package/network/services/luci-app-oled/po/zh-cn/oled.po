@@ -3,10 +3,10 @@ msgstr "Content-Type: text/plain; charset=UTF-8\n"
 
 #: ../../package/new/luci-app-oled/luasrc/model/cbi/oled/setting.lua:1
 msgid ""
-"A LuCI app that helps you config your oled display (SSD1306, 0.91', 128X32) "
+"A LuCI app that helps you config your oled display (SSD1306, 0.91', 128X32/128X64) "
 "with screensavers! <br /> <br /> Any issues, please go to:"
 msgstr ""
-"这是一款支持在ssd1306，0.91寸，128x32像素的oled显示屏上显示你要的信息，包含屏"
+"这是一款支持在ssd1306，0.91寸，128x32像素或128x64像素的oled显示屏上显示你要的信息，包含屏"
 "保的程序。<br /> <br />任何问题请到："
 
 #: ../../package/new/luci-app-oled/luasrc/model/cbi/oled/setting.lua:24
@@ -121,7 +121,10 @@ msgstr "反转"
 
 #: ../../package/new/luci-app-oled/luasrc/model/cbi/oled/setting.lua:20
 msgid "LAN IP address"
-msgstr "LAN 地址"
+msgstr "LAN口地址"
+
+msgid "WAN IP address"
+msgstr "WAN口地址"
 
 #: ../../package/new/luci-app-oled/luasrc/view/oled/status.htm:10
 msgid "NOT RUNNING"

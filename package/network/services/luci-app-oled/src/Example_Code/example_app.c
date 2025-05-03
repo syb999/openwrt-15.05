@@ -58,6 +58,7 @@ SOFTWARE.
 #define FREQPATH "cat /sys/devices/system/cpu/cpu[04]/cpufreq/cpuinfo_cur_freq"
 //ip
 #define IPPATH "ifconfig br-lan|grep 'inet addr:'|cut -d: -f2|awk '{print $1}'"
+#define IPWAN "(ifconfig wan 2>/dev/null || ifconfig br-wan 2>/dev/null) | grep 'inet addr:'|cut -d: -f2|awk '{print $1}'"
 #define IPSIZE 20
 //netspeed
 #define NETPATH "cat /tmp/netspeed"
@@ -445,7 +446,32 @@ void testlanip(int mode, int y)
             break;
         case FULL:
             setTextSize(1);
-            sprintf(buf,"IP:%s",content_buff);
+            sprintf(buf,"LAN:%s",content_buff);
+            setCursor(display_offset, y);
+            break;
+        }
+        print_strln(buf);
+    }
+}
+
+void testwanip(int mode, int y)
+{
+    setTextSize(1);
+    if((fp=popen(IPWAN,"r"))!=NULL)
+    {
+        fscanf(fp,"%s",content_buff);
+        fclose(fp);
+        //ipbuff[strlen(ipbuff)-1]=32;
+        switch(mode)
+        {
+        case CENTER:
+            setTextSize(1);
+            sprintf(buf,"%s",content_buff);
+            setCursor((127-strlen(buf)*6)/2, y+4);
+            break;
+        case FULL:
+            setTextSize(1);
+            sprintf(buf,"WAN:%s",content_buff);
             setCursor(display_offset, y);
             break;
         }
@@ -615,7 +641,17 @@ void testprintinfo()
         fscanf(fp,"%s",content_buff);
         fclose(fp);
         //ipbuff[strlen(ipbuff)-1]=32;
-        sprintf(buf,"IP:%s",content_buff);
+        sprintf(buf,"LAN:%s",content_buff);
+        print_strln(buf);
+    }
+
+    //wan ip
+    if((fp=popen(IPWAN,"r"))!=NULL)
+    {
+        fscanf(fp,"%s",content_buff);
+        fclose(fp);
+        //ipbuff[strlen(ipbuff)-1]=32;
+        sprintf(buf,"WAN:%s",content_buff);
         print_strln(buf);
     }
 

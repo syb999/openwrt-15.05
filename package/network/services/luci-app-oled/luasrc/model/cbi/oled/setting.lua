@@ -1,4 +1,4 @@
-m = Map("oled", translate("OLED"), translate("A LuCI app that helps you config your oled display (SSD1306, 0.91', 128X32) with screensavers! <br /> <br /> Any issues, please go to: ")..[[<a href="https://github.com/natelol/luci-app-oled" target="_blank">luci-app-oled</a>]])
+m = Map("oled", translate("OLED"), translate("A LuCI app that helps you config your oled display (SSD1306, 0.91', 128X32/128X64) with screensavers! <br /> <br /> Any issues, please go to: ")..[[<a href="https://github.com/natelol/luci-app-oled" target="_blank">luci-app-oled</a>]])
 
 --m.chain("luci")
 
@@ -38,7 +38,9 @@ to.default=1440
 --informtion  options----
 o = s:taboption("info", Flag, "date", translate("Date"), translate('Format YYYY-MM-DD HH:MM:SS'))
 o.default=0
-o = s:taboption("info", Flag, "lanip", translate("IP"), translate("LAN IP address"))
+o = s:taboption("info", Flag, "lanip", translate("LAN IP"), translate("LAN IP address"))
+o.default=0
+o = s:taboption("info", Flag, "wanip", translate("WAN IP"), translate("WAN IP address"))
 o.default=0
 o = s:taboption("info", Flag, "cputemp", translate("CPU temperature"))
 o.default=0

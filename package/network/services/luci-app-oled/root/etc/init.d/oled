@@ -39,6 +39,7 @@ start() {
 
 	date=$(uci get oled.@oled[0].date)
 	lanip=$(uci get oled.@oled[0].lanip)
+	wanip=$(uci get oled.@oled[0].wanip)
 	cputemp=$(uci get oled.@oled[0].cputemp)
 	cpufreq=$(uci get oled.@oled[0].cpufreq)
 	netspeed=$(uci get oled.@oled[0].netspeed)
@@ -66,7 +67,7 @@ start() {
 		kill -9 $(pgrep -f /usr/sbin/netspeed)
 		rm -f /tmp/netspeed
 	fi
-	nohup ${PROG} ${date} ${lanip} ${cputemp} ${cpufreq} ${netspeed} ${time} ${drawline} ${drawrect} ${fillrect} ${drawcircle} ${drawroundrect} ${fillroundrect} ${drawtriangle} ${filltriangle} ${displaybitmap} ${displayinvertnormal}  ${drawbitmapeg} ${scroll} "${text}" "${netsource}" "${path}" ${rotate} 1 > /dev/null 2>&1 &
+	nohup ${PROG} ${date} ${lanip} ${wanip} ${cputemp} ${cpufreq} ${netspeed} ${time} ${drawline} ${drawrect} ${fillrect} ${drawcircle} ${drawroundrect} ${fillroundrect} ${drawtriangle} ${filltriangle} ${displaybitmap} ${displayinvertnormal}  ${drawbitmapeg} ${scroll} "${text}" "${netsource}" "${path}" ${rotate} 1 > /dev/null 2>&1 &
 }
 
 restart() {
@@ -91,6 +92,7 @@ restart() {
 
 			date=$(uci get oled.@oled[0].date)
 			lanip=$(uci get oled.@oled[0].lanip)
+			wanip=$(uci get oled.@oled[0].wanip)
 			cputemp=$(uci get oled.@oled[0].cputemp)
 			cpufreq=$(uci get oled.@oled[0].cpufreq)
 			netspeed=$(uci get oled.@oled[0].netspeed)
@@ -121,7 +123,7 @@ restart() {
 				kill -9 $(pgrep -f /usr/sbin/netspeed)
 				rm -f /tmp/netspeed
 			fi
-			nohup ${PROG} ${date} ${lanip} ${cputemp} ${cpufreq} ${netspeed} ${time} ${drawline} ${drawrect} ${fillrect} ${drawcircle} ${drawroundrect} ${fillroundrect} ${drawtriangle} ${filltriangle} ${displaybitmap} ${displayinvertnormal}  ${drawbitmapeg} ${scroll} "${text}" "${netsource}" "${path}" ${rotate} 0 > /dev/null 2>&1 &
+			nohup ${PROG} ${date} ${lanip} ${wanip} ${cputemp} ${cpufreq} ${netspeed} ${time} ${drawline} ${drawrect} ${fillrect} ${drawcircle} ${drawroundrect} ${fillroundrect} ${drawtriangle} ${filltriangle} ${displaybitmap} ${displayinvertnormal}  ${drawbitmapeg} ${scroll} "${text}" "${netsource}" "${path}" ${rotate} 0 > /dev/null 2>&1 &
 		else
 			stop
 		fi

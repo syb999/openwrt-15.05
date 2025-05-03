@@ -22,6 +22,7 @@ void deeplyembedded_credits();
 void testprintinfo();
 void testdate(int mode, int y);
 void testlanip(int mode, int y);
+void testwanip(int mode, int y);
 void testcpufreq(int mode, int y);
 void testcputemp(int mode, int y);
 void testnetspeed(int mode, int y);
