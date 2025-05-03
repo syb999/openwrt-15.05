@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 LUCI_Title:=LuCI support for ssd1306 oled display
-LUCI_DEPENDS:=+coreutils +coreutils-nohup +libuci
+LUCI_DEPENDS:=+coreutils +coreutils-nohup +libuci +kmod-i2c-core
 LUCI_PKGARCH:=all
 
 PKG_LICENSE:=GPLv3
