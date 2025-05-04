@@ -10,10 +10,6 @@
 		bootargs = "console=ttyS0,115200";
 	};
 
-	sdhci@1E130000 {
-		status = "okay";
-	};
-
 	palmbus@1E000000 {
 		spi@b00 {
 			status = "okay";
@@ -48,14 +44,13 @@
 			};
 		};
 
-		i2c@900 {
-			compatible = "ralink,i2c-mt7621";
-			reg = <0x900 0x100>;
+		i2c {
+			compatible = "i2c-gpio";
+			// <&gpio0 9> is gpio 9 (R65 right)(SDA), <&gpio1 11> is gpio 11(R59 right) (SCL)
+			gpios = <&gpio0 9 0>, <&gpio0 11 0>;
+			i2c-gpio,delay-us = <5>;
 			#address-cells = <1>;
 			#size-cells = <0>;
-			pinctrl-names = "default";
-			pinctrl-0 = <&i2c_pins>;
-			status = "okay";
 		};
 	};
 
@@ -120,7 +115,7 @@
 	pinctrl {
 		state_default: pinctrl0 {
 			gpio {
-				ralink,group = "uart2", "uart3", "wdt";
+				ralink,group = "uart2", "uart3", "wdt", "i2c";
 				ralink,function = "gpio";
 			};
 		};
