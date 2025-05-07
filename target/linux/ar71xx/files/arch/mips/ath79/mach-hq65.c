@@ -1,6 +1,7 @@
 #include <linux/i2c.h>
 #include <linux/i2c-gpio.h>
 #include <linux/platform_device.h>
+#include <linux/rtc/ds1307.h>
 
 #include <linux/gpio.h>
 #include <linux/pci.h>
@@ -96,6 +97,12 @@ static struct gpio_keys_button hq65_gpio_keys[] __initdata = {
     },
 };
 
+static struct i2c_board_info hq65_i2c_rtc_info[] __initdata = {
+    {
+       I2C_BOARD_INFO("ds1307", 0x68),
+    },
+};
+
 static void __init hq65_setup(void)
 {
     u8 *art = (u8 *) KSEG1ADDR(0x1fff0000);
@@ -133,6 +140,8 @@ static void __init hq65_setup(void)
     ath79_register_wmac(art + HQ65_WMAC_CALDATA_OFFSET, tmpmac);
 
     platform_device_register(&hq65_i2c_gpio_device);
+
+    i2c_register_board_info(0, hq65_i2c_rtc_info, ARRAY_SIZE(hq65_i2c_rtc_info));
 
     /* enable usb */
     ath79_register_usb();
