@@ -327,6 +327,9 @@ ar71xx_board_detect() {
 	*"100mshBOX HQ65")
 		name="hq65"
 		;;
+	*"100mshBOX HQ65 DS1307")
+		name="hq65-ds1307"
+		;;
 	*"AC1750DB")
 		name="f9k1115v2"
 		;;

@@ -27,11 +27,14 @@ ifdef CONFIG_TARGET_ramips_mt7628_WNA4320V2
 	$(INSTALL_DIR) $(1)/etc/rc.button
 	$(INSTALL_BIN) ./files/button/wna4320v2 $(1)/etc/rc.button/wps
 endif
-ifdef CONFIG_TARGET_ar71xx_generic_HQ65
+ifdef CONFIG_TARGET_ar71xx_generic_100mshBOX-HQ65
 	$(INSTALL_DIR) $(1)/etc/rc.button
 	$(INSTALL_BIN) ./files/button/100msh $(1)/etc/rc.button/BTN_1
 endif
-
+ifdef CONFIG_TARGET_ar71xx_generic_100mshBOX-HQ65-RTC-DS1307
+	$(INSTALL_DIR) $(1)/etc/rc.button
+	$(INSTALL_BIN) ./files/button/100msh $(1)/etc/rc.button/BTN_1
+endif
 
 endef
 

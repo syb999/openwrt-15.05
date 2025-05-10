@@ -155,13 +155,21 @@ define Device/H3C-WTU430H
 endef
 TARGET_DEVICES += H3C-WTU430H
 
-define Device/hq65
-  BOARDNAME = HQ65
+define Device/100mshBOX-HQ65
+  BOARDNAME = 100mshBOX-HQ65
   IMAGE_SIZE = 16000k
   CONSOLE = ttyS0,115200
   MTDPARTS = spi0.0:256k(u-boot)ro,64k(u-boot-env),16000k(firmware),64k(art)ro
 endef
-TARGET_DEVICES += hq65
+TARGET_DEVICES += 100mshBOX-HQ65
+
+define Device/100mshBOX-HQ65-RTC-DS1307
+  BOARDNAME = 100mshBOX-HQ65-RTC-DS1307
+  IMAGE_SIZE = 16000k
+  CONSOLE = ttyS0,115200
+  MTDPARTS = spi0.0:256k(u-boot)ro,64k(u-boot-env),16000k(firmware),64k(art)ro
+endef
+TARGET_DEVICES += 100mshBOX-HQ65-RTC-DS1307
 
 define Device/K2T
   BOARDNAME = K2T

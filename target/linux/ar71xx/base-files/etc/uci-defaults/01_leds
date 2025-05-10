@@ -286,6 +286,7 @@ h3c-wtu430h)
 	ucidef_set_led_wlan "wlan" "WLAN" "wtu430h:orange:wlan" "phy0tpt"
 	;;
 
+hq65-ds1307 | \
 hq65)
 	ucidef_set_led_netdev "wan" "WAN" "hq65:green:wan" "eth0"
 	ucidef_set_led_wlan "wlan" "WLAN" "hq65:green:wlan" "phy0tpt"

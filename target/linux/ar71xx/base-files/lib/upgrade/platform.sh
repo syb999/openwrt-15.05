@@ -227,6 +227,7 @@ platform_check_image() {
 	hiwifi-hc6361 | \
 	hornet-ub-x2 | \
 	hq65 | \
+	hq65-ds1307 | \
 	mzk-w04nu | \
 	mzk-w300nh | \
 	tew-632brp | \

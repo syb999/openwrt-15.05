@@ -53,6 +53,7 @@ h3c-wtu430h)
 	ucidef_add_switch_vlan "switch0" "2" "0t 1"
 	;;
 
+hq65-ds1307 | \
 hq65)
 	ucidef_set_interfaces_lan_wan "eth1" "eth0"
 	;;
