@@ -2,12 +2,10 @@
 START=99
 STOP=99
 
-sleep 10
-
 PROG=/usr/bin/oled
 
 stop() {
-	kill -2 $(pgrep /usr/bin/oled)
+	kill -9 $(busybox ps | grep '/usr/bin/oled')
 	kill -9 $(pgrep -f /usr/sbin/netspeed)
 	echo "oled exit..."
 }
@@ -32,11 +30,6 @@ start() {
 			stop
 			exit 0
 		fi
-	fi
-
-	#crontab daemon
-	if ! grep "/etc/init.d/oled \+restart" /etc/crontabs/root >/dev/null 2>&1; then
-		echo "*/5 * * * * /etc/init.d/oled restart >/dev/null 2>&1" >> /etc/crontabs/root
 	fi
 
 	date=$(uci get oled.@oled[0].date)
@@ -116,7 +109,7 @@ restart() {
 			netsource=$(uci get oled.@oled[0].netsource)
 			path=$(uci get oled.@oled[0].path)
 
-			kill -9 $(pgrep /usr/bin/oled)
+			kill -9 $(busybox ps | grep '/usr/bin/oled')
 			kill -9 $(pgrep -f /usr/sbin/netspeed)
 
 			if [ ${netspeed} -eq 1 ]; then

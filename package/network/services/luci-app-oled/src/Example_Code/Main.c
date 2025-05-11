@@ -12,29 +12,90 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <signal.h>
+#include <signal.h>
+#include <syslog.h>
+#include <dirent.h>
 
 /* Header Files */
 #include "I2C.h"
 #include "SSD1306_OLED.h"
 #include "example_app.h"
 
+#define MAX_FD_THRESHOLD 50
+#define MEMORY_THRESHOLD (50*1024)
+#define WATCHDOG_INTERVAL 600
+
 /* Oh Compiler-Please leave me as is */
 volatile unsigned char flag = 0;
+volatile sig_atomic_t running = 1;
+int watchdog_counter = 0;
+
+void monitor_resources(void);
+int safe_atoi(const char *str, int *value);
+long get_memory_usage(void);
+void safe_cleanup(void);
 
 /* Alarm Signal Handler */
-void ALARMhandler(int sig)
-{
-    /* Set flag */
-    flag = 5;
+void signal_handler(int sig) {
+    static volatile sig_atomic_t exiting = 0;
+    if(exiting++) return;
+    
+    if(sig == SIGALRM) {
+        flag = 5;
+    } else {
+        running = 0;
+    }
 }
 
-void BreakDeal(int sig)
-{
+
+void monitor_resources(void) {
+    DIR *dir = opendir("/proc/self/fd");
+    if(dir) {
+        size_t count = 0;
+        while(readdir(dir)) count++;
+        closedir(dir);
+    }
+    
+    long mem_used = get_memory_usage();
+}
+
+int safe_atoi(const char *str, int *value) {
+    char *endptr;
+    long val = strtol(str, &endptr, 10);
+    if (*endptr != '\0' || val < 0 || val > (long)INT_MAX) {
+        return -1;
+    }
+    *value = (int)val;
+    return 0;
+}
+ 
+long get_memory_usage(void) {
+    FILE* fp = fopen("/proc/self/status", "r");
+    if(!fp) return -1;
+    
+    long mem = -1;
+    char line[128];
+    
+    while(fgets(line, sizeof(line), fp)) {
+        if(strncmp(line, "VmRSS:", 6) == 0) {
+            sscanf(line+6, "%ld", &mem);
+            break;
+        }
+    }
+    
+    fclose(fp);
+    return mem;
+}
+
+void safe_cleanup(void) {
     clearDisplay();
-    usleep(1000000);
     Display();
-    exit(0);
+    #ifdef I2C_CLEANUP
+    i2c_cleanup();
+    #endif
+    closelog();
 }
 
 int main(int argc, char* argv[])
@@ -64,6 +125,9 @@ int main(int argc, char* argv[])
     int rotate=atoi(argv[23]);
     int needinit=atoi(argv[24]);
 
+    static unsigned long last_reset = 0;
+    const unsigned long reset_interval = 60000;
+
     if(path == NULL)
         path = I2C_DEV0_PATH;
 
@@ -79,9 +143,11 @@ int main(int argc, char* argv[])
     }
 
     /* Register the Alarm Handler */
-    signal(SIGALRM, ALARMhandler);
-    signal(SIGINT, BreakDeal);
-    //signal(SIGTERM, BreakDeal);
+    signal(SIGALRM, signal_handler);
+    signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
+    signal(SIGSEGV, signal_handler);
+    signal(SIGPIPE, SIG_IGN);
 
     /* Run SDD1306 Initialization Sequence */
     if (needinit==1)
@@ -102,7 +168,8 @@ int main(int argc, char* argv[])
 //    clearDisplay();
 
     // draw many lines
-    while(1){
+    while(running){
+        monitor_resources();
         if(scroll){
             testscrolltext(text);
             usleep(1000000);
@@ -239,5 +306,15 @@ int main(int argc, char* argv[])
                 clearDisplay();
             }
         }
+
+        if(++watchdog_counter > WATCHDOG_INTERVAL) {
+            watchdog_counter = 0;
+            if(get_memory_usage() > MEMORY_THRESHOLD) {
+                running = 0;
+            }
+        }
     }
+
+    safe_cleanup();
+    return EXIT_SUCCESS;
 }

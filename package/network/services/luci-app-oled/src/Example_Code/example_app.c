@@ -100,13 +100,13 @@ void testdrawline()
     {
         drawLine(0, 0, i, SSD1306_LCDHEIGHT-1, WHITE);
         Display();
-        usleep(1000);
+        usleep(100000);
     }
     for (i=0; i<SSD1306_LCDHEIGHT; i+=4)
     {
         drawLine(0, 0, SSD1306_LCDWIDTH-1, i, WHITE);
         Display();
-        usleep(1000);
+        usleep(100000);
     }
     usleep(250000);
 
@@ -115,13 +115,13 @@ void testdrawline()
     {
         drawLine(0, SSD1306_LCDHEIGHT-1, i, 0, WHITE);
         Display();
-        usleep(1000);
+        usleep(100000);
     }
     for (i=SSD1306_LCDHEIGHT-1; i>=0; i-=4)
     {
         drawLine(0, SSD1306_LCDHEIGHT-1, SSD1306_LCDWIDTH-1, i, WHITE);
         Display();
-        usleep(1000);
+        usleep(100000);
     }
     usleep(250000);
 
@@ -130,13 +130,13 @@ void testdrawline()
     {
         drawLine(SSD1306_LCDWIDTH-1, SSD1306_LCDHEIGHT-1, i, 0, WHITE);
         Display();
-        usleep(1000);
+        usleep(100000);
     }
     for (i=SSD1306_LCDHEIGHT-1; i>=0; i-=4)
     {
         drawLine(SSD1306_LCDWIDTH-1, SSD1306_LCDHEIGHT-1, 0, i, WHITE);
         Display();
-        usleep(1000);
+        usleep(100000);
     }
     usleep(250000);
 
@@ -145,12 +145,12 @@ void testdrawline()
     {
         drawLine(SSD1306_LCDWIDTH-1, 0, 0, i, WHITE);
         Display();
-        usleep(1000);
+        usleep(100000);
     }
     for (i=0; i<SSD1306_LCDWIDTH; i+=4) {
         drawLine(SSD1306_LCDWIDTH-1, 0, i, SSD1306_LCDHEIGHT-1, WHITE);
         Display();
-        usleep(1000);
+        usleep(100000);
     }
     usleep(250000);
 }
@@ -163,7 +163,7 @@ void testdrawrect()
     {
         drawRect(i, i,SSD1306_LCDWIDTH-2*i, SSD1306_LCDHEIGHT-2*i, WHITE);
         Display();
-        usleep(1000);
+        usleep(100000);
     }
 }
 
@@ -177,7 +177,7 @@ void testfillrect()
         // alternate colors
         fillRect(i, i, SSD1306_LCDWIDTH-i*2, SSD1306_LCDHEIGHT-i*2, color%2);
         Display();
-        usleep(1000);
+        usleep(100000);
         color++;
     }
 }
@@ -190,7 +190,7 @@ void testdrawcircle()
     {
         drawCircle(SSD1306_LCDWIDTH/2,SSD1306_LCDHEIGHT/2, i, WHITE);
         Display();
-        usleep(1000);
+        usleep(100000);
     }
 }
 
@@ -201,7 +201,7 @@ void testdrawroundrect()
     for (i=0; i<SSD1306_LCDHEIGHT/2-2; i+=2) {
         drawRoundRect(i, i,SSD1306_LCDWIDTH-2*i, SSD1306_LCDHEIGHT-2*i, SSD1306_LCDHEIGHT/4, WHITE);
         Display();
-        usleep(1000);
+        usleep(100000);
     }
 }
 
@@ -217,7 +217,7 @@ void testfillroundrect()
         else
             color = WHITE;
         Display();
-        usleep(1000);
+        usleep(100000);
     }
 }
 
@@ -231,7 +231,7 @@ void testdrawtriangle()
                      SSD1306_LCDWIDTH/2-i,SSD1306_LCDHEIGHT /2+i,
                      SSD1306_LCDWIDTH/2+i, SSD1306_LCDHEIGHT/2+i, WHITE);
         Display();
-        usleep(1000);
+        usleep(100000);
     }
 }
 
@@ -250,7 +250,7 @@ void testfilltriangle()
         else
             color = WHITE;
         Display();
-        usleep(1000);
+        usleep(100000);
     }
 }
 
@@ -271,7 +271,7 @@ void testdrawchar()
             println();
     }
     Display();
-    usleep(1000);
+    usleep(100000);
 }
 
 /* Display "scroll" and scroll around */
@@ -283,7 +283,7 @@ void testscrolltext(char* str)
     sprintf(buf,"%s",str);
     print_strln(buf);
     Display();
-    usleep(1000);
+    usleep(100000);
     startscrollright(0x00, 0x0F);
     usleep(5000000);
     stopscroll();

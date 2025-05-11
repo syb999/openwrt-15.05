@@ -35,6 +35,7 @@ SOFTWARE.
 #include <string.h>
 #include <stdint.h>
 #include <math.h>
+#include <unistd.h> 
 #include "I2C.h"
 #include "SSD1306_OLED.h"
 #include "gfxfont.h"
@@ -48,6 +49,9 @@ SOFTWARE.
 #define pgm_read_word(addr) (*(const unsigned long *)(addr))
 #define pgm_read_dword(addr) (*(const unsigned long *)(addr))
 #define pgm_read_pointer(addr) ((void *)pgm_read_word(addr))
+
+#define MAX_RETRIES 3
+#define RETRY_DELAY 1000
 
 /* static Variables */
 static unsigned char _rotation = 0,textsize = 0;
@@ -809,16 +813,24 @@ void transfer()
     for (loop_1 = 0; loop_1 < 1024; loop_1++)
     {
         chunk[0] = 0x40;
-        for(loop_2 = 1; loop_2 < 17; loop_2++)
+        for(loop_2 = 1; loop_2 < 17; loop_2++) {
             chunk[loop_2] = screen[index++];
-        if(i2c_multiple_writes(I2C_DEV_2.fd_i2c, 17, chunk) == 17)
-        {
+        }
+
+        int retries = MAX_RETRIES;
+        int write_result = 0;
+        while(retries--) {
+            write_result = i2c_multiple_writes(I2C_DEV_2.fd_i2c, 17, chunk);
+            if(write_result == 17) {
+                break;
+           }
+            usleep(RETRY_DELAY);
 #ifdef SSD1306_DBG
             printf("Chunk written to RAM - Completed\r\n");
 #endif
         }
-        else
-        {
+
+        if(write_result != 17) {
 #ifdef SSD1306_DBG
             printf("Chunk written to RAM - Failed\r\n");
 #endif
@@ -844,6 +856,7 @@ void Display()
 {
     Init_Col_PG_addrs(SSD1306_COL_START_ADDR,SSD1306_COL_END_ADDR,
                       SSD1306_PG_START_ADDR,SSD1306_PG_END_ADDR);
+    usleep(1000);
     transfer();
 }
 

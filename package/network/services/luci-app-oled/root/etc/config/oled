@@ -1,7 +1,7 @@
 config oled
 	option enable '0'
-	option cpufreq '1'
-	option cputemp '1'
+	option cpufreq '0'
+	option cputemp '0'
 	option drawline '0'
 	option drawrect '0'
 	option fillrect '0'

@@ -66,4 +66,6 @@ extern int i2c_write_register(int fd, unsigned char reg_addr_or_cntrl, unsigned 
 /* Exposed I2C-x Specific Functions */
 extern int init_i2c_dev(const char* i2c_path, unsigned char slave_address);
 
+void i2c_cleanup(void);
+
 #endif /* I2C_H_ */
