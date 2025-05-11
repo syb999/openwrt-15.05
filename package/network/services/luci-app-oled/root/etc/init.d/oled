@@ -1,6 +1,8 @@
 #!/bin/sh /etc/rc.common
-START=88
-STOP=88
+START=99
+STOP=99
+
+sleep 10
 
 PROG=/usr/bin/oled
 

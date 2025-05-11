@@ -1,4 +1,4 @@
-m = Map("oled", translate("OLED"), translate("A LuCI app that helps you config your oled display (SSD1306, 0.91', 128X32/128X64) with screensavers! <br /> <br /> Any issues, please go to: ")..[[<a href="https://github.com/natelol/luci-app-oled" target="_blank">luci-app-oled</a>]])
+m = Map("oled", translate("OLED"), translate("A LuCI app that helps you config your oled display (SSD1306/1315, 0.91', 128X32/128X64) with screensavers! <br /> <br /> Any issues, please go to: ")..[[<a href="https://github.com/natelol/luci-app-oled" target="_blank">luci-app-oled</a>]])
 
 --m.chain("luci")
 
