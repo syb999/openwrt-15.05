@@ -84,7 +84,7 @@ k2t)
 	;;
 
 kisslink-nb1210)
-	ucidef_set_interfaces_lan_wan "eth1" "eth0"
+	ucidef_set_interfaces_lan_wan "eth0.9" "eth0"
 	;;
 
 csac)
