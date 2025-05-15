@@ -103,15 +103,13 @@ define KernelPackage/sound-mt7620
 	CONFIG_SND_DMAENGINE_PCM \
 	CONFIG_SND_MT7620_SOC_I2S \
 	CONFIG_SND_SIMPLE_CARD \
-	CONFIG_SND_MT7620_SOC_WM8960 \
-	CONFIG_SND_SOC_UDA1334
+	CONFIG_SND_MT7620_SOC_WM8960
   FILES:= \
 	$(LINUX_DIR)/sound/soc/ralink/snd-soc-mt7620-i2s.ko \
 	$(LINUX_DIR)/sound/soc/generic/snd-soc-simple-card.ko \
 	$(LINUX_DIR)/sound/soc/ralink/snd-soc-mt7620-wm8960.ko \
-	$(LINUX_DIR)/sound/soc/codecs/snd-soc-wm8960.ko \
-	$(LINUX_DIR)/sound/soc/codecs/snd-soc-uda1334.ko
-  AUTOLOAD:=$(call AutoLoad,90,snd-soc-wm8960 snd-soc-uda1334 snd-soc-mt7620-i2s snd-soc-simple-card snd-soc-mt7620-wm8960)
+	$(LINUX_DIR)/sound/soc/codecs/snd-soc-wm8960.ko
+  AUTOLOAD:=$(call AutoLoad,90,snd-soc-wm8960 snd-soc-mt7620-i2s snd-soc-simple-card snd-soc-mt7620-wm8960)
   $(call AddDepends/sound)
 endef
 
