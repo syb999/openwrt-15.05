@@ -52,7 +52,6 @@ endef
 
 $(eval $(call KernelPackage,spi-vsc7385))
 
-
 define KernelPackage/sound-ap123-ak4430
   SUBMENU:=$(SOUND_MENU)
   TITLE:=ar71xx I2S Audio Driver
