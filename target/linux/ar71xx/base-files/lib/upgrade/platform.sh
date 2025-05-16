@@ -332,6 +332,7 @@ platform_check_image() {
 	fap-022wld | \
 	gl-inet | \
 	kisslink-nb1210 | \
+	kisslink-nb1210-i2s | \
 	ikuai-ap | \
 	mc-mac1200r | \
 	minibox-v1 |\

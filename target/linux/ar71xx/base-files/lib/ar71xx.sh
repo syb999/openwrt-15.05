@@ -533,6 +533,9 @@ ar71xx_board_detect() {
 	*"Keewifi Kisslink NB1210")
 		name="kisslink-nb1210"
 		;;
+	*"Keewifi Kisslink NB1210 I2S")
+		name="kisslink-nb1210-i2s"
+		;;
 	*"H3C WTU430H")
 		name="h3c-wtu430h"
 		;;

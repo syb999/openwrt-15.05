@@ -288,10 +288,11 @@ h3c-wtu430h)
 
 hq65-ds1307 | \
 hq65)
-	ucidef_set_led_netdev "wan" "WAN" "hq65:green:wan" "eth0"
-	ucidef_set_led_wlan "wlan" "WLAN" "hq65:green:wlan" "phy0tpt"
+	ucidef_set_led_netdev "wan" "WAN" "hq65:green:wan" "eth0" "0"
+	ucidef_set_led_wlan "wlan" "WLAN" "hq65:green:wlan" "phy0tpt" "0"
 	;;
 
+kisslink-nb1210-i2s | \
 kisslink-nb1210)
 	ucidef_set_led_netdev "wan" "WAN" "nb1210:green:wan" "eth0"
 	;;

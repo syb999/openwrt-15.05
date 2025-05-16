@@ -55,7 +55,7 @@ $(eval $(call KernelPackage,spi-vsc7385))
 define KernelPackage/sound-ap123-ak4430
   SUBMENU:=$(SOUND_MENU)
   TITLE:=ar71xx I2S Audio Driver
-  DEPENDS:=@AUDIO_SUPPORT @TARGET_ar71xx +kmod-sound-soc-core
+  DEPENDS:=@TARGET_ar71xx
   KCONFIG:= \
 	CONFIG_SND=y \
 	CONFIG_SND_ATH79_SOC_CODEC=y \
@@ -65,7 +65,6 @@ define KernelPackage/sound-ap123-ak4430
 	CONFIG_SND_SOC=y \
 	CONFIG_SND_SOC_AK4430=y \
 	CONFIG_SND_SOC_I2C_AND_SPI=y \
-	CONFIG_SND_TIMER=y \
 	CONFIG_SOUND=y \
 	CONFIG_ATH79_DEV_AUDIO=y \
 	CONFIG_SND_ATH79_SOC=y \

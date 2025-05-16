@@ -7,15 +7,15 @@
  *  by the Free Software Foundation.
  */
 
-#include <linux/i2c.h>
-#include <linux/i2c-gpio.h>
 #include <linux/gpio.h>
 #include <linux/platform_device.h>
+#include <linux/delay.h>
 
 #include <asm/mach-ath79/ath79.h>
 #include <asm/mach-ath79/ar71xx_regs.h>
 
 #include "common.h"
+#include "dev-audio.h"
 #include "dev-eth.h"
 #include "dev-gpio-buttons.h"
 #include "dev-leds-gpio.h"
@@ -24,9 +24,11 @@
 #include "dev-wmac.h"
 #include "machtypes.h"
 
+#define KISSLINK_NB1210_GPIO_I2S_SD		15
+#define KISSLINK_NB1210_GPIO_I2S_CLK	14
+#define KISSLINK_NB1210_GPIO_I2S_WS		17
 
-#define KISSLINK_NB1210_GPIO_I2C_SDA		15
-#define KISSLINK_NB1210_GPIO_I2C_SLC		14
+#define AUDIO_RELAY                 4  /* relay1*/
 
 #define KISSLINK_NB1210_GPIO_LED_GPIO_LED_WAN	18
 
@@ -47,17 +49,14 @@ static struct flash_platform_data kisslink_nb1210_flash_data = {
 	.part_probes	= kisslink_nb1210_part_probes,
 };
 
-static struct i2c_gpio_platform_data kisslink_nb1210_i2c_gpio_data = {
-	.sda_pin	= KISSLINK_NB1210_GPIO_I2C_SDA,
-	.scl_pin	= KISSLINK_NB1210_GPIO_I2C_SLC,
+static struct platform_device kisslink_nb1210_internal_codec = {
+	.name		= "ath79-internal-codec",
+	.id		= -1,
 };
 
-static struct platform_device kisslink_nb1210_i2c_gpio_device = {
-	.name		= "i2c-gpio",
-	.id		= 0,
-	.dev = {
-		.platform_data  = &kisslink_nb1210_i2c_gpio_data,
-	}
+static struct platform_device kisslink_nb1210_spdif_codec = {
+	.name		= "ak4430-codec",
+	.id		= -1,
 };
 
 static struct gpio_led kisslink_nb1210_leds_gpio[] __initdata = {
@@ -78,6 +77,42 @@ static struct gpio_keys_button kisslink_nb1210_gpio_keys[] __initdata = {
 		.active_low	= 1,
 	}
 };
+
+static void __init kisslink_nb1210_audio_setup(void)
+{
+	u32 t;
+
+	/* Reset I2S internal controller */
+	t = ath79_reset_rr(AR71XX_RESET_REG_RESET_MODULE);
+	ath79_reset_wr(AR71XX_RESET_REG_RESET_MODULE, t | AR934X_RESET_I2S );
+	udelay(1000);
+
+	/* GPIO configuration
+	   GPIOs 4,11,12,13 are configured as I2S signal - Output
+	   GPIO 15 is SPDIF - Output
+	   GPIO 14 is MIC - Input
+	   Please note that the value in direction_output doesn't really matter
+	   here as GPIOs are configured to relay internal data signal
+	*/
+	gpio_request(KISSLINK_NB1210_GPIO_I2S_CLK, "I2S CLK");
+	ath79_gpio_output_select(KISSLINK_NB1210_GPIO_I2S_CLK, AR934X_GPIO_OUT_MUX_I2S_CLK);
+	gpio_direction_output(KISSLINK_NB1210_GPIO_I2S_CLK, 0);
+
+	gpio_request(KISSLINK_NB1210_GPIO_I2S_WS, "I2S WS");
+	ath79_gpio_output_select(KISSLINK_NB1210_GPIO_I2S_WS, AR934X_GPIO_OUT_MUX_I2S_WS);
+	gpio_direction_output(KISSLINK_NB1210_GPIO_I2S_WS, 0);
+
+	gpio_request(KISSLINK_NB1210_GPIO_I2S_SD, "I2S SD");
+	ath79_gpio_output_select(KISSLINK_NB1210_GPIO_I2S_SD, AR934X_GPIO_OUT_MUX_I2S_SD);
+	gpio_direction_output(KISSLINK_NB1210_GPIO_I2S_SD, 0);
+
+	//gpio_request(KISSLINK_NB1210_GPIO_SPDIF_OUT, "SPDIF OUT");
+	//ath79_gpio_output_select(KISSLINK_NB1210_GPIO_SPDIF_OUT, AR934X_GPIO_OUT_MUX_SPDIF_OUT);
+	//gpio_direction_output(KISSLINK_NB1210_GPIO_SPDIF_OUT, 0);
+
+	/* Init stereo block registers in default configuration */
+	ath79_audio_setup();
+}
 
 static void __init tl_ap123_setup(void)
 {
@@ -111,12 +146,18 @@ static void __init tl_ap123_setup(void)
 
 	ath79_register_wmac(art + KISSLINK_NB1210_WMAC_CALDATA_OFFSET, art);
 
-	platform_device_register(&kisslink_nb1210_i2c_gpio_device);
-
 	ath79_register_usb();
+
+    /* Audio initialization: PCM/I2S and CODEC */
+	kisslink_nb1210_audio_setup();
+
+	platform_device_register(&kisslink_nb1210_spdif_codec);
+    platform_device_register(&kisslink_nb1210_internal_codec);
+
+	ath79_audio_device_register();
 }
 
-static void __init kisslink_nb1210_setup(void)
+static void __init kisslink_nb1210_i2s_setup(void)
 {
 	tl_ap123_setup();
 
@@ -128,5 +169,5 @@ static void __init kisslink_nb1210_setup(void)
 					kisslink_nb1210_gpio_keys);
 }
 
-MIPS_MACHINE(ATH79_MACH_KISSLINK_NB1210, "KISSLINK-NB1210", "Keewifi Kisslink NB1210",
-	     kisslink_nb1210_setup);
+MIPS_MACHINE(ATH79_MACH_KISSLINK_NB1210_I2S, "KISSLINK-NB1210-I2S", "Keewifi Kisslink NB1210 I2S",
+	     kisslink_nb1210_i2s_setup);
