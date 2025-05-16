@@ -1,0 +1,7 @@
+#!/bin/sh
+
+/etc/init.d/i2c-lcd1602 enable
+/etc/init.d/i2c-lcd1602 start
+
+rm -f /tmp/luci-indexcache
+exit 0

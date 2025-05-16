@@ -1,0 +1,40 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+USE_PROCD=1
+
+start_service() {
+	enabled=$(uci get i2c-lcd1602.@i2c-lcd1602[0].enabled)
+	if [ $enabled -eq 0 ]; then
+		# deactivate backlight
+		i2cset -y $(echo $(uci get i2c-lcd1602.@i2c-lcd1602[0].i2c_bus) | cut -d '-' -f2) $(uci get i2c-lcd1602.@i2c-lcd1602[0].i2c_address) 0x00 0x00
+		exit 0
+	fi
+
+	procd_open_instance
+	procd_set_param command /usr/sbin/i2c_lcd1602 \
+		-i "$(uci get i2c-lcd1602.@i2c-lcd1602[0].i2c_bus)" \
+		-a "$(uci get i2c-lcd1602.@i2c-lcd1602[0].i2c_address)" \
+		-w 16 \
+		-l "$(uci get i2c-lcd1602.@i2c-lcd1602[0].log_file)"
+    
+	procd_set_param respawn
+	procd_close_instance
+
+	if [ ! -f "$(uci get i2c-lcd1602.@i2c-lcd1602[0].log_file)" -o ! -s "$(uci get i2c-lcd1602.@i2c-lcd1602[0].log_file)" ]; then
+		# activate backlight
+		i2cset -y $(echo $(uci get i2c-lcd1602.@i2c-lcd1602[0].i2c_bus) | cut -d '-' -f2) $(uci get i2c-lcd1602.@i2c-lcd1602[0].i2c_address) 0x00 0x08
+		echo "\$(date +%m-%d\ %H:%M:%S)" > /var/log/lcd1602.log
+		echo "HELLO, OPENWRT!   " >> /var/log/lcd1602.log
+	fi
+}
+
+stop_service() {
+    killall i2c_lcd1602
+}
+
+restart() {
+    stop
+    start
+}
+

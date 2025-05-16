@@ -14,7 +14,7 @@
 #define DEFAULT_LCD_LINE_WIDTH 16
 #define DEFAULT_LCD_LINE_COUNT 2
 #define DEFAULT_MAX_CMD_LENGTH 1024
-#define DEFAULT_LOG_FILE "/tmp/logread.tmp"
+#define DEFAULT_LOG_FILE "/var/log/lcd1602.log"
 #define DEFAULT_I2C_BUS "/dev/i2c-0"
 
 #ifndef LCD_LINE_WIDTH

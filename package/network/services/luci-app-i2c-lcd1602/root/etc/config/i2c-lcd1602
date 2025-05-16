@@ -1,0 +1,7 @@
+
+config i2c-lcd1602
+	option enabled '1'
+	option i2c_bus '/dev/i2c-0'
+	option i2c_address '0x27'
+	option log_file '/var/log/lcd1602.log'
+
