@@ -15,6 +15,7 @@
 #define DEFAULT_LCD_LINE_COUNT 2
 #define DEFAULT_MAX_CMD_LENGTH 1024
 #define DEFAULT_LOG_FILE "/var/log/lcd1602.log"
+#define DEFAULT_CMD_PIPE "/var/state/lcd1602_backlight"
 #define DEFAULT_I2C_BUS "/dev/i2c-0"
 
 #ifndef LCD_LINE_WIDTH
@@ -69,12 +70,19 @@ static void hal_write_data(uint8_t data, void *user_data) {
 
 static void hal_backlight_on(void *user_data) {
     I2cLcd *lcd = (I2cLcd *)user_data;
+    if (!lcd->api.backlight_enabled) return;
     lcd->api.backlight = true;
 }
 
 static void hal_backlight_off(void *user_data) {
     I2cLcd *lcd = (I2cLcd *)user_data;
     lcd->api.backlight = false;
+}
+
+static void hal_backlight_enable(void *user_data, bool enable) {
+    I2cLcd *lcd = (I2cLcd *)user_data;
+    lcd->api.backlight_enabled = enable;
+    if (!enable) hal_backlight_off(user_data);
 }
 
 static void i2c_lcd_init(I2cLcd *lcd, const char *i2c_bus, uint8_t addr, uint8_t rows, uint8_t cols) {
@@ -99,7 +107,9 @@ static void i2c_lcd_init(I2cLcd *lcd, const char *i2c_bus, uint8_t addr, uint8_t
     lcd->api.hal_write_data = hal_write_data;
     lcd->api.hal_backlight_on = hal_backlight_on;
     lcd->api.hal_backlight_off = hal_backlight_off;
+    lcd->api.hal_backlight_enable = hal_backlight_enable;
     lcd->api.user_data = lcd;
+    lcd->api.backlight_enabled = true;
 
     usleep(50000);
     hal_write_command(0x33, lcd);
@@ -111,7 +121,6 @@ static void i2c_lcd_init(I2cLcd *lcd, const char *i2c_bus, uint8_t addr, uint8_t
     hal_write_command(0x0C, lcd);
     hal_write_command(0x01, lcd);
     usleep(2000);
-    hal_backlight_on(lcd);
 }
 
 static void display_two_lines(I2cLcd *lcd, const char *line1, const char *line2) {
@@ -313,6 +322,46 @@ static void read_and_display_log(I2cLcd *lcd, const char *log_file) {
     display_two_lines(lcd, line1, line2);
 }
 
+static int create_command_pipe(const char *pipe_path) {
+    if (access(pipe_path, F_OK) == -1) {
+        if (mkfifo(pipe_path, 0666) == -1) {
+            perror("mkfifo");
+            return -1;
+        }
+    }
+    return open(pipe_path, O_RDWR | O_NONBLOCK);
+}
+
+static void process_commands(I2cLcd *lcd, int cmd_fd) {
+    char cmd_buf[32];
+    ssize_t bytes_read;
+    
+    while ((bytes_read = read(cmd_fd, cmd_buf, sizeof(cmd_buf)-1)) > 0) {
+        cmd_buf[bytes_read] = '\0';
+        char *cmd = strtok(cmd_buf, "\n");
+        while (cmd) {
+            if (strcmp(cmd, "BL_ON") == 0) {
+                lcd->api.hal_backlight_enable(lcd, true);
+                lcd->api.hal_backlight_on(lcd);
+            } 
+            else if (strcmp(cmd, "BL_OFF") == 0) {
+                lcd->api.hal_backlight_enable(lcd, false);
+            }
+            else if (strcmp(cmd, "BL_TOGGLE") == 0) {
+                lcd->api.backlight_enabled = !lcd->api.backlight_enabled;
+                if (lcd->api.backlight_enabled) {
+                    lcd->api.hal_backlight_on(lcd);
+                } else {
+                    lcd->api.hal_backlight_off(lcd);
+                }
+            }
+            cmd = strtok(NULL, "\n");
+        }
+        
+        while (read(cmd_fd, cmd_buf, sizeof(cmd_buf)) > 0) {}
+    }
+}
+
 int main(int argc, char *argv[]) {
     const char *i2c_bus = DEFAULT_I2C_BUS;
     const char *log_file = DEFAULT_LOG_FILE;
@@ -353,6 +402,12 @@ int main(int argc, char *argv[]) {
     I2cLcd lcd;
     i2c_lcd_init(&lcd, i2c_bus, i2c_addr, lcd_lines, lcd_width);
 
+    int cmd_fd = create_command_pipe(DEFAULT_CMD_PIPE);
+    if (cmd_fd < 0) {
+        fprintf(stderr, "Failed to create command pipe\n");
+        return 1;
+    }
+
     char welcome_line1[LCD_LINE_WIDTH + 1];
     char welcome_line2[LCD_LINE_WIDTH + 1];
     snprintf(welcome_line1, sizeof(welcome_line1), "Log Monitor");
@@ -368,6 +423,7 @@ int main(int argc, char *argv[]) {
 
     while (1) {
         read_and_display_log(&lcd, log_file);
+        process_commands(&lcd, cmd_fd);
         sleep(1); //
     }
 

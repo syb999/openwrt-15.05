@@ -41,7 +41,9 @@ typedef struct {
     void (*hal_write_data)(uint8_t data, void *user_data);
     void (*hal_backlight_on)(void *user_data);
     void (*hal_backlight_off)(void *user_data);
-    
+    void (*hal_backlight_enable)(void *user_data, bool enable);
+    bool backlight_enabled;
+
     void *user_data;
 } LcdApi;
 
