@@ -2,6 +2,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/wait.h>
 
 #define DEFAULT_MAX_CMD_LENGTH 64
 
@@ -198,16 +199,17 @@ const uint8_t font5x7[] = {
     0x08, 0x08, 0x2A, 0x1C, 0x08
 };
 
+static const uint8_t init_sequence[] = {
+    0xAE, 0xD5, 0x80, 0xA8, 0x3F, 0xD3, 0x00, 0x40,
+    0x8D, 0x14, 0x20, 0x00, 0xA1, 0xC8, 0xDA, 0x12,
+    0x81, 0xCF, 0xD9, 0xF1, 0xDB, 0x40, 0xA4, 0xA6, 0xAF
+};
+
 static int i2c_write(SSD1306_Device *dev, const uint8_t *data, size_t len) {
-    int retry = 3;
-    while (retry--) {
-        if (write(dev->i2c_fd, data, len) == (ssize_t)len) {
-            return 0;
-        }
-        usleep(10000);
+    if (write(dev->i2c_fd, data, len) != (ssize_t)len) {
+        return -1;
     }
-    perror("I2C write failed after retries");
-    return -1;
+    return 0;
 }
 
 static void write_command(SSD1306_Device *dev, uint8_t cmd) {
@@ -215,241 +217,238 @@ static void write_command(SSD1306_Device *dev, uint8_t cmd) {
     i2c_write(dev, buf, 2);
 }
 
-static const uint8_t init_sequence[] = {
-    0xAE,
-    0xD5, 0x80,
-    0xA8, 0x1F,
-    0xD3, 0x00,
-    0x40,
-    0xA1,
-    0xC8,
-    0xDA, 0x02,
-    0x81, 0x8F,
-    0xD9, 0xF1,
-    0xDB, 0x40,
-    0xA4,
-    0xA6,
-    0x8D, 0x14,
-    0xAF
-};
-
-
 int ssd1306_init(SSD1306_Device *dev, const SSD1306_Config *config) {
-    if ((dev->i2c_fd = open(config->i2c_bus, O_RDWR)) < 0)
+    if ((dev->i2c_fd = open(config->i2c_bus, O_RDWR)) < 0) {
+        perror("Failed to open I2C device");
         return -1;
+    }
 
     if (ioctl(dev->i2c_fd, I2C_SLAVE, config->i2c_addr) < 0) {
+        perror("Failed to set I2C address");
         close(dev->i2c_fd);
         return -1;
     }
 
     for (size_t i = 0; i < sizeof(init_sequence); i++) {
-        uint8_t buf[2] = {0x00, init_sequence[i]};
-        if (write(dev->i2c_fd, buf, 2) != 2) {
-            close(dev->i2c_fd);
-            return -1;
-        }
+        write_command(dev, init_sequence[i]);
     }
 
-    dev->width = SSD1306_WIDTH;
-    dev->height = SSD1306_HEIGHT;
-    dev->buffer = malloc(dev->width * dev->height / 8);
+    dev->config = *config;
+    dev->buffer = malloc(LOGICAL_WIDTH * LOGICAL_HEIGHT / 8);
     if (!dev->buffer) {
         close(dev->i2c_fd);
         return -1;
     }
-    memset(dev->buffer, 0, dev->width * dev->height / 8);
-    memcpy(&dev->config, config, sizeof(SSD1306_Config));
-
+    memset(dev->buffer, 0, LOGICAL_WIDTH * LOGICAL_HEIGHT / 8);
+    dev->scale = (config->type == SSD1306_128x64) ? 2 : 1;
+    dev->last_state_change = 0;
+    
     return 0;
 }
 
 void ssd1306_cleanup(SSD1306_Device *dev) {
     if (dev->i2c_fd >= 0) {
-        uint8_t buf[2] = {0x00, 0xAE};
-        write(dev->i2c_fd, buf, 2);
+        write_command(dev, 0xAE);
         close(dev->i2c_fd);
     }
     free(dev->buffer);
 }
 
 void ssd1306_clear(SSD1306_Device *dev) {
-    memset(dev->buffer, 0, dev->width * dev->height / 8);
-}
-
-void ssd1306_display(SSD1306_Device *dev) {
-    uint8_t setup_cmds[] = {
-        0x21, 0x00, 0x7F,
-        0x22, 0x00, 0x07
-    };
-    
-    for (size_t i = 0; i < sizeof(setup_cmds); i++) {
-        write_command(dev, setup_cmds[i]);
-    }
-
-    for (uint16_t i = 0; i < (SSD1306_WIDTH * SSD1306_HEIGHT / 8); i += 16) {
-        uint8_t buf[17];
-        buf[0] = 0x40;
-        memcpy(&buf[1], &dev->buffer[i], 16);
-        
-        if (i2c_write(dev, buf, sizeof(buf)) != 0) {
-            fprintf(stderr, "Display update failed at block %d\n", i/16);
-        }
-        usleep(10000);
-    }
+    memset(dev->buffer, 0, LOGICAL_WIDTH * LOGICAL_HEIGHT / 8);
 }
 
 void ssd1306_draw_char(SSD1306_Device *dev, uint8_t x, uint8_t y, char c) {
-    if (x >= SSD1306_WIDTH || y >= SSD1306_HEIGHT) {
-        return;
-    }
-
-    if (c < 32 || c > 126) {
-        c = '?';
-    }
-
-    uint8_t char_index = c - 32;
-    if (char_index >= (sizeof(font5x7)/5)) {
-        char_index = '?' - 32;
-    }
-    const uint8_t *glyph = &font5x7[char_index * 5];
-
+    if (x >= LOGICAL_WIDTH || y >= LOGICAL_HEIGHT) return;
+    if (c < 32 || c > 126) c = '?';
+    
+    const uint8_t *glyph = &font5x7[(c - 32) * 5];
+    uint8_t page = y / 8;
+    uint8_t bit_offset = y % 8;
+    
     for (uint8_t col = 0; col < 5; col++) {
-        if (x + col >= SSD1306_WIDTH) break;
-        
-        uint8_t col_data = glyph[col];
-        for (uint8_t bit = 0; bit < 7; bit++) {
-            if (y + bit >= SSD1306_HEIGHT) break;
-            
-            uint16_t buf_index = x + col + ((y + bit) / 8) * SSD1306_WIDTH;
-            uint8_t bit_pos = (y + bit) % 8;
-            
-            if (col_data & (1 << bit)) {
-                dev->buffer[buf_index] |= (1 << bit_pos);
-            } else {
-                dev->buffer[buf_index] &= ~(1 << bit_pos);
+        if (bit_offset) {
+            dev->buffer[page * LOGICAL_WIDTH + x + col] |= (glyph[col] << bit_offset);
+            if (page + 1 < LOGICAL_HEIGHT/8) {
+                dev->buffer[(page + 1) * LOGICAL_WIDTH + x + col] |= (glyph[col] >> (8 - bit_offset));
             }
+        } else {
+            dev->buffer[page * LOGICAL_WIDTH + x + col] |= glyph[col];
         }
     }
 }
 
 void ssd1306_draw_string(SSD1306_Device *dev, uint8_t x, uint8_t y, const char *str) {
-    while (*str && x < SSD1306_WIDTH) {
-        ssd1306_draw_char(dev, x, y, *str++);
-        x += FONT_WIDTH + CHAR_SPACING;
-        
-        if (x >= SSD1306_WIDTH - FONT_WIDTH) {
+    char limited_str[22] = {0};
+    strncpy(limited_str, str, 20);
+    limited_str[20] = '\0';
+    
+    const char *p = limited_str;
+    while (*p && x < LOGICAL_WIDTH) {
+        ssd1306_draw_char(dev, x, y, *p++);
+        x += 6;
+        if (x >= LOGICAL_WIDTH - 5) {
             x = 0;
-            y += FONT_HEIGHT + 1;
-            if (y >= SSD1306_HEIGHT - FONT_HEIGHT) break;
+            y += 8;
+            if (y >= LOGICAL_HEIGHT) break;
         }
     }
 }
 
-int process_shell_command(const char *cmd, char *output, size_t out_len) {
-    int pipefd[2];
-    if (pipe(pipefd) == -1) {
-        perror("pipe");
-        return 0;
+static char* exec_shell_command(const char* cmd) {
+    static char result[128] = {0};
+    FILE* fp = popen(cmd, "r");
+    if (fp == NULL) {
+        strcpy(result, "[CMD ERR]");
+        return result;
     }
 
-    pid_t pid = fork();
-    if (pid == -1) {
-        perror("fork");
-        close(pipefd[0]);
-        close(pipefd[1]);
-        return 0;
-    }
-
-    if (pid == 0) {
-        close(pipefd[0]);
-        dup2(pipefd[1], STDOUT_FILENO);
-        close(pipefd[1]);
-        execl("/bin/sh", "sh", "-c", cmd, NULL);
-        perror("execl");
-        _exit(1);
+    if (fgets(result, sizeof(result), fp) == NULL) {
+        strcpy(result, "[NO OUTPUT]");
     } else {
-        close(pipefd[1]);
-        ssize_t bytes_read = read(pipefd[0], output, out_len - 1);
-        close(pipefd[0]);
-        
-        if (bytes_read > 0) {
-            output[bytes_read] = '\0';
-            waitpid(pid, NULL, 0);
-            return 1;
-        } else {
-            waitpid(pid, NULL, 0);
+        char* newline = strchr(result, '\n');
+        if (newline) *newline = '\0';
+    }
+    
+    pclose(fp);
+    return result;
+}
+
+static int is_safe_command(const char* cmd) {
+    const char* dangerous_chars = "&;";
+    int i;
+    
+    for (int i = 0; dangerous_chars[i]; i++) {
+        if (strchr(cmd, dangerous_chars[i])) {
             return 0;
         }
     }
+
+    const char* allowed_commands[] = {
+        "date", "uptime", "ip", "cat", "free", 
+        "df", "uname", "hostname", "uci", "ls", 
+        "ifconfig", "head", "tail", "grep", "awk",
+        "cut", "ubus", "jsonfilter", "ifstatus", NULL
+    };
+    
+    int allowed = 0;
+    for (int i = 0; allowed_commands[i]; i++) {
+        if (strncmp(cmd, allowed_commands[i], strlen(allowed_commands[i])) == 0) {
+            allowed = 1;
+            break;
+        }
+    }
+    
+    return allowed;
 }
 
-void replace_shell_commands(char *line, size_t line_len) {
-    char temp[line_len * 2];
-    char *src = line;
-    char *dst = temp;
-    size_t remaining = sizeof(temp) - 1;
+void parse_and_draw_shell(SSD1306_Device *dev, uint8_t x, uint8_t y, const char *str) {
+    char output[22] = {0};
+    char temp[64];
+    const char *start, *end;
+    size_t output_len = 0;
     
-    *dst = 0;
-    
-    while (*src && remaining > 1) {
-        if (strncmp(src, "$(", 2) == 0) {
-            char *end = strchr(src + 2, ')');
+    while (*str && output_len < 20) {
+        if (strncmp(str, "$(", 2) == 0) {
+            start = str + 2;
+            end = strchr(start, ')');
             if (end) {
-                char cmd[DEFAULT_MAX_CMD_LENGTH];
-                size_t cmd_len = end - (src + 2);
+                size_t cmd_len = end - start;
+                if (cmd_len > sizeof(temp)-1) cmd_len = sizeof(temp)-1;
+                strncpy(temp, start, cmd_len);
+                temp[cmd_len] = '\0';
                 
-                if (cmd_len >= sizeof(cmd)) cmd_len = sizeof(cmd) - 1;
-                
-                strncpy(cmd, src + 2, cmd_len);
-                cmd[cmd_len] = 0;
-                
-                char output[DEFAULT_MAX_CMD_LENGTH];
-                if (process_shell_command(cmd, output, sizeof(output))) {
-                    char *out_ptr = output;
-                    while (*out_ptr && remaining > 1) {
-                        if ((*out_ptr >= 32 && *out_ptr <= 126) || *out_ptr == ' ') {
-                            *dst++ = *out_ptr;
-                            remaining--;
-                        }
-                        out_ptr++;
-                    }
+                if (is_safe_command(temp)) {
+                    char* cmd_result = exec_shell_command(temp);
+                    char* newline = strchr(cmd_result, '\n');
+                    if (newline) *newline = '\0';
+                    size_t to_copy = strlen(cmd_result);
+                    if (to_copy > 20 - output_len) 
+                        to_copy = 20 - output_len;
+                    strncat(output, cmd_result, to_copy);
+                    output_len += to_copy;
+                } else {
+                    strncat(output, "[BLOCKED]", 20 - output_len);
+                    output_len += 9;
                 }
-                src = end + 1;
+                
+                str = end + 1;
                 continue;
             }
         }
         
-        if ((*src >= 32 && *src <= 126) || *src == ' ') {
-            *dst++ = *src;
-            remaining--;
-        }
-        src++;
+        size_t len = strcspn(str, "$(");
+        if (len > 20 - output_len) len = 20 - output_len;
+        strncat(output, str, len);
+        output_len += len;
+        str += len;
     }
     
-    *dst = 0;
-    strncpy(line, temp, line_len);
-    line[line_len - 1] = 0;
+    output[20] = '\0';
+    ssd1306_draw_string(dev, x, y, output);
+}
+
+void ssd1306_display(SSD1306_Device *dev) {
+    write_command(dev, 0x21);
+    write_command(dev, 0x00);
+    write_command(dev, LOGICAL_WIDTH - 1);
+    
+    write_command(dev, 0x22);
+    write_command(dev, 0x00);
+    write_command(dev, (LOGICAL_HEIGHT / 8) - 1);
+    
+    uint8_t buf[LOGICAL_WIDTH + 1];
+    buf[0] = 0x40;
+    
+    for (uint8_t page = 0; page < LOGICAL_HEIGHT/8; page++) {
+        memcpy(&buf[1], &dev->buffer[page * LOGICAL_WIDTH], LOGICAL_WIDTH);
+        i2c_write(dev, buf, sizeof(buf));
+    }
 }
 
 void ssd1306_display_log(SSD1306_Device *dev) {
-   
-    FILE *fp = fopen(dev->config.log_file, "r");
+    const time_t now = time(NULL);
+    const time_t error_min_duration = 5;
+    
+    char full_path[128];
+    snprintf(full_path, sizeof(full_path), "%s%s", 
+            (dev->config.log_file[0] == '/') ? "" : "/",
+            dev->config.log_file);
+    
+    FILE *fp = fopen(full_path, "r");
     if (!fp) {
-        ssd1306_clear(dev);
-        ssd1306_draw_string(dev, 0, 0, "Log Open Error");
+        if (dev->last_state_change == 0) {
+            dev->last_state_change = now;
+        }
+        
+        if (now - dev->last_state_change < error_min_duration) {
+            ssd1306_clear(dev);
+            char buf[32];
+            snprintf(buf, sizeof(buf), "Retry in %lds", 
+                    error_min_duration - (now - dev->last_state_change));
+            ssd1306_draw_string(dev, 0, 0, buf);
+        } else {
+            ssd1306_clear(dev);
+            ssd1306_draw_string(dev, 0, 0, "LOGFILE ERROR");
+            ssd1306_draw_string(dev, 0, 8, full_path);
+        }
         ssd1306_display(dev);
         return;
     }
-
-    ssd1306_clear(dev);
-    char line[SSD1306_WIDTH + 1];
-    uint8_t line_num = 0;
     
-    while (line_num < 4 && fgets(line, sizeof(line), fp)) {
+    dev->last_state_change = 0;
+    char line[LOGICAL_WIDTH + 1];
+    uint8_t line_num = 0;
+    ssd1306_clear(dev);
+    
+    while (line_num < 6 && fgets(line, sizeof(line), fp)) {
         line[strcspn(line, "\r\n")] = 0;
-        
-        ssd1306_draw_string(dev, 0, line_num * 8, line);
+
+        if (strstr(line, "$(")) {
+            parse_and_draw_shell(dev, 0, line_num * 8, line);
+        } else {
+            ssd1306_draw_string(dev, 0, line_num * 8, line);
+        }
         line_num++;
     }
     

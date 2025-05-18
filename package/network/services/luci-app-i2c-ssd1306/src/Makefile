@@ -1,11 +1,10 @@
 CC = gcc
 LD = gcc
 
-
 SOURCES = i2c_ssd1306.c ssd1306.c
 OBJS := $(SOURCES:.c=.o)
 CPPFLAGS := -I I2C_Library
-CFLAGS :=-Os -Wall -std=gnu99
+CFLAGS :=-Os -Wall -std=gnu99 -I. -luci
 
 
 i2c_ssd1306: $(OBJS)
