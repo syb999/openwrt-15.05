@@ -1,0 +1,7 @@
+#!/bin/sh
+
+/etc/init.d/i2c-ssd1306 enable
+/etc/init.d/i2c-ssd1306 start
+
+rm -f /tmp/luci-indexcache
+exit 0
