@@ -239,7 +239,10 @@ int ssd1306_init(SSD1306_Device *dev, const SSD1306_Config *config) {
         close(dev->i2c_fd);
         return -1;
     }
-    memset(dev->buffer, 0, LOGICAL_WIDTH * LOGICAL_HEIGHT / 8);
+
+    dev->buffer = malloc(LOGICAL_WIDTH * (LOGICAL_HEIGHT / 8));
+    memset(dev->buffer, 0, LOGICAL_WIDTH * (LOGICAL_HEIGHT / 8));
+
     dev->scale = (config->type == SSD1306_128x64) ? 2 : 1;
     dev->last_state_change = 0;
     
@@ -295,25 +298,6 @@ void ssd1306_draw_string(SSD1306_Device *dev, uint8_t x, uint8_t y, const char *
     }
 }
 
-static char* exec_shell_command(const char* cmd) {
-    static char result[128] = {0};
-    FILE* fp = popen(cmd, "r");
-    if (fp == NULL) {
-        strcpy(result, "[CMD ERR]");
-        return result;
-    }
-
-    if (fgets(result, sizeof(result), fp) == NULL) {
-        strcpy(result, "[NO OUTPUT]");
-    } else {
-        char* newline = strchr(result, '\n');
-        if (newline) *newline = '\0';
-    }
-    
-    pclose(fp);
-    return result;
-}
-
 static int is_safe_command(const char* cmd) {
     const char* dangerous_chars = "&;";
     int i;
@@ -342,49 +326,68 @@ static int is_safe_command(const char* cmd) {
     return allowed;
 }
 
+static char* exec_shell_command(const char* cmd) {
+    static char result[128] = {0};
+    FILE* fp = popen(cmd, "r");
+    if (fp == NULL) {
+        strcpy(result, "[CMD ERR]");
+        return result;
+    }
+
+    if (fgets(result, sizeof(result), fp) == NULL) {
+        strcpy(result, "[NO OUTPUT]");
+    }
+    pclose(fp);
+
+    char* p = result;
+    while (*p) {
+        if (*p == '\n' || *p == '\r' || (*p < 32 && *p != '\t')) {
+            *p = ' ';
+        }
+        p++;
+    }
+    
+    return result;
+}
+
 void parse_and_draw_shell(SSD1306_Device *dev, uint8_t x, uint8_t y, const char *str) {
-    char output[22] = {0};
+    char output[LOGICAL_WIDTH + 1] = {0};
     char temp[64];
     const char *start, *end;
-    size_t output_len = 0;
     
-    while (*str && output_len < 20) {
+    while (*str) {
         if (strncmp(str, "$(", 2) == 0) {
             start = str + 2;
             end = strchr(start, ')');
             if (end) {
                 size_t cmd_len = end - start;
-                if (cmd_len > sizeof(temp)-1) cmd_len = sizeof(temp)-1;
+                if (cmd_len >= sizeof(temp)) cmd_len = sizeof(temp) - 1;
+                
                 strncpy(temp, start, cmd_len);
                 temp[cmd_len] = '\0';
                 
                 if (is_safe_command(temp)) {
                     char* cmd_result = exec_shell_command(temp);
-                    char* newline = strchr(cmd_result, '\n');
-                    if (newline) *newline = '\0';
-                    size_t to_copy = strlen(cmd_result);
-                    if (to_copy > 20 - output_len) 
-                        to_copy = 20 - output_len;
-                    strncat(output, cmd_result, to_copy);
-                    output_len += to_copy;
+                    strncat(output, cmd_result, sizeof(output) - strlen(output) - 1);
                 } else {
-                    strncat(output, "[BLOCKED]", 20 - output_len);
-                    output_len += 9;
+                    strncat(output, "[BLOCKED]", sizeof(output) - strlen(output) - 1);
                 }
-                
                 str = end + 1;
                 continue;
             }
         }
         
         size_t len = strcspn(str, "$(");
-        if (len > 20 - output_len) len = 20 - output_len;
-        strncat(output, str, len);
-        output_len += len;
-        str += len;
+        if (len > 0) {
+            strncat(output, str, len);
+            str += len;
+        } else {
+            strncat(output, str, 1);
+            str++;
+        }
     }
     
-    output[20] = '\0';
+    output[LOGICAL_WIDTH] = '\0';
     ssd1306_draw_string(dev, x, y, output);
 }
 

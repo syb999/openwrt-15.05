@@ -13,7 +13,7 @@
 #include <time.h>
 
 #define LOGICAL_WIDTH 128
-#define LOGICAL_HEIGHT 32
+#define LOGICAL_HEIGHT 64
 
 typedef enum {
     SSD1306_128x32,
