@@ -212,7 +212,7 @@ static int i2c_write(SSD1306_Device *dev, const uint8_t *data, size_t len) {
     return 0;
 }
 
-static void write_command(SSD1306_Device *dev, uint8_t cmd) {
+void write_command(SSD1306_Device *dev, uint8_t cmd) {
     uint8_t buf[2] = {0x00, cmd};
     i2c_write(dev, buf, 2);
 }
@@ -300,7 +300,6 @@ void ssd1306_draw_string(SSD1306_Device *dev, uint8_t x, uint8_t y, const char *
 
 static int is_safe_command(const char* cmd) {
     const char* dangerous_chars = "&;";
-    int i;
     
     for (int i = 0; dangerous_chars[i]; i++) {
         if (strchr(cmd, dangerous_chars[i])) {
@@ -389,6 +388,18 @@ void parse_and_draw_shell(SSD1306_Device *dev, uint8_t x, uint8_t y, const char 
     
     output[LOGICAL_WIDTH] = '\0';
     ssd1306_draw_string(dev, x, y, output);
+}
+
+void ssd1306_power(SSD1306_Device *dev, bool on) {
+    if (on) {
+        write_command(dev, 0xAF);
+        for (size_t i = 0; i < sizeof(init_sequence); i++) {
+            write_command(dev, init_sequence[i]);
+        }
+        ssd1306_display(dev);
+    } else {
+        write_command(dev, 0xAE);
+    }
 }
 
 void ssd1306_display(SSD1306_Device *dev) {

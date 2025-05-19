@@ -28,4 +28,14 @@ log_file.datatype = "string"
 log_file.default = "/var/log/ssd1306.log"
 log_file.rmempty = false
 
+screen_on_time = s:option(Value, "screen_on_time", translate("loop display duration"))
+screen_on_time.datatype = "uinteger"
+screen_on_time.default = "15"
+screen_on_time.rmempty = false
+
+screen_off_time = s:option(Value, "screen_off_time", translate("loop screen-off duration"))
+screen_off_time.datatype = "uinteger"
+screen_off_time.default = "5"
+screen_off_time.rmempty = false
+
 return m

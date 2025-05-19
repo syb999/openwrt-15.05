@@ -39,6 +39,9 @@ int load_uci_config(SSD1306_Config *config) {
             const char *addr = uci_lookup_option_string(ctx, s, "i2c_address");
             const char *log = uci_lookup_option_string(ctx, s, "log_file");
 
+            const char *on_time = uci_lookup_option_string(ctx, s, "screen_on_time");
+            const char *off_time = uci_lookup_option_string(ctx, s, "screen_off_time");
+
             config->enabled = enabled ? atoi(enabled) : 1;
             snprintf(config->i2c_bus, sizeof(config->i2c_bus), 
                     bus ? bus : "/dev/i2c-0");
@@ -46,6 +49,8 @@ int load_uci_config(SSD1306_Config *config) {
             snprintf(config->log_file, sizeof(config->log_file),
                     log ? log : "/var/log/ssd1306.log");
             config->type = SSD1306_128x64;
+            config->screen_on_time = on_time ? atoi(on_time) : 10;
+            config->screen_off_time = off_time ? atoi(off_time) : 10;
             
             ret = 0;
             break;
@@ -93,8 +98,33 @@ int main(int argc, char *argv[]) {
     ssd1306_display(&device);
     sleep(2);
 
+    time_t last_activity = time(NULL);
+    bool screen_on = true;
+
     while (running) {
-        ssd1306_display_log(&device);
+        time_t now = time(NULL);
+        
+        if (screen_on) {
+            if (now - last_activity >= device.config.screen_on_time) {
+                write_command(&device, 0xAE);
+                screen_on = false;
+                last_activity = now;
+                continue;
+            }
+        } else {
+            if (now - last_activity >= device.config.screen_off_time) {
+                write_command(&device, 0xAF);
+                screen_on = true;
+                last_activity = now;
+                ssd1306_display_log(&device);
+                continue;
+            }
+        }
+        
+        if (screen_on) {
+            ssd1306_display_log(&device);
+        }
+        
         sleep(1);
     }
 

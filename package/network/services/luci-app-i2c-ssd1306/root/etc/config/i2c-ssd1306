@@ -4,4 +4,5 @@ config i2c-ssd1306
 	option i2c_bus '/dev/i2c-0'
 	option i2c_address '0x3c'
 	option log_file '/var/log/ssd1306.log'
-
+	option screen_on_time '15'
+	option screen_off_time '5'

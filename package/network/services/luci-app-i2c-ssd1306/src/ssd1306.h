@@ -26,6 +26,8 @@ typedef struct {
     uint8_t i2c_addr;
     char log_file[64];
     SSD1306_Type type;
+    uint16_t screen_on_time;
+    uint16_t screen_off_time;
 } SSD1306_Config;
 
 typedef struct {
@@ -47,5 +49,7 @@ void ssd1306_draw_string(SSD1306_Device *dev, uint8_t x, uint8_t y, const char *
 
 void ssd1306_display_log(SSD1306_Device *dev);
 void parse_and_draw_shell(SSD1306_Device *dev, uint8_t x, uint8_t y, const char *str);
+
+void write_command(SSD1306_Device *dev, uint8_t cmd);
 
 #endif
