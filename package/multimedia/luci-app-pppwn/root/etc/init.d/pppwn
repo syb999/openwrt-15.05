@@ -18,9 +18,15 @@ start() {
 
 	$PROG --interface $source --fw $fwver --stage1 "/etc/pppwn/stage1_$fwver.bin" --stage2 "/etc/pppwn/stage2_$fwver.bin" -a > /var/log/pppwn.log &
 
+	if [ -e "/usr/bin/pppwnlog" ];then
+		if [ -z "$(busybox ps | grep pppwnlog | grep -v grep)" ];then
+			pppwnlog
+		fi
+	fi
+
 }
 
 stop() {
-    ps -w | grep -v "grep" | grep "$PROG" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
+    busybox ps | grep -v "grep" | grep "$PROG" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
     echo "" > /var/log/pppwn.log
 }

@@ -40,6 +40,10 @@ endif
 ifeq ($(ARCH),aarch64)
 	$(INSTALL_BIN) ./bin/aarch64 $(1)/usr/bin/pppwn
 endif
+ifdef CONFIG_PACKAGE_luci-app-i2c-ssd1306
+	$(INSTALL_BIN) ./bin/pppwnlog $(1)/usr/bin/pppwnlog
+endif
+
 endef
 
 $(eval $(call BuildPackage,pppwn-cpp))

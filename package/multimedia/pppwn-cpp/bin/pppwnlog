@@ -1,0 +1,39 @@
+#!/bin/sh
+
+INPUT_LOG="/var/log/pppwn.log"
+OUTPUT_LOG="/var/log/ssd1306.log"
+MAX_LINES=5
+LAST_POS=0
+
+: > "$OUTPUT_LOG"
+
+while true; do
+	if [ -e $INPUT_LOG ]; then
+		CURRENT_SIZE=$(wc -c < "$INPUT_LOG" | awk '{print $1}')
+		NEW_LINES=$(tail -c +$((LAST_POS+1)) "$INPUT_LOG" | wc -l)
+		
+		if [ "$NEW_LINES" -gt 0 ]; then
+		    tail -c +$((LAST_POS+1)) "$INPUT_LOG" | {
+		        while IFS= read -r line; do
+		            CURRENT_OUTPUT=$(wc -l < "$OUTPUT_LOG" | awk '{print $1}')
+		            
+		            if [ "$CURRENT_OUTPUT" -lt "$MAX_LINES" ]; then
+		                echo " $line" >> "$OUTPUT_LOG"
+		            else
+		                tail -n $((MAX_LINES-1)) "$OUTPUT_LOG" > /var/log/pppwn_tmp.log
+		                echo " $line" >> /var/log/pppwn_tmp.log
+		                mv /var/log/pppwn_tmp.log "$OUTPUT_LOG"
+		            fi
+		            sleep 1
+		        done
+		    }
+
+		    LAST_POS=$CURRENT_SIZE
+		fi
+	else
+		sleep 1
+	fi
+
+    sleep 1
+done
+
