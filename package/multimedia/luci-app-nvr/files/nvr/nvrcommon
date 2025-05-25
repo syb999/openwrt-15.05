@@ -19,6 +19,8 @@ elif [ "$(uci get nvr.@nvr[0].video_preset)" == "fast" ];then
 	param_preset="-preset fast"
 elif [ "$(uci get nvr.@nvr[0].video_preset)" == "medium" ];then
 	param_preset="-preset medium"
+else
+	param_preset=""
 fi
 
 if [ "$(uci get nvr.@nvr[0].fast_copy)" == "1" ];then

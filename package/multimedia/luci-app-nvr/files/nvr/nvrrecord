@@ -22,7 +22,7 @@ function main() {
 		if [ ! -f "${_directory}/${theday}/${thedir}/${thename}.*" ];then
 			kill -9 "$(ps -w | grep ffmpeg | grep "${_input}" | grep -v grep | grep -v "\-f flv")"
 		fi
-		thename="$(date +%Y-%m-%d-%H:%M:%S)"
+		thename="$(date +%Y-%m-%d-%H%M%S)"
 		if [ "$_enable_audio" -eq 1 ];then
 			ffmpeg -i "${_input}" $param_preset $param_copy -t ${_rec_time} "${_directory}/${theday}/${thedir}/${thename}.mkv" &
 		else

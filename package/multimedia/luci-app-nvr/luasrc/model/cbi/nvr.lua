@@ -168,10 +168,11 @@ enable_audio.rmempty = false
 
 video_preset=s:taboption("nvr", ListValue, "video_preset", translate("Preset"))
 video_preset.placeholder = "ultrafast"
+video_preset:value("none")
 video_preset:value("ultrafast")
 video_preset:value("fast")
 video_preset:value("medium")
-video_preset.default = "ultrafast"
+video_preset.default = "none"
 video_preset.rempty  = false
 video_preset.description = translate("Choseing ultrafast that can reduce CPU usage. PS: medium is default setting")
 
