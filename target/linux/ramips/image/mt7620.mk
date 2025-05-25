@@ -24,6 +24,14 @@ define Device/mb-0002
 endef
 TARGET_DEVICES += mb-0002
 
+define Device/meiluyou-p1
+  DTS := MEILUYOU-P1
+  IMAGE_SIZE := $(ralink_default_fw_size_8M)
+  DEVICE_TITLE := MEILUYOU P1
+  DEVICE_PACKAGES := panel-ap-setup
+endef
+TARGET_DEVICES += meiluyou-p1
+
 define Device/mt7620a
   DTS := MT7620a
   DEVICE_TITLE := MediaTek MT7620a EVB

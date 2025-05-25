@@ -69,6 +69,7 @@ platform_check_image() {
 	m2m | \
 	m3 | \
 	m4 | \
+	meiluyou-p1 | \
 	microwrt | \
 	mlw221 | \
 	mlwg2 | \

@@ -232,6 +232,9 @@ ramips_board_detect() {
 	*"ZYXEL WNA4320 v2")
 		name="wna4320v2"
 		;;
+	*"MEILUYOU-P1")
+		name="meiluyou-p1"
+		;;
 	*"Microduino MicroWRT")
 		name="microwrt"
 		;;
