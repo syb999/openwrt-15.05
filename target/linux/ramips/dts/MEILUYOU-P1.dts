@@ -79,6 +79,14 @@
 		};
 	};
 
+	gpio-leds {
+		compatible = "gpio-leds";
+		wan {
+			label = "p1:orange:wan";
+			gpios = <&gpio2 0 1>;
+		};
+	};
+
 	gpio-keys-polled {
 		compatible = "gpio-keys-polled";
 		#address-cells = <1>;
