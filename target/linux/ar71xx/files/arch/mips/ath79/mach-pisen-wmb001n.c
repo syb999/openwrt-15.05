@@ -31,10 +31,12 @@
 #define PISEN_WMB001N_GPIO_I2S_MCLK		14
 #define PISEN_WMB001N_GPIO_SPDIF_OUT	15
 #define PISEN_WMB001N_GPIO_I2S_MIC_SD   16
-#define PISEN_WMB001N_GPIO_LED_WLAN     4
+
+#define PISEN_WMB001N_GPIO_LED_WLAN     22
 
 #define PISEN_WMB001N_GPIO_BTN_RESET	17
-#define PISEN_WMB001N_GPIO_SW_RFKILL	18
+#define PISEN_WMB001N_GPIO_BTN_VOLUMEDOWN	18
+#define PISEN_WMB001N_GPIO_BTN_VOLUMEUP		19
 
 #define PISEN_WMB001N_KEYS_POLL_INTERVAL	20	/* msecs */
 #define PISEN_WMB001N_KEYS_DEBOUNCE_INTERVAL (3 * PISEN_WMB001N_KEYS_POLL_INTERVAL)
@@ -75,12 +77,19 @@ static struct gpio_keys_button pisen_wmb001n_gpio_keys[] __initdata = {
 		.gpio		= PISEN_WMB001N_GPIO_BTN_RESET,
 		.active_low	= 1,
 	}, {
-		.desc		= "RFKILL switch",
-		.type		= EV_SW,
-		.code		= KEY_RFKILL,
+		.desc		= "volume_down",
+		.type		= EV_KEY,
+		.code		= KEY_VOLUMEDOWN,
 		.debounce_interval = PISEN_WMB001N_KEYS_DEBOUNCE_INTERVAL,
-		.gpio		= PISEN_WMB001N_GPIO_SW_RFKILL,
-		.active_low	= 0,
+		.gpio		= PISEN_WMB001N_GPIO_BTN_VOLUMEDOWN,
+		.active_low	= 1,
+	}, {
+		.desc		= "volume_up",
+		.type		= EV_KEY,
+		.code		= KEY_VOLUMEUP,
+		.debounce_interval = PISEN_WMB001N_KEYS_DEBOUNCE_INTERVAL,
+		.gpio		= PISEN_WMB001N_GPIO_BTN_VOLUMEUP,
+		.active_low	= 1,
 	}
 };
 
@@ -91,7 +100,7 @@ static void __init pisen_wmb001n_audio_setup(void)
 	/* Reset I2S internal controller */
 	t = ath79_reset_rr(AR71XX_RESET_REG_RESET_MODULE);
 	ath79_reset_wr(AR71XX_RESET_REG_RESET_MODULE, t | AR934X_RESET_I2S );
-	udelay(1);
+	udelay(1000);
 
 	/* GPIO configuration
 	   GPIOs 11,12,13,14 are configured as I2S signal - Output
@@ -130,7 +139,7 @@ static void __init pisen_wmb001n_audio_setup(void)
 
 static void __init tl_ap123_setup(void)
 {
-	u8 *mac = (u8 *) KSEG1ADDR(0x1f01fc00);
+	u8 *mac = (u8 *) KSEG1ADDR(0x1fff0000);
 	u8 *ee = (u8 *) KSEG1ADDR(0x1fff1000);
 
 	/* Disable JTAG, enabling GPIOs 0-3 */
@@ -166,14 +175,16 @@ static void __init pisen_wmb001n_setup(void)
 {
 	tl_ap123_setup();
 
-	ath79_register_leds_gpio(-1, ARRAY_SIZE(pisen_wmb001n_leds_gpio) - 1,
+	ath79_register_leds_gpio(-1, ARRAY_SIZE(pisen_wmb001n_leds_gpio),
 				 pisen_wmb001n_leds_gpio);
 
 	ath79_register_gpio_keys_polled(1, PISEN_WMB001N_KEYS_POLL_INTERVAL,
 					ARRAY_SIZE(pisen_wmb001n_gpio_keys),
 					pisen_wmb001n_gpio_keys);
+
 	ath79_register_usb();
-		/* Audio initialization: PCM/I2S and CODEC */
+
+	/* Audio initialization: PCM/I2S and CODEC */
 	pisen_wmb001n_audio_setup();
 	platform_device_register(&pisen_wmb001n_spdif_codec);
 	platform_device_register(&pisen_wmb001n_internal_codec);
