@@ -271,7 +271,7 @@
 	};
 
 	ethernet: ethernet@10100000 {
-		compatible = "ralink,rt5350-eth";
+		compatible = "ralink,rt5350-eth", "ralink,rt3050-eth";
 		reg = <0x10100000 0x10000>;
 
 		resets = <&rstctrl 21 &rstctrl 23>;
@@ -287,8 +287,8 @@
 		compatible = "ralink,rt5350-esw", "ralink,rt3050-esw";
 		reg = <0x10110000 0x8000>;
 
-		resets = <&rstctrl 23>;
-		reset-names = "esw";
+		resets = <&rstctrl 24>;
+		reset-names = "ephy";
 
 		interrupt-parent = <&intc>;
 		interrupts = <17>;
