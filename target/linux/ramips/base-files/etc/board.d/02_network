@@ -152,6 +152,7 @@ ramips_setup_interfaces()
 	k2p|\
 	mt7621 | \
 	mt7628 | \
+	iu-01w | \
 	mzk-w300nh2 | \
 	mzk-750dhp | \
 	whr-300hp2 | \
