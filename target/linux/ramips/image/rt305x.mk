@@ -371,6 +371,14 @@ define Device/hg255d
 endef
 TARGET_DEVICES += hg255d
 
+define Device/hn1200
+  DTS := HN1200
+  IMAGE_SIZE := $(ralink_default_fw_size_8M)
+  DEVICE_TITLE := CMCC HN1200
+  DEVICE_PACKAGES := kmod-leds-gpio wpad-mini
+endef
+TARGET_DEVICES += hn1200
+
 define Device/hlk-rm04
   DTS := HLKRM04
   IMAGES += factory.bin

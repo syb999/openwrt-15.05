@@ -307,6 +307,7 @@ ramips_setup_interfaces()
 	f5d8235-v1 | \
 	f5d8235-v2 | \
 	hg255d | \
+	hn1200 | \
 	rt-n14u | \
 	tplink,c20-v4|\
 	fwr200-v2 | \

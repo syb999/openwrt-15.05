@@ -60,6 +60,7 @@ platform_check_image() {
 	hc5661a | \
 	hc5611 | \
 	hg255d | \
+	hn1200 | \
 	hlk-rm04 | \
 	ht-tm02 | \
 	hw550-3g | \

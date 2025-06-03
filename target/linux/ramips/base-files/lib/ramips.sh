@@ -433,6 +433,9 @@ ramips_board_detect() {
 	*"HG255D")
 		name="hg255d"
 		;;
+	*"HN1200")
+		name="hn1200"
+		;;
 	*"V22SG")
 		name="v22sg"
 		;;
