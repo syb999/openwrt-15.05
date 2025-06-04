@@ -522,7 +522,7 @@ define Device/iu-01w
   DTS := IU-01W
   DEVICE_TITLE := DELUX IU-01W
   IMAGE_SIZE := $(ralink_default_fw_size_8M)
-  DEVICE_PACKAGES := panel-ap-setup
+  DEVICE_PACKAGES := panel-ap-setup kmod-i2c-ralink kmod-i2c-gpio i2c-tool
 endef
 TARGET_DEVICES += iu-01w
 

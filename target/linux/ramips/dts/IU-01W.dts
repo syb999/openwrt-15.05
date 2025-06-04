@@ -51,6 +51,13 @@
 		};
 	};
 
+	i2c {
+		compatible = "i2c-gpio";
+
+		gpios = <&gpio0 0 0>, <&gpio0 10 0>;
+		i2c-gpio,delay-us = <10>;
+	};
+
 	ethernet@10100000 {
 		mtd-mac-address = <&factory 0x4>;
 	};
@@ -69,5 +76,16 @@
 
 	ohci@101c1000 {
 		status = "okay";
+	};
+
+	gpio-export {
+		compatible = "gpio-export";
+		#size-cells = <0>;
+
+		gpio8 {
+			gpio-export,name = "gpio8";
+			gpio-export,output = <0>;
+			gpios = <&gpio0 8 0>;
+		};
 	};
 };
