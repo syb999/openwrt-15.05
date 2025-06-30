@@ -164,6 +164,7 @@ ramips_setup_interfaces()
 	miwifi-nano |\
 	youku-yk-l1|\
 	youku-yk-l1c|\
+	yb-801 | \
 	psg1208|\
 	psg1218|\
 	jcg-y2|\

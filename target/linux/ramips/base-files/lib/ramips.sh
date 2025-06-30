@@ -430,6 +430,9 @@ ramips_board_detect() {
 	*"XiaoYu XY-C5")
 		name="xiaoyu-xy-c5"
 		;;
+	*"Yoobao YB-801")
+		name="yb-801"
+		;;
 	*"HG255D")
 		name="hg255d"
 		;;

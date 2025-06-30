@@ -920,6 +920,14 @@ define Device/xdxrn502j
 endef
 TARGET_DEVICES += xdxrn502j
 
+define Device/yb-801
+  DTS := YB-801
+  DEVICE_TITLE := Yoobao YB-801
+  IMAGE_SIZE := $(ralink_default_fw_size_8M)
+  DEVICE_PACKAGES := panel-ap-setup
+endef
+TARGET_DEVICES += yb-801
+
 define Device/kn
   DTS := kn
   BLOCKSIZE := 64k

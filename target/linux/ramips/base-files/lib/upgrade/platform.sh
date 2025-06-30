@@ -135,6 +135,7 @@ platform_check_image() {
 	x8 |\
 	xiaomi-miwifi-mini |\
 	xiaoyu-xy-c5 |\
+	yb-801 | \
 	wna4320v2 |\
 	micap-1321w |\
 	miwifi-nano |\
