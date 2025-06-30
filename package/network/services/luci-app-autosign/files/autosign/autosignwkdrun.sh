@@ -50,6 +50,10 @@ addday="off"
 test_addday
 
 if [ "${D31}" = "$(date +%m%d)" ];then
+	new_year=$(expr $(date +%Y) + 1)
+	uci set autosign.@autosign[0].tianapidate=${new_year}
+	uci commit autosign
+
 	ping -c1 -W 1 223.5.5.5 >/dev/null 2>&1
 
 	if [ $? -eq 0 ];then
