@@ -529,6 +529,9 @@ ramips_board_detect() {
 	*"TPLINK WDR5640 v1")
 		name="wdr5640v1"
 		;;
+	*"Witown TreeBear")
+		name="treebear"
+		;;
 	*"360 P2")
 		name="360p2"
 		;;

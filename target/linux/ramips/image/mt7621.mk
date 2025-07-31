@@ -88,6 +88,14 @@ define Device/newifi-d2
 endef
 TARGET_DEVICES += newifi-d2
 
+define Device/treebear
+  DTS := WITOWN-TREEBEAR
+  IMAGE_SIZE := $(ralink_default_fw_size_32M)
+  DEVICE_TITLE := Witown TreeBear
+  DEVICE_PACKAGES := kmod-mt7603 kmod-mt76x2 kmod-usb3
+endef
+TARGET_DEVICES += treebear
+
 define Device/zbt-we1326
   DTS := ZBT-WE1326
   IMAGE_SIZE := $(ralink_default_fw_size_16M)

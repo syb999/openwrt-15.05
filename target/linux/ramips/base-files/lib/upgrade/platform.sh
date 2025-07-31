@@ -150,6 +150,7 @@ platform_check_image() {
 	mb-0002 |\
 	newifi-d1 |\
 	newifi-d2 |\
+	treebear |\
 	jcg-y2 |\
 	k2p|\
 	zbt-we1326 |\
