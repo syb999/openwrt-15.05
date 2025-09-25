@@ -1,0 +1,11 @@
+#!/bin/sh
+
+[ "${ACTION}" = "released" ] || exit 0
+
+uci set network.wan.ifname='eth0.2'
+uci set network.@switch_vlan[1].ports='6t'
+uci set network.@switch_vlan[0].ports='0 1 2 3 4 6t'
+uci commit network
+/etc/init.d/network restart
+
+return 0

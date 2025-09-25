@@ -162,6 +162,7 @@ ramips_setup_interfaces()
 	wt1520 | \
 	hc5661a | \
 	miwifi-nano |\
+	x9 | \
 	youku-yk-l1|\
 	youku-yk-l1c|\
 	yb-801 | \

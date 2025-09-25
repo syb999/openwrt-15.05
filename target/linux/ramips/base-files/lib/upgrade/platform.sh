@@ -133,6 +133,7 @@ platform_check_image() {
 	wt3020 |\
 	x5 |\
 	x8 |\
+	x9 | \
 	xiaomi-miwifi-mini |\
 	xiaoyu-xy-c5 |\
 	yb-801 | \

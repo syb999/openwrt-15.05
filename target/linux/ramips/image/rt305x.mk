@@ -912,6 +912,15 @@ define Device/x8
 endef
 TARGET_DEVICES += x8
 
+define Device/x9
+  DTS := HIKER
+  DEVICE_TITLE := Hiker X9
+  IMAGE_SIZE := $(ralink_default_fw_size_8M)
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-uhci kmod-usb-ohci \
+	kmod-usb-wdm kmod-usb-net kmod-usb-net-rndis panel-ap-setup
+endef
+TARGET_DEVICES += x9
+
 define Device/xdxrn502j
   DTS := XDXRN502J
   BLOCKSIZE := 64k
