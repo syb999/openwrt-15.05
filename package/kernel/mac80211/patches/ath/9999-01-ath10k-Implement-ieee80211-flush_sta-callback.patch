@@ -1,0 +1,158 @@
+--- a/drivers/net/wireless/ath/ath10k/core.h
++++ b/drivers/net/wireless/ath/ath10k/core.h
+@@ -555,6 +555,8 @@ struct ath10k_sta {
+ 	u8 rate_ctrl[ATH10K_TID_MAX];
+ 	u32 rate_code[ATH10K_TID_MAX];
+ 	int rtscts[ATH10K_TID_MAX];
++	wait_queue_head_t empty_tx_wq;
++	atomic_t num_fw_queued;
+ };
+ 
+ #define ATH10K_VDEV_SETUP_TIMEOUT_HZ	(5 * HZ)
+--- a/drivers/net/wireless/ath/ath10k/htt.h
++++ b/drivers/net/wireless/ath/ath10k/htt.h
+@@ -2306,6 +2306,10 @@ int ath10k_htt_tx_inc_pending(struct ath
+ void ath10k_htt_tx_mgmt_dec_pending(struct ath10k_htt *htt);
+ int ath10k_htt_tx_mgmt_inc_pending(struct ath10k_htt *htt, bool is_mgmt,
+ 				   bool is_presp);
++void ath10k_htt_tx_sta_inc_pending(struct ath10k_htt *htt,
++				   struct ieee80211_sta *sta);
++void ath10k_htt_tx_sta_dec_pending(struct ath10k_htt *htt,
++				   struct ieee80211_sta *sta);
+ 
+ int ath10k_htt_tx_alloc_msdu_id(struct ath10k_htt *htt, struct sk_buff *skb);
+ void ath10k_htt_tx_free_msdu_id(struct ath10k_htt *htt, u16 msdu_id);
+--- a/drivers/net/wireless/ath/ath10k/htt_tx.c
++++ b/drivers/net/wireless/ath/ath10k/htt_tx.c
+@@ -192,6 +192,37 @@ void ath10k_htt_tx_mgmt_dec_pending(stru
+ 	htt->num_pending_mgmt_tx--;
+ }
+ 
++void ath10k_htt_tx_sta_inc_pending(struct ath10k_htt *htt,
++				   struct ieee80211_sta *sta)
++{
++	struct ath10k_sta *arsta;
++
++	if (!sta)
++		return;
++
++	arsta = (struct ath10k_sta *)sta->drv_priv;
++
++	atomic_inc(&arsta->num_fw_queued);
++}
++
++void ath10k_htt_tx_sta_dec_pending(struct ath10k_htt *htt,
++				   struct ieee80211_sta *sta)
++{
++	struct ath10k_sta *arsta;
++	int v;
++
++	if (!sta)
++		return;
++
++	arsta = (struct ath10k_sta *)sta->drv_priv;
++
++	v = atomic_dec_if_positive(&arsta->num_fw_queued);
++	if (v < 0)
++		WARN_ON_ONCE(1);
++	if (v == 0)
++		wake_up(&arsta->empty_tx_wq);
++}
++
+ int ath10k_htt_tx_alloc_msdu_id(struct ath10k_htt *htt, struct sk_buff *skb)
+ {
+ 	struct ath10k *ar = htt->ar;
+--- a/drivers/net/wireless/ath/ath10k/mac.c
++++ b/drivers/net/wireless/ath/ath10k/mac.c
+@@ -4272,6 +4272,8 @@ int ath10k_mac_tx_push_txq(struct ieee80
+ 		spin_unlock_bh(&ar->htt.tx_lock);
+ 	}
+ 
++	ath10k_htt_tx_sta_inc_pending(&ar->htt, sta);
++
+ 	ret = ath10k_mac_tx(ar, vif, txmode, txpath, skb, false);
+ 	if (unlikely(ret)) {
+ 		ath10k_warn(ar, "failed to push frame: %d\n", ret);
+@@ -4281,6 +4283,7 @@ int ath10k_mac_tx_push_txq(struct ieee80
+ 		if (is_mgmt)
+ 			ath10k_htt_tx_mgmt_dec_pending(htt);
+ 		spin_unlock_bh(&ar->htt.tx_lock);
++		ath10k_htt_tx_sta_dec_pending(&ar->htt, sta);
+ 
+ 		return ret;
+ 	}
+@@ -7311,6 +7314,7 @@ static int ath10k_sta_state(struct ieee8
+ 		arsta->peer_ps_state = WMI_PEER_PS_STATE_DISABLED;
+ 		INIT_WORK(&arsta->update_wk, ath10k_sta_rc_update_wk);
+ 		INIT_WORK(&arsta->tid_config_wk, ath10k_sta_tid_cfg_wk);
++		init_waitqueue_head(&arsta->empty_tx_wq);
+ 
+ 		for (i = 0; i < ARRAY_SIZE(sta->txq); i++)
+ 			ath10k_mac_txq_init(sta->txq[i]);
+@@ -7937,6 +7941,40 @@ static void ath10k_flush(struct ieee8021
+ 	mutex_unlock(&ar->conf_mutex);
+ }
+ 
++static void ath10k_flush_sta(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
++			     struct ieee80211_sta *sta)
++{
++	struct ath10k_sta *arsta = (struct ath10k_sta *)sta->drv_priv;
++	struct ath10k *ar = hw->priv;
++	bool skip;
++	long time_left;
++
++	/* TODO do we need drop implemented here ? */
++
++	mutex_lock(&ar->conf_mutex);
++
++	if (ar->state == ATH10K_STATE_WEDGED)
++		goto out;
++
++	time_left = wait_event_timeout(arsta->empty_tx_wq, ({
++			bool empty;
++
++			empty = atomic_read(&arsta->num_fw_queued) == 0;
++
++			skip = (ar->state == ATH10K_STATE_WEDGED) ||
++			       test_bit(ATH10K_FLAG_CRASH_FLUSH,
++					&ar->dev_flags);
++
++			(empty || skip);
++		}), ATH10K_FLUSH_TIMEOUT_HZ);
++
++	if (time_left == 0 || skip)
++		ath10k_warn(ar, "failed to flush sta txq (sta %pM skip %i ar-state %i): %ld\n",
++			    sta->addr, skip, ar->state, time_left);
++out:
++	mutex_unlock(&ar->conf_mutex);
++}
++
+ /* TODO: Implement this function properly
+  * For now it is needed to reply to Probe Requests in IBSS mode.
+  * Propably we need this information from FW.
+@@ -9270,6 +9308,7 @@ static const struct ieee80211_ops ath10k
+ 	.set_rts_threshold		= ath10k_set_rts_threshold,
+ 	.set_frag_threshold		= ath10k_mac_op_set_frag_threshold,
+ 	.flush				= ath10k_flush,
++	.flush_sta			= ath10k_flush_sta,
+ 	.tx_last_beacon			= ath10k_tx_last_beacon,
+ 	.set_antenna			= ath10k_set_antenna,
+ 	.get_antenna			= ath10k_get_antenna,
+--- a/drivers/net/wireless/ath/ath10k/txrx.c
++++ b/drivers/net/wireless/ath/ath10k/txrx.c
+@@ -87,9 +87,12 @@ int ath10k_txrx_tx_unref(struct ath10k_h
+ 	spin_unlock_bh(&htt->tx_lock);
+ 
+ 	rcu_read_lock();
+-	if (txq && txq->sta && skb_cb->airtime_est)
+-		ieee80211_sta_register_airtime(txq->sta, txq->tid,
+-					       skb_cb->airtime_est, 0);
++	if (txq && txq->sta) {
++		if (skb_cb->airtime_est)
++			ieee80211_sta_register_airtime(txq->sta, txq->tid,
++						       skb_cb->airtime_est, 0);
++		ath10k_htt_tx_sta_dec_pending(htt, txq->sta);
++	}
+ 	rcu_read_unlock();
+ 
+ 	if (ar->bus_param.dev_type != ATH10K_DEV_TYPE_HL)
