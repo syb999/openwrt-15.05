@@ -25,7 +25,7 @@ function sync_year() {
 	ping -c1 -W 1 223.5.5.5 >/dev/null 2>&1
 
 	if [ $? -eq 0 ];then
-		ntpd -p ntp.aliyun.com
+		ntpd -q -p ntp.aliyun.com
 		sleep 3 
 	fi
 
