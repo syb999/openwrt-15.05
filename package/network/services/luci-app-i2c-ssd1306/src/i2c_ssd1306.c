@@ -51,7 +51,7 @@ int load_uci_config(SSD1306_Config *config) {
             config->type = SSD1306_128x64;
             config->screen_on_time = on_time ? atoi(on_time) : 10;
             config->screen_off_time = off_time ? atoi(off_time) : 10;
-            
+
             ret = 0;
             break;
         }
@@ -124,7 +124,7 @@ int main(int argc, char *argv[]) {
         if (screen_on) {
             ssd1306_display_log(&device);
         }
-        
+
         sleep(1);
     }
 

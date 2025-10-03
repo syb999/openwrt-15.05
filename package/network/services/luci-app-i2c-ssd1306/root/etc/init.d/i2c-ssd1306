@@ -21,8 +21,8 @@ start_service() {
 	if [ ! -f "$(uci get i2c-ssd1306.@i2c-ssd1306[0].log_file)" -o ! -s "$(uci get i2c-ssd1306.@i2c-ssd1306[0].log_file)" ]; then
 		echo "  \$(date +%m-%d\ %H:%M:%S)" > /var/log/ssd1306.log
 		echo "  HELLO, OPENWRT!" >> /var/log/ssd1306.log
-		echo "  LAN IP:\$(ifstatus lan | jsonfilter -e '@[\"ipv4-address\"][0].address')" >> /var/log/ssd1306.log
-		echo "  WAN IP:\$(ifstatus wan | jsonfilter -e '@[\"ipv4-address\"][0].address')" >> /var/log/ssd1306.log
+		echo "  LAN:\$(ifstatus lan | jsonfilter -e '@[\"ipv4-address\"][0].address')" >> /var/log/ssd1306.log
+		echo "  WAN:\$(ifstatus wan | jsonfilter -e '@[\"ipv4-address\"][0].address')" >> /var/log/ssd1306.log
 	fi
 }
 

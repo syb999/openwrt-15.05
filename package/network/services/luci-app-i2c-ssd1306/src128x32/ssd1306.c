@@ -280,6 +280,8 @@ int ssd1306_init(SSD1306_Device *dev, const SSD1306_Config *config) {
     ssd1306_clear(dev);
     memcpy(&dev->config, config, sizeof(SSD1306_Config));
 
+    dev->power_on = true;
+
     return 0;
 }
 
@@ -490,4 +492,28 @@ void ssd1306_display_log(SSD1306_Device *dev) {
     
     fclose(fp);
     ssd1306_display(dev);
+}
+
+void ssd1306_power_on(SSD1306_Device *dev) {
+    if (dev->i2c_fd < 0) return;
+
+    uint8_t cmd[] = {0x00, 0xAF};
+    if (write(dev->i2c_fd, cmd, sizeof(cmd)) != sizeof(cmd)) {
+        fprintf(stderr, "Failed to power on SSD1306\n");
+        return;
+    }
+    
+    dev->power_on = true;
+}
+
+void ssd1306_power_off(SSD1306_Device *dev) {
+    if (dev->i2c_fd < 0) return;
+
+    uint8_t cmd[] = {0x00, 0xAE};
+    if (write(dev->i2c_fd, cmd, sizeof(cmd)) != sizeof(cmd)) {
+        fprintf(stderr, "Failed to power off SSD1306\n");
+        return;
+    }
+    
+    dev->power_on = false;
 }

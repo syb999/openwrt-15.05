@@ -30,11 +30,14 @@ typedef struct {
     char i2c_bus[32];
     uint8_t i2c_addr;
     char log_file[64];
+    int screen_on_time;
+    int screen_off_time;
 } SSD1306_Config;
 
 typedef struct {
     int i2c_fd;
     SSD1306_Config config;
+    bool power_on;  
     uint8_t width;
     uint8_t height;
     uint8_t *buffer;
@@ -51,5 +54,8 @@ void ssd1306_draw_string(SSD1306_Device *dev, uint8_t x, uint8_t y, const char *
 void ssd1306_display_log(SSD1306_Device *dev);
 int process_shell_command(const char *cmd, char *output, size_t out_len);
 void replace_shell_commands(char *line, size_t line_len);
+
+void ssd1306_power_on(SSD1306_Device *dev);
+void ssd1306_power_off(SSD1306_Device *dev);
 
 #endif
