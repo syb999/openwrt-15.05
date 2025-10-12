@@ -703,6 +703,9 @@ picture_resolution.placeholder = "1280x720"
 picture_resolution.default = "1280x720"
 picture_resolution.rmempty = true
 
+fix_android=s:taboption("video_setting", Flag, "fix_android", translate("fix display for android"))
+fix_android:depends( "picture_tovideo", "1" )
+
 video_copy = s:taboption("video_setting", Flag, "video_copy", translate("Fast copy"))
 video_copy:depends({ image_effects = "", video_x2645 = "none", video_picture = "", picture_tovideo = "" })
 

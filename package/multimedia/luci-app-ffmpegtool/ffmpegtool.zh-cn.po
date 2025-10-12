@@ -235,6 +235,9 @@ msgstr "文件名设置为标题"
 msgid "replace filename with title"
 msgstr "用标题替换文件名"
 
+msgid "fix display for android"
+msgstr "修复安卓播放黑屏的问题"
+
 msgid "Fast copy"
 msgstr "快速复制"
 
