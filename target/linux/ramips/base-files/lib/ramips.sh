@@ -91,6 +91,9 @@ ramips_board_detect() {
 	*"AXIMCom MR-102N")
 		name="mr-102n"
 		;;
+	*"BHU uRouter")
+		name="urouter"
+		;;
 	*"Buffalo WSR-600DHP")
 		name="wsr-600"
 		;;

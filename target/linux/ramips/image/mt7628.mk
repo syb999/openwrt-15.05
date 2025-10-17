@@ -29,6 +29,12 @@ define Device/wdr5620v1
 endef
 TARGET_DEVICES += wdr5620v1
 
+define Device/urouter
+  DTS := UROUTER
+  IMAGE_SIZE := $(ralink_default_fw_size_16M)
+endef
+TARGET_DEVICES += urouter
+
 define Device/micap-1321w
   DTS := MICAP-1321W
   IMAGE_SIZE := $(ralink_default_fw_size_8M)
