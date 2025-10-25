@@ -54,18 +54,15 @@ $(eval $(call KernelPackage,spi-vsc7385))
 
 define KernelPackage/sound-ap123-ak4430
   SUBMENU:=$(SOUND_MENU)
-  TITLE:=ar71xx I2S Audio Driver
-  DEPENDS:=@TARGET_ar71xx
+  TITLE:=ar71xx ak4430 I2S Audio Driver
+  DEPENDS:=@TARGET_ar71xx +alsa-lib +kmod-sound-soc-core
   KCONFIG:= \
 	CONFIG_SND=y \
 	CONFIG_SND_ATH79_SOC_CODEC=y \
 	CONFIG_SND_ATH79_SOC_I2S=y \
-	CONFIG_SND_COMPRESS_OFFLOAD=y \
-	CONFIG_SND_PCM=y \
 	CONFIG_SND_SOC=y \
 	CONFIG_SND_SOC_AK4430=y \
 	CONFIG_SND_SOC_I2C_AND_SPI=y \
-	CONFIG_SOUND=y \
 	CONFIG_ATH79_DEV_AUDIO=y \
 	CONFIG_SND_ATH79_SOC=y \
 	CONFIG_SND_ATH79_SOC_AP123_AK4430=y
@@ -75,6 +72,7 @@ define KernelPackage/sound-ap123-ak4430
 	$(LINUX_DIR)/sound/soc/ath79/snd-soc-ath79-codec.ko \
 	$(LINUX_DIR)/sound/soc/ath79/snd-soc-ap123-ak4430.ko \
 	$(LINUX_DIR)/sound/soc/codecs/snd-soc-ak4430.ko
+  AUTOLOAD:=$(call AutoLoad,90,snd-soc-ath79-codec snd-soc-ath79-i2s snd-soc-ath79-pcm snd-soc-ak4430 snd-soc-ap123-ak4430)
 endef
 
 define KernelPackage/sound-ap123-ak4430/description
