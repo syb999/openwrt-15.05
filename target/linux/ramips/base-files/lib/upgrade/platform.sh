@@ -105,6 +105,7 @@ platform_check_image() {
 	tew-692gr | \
 	todaair-in1251y | \
 	urouter |\
+	urouter-se |\
 	ur-326n4g |\
 	ur-336un |\
 	v22rw-2x2 | \

@@ -35,6 +35,13 @@ define Device/urouter
 endef
 TARGET_DEVICES += urouter
 
+define Device/urouter-se
+  DTS := UROUTER-SE
+  IMAGE_SIZE := $(ralink_default_fw_size_16M)
+endef
+TARGET_DEVICES += urouter-se
+
+
 define Device/micap-1321w
   DTS := MICAP-1321W
   IMAGE_SIZE := $(ralink_default_fw_size_8M)

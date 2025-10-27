@@ -94,6 +94,9 @@ ramips_board_detect() {
 	*"BHU uRouter")
 		name="urouter"
 		;;
+	*"BHU uRouter SE")
+		name="urouter-se"
+		;;
 	*"Buffalo WSR-600DHP")
 		name="wsr-600"
 		;;

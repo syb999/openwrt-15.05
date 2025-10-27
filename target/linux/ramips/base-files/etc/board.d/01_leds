@@ -356,6 +356,9 @@ case $board in
 	psg1218)
 		ucidef_set_led_default "system" "system" "psg1218:yellow:status" "1"
 		;;
+	urouter-se)
+		ucidef_set_led_netdev "wlan" "WiFi" "urouter:green:wlan" "wlan0"
+		;;
 	xiaoyu-xy-c5)
 		ucidef_set_led_default "system" "system" "xiaoyu-xy-c5:green:system" "1"
 		ucidef_set_led_netdev "work" "work" "xiaoyu-xy-c5:green:work" "eth0.2"
