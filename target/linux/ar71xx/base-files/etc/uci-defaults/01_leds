@@ -399,6 +399,13 @@ om5p-ac)
 	ucidef_set_led_netdev "port2" "port2" "om5pac:blue:wan" "eth1"
 	;;
 
+pisen-wfr101n)
+	ucidef_set_led_wlan "wlan" "WLAN" "pisen:blue:wlan" "phy0tpt"
+	ucidef_set_led_netdev "lan" "LAN" "pisen:blue:lan" "eth0"
+	ucidef_set_led_netdev "wan" "WAN" "pisen:blue:wan" "eth1"
+	ucidef_set_led_usbdev "usb" "USB" "pisen:blue:usb" "1-1"
+	;;
+
 pisen-wmm003n)
 	ucidef_set_led_wlan "wlan" "WLAN" "pisen:blue:wlan" "phy0tpt"
 	;;

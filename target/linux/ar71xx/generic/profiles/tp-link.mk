@@ -399,7 +399,7 @@ $(eval $(call Profile,TLWR841))
 
 define Profile/PISEN
 	NAME:=PISEN Cloud Router
-	PACKAGES:=kmod-usb-core kmod-usb2 kmod-sound-ak4430
+	PACKAGES:=kmod-usb-core kmod-usb2 kmod-sound-ap123-ak4430
 endef
 
 define Profile/PISEN/Description

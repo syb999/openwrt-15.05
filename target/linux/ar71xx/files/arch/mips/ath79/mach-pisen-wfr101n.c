@@ -31,10 +31,14 @@
 #define PISEN_WFR101N_GPIO_I2S_MCLK		14
 #define PISEN_WFR101N_GPIO_SPDIF_OUT	15
 #define PISEN_WFR101N_GPIO_I2S_MIC_SD   16
-#define PISEN_WFR101N_GPIO_LED_WLAN     4
+
+#define PISEN_WFR101N_GPIO_LED_WLAN     3
+#define PISEN_WFR101N_GPIO_LED_LAN      4
+#define PISEN_WFR101N_GPIO_LED_WAN      21
+#define PISEN_WFR101N_GPIO_LED_USB     22
 
 #define PISEN_WFR101N_GPIO_BTN_RESET	17
-#define PISEN_WFR101N_GPIO_SW_RFKILL	18
+#define PISEN_WFR101N_GPIO_BTN_WPS	0
 
 #define PISEN_WFR101N_KEYS_POLL_INTERVAL	20	/* msecs */
 #define PISEN_WFR101N_KEYS_DEBOUNCE_INTERVAL (3 * PISEN_WFR101N_KEYS_POLL_INTERVAL)
@@ -59,11 +63,27 @@ static struct platform_device pisen_wfr101n_spdif_codec = {
 };
 
 static struct gpio_led pisen_wfr101n_leds_gpio[] __initdata = {
-	 {
-		.name		= "tp-link:green:wlan",
+	{
+		.name		= "pisen:blue:wlan",
 		.gpio		= PISEN_WFR101N_GPIO_LED_WLAN,
 		.active_low	= 1,
 	}, 
+	{
+		.name		= "pisen:blue:wan",
+		.gpio		= PISEN_WFR101N_GPIO_LED_WAN,
+		.active_low	= 1,
+	},
+	{
+		.name		= "pisen:blue:lan",
+		.gpio		= PISEN_WFR101N_GPIO_LED_LAN,
+		.active_low	= 1,
+	},
+	{
+		.name		= "pisen:blue:usb",
+		.gpio		= PISEN_WFR101N_GPIO_LED_USB,
+		.active_low	= 1,
+	}
+
 };
 
 static struct gpio_keys_button pisen_wfr101n_gpio_keys[] __initdata = {
@@ -75,12 +95,12 @@ static struct gpio_keys_button pisen_wfr101n_gpio_keys[] __initdata = {
 		.gpio		= PISEN_WFR101N_GPIO_BTN_RESET,
 		.active_low	= 1,
 	}, {
-		.desc		= "RFKILL switch",
-		.type		= EV_SW,
-		.code		= KEY_RFKILL,
+		.desc		= "WPS button",
+		.type		= EV_KEY,
+		.code		= KEY_WPS_BUTTON,
 		.debounce_interval = PISEN_WFR101N_KEYS_DEBOUNCE_INTERVAL,
-		.gpio		= PISEN_WFR101N_GPIO_SW_RFKILL,
-		.active_low	= 0,
+		.gpio		= PISEN_WFR101N_GPIO_BTN_WPS,
+		.active_low	= 1,
 	}
 };
 
@@ -173,7 +193,7 @@ static void __init pisen_wfr101n_setup(void)
 					ARRAY_SIZE(pisen_wfr101n_gpio_keys),
 					pisen_wfr101n_gpio_keys);
 	ath79_register_usb();
-		/* Audio initialization: PCM/I2S and CODEC */
+	/* Audio initialization: PCM/I2S and CODEC */
 	pisen_wfr101n_audio_setup();
 	platform_device_register(&pisen_wfr101n_spdif_codec);
 	platform_device_register(&pisen_wfr101n_internal_codec);
