@@ -1,5 +1,20 @@
 /*
- *  Audio_MW300R4 board support
+ *  Audio_MW300R v4 board support
+ *
+ *   I2S_SD   = LED:WAN
+ *   I2S_CLK  = LED:LAN4
+ *   I2S_WS   = LED:LAN3
+ *   I2S_MCLK = LED:LAN2 
+ *   TP1      = 3.3V
+ *   TP2      = GND
+ *
+ *   UDA1334A I2S AUDIO CODEC:
+ *   VIN  = 3.3V
+ *   GND  = GND
+ *   WSEL = I2S_WS
+ *   DIN  = I2S_SD
+ *   BCLK = I2S_CLK
+ *   NO MCLK!
  */
 
 #include <linux/platform_device.h>
@@ -21,10 +36,9 @@
 #include "dev-wmac.h"
 #include "machtypes.h"
 
-#define TL_MW300R4_GPIO_I2S_SD         0	/* I2S SDO signal for AR934X  */
-#define TL_MW300R4_GPIO_I2S_CLK        1	/* I2S SCLK signal for AR934X */
-#define TL_MW300R4_GPIO_I2S_WS         2	/* I2S LRCK signal for AR934X */
-#define TL_MW300R4_GPIO_I2S_MCLK       3	/* I2S MCLK signal for AR934X */
+#define TL_MW300R4_GPIO_I2S_SD         19	/* I2S SDO signal for AR934X  */
+#define TL_MW300R4_GPIO_I2S_CLK        20	/* I2S SCLK signal for AR934X */
+#define TL_MW300R4_GPIO_I2S_WS         21	/* I2S LRCK signal for AR934X */
 
 #define TL_MW300R4_GPIO_LED_SYSTEM     14
 #define TL_MW300R4_GPIO_LED_WLAN       13
@@ -70,7 +84,6 @@ static struct gpio_led tl_mw300_r4_leds_gpio[] __initdata = {
 	},
 };
 
-
 static struct gpio_keys_button tl_mw300_r4_gpio_keys[] __initdata = {
 	{
 		.desc		= "Reset button",
@@ -102,11 +115,6 @@ static void __init tl_mw300_r4_audio_setup(void)
 	gpio_request(TL_MW300R4_GPIO_I2S_SD, "I2S SD");
 	ath79_gpio_output_select(TL_MW300R4_GPIO_I2S_SD, AR934X_GPIO_OUT_MUX_I2S_SD);
 	gpio_direction_output(TL_MW300R4_GPIO_I2S_SD, 0);
-
-	gpio_request(TL_MW300R4_GPIO_I2S_MCLK, "I2S MCLK");
-	ath79_gpio_output_select(TL_MW300R4_GPIO_I2S_MCLK, AR934X_GPIO_OUT_MUX_I2S_MCK);
-	gpio_direction_output(TL_MW300R4_GPIO_I2S_MCLK, 0);
-
 
 	/* Init stereo block registers in default configuration */
 	ath79_audio_setup();
@@ -146,10 +154,7 @@ static void __init tl_ap123_setup(void)
 	ath79_register_wmac(ee, mac);
 
 	ath79_register_usb();
-	platform_device_register(&tl_mw300_r4_spdif_codec);
-	platform_device_register(&tl_mw300_r4_internal_codec);
-	ath79_audio_device_register();
-	tl_mw300_r4_audio_setup();
+
 }
 
 static void __init tl_mw300_r4_setup(void)
@@ -162,6 +167,11 @@ static void __init tl_mw300_r4_setup(void)
 	ath79_register_gpio_keys_polled(1, TL_MW300R4_KEYS_POLL_INTERVAL,
 					ARRAY_SIZE(tl_mw300_r4_gpio_keys),
 					tl_mw300_r4_gpio_keys);
+
+	tl_mw300_r4_audio_setup();
+	platform_device_register(&tl_mw300_r4_spdif_codec);
+	platform_device_register(&tl_mw300_r4_internal_codec);
+	ath79_audio_device_register();
 }
 
 MIPS_MACHINE(ATH79_MACH_TL_MW300_R4, "TL-MW300-r4", "Mercury MW300R v4",
