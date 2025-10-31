@@ -28,9 +28,9 @@
 
 #define TL_MW300R4_GPIO_LED_SYSTEM     14
 #define TL_MW300R4_GPIO_LED_WLAN       13
+#define TL_MW300R4_GPIO_LED_WAN        18
 
 #define TL_MW300R4_GPIO_BTN_RESET      17
-#define TL_MW300R4_GPIO_SW_RFKILL      20
 
 #define TL_MW300R4_KEYS_POLL_INTERVAL	20	/* msecs */
 #define TL_MW300R4_KEYS_DEBOUNCE_INTERVAL (3 * TL_MW300R4_KEYS_POLL_INTERVAL)
@@ -62,6 +62,10 @@ static struct gpio_led tl_mw300_r4_leds_gpio[] __initdata = {
 	}, {
 		.name		= "tp-link:green:wlan",
 		.gpio		= TL_MW300R4_GPIO_LED_WLAN,
+		.active_low	= 0,
+	}, {
+		.name		= "tp-link:green:wan",
+		.gpio		= TL_MW300R4_GPIO_LED_WAN,
 		.active_low	= 1,
 	},
 };
@@ -75,13 +79,6 @@ static struct gpio_keys_button tl_mw300_r4_gpio_keys[] __initdata = {
 		.debounce_interval = TL_MW300R4_KEYS_DEBOUNCE_INTERVAL,
 		.gpio		= TL_MW300R4_GPIO_BTN_RESET,
 		.active_low	= 1,
-	}, {
-		.desc		= "RFKILL switch",
-		.type		= EV_SW,
-		.code		= KEY_RFKILL,
-		.debounce_interval = TL_MW300R4_KEYS_DEBOUNCE_INTERVAL,
-		.gpio		= TL_MW300R4_GPIO_SW_RFKILL,
-		.active_low	= 0,
 	}
 };
 
@@ -127,7 +124,7 @@ static void __init tl_ap123_setup(void)
 
 	ath79_register_m25p80(&tl_mw300_r4_flash_data);
 
-	ath79_setup_ar934x_eth_cfg(AR934X_ETH_CFG_SW_ONLY_MODE);
+	ath79_setup_ar934x_eth_cfg(AR934X_ETH_CFG_SW_PHY_SWAP);
 
 	ath79_register_mdio(1, 0x0);
 
@@ -136,9 +133,9 @@ static void __init tl_ap123_setup(void)
 
 	/* GMAC0 is connected to the PHY0 of the internal switch */
 	ath79_switch_data.phy4_mii_en = 1;
-	ath79_switch_data.phy_poll_mask = BIT(4);
+	ath79_switch_data.phy_poll_mask = BIT(0);
 	ath79_eth0_data.phy_if_mode = PHY_INTERFACE_MODE_MII;
-	ath79_eth0_data.phy_mask = BIT(4);
+	ath79_eth0_data.phy_mask = BIT(0);
 	ath79_eth0_data.mii_bus_dev = &ath79_mdio1_device.dev;
 	ath79_register_eth(0);
 
@@ -167,5 +164,5 @@ static void __init tl_mw300_r4_setup(void)
 					tl_mw300_r4_gpio_keys);
 }
 
-MIPS_MACHINE(ATH79_MACH_TL_MW300_R4, "TL_MW300-r4", "TL_MW300-r4",
+MIPS_MACHINE(ATH79_MACH_TL_MW300_R4, "TL-MW300-r4", "Mercury MW300R v4",
 	     tl_mw300_r4_setup);

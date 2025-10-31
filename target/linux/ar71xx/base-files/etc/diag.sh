@@ -309,7 +309,7 @@ get_status_led() {
 	tl-wr841n-v7 | \
 	tl-wr841n-v8 | \
 	tl-wr841n-v11 | \
-	tl_mw300_r4 | \
+	tl-mw300-r4 | \
 	pisen_wmb001n | \
 	tl-wa830re-v2 | \
 	tl-wr842n-v2 | \

@@ -596,7 +596,8 @@ tl-wr941nd-v5)
 	;;
 
 tl-mw300-r4)
-	ucidef_set_led_wlan "wlan" "WLAN" "tp-link:green:wlan" "phy0tpt"
+	ucidef_set_led_netdev "wan" "WAN" "tp-link:green:wan" "eth0"
+	ucidef_set_led_wlan "wlan" "WLAN" "tp-link:green:wlan" "phy0radio"
 	;;
 
 tl-wr941nd-v6)
