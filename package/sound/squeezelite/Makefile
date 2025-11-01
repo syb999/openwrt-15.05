@@ -32,18 +32,10 @@ define Package/squeezelite/default
     MENU:=1
 endef
 
-define Package/squeezelite-full
-    $(call Package/squeezelite/default)
-    TITLE+= (full)
-    DEPENDS+= +libflac +libvorbis +libmpg123 +libfaad2 \
-              +SQUEEZELITE_WMA:libffmpeg-audio-dec
-    VARIANT:=full
-endef
-
-define Package/squeezelite-mini
+define Package/squeezelite-mp3
     $(call Package/squeezelite/default)
     TITLE+= (minimal)
-    VARIANT:=mini
+    VARIANT:=mp3
 endef
 
 define Package/squeezelite/config/default
@@ -66,16 +58,17 @@ define Package/squeezelite/config/default
 	    help
 		Include support for DSD over PCM for compatible DAC"
 	    default n
+
+	config SQUEEZELITE_MP3
+		bool "MP3 decode support"
+		help
+		    Include MP3 decoding using libmpg123
+		default y
+
 endef
 
-define Package/squeezelite-full/config
-    if PACKAGE_squeezelite-full
-	$(call Package/squeezelite/config/default)
-    endif
-endef
-
-define Package/squeezelite-mini/config
-    if PACKAGE_squeezelite-mini
+define Package/squeezelite-mp3/config
+    if PACKAGE_squeezelite-mp3
 	$(call Package/squeezelite/config/default)
     endif
 endef
@@ -90,16 +83,10 @@ define Package/squeezelite/description/default
     Optional resampling to match sound device
 endef
 
-define Package/squeezelite-full/description
+define Package/squeezelite-mp3/description
     $(call Package/squeezelite/description/default)
 
-    This package has all the audio codecs compiled in.
-endef
-
-define Package/squeezelite-mini/description
-    $(call Package/squeezelite/description/default)
-
-    This package will dynamically load installed codecs.
+    This package will load mpg codec.
 endef
 
 ifeq ($(CONFIG_SQUEEZELITE_WMA),y)
@@ -114,6 +101,11 @@ ifeq ($(CONFIG_SQUEEZELITE_RESAMPLE),y)
     opts+= -DRESAMPLE
 endif
 
+ifeq ($(CONFIG_SQUEEZELITE_MP3),y)
+    DEPENDS += +libmpg123
+    opts+= -DMP3
+endif
+
 ifeq ($(BUILD_VARIANT),full)
     opts+= -DLINKALL
 endif
@@ -126,8 +118,7 @@ define Package/squeezelite/conffiles
 /etc/config/squeezelite
 endef
 
-Package/squeezelite-mini/conffiles = $(Package/squeezelite/conffiles)
-Package/squeezelite-full/conffiles = $(Package/squeezelite/conffiles)
+Package/squeezelite-mp3/conffiles = $(Package/squeezelite/conffiles)
 
 define Package/squeezelite/install
 	$(INSTALL_DIR) $(1)/usr/bin
@@ -138,8 +129,6 @@ define Package/squeezelite/install
 	$(INSTALL_CONF) ./files/squeezelite.conf $(1)/etc/config/squeezelite
 endef
 
-Package/squeezelite-mini/install=$(Package/squeezelite/install)
-Package/squeezelite-full/install=$(Package/squeezelite/install)
+Package/squeezelite-mp3/install=$(Package/squeezelite/install)
 
-$(eval $(call BuildPackage,squeezelite-mini))
-$(eval $(call BuildPackage,squeezelite-full))
+$(eval $(call BuildPackage,squeezelite-mp3))
