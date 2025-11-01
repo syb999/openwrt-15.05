@@ -1,0 +1,137 @@
+/dts-v1/;
+
+/include/ "mt7620a.dtsi"
+
+/ {
+	compatible = "betterspot", "ralink,mt7620a-soc";
+	model = "Betterspot";
+
+	chosen {
+		bootargs = "console=ttyS0,115200";
+	};
+
+	palmbus@10000000 {
+		gpio0: gpio@600 {
+			status = "okay";
+		};
+
+		gpio1: gpio@638 {
+			status = "okay";
+		};
+
+		gpio2: gpio@660 {
+			status = "okay";
+		};
+
+		spi@b00 {
+			status = "okay";
+
+			m25p80@0 {
+				#address-cells = <1>;
+				#size-cells = <1>;
+				compatible = "w25q128";
+				reg = <0 0>;
+				linux,modalias = "m25p80", "w25q128";
+				spi-max-frequency = <10000000>;
+
+				partition@0 {
+					label = "u-boot";
+					reg = <0x0 0x30000>;
+				};
+
+				partition@30000 {
+					label = "u-boot-env";
+					reg = <0x30000 0x10000>;
+				};
+
+				factory: partition@40000 {
+					label = "factory";
+					reg = <0x40000 0x10000>;
+				};
+
+				partition@50000 {
+					label = "firmware";
+					reg = <0x50000 0xf80000>;
+				};
+
+				partition@ff0000 {
+					label = "art";
+					reg = <0xff0000 0x10000>;
+				};
+			};
+		};
+	};
+
+	ehci@101c0000 {
+		status = "okay";
+	};
+
+	ohci@101c1000 {
+		status = "okay";
+	};
+
+	ethernet@10100000 {
+		pinctrl-names = "default";
+		pinctrl-0 = <&ephy_pins>;
+		mtd-mac-address = <&factory 0x4000>;
+		ralink,port-map = "wllll";
+	};
+
+	wmac@10180000 {
+		ralink,mtd-eeprom = <&factory 0>;
+	};
+
+	pinctrl {
+		state_default: pinctrl0 {
+			gpio {
+				ralink,group = "wled","ephy","uartf","i2c";
+				ralink,function = "gpio";
+			};
+		};
+	};
+
+	gpio_export {
+		compatible = "gpio-export";
+		#size-cells = <0>;
+
+		gpio50 {
+			gpio-export,name = "gpio50";
+			gpio-export,output = <1>;
+			gpios = <&gpio2 10 1>;
+		};
+
+
+		gpio51 {
+			gpio-export,name = "gpio51";
+			gpio-export,output = <1>;
+			gpios = <&gpio2 11 1>;
+		};
+
+
+		gpio53 {
+			gpio-export,name = "gpio53";
+			gpio-export,output = <1>;
+			gpios = <&gpio2 13 1>;
+		};
+
+		gpio54 {
+			gpio-export,name = "gpio54";
+			gpio-export,output = <1>;
+			gpios = <&gpio2 14 1>;
+		};
+
+	};
+
+	gpio-keys-polled {
+		compatible = "gpio-keys-polled";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		poll-interval = <20>;
+
+		reset {
+			label = "reset";
+			gpios = <&gpio2 12 1>;
+			linux,code = <0x198>;
+		};
+	};
+};

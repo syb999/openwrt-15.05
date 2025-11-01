@@ -31,6 +31,7 @@ platform_check_image() {
 	awm002-evb | \
 	awm003-evb | \
 	bc2 | \
+	betterspot | \
 	broadway | \
 	bussiness-router | \
 	carambola | \

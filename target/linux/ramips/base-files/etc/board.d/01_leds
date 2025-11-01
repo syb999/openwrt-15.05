@@ -60,6 +60,9 @@ case $board in
 	bc2)
 		set_usb_led "bc2:blue:usb"
 		;;
+	betterspot)
+		ucidef_set_led_netdev "wlan" "WiFi" "betterspot:white:wlan" "wlan0"
+		;;
 	br6425)
 		set_wifi_led "edimax:orange:wlan"
 		;;

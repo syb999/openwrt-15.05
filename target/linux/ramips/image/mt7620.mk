@@ -9,6 +9,15 @@ define Device/ai-br100
 endef
 TARGET_DEVICES += ai-br100
 
+define Device/betterspot
+  DTS := BETTERSPOT
+  IMAGE_SIZE := $(ralink_default_fw_size_16M)
+  DEVICE_TITLE := Betterspot
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb-dwc2 kmod-usb2 kmod-usb-ohci \
+	kmod-usb-wdm kmod-usb-net kmod-usb-net-rndis panel-ap-setup
+endef
+TARGET_DEVICES += betterspot
+
 define Device/e1700
   DTS := E1700
   IMAGES += factory.bin
