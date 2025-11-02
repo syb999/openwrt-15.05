@@ -1,0 +1,29 @@
+--- a/kernel/irq/spurious.c
++++ b/kernel/irq/spurious.c
+@@ -405,26 +405,7 @@ void note_interrupt(unsigned int irq, st
+ 	}
+ 
+ 	desc->irq_count++;
+-	if (likely(desc->irq_count < 100000))
+-		return;
+ 
+-	desc->irq_count = 0;
+-	if (unlikely(desc->irqs_unhandled > 99900)) {
+-		/*
+-		 * The interrupt is stuck
+-		 */
+-		__report_bad_irq(irq, desc, action_ret);
+-		/*
+-		 * Now kill the IRQ
+-		 */
+-		printk(KERN_EMERG "Disabling IRQ #%d\n", irq);
+-		desc->istate |= IRQS_SPURIOUS_DISABLED;
+-		desc->depth++;
+-		irq_disable(desc);
+-
+-		mod_timer(&poll_spurious_irq_timer,
+-			  jiffies + POLL_SPURIOUS_IRQ_INTERVAL);
+-	}
+ 	desc->irqs_unhandled = 0;
+ }
+ 
