@@ -28,7 +28,7 @@ define Package/squeezelite/default
     TITLE:=Headless squeezebox emulator
     PROVIDES:=squeezelite
     URL:=https://github.com/ralph-irving/squeezelite
-    DEPENDS:= +alsa-lib +SQUEEZELITE_RESAMPLE:libsoxr
+    DEPENDS:= +alsa-lib +libflac +libvorbis +libmpg123 +libfaad2 +SQUEEZELITE_RESAMPLE:libsoxr
     MENU:=1
 endef
 
@@ -102,7 +102,6 @@ ifeq ($(CONFIG_SQUEEZELITE_RESAMPLE),y)
 endif
 
 ifeq ($(CONFIG_SQUEEZELITE_MP3),y)
-    DEPENDS += +libmpg123
     opts+= -DMP3
 endif
 
