@@ -8,6 +8,11 @@
  *  by the Free Software Foundation.
  */
 
+#define PISEN_WMB001N_GPIO_I2C_SDA		16
+#define PISEN_WMB001N_GPIO_I2C_SCL		20
+
+#include <linux/i2c.h>
+#include <linux/i2c-gpio.h>
 #include <linux/platform_device.h>
 #include <linux/ath9k_platform.h>
 #include <linux/gpio.h>
@@ -30,9 +35,14 @@
 #define PISEN_WMB001N_GPIO_I2S_CLK		13
 #define PISEN_WMB001N_GPIO_I2S_MCLK		14
 #define PISEN_WMB001N_GPIO_SPDIF_OUT	15
-#define PISEN_WMB001N_GPIO_I2S_MIC_SD   16
 
 #define PISEN_WMB001N_GPIO_LED_WLAN     22
+
+#define PISEN_WMB001N_GPIO_LED_VOLUM4    4
+#define PISEN_WMB001N_GPIO_LED_VOLUM3    3
+#define PISEN_WMB001N_GPIO_LED_VOLUM2    2
+#define PISEN_WMB001N_GPIO_LED_VOLUM1    1
+#define PISEN_WMB001N_GPIO_LED_VOLUM0    0
 
 #define PISEN_WMB001N_GPIO_BTN_RESET	17
 #define PISEN_WMB001N_GPIO_BTN_VOLUMEDOWN	18
@@ -48,6 +58,30 @@ static const char *pisen_wmb001n_part_probes[] = {
 
 static struct flash_platform_data pisen_wmb001n_flash_data = {
 	.part_probes	= pisen_wmb001n_part_probes,
+};
+
+static struct i2c_board_info pisen_wmb001n_i2c_devices[] __initdata = {
+	{
+		I2C_BOARD_INFO("wm8904", 0x1a),
+	},
+};
+
+static struct i2c_gpio_platform_data pisen_wmb001n_i2c_gpio_data = {
+	.sda_pin	= PISEN_WMB001N_GPIO_I2C_SDA,
+	.scl_pin	= PISEN_WMB001N_GPIO_I2C_SCL,
+	.sda_is_open_drain = 1,
+	.scl_is_open_drain = 1,
+	.scl_is_output_only = 0,
+	.udelay = 5,
+	.timeout = 100,
+};
+
+static struct platform_device pisen_wmb001n_i2c_gpio_device = {
+	.name	= "i2c-gpio",
+	.id	= 0,
+	.dev	= {
+		.platform_data	= &pisen_wmb001n_i2c_gpio_data,
+	},
 };
 
 static struct platform_device pisen_wmb001n_internal_codec = {
@@ -181,6 +215,11 @@ static void __init pisen_wmb001n_setup(void)
 	ath79_register_gpio_keys_polled(1, PISEN_WMB001N_KEYS_POLL_INTERVAL,
 					ARRAY_SIZE(pisen_wmb001n_gpio_keys),
 					pisen_wmb001n_gpio_keys);
+
+    platform_device_register(&pisen_wmb001n_i2c_gpio_device);
+
+    i2c_register_board_info(0, pisen_wmb001n_i2c_devices, 
+                           ARRAY_SIZE(pisen_wmb001n_i2c_devices));
 
 	ath79_register_usb();
 
