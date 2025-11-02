@@ -68,6 +68,30 @@ static int ath79_i2s_set_pll(struct snd_soc_dai *dai, int pll_id, int source,
 
 }
 
+static int ath79_i2s_set_sysclk(struct snd_soc_dai *dai,
+				int clk_id, unsigned int freq, int dir)
+{
+	struct ath79_i2s_priv *ath79_i2s = snd_soc_dai_get_drvdata(dai);
+	int ret;
+
+	pr_debug("ath79_i2s_set_sysclk: freq=%u, dir=%d\n", freq, dir);
+
+	if (ath79_find_mclk_in_pll_table(freq) < 0) {
+		pr_err("MCLK frequency %u not supported\n", freq);
+		return -EINVAL;
+	}
+
+	ath79_i2s->mclk = freq;
+	ret = ath79_audio_set_clocks(freq);
+	if (ret < 0) {
+		pr_err("Failed to set MCLK to %u: %d\n", freq, ret);
+		return ret;
+	}
+
+	pr_info("ATH79 I2S MCLK set to %u Hz\n", freq);
+	return 0;
+}
+
 static int ath79_i2s_startup(struct snd_pcm_substream *substream,
 			      struct snd_soc_dai *dai)
 {
@@ -174,6 +198,7 @@ static int ath79_i2s_dai_remove(struct snd_soc_dai *dai)
 
 static struct snd_soc_dai_ops ath79_i2s_dai_ops = {
 	.set_pll	= ath79_i2s_set_pll,
+	.set_sysclk	= ath79_i2s_set_sysclk,
 	.startup	= ath79_i2s_startup,
 	.shutdown	= ath79_i2s_shutdown,
 	.trigger	= ath79_i2s_trigger,

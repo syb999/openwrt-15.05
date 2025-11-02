@@ -8,11 +8,13 @@
  *  by the Free Software Foundation.
  */
 
-#define PISEN_WMB001N_GPIO_I2C_SDA		16
-#define PISEN_WMB001N_GPIO_I2C_SCL		20
-
 #include <linux/i2c.h>
 #include <linux/i2c-gpio.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+
+#include <linux/clk.h>
+
 #include <linux/platform_device.h>
 #include <linux/ath9k_platform.h>
 #include <linux/gpio.h>
@@ -29,6 +31,9 @@
 #include "dev-usb.h"
 #include "dev-wmac.h"
 #include "machtypes.h"
+
+#define PISEN_WMB001N_GPIO_I2C_SDA		16
+#define PISEN_WMB001N_GPIO_I2C_SCL		20
 
 #define PISEN_WMB001N_GPIO_I2S_SD		11
 #define PISEN_WMB001N_GPIO_I2S_WS		12
@@ -89,13 +94,13 @@ static struct platform_device pisen_wmb001n_internal_codec = {
 	.id		= -1,
 };
 
-static struct platform_device pisen_wmb001n_spdif_codec = {
-	.name		= "ak4430-codec",
-	.id		= -1,
+static struct platform_device pisen_wmb001n_sound_device = {
+	.name = "ath79-wm8904",
+	.id = -1,
 };
 
 static struct gpio_led pisen_wmb001n_leds_gpio[] __initdata = {
-	 {
+	{
 		.name		= "tp-link:green:wlan",
 		.gpio		= PISEN_WMB001N_GPIO_LED_WLAN,
 		.active_low	= 1,
@@ -133,42 +138,37 @@ static void __init pisen_wmb001n_audio_setup(void)
 
 	/* Reset I2S internal controller */
 	t = ath79_reset_rr(AR71XX_RESET_REG_RESET_MODULE);
-	ath79_reset_wr(AR71XX_RESET_REG_RESET_MODULE, t | AR934X_RESET_I2S );
-	udelay(1000);
+	ath79_reset_wr(AR71XX_RESET_REG_RESET_MODULE, t | AR934X_RESET_I2S);
+	udelay(10);
 
-	/* GPIO configuration
-	   GPIOs 11,12,13,14 are configured as I2S signal - Output
-	   GPIO 16 is MIC - Input
-	   GPIO 18 is SPDIF - Output
-	   Please note that the value in direction_output doesn't really matter
-	   here as GPIOs are configured to relay internal data signal
-	*/
-	gpio_request(PISEN_WMB001N_GPIO_I2S_CLK, "I2S CLK");
-	ath79_gpio_output_select(PISEN_WMB001N_GPIO_I2S_CLK, AR934X_GPIO_OUT_MUX_I2S_CLK);
-	gpio_direction_output(PISEN_WMB001N_GPIO_I2S_CLK, 0);
-
-	gpio_request(PISEN_WMB001N_GPIO_I2S_WS, "I2S WS");
-	ath79_gpio_output_select(PISEN_WMB001N_GPIO_I2S_WS, AR934X_GPIO_OUT_MUX_I2S_WS);
-	gpio_direction_output(PISEN_WMB001N_GPIO_I2S_WS, 0);
-
-	gpio_request(PISEN_WMB001N_GPIO_I2S_SD, "I2S SD");
-	ath79_gpio_output_select(PISEN_WMB001N_GPIO_I2S_SD, AR934X_GPIO_OUT_MUX_I2S_SD);
-	gpio_direction_output(PISEN_WMB001N_GPIO_I2S_SD, 0);
-
-	gpio_request(PISEN_WMB001N_GPIO_I2S_MCLK, "I2S MCLK");
+	/* Configure I2S MCLK pin - critical for WM8904 */
+	gpio_request(PISEN_WMB001N_GPIO_I2S_MCLK, "i2s_mclk");
 	ath79_gpio_output_select(PISEN_WMB001N_GPIO_I2S_MCLK, AR934X_GPIO_OUT_MUX_I2S_MCK);
 	gpio_direction_output(PISEN_WMB001N_GPIO_I2S_MCLK, 0);
 
-	gpio_request(PISEN_WMB001N_GPIO_SPDIF_OUT, "SPDIF OUT");
-	ath79_gpio_output_select(PISEN_WMB001N_GPIO_SPDIF_OUT, AR934X_GPIO_OUT_MUX_SPDIF_OUT);
-	gpio_direction_output(PISEN_WMB001N_GPIO_SPDIF_OUT, 0);
+	/* Configure I2S CLK pin (BCLK) */
+	gpio_request(PISEN_WMB001N_GPIO_I2S_CLK, "i2s_clk");
+	ath79_gpio_output_select(PISEN_WMB001N_GPIO_I2S_CLK, AR934X_GPIO_OUT_MUX_I2S_CLK);
+	gpio_direction_output(PISEN_WMB001N_GPIO_I2S_CLK, 0);
 
-	gpio_request(PISEN_WMB001N_GPIO_I2S_MIC_SD, "I2S MIC_SD");
-	ath79_gpio_input_select(PISEN_WMB001N_GPIO_I2S_MIC_SD, AR934X_GPIO_IN_MUX_I2S_MIC_SD);
-	gpio_direction_input(PISEN_WMB001N_GPIO_I2S_MIC_SD);
+	/* Configure I2S WS pin (LRCLK) */
+	gpio_request(PISEN_WMB001N_GPIO_I2S_WS, "i2s_ws");
+	ath79_gpio_output_select(PISEN_WMB001N_GPIO_I2S_WS, AR934X_GPIO_OUT_MUX_I2S_WS);
+	gpio_direction_output(PISEN_WMB001N_GPIO_I2S_WS, 0);
 
-	/* Init stereo block registers in default configuration */
+	/* Configure I2S SD pin (DATA) */
+	gpio_request(PISEN_WMB001N_GPIO_I2S_SD, "i2s_sd");
+	ath79_gpio_output_select(PISEN_WMB001N_GPIO_I2S_SD, AR934X_GPIO_OUT_MUX_I2S_SD);
+	gpio_direction_output(PISEN_WMB001N_GPIO_I2S_SD, 0);
+
+	/* Release reset of I2S controller */
+	ath79_reset_wr(AR71XX_RESET_REG_RESET_MODULE, t & ~AR934X_RESET_I2S);
+	udelay(10);
+
+	/* Initialize stereo block registers */
 	ath79_audio_setup();
+	
+	printk(KERN_INFO "PISEN_WMB001N: I2S GPIO pins configured for WM8904\n");
 }
 
 static void __init tl_ap123_setup(void)
@@ -177,7 +177,6 @@ static void __init tl_ap123_setup(void)
 	u8 *ee = (u8 *) KSEG1ADDR(0x1fff1000);
 
 	/* Disable JTAG, enabling GPIOs 0-3 */
-	/* Configure OBS4 line, for GPIO 4*/
 	ath79_gpio_function_setup(AR934X_GPIO_FUNC_JTAG_DISABLE,
 				 AR934X_GPIO_FUNC_CLK_OBS4_EN);
 
@@ -216,17 +215,19 @@ static void __init pisen_wmb001n_setup(void)
 					ARRAY_SIZE(pisen_wmb001n_gpio_keys),
 					pisen_wmb001n_gpio_keys);
 
-    platform_device_register(&pisen_wmb001n_i2c_gpio_device);
+	/* Register I2C GPIO first */
+	platform_device_register(&pisen_wmb001n_i2c_gpio_device);
 
-    i2c_register_board_info(0, pisen_wmb001n_i2c_devices, 
-                           ARRAY_SIZE(pisen_wmb001n_i2c_devices));
+	/* Register I2C devices (WM8904) */
+	i2c_register_board_info(0, pisen_wmb001n_i2c_devices, 
+				ARRAY_SIZE(pisen_wmb001n_i2c_devices));
 
 	ath79_register_usb();
 
-	/* Audio initialization: PCM/I2S and CODEC */
+	/* Audio setup for WM8904 */
 	pisen_wmb001n_audio_setup();
-	platform_device_register(&pisen_wmb001n_spdif_codec);
 	platform_device_register(&pisen_wmb001n_internal_codec);
+	platform_device_register(&pisen_wmb001n_sound_device);
 	ath79_audio_device_register();
 }
 

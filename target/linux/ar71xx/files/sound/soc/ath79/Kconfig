@@ -94,7 +94,7 @@ config SND_ATH79_SOC_CUS227
 	  CUS227 machine support, ath79 PCM engine, I2S interface and internal
 	  codec.
 
-config SND_ATH79_SOC_WMB001N
+config SND_ATH79_SOC_WM8904
 	tristate "SoC  Audio support for WMB001N board"
 	depends on SND_ATH79_SOC
 	select SND_ATH79_SOC_I2S

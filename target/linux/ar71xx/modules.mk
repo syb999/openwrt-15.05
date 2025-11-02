@@ -80,3 +80,33 @@ define KernelPackage/sound-ap123-ak4430/description
 endef
 
 $(eval $(call KernelPackage,sound-ap123-ak4430))
+
+
+define KernelPackage/sound-wm8904
+  SUBMENU:=$(SOUND_MENU)
+  TITLE:=WM8904 I2S Audio Driver for AR71xx
+  DEPENDS:=@TARGET_ar71xx +kmod-sound-soc-core +kmod-i2c-core
+  KCONFIG:= \
+    CONFIG_SND=y \
+	CONFIG_SND_ATH79_SOC_CODEC=y \
+    CONFIG_SND_ATH79_SOC_I2S=y \
+    CONFIG_SND_SOC=y \
+    CONFIG_SND_SOC_WM8904=y \
+    CONFIG_SND_SOC_I2C_AND_SPI=y \
+    CONFIG_ATH79_DEV_AUDIO=y \
+    CONFIG_SND_ATH79_SOC=y \
+    CONFIG_SND_ATH79_SOC_WM8904=y
+  FILES:= \
+    $(LINUX_DIR)/sound/soc/codecs/snd-soc-wm8904.ko \
+    $(LINUX_DIR)/sound/soc/ath79/snd-soc-ath79-i2s.ko \
+    $(LINUX_DIR)/sound/soc/ath79/snd-soc-ath79-pcm.ko \
+	$(LINUX_DIR)/sound/soc/ath79/snd-soc-ath79-codec.ko \
+    $(LINUX_DIR)/sound/soc/ath79/snd-soc-ath79-wm8904.ko
+  AUTOLOAD:=$(call AutoLoad,89,snd-soc-wm8904 snd-soc-ath79-codec snd-soc-ath79-i2s snd-soc-ath79-pcm snd-soc-ath79-wm8904)
+endef
+
+define KernelPackage/sound-wm8904/description
+  WM8904 audio codec support for AR71xx with I2S controller
+endef
+
+$(eval $(call KernelPackage,sound-wm8904))

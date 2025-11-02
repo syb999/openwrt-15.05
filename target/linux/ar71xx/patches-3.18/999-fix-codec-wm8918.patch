@@ -1,0 +1,47 @@
+--- a/sound/soc/codecs/wm8904.c
++++ b/sound/soc/codecs/wm8904.c
+@@ -326,6 +326,12 @@ static int wm8904_configure_clocking(str
+ 	snd_soc_update_bits(codec, WM8904_CLOCK_RATES_2,
+ 			    WM8904_SYSCLK_SRC, 0);
+ 
++	if (wm8904->sysclk_src == 0) {
++		dev_warn(codec->dev, "Using default MCLK clock source\n");
++		wm8904->sysclk_src = WM8904_CLK_MCLK;
++		wm8904->mclk_rate = 12288000;  /* 12.288 MHz */
++	}
++
+ 	/* This should be done on init() for bypass paths */
+ 	switch (wm8904->sysclk_src) {
+ 	case WM8904_CLK_MCLK:
+@@ -2110,12 +2116,14 @@ static int wm8904_i2c_probe(struct i2c_c
+ 	if (wm8904 == NULL)
+ 		return -ENOMEM;
+ 
+-	wm8904->mclk = devm_clk_get(&i2c->dev, "mclk");
+-	if (IS_ERR(wm8904->mclk)) {
+-		ret = PTR_ERR(wm8904->mclk);
+-		dev_err(&i2c->dev, "Failed to get MCLK\n");
+-		return ret;
+-	}
++	wm8904->mclk = NULL;
++
++	wm8904->sysclk_src = WM8904_CLK_MCLK;
++	wm8904->mclk_rate = 12288000;
++	wm8904->sysclk_rate = 12288000;
++
++	dev_info(&i2c->dev, "WM8904: Using default MCLK configuration: %d Hz\n", 
++		 wm8904->mclk_rate);
+ 
+ 	wm8904->regmap = devm_regmap_init_i2c(i2c, &wm8904_regmap);
+ 	if (IS_ERR(wm8904->regmap)) {
+@@ -2229,6 +2237,10 @@ static int wm8904_i2c_probe(struct i2c_c
+ 	regcache_cache_only(wm8904->regmap, true);
+ 	regulator_bulk_disable(ARRAY_SIZE(wm8904->supplies), wm8904->supplies);
+ 
++	dev_info(&i2c->dev, "=== WM8904 Codec Registration ===\n");
++	dev_info(&i2c->dev, "Device name: %s\n", dev_name(&i2c->dev));
++	dev_info(&i2c->dev, "DAI name: %s\n", wm8904_dai.name);
++
+ 	ret = snd_soc_register_codec(&i2c->dev,
+ 			&soc_codec_dev_wm8904, &wm8904_dai, 1);
+ 	if (ret != 0)
