@@ -474,6 +474,19 @@ endef
 $(eval $(call Profile,TLWR1043))
 
 
+define Profile/urouter-plus
+	NAME:=BHU uRouter Plus
+	PACKAGES:=kmod-usb-core kmod-usb2 kmod-mtd-rw panel-ap-setup \
+		kmod-fs-ext4 kmod-usb-storage kmod-usb-storage-extras \
+		kmod-usb-ohci kmod-usb-uhci blkid fdisk cfdisk usbutils \
+		badblocks e2fsprogs mount-utils block-mount
+endef
+define Profile/urouter-plus/Description
+	Package set optimized for the BHU uRouter Plus router.
+endef
+$(eval $(call Profile,urouter-plus))
+
+
 define Profile/TLWR2543
 	NAME:=TP-LINK TL-WR2543N/ND
 	PACKAGES:=kmod-usb-core kmod-usb2 kmod-ledtrig-usbdev

@@ -525,6 +525,17 @@ dir-505-a1)
 	ucidef_set_interface_lan "eth1"
 	;;
 
+urouter-plus)
+	ucidef_set_interfaces_lan_wan "eth1.1" "eth1.2"
+	ucidef_add_switch "switch0" "1" "1"
+	ucidef_add_switch_vlan "switch0" "1" "0t 1"
+	ucidef_add_switch_vlan "switch0" "2" "0t 4"
+	mac_lan=$(cat /sys/class/net/eth1/address)
+	[ -n "$mac_lan" ] && ucidef_set_interface_macaddr "lan" "$mac_lan"
+	mac_wan=$(macaddr_add "$mac_lan" -1)
+	[ -n "$mac_wan" ] && ucidef_set_interface_macaddr "wan" "$mac_wan"
+	;;
+
 alfa-ap96 |\
 alfa-nx |\
 ap83 |\

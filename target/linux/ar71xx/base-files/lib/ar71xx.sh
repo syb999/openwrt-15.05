@@ -956,6 +956,9 @@ ar71xx_board_detect() {
 	*WLAE-AG300N)
 		name="wlae-ag300n"
 		;;
+	*"uRouter Plus")
+		name="urouter-plus"
+		;;
 	*"UniFiAP Outdoor")
 		name="unifi-outdoor"
 		;;
