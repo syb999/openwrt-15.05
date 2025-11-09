@@ -1,0 +1,53 @@
+#!/bin/sh
+
+normal_step=6
+
+volume1=$(amixer get "Headphone" | tail -n1 | cut -d ' ' -f5)
+
+new_volume=$(expr $volume1 - $normal_step)
+
+if [ "$ACTION" = "released" ];then
+        if [ $new_volume -gt 0 ];then
+                amixer set "Headphone" $new_volume
+                amixer set "Line Output" $new_volume
+        else
+                amixer set "Headphone" 0
+                amixer set "Line Output" 0
+                amixer set "Digital" 0
+        fi
+
+        if [ $(amixer get "Headphone" | tail -n1 | cut -d ' ' -f6 | cut -d '%' -f1 | cut -d '[' -f2) -eq 0 ];then
+                echo 0 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum0/brightness
+        elif [ $(amixer get "Headphone" | tail -n1 | cut -d ' ' -f6 | cut -d '%' -f1 | cut -d '[' -f2) -le 20 ];then
+                echo 0 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum4/brightness
+                echo 0 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum3/brightness
+                echo 0 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum2/brightness
+                echo 0 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum1/brightness
+                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum0/brightness
+        elif [ $(amixer get "Headphone" | tail -n1 | cut -d ' ' -f6 | cut -d '%' -f1 | cut -d '[' -f2) -le 40 ];then
+                echo 0 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum4/brightness
+                echo 0 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum3/brightness
+                echo 0 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum2/brightness
+                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum1/brightness
+                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum0/brightness
+        elif [ $(amixer get "Headphone" | tail -n1 | cut -d ' ' -f6 | cut -d '%' -f1 | cut -d '[' -f2) -le 60 ];then
+                echo 0 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum4/brightness
+                echo 0 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum3/brightness
+                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum2/brightness
+                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum1/brightness
+                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum0/brightness
+        elif [ $(amixer get "Headphone" | tail -n1 | cut -d ' ' -f6 | cut -d '%' -f1 | cut -d '[' -f2) -le 80 ];then
+                echo 0 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum4/brightness
+                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum3/brightness
+                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum2/brightness
+                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum1/brightness
+                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum0/brightness
+        else
+                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum4/brightness
+                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum3/brightness
+                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum2/brightness
+                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum1/brightness
+                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum0/brightness
+        fi
+fi
+

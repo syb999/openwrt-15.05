@@ -637,6 +637,15 @@ define Device/tl-wr720n-v4
 endef
 TARGET_DEVICES += tl-wr703n-v1 tl-wr710n-v1 tl-wr710n-v2 tl-wr720n-v3 tl-wr720n-v4
 
+define Device/pisen-wmb001n
+    $(Device/tplink-16mlzma)
+    BOARDNAME := PISEN_WMB001N
+    DEVICE_PROFILE := PISEN-WMB001N
+    TPLINK_HWID := 0x30100102
+    CONSOLE := ttyATH0,115200
+endef
+TARGET_DEVICES += pisen-wmb001n
+
 define Device/pisen-wmm003n
     $(Device/tplink-8mlzma)
     BOARDNAME := PISEN-WMM003N
@@ -821,20 +830,13 @@ define Device/pisen-wfr101n
     TPLINK_HWID := 0x30100101
 endef
 
-define Device/pisen-wmb001n
-    $(Device/tplink-16mlzma)
-    BOARDNAME := PISEN_WMB001N
-    DEVICE_PROFILE := PISEN
-    TPLINK_HWID := 0x30100102
-endef
-
 define Device/pisen-wpr003n
     $(Device/tplink-16mlzma)
     BOARDNAME := PISEN_WPR003N
     DEVICE_PROFILE := PISEN
     TPLINK_HWID := 0x30100103
 endef
-TARGET_DEVICES += pisen-wfr101n pisen-wmb001n pisen-wpr003n
+TARGET_DEVICES += pisen-wfr101n pisen-wpr003n
 
 define Device/tl-wr941nd-v5
     $(Device/tplink-4mlzma)

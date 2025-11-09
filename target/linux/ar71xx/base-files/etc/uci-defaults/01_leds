@@ -406,6 +406,10 @@ pisen-wfr101n)
 	ucidef_set_led_usbdev "usb" "USB" "pisen:blue:usb" "1-1"
 	;;
 
+pisen-wmb001n)
+	ucidef_set_led_wlan "wlan" "WLAN" "pisen:blue:wlan" "phy0radio"
+	;;
+
 pisen-wmm003n)
 	ucidef_set_led_wlan "wlan" "WLAN" "pisen:blue:wlan" "phy0tpt"
 	;;

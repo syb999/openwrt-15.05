@@ -399,13 +399,25 @@ $(eval $(call Profile,TLWR841))
 
 define Profile/PISEN
 	NAME:=PISEN Cloud Router
-	PACKAGES:=kmod-usb-core kmod-usb2 kmod-sound-wm8904
+	PACKAGES:=kmod-usb-core kmod-usb2 kmod-sound-ap123-ak4430
 endef
 
 define Profile/PISEN/Description
-	Package set optimized for the PISEN_WFR101N/PISEN_WMB001N/PISEN_WPR003N.
+	Package set optimized for the PISEN_WFR101N/PISEN_WPR003N.
 endef
 $(eval $(call Profile,PISEN))
+
+
+define Profile/PISEN-WMB001N
+	NAME:=PISEN_WMB001N
+	PACKAGES:=kmod-usb-core kmod-usb2 kmod-gpio-button-hotplug \
+		kmod-sound-wm8904 alsa-utils panel-ap-setup
+endef
+
+define Profile/PISEN-WMB001N/Description
+	Package set optimized for the PISEN WMB001N.
+endef
+$(eval $(call Profile,PISEN-WMB001N))
 
 
 define Profile/PISEN-WMM003N
