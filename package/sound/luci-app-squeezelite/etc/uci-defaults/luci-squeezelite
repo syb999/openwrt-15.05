@@ -1,0 +1,11 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@squeezelite[-1]
+	add ucitrack squeezelite
+	set ucitrack.@squeezelite[-1].init=squeezelite
+	commit ucitrack
+EOF
+
+rm -f /tmp/luci-indexcache
+exit 0
