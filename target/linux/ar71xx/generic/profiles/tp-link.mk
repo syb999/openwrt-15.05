@@ -41,7 +41,7 @@ $(eval $(call Profile,baicells-cn6619))
 
 define Profile/fap-022wld
 	NAME:=PHICOMM FAP-022WLD
-	PACKAGES:=panel-ap-setup
+	PACKAGES:=panel-ap-setup kmod-sound-ap123-ak4430 mpg123 luci-app-squeezelite
 endef
 
 define Profile/fap-022wld/Description

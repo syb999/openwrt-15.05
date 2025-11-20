@@ -8,12 +8,15 @@
  */
 
 #include <linux/gpio.h>
+#include <linux/delay.h>
 #include <linux/platform_device.h>
+#include <linux/ath9k_platform.h>
 
 #include <asm/mach-ath79/ath79.h>
 #include <asm/mach-ath79/ar71xx_regs.h>
 
 #include "common.h"
+#include "dev-audio.h"
 #include "dev-eth.h"
 #include "dev-gpio-buttons.h"
 #include "dev-leds-gpio.h"
@@ -22,9 +25,17 @@
 #include "dev-wmac.h"
 #include "machtypes.h"
 
+/*   MAX98357A I2S CODEC */
+/*   LRC = I2S_WS    */
+/*   DIN  = I2S_SD   */
+/*   BCLK = I2S_CLK  */
+
+#define FAP_022WLD_GPIO_I2S_SD		18
+#define FAP_022WLD_GPIO_I2S_WS		14
+#define FAP_022WLD_GPIO_I2S_CLK		19
+
 #define FAP_022WLD_GPIO_LED_POWER	11
 #define FAP_022WLD_GPIO_LED_WIFI	13
-#define FAP_022WLD_GPIO_LED_WAN		19
 
 #define FAP_022WLD_GPIO_BTN_RESET	17
 
@@ -40,14 +51,20 @@ static struct flash_platform_data fap_022wld_flash_data = {
 	.part_probes	= fap_022wld_part_probes,
 };
 
+static struct platform_device fap_022wld_internal_codec = {
+	.name		= "ath79-internal-codec",
+	.id		= -1,
+};
+
+static struct platform_device fap_022wld_spdif_codec = {
+	.name		= "ak4430-codec",
+	.id		= -1,
+};
+
 static struct gpio_led fap_022wld_leds_gpio[] __initdata = {
 	{
 		.name		= "fap:green:power",
 		.gpio		= FAP_022WLD_GPIO_LED_POWER,
-		.active_low	= 1,
-	}, {
-		.name		= "fap:green:wan",
-		.gpio		= FAP_022WLD_GPIO_LED_WAN,
 		.active_low	= 1,
 	}, {
 		.name		= "fap:green:wifi",
@@ -66,6 +83,31 @@ static struct gpio_keys_button fap_022wld_gpio_keys[] __initdata = {
 		.active_low	= 1,
 	}
 };
+
+static void __init fap_022wld_audio_setup(void)
+{
+	u32 t;
+
+	/* Reset I2S internal controller */
+	t = ath79_reset_rr(AR71XX_RESET_REG_RESET_MODULE);
+	ath79_reset_wr(AR71XX_RESET_REG_RESET_MODULE, t | AR934X_RESET_I2S );
+	udelay(1);
+
+	gpio_request(FAP_022WLD_GPIO_I2S_CLK, "I2S CLK");
+	ath79_gpio_output_select(FAP_022WLD_GPIO_I2S_CLK, AR934X_GPIO_OUT_MUX_I2S_CLK);
+	gpio_direction_output(FAP_022WLD_GPIO_I2S_CLK, 0);
+
+	gpio_request(FAP_022WLD_GPIO_I2S_WS, "I2S WS");
+	ath79_gpio_output_select(FAP_022WLD_GPIO_I2S_WS, AR934X_GPIO_OUT_MUX_I2S_WS);
+	gpio_direction_output(FAP_022WLD_GPIO_I2S_WS, 0);
+
+	gpio_request(FAP_022WLD_GPIO_I2S_SD, "I2S SD");
+	ath79_gpio_output_select(FAP_022WLD_GPIO_I2S_SD, AR934X_GPIO_OUT_MUX_I2S_SD);
+	gpio_direction_output(FAP_022WLD_GPIO_I2S_SD, 0);
+
+	/* Init stereo block registers in default configuration */
+	ath79_audio_setup();
+}
 
 static void __init tl_ap123_setup(void)
 {
@@ -112,6 +154,11 @@ static void __init fap_022wld_setup(void)
 					ARRAY_SIZE(fap_022wld_gpio_keys),
 					fap_022wld_gpio_keys);
 
+	/* Audio initialization: PCM/I2S and CODEC */
+	fap_022wld_audio_setup();
+	platform_device_register(&fap_022wld_spdif_codec);
+	platform_device_register(&fap_022wld_internal_codec);
+	ath79_audio_device_register();
 }
 
 MIPS_MACHINE(ATH79_MACH_FAP_022WLD, "FAP-022WLD", "PHICOMM FAP-022WLD",
