@@ -118,3 +118,25 @@ define KernelPackage/sound-mt7620/description
 endef
 
 $(eval $(call KernelPackage,sound-mt7620))
+
+define KernelPackage/sound-mt762x-max98357
+  SUBMENU:=$(SOUND_MENU)
+  TITLE:=MT7620 MAX98357 PCM/I2S Alsa Driver
+  DEPENDS:=@TARGET_ramips +alsa-lib +kmod-sound-soc-core @!TARGET_ramips_rt288x
+  KCONFIG:= \
+	CONFIG_SND_DMAENGINE_PCM \
+	CONFIG_SND_MT762X_SOC_I2S_GPIO=y \
+	CONFIG_SND_MT762X_SOC_MAX98357A=y \
+	CONFIG_SND_SOC_MAX98357A=y
+  FILES:= \
+	$(LINUX_DIR)/sound/soc/ralink/snd-soc-mt762x-i2s-gpio.ko \
+	$(LINUX_DIR)/sound/soc/ralink/snd-soc-mt762x-max98357a.ko \
+	$(LINUX_DIR)/sound/soc/codecs/snd-soc-max98357a.ko
+  AUTOLOAD:=$(call AutoLoad,90,snd-soc-max98357a snd-soc-mt762x-i2s-gpio snd-soc-mt762x-max98357a)
+endef
+
+define KernelPackage/sound-mt762x-max98357/description
+ Alsa modules for ralink i2s controller.
+endef
+
+$(eval $(call KernelPackage,sound-mt762x-max98357))

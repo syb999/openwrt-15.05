@@ -1,0 +1,602 @@
+--- a/sound/soc/ralink/Kconfig
++++ b/sound/soc/ralink/Kconfig
+@@ -7,6 +7,16 @@ config SND_MT7620_SOC_I2S
+ 	  Say Y if you want to use I2S protocol and I2S codec on Ralink/MediaTek
+ 	  based boards.
+ 
++config SND_MT762X_SOC_I2S_GPIO
++	tristate "MT762x GPIO I2S driver"
++	depends on SND_SOC
++	select SND_SOC_GENERIC_DMAENGINE_PCM
++	select REGMAP_MMIO
++	select SND_SOC_GENERIC_DMAENGINE_PCM
++	help
++	  Say Y if you want to add support for GPIO-based I2S on MT762x
++	  using custom GPIO pins.
++
+ config SND_MT7620_SOC_WM8960
+ 	tristate "SoC Audio support for Ralink WM8960"
+ 	select SND_MT7620_SOC_I2S
+@@ -14,3 +24,11 @@ config SND_MT7620_SOC_WM8960
+ 	help
+ 	  Say Y if you want to add support for ASoC audio on the Qi LB60 board
+ 	  a.k.a Qi Ben NanoNote.
++
++config SND_MT762X_SOC_MAX98357A
++	tristate "SoC Audio support for MT762x with MAX98357A (GPIO I2S)"
++	select SND_MT762X_SOC_I2S_GPIO
++	select SND_SOC_MAX98357A
++	help
++	  Say Y if you want to add support for ASoC audio on MT762x
++	  boards using the MAX98357A I2S amplifier with GPIO I2S.
+--- a/sound/soc/ralink/Makefile
++++ b/sound/soc/ralink/Makefile
+@@ -2,10 +2,14 @@
+ # Jz4740 Platform Support
+ #
+ snd-soc-mt7620-i2s-objs := mt7620-i2s.o
++snd-soc-mt762x-i2s-gpio-objs := mt762x-i2s-gpio.o
+ 
+ obj-$(CONFIG_SND_MT7620_SOC_I2S) += snd-soc-mt7620-i2s.o
++obj-$(CONFIG_SND_MT762X_SOC_I2S_GPIO) += snd-soc-mt762x-i2s-gpio.o
+ 
+ # Jz4740 Machine Support
+ snd-soc-mt7620-wm8960-objs := mt7620-wm8960.o
++snd-soc-mt762x-max98357a-objs := mt762x-max98357a.o
+ 
+ obj-$(CONFIG_SND_MT7620_SOC_WM8960) += snd-soc-mt7620-wm8960.o
++obj-$(CONFIG_SND_MT762X_SOC_MAX98357A) += snd-soc-mt762x-max98357a.o
+--- /dev/null
++++ b/sound/soc/ralink/mt762x-i2s-gpio.c
+@@ -0,0 +1,456 @@
++/*
++ * MT762x GPIO-based I2S driver
++ */
++
++#include <linux/init.h>
++#include <linux/io.h>
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/platform_device.h>
++#include <linux/slab.h>
++#include <linux/gpio/consumer.h>
++#include <linux/delay.h>
++#include <linux/dma-mapping.h>
++#include <linux/jiffies.h>
++#include <linux/kthread.h>
++#include <linux/sched.h>
++
++#include <sound/core.h>
++#include <sound/pcm.h>
++#include <sound/pcm_params.h>
++#include <sound/soc.h>
++#include <sound/initval.h>
++
++struct mt762x_i2s_gpio {
++	struct gpio_desc *bclk_gpio;
++	struct gpio_desc *lrclk_gpio; 
++	struct gpio_desc *data_gpio;
++	
++	unsigned int rate;
++	unsigned int bits_per_sample;
++	unsigned int channels;
++	
++	struct task_struct *bit_bang_thread;
++	bool running;
++	spinlock_t lock;
++	
++	struct snd_pcm_substream *substream;
++	unsigned int buffer_pos;
++};
++
++static void mt762x_i2s_gpio_set_bclk(struct mt762x_i2s_gpio *i2s_gpio, int value)
++{
++	gpiod_set_value(i2s_gpio->bclk_gpio, value);
++}
++
++static void mt762x_i2s_gpio_set_lrclk(struct mt762x_i2s_gpio *i2s_gpio, int value)
++{
++	gpiod_set_value(i2s_gpio->lrclk_gpio, value);
++}
++
++static void mt762x_i2s_gpio_set_data(struct mt762x_i2s_gpio *i2s_gpio, int value)
++{
++	gpiod_set_value(i2s_gpio->data_gpio, value);
++}
++
++static int mt762x_i2s_gpio_bit_bang_thread(void *data)
++{
++	struct mt762x_i2s_gpio *i2s_gpio = data;
++	struct snd_pcm_substream *substream = i2s_gpio->substream;
++	struct snd_pcm_runtime *runtime = substream->runtime;
++	unsigned int period_size = runtime->period_size;
++	unsigned int buffer_size = runtime->buffer_size;
++	int16_t *buffer = (int16_t *)runtime->dma_area;
++	unsigned int bit_delay;
++
++	unsigned int bclk_freq = i2s_gpio->rate * 32; // 44100 * 32 = 1.4112 MHz
++	bit_delay = 1000000000 / (bclk_freq * 2);
++	
++	if (bit_delay < 300)
++		bit_delay = 300;
++	
++	printk(KERN_INFO "mt762x-i2s-gpio: Bit-bang: rate=%u, channels=%u, delay=%uns\n", 
++	       i2s_gpio->rate, i2s_gpio->channels, bit_delay);
++	
++	while (!kthread_should_stop() && i2s_gpio->running) {
++		unsigned int i;
++		int bit;
++		
++		for (i = 0; i < period_size && i2s_gpio->running; i++) {
++			int16_t left_sample, right_sample;
++
++			if (i2s_gpio->channels == 2) {
++				left_sample = buffer[i2s_gpio->buffer_pos * 2];
++				right_sample = buffer[i2s_gpio->buffer_pos * 2 + 1];
++			} else {
++				left_sample = buffer[i2s_gpio->buffer_pos];
++				right_sample = left_sample;
++			}
++
++			mt762x_i2s_gpio_set_lrclk(i2s_gpio, 0);
++			for (bit = 15; bit >= 0; bit--) {
++				mt762x_i2s_gpio_set_bclk(i2s_gpio, 0);
++				mt762x_i2s_gpio_set_data(i2s_gpio, (left_sample >> bit) & 1);
++				ndelay(bit_delay);
++				mt762x_i2s_gpio_set_bclk(i2s_gpio, 1);
++				ndelay(bit_delay);
++			}
++
++			mt762x_i2s_gpio_set_lrclk(i2s_gpio, 1);
++			for (bit = 15; bit >= 0; bit--) {
++				mt762x_i2s_gpio_set_bclk(i2s_gpio, 0);
++				mt762x_i2s_gpio_set_data(i2s_gpio, (right_sample >> bit) & 1);
++				ndelay(bit_delay);
++				mt762x_i2s_gpio_set_bclk(i2s_gpio, 1);
++				ndelay(bit_delay);
++			}
++			
++			i2s_gpio->buffer_pos++;
++			if (i2s_gpio->buffer_pos >= buffer_size)
++				i2s_gpio->buffer_pos = 0;
++		}
++		
++		if (i2s_gpio->running) {
++			snd_pcm_period_elapsed(substream);
++		}
++
++		set_current_state(TASK_INTERRUPTIBLE);
++		schedule_timeout(1);
++		set_current_state(TASK_RUNNING);
++	}
++	
++	mt762x_i2s_gpio_set_bclk(i2s_gpio, 0);
++	mt762x_i2s_gpio_set_lrclk(i2s_gpio, 0);
++	mt762x_i2s_gpio_set_data(i2s_gpio, 0);
++	
++	printk(KERN_INFO "mt762x-i2s-gpio: Bit-bang stopped\n");
++	return 0;
++}
++
++static int mt762x_i2s_gpio_startup(struct snd_pcm_substream *substream,
++				   struct snd_soc_dai *dai)
++{
++	struct mt762x_i2s_gpio *i2s_gpio = snd_soc_dai_get_drvdata(dai);
++	
++	dev_info(dai->dev, "STARTUP: i2s_gpio=%p\n", i2s_gpio);
++	return 0;
++}
++
++static void mt762x_i2s_gpio_shutdown(struct snd_pcm_substream *substream,
++				     struct snd_soc_dai *dai)
++{
++	dev_info(dai->dev, "SHUTDOWN\n");
++}
++
++static int mt762x_i2s_gpio_trigger(struct snd_pcm_substream *substream, int cmd,
++				   struct snd_soc_dai *dai)
++{
++	struct mt762x_i2s_gpio *i2s_gpio = snd_soc_dai_get_drvdata(dai);
++	unsigned long flags;
++	int ret = 0;
++
++	dev_info(dai->dev, "TRIGGER: cmd=%d, i2s_gpio=%p\n", cmd, i2s_gpio);
++
++	if (!i2s_gpio) {
++		dev_err(dai->dev, "No driver data!\n");
++		return -ENODEV;
++	}
++
++	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {
++		dev_info(dai->dev, "Capture not supported\n");
++		return 0;
++	}
++
++	spin_lock_irqsave(&i2s_gpio->lock, flags);
++
++	switch (cmd) {
++	case SNDRV_PCM_TRIGGER_START:
++	case SNDRV_PCM_TRIGGER_RESUME:
++	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
++		if (!i2s_gpio->running) {
++			i2s_gpio->running = true;
++			i2s_gpio->substream = substream;
++			i2s_gpio->buffer_pos = 0;
++
++			mt762x_i2s_gpio_set_bclk(i2s_gpio, 0);
++			mt762x_i2s_gpio_set_lrclk(i2s_gpio, 0);
++			mt762x_i2s_gpio_set_data(i2s_gpio, 0);
++
++			i2s_gpio->bit_bang_thread = kthread_run(
++				mt762x_i2s_gpio_bit_bang_thread, i2s_gpio, "mt762x-i2s-gpio");
++				
++			if (IS_ERR(i2s_gpio->bit_bang_thread)) {
++				ret = PTR_ERR(i2s_gpio->bit_bang_thread);
++				dev_err(dai->dev, "Failed to start thread: %d\n", ret);
++				i2s_gpio->bit_bang_thread = NULL;
++				i2s_gpio->running = false;
++			} else {
++				dev_info(dai->dev, "Bit-bang thread started\n");
++			}
++		}
++		break;
++
++	case SNDRV_PCM_TRIGGER_STOP:
++	case SNDRV_PCM_TRIGGER_SUSPEND:
++	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
++		if (i2s_gpio->running) {
++			i2s_gpio->running = false;
++
++			if (i2s_gpio->bit_bang_thread) {
++				kthread_stop(i2s_gpio->bit_bang_thread);
++				i2s_gpio->bit_bang_thread = NULL;
++				dev_info(dai->dev, "Bit-bang thread stopped\n");
++			}
++		}
++		break;
++
++	default:
++		ret = -EINVAL;
++		break;
++	}
++	
++	spin_unlock_irqrestore(&i2s_gpio->lock, flags);
++	return ret;
++}
++
++static int mt762x_i2s_gpio_hw_params(struct snd_pcm_substream *substream,
++				     struct snd_pcm_hw_params *params,
++				     struct snd_soc_dai *dai)
++{
++	struct mt762x_i2s_gpio *i2s_gpio = snd_soc_dai_get_drvdata(dai);
++	
++	dev_info(dai->dev, "HW_PARAMS: i2s_gpio=%p\n", i2s_gpio);
++	
++	if (!i2s_gpio) {
++		dev_err(dai->dev, "No driver data!\n");
++		return -ENODEV;
++	}
++
++	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {
++		dev_info(dai->dev, "Capture not supported\n");
++		return 0;
++	}
++	
++	i2s_gpio->rate = params_rate(params);
++	i2s_gpio->bits_per_sample = params_width(params);
++	i2s_gpio->channels = params_channels(params);
++	
++	dev_info(dai->dev, "Configured: rate=%u, bits=%u, channels=%u\n",
++		 i2s_gpio->rate, i2s_gpio->bits_per_sample, i2s_gpio->channels);
++	
++	return 0;
++}
++
++static int mt762x_i2s_gpio_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
++{
++	dev_info(dai->dev, "SET_FMT: fmt=0x%x\n", fmt);
++	return 0;
++}
++
++static const struct snd_soc_dai_ops mt762x_i2s_gpio_dai_ops = {
++	.startup = mt762x_i2s_gpio_startup,
++	.shutdown = mt762x_i2s_gpio_shutdown,
++	.trigger = mt762x_i2s_gpio_trigger,
++	.hw_params = mt762x_i2s_gpio_hw_params,
++	.set_fmt = mt762x_i2s_gpio_set_fmt,
++};
++
++static struct snd_soc_dai_driver mt762x_i2s_gpio_dai = {
++	.name = "mt762x-i2s-gpio",
++	.playback = {
++		.stream_name = "Playback",
++		.channels_min = 1,
++		.channels_max = 2,
++		.rates = SNDRV_PCM_RATE_8000_48000,
++		.formats = SNDRV_PCM_FMTBIT_S16_LE,
++	},
++	.ops = &mt762x_i2s_gpio_dai_ops,
++};
++
++static const struct snd_soc_component_driver mt762x_i2s_gpio_component = {
++	.name = "mt762x-i2s-gpio",
++};
++
++static struct snd_pcm_hardware mt762x_i2s_gpio_pcm_hardware = {
++	.info = SNDRV_PCM_INFO_INTERLEAVED |
++		SNDRV_PCM_INFO_BLOCK_TRANSFER,
++	.formats = SNDRV_PCM_FMTBIT_S16_LE,
++	.rates = SNDRV_PCM_RATE_8000_48000,
++	.rate_min = 8000,
++	.rate_max = 48000,
++	.channels_min = 1,
++	.channels_max = 2,
++	.buffer_bytes_max = 64 * 1024,
++	.period_bytes_min = 1024,
++	.period_bytes_max = 16 * 1024,
++	.periods_min = 4,
++	.periods_max = 16,
++	.fifo_size = 0,
++};
++
++static int mt762x_i2s_gpio_pcm_open(struct snd_pcm_substream *substream)
++{
++	snd_soc_set_runtime_hwparams(substream, &mt762x_i2s_gpio_pcm_hardware);
++	return 0;
++}
++
++static int mt762x_i2s_gpio_pcm_close(struct snd_pcm_substream *substream)
++{
++	return 0;
++}
++
++static int mt762x_i2s_gpio_pcm_hw_params(struct snd_pcm_substream *substream,
++					 struct snd_pcm_hw_params *params)
++{
++	return snd_pcm_lib_malloc_pages(substream, params_buffer_bytes(params));
++}
++
++static int mt762x_i2s_gpio_pcm_hw_free(struct snd_pcm_substream *substream)
++{
++	return snd_pcm_lib_free_pages(substream);
++}
++
++static int mt762x_i2s_gpio_pcm_prepare(struct snd_pcm_substream *substream)
++{
++	return 0;
++}
++
++static int mt762x_i2s_gpio_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
++{
++	return 0;
++}
++
++static snd_pcm_uframes_t mt762x_i2s_gpio_pcm_pointer(struct snd_pcm_substream *substream)
++{
++	struct snd_pcm_runtime *runtime = substream->runtime;
++	return bytes_to_frames(runtime, runtime->control->appl_ptr);
++}
++
++static struct snd_pcm_ops mt762x_i2s_gpio_pcm_ops = {
++	.open		= mt762x_i2s_gpio_pcm_open,
++	.close		= mt762x_i2s_gpio_pcm_close,
++	.hw_params	= mt762x_i2s_gpio_pcm_hw_params,
++	.hw_free	= mt762x_i2s_gpio_pcm_hw_free,
++	.prepare	= mt762x_i2s_gpio_pcm_prepare,
++	.trigger	= mt762x_i2s_gpio_pcm_trigger,
++	.pointer	= mt762x_i2s_gpio_pcm_pointer,
++};
++
++static int mt762x_i2s_gpio_pcm_new(struct snd_soc_pcm_runtime *rtd)
++{
++	struct snd_pcm *pcm = rtd->pcm;
++	
++	snd_pcm_lib_preallocate_pages_for_all(pcm, SNDRV_DMA_TYPE_DEV,
++					      rtd->card->snd_card->dev,
++					      64 * 1024, 128 * 1024);
++	return 0;
++}
++
++static void mt762x_i2s_gpio_pcm_free(struct snd_pcm *pcm)
++{
++	snd_pcm_lib_preallocate_free_for_all(pcm);
++}
++
++static struct snd_soc_platform_driver mt762x_i2s_gpio_platform = {
++	.ops		= &mt762x_i2s_gpio_pcm_ops,
++	.pcm_new	= mt762x_i2s_gpio_pcm_new,
++	.pcm_free	= mt762x_i2s_gpio_pcm_free,
++};
++
++static int mt762x_i2s_gpio_probe(struct platform_device *pdev)
++{
++	struct mt762x_i2s_gpio *i2s_gpio;
++	int ret;
++	
++	dev_info(&pdev->dev, "MT762x GPIO I2S Probe Start\n");
++
++	i2s_gpio = devm_kzalloc(&pdev->dev, sizeof(*i2s_gpio), GFP_KERNEL);
++	if (!i2s_gpio)
++		return -ENOMEM;
++
++	i2s_gpio->bclk_gpio = devm_gpiod_get(&pdev->dev, "bclk", GPIOD_OUT_LOW);
++	if (IS_ERR(i2s_gpio->bclk_gpio))
++		return PTR_ERR(i2s_gpio->bclk_gpio);
++		
++	i2s_gpio->lrclk_gpio = devm_gpiod_get(&pdev->dev, "lrclk", GPIOD_OUT_LOW);
++	if (IS_ERR(i2s_gpio->lrclk_gpio))
++		return PTR_ERR(i2s_gpio->lrclk_gpio);
++		
++	i2s_gpio->data_gpio = devm_gpiod_get(&pdev->dev, "data", GPIOD_OUT_LOW);
++	if (IS_ERR(i2s_gpio->data_gpio))
++		return PTR_ERR(i2s_gpio->data_gpio);
++	
++	spin_lock_init(&i2s_gpio->lock);
++	i2s_gpio->running = false;
++	
++	platform_set_drvdata(pdev, i2s_gpio);
++
++	dev_info(&pdev->dev, "Testing GPIOs...\n");
++	gpiod_set_value(i2s_gpio->bclk_gpio, 1);
++	gpiod_set_value(i2s_gpio->lrclk_gpio, 1);
++	gpiod_set_value(i2s_gpio->data_gpio, 1);
++	mdelay(100);
++	gpiod_set_value(i2s_gpio->bclk_gpio, 0);
++	gpiod_set_value(i2s_gpio->lrclk_gpio, 0);
++	gpiod_set_value(i2s_gpio->data_gpio, 0);
++
++	ret = snd_soc_register_platform(&pdev->dev, &mt762x_i2s_gpio_platform);
++	if (ret) {
++		dev_err(&pdev->dev, "Failed to register platform: %d\n", ret);
++		return ret;
++	}
++
++	ret = snd_soc_register_component(&pdev->dev, &mt762x_i2s_gpio_component,
++					 &mt762x_i2s_gpio_dai, 1);
++	if (ret) {
++		dev_err(&pdev->dev, "Failed to register component: %d\n", ret);
++		snd_soc_unregister_platform(&pdev->dev);
++		return ret;
++	}
++	
++	dev_info(&pdev->dev, "MT762x GPIO I2S Probe Successful\n");
++	return 0;
++}
++
++static int mt762x_i2s_gpio_remove(struct platform_device *pdev)
++{
++	struct mt762x_i2s_gpio *i2s_gpio = platform_get_drvdata(pdev);
++	unsigned long flags;
++	
++	if (i2s_gpio) {
++		spin_lock_irqsave(&i2s_gpio->lock, flags);
++		if (i2s_gpio->running && i2s_gpio->bit_bang_thread) {
++			i2s_gpio->running = false;
++			spin_unlock_irqrestore(&i2s_gpio->lock, flags);
++			kthread_stop(i2s_gpio->bit_bang_thread);
++		} else {
++			spin_unlock_irqrestore(&i2s_gpio->lock, flags);
++		}
++	}
++	
++	snd_soc_unregister_component(&pdev->dev);
++	snd_soc_unregister_platform(&pdev->dev);
++	return 0;
++}
++
++static const struct of_device_id mt762x_i2s_gpio_match[] = {
++	{ .compatible = "mediatek,mt762x-i2s-gpio" },
++	{},
++};
++MODULE_DEVICE_TABLE(of, mt762x_i2s_gpio_match);
++
++static struct platform_driver mt762x_i2s_gpio_driver = {
++	.probe = mt762x_i2s_gpio_probe,
++	.remove = mt762x_i2s_gpio_remove,
++	.driver = {
++		.name = "mt762x-i2s-gpio",
++		.owner = THIS_MODULE,
++		.of_match_table = mt762x_i2s_gpio_match,
++	},
++};
++
++module_platform_driver(mt762x_i2s_gpio_driver);
++
++MODULE_AUTHOR("Custom MT762x GPIO I2S Driver");
++MODULE_DESCRIPTION("MT762x GPIO-based I2S driver");
++MODULE_LICENSE("GPL");
+--- /dev/null
++++ b/sound/soc/ralink/mt762x-max98357a.c
+@@ -0,0 +1,92 @@
++/*
++ * MT762x MAX98357A custom machine driver
++ */
++
++#include <linux/module.h>
++#include <linux/platform_device.h>
++#include <linux/of.h>
++#include <sound/soc.h>
++
++static int mt762x_max98357a_probe(struct platform_device *pdev)
++{
++	struct device_node *cpu_np, *codec_np;
++	struct snd_soc_dai_link *dai;
++	struct snd_soc_card *card;
++	int ret;
++
++	dev_info(&pdev->dev, "MT762x MAX98357A machine driver probe start\n");
++
++	cpu_np = of_parse_phandle(pdev->dev.of_node, "mt762x-i2s-gpio", 0);
++	codec_np = of_parse_phandle(pdev->dev.of_node, "audio-codec", 0);
++	
++	if (!cpu_np || !codec_np) {
++		dev_err(&pdev->dev, "Missing CPU or CODEC node\n");
++		return -EINVAL;
++	}
++
++	card = devm_kzalloc(&pdev->dev, sizeof(*card), GFP_KERNEL);
++	dai = devm_kzalloc(&pdev->dev, sizeof(*dai), GFP_KERNEL);
++	if (!card || !dai)
++		return -ENOMEM;
++
++	dai->name = "MT762x MAX98357A";
++	dai->stream_name = "MAX98357A Audio";
++	dai->codec_dai_name = "max98357a-hifi";
++	dai->codec_of_node = codec_np;
++	dai->cpu_dai_name = "mt762x-i2s-gpio";
++	dai->cpu_of_node = cpu_np;
++	dai->platform_of_node = cpu_np;
++	dai->dai_fmt = SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_NB_NF | SND_SOC_DAIFMT_CBS_CFS;
++	
++	dai->ignore_suspend = 1;
++	dai->ignore_pmdown_time = 1;
++
++	card->dev = &pdev->dev;
++	card->owner = THIS_MODULE;
++	card->dai_link = dai;
++	card->num_links = 1;
++	card->name = "mt762x-max98357a";
++	card->driver_name = "mt762x-max98357a";
++	card->fully_routed = true;
++
++	platform_set_drvdata(pdev, card);
++
++	ret = snd_soc_register_card(card);
++	if (ret) {
++		dev_err(&pdev->dev, "snd_soc_register_card failed: %d\n", ret);
++		return ret;
++	}
++
++	dev_info(&pdev->dev, "MT762x MAX98357A custom machine driver initialized\n");
++	return 0;
++}
++
++static int mt762x_max98357a_remove(struct platform_device *pdev)
++{
++	struct snd_soc_card *card = platform_get_drvdata(pdev);
++
++	snd_soc_unregister_card(card);
++	return 0;
++}
++
++static const struct of_device_id mt762x_max98357a_of_match[] = {
++	{ .compatible = "mediatek,mt762x-max98357a", },
++	{},
++};
++MODULE_DEVICE_TABLE(of, mt762x_max98357a_of_match);
++
++static struct platform_driver mt762x_max98357a_driver = {
++	.driver = {
++		.name = "mt762x-max98357a",
++		.of_match_table = mt762x_max98357a_of_match,
++		.pm = &snd_soc_pm_ops,
++	},
++	.probe = mt762x_max98357a_probe,
++	.remove = mt762x_max98357a_remove,
++};
++
++module_platform_driver(mt762x_max98357a_driver);
++
++MODULE_AUTHOR("Custom MT762x Audio Driver");
++MODULE_DESCRIPTION("MT762x MAX98357A custom machine driver");
++MODULE_LICENSE("GPL v2");
