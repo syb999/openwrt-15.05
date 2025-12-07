@@ -284,13 +284,6 @@
 			};
 		};
 
-		i2s_pins: i2s {
-			i2s {
-				ralink,groups = "i2s";
-				ralink,function = "i2s";
-			};
-		};
-
 		i2c_pins: i2c {
 			i2c {
 				ralink,group = "i2c";
@@ -337,6 +330,13 @@
 			pwm1 {
 				ralink,group = "pwm1";
 				ralink,function = "pwm1";
+			};
+		};
+
+		pcm_i2s_pins: i2s {
+			i2s {
+				ralink,group = "i2s";
+				ralink,function = "pcm";
 			};
 		};
 

@@ -24,29 +24,6 @@
 		};
 	};
 
-	mt762x_i2s_gpio: mt762x-i2s-gpio {
-		compatible = "mediatek,mt762x-i2s-gpio";
-		#sound-dai-cells = <0>;
-		status = "okay";
-		
-		bclk-gpios = <&gpio1 7 0>;
-		lrclk-gpios = <&gpio1 9 0>;  
-		data-gpios = <&gpio1 10 0>;
-	};
-
-	max98357a: audio-codec {
-		compatible = "maxim,max98357a";
-		#sound-dai-cells = <0>;
-		status = "okay";
-	};
-
-	sound {
-		compatible = "mediatek,mt762x-max98357a";
-		mt762x-i2s-gpio = <&mt762x_i2s_gpio>;
-		audio-codec = <&max98357a>;
-		status = "okay";
-	};
-
 	gpio-keys-polled {
 		compatible = "gpio-keys-polled";
 		#address-cells = <1>;
