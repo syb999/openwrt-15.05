@@ -1,87 +1,138 @@
 --- a/drivers/mtd/nand/mtk_nand.c
 +++ b/drivers/mtd/nand/mtk_nand.c
-@@ -110,6 +110,10 @@
+@@ -110,10 +110,16 @@ int part_num = NUM_PARTITIONS;
  int manu_id;
  int dev_id;
  
-+/* this constant was taken from linux/nand/nand.h v 3.14
-+ * in later versions it seems it was removed in order to save a bit of space
-+ */
++#ifndef NAND_MAX_OOBSIZE
 +#define NAND_MAX_OOBSIZE 774
++#endif
++
  static u8 local_oob_buf[NAND_MAX_OOBSIZE];
  
  static u8 nand_badblock_offset = 0;
-@@ -348,7 +352,7 @@
- 		if (0xF == u4ErrNum) {
- 			mtd->ecc_stats.failed++;
- 			bRet = false;
--			//printk(KERN_ERR"UnCorrectable at PageAddr=%d\n", u4PageAddr);
-+			printk(KERN_ERR"mtk_nand: UnCorrectable at PageAddr=%d\n", u4PageAddr);
- 		} else {
- 			for (i = 0; i < ((u4ErrNum + 1) >> 1); ++i) {
- 				au4ErrBitLoc[i] = DRV_Reg32(ECC_DECEL0_REG32 + i);
-@@ -1422,7 +1426,7 @@
+ 
++static u8 *dma_aligned_buffer = NULL;
++
+ void nand_enable_clock(void)
+ {
+     //enable_clock(MT65XX_PDN_PERI_NFI, "NAND");
+@@ -875,12 +881,27 @@ mtk_nand_exec_write_page(struct mtd_info
+ 
+ 	MSG(WRITE, "mtk_nand_exec_write_page, page: 0x%x\n", u4RowAddr);
+ 
+-	if (((u32) pPageBuf % 16) && local_buffer_16_align) {
+-		printk(KERN_INFO "Data buffer not 16 bytes aligned: %p\n", pPageBuf);
+-		memcpy(local_buffer_16_align, pPageBuf, mtd->writesize);
+-		buf = local_buffer_16_align;
+-	} else
++	if ((u32)pPageBuf % 16) {
++		if (local_buffer_16_align) {
++			memcpy(local_buffer_16_align, pPageBuf, mtd->writesize);
++			buf = local_buffer_16_align;
++		} 
++		else {
++			if (!dma_aligned_buffer) {
++				dma_aligned_buffer = kmalloc(u4PageSize, GFP_KERNEL | GFP_DMA);
++				if (!dma_aligned_buffer) {
++					printk(KERN_ERR "Failed to allocate DMA aligned buffer\n");
++					return -ENOMEM;
++				}
++				printk(KERN_INFO "Allocated DMA aligned buffer: %p\n", dma_aligned_buffer);
++			}
++			printk(KERN_INFO "Data buffer not 16 bytes aligned: %p, using DMA buffer\n", pPageBuf);
++			memcpy(dma_aligned_buffer, pPageBuf, u4PageSize);
++			buf = dma_aligned_buffer;
++		}
++	} else {
+ 		buf = pPageBuf;
++	}
+ 
+ 	if (mtk_nand_ready_for_write(chip, u4RowAddr, 0, true, buf)) {
+ 		mtk_nand_write_fdm_data(chip, pFDMBuf, u4SecNum);
+@@ -1417,18 +1438,17 @@ mtk_nand_read_page(struct mtd_info *mtd,
+ #endif
+ }
+ 
+-int
+-mtk_nand_erase_hw(struct mtd_info *mtd, int page)
++int mtk_nand_erase_hw(struct mtd_info *mtd, int page)
  {
  	struct nand_chip *chip = (struct nand_chip *)mtd->priv;
  
 -	chip->erase_cmd(mtd, page);
-+	chip->erase(mtd, page);
++	chip->cmdfunc(mtd, NAND_CMD_ERASE1, -1, page);
++	chip->cmdfunc(mtd, NAND_CMD_ERASE2, -1, -1);
  
  	return chip->waitfunc(mtd, chip);
  }
-@@ -2094,8 +2098,8 @@
+ 
+-static int
+-mtk_nand_erase(struct mtd_info *mtd, int page)
++int mtk_nand_erase(struct mtd_info *mtd, int page)
+ {
+ 	// get mapping 
+ 	struct nand_chip *chip = mtd->priv;
+@@ -2094,8 +2114,11 @@ mtk_nand_probe(struct platform_device *p
  	nand_chip->write_page = mtk_nand_write_page;
  	nand_chip->ecc.write_oob = mtk_nand_write_oob;
  	nand_chip->block_markbad = mtk_nand_block_markbad;   // need to add nand_get_device()/nand_release_device().
 -	//	nand_chip->erase = mtk_nand_erase;	
 -	//    nand_chip->read_page = mtk_nand_read_page;
-+	nand_chip->erase_mtk = mtk_nand_erase;		
++#ifdef CONFIG_MTK_MTD_NAND
++	nand_chip->erase_mtk = mtk_nand_erase;
 +	nand_chip->read_page = mtk_nand_read_page;
++#endif
++	nand_chip->erase = mtk_nand_erase_hw;
  	nand_chip->ecc.read_oob = mtk_nand_read_oob;
  	nand_chip->block_bad = mtk_nand_block_bad;
  
-@@ -2175,6 +2179,21 @@
+@@ -2175,6 +2198,19 @@ mtk_nand_probe(struct platform_device *p
  	nand_chip->pagemask = (nand_chip->chipsize >> nand_chip->page_shift) - 1;
  	nand_chip->phys_erase_shift = ffs(mtd->erasesize) - 1;
  	nand_chip->chip_shift = ffs(nand_chip->chipsize) - 1;//0x1C;//ffs(nand_chip->chipsize) - 1;
 +
-+	/* allocate buffers or call select_chip here or a bit earlier*/
-+	{
++	if (!nand_chip->buffers) {
 +		struct nand_buffers *nbuf = kzalloc(sizeof(*nbuf) + mtd->writesize + mtd->oobsize * 3, GFP_KERNEL);
 +		if (!nbuf) {
-+			return -ENOMEM;
++			err = -ENOMEM;
++			goto out;
 +		}
 +		nbuf->ecccalc = (uint8_t *)(nbuf + 1);
 +		nbuf->ecccode = nbuf->ecccalc + mtd->oobsize;
 +		nbuf->databuf = nbuf->ecccode + mtd->oobsize;
-+
 +		nand_chip->buffers = nbuf;
-+		nand_chip->options |= NAND_OWN_BUFFERS;
 +	}
 +
  	nand_chip->oob_poi = nand_chip->buffers->databuf + mtd->writesize;
  	nand_chip->badblockpos = 0;
  
-@@ -2251,6 +2270,9 @@
+@@ -2251,6 +2287,15 @@ out:
  	MSG(INIT, "[NFI] mtk_nand_probe fail, err = %d!\n", err);
  	nand_release(mtd);
  	platform_set_drvdata(pdev, NULL);
-+	if ( NULL != nand_chip->buffers) {
++
++	if (nand_chip->buffers) {
 +		kfree(nand_chip->buffers);
++		nand_chip->buffers = NULL;
 +	}
++
++	if (dma_aligned_buffer)
++		kfree(dma_aligned_buffer);
++
  	kfree(host);
  	nand_disable_clock();
  	return err;
-@@ -2261,8 +2283,12 @@
+@@ -2261,8 +2306,12 @@ mtk_nand_remove(struct platform_device *
  {
  	struct mtk_nand_host *host = platform_get_drvdata(pdev);
  	struct mtd_info *mtd = &host->mtd;
 +	struct nand_chip *nand_chip = &host->nand_chip;
  
  	nand_release(mtd);
-+	if ( NULL != nand_chip->buffers) {
-+		kfree(nand_chip->buffers);
-+	}
++
++	if (dma_aligned_buffer)
++		kfree(dma_aligned_buffer);
  	kfree(host);
  	nand_disable_clock();
  
@@ -119,12 +170,13 @@
  		 * See if operation failed and additional status checks are
 --- a/drivers/mtd/nand/nand_device_list.h
 +++ b/drivers/mtd/nand/nand_device_list.h
-@@ -43,6 +43,8 @@
+@@ -43,6 +43,9 @@ static const flashdev_info gen_FlashTabl
  	{0xADBC, 0x905554, 5, 16, 512, 128, 2048, 64, 0x10801011, "H9DA4GH4JJAMC", 0},
      {0x01F1, 0x801D01, 4, 8, 128, 128, 2048, 64, 0x30C77fff, "S34ML01G100TF", 0},
      {0x92F1, 0x8095FF, 4, 8, 128, 128, 2048, 64, 0x30C77fff, "F59L1G81A", 0},
-+	{0xC8DA, 0x909544, 5, 8, 256, 128, 2048, 64, 0x30C77fff, "F59L2G81A", 0},
-+	{0xC8DC, 0x909554, 5, 8, 512, 128, 2048, 64, 0x30C77fff, "F59L4G81A", 0},
++    {0xC8DA, 0x909544, 5, 8, 256, 128, 2048, 64, 0x30C77fff, "F59L2G81A", 0},
++    {0xC8DC, 0x909554, 5, 8, 512, 128, 2048, 64, 0x30C77fff, "F59L4G81A", 0},
++    {0xC8D1, 0x000000, 3, 8, 128, 128, 2048, 64, 0x30C77fff, "ESMT 128MiB", 0},
  	{0xECD3, 0x519558, 5, 8, 1024, 128, 2048, 64, 0x44333, "K9K8G8000", 0},
      {0xC2F1, 0x801DC2, 4, 8, 128, 128, 2048, 64, 0x30C77fff, "MX30LF1G08AA", 0},
      {0x98D3, 0x902676, 5, 8, 1024, 256, 4096, 224, 0x00C25332, "TC58NVG3S0F", 0},
