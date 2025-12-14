@@ -30,5 +30,9 @@ log_file.datatype = "string"
 log_file.default = "/dev/null"
 log_file.rmempty = false
 
+function m.on_after_commit(self)
+    os.execute("/etc/init.d/msd_lite restart >/dev/null 2>&1")
+end
+
 
 return m
