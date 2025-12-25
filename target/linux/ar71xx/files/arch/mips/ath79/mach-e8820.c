@@ -60,6 +60,22 @@ static struct gpio_keys_button e8820_gpio_keys[] __initdata = {
 	},
 };
 
+static const struct ar8327_led_info e8820_leds_qca8337[] = {
+	AR8327_LED_INFO(PHY0_0, HW, "e8820:green:lan1"),
+	AR8327_LED_INFO(PHY1_0, HW, "e8820:green:lan2"),
+	AR8327_LED_INFO(PHY2_0, HW, "e8820:green:lan3"),
+	AR8327_LED_INFO(PHY3_0, HW, "e8820:green:lan4"),
+	AR8327_LED_INFO(PHY4_0, HW, "e8820:green:wan"),
+};
+
+static struct ar8327_led_cfg e8820_qca8337_led_cfg = {
+	.led_ctrl0 = 0xcf37cf37,
+	.led_ctrl1 = 0xcf37cf37,
+	.led_ctrl2 = 0xcf37cf37,
+	.led_ctrl3 = 0x0,
+	.open_drain = true,
+};
+
 static struct ar8327_pad_cfg e8820_ar8337_pad0_cfg = {
 	.mode = AR8327_PAD_MAC_SGMII,
 	.sgmii_delay_en = true,
@@ -74,6 +90,7 @@ static struct ar8327_platform_data e8820_ar8337_data = {
 		.txpause = 1,
 		.rxpause = 1,
 	},
+	.led_cfg = &e8820_qca8337_led_cfg,
 };
 
 static struct mdio_board_info e8820_mdio0_info[] = {
@@ -89,6 +106,10 @@ static void __init e8820_setup(void)
 	u8 *art = (u8 *) KSEG1ADDR(0x1fff0000);
 
 	ath79_register_m25p80(NULL);
+
+	e8820_qca8337_data.leds = e8820_leds_qca8337;
+	e8820_qca8337_data.num_leds = ARRAY_SIZE(e8820_leds_qca8337);
+
 
 	ath79_register_leds_gpio(-1, ARRAY_SIZE(e8820_leds_gpio),
 				 e8820_leds_gpio);
