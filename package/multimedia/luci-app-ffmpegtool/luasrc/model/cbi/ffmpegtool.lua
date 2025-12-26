@@ -669,6 +669,7 @@ vide_duration.default = "5"
 vide_duration.rmempty = true
 
 video_mute = s:taboption("video_setting", Flag, "video_mute", translate("Mute"))
+video_mute:depends( "audio_denoising", "" )
 video_mute.default = ""
 
 video_picture = s:taboption("video_setting", Flag, "video_picture", translate("Save to picture"))
@@ -706,8 +707,20 @@ picture_resolution.rmempty = true
 fix_android=s:taboption("video_setting", Flag, "fix_android", translate("fix display for android"))
 fix_android:depends( "picture_tovideo", "1" )
 
+audio_denoising=s:taboption("video_setting", Flag, "audio_denoising", translate("Adaptive Fast Filtering for Temporal Denoising‌"))
+audio_denoising:depends( "video_mute", "" )
+audio_denoising.default = ""
+
+audio_components=s:taboption("video_setting", ListValue, "audio_components", translate("value of denoising"))
+audio_components:depends( "audio_denoising", "1" )
+audio_components:value("-30",translate("whisper"))
+audio_components:value("-20",translate("clear vocals"))
+audio_components:value("-10",translate("speak loudly"))
+audio_components.default = "-20"
+audio_components.rempty  = true
+
 video_copy = s:taboption("video_setting", Flag, "video_copy", translate("Fast copy"))
-video_copy:depends({ image_effects = "", video_x2645 = "none", video_picture = "", picture_tovideo = "" })
+video_copy:depends({ image_effects = "", video_x2645 = "none", video_picture = "", picture_tovideo = "", audio_denoising = "" })
 
 video_ready = s:taboption("video_setting", Flag, "video_ready", translate("Setup ready"))
 video_ready.description = translate("Save/apply first please")

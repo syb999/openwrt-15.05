@@ -20,6 +20,7 @@ param_crop=""
 param_blackandwhite=""
 param_copy=""
 param_fix_android=""
+param_denoising=""
 
 if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_x2645)" == "libx264" ];then
 	param_libx2645="-vcodec libx264"
@@ -109,6 +110,11 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].fix_android)" == "1" ];then
 	param_fix_android="-pix_fmt yuv420p"
 fi
 
+if [ "$(uci get ffmpegtool.@ffmpegtool[0].audio_denoising)" == "1" ];then
+	ad_value="$(uci get ffmpegtool.@ffmpegtool[0].audio_components)"
+	param_denoising="-af afftdn=nf=${ad_value}"
+fi
+
 if [ "$(uci get ffmpegtool.@ffmpegtool[0].dest_select)" == "streaming media server" ];then
 	if [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "one file" ];then
 		while true;do
@@ -154,7 +160,7 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].enable_merge)" == "left and right" ];t
 	ffprobe "$input1" > /tmp/ffmpeg.log 2>&1
 	time_work_v
 	echo " $input1 ----> 视频合并中 <---- $input2 " >> /tmp/ffmpeg.log
-	ffmpeg -i "$input1" -vf "[in] scale=iw/2:ih/2,pad=2*iw:ih [left];movie='${input2}',scale=iw/2:ih/2 [right];[left][right] overlay=main_w/2:0 [out]" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_fix_android $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
+	ffmpeg -i "$input1" -vf "[in] scale=iw/2:ih/2,pad=2*iw:ih [left];movie='${input2}',scale=iw/2:ih/2 [right];[left][right] overlay=main_w/2:0 [out]" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_fix_android $param_denoising $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
 	echo "合并完毕!" >> /tmp/ffmpeg.log
 	ucidefault
 	exit 0
@@ -164,7 +170,7 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].enable_merge)" == "top and bottom" ]
 	ffprobe "$input1" > /tmp/ffmpeg.log 2>&1
 	time_work_v
 	echo " $input1 ----> 视频合并中 <---- $input2 " >> /tmp/ffmpeg.log
-	ffmpeg -i "$input1" -vf "[in] scale=iw/2:ih/2,pad=iw:2*ih [top];movie='${input2}',scale=iw/2:ih/2 [bottom];[top][bottom] overlay=0:main_h/2 [out]" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_fix_android $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
+	ffmpeg -i "$input1" -vf "[in] scale=iw/2:ih/2,pad=iw:2*ih [top];movie='${input2}',scale=iw/2:ih/2 [bottom];[top][bottom] overlay=0:main_h/2 [out]" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_fix_android $param_denoising $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
 	echo "合并完毕!" >> /tmp/ffmpeg.log
 	ucidefault
 	exit 0
@@ -188,14 +194,14 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].enable_merge)" == "merge video to pi
 		customresolution="$(uci get ffmpegtool.@ffmpegtool[0].picture_custom_1)"
 		custompixel="$(uci get ffmpegtool.@ffmpegtool[0].picture_custom_3)"
 		echo " $input1 ----> 视频合并到图片上 <---- $inputpic " >> /tmp/ffmpeg.log
-		ffmpeg -loop 1 -i "$inputpic" -i "$input1" -filter_complex "[1:0]scale=${customresolution}[a];[0:0][a]overlay=${custompixel}" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_fix_android $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
+		ffmpeg -loop 1 -i "$inputpic" -i "$input1" -filter_complex "[1:0]scale=${customresolution}[a];[0:0][a]overlay=${custompixel}" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_fix_android $param_denoising $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
 	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].picture_merge)" == "two videos and one picture" ];then
 		customresolution="$(uci get ffmpegtool.@ffmpegtool[0].picture_custom_1)"
 		customresolution2="$(uci get ffmpegtool.@ffmpegtool[0].picture_custom_2)"
 		custompixel="$(uci get ffmpegtool.@ffmpegtool[0].picture_custom_3)"
 		custompixel2="$(uci get ffmpegtool.@ffmpegtool[0].picture_custom_4)"
 		echo " $input1 ----> 视频合并到图片上 <---- $inputpic " >> /tmp/ffmpeg.log
-		ffmpeg -loop 1 -i "$inputpic" -i "$input1" -i "$input2" -filter_complex "[1:0]scale=${customresolution}[a];[2:0]scale=${customresolution2}[b];[0:0][a]overlay=${custompixel}[c];[c][b]overlay=${custompixel2}" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_fix_android $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
+		ffmpeg -loop 1 -i "$inputpic" -i "$input1" -i "$input2" -filter_complex "[1:0]scale=${customresolution}[a];[2:0]scale=${customresolution2}[b];[0:0][a]overlay=${custompixel}[c];[c][b]overlay=${custompixel2}" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_fix_android $param_denoising $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
 	fi
 	echo "合并完毕!" >> /tmp/ffmpeg.log
 	ucidefault
@@ -218,7 +224,7 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].enable_merge)" == "one by one" ];the
 	time_work_v
 	echo " $input1 ----> 视频合并中 <---- $input2 " >> /tmp/ffmpeg.log
 	echo -e "file '$input1'\nfile '$input2'\n" > /tmp/ffmpeg.filelist
-	ffmpeg -f concat -safe 0 -i /tmp/ffmpeg.filelist $param_mute $param_libx2645 $param_preset $param_copy $param_fix_android "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
+	ffmpeg -f concat -safe 0 -i /tmp/ffmpeg.filelist $param_mute $param_libx2645 $param_preset $param_copy $param_fix_android $param_denoising "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
 	echo "合并完毕!" >> /tmp/ffmpeg.log
 	ucidefault
 	exit 0
@@ -228,7 +234,7 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].enable_merge)" == "overlay in the mi
 	ffprobe "$input1" > /tmp/ffmpeg.log 2>&1
 	time_work_v
 	echo " $input1 ----> 视频合并中 <---- $input2 " >> /tmp/ffmpeg.log
-	ffmpeg -i "$input1" -i "$input2" -filter_complex "[0:v]pad=w=iw[a];[1:v]scale=iw/2:-1[b];[a][b]overlay=w/2:h/2" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_fix_android $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
+	ffmpeg -i "$input1" -i "$input2" -filter_complex "[0:v]pad=w=iw[a];[1:v]scale=iw/2:-1[b];[a][b]overlay=w/2:h/2" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_fix_android $param_denoising $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
 	echo "合并完毕!" >> /tmp/ffmpeg.log
 	ucidefault
 	exit 0
@@ -240,7 +246,7 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].enable_merge)" == "custom overley" ]
 	ffprobe "$input1" > /tmp/ffmpeg.log 2>&1
 	time_work_v
 	echo " $input1 ----> 视频合并中 <---- $input2 " >> /tmp/ffmpeg.log
-	ffmpeg -i "$input1" -i "$input2" -filter_complex "[0:v]pad=w=iw[a];[1:v]scale=${customresolution}[b];[a][b]overlay=${custompixel}" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_fix_android $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
+	ffmpeg -i "$input1" -i "$input2" -filter_complex "[0:v]pad=w=iw[a];[1:v]scale=${customresolution}[b];[a][b]overlay=${custompixel}" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_fix_android $param_denoising $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/merge-$(date +%s).$param_format" -y
 	echo "合并完毕!" >> /tmp/ffmpeg.log
 	ucidefault
 	exit 0
@@ -274,11 +280,11 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "one file" ];then
 	if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_picture)" == "1" ];then 
 		echo "$srctarget ---- 导出图片中..." >> /tmp/ffmpeg.log
 		if [ "$(uci get ffmpegtool.@ffmpegtool[0].image_effects)" == "1" ];then
-			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_preset $param_copy $param_fix_android $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-%03d.jpg" -y
-			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_preset $param_copy $param_fix_android $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-$(date +%s).gif" -y
+			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_preset $param_copy $param_fix_android $param_denoising $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-%03d.jpg" -y
+			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_preset $param_copy $param_fix_android $param_denoising $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-$(date +%s).gif" -y
 		else
-			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_fix_android $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-%03d.jpg" -y
-			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_fix_android $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-$(date +%s).gif" -y
+			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_fix_android $param_denoising $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-%03d.jpg" -y
+			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_fix_android $param_denoising $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-$(date +%s).gif" -y
 		fi
 		echo "导出完毕!" >> /tmp/ffmpeg.log
 	elif [ "$(uci get ffmpegtool.@ffmpegtool[0].video_adjustspeed)" == "1" ];then 
@@ -296,7 +302,7 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "one file" ];then
 					ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_duration -vf "drawbox=x=0:y=ih/2-${reduced_pixel}:w=iw:h=${bar_size}:color=${bar_color}:t=fill" "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/output-$(date +%s)-new.$param_format" -y
 				fi
 			else
-				ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_preset $param_copy $param_fix_android $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1).$param_format" -y
+				ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_preset $param_copy $param_fix_android $param_denoising $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1).$param_format" -y
 			fi
 		elif [ "$(uci get ffmpegtool.@ffmpegtool[0].video_expan)" == "1" ];then
 			if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_expand_direction)" == "left and right" ];then
@@ -305,7 +311,7 @@ if [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "one file" ];then
 				ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num -vf "pad=iw:ih+${expand_size}:0:(oh-ih)/2:color=${expand_color}" $param_libx2645 $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/output-$(date +%s).$param_format" -y
 			fi
 		else
-			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_fix_android $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1).$param_format" -y
+			ffmpeg $param_starttime $param_endtime -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_fix_android $param_denoising $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(uci get ffmpegtool.@ffmpegtool[0].src_file_path | cut -d '/' -f$(expr $(uci get ffmpegtool.@ffmpegtool[0].src_file_path | grep -o / | wc -l) + 1) | cut -d '.' -f1).$param_format" -y
 		fi
 		echo "转换完成!" >> /tmp/ffmpeg.log
 	fi
@@ -327,7 +333,7 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "all files in the di
 					ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_mute $param_frames_num $param_libx2645 $param_duration -vf "drawbox=x=0:y=ih/2-${reduced_pixel}:w=iw:h=${bar_size}:color=${bar_color}:t=fill" "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1)-new.$param_format" -y
 				fi
 			else
-				ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_preset $param_copy $param_fix_android $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1).$param_format" -y
+				ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_preset $param_copy $param_fix_android $param_denoising $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1).$param_format" -y
 			fi
 		elif [ "$(uci get ffmpegtool.@ffmpegtool[0].video_adjustspeed)" == "1" ];then 
 			video_speed="setpts=$(uci get ffmpegtool.@ffmpegtool[0].list_adjustspeed)*PTS"
@@ -341,7 +347,7 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "all files in the di
 					ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_mute $param_frames_num -vf "pad=iw:ih+${expand_size}:0:(oh-ih)/2:color=${expand_color}" $param_libx2645 $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1)-new.$param_format" -y
 				fi
 			else
-				ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_fix_android $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1).$param_format" -y
+				ffmpeg $param_starttime $param_endtime -i "$(uci get ffmpegtool.@ffmpegtool[0].src_directory_path)/$i" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_fix_android $param_denoising $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/$(echo $i | cut -d '.' -f1).$param_format" -y
 			fi
 		fi
 		echo "转换完成!" >> /tmp/ffmpeg.log
@@ -357,19 +363,19 @@ elif [ "$(uci get ffmpegtool.@ffmpegtool[0].src_select)" == "streaming media" ];
 		if [ "$(uci get ffmpegtool.@ffmpegtool[0].video_picture)" == "1" ];then 
 			echo "$srctarget ---- 导出图片中..." >> /tmp/ffmpeg.log
 			if [ "$(uci get ffmpegtool.@ffmpegtool[0].image_effects)" == "1" ];then
-				ffmpeg -i "$srctarget" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_preset $param_copy $param_fix_android $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-%03d.jpg" -y
-				ffmpeg -i "$srctarget" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_preset $param_copy $param_fix_android $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-$(date +%s).gif" -y
+				ffmpeg -i "$srctarget" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_preset $param_copy $param_fix_android $param_denoising $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-%03d.jpg" -y
+				ffmpeg -i "$srctarget" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_preset $param_copy $param_fix_android $param_denoising $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-$(date +%s).gif" -y
 			else
-				ffmpeg -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_fix_android $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-%03d.jpg" -y
-				ffmpeg -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_fix_android $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-$(date +%s).gif" -y
+				ffmpeg -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_fix_android $param_denoising $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-%03d.jpg" -y
+				ffmpeg -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_fix_android $param_denoising $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/image-$(date +%s).gif" -y
 			fi
 			echo "导出完毕!" >> /tmp/ffmpeg.log
 		else
 			echo "$srctarget ---- 导出中..." >> /tmp/ffmpeg.log
 			if [ "$(uci get ffmpegtool.@ffmpegtool[0].image_effects)" == "1" ];then
-				ffmpeg -i "$srctarget" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_preset $param_copy $param_fix_android $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/output-$(date +%s).$param_format" -y
+				ffmpeg -i "$srctarget" $param_mute $param_frames_num -filter_complex $effects_param $param_libx2645 $param_preset $param_copy $param_fix_android $param_denoising $param_duration "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/output-$(date +%s).$param_format" -y
 			else
-				ffmpeg -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_fix_android $param_duration  "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/output-$(date +%s).$param_format" -y
+				ffmpeg -i "$srctarget" $param_mute $param_frames_num $param_libx2645 $param_preset $param_copy $param_fix_android $param_denoising $param_duration  "$(uci get ffmpegtool.@ffmpegtool[0].dest_directory_path)/output-$(date +%s).$param_format" -y
 			fi
 			echo "导出完毕!" >> /tmp/ffmpeg.log
 		fi

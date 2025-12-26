@@ -238,6 +238,21 @@ msgstr "用标题替换文件名"
 msgid "fix display for android"
 msgstr "修复安卓播放黑屏的问题"
 
+msgid "Adaptive Fast Filtering for Temporal Denoising‌"
+msgstr "去除声音中的噪声"
+
+msgid "value of denoising"
+msgstr "降噪值"
+
+msgid "whisper"
+msgstr "保留至轻柔的说话声"
+
+msgid "clear vocals"
+msgstr "保留至正常的说话声"
+
+msgid "speak loudly"
+msgstr "保留至响亮的说话声"
+
 msgid "Fast copy"
 msgstr "快速复制"
 
