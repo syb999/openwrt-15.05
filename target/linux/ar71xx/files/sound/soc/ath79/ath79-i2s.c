@@ -217,7 +217,8 @@ static struct snd_soc_dai_driver ath79_i2s_dai = {
 	.playback = {
 		.channels_min = 2,
 		.channels_max = 2,
-		.rates = SNDRV_PCM_RATE_32000 |
+		.rates = SNDRV_PCM_RATE_22050 | 
+                SNDRV_PCM_RATE_32000 |
 				SNDRV_PCM_RATE_44100 |
 				SNDRV_PCM_RATE_48000 |
 				SNDRV_PCM_RATE_88200 |

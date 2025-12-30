@@ -44,6 +44,9 @@ static int db120_ak4430_hw_params(struct snd_pcm_substream *substream,
 	int fs = params_rate(params);
 
 	switch (fs) {
+    case 22050:
+        mclk = 512 * fs;
+        break;
 	case 32000:
 		mclk = 768*fs;
 		break;
