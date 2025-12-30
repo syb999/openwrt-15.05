@@ -944,6 +944,9 @@ ar71xx_board_detect() {
 	*"XinXanG X-WAP750")
 		name="xinxang-x-wap750"
 		;;
+	*"WAP2600-211-PE")
+		name="wap2600-211-pe"
+		;;
 	"WeIO"*)
 		name="weio"
 		;;

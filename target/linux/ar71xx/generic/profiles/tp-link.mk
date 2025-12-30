@@ -508,3 +508,14 @@ define Profile/TLWR2543/Description
 	Package set optimized for the TP-LINK TL-WR2543N/ND.
 endef
 $(eval $(call Profile,TLWR2543))
+
+
+define Profile/wap2600-211-pe
+	NAME:=WAP2600-211-PE
+	PACKAGES:=kmod-mtd-rw panel-ap-setup kmod-sound-ap123-ak4430 \
+		mpg123 alsa-utils
+endef
+define Profile/wap2600-211-pe/Description
+	Package set optimized for the WAP2600-211-PE POE AP.
+endef
+$(eval $(call Profile,wap2600-211-pe))

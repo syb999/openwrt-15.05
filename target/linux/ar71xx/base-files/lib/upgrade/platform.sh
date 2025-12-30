@@ -391,6 +391,7 @@ platform_check_image() {
 	tl-wr1043nd | \
 	tl-wr1043nd-v2 | \
 	urouter-plus | \
+	wap2600-211-pe | \
 	tl-wr2543n)
 		[ "$magic" != "0100" ] && {
 			echo "Invalid image type."

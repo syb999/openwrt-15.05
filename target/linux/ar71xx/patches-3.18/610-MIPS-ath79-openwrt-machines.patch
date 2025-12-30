@@ -1,6 +1,6 @@
 --- a/arch/mips/ath79/machtypes.h
 +++ b/arch/mips/ath79/machtypes.h
-@@ -16,22 +16,229 @@
+@@ -16,22 +16,230 @@
  
  enum ath79_mach_type {
  	ATH79_MACH_GENERIC = 0,
@@ -225,6 +225,7 @@
 +	ATH79_MACH_PISEN_WPR003N,       /* PISEN-WPR003N */
 +	ATH79_MACH_PISEN_WMM003N,       /* PISEN WMM003N */
 +	ATH79_MACH_UROUTER_PLUS,       /* BHU uRouter Plus */
++	ATH79_MACH_WAP2600_211_PE,      /* WAP2600-211-PE */
 +	ATH79_MACH_WB2000,       /* Winchannel WB2000 */
 +	ATH79_MACH_ZTE_E8820,       /* ZTE E8820 */
  };
@@ -1542,7 +1543,7 @@
  
  config ATH79_MACH_UBNT_XM
  	bool "Ubiquiti Networks XM/UniFi boards"
-@@ -83,6 +1284,251 @@ config ATH79_MACH_UBNT_XM
+@@ -83,6 +1284,261 @@ config ATH79_MACH_UBNT_XM
  	  Say 'Y' here if you want your kernel to support the
  	  Ubiquiti Networks XM (rev 1.0) board.
  
@@ -1769,6 +1770,16 @@
 +	select ATH79_DEV_WMAC
 +	select ATH79_DEV_USB
 +
++config ATH79_MACH_WAP2600_211_PE
++	bool "WAP2600-211-PE POE AP support"
++	select SOC_AR934X
++	select ATH79_DEV_ETH
++	select ATH79_DEV_GPIO_BUTTONS
++	select ATH79_DEV_LEDS_GPIO
++	select ATH79_DEV_M25P80
++	select ATH79_DEV_WMAC
++	select ATH79_DEV_USB
++
 +config ATH79_MACH_WB2000
 +	bool "Winchannel WB2000 board support"
 +	select SOC_AR934X
@@ -1794,7 +1805,7 @@
  endmenu
  
  config SOC_AR71XX
-@@ -124,7 +1530,10 @@ config ATH79_DEV_DSA
+@@ -124,7 +1540,10 @@ config ATH79_DEV_DSA
  config ATH79_DEV_ETH
  	def_bool n
  
@@ -1806,7 +1817,7 @@
  	def_bool n
  
  config ATH79_DEV_GPIO_BUTTONS
-@@ -154,6 +1573,11 @@ config ATH79_PCI_ATH9K_FIXUP
+@@ -154,6 +1583,11 @@ config ATH79_PCI_ATH9K_FIXUP
  	def_bool n
  
  config ATH79_ROUTERBOOT
@@ -1820,7 +1831,7 @@
  endif
 --- a/arch/mips/ath79/Makefile
 +++ b/arch/mips/ath79/Makefile
-@@ -38,9 +38,157 @@ obj-$(CONFIG_ATH79_ROUTERBOOT)		+= route
+@@ -38,9 +38,158 @@ obj-$(CONFIG_ATH79_ROUTERBOOT)		+= route
  #
  # Machines
  #
@@ -1976,6 +1987,7 @@
 +obj-$(CONFIG_ATH79_MACH_PISEN_WPR003N)	+= mach-pisen-wpr003n.o
 +obj-$(CONFIG_ATH79_MACH_PISEN_WMM003N)	+= mach-pisen-wmm003n.o
 +obj-$(CONFIG_ATH79_MACH_UROUTER_PLUS)	+= mach-urouter-plus.o
++obj-$(CONFIG_ATH79_MACH_WAP2600_211_PE)	+= mach-wap2600-211-pe.o
 +obj-$(CONFIG_ATH79_MACH_WB2000)	+= mach-wb2000.o
 +obj-$(CONFIG_ATH79_MACH_ZTE_E8820)	+= mach-e8820.o
 --- a/arch/mips/ath79/prom.c

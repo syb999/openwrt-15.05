@@ -546,6 +546,7 @@ pb44 |\
 routerstation|\
 tl-wr710n |\
 tl-wr720n-v3|\
+wap2600-211-pe|\
 wpe72)
 	ucidef_set_interfaces_lan_wan "eth1" "eth0"
 	;;
