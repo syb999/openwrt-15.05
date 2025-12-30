@@ -107,8 +107,8 @@ static void __init e8820_setup(void)
 
 	ath79_register_m25p80(NULL);
 
-	e8820_qca8337_data.leds = e8820_leds_qca8337;
-	e8820_qca8337_data.num_leds = ARRAY_SIZE(e8820_leds_qca8337);
+	e8820_ar8337_data.leds = e8820_leds_qca8337;
+	e8820_ar8337_data.num_leds = ARRAY_SIZE(e8820_leds_qca8337);
 
 
 	ath79_register_leds_gpio(-1, ARRAY_SIZE(e8820_leds_gpio),
