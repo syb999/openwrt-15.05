@@ -39,7 +39,7 @@ model_name.datatype = "string"
 
 max_sr = s:taboption("general", Value, "max_sr", translate("Maximum Sample Rate (Hz)"))
 max_sr:depends("extraset", "1")
-max_sr.default = "44100"
+max_sr.default = "48000"
 max_sr:value("44100", "44.1 kHz")
 max_sr:value("48000", "48 kHz")
 max_sr:value("88200", "88.2 kHz")
