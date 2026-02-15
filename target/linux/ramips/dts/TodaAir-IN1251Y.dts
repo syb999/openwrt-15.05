@@ -6,6 +6,11 @@
 	compatible = "todaair-in1251y", "mediatek,mt7621-soc";
 	model = "TodaAir IN1251Y";
 
+	memory@0 {
+		device_type = "memory";
+		reg = <0x0 0x8000000>;
+	};
+
 	chosen {
 		bootargs = "console=ttyS0,57600";
 	};
