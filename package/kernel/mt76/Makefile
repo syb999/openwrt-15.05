@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mt76
-PKG_RELEASE:=16
+PKG_RELEASE:=17
 
 PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILES:=
@@ -446,7 +446,7 @@ $(eval $(call BuildPackage,mt7663-firmware-sta))
 #$(eval $(call KernelPackage,mt7663-usb-sdio))
 #$(eval $(call KernelPackage,mt7663u))
 #$(eval $(call KernelPackage,mt7663s))
-$(eval $(call KernelPackage,mt7915e))
-$(eval $(call KernelPackage,mt7921e))
+#$(eval $(call KernelPackage,mt7915e))
+#$(eval $(call KernelPackage,mt7921e))
 $(eval $(call KernelPackage,mt76))
 $(eval $(call BuildPackage,mt76-test))

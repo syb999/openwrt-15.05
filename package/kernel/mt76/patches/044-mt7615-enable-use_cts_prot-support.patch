@@ -1,0 +1,65 @@
+wifi: mt76: mt7615: enable use_cts_prot support
+This adds selectable RTC/CTS enablement for each interface.
+
+Signed-off-by: Ryder Lee <ryder.lee@mediatek.com>
+Signed-off-by: Felix Fietkau <nbd@nbd.name>
+https://github.com/openwrt/mt76/commit/ad9bd2ba361e72cbb0824dea23253847d480bae0
+
+--- a/mt7615/mac.c
++++ b/mt7615/mac.c
+@@ -1107,6 +1107,21 @@ void mt7615_mac_set_rates(struct mt7615_
+ }
+ EXPORT_SYMBOL_GPL(mt7615_mac_set_rates);
+ 
++void mt7615_mac_enable_rtscts(struct mt7615_dev *dev,
++			      struct ieee80211_vif *vif, bool enable)
++{
++	struct mt7615_vif *mvif = (struct mt7615_vif *)vif->drv_priv;
++	u32 addr;
++
++	addr = mt7615_mac_wtbl_addr(dev, mvif->sta.wcid.idx) + 3 * 4;
++
++	if (enable)
++		mt76_set(dev, addr, MT_WTBL_W3_RTS);
++	else
++		mt76_clear(dev, addr, MT_WTBL_W3_RTS);
++}
++EXPORT_SYMBOL_GPL(mt7615_mac_enable_rtscts);
++
+ static int
+ mt7615_mac_wtbl_update_key(struct mt7615_dev *dev, struct mt76_wcid *wcid,
+ 			   struct ieee80211_key_conf *key,
+--- a/mt7615/main.c
++++ b/mt7615/main.c
+@@ -584,6 +584,9 @@ static void mt7615_bss_info_changed(stru
+ 		}
+ 	}
+ 
++	if (changed & BSS_CHANGED_ERP_CTS_PROT)
++		mt7615_mac_enable_rtscts(dev, vif, info->use_cts_prot);
++
+ 	if (changed & BSS_CHANGED_BEACON_ENABLED && info->enable_beacon) {
+ 		mt7615_mcu_add_bss_info(phy, vif, NULL, true);
+ 		mt7615_mcu_sta_add(phy, vif, NULL, true);
+--- a/mt7615/mt7615.h
++++ b/mt7615/mt7615.h
+@@ -483,6 +483,8 @@ void mt7615_mac_reset_counters(struct mt
+ void mt7615_mac_cca_stats_reset(struct mt7615_phy *phy);
+ void mt7615_mac_set_scs(struct mt7615_phy *phy, bool enable);
+ void mt7615_mac_enable_nf(struct mt7615_dev *dev, bool ext_phy);
++void mt7615_mac_enable_rtscts(struct mt7615_dev *dev,
++			      struct ieee80211_vif *vif, bool enable);
+ void mt7615_mac_sta_poll(struct mt7615_dev *dev);
+ int mt7615_mac_write_txwi(struct mt7615_dev *dev, __le32 *txwi,
+ 			  struct sk_buff *skb, struct mt76_wcid *wcid,
+--- a/mt7615/regs.h
++++ b/mt7615/regs.h
+@@ -446,6 +446,8 @@ enum mt7615_reg_base {
+ #define MT_WTBL_RIUCR3_RATE6		GENMASK(19, 8)
+ #define MT_WTBL_RIUCR3_RATE7		GENMASK(31, 20)
+ 
++#define MT_WTBL_W3_RTS			BIT(22)
++
+ #define MT_WTBL_W5_CHANGE_BW_RATE	GENMASK(7, 5)
+ #define MT_WTBL_W5_SHORT_GI_20		BIT(8)
+ #define MT_WTBL_W5_SHORT_GI_40		BIT(9)
