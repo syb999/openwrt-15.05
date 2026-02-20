@@ -108,7 +108,7 @@ https://github.com/openwrt/mt76/commit/d9b9807a3d6ab8d2339486ee3e62fc69bc379825
 +		req.prot_erp_mask = BIT(i);
 +	}
 +
-+	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD(PROTECT_CTRL), &req,
++	return mt76_mcu_send_msg(&dev->mt76, MCU_EXT_CMD_PROTECT_CTRL, &req,
 +				 sizeof(req), true);
 +}
 +
