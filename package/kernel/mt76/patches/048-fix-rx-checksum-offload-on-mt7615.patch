@@ -1,0 +1,48 @@
+wifi: mt76: fix rx checksum offload on mt7615/mt7915/mt7921
+Checking the relevant rxd bits for the checksum information only indicates
+if the checksum verification was performed by the hardware and doesn't show
+actual checksum errors. Checksum errors are indicated in the info field of
+the DMA descriptor. Fix packets erroneously marked as CHECKSUM_UNNECESSARY
+by checking the extra bits as well.
+Those bits are only passed to the driver for MMIO devices at the moment, so
+limit checksum offload to those.
+
+Fixes: 2122dfbfd0bd ("mt76: mt7615: add rx checksum offload support")
+Signed-off-by: Felix Fietkau <nbd@nbd.name>
+https://github.com/openwrt/mt76/commit/269df4b01f27518e9bdbf12dca15baa1cd899030
+
+
+--- a/dma.c
++++ b/dma.c
+@@ -591,10 +591,7 @@ mt76_dma_rx_process(struct mt76_dev *dev
+ 		}
+ 		skb_reserve(skb, q->buf_offset);
+ 
+-		if (q == &dev->q_rx[MT_RXQ_MCU]) {
+-			u32 *rxfce = (u32 *)skb->cb;
+-			*rxfce = info;
+-		}
++		*(u32 *)skb->cb = info;
+ 
+ 		__skb_put(skb, len);
+ 		done++;
+--- a/mt7615/mac.c
++++ b/mt7615/mac.c
+@@ -262,6 +262,7 @@ static int mt7615_mac_fill_rx(struct mt7
+ 	u32 rxd1 = le32_to_cpu(rxd[1]);
+ 	u32 rxd2 = le32_to_cpu(rxd[2]);
+ 	u32 csum_mask = MT_RXD0_NORMAL_IP_SUM | MT_RXD0_NORMAL_UDP_TCP_SUM;
++	u32 csum_status = *(u32 *)skb->cb;
+ 	__le32 rxd12 = rxd[12];
+ 	bool unicast, hdr_trans, remove_pad, insert_ccmp_hdr = false;
+ 	int phy_idx;
+@@ -302,7 +303,8 @@ static int mt7615_mac_fill_rx(struct mt7
+ 		spin_unlock_bh(&dev->sta_poll_lock);
+ 	}
+ 
+-	if ((rxd0 & csum_mask) == csum_mask)
++	if (mt76_is_mmio(&dev->mt76) && (rxd0 & csum_mask) == csum_mask &&
++	    !(csum_status & (BIT(0) | BIT(2) | BIT(3))))
+ 		skb->ip_summed = CHECKSUM_UNNECESSARY;
+ 
+ 	if (rxd2 & MT_RXD2_NORMAL_FCS_ERR)
