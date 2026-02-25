@@ -7,7 +7,7 @@
 
 define Profile/ZTE-E8820
         NAME:=ZTE-E8820
-        PACKAGES:=uboot-envtools kmod-ath10k-smallbuffers ath10k-firmware-qca988x kmod-usb2
+        PACKAGES:=uboot-envtools kmod-ath10k-smallbuffers ath10k-firmware-qca988x-ct-full-htt kmod-usb2
 endef
 
 define Profile/ZTE-E8820/Description
