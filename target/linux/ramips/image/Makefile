@@ -578,6 +578,18 @@ define Device/nokia-a040wq
 endef
 TARGET_DEVICES += nokia-a040wq
 
+define Device/maipu-igw401-100-p
+  DTS := MAIPU-IGW401-100-P
+  BLOCKSIZE := 128KiB
+  PAGESIZE := 2048
+  KERNEL_SIZE := 2097152
+  IMAGE_SIZE := 127232k
+  FILESYSTEMS := squashfs
+  IMAGES := factory.bin
+  IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
+endef
+TARGET_DEVICES += maipu-igw401-100-p
+
 define Device/mir3g
   DTS := MIR3G
   BLOCKSIZE := 128KiB

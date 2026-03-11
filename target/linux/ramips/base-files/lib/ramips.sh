@@ -247,6 +247,9 @@ ramips_board_detect() {
 	*"ZYXEL WNA4320 v2")
 		name="wna4320v2"
 		;;
+	*"MAIPU IGW401-100-P")
+		name="maipu-igw401-100-p"
+		;;
 	*"MEILUYOU-P1")
 		name="meiluyou-p1"
 		;;

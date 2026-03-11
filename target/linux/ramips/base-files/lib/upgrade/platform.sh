@@ -231,6 +231,7 @@ platform_do_upgrade() {
 
 	case "$board" in
 	an1201l|\
+	maipu-igw401-100-p|\
 	mir3g|\
 	mi-router-ac2100|\
 	nokia-a040wq |\
