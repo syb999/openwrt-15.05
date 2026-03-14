@@ -1,0 +1,23 @@
+--- a/drivers/mtd/nand/nand_ids.c
++++ b/drivers/mtd/nand/nand_ids.c
+@@ -50,6 +50,10 @@ struct nand_flash_dev nand_flash_ids[] =
+ 		{ .id = {0xad, 0xde, 0x94, 0xda, 0x74, 0xc4} },
+ 		  SZ_8K, SZ_8K, SZ_2M, 0, 6, 640, NAND_ECC_INFO(40, SZ_1K),
+ 		  4 },
++	{"MX30LF1G28AD 1G 3.3V 8-bit",
++		{ .id = {0xC2, 0xF1, 0x80, 0x91, 0x03, 0x03} },
++		  SZ_2K, SZ_128, SZ_128K, 0, 6, 128, NAND_ECC_INFO(8, SZ_512),
++		  0 },
+ 
+ 	LEGACY_ID_NAND("NAND 4MiB 5V 8-bit",   0x6B, 4, SZ_8K, SP_OPTIONS),
+ 	LEGACY_ID_NAND("NAND 4MiB 3,3V 8-bit", 0xE3, 4, SZ_8K, SP_OPTIONS),
+--- a/drivers/mtd/nand/nand_device_list.h
++++ b/drivers/mtd/nand/nand_device_list.h
+@@ -48,6 +48,7 @@ static const flashdev_info gen_FlashTabl
+     {0xC8D1, 0x000000, 3, 8, 128, 128, 2048, 64, 0x30C77fff, "ESMT 128MiB", 0},
+ 	{0xECD3, 0x519558, 5, 8, 1024, 128, 2048, 64, 0x44333, "K9K8G8000", 0},
+     {0xC2F1, 0x801DC2, 4, 8, 128, 128, 2048, 64, 0x30C77fff, "MX30LF1G08AA", 0},
++    {0xC2F1, 0x809103, 4, 8,  128, 128, 2048, 112, 0x00444332, "MX30LF1G28AD", 0},
+     {0x98D3, 0x902676, 5, 8, 1024, 256, 4096, 224, 0x00C25332, "TC58NVG3S0F", 0},
+     {0x01DA, 0x909546, 5, 8, 256, 128, 2048, 128, 0x30C77fff, "S34ML02G200TF", 0},
+     {0x01DC, 0x909556, 5, 8, 512, 128, 2048, 128, 0x30C77fff, "S34ML04G200TF", 0},
