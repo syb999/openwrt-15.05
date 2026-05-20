@@ -30,6 +30,14 @@ define Device/wsr-1166
   IMAGE/sysupgrade.bin := trx | pad-rootfs | append-metadata
 endef
 
+define Device/243p
+  DTS := 243P
+  IMAGE_SIZE := $(ralink_default_fw_size_16M)
+  DEVICE_TITLE := 243P
+  DEVICE_PACKAGES := kmod-mt7603 kmod-mt7615e mt7663-firmware-ap mt7663-firmware-sta
+endef
+TARGET_DEVICES += 243p
+
 define Device/dir-860l-b1
   DTS := DIR-860L-B1
   BLOCKSIZE := 64k

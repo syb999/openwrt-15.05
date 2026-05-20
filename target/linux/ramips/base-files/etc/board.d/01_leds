@@ -17,6 +17,9 @@ board=$(ramips_board_name)
 board_config_update
 
 case $board in
+	243p)
+		ucidef_set_led_netdev "wan" "wan" "243p:green:wan" "br-lan" "eth0.2"
+		;;
 	3g-6200n)
 		set_wifi_led "edimax:amber:wlan"
 		set_usb_led "edimax:blue:3g"
