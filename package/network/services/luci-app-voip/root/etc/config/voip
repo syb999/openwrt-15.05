@@ -1,0 +1,30 @@
+
+config voip 'global'
+	option enabled '1'
+	option auto_restart '1'
+
+config trunk 'ims'
+	option enabled '0'
+	option port '5060'
+	option context 'external'
+	option nat '1'
+
+config record
+	option enabled '1'
+	option dir '/tmp/voip_records'
+	option auto_clean '7'
+
+config extension '6001'
+	option number '6001'
+	option enabled '1'
+	option secret 'secret'
+	option callerid 'User 6001'
+	option record '0'
+
+config extension '6002'
+	option number '6002'
+	option enabled '1'
+	option secret 'secret'
+	option callerid 'User 6002'
+	option record '0'
+

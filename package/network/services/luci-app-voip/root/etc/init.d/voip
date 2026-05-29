@@ -1,0 +1,21 @@
+#!/bin/sh /etc/rc.common
+
+START=95
+STOP=10
+
+start() {
+    /etc/init.d/asterisk start
+}
+
+stop() {
+    /etc/init.d/asterisk stop
+}
+
+reload() {
+    /etc/init.d/asterisk reload
+}
+
+restart() {
+    stop
+    start
+}

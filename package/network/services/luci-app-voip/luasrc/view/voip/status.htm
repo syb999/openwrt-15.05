@@ -1,0 +1,247 @@
+<%+header%>
+<h2><%:VoIP Status%></h2>
+
+<style>
+.status-ok { color: green; font-weight: bold; }
+.status-unknown { color: orange; font-weight: bold; }
+.status-unreachable { color: red; font-weight: bold; }
+</style>
+
+<script type="text/javascript">
+var refreshInterval = null;
+
+function refreshStatus() {
+    var url = '<%=luci.dispatcher.build_url("admin", "services", "voip", "status_data")%>';
+    XHR.get(url, null,
+        function(xhr) {
+            var data = JSON.parse(xhr.responseText);
+            
+            var peersHtml = '';
+            for (var i = 0; i < data.peers.length; i++) {
+                var peer = data.peers[i];
+                var statusClass = '';
+                if (peer.status == 'OK') statusClass = 'status-ok';
+                else if (peer.status == 'UNKNOWN') statusClass = 'status-unknown';
+                else if (peer.status == 'UNREACHABLE') statusClass = 'status-unreachable';
+                
+                peersHtml += '<tr class="cbi-section-table-row">';
+                peersHtml += '<td class="cbi-section-table-cell">' + peer.name + '</td>';
+                peersHtml += '<td class="cbi-section-table-cell">' + peer.host + '</td>';
+                peersHtml += '<td class="cbi-section-table-cell"><span class="' + statusClass + '">' + peer.status + '</span></td>';
+                peersHtml += '</tr>';
+            }
+            if (data.peers.length == 0) {
+                peersHtml = '<tr class="cbi-section-table-row"><td class="cbi-section-table-cell" colspan="3"><%:No peers found%></td></tr>';
+            }
+            document.getElementById('peers-tbody').innerHTML = peersHtml;
+            
+            var callsHtml = '';
+            for (var i = 0; i < data.calls.length; i++) {
+                var call = data.calls[i];
+                callsHtml += '<tr class="cbi-section-table-row">';
+                callsHtml += '<td class="cbi-section-table-cell">' + call.caller + ' → ' + call.callee + '</td>';
+                callsHtml += '</tr>';
+            }
+            if (data.calls.length == 0) {
+                callsHtml = '<tr class="cbi-section-table-row"><td class="cbi-section-table-cell" colspan="1"><%:No active calls%></td></tr>';
+            }
+            document.getElementById('calls-tbody').innerHTML = callsHtml;
+            
+            var now = new Date();
+            document.getElementById('last-update').innerHTML = '最后更新: ' + now.toLocaleTimeString();
+        },
+        function() {}
+    );
+}
+
+function startAutoRefresh() {
+    if (refreshInterval) clearInterval(refreshInterval);
+    refreshStatus();
+    refreshInterval = setInterval(refreshStatus, 5000);
+}
+
+function stopAutoRefresh() {
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+        refreshInterval = null;
+    }
+}
+
+window.addEventListener('load', function() {
+    startAutoRefresh();
+});
+
+window.addEventListener('beforeunload', function() {
+    stopAutoRefresh();
+});
+</script>
+
+<div class="cbi-map">
+    <fieldset class="cbi-section">
+        <legend><%:Service Status%></legend>
+        <div class="cbi-section-node">
+            <div class="cbi-value">
+                <label class="cbi-value-title"><%:VoIP Service%>:</label>
+                <div class="cbi-value-field">
+                    <% 
+                    local uci = require("luci.model.uci").cursor()
+                    local global_enabled = uci:get_first("voip", "global", "enabled") or "0"
+                    if global_enabled == "1" then 
+                    %>
+                        <span style="color: green">● <%:Enabled%></span>
+                    <% else %>
+                        <span style="color: red">● <%:Disabled%></span>
+                    <% end %>
+                </div>
+            </div>
+            <div class="cbi-value">
+                <label class="cbi-value-title"><%:Asterisk Process%>:</label>
+                <div class="cbi-value-field">
+                    <% 
+                    local sys = require "luci.sys"
+                    local pid = sys.call("pidof asterisk >/dev/null 2>&1")
+                    if pid == 0 then 
+                    %>
+                        <span style="color: green">● <%:Running%></span>
+                    <% else %>
+                        <span style="color: red">● <%:Stopped%></span>
+                    <% end %>
+                </div>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="cbi-section">
+        <legend><%:SIP Registry Status%></legend>
+        <div class="cbi-section-node">
+            <%
+            local f = io.popen("asterisk -rx 'sip show registry' 2>/dev/null")
+            local has_reg = false
+            if f then
+                for line in f:lines() do
+                    if line:match("Registered") then
+                        has_reg = true
+                    %>
+                    <div class="cbi-value">
+                        <div class="cbi-value-field" style="font-family: monospace;">
+                            <%=line:gsub("^%s+", "")%>
+                        </div>
+                    </div>
+                    <%
+                    end
+                end
+                f:close()
+            end
+            if not has_reg then
+            %>
+                <div class="cbi-value">
+                    <div class="cbi-value-field"><%:No registry information%></div>
+                </div>
+            <% end %>
+        </div>
+    </fieldset>
+
+    <fieldset class="cbi-section">
+        <legend><%:SIP Peers%></legend>
+        <div class="cbi-section-node">
+            <table class="cbi-section-table">
+                <tr class="cbi-section-table-titles">
+                    <th class="cbi-section-table-cell"><%:Name%></th>
+                    <th class="cbi-section-table-cell"><%:Host%></th>
+                    <th class="cbi-section-table-cell"><%:Status%></th>
+                </tr>
+                <tbody id="peers-tbody">
+                <%
+                local f = io.popen("asterisk -rx 'sip show peers' 2>/dev/null")
+                local has_peer = false
+                if f then
+                    local in_peer_section = false
+                    for line in f:lines() do
+                        if line:match("Name/username") then
+                            in_peer_section = true
+                        elseif in_peer_section and not line:match("^-") and not line:match("sip peers") then
+                            local name = line:match("^(%d+)/")
+                            if name then
+                                local host = line:match("^%S+%s+(%S+)")
+                                if host == "(Unspecified)" or host == "" then
+                                    host = "(Unspecified)"
+                                end
+                                local status = line:match("OK") and "OK" or 
+                                               line:match("UNKNOWN") and "UNKNOWN" or 
+                                               line:match("UNREACHABLE") and "UNREACHABLE" or "Unknown"
+                                has_peer = true
+                                local status_class = ""
+                                if status == "OK" then status_class = "status-ok"
+                                elseif status == "UNKNOWN" then status_class = "status-unknown"
+                                elseif status == "UNREACHABLE" then status_class = "status-unreachable"
+                                end
+                                %>
+                                <tr class="cbi-section-table-row">
+                                    <td class="cbi-section-table-cell"><%=name%></td>
+                                    <td class="cbi-section-table-cell"><%=host%></td>
+                                    <td class="cbi-section-table-cell"><span class="<%=status_class%>"><%=status%></span></td>
+                                </tr>
+                                <%
+                            end
+                        end
+                    end
+                    f:close()
+                end
+                if not has_peer then
+                %>
+                    <tr class="cbi-section-table-row">
+                        <td class="cbi-section-table-cell" colspan="3"><%:No peers found%></td>
+                    </tr>
+                <% end %>
+                </tbody>
+            </table>
+        </div>
+    </fieldset>
+
+    <fieldset class="cbi-section">
+        <legend><%:Active Calls%></legend>
+        <div class="cbi-section-node">
+            <table class="cbi-section-table">
+                <tr class="cbi-section-table-titles">
+                    <th class="cbi-section-table-cell"><%:Caller → Callee%></th>
+                </tr>
+                <tbody id="calls-tbody">
+                <%
+                local f = io.popen("asterisk -rx 'core show channels' 2>/dev/null")
+                local has_call = false
+                if f then
+                    for line in f:lines() do
+                        if line:match("SIP/%d+.*%d+@internal") then
+                            local caller = line:match("SIP/(%d+)")
+                            local callee = line:match("(%d+)@internal")
+                            if caller and callee then
+                                has_call = true
+                                %>
+                                <tr class="cbi-section-table-row">
+                                    <td class="cbi-section-table-cell"><%=caller%> → <%=callee%></td>
+                                </tr>
+                                <%
+                            end
+                        end
+                    end
+                    f:close()
+                end
+                if not has_call then
+                %>
+                    <tr class="cbi-section-table-row">
+                        <td class="cbi-section-table-cell" colspan="1"><%:No active calls%></td>
+                    </tr>
+                <% end %>
+                </tbody>
+            </table>
+        </div>
+    </fieldset>
+</div>
+
+<div class="cbi-page-actions">
+    <span id="last-update" style="margin-right: 20px; color: #666;"></span>
+    <input class="cbi-button cbi-button-apply" type="button" value="<%:Apply Changes%>" onclick="window.location='<%=luci.dispatcher.build_url('admin/services/voip/apply')%>'" />
+    <input class="cbi-button cbi-button-reset" type="button" value="<%:Restart VoIP%>" onclick="window.location='<%=luci.dispatcher.build_url('admin/services/voip/restart')%>'" />
+</div>
+
+<%+footer%>

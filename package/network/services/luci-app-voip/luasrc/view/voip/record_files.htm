@@ -1,0 +1,158 @@
+<%+header%>
+<h2><%:Record Files%></h2>
+
+<style>
+.recording-table {
+    width: 100%;
+}
+.file-size {
+    font-family: monospace;
+}
+.total-info {
+    margin-bottom: 20px;
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 5px;
+}
+</style>
+
+<script type="text/javascript">
+var refreshInterval = null;
+
+function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1024 / 1024).toFixed(2) + ' MB';
+}
+
+function formatTime(timeStr) {
+    if (!timeStr || timeStr.length < 14) return timeStr;
+    var year = timeStr.substring(0, 4);
+    var month = timeStr.substring(4, 6);
+    var day = timeStr.substring(6, 8);
+    var hour = timeStr.substring(8, 10);
+    var minute = timeStr.substring(10, 12);
+    var second = timeStr.substring(12, 14);
+    return year + '-' + month + '-' + day + ' ' + hour + ':' + minute + ':' + second;
+}
+
+function downloadFile(filename) {
+    window.location = '<%=luci.dispatcher.build_url("admin", "services", "voip", "download_record")%>?file=' + encodeURIComponent(filename);
+}
+
+function deleteFile(filename) {
+    if (confirm('Delete recording file ' + filename + '?')) {
+        window.location = '<%=luci.dispatcher.build_url("admin", "services", "voip", "delete_record")%>?file=' + encodeURIComponent(filename);
+    }
+}
+
+function refreshFiles() {
+    var url = '<%=luci.dispatcher.build_url("admin", "services", "voip", "record_files_data")%>';
+    XHR.get(url, null,
+        function(xhr) {
+            var data = JSON.parse(xhr.responseText);
+            
+            var totalSizeMB = (data.total_size / 1024 / 1024).toFixed(2);
+            var totalSizeKB = (data.total_size / 1024).toFixed(0);
+            var sizeText = '';
+            if (data.total_size > 1024 * 1024) {
+                sizeText = totalSizeMB + ' MB';
+            } else {
+                sizeText = totalSizeKB + ' KB';
+            }
+            
+            document.getElementById('total-count').innerHTML = data.total_count;
+            document.getElementById('total-size').innerHTML = sizeText;
+            document.getElementById('record-dir').innerHTML = data.dir;
+            
+            var filesHtml = '';
+            for (var i = 0; i < data.files.length; i++) {
+                var f = data.files[i];
+                var sizeText = formatFileSize(f.size);
+                
+                filesHtml += '<tr class="cbi-section-table-row">';
+                filesHtml += '<td class="cbi-section-table-cell">' + f.caller + ' → ' + f.callee + '</td>';
+                filesHtml += '<td class="cbi-section-table-cell">' + formatTime(f.timestamp) + '</td>';
+                filesHtml += '<td class="cbi-section-table-cell file-size">' + sizeText + '</td>';
+                filesHtml += '<td class="cbi-section-table-cell">';
+                filesHtml += '<a href="#" onclick="downloadFile(\'' + f.name + '\'); return false;" class="cbi-button cbi-button-apply">Download</a> ';
+                filesHtml += '<a href="#" onclick="deleteFile(\'' + f.name + '\'); return false;" class="cbi-button cbi-button-remove">Delete</a>';
+                filesHtml += '</td>';
+                filesHtml += '</tr>';
+            }
+            if (data.files.length == 0) {
+                filesHtml = '<tr class="cbi-section-table-row"><td class="cbi-section-table-cell" colspan="4">No recording files</td></tr>';
+            }
+            document.getElementById('files-tbody').innerHTML = filesHtml;
+            
+            var now = new Date();
+            document.getElementById('last-update').innerHTML = '最后更新: ' + now.toLocaleTimeString();
+        },
+        function() {}
+    );
+}
+
+function startAutoRefresh() {
+    if (refreshInterval) clearInterval(refreshInterval);
+    refreshFiles();
+    refreshInterval = setInterval(refreshFiles, 5000);
+}
+
+function stopAutoRefresh() {
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+        refreshInterval = null;
+    }
+}
+
+window.addEventListener('load', function() {
+    startAutoRefresh();
+});
+
+window.addEventListener('beforeunload', function() {
+    stopAutoRefresh();
+});
+</script>
+
+<div class="cbi-map">
+    <fieldset class="cbi-section">
+        <legend><%:Recording Statistics%></legend>
+        <div class="cbi-section-node">
+            <div class="cbi-value">
+                <label class="cbi-value-title"><%:Recording Directory%>:</label>
+                <div class="cbi-value-field" id="record-dir"></div>
+            </div>
+            <div class="cbi-value">
+                <label class="cbi-value-title"><%:Total Files%>:</label>
+                <div class="cbi-value-field" id="total-count"></div>
+            </div>
+            <div class="cbi-value">
+                <label class="cbi-value-title"><%:Total Size%>:</label>
+                <div class="cbi-value-field" id="total-size"></div>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="cbi-section">
+        <legend><%:Recording Files%></legend>
+        <div class="cbi-section-node">
+            <table class="cbi-section-table">
+                <tr class="cbi-section-table-titles">
+                    <th class="cbi-section-table-cell"><%:Call (Caller → Callee)%></th>
+                    <th class="cbi-section-table-cell"><%:Time%></th>
+                    <th class="cbi-section-table-cell"><%:Size%></th>
+                    <th class="cbi-section-table-cell"><%:Operations%></th>
+                </tr>
+                <tbody id="files-tbody">
+                </tbody>
+            </table>
+        </div>
+    </fieldset>
+</div>
+
+<div class="cbi-page-actions">
+    <span id="last-update" style="margin-right: 20px; color: #666;"></span>
+    <input class="cbi-button cbi-button-reset" type="button" value="<%:Back to Status%>" onclick="window.location='<%=luci.dispatcher.build_url('admin/services/voip/status')%>'" />
+</div>
+
+<%+footer%>

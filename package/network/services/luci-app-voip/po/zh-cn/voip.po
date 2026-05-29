@@ -1,0 +1,235 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: luci-app-voip\n"
+"Language-Team: Chinese\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+# Controller
+msgid "VoIP"
+msgstr "VoIP"
+
+msgid "Status"
+msgstr "状态"
+
+msgid "SIP Trunk"
+msgstr "SIP中继"
+
+msgid "Extensions"
+msgstr "分机"
+
+msgid "Record Settings"
+msgstr "录音设置"
+
+msgid "Record Files"
+msgstr "录音文件"
+
+# status.htm
+msgid "VoIP Status"
+msgstr "VoIP状态"
+
+msgid "Service Status"
+msgstr "服务状态"
+
+msgid "VoIP Service"
+msgstr "VoIP服务"
+
+msgid "Asterisk Process"
+msgstr "Asterisk进程"
+
+msgid "Running"
+msgstr "运行中"
+
+msgid "Stopped"
+msgid "已停止"
+
+msgid "SIP Registry Status"
+msgstr "SIP注册状态"
+
+msgid "No registry information"
+msgstr "暂无注册信息"
+
+msgid "SIP Peers"
+msgstr "SIP分机"
+
+msgid "Name"
+msgstr "名称"
+
+msgid "Host"
+msgstr "主机"
+
+msgid "Status"
+msgstr "状态"
+
+msgid "No peers found"
+msgstr "未找到分机"
+
+msgid "Active Calls"
+msgstr "活跃通话"
+
+msgid "Caller → Callee"
+msgstr "主叫 → 被叫"
+
+msgid "No active calls"
+msgstr "暂无通话"
+
+msgid "Last update"
+msgstr "最后更新"
+
+msgid "Refresh"
+msgstr "刷新"
+
+msgid "Apply Changes"
+msgstr "应用更改"
+
+msgid "Restart VoIP"
+msgstr "重启VoIP"
+
+# trunk.lua
+msgid "SIP Trunk Configuration"
+msgstr "SIP中继配置"
+
+msgid "Configure China Telecom IMS SIP trunk connection"
+msgstr "配置中国电信IMS SIP中继连接"
+
+msgid "VoIP Service Global Settings"
+msgstr "VoIP服务全局设置"
+
+msgid "Enable VoIP Service"
+msgstr "启用VoIP服务"
+
+msgid "Auto Restart"
+msgstr "自动重启"
+
+msgid "China Telecom IMS Trunk"
+msgstr "中国电信IMS中继"
+
+msgid "Enable IMS Trunk"
+msgstr "启用IMS中继"
+
+msgid "SIP Server"
+msgstr "SIP服务器"
+
+msgid "Forward Server IP"
+msgstr "转发服务器IP"
+
+msgid "Port"
+msgstr "端口"
+
+msgid "Phone Number"
+msgstr "电话号码"
+
+msgid "Password"
+msgstr "密码"
+
+msgid "Inbound Context"
+msgstr "来电上下文"
+
+msgid "external"
+msgstr "external"
+
+msgid "internal"
+msgstr "internal"
+
+msgid "NAT Support"
+msgstr "NAT支持"
+
+# extension.lua
+msgid "Extension Configuration"
+msgstr "分机配置"
+
+msgid "Configure internal extensions"
+msgstr "配置内部分机"
+
+msgid "Internal Extensions"
+msgstr "内部分机"
+
+msgid "Extension Number"
+msgstr "分机号码"
+
+msgid "Caller ID"
+msgstr "来电显示"
+
+msgid "Enabled"
+msgstr "启用"
+
+msgid "Auto Record"
+msgstr "自动录音"
+
+# record_settings.lua
+msgid "Configure recording parameters"
+msgstr "配置录音参数"
+
+msgid "Recording Settings"
+msgstr "录音设置"
+
+msgid "Enable Recording"
+msgstr "启用录音"
+
+msgid "Recording Directory"
+msgstr "录音目录"
+
+msgid "Auto Clean Days"
+msgstr "自动清理天数"
+
+# record_files.htm
+msgid "Recording Statistics"
+msgstr "录音统计"
+
+msgid "Total Files"
+msgstr "文件总数"
+
+msgid "Total Size"
+msgstr "总大小"
+
+msgid "Recording Files"
+msgstr "录音文件列表"
+
+msgid "Call (Caller → Callee)"
+msgstr "通话 (主叫 → 被叫)"
+
+msgid "Time"
+msgstr "时间"
+
+msgid "Size"
+msgstr "大小"
+
+msgid "Operations"
+msgstr "操作"
+
+msgid "Download"
+msgstr "下载"
+
+msgid "Delete"
+msgstr "删除"
+
+msgid "No recording files"
+msgstr "暂无录音文件"
+
+msgid "Back to Status"
+msgstr "返回状态"
+
+# Common
+msgid "Save & Apply"
+msgstr "保存并应用"
+
+msgid "Enabled"
+msgstr "已启用"
+
+msgid "Disabled"
+msgstr "已禁用"
+
+msgid "Enabled"
+msgstr "启用"
+
+msgid "Disabled"
+msgstr "禁用"
+
+msgid "SRTP Support"
+msgstr "SRTP支持"
+
+msgid "Enable SRTP encryption for secure calls"
+msgstr "启用SRTP加密以保护通话安全"
+
