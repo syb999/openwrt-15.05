@@ -20,7 +20,8 @@ define Package/luci-app-voip
            +asterisk13-codec-ulaw +asterisk13-func-channel +asterisk13-func-shell \
            +asterisk13-res-musiconhold +asterisk13-res-rtp-asterisk \
            +asterisk13-res-rtp-multicast +asterisk13-res-srtp +asterisk13-app-verbose \
-           +asterisk13-app-mixmonitor +asterisk13-format-wav
+           +asterisk13-app-mixmonitor +asterisk13-format-wav +asterisk13-format-gsm \
+           +asterisk13-codec-gsm
   PKGARCH:=all
 endef
 

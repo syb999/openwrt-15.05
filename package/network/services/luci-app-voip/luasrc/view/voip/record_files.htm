@@ -14,6 +14,15 @@
     background: #f5f5f5;
     border-radius: 5px;
 }
+.hint {
+    margin: 10px 0;
+    padding: 8px 12px;
+    background: #e8f4e8;
+    border-left: 4px solid #5cb85c;
+    border-radius: 3px;
+    color: #3c763d;
+    font-size: 12px;
+}
 </style>
 
 <script type="text/javascript">
@@ -26,13 +35,17 @@ function formatFileSize(bytes) {
 }
 
 function formatTime(timeStr) {
+    if (timeStr && timeStr.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/)) {
+        return timeStr;
+    }
+
     if (!timeStr || timeStr.length < 14) return timeStr;
     var year = timeStr.substring(0, 4);
     var month = timeStr.substring(4, 6);
     var day = timeStr.substring(6, 8);
-    var hour = timeStr.substring(8, 10);
-    var minute = timeStr.substring(10, 12);
-    var second = timeStr.substring(12, 14);
+    var hour = timeStr.substring(9, 11);
+    var minute = timeStr.substring(11, 13);
+    var second = timeStr.substring(13, 15);
     return year + '-' + month + '-' + day + ' ' + hour + ':' + minute + ':' + second;
 }
 
@@ -132,6 +145,10 @@ window.addEventListener('beforeunload', function() {
             </div>
         </div>
     </fieldset>
+
+    <div class="hint">
+        提示：请定期清理Asterisk录音文件,以防止磁盘空间占用过大！
+    </div>
 
     <fieldset class="cbi-section">
         <legend><%:Recording Files%></legend>

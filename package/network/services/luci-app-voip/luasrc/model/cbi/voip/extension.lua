@@ -1,5 +1,8 @@
 local m = Map("voip", translate("Extension Configuration"), translate("Configure internal extensions"))
 
+local tip = m:section(SimpleSection)
+tip.description = '<div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; margin: 10px 0;">' .. translate("After saving configuration, please go to Status page, click Apply Changes, then click Restart VoIP to make settings take effect.") .. '</div>'
+
 local s = m:section(TypedSection, "extension", translate("Internal Extensions"))
 s.addremove = true
 s.template = "cbi/tblsection"

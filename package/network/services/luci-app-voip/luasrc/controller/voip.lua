@@ -76,7 +76,45 @@ function action_record_files_data()
         total_count = 0
     }
     
-    local f = io.popen("ls -la \"" .. record_dir .. "\" 2>/dev/null | grep -E '\\.wav$' | wc -l")
+    local f = io.popen("ls -lt \"" .. record_dir .. "\" 2>/dev/null | grep -E '\\.(wav|gsm)$' | awk '{print $9, $5}'")
+    if f then
+        for line in f:lines() do
+            local filename, size = line:match("^([^%s]+)%s+(%d+)")
+            if filename and size then
+                local parts = {}
+                for part in filename:gmatch("[^_]+") do
+                    table.insert(parts, part)
+                end
+                
+                local caller = parts[1] or "Unknown"
+                local callee = parts[2] or "Unknown"
+                local timestamp_str = parts[3] or ""
+                timestamp_str = timestamp_str:gsub("%.wav$", ""):gsub("%.gsm$", "")
+                
+                local formatted_time = timestamp_str
+                if #timestamp_str == 15 then
+                    local year = timestamp_str:sub(1, 4)
+                    local month = timestamp_str:sub(5, 6)
+                    local day = timestamp_str:sub(7, 8)
+                    local hour = timestamp_str:sub(10, 11)
+                    local minute = timestamp_str:sub(12, 13)
+                    local second = timestamp_str:sub(14, 15)
+                    formatted_time = year .. "-" .. month .. "-" .. day .. " " .. hour .. ":" .. minute .. ":" .. second
+                end
+                
+                table.insert(data.files, {
+                    name = filename,
+                    caller = caller,
+                    callee = callee,
+                    timestamp = formatted_time,
+                    size = tonumber(size)
+                })
+            end
+        end
+        f:close()
+    end
+    
+    f = io.popen("ls -la \"" .. record_dir .. "\" 2>/dev/null | grep -E '\\.(wav|gsm)$' | wc -l")
     if f then
         data.total_count = tonumber(f:read("*line")) or 0
         f:close()
@@ -89,36 +127,41 @@ function action_record_files_data()
         f:close()
     end
     
-    f = io.popen("ls -la \"" .. record_dir .. "\" 2>/dev/null | grep -E '\\.wav$' | awk '{print $9, $5}' | sort -r")
-    if f then
-        for line in f:lines() do
-            local filename, size = line:match("^([^%s]+)%s+(%d+)")
-            if filename and size then
-                local parts = {}
-                for part in filename:gmatch("[^_]+") do
-                    table.insert(parts, part)
+    luci.http.write_json(data)
+end
+
+function action_download_record()
+    local fs = require "nixio.fs"
+    local filename = luci.http.formvalue("file")
+    
+    if filename then
+        local uci = require("luci.model.uci").cursor()
+        local record_dir = uci:get_first("voip", "record", "dir") or "/tmp/voip_records"
+        local fullpath = record_dir .. "/" .. filename
+        
+        if fs.access(fullpath) then
+            local file = io.open(fullpath, "rb")
+            if file then
+                local content = file:read("*all")
+                file:close()
+                
+                if filename:match("%.wav$") then
+                    luci.http.header('Content-Type', 'audio/x-wav')
+                elseif filename:match("%.gsm$") then
+                    luci.http.header('Content-Type', 'audio/x-gsm')
+                else
+                    luci.http.header('Content-Type', 'application/octet-stream')
                 end
                 
-                local caller = parts[1] or "Unknown"
-                local callee = parts[2] or "Unknown"
-                local timestamp = parts[3] or ""
-                if timestamp then
-                    timestamp = timestamp:gsub("%.wav$", "")
-                end
-                
-                table.insert(data.files, {
-                    name = filename,
-                    caller = caller,
-                    callee = callee,
-                    timestamp = timestamp,
-                    size = tonumber(size)
-                })
+                luci.http.header('Content-Disposition', 'attachment; filename="' .. filename .. '"')
+                luci.http.write(content)
+                return
             end
         end
-        f:close()
     end
     
-    luci.http.write_json(data)
+    luci.http.status(404, "Not Found")
+    luci.http.write("File not found")
 end
 
 function action_delete_record()
@@ -155,7 +198,19 @@ function generate_configs()
     
     local record_enabled = uci:get_first("voip", "record", "enabled") or "0"
     local record_dir = uci:get_first("voip", "record", "dir") or "/tmp/voip_records"
+    local record_format = uci:get_first("voip", "record", "format") or "gsm"
     local auto_clean = uci:get_first("voip", "record", "auto_clean") or "30"
+    
+    -- 根据格式设置
+    local file_ext = ""
+    local mixmonitor_opts = ""
+    if record_format == "wav" then
+        file_ext = ".wav"
+        mixmonitor_opts = ",a"
+    else
+        file_ext = ".gsm"
+        mixmonitor_opts = ""
+    end
     
     local sip_content = [[
 [general]
@@ -250,7 +305,7 @@ exten => _1XXXXXXXXXX!,1,Dial(SIP/${EXTEN}@trunk_ims,60,r)
                 ext_content = ext_content .. "exten => " .. number .. ",n,Set(CALLEE=" .. number .. ")\n"
                 ext_content = ext_content .. "exten => " .. number .. ",n,Set(TIMESTAMP=${SHELL(date +%Y%m%d-%H%M%S | tr -d '\\n')})\n"
                 ext_content = ext_content .. "exten => " .. number .. ",n,Set(FILE_NAME=" .. record_dir .. "/${CALLER}_${CALLEE}_${TIMESTAMP})\n"
-                ext_content = ext_content .. "exten => " .. number .. ",n,MixMonitor(${FILE_NAME}.wav,a)\n"
+                ext_content = ext_content .. "exten => " .. number .. ",n,MixMonitor(${FILE_NAME}" .. file_ext .. mixmonitor_opts .. ")\n"
                 ext_content = ext_content .. "exten => " .. number .. ",n,Dial(SIP/" .. number .. ",30)\n"
                 ext_content = ext_content .. "exten => " .. number .. ",n,StopMixMonitor()\n"
                 ext_content = ext_content .. "exten => " .. number .. ",n,Hangup()\n"
@@ -291,37 +346,11 @@ exten => s,1,Answer()
     if record_enabled == "1" then
         fs.mkdir(record_dir)
         if tonumber(auto_clean) and tonumber(auto_clean) > 0 then
-            local cmd = "find " .. record_dir .. " -name \"*.wav\" -mtime +" .. auto_clean .. " -delete 2>/dev/null"
+            local ext_pattern = (record_format == "wav") and "*.wav" or "*.gsm"
+            local cmd = "find " .. record_dir .. " -name \"" .. ext_pattern .. "\" -mtime +" .. auto_clean .. " -delete 2>/dev/null"
             os.execute(cmd)
         end
     end
     
     os.execute("/etc/init.d/asterisk reload 2>/dev/null")
-end
-
-function action_download_record()
-    local fs = require "nixio.fs"
-    local filename = luci.http.formvalue("file")
-    
-    if filename then
-        local uci = require("luci.model.uci").cursor()
-        local record_dir = uci:get_first("voip", "record", "dir") or "/tmp/voip_records"
-        local fullpath = record_dir .. "/" .. filename
-        
-        if fs.access(fullpath) then
-            local file = io.open(fullpath, "rb")
-            if file then
-                local content = file:read("*all")
-                file:close()
-                
-                luci.http.header('Content-Type', 'audio/x-wav')
-                luci.http.header('Content-Disposition', 'attachment; filename="' .. filename .. '"')
-                luci.http.write(content)
-                return
-            end
-        end
-    end
-    
-    luci.http.status(404, "Not Found")
-    luci.http.write("File not found")
 end
