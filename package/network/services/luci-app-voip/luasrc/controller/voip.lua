@@ -325,7 +325,7 @@ exten => s,n,Hangup()
                 ext_content = ext_content .. "exten => " .. number .. ",n,Set(TIMESTAMP=${FILTER(0-9-,${RAW})})\n"
                 ext_content = ext_content .. "exten => " .. number .. ",n,Set(FILE_NAME=" .. record_dir .. "/${CALLER}_${CALLEE}_${TIMESTAMP})\n"
                 ext_content = ext_content .. "exten => " .. number .. ",n,MixMonitor(${FILE_NAME}" .. file_ext_dot .. mixmonitor_opts .. ")\n"
-                ext_content = ext_content .. "exten => " .. number .. ",n,Dial(SIP/" .. number .. ",30)\n"
+                ext_content = ext_content .. "exten => " .. number .. ",n,Dial(SIP/" .. number .. ",60)\n"
                 ext_content = ext_content .. "exten => " .. number .. ",n,StopMixMonitor()\n"
                 ext_content = ext_content .. "exten => " .. number .. ",n,Hangup()\n"
             else
