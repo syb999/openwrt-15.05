@@ -349,7 +349,8 @@ exten => _1XXXXXXXXXX!,1,Macro(dialout,${EXTEN})
     ext_content = ext_content .. [[
 
 [external]
-exten => s,1,Answer()
+exten => s,1,Progress()
+exten => s,n,Playback(vm-intro)
 ]]
     
     if trunk_enabled == "1" then
@@ -368,7 +369,7 @@ exten => s,1,Answer()
                 end
             end)
             if ring_all ~= "" then
-                ext_content = ext_content .. "exten => s,n,Dial(" .. ring_all .. ",30)\n"
+                ext_content = ext_content .. "exten => s,n,Dial(" .. ring_all .. ",60)\n"
             else
                 ext_content = ext_content .. "exten => s,n,Playback(invalid)\n"
             end
