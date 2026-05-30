@@ -278,12 +278,25 @@ canreinvite = no
     
     fs.writefile(sip_conf, sip_content)
     
+    -- 开始生成 extensions.conf
     local ext_content = [[
 [general]
+
+; Macro for outbound calls with recording
+[macro-dialout]
+exten => s,1,Set(CALLER=${CALLERID(num)})
+exten => s,n,Set(CALLEE=${ARG1})
+exten => s,n,Set(TIMESTAMP=${SHELL(date +%Y%m%d-%H%M%S)})
+exten => s,n,Set(FILE_NAME=]] .. record_dir .. [[/${CALLER}_${CALLEE}_${TIMESTAMP})
+exten => s,n,MixMonitor(${FILE_NAME}.]] .. file_ext .. mixmonitor_opts .. [[)
+exten => s,n,Dial(SIP/${ARG1}@trunk_ims,60,r)
+exten => s,n,StopMixMonitor()
+exten => s,n,Hangup()
 
 [internal]
 ]]
     
+    -- 分机互拨规则（录音或普通）
     uci:foreach("voip", "extension", function(s)
         if s.enabled == "1" then
             local number = s.number or s[".name"]
@@ -305,14 +318,15 @@ canreinvite = no
         end
     end)
     
+    -- 外呼规则（使用 Macro，只有 trunk 启用时添加）
     if trunk_enabled == "1" then
         ext_content = ext_content .. [[
 
 ; Outbound dialing rules for PSTN
-exten => _1XX!,1,Dial(SIP/${EXTEN}@trunk_ims,60,r)
-exten => _XXXXX!,1,Dial(SIP/${EXTEN}@trunk_ims,60,r)
-exten => _XXXXXXXX!,1,Dial(SIP/${EXTEN}@trunk_ims,60,r)
-exten => _1XXXXXXXXXX!,1,Dial(SIP/${EXTEN}@trunk_ims,60,r)
+exten => _1XX!,1,Macro(dialout,${EXTEN})
+exten => _XXXXX!,1,Macro(dialout,${EXTEN})
+exten => _XXXXXXXX!,1,Macro(dialout,${EXTEN})
+exten => _1XXXXXXXXXX!,1,Macro(dialout,${EXTEN})
 ]]
     end
     
@@ -324,7 +338,7 @@ exten => s,1,Answer()
     
     if trunk_enabled == "1" then
         if default_extension ~= "" then
-            ext_content = ext_content .. "exten => s,n,Dial(SIP/" .. default_extension .. ",60)\n"
+            ext_content = ext_content .. "exten => s,n,Goto(internal," .. default_extension .. ",1)\n"
         else
             local ring_all = ""
             uci:foreach("voip", "extension", function(s)
