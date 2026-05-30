@@ -48,12 +48,25 @@ function action_status_data()
     
     f = io.popen("asterisk -rx 'core show channels' 2>/dev/null")
     if f then
+        local calls_seen = {}
         for line in f:lines() do
-            if line:match("SIP/%d+.*%d+@internal") then
-                local caller = line:match("SIP/(%d+)")
-                local callee = line:match("(%d+)@internal")
-                if caller and callee then
-                    table.insert(data.calls, {caller = caller, callee = callee})
+            if line:match("SIP/") then
+                local channel = line:match("^(SIP/%d+%-%S+)")
+                if channel then
+                    local caller = channel:match("SIP/(%d+)")
+                    local callee = line:match("(%d+)@internal")
+                    
+                    if not callee then
+                        callee = line:match("Dial%(SIP/(%d+)")
+                    end
+                    
+                    if caller and callee and not calls_seen[caller .. "_" .. callee] then
+                        calls_seen[caller .. "_" .. callee] = true
+                        table.insert(data.calls, {caller = caller, callee = callee})
+                    elseif callee and not calls_seen["_PSTN_" .. callee] then
+                        calls_seen["_PSTN_" .. callee] = true
+                        table.insert(data.calls, {caller = "外线", callee = callee})
+                    end
                 end
             end
         end
@@ -201,13 +214,17 @@ function generate_configs()
     local record_format = uci:get_first("voip", "record", "format") or "gsm"
     local auto_clean = uci:get_first("voip", "record", "auto_clean") or "30"
     
-    local file_ext = ""
+    local file_ext_dot = ""
+    local file_ext_plain = ""
     local mixmonitor_opts = ""
+    
     if record_format == "wav" then
-        file_ext = ".wav"
+        file_ext_dot = ".wav"
+        file_ext_plain = "wav"
         mixmonitor_opts = ",a"
     else
-        file_ext = ".gsm"
+        file_ext_dot = ".gsm"
+        file_ext_plain = "gsm"
         mixmonitor_opts = ""
     end
     
@@ -278,7 +295,6 @@ canreinvite = no
     
     fs.writefile(sip_conf, sip_content)
     
-    -- 开始生成 extensions.conf
     local ext_content = [[
 [general]
 
@@ -286,9 +302,10 @@ canreinvite = no
 [macro-dialout]
 exten => s,1,Set(CALLER=${CALLERID(num)})
 exten => s,n,Set(CALLEE=${ARG1})
-exten => s,n,Set(TIMESTAMP=${SHELL(date +%Y%m%d-%H%M%S)})
+exten => s,n,Set(RAW=${SHELL(date +%Y%m%d-%H%M%S)})
+exten => s,n,Set(TIMESTAMP=${FILTER(0-9-,${RAW})})
 exten => s,n,Set(FILE_NAME=]] .. record_dir .. [[/${CALLER}_${CALLEE}_${TIMESTAMP})
-exten => s,n,MixMonitor(${FILE_NAME}.]] .. file_ext .. mixmonitor_opts .. [[)
+exten => s,n,MixMonitor(${FILE_NAME}.]] .. file_ext_plain .. [[)
 exten => s,n,Dial(SIP/${ARG1}@trunk_ims,60,r)
 exten => s,n,StopMixMonitor()
 exten => s,n,Hangup()
@@ -296,7 +313,6 @@ exten => s,n,Hangup()
 [internal]
 ]]
     
-    -- 分机互拨规则（录音或普通）
     uci:foreach("voip", "extension", function(s)
         if s.enabled == "1" then
             local number = s.number or s[".name"]
@@ -305,9 +321,10 @@ exten => s,n,Hangup()
             if record_enabled == "1" and ext_record == "1" then
                 ext_content = ext_content .. "exten => " .. number .. ",1,Set(CALLER=${CALLERID(num)})\n"
                 ext_content = ext_content .. "exten => " .. number .. ",n,Set(CALLEE=" .. number .. ")\n"
-                ext_content = ext_content .. "exten => " .. number .. ",n,Set(TIMESTAMP=${SHELL(date +%Y%m%d-%H%M%S | tr -d '\\n')})\n"
+                ext_content = ext_content .. "exten => " .. number .. ",n,Set(RAW=${SHELL(date +%Y%m%d-%H%M%S)})\n"
+                ext_content = ext_content .. "exten => " .. number .. ",n,Set(TIMESTAMP=${FILTER(0-9-,${RAW})})\n"
                 ext_content = ext_content .. "exten => " .. number .. ",n,Set(FILE_NAME=" .. record_dir .. "/${CALLER}_${CALLEE}_${TIMESTAMP})\n"
-                ext_content = ext_content .. "exten => " .. number .. ",n,MixMonitor(${FILE_NAME}" .. file_ext .. mixmonitor_opts .. ")\n"
+                ext_content = ext_content .. "exten => " .. number .. ",n,MixMonitor(${FILE_NAME}" .. file_ext_dot .. mixmonitor_opts .. ")\n"
                 ext_content = ext_content .. "exten => " .. number .. ",n,Dial(SIP/" .. number .. ",30)\n"
                 ext_content = ext_content .. "exten => " .. number .. ",n,StopMixMonitor()\n"
                 ext_content = ext_content .. "exten => " .. number .. ",n,Hangup()\n"
@@ -318,7 +335,6 @@ exten => s,n,Hangup()
         end
     end)
     
-    -- 外呼规则（使用 Macro，只有 trunk 启用时添加）
     if trunk_enabled == "1" then
         ext_content = ext_content .. [[
 
@@ -352,7 +368,7 @@ exten => s,1,Answer()
                 end
             end)
             if ring_all ~= "" then
-                ext_content = ext_content .. "exten => s,n,Dial(" .. ring_all .. ",60)\n"
+                ext_content = ext_content .. "exten => s,n,Dial(" .. ring_all .. ",30)\n"
             else
                 ext_content = ext_content .. "exten => s,n,Playback(invalid)\n"
             end
