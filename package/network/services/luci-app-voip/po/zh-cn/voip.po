@@ -245,3 +245,10 @@ msgstr "启用SRTP加密以保护通话安全"
 
 msgid "After saving configuration, please go to Status page, click Apply Changes, then click Restart VoIP to make settings take effect."
 msgstr "配置修改保存后，请前往状态页面，点击应用更改，然后点击重启VoIP使配置生效。"
+
+msgid "Default Incoming Extension"
+msgstr "默认来电分机"
+
+msgid "Extension number that receives incoming calls from PSTN (leave empty to ring all extensions)"
+msgstr "接收来自PSTN来电的分机号码（留空则所有分机振铃）"
+

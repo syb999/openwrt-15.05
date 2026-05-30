@@ -34,17 +34,18 @@ phone.placeholder = "+86XXXXXXXXXX"
 password = s2:option(Value, "password", translate("Password"))
 password.password = true
 
-context = s2:option(ListValue, "context", translate("Inbound Context"))
-context:value("external", translate("external"))
-context:value("internal", translate("internal"))
-context.default = "external"
-
 nat = s2:option(Flag, "nat", translate("NAT Support"))
 nat.default = 1
 
 srtp = s2:option(Flag, "srtp", translate("SRTP Support"))
 srtp.default = 0
 srtp.description = translate("Enable SRTP encryption for secure calls")
+
+default_extension = s2:option(Value, "default_extension", translate("Default Incoming Extension"))
+default_extension.description = translate("Extension number that receives incoming calls from PSTN (leave empty to ring all extensions)")
+default_extension.default = "6001"
+default_extension.datatype = "uinteger"
+default_extension.placeholder = "6001"
 
 function m.on_commit()
     os.execute("/etc/init.d/asterisk reload 2>/dev/null &")

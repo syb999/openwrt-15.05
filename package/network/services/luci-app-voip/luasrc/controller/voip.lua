@@ -201,7 +201,6 @@ function generate_configs()
     local record_format = uci:get_first("voip", "record", "format") or "gsm"
     local auto_clean = uci:get_first("voip", "record", "auto_clean") or "30"
     
-    -- 根据格式设置
     local file_ext = ""
     local mixmonitor_opts = ""
     if record_format == "wav" then
@@ -234,9 +233,9 @@ canreinvite = no
     local port = uci:get_first("voip", "trunk", "port") or "5060"
     local phone = uci:get_first("voip", "trunk", "phone") or ""
     local password = uci:get_first("voip", "trunk", "password") or ""
-    local context = uci:get_first("voip", "trunk", "context") or "external"
     local nat = uci:get_first("voip", "trunk", "nat") or "1"
     local use_srtp = uci:get_first("voip", "trunk", "srtp") or "0"
+    local default_extension = uci:get_first("voip", "trunk", "default_extension") or ""
     
     if trunk_enabled == "1" and server ~= "" and phone ~= "" and password ~= "" and forward_server ~= "" then
         sip_content = sip_content .. "register = " .. phone .. "@" .. server .. ":" .. password .. ":" .. phone .. "@" .. server .. "@" .. forward_server .. ":" .. port .. "\n"
@@ -247,7 +246,7 @@ canreinvite = no
         end
         
         sip_content = sip_content .. "\n[trunk_ims]\n"
-        sip_content = sip_content .. "host=" .. forward_server .. ":" .. port .. "\n"
+        sip_content = sip_content .. "host=" .. forward_server .. "\n"
         sip_content = sip_content .. "username=" .. phone .. "@" .. server .. "\n"
         sip_content = sip_content .. "secret=" .. password .. "\n"
         sip_content = sip_content .. "type=friend\n"
@@ -255,7 +254,7 @@ canreinvite = no
         sip_content = sip_content .. "fromuser=" .. phone .. "\n"
         sip_content = sip_content .. "insecure=port,invite\n"
         sip_content = sip_content .. "dtmfmode=inband\n"
-        sip_content = sip_content .. "context=" .. context .. "\n"
+        sip_content = sip_content .. "context=external\n"
         sip_content = sip_content .. "nat=" .. (nat == "1" and "yes" or "no") .. "\n"
         sip_content = sip_content .. "qualify=yes\n"
     end
@@ -285,16 +284,6 @@ canreinvite = no
 [internal]
 ]]
     
-    if trunk_enabled == "1" then
-        ext_content = ext_content .. [[
-; Outbound dialing rules for PSTN
-exten => _1XX!,1,Dial(SIP/${EXTEN}@trunk_ims,60,r)
-exten => _XXXXX!,1,Dial(SIP/${EXTEN}@trunk_ims,60,r)
-exten => _XXXXXXXX!,1,Dial(SIP/${EXTEN}@trunk_ims,60,r)
-exten => _1XXXXXXXXXX!,1,Dial(SIP/${EXTEN}@trunk_ims,60,r)
-]]
-    end
-    
     uci:foreach("voip", "extension", function(s)
         if s.enabled == "1" then
             local number = s.number or s[".name"]
@@ -316,26 +305,44 @@ exten => _1XXXXXXXXXX!,1,Dial(SIP/${EXTEN}@trunk_ims,60,r)
         end
     end)
     
+    if trunk_enabled == "1" then
+        ext_content = ext_content .. [[
+
+; Outbound dialing rules for PSTN
+exten => _1XX!,1,Dial(SIP/${EXTEN}@trunk_ims,60,r)
+exten => _XXXXX!,1,Dial(SIP/${EXTEN}@trunk_ims,60,r)
+exten => _XXXXXXXX!,1,Dial(SIP/${EXTEN}@trunk_ims,60,r)
+exten => _1XXXXXXXXXX!,1,Dial(SIP/${EXTEN}@trunk_ims,60,r)
+]]
+    end
+    
     ext_content = ext_content .. [[
 
 [external]
 exten => s,1,Answer()
 ]]
     
-    local ring_all = ""
-    uci:foreach("voip", "extension", function(s)
-        if s.enabled == "1" then
-            local number = s.number or s[".name"]
-            if ring_all == "" then
-                ring_all = "SIP/" .. number
+    if trunk_enabled == "1" then
+        if default_extension ~= "" then
+            ext_content = ext_content .. "exten => s,n,Dial(SIP/" .. default_extension .. ",60)\n"
+        else
+            local ring_all = ""
+            uci:foreach("voip", "extension", function(s)
+                if s.enabled == "1" then
+                    local number = s.number or s[".name"]
+                    if ring_all == "" then
+                        ring_all = "SIP/" .. number
+                    else
+                        ring_all = ring_all .. "&SIP/" .. number
+                    end
+                end
+            end)
+            if ring_all ~= "" then
+                ext_content = ext_content .. "exten => s,n,Dial(" .. ring_all .. ",60)\n"
             else
-                ring_all = ring_all .. "&SIP/" .. number
+                ext_content = ext_content .. "exten => s,n,Playback(invalid)\n"
             end
         end
-    end)
-    
-    if ring_all ~= "" then
-        ext_content = ext_content .. "exten => s,n,Dial(" .. ring_all .. ",60)\n"
     else
         ext_content = ext_content .. "exten => s,n,Playback(invalid)\n"
     end
