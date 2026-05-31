@@ -274,6 +274,9 @@ nat = yes
 allow = ulaw
 allow = alaw
 canreinvite = no
+rtcachefriends=yes
+rtsavesysname=yes
+qualifyfreq=60
 
 ]]
     
@@ -305,8 +308,12 @@ canreinvite = no
         sip_content = sip_content .. "insecure=port,invite\n"
         sip_content = sip_content .. "dtmfmode=inband\n"
         sip_content = sip_content .. "context=external\n"
-        sip_content = sip_content .. "nat=" .. (nat == "1" and "yes" or "no") .. "\n"
+        sip_content = sip_content .. "nat=force_rport,comedia\n"
         sip_content = sip_content .. "qualify=yes\n"
+        sip_content = sip_content .. "qualifyfreq=30\n"
+        sip_content = sip_content .. "session-timers=refuse\n"
+        sip_content = sip_content .. "register_timeout=30\n"
+        sip_content = sip_content .. "registration_timeout=30\n"
     end
     
     uci:foreach("voip", "extension", function(s)
@@ -320,8 +327,12 @@ canreinvite = no
             sip_content = sip_content .. "host=dynamic\n"
             sip_content = sip_content .. "context=internal\n"
             sip_content = sip_content .. "dtmfmode=rfc2833\n"
-            sip_content = sip_content .. "nat=yes\n"
+            sip_content = sip_content .. "nat=force_rport,comedia\n"
             sip_content = sip_content .. "qualify=yes\n"
+            sip_content = sip_content .. "qualifyfreq=30\n"
+            sip_content = sip_content .. "rtupdate=yes\n"
+            sip_content = sip_content .. "rtcachefriends=yes\n"
+            sip_content = sip_content .. "session-timers=refuse\n"
             sip_content = sip_content .. "callerid=\"" .. callerid .. "\" <" .. number .. ">\n"
         end
     end)
@@ -344,6 +355,7 @@ canreinvite = no
             sip_content = sip_content .. "context=" .. (p.context or "internal") .. "\n"
             sip_content = sip_content .. "nat=" .. (p.nat == "1" and "yes" or "no") .. "\n"
             sip_content = sip_content .. "qualify=" .. (p.qualify == "1" and "yes" or "no") .. "\n"
+            sip_content = sip_content .. "qualifyfreq=60\n"
             sip_content = sip_content .. "dtmfmode=" .. (p.dtmfmode or "rfc2833") .. "\n"
             sip_content = sip_content .. "canreinvite=no\n"
         end
