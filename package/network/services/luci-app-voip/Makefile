@@ -51,6 +51,7 @@ define Package/luci-app-voip/install
 	$(INSTALL_DATA) ./luasrc/model/cbi/voip/record_settings.lua $(1)/usr/lib/lua/luci/model/cbi/voip/
 	$(INSTALL_DATA) ./luasrc/view/voip/status.htm $(1)/usr/lib/lua/luci/view/voip/
 	$(INSTALL_DATA) ./luasrc/view/voip/record_files.htm $(1)/usr/lib/lua/luci/view/voip/
+	$(INSTALL_DATA) ./luasrc/view/voip/peer.htm $(1)/usr/lib/lua/luci/view/voip/
 	$(INSTALL_DATA) ./root/etc/config/voip $(1)/etc/config/
 	$(INSTALL_BIN) ./root/etc/init.d/voip $(1)/etc/init.d/
 	

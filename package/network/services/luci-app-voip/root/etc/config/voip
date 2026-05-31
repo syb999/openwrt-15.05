@@ -28,3 +28,15 @@ config extension '6002'
 	option callerid 'User 6002'
 	option record '0'
 
+# Server Peers configuration
+config peer 'peer_server_hq'
+	option name 'server_hq'
+	option dial_prefix '81'
+	option host '192.168.1.100'
+	option port '5060'
+	option type 'friend'
+	option context 'internal'
+	option nat '1'
+	option qualify '1'
+	option dtmfmode 'rfc2833'
+

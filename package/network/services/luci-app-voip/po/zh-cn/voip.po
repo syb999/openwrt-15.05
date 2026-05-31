@@ -252,3 +252,43 @@ msgstr "默认来电分机"
 msgid "Extension number that receives incoming calls from PSTN (leave empty to ring all extensions)"
 msgstr "接收来自PSTN来电的分机号码（留空则所有分机振铃）"
 
+# Server Peers
+msgid "Server Peers"
+msgstr "服务器对端"
+
+msgid "Configure remote Asterisk servers for interconnection"
+msgstr "配置远程Asterisk服务器互联"
+
+msgid "Remote Servers"
+msgstr "远程服务器"
+
+msgid "Server Name"
+msgstr "服务器名称"
+
+msgid "Server IP/Host"
+msgstr "服务器IP/主机"
+
+msgid "Qualify (keepalive)"
+msgstr "Qualify (心跳检测)"
+
+msgid "DTMF Mode"
+msgstr "DTMF模式"
+
+msgid "Friend (bidirectional)"
+msgstr "Friend (双向)"
+
+msgid "Peer (outbound only)"
+msgstr "Peer (仅呼出)"
+
+msgid "User (inbound only)"
+msgstr "User (仅呼入)"
+
+msgid "About Dial Prefix"
+msgstr "关于拨号前缀"
+
+msgid "When you dial a number starting with the prefix (e.g., 81), Asterisk will route the call to the corresponding remote server."
+msgstr "当您拨打以前缀（例如 81）开头的号码时，Asterisk 会将呼叫路由到对应的远程服务器。"
+
+msgid "Example: If prefix is 81 and you dial 816001, it will call extension 6001 on the remote server."
+msgstr "例如：前缀为 81，拨打 816001 时，将呼叫远程服务器上的分机 6001。"
+

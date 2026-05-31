@@ -35,6 +35,27 @@ function refreshStatus() {
             }
             document.getElementById('peers-tbody').innerHTML = peersHtml;
             
+            var serverPeersHtml = '';
+            if (data.server_peers && data.server_peers.length > 0) {
+                for (var i = 0; i < data.server_peers.length; i++) {
+                    var sp = data.server_peers[i];
+                    var statusClass = '';
+                    if (sp.status == 'OK') statusClass = 'status-ok';
+                    else if (sp.status == 'UNKNOWN') statusClass = 'status-unknown';
+                    else if (sp.status == 'UNREACHABLE') statusClass = 'status-unreachable';
+                    
+                    serverPeersHtml += '<tr class="cbi-section-table-row">';
+                    serverPeersHtml += '<td class="cbi-section-table-cell">' + sp.name + '</td>';
+                    serverPeersHtml += '<td class="cbi-section-table-cell">' + sp.host + '</td>';
+                    serverPeersHtml += '<td class="cbi-section-table-cell">' + (sp.port || '5060') + '</td>';
+                    serverPeersHtml += '<td class="cbi-section-table-cell"><span class="' + statusClass + '">' + sp.status + '</span></td>';
+                    serverPeersHtml += '</tr>';
+                }
+            } else {
+                serverPeersHtml = '<tr class="cbi-section-table-row"><td class="cbi-section-table-cell" colspan="4"><%:No server peers configured%></td></tr>';
+            }
+            document.getElementById('server-peers-tbody').innerHTML = serverPeersHtml;
+            
             var callsHtml = '';
             for (var i = 0; i < data.calls.length; i++) {
                 var call = data.calls[i];
@@ -152,8 +173,9 @@ window.addEventListener('beforeunload', function() {
                 </tr>
                 <tbody id="peers-tbody">
                 <%
+                local uci = require("luci.model.uci").cursor()
                 local f = io.popen("asterisk -rx 'sip show peers' 2>/dev/null")
-                local has_peer = false
+                local peer_status = {}
                 if f then
                     local in_peer_section = false
                     for line in f:lines() do
@@ -161,36 +183,92 @@ window.addEventListener('beforeunload', function() {
                             in_peer_section = true
                         elseif in_peer_section and not line:match("^-") and not line:match("sip peers") then
                             local name = line:match("^(%d+)/")
+                            local host = line:match("^%S+%s+(%S+)")
+                            local status = line:match("OK") and "OK" or 
+                                           line:match("UNKNOWN") and "UNKNOWN" or 
+                                           line:match("UNREACHABLE") and "UNREACHABLE" or "Unknown"
                             if name then
-                                local host = line:match("^%S+%s+(%S+)")
-                                if host == "(Unspecified)" or host == "" then
-                                    host = "(Unspecified)"
-                                end
-                                local status = line:match("OK") and "OK" or 
-                                               line:match("UNKNOWN") and "UNKNOWN" or 
-                                               line:match("UNREACHABLE") and "UNREACHABLE" or "Unknown"
-                                has_peer = true
-                                local status_class = ""
-                                if status == "OK" then status_class = "status-ok"
-                                elseif status == "UNKNOWN" then status_class = "status-unknown"
-                                elseif status == "UNREACHABLE" then status_class = "status-unreachable"
-                                end
-                                %>
-                                <tr class="cbi-section-table-row">
-                                    <td class="cbi-section-table-cell"><%=name%></td>
-                                    <td class="cbi-section-table-cell"><%=host%></td>
-                                    <td class="cbi-section-table-cell"><span class="<%=status_class%>"><%=status%></span></td>
-                                </tr>
-                                <%
+                                peer_status[name] = {host = host, status = status}
                             end
                         end
                     end
                     f:close()
                 end
+                
+                local has_peer = false
+                uci:foreach("voip", "extension", function(s)
+                    if s.enabled == "1" then
+                        local number = s.number or s[".name"]
+                        if number and number:match("^%d+$") then
+                            has_peer = true
+                            local status_info = peer_status[number] or {}
+                            local host = status_info.host or "(Unspecified)"
+                            local status = status_info.status or "Unknown"
+                            local status_class = ""
+                            if status == "OK" then status_class = "status-ok"
+                            elseif status == "UNKNOWN" then status_class = "status-unknown"
+                            elseif status == "UNREACHABLE" then status_class = "status-unreachable"
+                            end
+                            %>
+                            <tr class="cbi-section-table-row">
+                                <td class="cbi-section-table-cell"><%=number%></td>
+                                <td class="cbi-section-table-cell"><%=host%></td>
+                                <td class="cbi-section-table-cell"><span class="<%=status_class%>"><%=status%></span></td>
+                            </tr>
+                            <%
+                        end
+                    end
+                end)
                 if not has_peer then
                 %>
                     <tr class="cbi-section-table-row">
                         <td class="cbi-section-table-cell" colspan="3"><%:No peers found%></td>
+                    </tr>
+                <% end %>
+                </tbody>
+            </table>
+        </div>
+    </fieldset>
+
+    <fieldset class="cbi-section">
+        <legend><%:Server Peers%></legend>
+        <div class="cbi-section-node">
+            <table class="cbi-section-table">
+                <tr class="cbi-section-table-titles">
+                    <th class="cbi-section-table-cell"><%:Name%></th>
+                    <th class="cbi-section-table-cell"><%:Host%></th>
+                    <th class="cbi-section-table-cell"><%:Port%></th>
+                    <th class="cbi-section-table-cell"><%:Status%></th>
+                </tr>
+                <tbody id="server-peers-tbody">
+                <%
+                local has_server_peer = false
+                uci:foreach("voip", "peer", function(p)
+                    if p.name and p.name ~= "" and not p.name:match("^%d+$") then
+                        has_server_peer = true
+                        local host = p.host or ""
+                        local port = p.port or "5060"
+                        local status_info = peer_status[p.name] or {}
+                        local status = status_info.status or "Unknown"
+                        local status_class = ""
+                        if status == "OK" then status_class = "status-ok"
+                        elseif status == "UNKNOWN" then status_class = "status-unknown"
+                        elseif status == "UNREACHABLE" then status_class = "status-unreachable"
+                        end
+                        %>
+                        <tr class="cbi-section-table-row">
+                            <td class="cbi-section-table-cell"><%=p.name%></td>
+                            <td class="cbi-section-table-cell"><%=host%></td>
+                            <td class="cbi-section-table-cell"><%=port%></td>
+                            <td class="cbi-section-table-cell"><span class="<%=status_class%>"><%=status%></span></td>
+                        </tr>
+                        <%
+                    end
+                end)
+                if not has_server_peer then
+                %>
+                    <tr class="cbi-section-table-row">
+                        <td class="cbi-section-table-cell" colspan="4"><%:No server peers configured%></td>
                     </tr>
                 <% end %>
                 </tbody>
