@@ -231,7 +231,24 @@ function action_restart()
 end
 
 function action_apply()
+    local uci = require("luci.model.uci").cursor()
+    
     generate_configs()
+    
+    os.execute("asterisk -rx 'database deltree record' > /dev/null 2>&1 &")
+    
+    uci:foreach("voip", "extension", function(s)
+        if s.enabled == "1" then
+            local number = s.number or s[".name"]
+            local ext_record = s.record or "0"
+            if number then
+                os.execute("asterisk -rx 'database put record " .. number .. " " .. ext_record .. "' > /dev/null 2>&1 &")
+            end
+        end
+    end)
+    
+    os.execute("asterisk -rx 'dialplan reload' > /dev/null 2>&1 &")
+    
     luci.http.redirect(luci.dispatcher.build_url("admin", "services", "voip", "status"))
 end
 
@@ -316,11 +333,19 @@ qualifyfreq=60
         sip_content = sip_content .. "registration_timeout=30\n"
     end
     
+    local extensions_info = {}
     uci:foreach("voip", "extension", function(s)
         if s.enabled == "1" then
             local number = s.number or s[".name"]
             local secret = s.secret or "secret"
             local callerid = s.callerid or ("Extension " .. number)
+            local ext_record = s.record or "0"
+            table.insert(extensions_info, {
+                number = number,
+                secret = secret,
+                callerid = callerid,
+                record = ext_record
+            })
             sip_content = sip_content .. "\n[" .. number .. "]\n"
             sip_content = sip_content .. "type=friend\n"
             sip_content = sip_content .. "secret=" .. secret .. "\n"
@@ -368,40 +393,45 @@ qualifyfreq=60
 
 ; Macro for outbound calls with recording
 [macro-dialout]
-exten => s,1,Set(CALLER=${CALLERID(num)})
+exten => s,1,Set(CALLER_RAW=${CALLERID(num)})
+exten => s,n,Set(CALLER=${FILTER(0-9,${CALLER_RAW})})
 exten => s,n,Set(CALLEE=${ARG1})
-exten => s,n,Set(RAW=${SHELL(date +%Y%m%d-%H%M%S)})
-exten => s,n,Set(TIMESTAMP=${FILTER(0-9-,${RAW})})
-exten => s,n,Set(FILE_NAME=]] .. record_dir .. [[/${CALLER}_${CALLEE}_${TIMESTAMP})
-exten => s,n,MixMonitor(${FILE_NAME}.]] .. file_ext_plain .. [[)
-exten => s,n,Dial(SIP/${ARG1}@trunk_ims,60,r)
-exten => s,n,StopMixMonitor()
+exten => s,n,Set(RECORD_ENABLED=${DB(record/${CALLER})})
+exten => s,n,GotoIf($["${RECORD_ENABLED}" = "1"]?record,1)
+exten => s,n,Dial(SIP/${CALLEE}@trunk_ims,60,r)
 exten => s,n,Hangup()
+exten => record,1,Set(CALLEE=${ARG1})
+exten => record,n,Set(RAW=${SHELL(date +%Y%m%d-%H%M%S)})
+exten => record,n,Set(TIMESTAMP=${FILTER(0-9-,${RAW})})
+exten => record,n,Set(FILE_NAME=/tmp/voip_records/${CALLER}_${CALLEE}_${TIMESTAMP})
+exten => record,n,MixMonitor(${FILE_NAME}.gsm)
+exten => record,n,Dial(SIP/${CALLEE}@trunk_ims,60,r)
+exten => record,n,StopMixMonitor()
+exten => record,n,Hangup()
 
 [internal]
 ]]
     
-    uci:foreach("voip", "extension", function(s)
-        if s.enabled == "1" then
-            local number = s.number or s[".name"]
-            local ext_record = s.record or "0"
-            
-            if record_enabled == "1" and ext_record == "1" then
-                ext_content = ext_content .. "exten => " .. number .. ",1,Set(CALLER=${CALLERID(num)})\n"
-                ext_content = ext_content .. "exten => " .. number .. ",n,Set(CALLEE=" .. number .. ")\n"
-                ext_content = ext_content .. "exten => " .. number .. ",n,Set(RAW=${SHELL(date +%Y%m%d-%H%M%S)})\n"
-                ext_content = ext_content .. "exten => " .. number .. ",n,Set(TIMESTAMP=${FILTER(0-9-,${RAW})})\n"
-                ext_content = ext_content .. "exten => " .. number .. ",n,Set(FILE_NAME=" .. record_dir .. "/${CALLER}_${CALLEE}_${TIMESTAMP})\n"
-                ext_content = ext_content .. "exten => " .. number .. ",n,MixMonitor(${FILE_NAME}" .. file_ext_dot .. mixmonitor_opts .. ")\n"
-                ext_content = ext_content .. "exten => " .. number .. ",n,Dial(SIP/" .. number .. ",60)\n"
-                ext_content = ext_content .. "exten => " .. number .. ",n,StopMixMonitor()\n"
-                ext_content = ext_content .. "exten => " .. number .. ",n,Hangup()\n"
-            else
-                ext_content = ext_content .. "exten => " .. number .. ",1,Dial(SIP/" .. number .. ")\n"
-                ext_content = ext_content .. "exten => " .. number .. ",n,Hangup()\n"
-            end
+    for _, ext in ipairs(extensions_info) do
+        local number = ext.number
+        local ext_record = ext.record
+        
+        if record_enabled == "1" and ext_record == "1" then
+            ext_content = ext_content .. "exten => " .. number .. ",1,Set(DB(record/" .. number .. ")=" .. ext_record .. ")\n"
+            ext_content = ext_content .. "exten => " .. number .. ",n,Set(CALLER=${CALLERID(num)})\n"
+            ext_content = ext_content .. "exten => " .. number .. ",n,Set(CALLEE=" .. number .. ")\n"
+            ext_content = ext_content .. "exten => " .. number .. ",n,Set(RAW=${SHELL(date +%Y%m%d-%H%M%S)})\n"
+            ext_content = ext_content .. "exten => " .. number .. ",n,Set(TIMESTAMP=${FILTER(0-9-,${RAW})})\n"
+            ext_content = ext_content .. "exten => " .. number .. ",n,Set(FILE_NAME=" .. record_dir .. "/${CALLER}_${CALLEE}_${TIMESTAMP})\n"
+            ext_content = ext_content .. "exten => " .. number .. ",n,MixMonitor(${FILE_NAME}" .. file_ext_dot .. mixmonitor_opts .. ")\n"
+            ext_content = ext_content .. "exten => " .. number .. ",n,Dial(SIP/" .. number .. ",60)\n"
+            ext_content = ext_content .. "exten => " .. number .. ",n,StopMixMonitor()\n"
+            ext_content = ext_content .. "exten => " .. number .. ",n,Hangup()\n"
+        else
+            ext_content = ext_content .. "exten => " .. number .. ",1,Dial(SIP/" .. number .. ")\n"
+            ext_content = ext_content .. "exten => " .. number .. ",n,Hangup()\n"
         end
-    end)
+    end
     
     if trunk_enabled == "1" then
         ext_content = ext_content .. [[
