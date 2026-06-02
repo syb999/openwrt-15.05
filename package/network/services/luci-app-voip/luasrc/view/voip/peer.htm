@@ -2,8 +2,12 @@
 <h2><%:Server Peers%></h2>
 
 <style>
+.peer-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
 .peer-table {
-    width: 100%;
+    min-width: 1200px;
     border-collapse: collapse;
 }
 .peer-table th, .peer-table td {
@@ -27,11 +31,20 @@
     white-space: nowrap;
     text-align: center;
 }
-.actions a {
+.actions a, .actions button {
     margin: 0 4px;
     cursor: pointer;
-    color: #0066cc;
-    text-decoration: underline;
+    padding: 4px 8px;
+    border: none;
+    border-radius: 3px;
+}
+.btn-save {
+    background-color: #5cb85c;
+    color: white;
+}
+.btn-delete {
+    background-color: #d9534f;
+    color: white;
 }
 .hint {
     margin: 10px 0;
@@ -48,25 +61,28 @@
     background: #e8f4e8;
     border: 1px solid #5cb85c;
     border-radius: 5px;
+    overflow-x: auto;
 }
-.add-area .row {
+.add-row {
     display: flex;
-    flex-wrap: wrap;
     gap: 8px;
     align-items: center;
+    min-width: 1200px;
 }
-.add-area .col-name { width: 10%; min-width: 100px; }
-.add-area .col-prefix { width: 3%; min-width: 60px; }
-.add-area .col-host { width: 15%; min-width: 150px; }
-.add-area .col-port { width: 6%; min-width: 60px; }
-.add-area .col-username { width: 8%; min-width: 90px; }
-.add-area .col-password { width: 8%; min-width: 90px; }
-.add-area .col-type { width: 12%; min-width: 120px; }
-.add-area .col-context { width: 5%; min-width: 70px; }
-.add-area .col-nat { width: 5%; min-width: 50px; }
-.add-area .col-qualify { width: 5%; min-width: 50px; }
-.add-area .col-dtmf { width: 10%; min-width: 100px; }
-.add-area input, .add-area select {
+.add-row .c-name { width: 100px; flex-shrink: 0; }
+.add-row .c-prefix { width: 50px; flex-shrink: 0; }
+.add-row .c-host { width: 140px; flex-shrink: 0; }
+.add-row .c-zerotier { width: 140px; flex-shrink: 0; }
+.add-row .c-port { width: 60px; flex-shrink: 0; }
+.add-row .c-username { width: 90px; flex-shrink: 0; }
+.add-row .c-password { width: 90px; flex-shrink: 0; }
+.add-row .c-type { width: 90px; flex-shrink: 0; }
+.add-row .c-context { width: 70px; flex-shrink: 0; }
+.add-row .c-nat { width: 50px; flex-shrink: 0; text-align: center; }
+.add-row .c-qualify { width: 50px; flex-shrink: 0; text-align: center; }
+.add-row .c-dtmf { width: 90px; flex-shrink: 0; }
+.add-row .c-actions { width: 100px; flex-shrink: 0; }
+.add-row input, .add-row select {
     width: 100%;
     padding: 4px;
     box-sizing: border-box;
@@ -84,6 +100,36 @@ function escapeHtml(str) {
     });
 }
 
+function savePeer(name, rowId) {
+    var data = {
+        name: document.getElementById('name_' + rowId).value,
+        dial_prefix: document.getElementById('prefix_' + rowId).value,
+        host: document.getElementById('host_' + rowId).value,
+        zerotier: document.getElementById('zerotier_' + rowId).value,
+        port: document.getElementById('port_' + rowId).value,
+        username: document.getElementById('username_' + rowId).value,
+        password: document.getElementById('password_' + rowId).value,
+        type: document.getElementById('type_' + rowId).value,
+        context: document.getElementById('context_' + rowId).value,
+        nat: document.getElementById('nat_' + rowId).checked ? '1' : '0',
+        qualify: document.getElementById('qualify_' + rowId).checked ? '1' : '0',
+        dtmf: document.getElementById('dtmf_' + rowId).value
+    };
+    
+    var url = '<%=luci.dispatcher.build_url("admin", "services", "voip", "peer_update")%>';
+    var params = 'data=' + encodeURIComponent(JSON.stringify(data));
+    
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', url, true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4 && xhr.status == 200) {
+            location.reload();
+        }
+    };
+    xhr.send(params);
+}
+
 function deletePeer(name) {
     if (!name) return;
     if (confirm('Delete server peer ' + name + '?')) {
@@ -92,52 +138,60 @@ function deletePeer(name) {
 }
 
 function renderTable(peers) {
-    var html = '<table class="peer-table">';
+    var html = '<div class="peer-container">';
+    html += '<table class="peer-table">';
     html += '<thead>';
     html += '<tr>';
-    html += '<th style="width:10%">Server Name</th>';
-    html += '<th style="width:3%">Prefix</th>';
-    html += '<th style="width:15%">Host/IP</th>';
-    html += '<th style="width:6%">Port</th>';
-    html += '<th style="width:8%">Username</th>';
-    html += '<th style="width:8%">Password</th>';
-    html += '<th style="width:12%">Type</th>';
-    html += '<th style="width:5%">Context</th>';
-    html += '<th style="width:5%">NAT</th>';
-    html += '<th style="width:5%">Qualify (keepalive)</th>';
-    html += '<th style="width:10%">DTMF</th>';
-    html += '<th style="width:8%">Actions</th>';
+    html += '<th style="width:100px">Server Name</th>';
+    html += '<th style="width:50px">Prefix</th>';
+    html += '<th style="width:140px">Host/IP</th>';
+    html += '<th style="width:140px">ZeroTier IP</th>';
+    html += '<th style="width:60px">Port</th>';
+    html += '<th style="width:90px">Username</th>';
+    html += '<th style="width:90px">Password</th>';
+    html += '<th style="width:90px">Type</th>';
+    html += '<th style="width:70px">Context</th>';
+    html += '<th style="width:50px">NAT</th>';
+    html += '<th style="width:50px">Qualify</th>';
+    html += '<th style="width:90px">DTMF</th>';
+    html += '<th style="width:150px">Actions</th>';
     html += '</tr>';
     html += '</thead><tbody>';
     
     for (var i = 0; i < peers.length; i++) {
         var p = peers[i];
+        var rowId = i + 1;
         html += '<tr>';
-        html += '<td><input type="text" name="peer_name_' + (i+1) + '" value="' + escapeHtml(p.name) + '" /></td>';
-        html += '<td><input type="text" name="peer_prefix_' + (i+1) + '" value="' + escapeHtml(p.dial_prefix) + '" /></td>';
-        html += '<td><input type="text" name="peer_host_' + (i+1) + '" value="' + escapeHtml(p.host) + '" /></td>';
-        html += '<td><input type="text" name="peer_port_' + (i+1) + '" value="' + escapeHtml(p.port) + '" /></td>';
-        html += '<td><input type="text" name="peer_username_' + (i+1) + '" value="' + escapeHtml(p.username) + '" /></td>';
-        html += '<td><input type="password" name="peer_password_' + (i+1) + '" value="' + escapeHtml(p.password || '') + '" /></td>';
-        html += '<td><select name="peer_type_' + (i+1) + '">';
-        html += '<option value="friend"' + (p.type == 'friend' ? ' selected' : '') + '>Friend (bidirectional)</option>';
-        html += '<option value="peer"' + (p.type == 'peer' ? ' selected' : '') + '>Peer (outbound only)</option>';
-        html += '<option value="user"' + (p.type == 'user' ? ' selected' : '') + '>User (inbound only)</option>';
+        html += '<td><input type="text" id="name_' + rowId + '" value="' + escapeHtml(p.name) + '" /></td>';
+        html += '<td><input type="text" id="prefix_' + rowId + '" value="' + escapeHtml(p.dial_prefix) + '" /></td>';
+        html += '<td><input type="text" id="host_' + rowId + '" value="' + escapeHtml(p.host) + '" /></td>';
+        html += '<td><input type="text" id="zerotier_' + rowId + '" value="' + escapeHtml(p.zerotier || '') + '" /></td>';
+        html += '<td><input type="text" id="port_' + rowId + '" value="' + escapeHtml(p.port) + '" /></td>';
+        html += '<td><input type="text" id="username_' + rowId + '" value="' + escapeHtml(p.username || '') + '" /></td>';
+        html += '<td><input type="password" id="password_' + rowId + '" value="' + escapeHtml(p.password || '') + '" /></td>';
+        html += '<td><select id="type_' + rowId + '">';
+        html += '<option value="friend"' + (p.type == 'friend' ? ' selected' : '') + '>Friend</option>';
+        html += '<option value="peer"' + (p.type == 'peer' ? ' selected' : '') + '>Peer</option>';
+        html += '<option value="user"' + (p.type == 'user' ? ' selected' : '') + '>User</option>';
         html += '</select></td>';
-        html += '<td><input type="text" name="peer_context_' + (i+1) + '" value="' + escapeHtml(p.context) + '" /></td>';
-        html += '<td style="text-align:center"><input type="checkbox" name="peer_nat_' + (i+1) + '" value="1"' + (p.nat == '1' ? ' checked' : '') + ' /></td>';
-        html += '<td style="text-align:center"><input type="checkbox" name="peer_qualify_' + (i+1) + '" value="1"' + (p.qualify == '1' ? ' checked' : '') + ' /></td>';
-        html += '<td><select name="peer_dtmf_' + (i+1) + '">';
+        html += '<td><input type="text" id="context_' + rowId + '" value="' + escapeHtml(p.context) + '" /></td>';
+        html += '<td style="text-align:center"><input type="checkbox" id="nat_' + rowId + '" value="1"' + (p.nat == '1' ? ' checked' : '') + ' /></td>';
+        html += '<td style="text-align:center"><input type="checkbox" id="qualify_' + rowId + '" value="1"' + (p.qualify == '1' ? ' checked' : '') + ' /></td>';
+        html += '<td><select id="dtmf_' + rowId + '">';
         html += '<option value="rfc2833"' + (p.dtmfmode == 'rfc2833' ? ' selected' : '') + '>RFC2833</option>';
-        html += '<option value="info"' + (p.dtmfmode == 'info' ? ' selected' : '') + '>SIP INFO</option>';
+        html += '<option value="info"' + (p.dtmfmode == 'info' ? ' selected' : '') + '>INFO</option>';
         html += '<option value="inband"' + (p.dtmfmode == 'inband' ? ' selected' : '') + '>Inband</option>';
         html += '</select></td>';
-        html += '<td class="actions"><a href="#" onclick="deletePeer(\'' + escapeHtml(p.name) + '\'); return false;">Delete</a></td>';
-        html += '</tr>';
+        html += '<td class="actions">';
+        html += '<button class="btn-save" onclick="savePeer(\'' + escapeHtml(p.name) + '\', ' + rowId + ')">Save</button>';
+        html += '<button class="btn-delete" onclick="deletePeer(\'' + escapeHtml(p.name) + '\')">Delete</button>';
+        html += '</td>';
+        html += '</table>';
     }
     
-    html += '</tbody></table>';
-    html += '<input type="hidden" name="peer_count" value="' + peers.length + '" />';
+    html += '</tbody>';
+    html += '</table>';
+    html += '</div>';
     
     document.getElementById('peer-table-container').innerHTML = html;
 }
@@ -162,45 +216,79 @@ window.addEventListener('load', function() {
 
 <div class="hint">
     <strong>About Dial Prefix</strong><br>
-    When you dial a number starting with the prefix (e.g., 81), Asterisk will route the call to the corresponding remote server.<br>
-    Example: If prefix is 81 and you dial 816001, it will call extension 6001 on the remote server.
+    Dial prefix to route calls to this server (e.g., 81 for extension 816001).<br>
+    <strong>ZeroTier IP:</strong> Optional. If provided, an additional peer will be created.
 </div>
 
-<form method="post" action="<%=luci.dispatcher.build_url("admin", "services", "voip", "peer_save")%>">
-    <div id="peer-table-container"></div>
-    
-    <div class="add-area">
-        <div style="font-weight: bold; margin-bottom: 10px;">Add New Server Peer</div>
-        <div class="row">
-            <input type="text" name="new_name" placeholder="Server Name" class="col-name" />
-            <input type="text" name="new_prefix" placeholder="Prefix" class="col-prefix" />
-            <input type="text" name="new_host" placeholder="Host/IP" class="col-host" required />
-            <input type="text" name="new_port" placeholder="Port" value="5060" class="col-port" />
-            <input type="text" name="new_username" placeholder="Username" class="col-username" />
-            <input type="password" name="new_password" placeholder="Password" class="col-password" />
-            <select name="new_type" class="col-type">
-                <option value="friend">Friend (bidirectional)</option>
-                <option value="peer">Peer (outbound only)</option>
-                <option value="user">User (inbound only)</option>
-            </select>
-            <input type="text" name="new_context" placeholder="Context" value="internal" class="col-context" />
-            <label class="col-nat"><input type="checkbox" name="new_nat" value="1" checked /> NAT</label>
-            <label class="col-qualify"><input type="checkbox" name="new_qualify" value="1" checked /> Qualify</label>
-            <select name="new_dtmf" class="col-dtmf">
-                <option value="rfc2833">RFC2833</option>
-                <option value="info">SIP INFO</option>
-                <option value="inband">Inband</option>
-            </select>
-        </div>
-        <div style="margin-top: 15px;">
-            <input class="cbi-button cbi-button-apply" type="submit" value="Save New Peer" style="background:#5cb85c; color:white; border:none; padding:8px 16px; cursor:pointer;" />
-        </div>
-    </div>
+<div id="peer-table-container"></div>
 
-    <div class="cbi-page-actions">
-        <input class="cbi-button cbi-button-reload" type="button" value="Refresh" onclick="loadPeers()" />
-        <input class="cbi-button cbi-button-reset" type="button" value="Back to Status" onclick="window.location='<%=luci.dispatcher.build_url('admin/services/voip/status')%>'" />
+<div class="add-area">
+    <div style="font-weight: bold; margin-bottom: 10px;">Add New Server Peer</div>
+    <div class="add-row">
+        <input type="text" name="new_name" placeholder="Server Name" class="c-name" />
+        <input type="text" name="new_prefix" placeholder="Prefix" class="c-prefix" />
+        <input type="text" name="new_host" placeholder="Host/IP" class="c-host" />
+        <input type="text" name="new_zerotier" placeholder="ZeroTier IP" class="c-zerotier" />
+        <input type="text" name="new_port" placeholder="Port" value="5060" class="c-port" />
+        <input type="text" name="new_username" placeholder="Username" class="c-username" />
+        <input type="password" name="new_password" placeholder="Password" class="c-password" />
+        <select name="new_type" class="c-type">
+            <option value="friend">Friend</option>
+            <option value="peer">Peer</option>
+            <option value="user">User</option>
+        </select>
+        <input type="text" name="new_context" placeholder="Context" value="internal" class="c-context" />
+        <label class="c-nat"><input type="checkbox" name="new_nat" value="1" checked /> NAT</label>
+        <label class="c-qualify"><input type="checkbox" name="new_qualify" value="1" checked /> Qualify</label>
+        <select name="new_dtmf" class="c-dtmf">
+            <option value="rfc2833">RFC2833</option>
+            <option value="info">SIP INFO</option>
+            <option value="inband">Inband</option>
+        </select>
+        <input type="submit" value="Save New Peer" class="c-actions" style="background:#5cb85c; color:white; border:none; padding:6px 12px; cursor:pointer;" onclick="addNewPeer()" />
     </div>
-</form>
+</div>
+
+<div class="cbi-page-actions">
+    <input class="cbi-button cbi-button-reload" type="button" value="Refresh" onclick="loadPeers()" />
+    <input class="cbi-button cbi-button-reset" type="button" value="Back to Status" onclick="window.location='<%=luci.dispatcher.build_url('admin/services/voip/status')%>'" />
+</div>
+
+<script>
+function addNewPeer() {
+    var data = {
+        name: document.querySelector('input[name="new_name"]').value,
+        dial_prefix: document.querySelector('input[name="new_prefix"]').value,
+        host: document.querySelector('input[name="new_host"]').value,
+        zerotier: document.querySelector('input[name="new_zerotier"]').value,
+        port: document.querySelector('input[name="new_port"]').value,
+        username: document.querySelector('input[name="new_username"]').value,
+        password: document.querySelector('input[name="new_password"]').value,
+        type: document.querySelector('select[name="new_type"]').value,
+        context: document.querySelector('input[name="new_context"]').value,
+        nat: document.querySelector('input[name="new_nat"]').checked ? '1' : '0',
+        qualify: document.querySelector('input[name="new_qualify"]').checked ? '1' : '0',
+        dtmf: document.querySelector('select[name="new_dtmf"]').value
+    };
+    
+    if (!data.name || !data.host) {
+        alert('Server Name and Host/IP are required');
+        return;
+    }
+    
+    var url = '<%=luci.dispatcher.build_url("admin", "services", "voip", "peer_add")%>';
+    var params = 'data=' + encodeURIComponent(JSON.stringify(data));
+    
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', url, true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4 && xhr.status == 200) {
+            location.reload();
+        }
+    };
+    xhr.send(params);
+}
+</script>
 
 <%+footer%>

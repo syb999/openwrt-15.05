@@ -8,7 +8,8 @@ function index()
     entry({"admin", "services", "voip", "extensions"}, cbi("voip/extension"), "Extensions", 3)
     entry({"admin", "services", "voip", "peer"}, template("voip/peer"), "Server Peers", 4)
     entry({"admin", "services", "voip", "peer_data"}, call("action_peer_data"), nil)
-    entry({"admin", "services", "voip", "peer_save"}, call("action_peer_save"), nil)
+    entry({"admin", "services", "voip", "peer_update"}, call("action_peer_update"), nil)
+    entry({"admin", "services", "voip", "peer_add"}, call("action_peer_add"), nil)
     entry({"admin", "services", "voip", "peer_delete"}, call("action_peer_delete"), nil)
     entry({"admin", "services", "voip", "record_settings"}, cbi("voip/record_settings"), "Record Settings", 5)
     entry({"admin", "services", "voip", "record_files"}, template("voip/record_files"), "Record Files", 6)
@@ -37,11 +38,14 @@ function action_status_data()
                 in_peer_section = true
             elseif in_peer_section and not line:match("^-") and not line:match("sip peers") then
                 local name = line:match("^(%S+)/")
-                local host = line:match("^%S+%s+(%S+)")
-                local status = line:match("OK") and "OK" or 
-                               line:match("UNKNOWN") and "UNKNOWN" or 
-                               line:match("UNREACHABLE") and "UNREACHABLE" or "Unknown"
+                if not name then
+                    name = line:match("^(%S+)%s+")
+                end
                 if name then
+                    local host = line:match("^%S+%s+(%S+)")
+                    local status = line:match("OK") and "OK" or 
+                                   line:match("UNKNOWN") and "UNKNOWN" or 
+                                   line:match("UNREACHABLE") and "UNREACHABLE" or "Unknown"
                     peer_status[name] = {
                         host = host,
                         status = status
@@ -68,7 +72,7 @@ function action_status_data()
     end)
     
     uci:foreach("voip", "peer", function(p)
-        if p.name and p.name ~= "" and not p.name:match("^%d+$") then
+        if p.name and p.name ~= "" then
             local status_info = peer_status[p.name] or {}
             table.insert(data.server_peers, {
                 name = p.name,
@@ -231,24 +235,7 @@ function action_restart()
 end
 
 function action_apply()
-    local uci = require("luci.model.uci").cursor()
-    
     generate_configs()
-    
-    os.execute("asterisk -rx 'database deltree record' > /dev/null 2>&1 &")
-    
-    uci:foreach("voip", "extension", function(s)
-        if s.enabled == "1" then
-            local number = s.number or s[".name"]
-            local ext_record = s.record or "0"
-            if number then
-                os.execute("asterisk -rx 'database put record " .. number .. " " .. ext_record .. "' > /dev/null 2>&1 &")
-            end
-        end
-    end)
-    
-    os.execute("asterisk -rx 'dialplan reload' > /dev/null 2>&1 &")
-    
     luci.http.redirect(luci.dispatcher.build_url("admin", "services", "voip", "status"))
 end
 
@@ -365,6 +352,8 @@ qualifyfreq=60
     uci:foreach("voip", "peer", function(p)
         if p.name and p.name ~= "" and p.host and p.host ~= "" then
             local peer_name = p.name
+            local context = p.context or "internal"
+            
             sip_content = sip_content .. "\n[" .. peer_name .. "]\n"
             sip_content = sip_content .. "type=" .. (p.type or "friend") .. "\n"
             sip_content = sip_content .. "host=" .. p.host .. "\n"
@@ -377,12 +366,27 @@ qualifyfreq=60
             if p.password and p.password ~= "" then
                 sip_content = sip_content .. "secret=" .. p.password .. "\n"
             end
-            sip_content = sip_content .. "context=" .. (p.context or "internal") .. "\n"
+            sip_content = sip_content .. "context=" .. context .. "\n"
             sip_content = sip_content .. "nat=" .. (p.nat == "1" and "yes" or "no") .. "\n"
             sip_content = sip_content .. "qualify=" .. (p.qualify == "1" and "yes" or "no") .. "\n"
             sip_content = sip_content .. "qualifyfreq=60\n"
             sip_content = sip_content .. "dtmfmode=" .. (p.dtmfmode or "rfc2833") .. "\n"
             sip_content = sip_content .. "canreinvite=no\n"
+            
+            if p.zerotier and p.zerotier ~= "" then
+                sip_content = sip_content .. "\n[" .. peer_name .. "_zt]\n"
+                sip_content = sip_content .. "type=peer\n"
+                sip_content = sip_content .. "host=" .. p.zerotier .. "\n"
+                if p.port and p.port ~= "" then
+                    sip_content = sip_content .. "port=" .. p.port .. "\n"
+                end
+                sip_content = sip_content .. "context=" .. context .. "\n"
+                sip_content = sip_content .. "nat=no\n"
+                sip_content = sip_content .. "qualify=" .. (p.qualify == "1" and "yes" or "no") .. "\n"
+                sip_content = sip_content .. "qualifyfreq=60\n"
+                sip_content = sip_content .. "dtmfmode=" .. (p.dtmfmode or "rfc2833") .. "\n"
+                sip_content = sip_content .. "canreinvite=no\n"
+            end
         end
     end)
     
@@ -458,24 +462,6 @@ exten => _1XXXXXXXXXX!,1,Macro(dialout,${EXTEN})
         end
     end)
     
-    local has_prefix = false
-    uci:foreach("voip", "peer", function(p)
-        if p.dial_prefix and p.dial_prefix ~= "" then
-            has_prefix = true
-        end
-    end)
-    if not has_prefix then
-        uci:foreach("voip", "peer", function(p)
-            if p.name and p.name ~= "" then
-                ext_content = ext_content .. "\n; Default route to server " .. p.name .. " (prefix: 8)\n"
-                ext_content = ext_content .. "exten => _8.,1,Verbose(2, Routing to server " .. p.name .. ": ${EXTEN:1})\n"
-                ext_content = ext_content .. "exten => _8.,n,Dial(SIP/${EXTEN:1}@" .. p.name .. ",60,r)\n"
-                ext_content = ext_content .. "exten => _8.,n,Hangup()\n"
-                return false
-            end
-        end)
-    end
-    
     ext_content = ext_content .. [[
 
 [external]
@@ -534,6 +520,7 @@ function action_peer_data()
             name = p.name or "",
             dial_prefix = p.dial_prefix or "",
             host = p.host or "",
+            zerotier = p.zerotier or "",
             port = p.port or "5060",
             username = p.username or "",
             type = p.type or "friend",
@@ -547,78 +534,106 @@ function action_peer_data()
     luci.http.write_json(peers)
 end
 
+function action_peer_add()
+    local uci = require("luci.model.uci").cursor()
+    local http = require("luci.http")
+    
+    local post_data = http.formvalue("data") or ""
+    local data = {}
+    if post_data ~= "" then
+        post_data = post_data:gsub("^%s+", ""):gsub("%s+$", "")
+        for key, value in post_data:gmatch('"([^"]+)"%s*:%s*"([^"]*)"') do
+            data[key] = value
+        end
+        for key, value in post_data:gmatch('"([^"]+)"%s*:%s*([^",][^,}]*)') do
+            if value == "true" then
+                data[key] = "1"
+            elseif value == "false" then
+                data[key] = "0"
+            elseif value:match("^%d+$") then
+                data[key] = value
+            end
+        end
+    end
+    
+    if data and data.name and data.name ~= "" and data.host and data.host ~= "" then
+        local section = "peer_" .. data.name
+        uci:set("voip", section, "peer")
+        uci:set("voip", section, "name", data.name)
+        uci:set("voip", section, "dial_prefix", data.dial_prefix or "")
+        uci:set("voip", section, "host", data.host)
+        uci:set("voip", section, "zerotier", data.zerotier or "")
+        uci:set("voip", section, "port", data.port or "5060")
+        uci:set("voip", section, "username", data.username or "")
+        uci:set("voip", section, "password", data.password or "")
+        uci:set("voip", section, "type", data.type or "friend")
+        uci:set("voip", section, "context", data.context or "internal")
+        uci:set("voip", section, "nat", data.nat or "0")
+        uci:set("voip", section, "qualify", data.qualify or "1")
+        uci:set("voip", section, "dtmfmode", data.dtmf or "rfc2833")
+        uci:commit("voip")
+        generate_configs()
+    end
+    
+    luci.http.status(200, "OK")
+    luci.http.write("")
+end
+
+function action_peer_update()
+    local uci = require("luci.model.uci").cursor()
+    local http = require("luci.http")
+    
+    local post_data = http.formvalue("data") or ""
+    local data = {}
+    if post_data ~= "" then
+        post_data = post_data:gsub("^%s+", ""):gsub("%s+$", "")
+        for key, value in post_data:gmatch('"([^"]+)"%s*:%s*"([^"]*)"') do
+            data[key] = value
+        end
+        for key, value in post_data:gmatch('"([^"]+)"%s*:%s*([^",][^,}]*)') do
+            if value == "true" then
+                data[key] = "1"
+            elseif value == "false" then
+                data[key] = "0"
+            elseif value:match("^%d+$") then
+                data[key] = value
+            end
+        end
+    end
+    
+    if data and data.name then
+        local section = "peer_" .. data.name
+        uci:set("voip", section, "peer")
+        uci:set("voip", section, "name", data.name)
+        uci:set("voip", section, "dial_prefix", data.dial_prefix or "")
+        uci:set("voip", section, "host", data.host or "")
+        uci:set("voip", section, "zerotier", data.zerotier or "")
+        uci:set("voip", section, "port", data.port or "5060")
+        uci:set("voip", section, "username", data.username or "")
+        uci:set("voip", section, "password", data.password or "")
+        uci:set("voip", section, "type", data.type or "friend")
+        uci:set("voip", section, "context", data.context or "internal")
+        uci:set("voip", section, "nat", data.nat or "0")
+        uci:set("voip", section, "qualify", data.qualify or "1")
+        uci:set("voip", section, "dtmfmode", data.dtmf or "rfc2833")
+        uci:commit("voip")
+        generate_configs()
+    end
+    
+    luci.http.status(200, "OK")
+    luci.http.write("")
+end
+
 function action_peer_delete()
     local uci = require("luci.model.uci").cursor()
     local name = luci.http.formvalue("name")
     
     if name and name ~= "" then
-        local found = false
-        uci:foreach("voip", "peer", function(s)
-            if s.name == name and not found then
-                uci:delete("voip", s[".name"])
-                found = true
-            end
-        end)
+        local section = "peer_" .. name
+        uci:delete("voip", section)
         uci:commit("voip")
         generate_configs()
     end
-    
-    luci.http.redirect(luci.dispatcher.build_url("admin", "services", "voip", "peer"))
-end
-
-function action_peer_save()
-    local uci = require("luci.model.uci").cursor()
-    local http = require("luci.http")
-    
-    local data = http.formvalue()
-    
-    local sections = {}
-    uci:foreach("voip", "peer", function(s)
-        table.insert(sections, s[".name"])
-    end)
-    for _, name in ipairs(sections) do
-        uci:delete("voip", name)
-    end
-    
-    local peer_count = tonumber(data.peer_count) or 0
-    for i = 1, peer_count do
-        local name = data["peer_name_" .. i]
-        if name and name ~= "" then
-            local section = "peer_" .. name
-            uci:set("voip", section, "peer")
-            uci:set("voip", section, "name", name)
-            uci:set("voip", section, "dial_prefix", data["peer_prefix_" .. i] or "")
-            uci:set("voip", section, "host", data["peer_host_" .. i] or "")
-            uci:set("voip", section, "port", data["peer_port_" .. i] or "5060")
-            uci:set("voip", section, "username", data["peer_username_" .. i] or "")
-            uci:set("voip", section, "password", data["peer_password_" .. i] or "")
-            uci:set("voip", section, "type", data["peer_type_" .. i] or "friend")
-            uci:set("voip", section, "context", data["peer_context_" .. i] or "internal")
-            uci:set("voip", section, "nat", data["peer_nat_" .. i] or "0")
-            uci:set("voip", section, "qualify", data["peer_qualify_" .. i] or "0")
-            uci:set("voip", section, "dtmfmode", data["peer_dtmf_" .. i] or "rfc2833")
-        end
-    end
-    
-    local new_name = data.new_name
-    if new_name and new_name ~= "" and data.new_host and data.new_host ~= "" then
-        local section = "peer_" .. new_name
-        uci:set("voip", section, "peer")
-        uci:set("voip", section, "name", new_name)
-        uci:set("voip", section, "dial_prefix", data.new_prefix or "")
-        uci:set("voip", section, "host", data.new_host)
-        uci:set("voip", section, "port", data.new_port or "5060")
-        uci:set("voip", section, "username", data.new_username or "")
-        uci:set("voip", section, "password", data.new_password or "")
-        uci:set("voip", section, "type", data.new_type or "friend")
-        uci:set("voip", section, "context", data.new_context or "internal")
-        uci:set("voip", section, "nat", data.new_nat or "0")
-        uci:set("voip", section, "qualify", data.new_qualify or "0")
-        uci:set("voip", section, "dtmfmode", data.new_dtmf or "rfc2833")
-    end
-    
-    uci:commit("voip")
-    generate_configs()
     
     luci.http.redirect(luci.dispatcher.build_url("admin", "services", "voip", "peer"))
 end
