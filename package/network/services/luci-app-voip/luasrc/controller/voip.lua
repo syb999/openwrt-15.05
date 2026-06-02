@@ -235,7 +235,24 @@ function action_restart()
 end
 
 function action_apply()
+    local uci = require("luci.model.uci").cursor()
+    
     generate_configs()
+    
+    os.execute("asterisk -rx 'database deltree record' > /dev/null 2>&1 &")
+    
+    uci:foreach("voip", "extension", function(s)
+        if s.enabled == "1" then
+            local number = s.number or s[".name"]
+            local ext_record = s.record or "0"
+            if number then
+                os.execute("asterisk -rx 'database put record " .. number .. " " .. ext_record .. "' > /dev/null 2>&1 &")
+            end
+        end
+    end)
+    
+    os.execute("asterisk -rx 'dialplan reload' > /dev/null 2>&1 &")
+    
     luci.http.redirect(luci.dispatcher.build_url("admin", "services", "voip", "status"))
 end
 
