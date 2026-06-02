@@ -417,18 +417,23 @@ qualifyfreq=60
 exten => s,1,Set(CALLER_RAW=${CALLERID(num)})
 exten => s,n,Set(CALLER=${FILTER(0-9,${CALLER_RAW})})
 exten => s,n,Set(CALLEE=${ARG1})
+exten => s,n,Set(TARGET=${ARG2})
 exten => s,n,Set(RECORD_ENABLED=${DB(record/${CALLER})})
 exten => s,n,GotoIf($["${RECORD_ENABLED}" = "1"]?record,1)
-exten => s,n,Dial(SIP/${CALLEE}@trunk_ims,60,r)
+exten => s,n,Dial(SIP/${CALLEE}@${TARGET},60,r)
 exten => s,n,Hangup()
 exten => record,1,Set(CALLEE=${ARG1})
 exten => record,n,Set(RAW=${SHELL(date +%Y%m%d-%H%M%S)})
 exten => record,n,Set(TIMESTAMP=${FILTER(0-9-,${RAW})})
 exten => record,n,Set(FILE_NAME=/tmp/voip_records/${CALLER}_${CALLEE}_${TIMESTAMP})
 exten => record,n,MixMonitor(${FILE_NAME}.gsm)
-exten => record,n,Dial(SIP/${CALLEE}@trunk_ims,60,r)
+exten => record,n,Dial(SIP/${CALLEE}@${TARGET},60,r)
 exten => record,n,StopMixMonitor()
 exten => record,n,Hangup()
+
+[default]
+exten => _.,1,Goto(internal,${EXTEN},1)
+exten => _.,n,Hangup()
 
 [internal]
 ]]
@@ -449,7 +454,8 @@ exten => record,n,Hangup()
             ext_content = ext_content .. "exten => " .. number .. ",n,StopMixMonitor()\n"
             ext_content = ext_content .. "exten => " .. number .. ",n,Hangup()\n"
         else
-            ext_content = ext_content .. "exten => " .. number .. ",1,Dial(SIP/" .. number .. ")\n"
+            ext_content = ext_content .. "exten => " .. number .. ",1,Set(DB(record/" .. number .. ")=" .. ext_record .. ")\n"
+            ext_content = ext_content .. "exten => " .. number .. ",n,Dial(SIP/" .. number .. ")\n"
             ext_content = ext_content .. "exten => " .. number .. ",n,Hangup()\n"
         end
     end
@@ -458,24 +464,20 @@ exten => record,n,Hangup()
         ext_content = ext_content .. [[
 
 ; Outbound dialing rules for PSTN
-exten => _1XX!,1,Macro(dialout,${EXTEN})
-exten => _XXXXX!,1,Macro(dialout,${EXTEN})
-exten => _XXXXXXXX!,1,Macro(dialout,${EXTEN})
-exten => _1XXXXXXXXXX!,1,Macro(dialout,${EXTEN})
+exten => _1XX!,1,Macro(dialout,${EXTEN},trunk_ims)
+exten => _XXXXX!,1,Macro(dialout,${EXTEN},trunk_ims)
+exten => _XXXXXXXX!,1,Macro(dialout,${EXTEN},trunk_ims)
+exten => _1XXXXXXXXXX!,1,Macro(dialout,${EXTEN},trunk_ims)
 ]]
     end
     
-    local peer_rules_added = {}
     uci:foreach("voip", "peer", function(p)
         if p.name and p.name ~= "" and p.dial_prefix and p.dial_prefix ~= "" then
             local prefix = p.dial_prefix
-            if not peer_rules_added[prefix] then
-                peer_rules_added[prefix] = true
-                ext_content = ext_content .. "\n; Route to server " .. p.name .. " (prefix: " .. prefix .. ")\n"
-                ext_content = ext_content .. "exten => _" .. prefix .. ".,1,Verbose(2, Routing to server " .. p.name .. ": ${EXTEN:" .. string.len(prefix) .. "})\n"
-                ext_content = ext_content .. "exten => _" .. prefix .. ".,n,Dial(SIP/${EXTEN:" .. string.len(prefix) .. "}@" .. p.name .. ",60,r)\n"
-                ext_content = ext_content .. "exten => _" .. prefix .. ".,n,Hangup()\n"
-            end
+            ext_content = ext_content .. "\n; Route to server " .. p.name .. " (prefix: " .. prefix .. ")\n"
+            ext_content = ext_content .. "exten => _" .. prefix .. ".,1,Verbose(2, Routing to server " .. p.name .. ": ${EXTEN:" .. string.len(prefix) .. "})\n"
+            ext_content = ext_content .. "exten => _" .. prefix .. ".,n,Macro(dialout,${EXTEN:" .. string.len(prefix) .. "}," .. p.name .. ")\n"
+            ext_content = ext_content .. "exten => _" .. prefix .. ".,n,Hangup()\n"
         end
     end)
     
