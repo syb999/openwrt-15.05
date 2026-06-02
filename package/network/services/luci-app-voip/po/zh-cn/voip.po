@@ -43,7 +43,7 @@ msgid "Running"
 msgstr "运行中"
 
 msgid "Stopped"
-msgid "已停止"
+msgstr "已停止"
 
 msgid "SIP Registry Status"
 msgstr "SIP注册状态"
@@ -59,9 +59,6 @@ msgstr "名称"
 
 msgid "Host"
 msgstr "主机"
-
-msgid "Status"
-msgstr "状态"
 
 msgid "No peers found"
 msgstr "未找到分机"
@@ -152,9 +149,6 @@ msgstr "分机号码"
 msgid "Caller ID"
 msgstr "来电显示"
 
-msgid "Enabled"
-msgstr "启用"
-
 msgid "Auto Record"
 msgstr "自动录音"
 
@@ -225,12 +219,6 @@ msgid "Save & Apply"
 msgstr "保存并应用"
 
 msgid "Enabled"
-msgstr "已启用"
-
-msgid "Disabled"
-msgstr "已禁用"
-
-msgid "Enabled"
 msgstr "启用"
 
 msgid "Disabled"
@@ -241,7 +229,6 @@ msgstr "SRTP支持"
 
 msgid "Enable SRTP encryption for secure calls"
 msgstr "启用SRTP加密以保护通话安全"
-
 
 msgid "After saving configuration, please go to Status page, click Apply Changes, then click Restart VoIP to make settings take effect."
 msgstr "配置修改保存后，请前往状态页面，点击应用更改，然后点击重启VoIP使配置生效。"
@@ -283,12 +270,136 @@ msgstr "Peer (仅呼出)"
 msgid "User (inbound only)"
 msgstr "User (仅呼入)"
 
+# Server Peers page - table headers and UI
+msgid "Host/IP"
+msgstr "主机/IP"
+
+msgid "ZeroTier IP"
+msgstr "ZeroTier IP"
+
+msgid "Username"
+msgstr "用户名"
+
+msgid "Type"
+msgstr "类型"
+
+msgid "Context"
+msgstr "上下文"
+
+msgid "NAT"
+msgstr "NAT"
+
+msgid "Qualify"
+msgstr "心跳检测"
+
+msgid "Actions"
+msgstr "操作"
+
+msgid "Friend"
+msgstr "双向"
+
+msgid "Peer"
+msgstr "仅呼出"
+
+msgid "User"
+msgstr "仅呼入"
+
+msgid "Save"
+msgstr "保存"
+
+msgid "Delete server peer"
+msgstr "删除服务器对端"
+
 msgid "About Dial Prefix"
 msgstr "关于拨号前缀"
 
-msgid "When you dial a number starting with the prefix (e.g., 81), Asterisk will route the call to the corresponding remote server."
-msgstr "当您拨打以前缀（例如 81）开头的号码时，Asterisk 会将呼叫路由到对应的远程服务器。"
+msgid "Dial prefix to route calls to this server (e.g., 81 for extension 816001)."
+msgstr "拨号前缀，用于将呼叫路由到此服务器（例如 81 表示拨打 816001）。"
 
-msgid "Example: If prefix is 81 and you dial 816001, it will call extension 6001 on the remote server."
-msgstr "例如：前缀为 81，拨打 816001 时，将呼叫远程服务器上的分机 6001。"
+msgid "ZeroTier IP:"
+msgstr "ZeroTier IP："
 
+msgid "Optional. If provided, an additional peer will be created."
+msgstr "可选。如果提供，将创建一个额外的对端。"
+
+msgid "Add New Server Peer"
+msgstr "添加新服务器对端"
+
+msgid "Save New Peer"
+msgstr "保存新对端"
+
+msgid "Server Name and Host/IP are required"
+msgstr "服务器名称和主机/IP为必填项"
+
+msgid "SIP INFO"
+msgstr "SIP INFO"
+
+msgid "Inband"
+msgstr "带内"
+
+# Multi-trunk
+msgid "Configure PSTN trunks with load balancing and failover"
+msgstr "配置 PSTN 中继，支持负载均衡和故障转移"
+
+msgid "PSTN Trunks"
+msgstr "PSTN 中继"
+
+msgid "Trunk Name"
+msgstr "中继名称"
+
+msgid "Force Prefix"
+msgstr "强制前缀"
+
+msgid "Dial this prefix to force use this trunk (e.g., 9 for 9138xxxxxxx). Leave empty for automatic routing."
+msgstr "拨打此前缀强制使用此中继（例如 9 表示拨打 9138xxxxxxx）。留空则自动路由。"
+
+msgid "Weight"
+msgstr "权重"
+
+msgid "Higher weight = more calls routed to this trunk. Use for primary/backup setup."
+msgstr "权重越高，分配到该中继的通话越多。可用于主备配置。"
+
+msgid "Extension that receives incoming calls from PSTN"
+msgstr "PSTN 来电时接听的分机号码"
+
+# Global settings descriptions
+msgid "Master switch for VoIP service. Disable to turn off the entire VoIP system."
+msgstr "VoIP服务总开关。禁用将关闭整个VoIP系统。"
+
+msgid "Automatically restart Asterisk when configuration changes. Disable to apply changes manually."
+msgstr "配置变更时自动重启Asterisk。禁用时需要手动重启生效。"
+
+msgid "Extension number that receives incoming calls from PSTN. Leave empty to ring all extensions."
+msgstr "接收PSTN来电的分机号码。留空则所有分机同时振铃。"
+
+# Trunk descriptions
+msgid "Enable/disable this PSTN trunk."
+msgstr "启用/禁用此PSTN中继。"
+
+msgid "Unique name to identify this trunk."
+msgstr "用于标识此中继的唯一名称。"
+
+msgid "SIP server domain provided by your VoIP provider."
+msgstr "VoIP提供商提供的SIP服务器域名。"
+
+msgid "Forward server IP address from China Telecom IMS."
+msgstr "中国电信IMS提供的转发服务器IP地址。"
+
+msgid "SIP signaling port (default: 5060)."
+msgstr "SIP信令端口（默认：5060）。"
+
+msgid "Your PSTN phone number with country code (e.g., +8612345678901)."
+msgstr "带国家代码的PSTN电话号码（例如 +8612345678901）。"
+
+msgid "SIP authentication password from your provider."
+msgstr "提供商提供的SIP认证密码。"
+
+msgid "Enable NAT traversal. Keep enabled if Asterisk is behind a router."
+msgstr "启用NAT穿透。如果Asterisk在路由器后面，请保持启用。"
+
+msgid "Enable SRTP encryption for secure calls. Only enable if your provider supports it."
+msgstr "启用SRTP加密以保护通话安全。仅在提供商支持时启用。"
+
+# Missing peer.htm alert message
+msgid "Delete server peer"
+msgstr "删除服务器对端"

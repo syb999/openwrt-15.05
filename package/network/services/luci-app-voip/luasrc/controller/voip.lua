@@ -240,17 +240,19 @@ function action_apply()
     generate_configs()
     
     os.execute("asterisk -rx 'database deltree record' > /dev/null 2>&1 &")
+    os.execute("sleep 1")
     
     uci:foreach("voip", "extension", function(s)
         if s.enabled == "1" then
-            local number = s.number or s[".name"]
+            local number = s.number
             local ext_record = s.record or "0"
-            if number then
+            if number and number ~= "" then
                 os.execute("asterisk -rx 'database put record " .. number .. " " .. ext_record .. "' > /dev/null 2>&1 &")
             end
         end
     end)
     
+    os.execute("sleep 1")
     os.execute("asterisk -rx 'dialplan reload' > /dev/null 2>&1 &")
     
     luci.http.redirect(luci.dispatcher.build_url("admin", "services", "voip", "status"))
@@ -301,41 +303,51 @@ qualifyfreq=60
 
 ]]
     
-    local trunk_enabled = uci:get_first("voip", "trunk", "enabled") or "0"
-    local server = uci:get_first("voip", "trunk", "server") or ""
-    local forward_server = uci:get_first("voip", "trunk", "forward_server") or ""
-    local port = uci:get_first("voip", "trunk", "port") or "5060"
-    local phone = uci:get_first("voip", "trunk", "phone") or ""
-    local password = uci:get_first("voip", "trunk", "password") or ""
-    local nat = uci:get_first("voip", "trunk", "nat") or "1"
-    local use_srtp = uci:get_first("voip", "trunk", "srtp") or "0"
-    local default_extension = uci:get_first("voip", "trunk", "default_extension") or ""
-    
-    if trunk_enabled == "1" and server ~= "" and phone ~= "" and password ~= "" and forward_server ~= "" then
-        sip_content = sip_content .. "register = " .. phone .. "@" .. server .. ":" .. password .. ":" .. phone .. "@" .. server .. "@" .. forward_server .. ":" .. port .. "\n"
-        
-        if use_srtp == "1" then
-            sip_content = sip_content .. "encryption=yes\n"
-            sip_content = sip_content .. "srtp=yes\n"
+    local trunks = {}
+    uci:foreach("voip", "trunk", function(t)
+        if t.enabled == "1" and t.server and t.server ~= "" and t.phone and t.phone ~= "" and t.forward_server and t.forward_server ~= "" then
+            local trunk_name = t.name
+            if not trunk_name or trunk_name == "" then
+                trunk_name = t[".name"]
+            end
+            if not trunk_name or trunk_name == "" then
+                trunk_name = "trunk_" .. t.phone
+            end
+            
+            table.insert(trunks, {
+                name = trunk_name,
+                prefix = t.prefix or "",
+                server = t.server,
+                forward_server = t.forward_server,
+                port = t.port or "5060",
+                phone = t.phone,
+                password = t.password,
+                srtp = t.srtp or "0",
+                weight = tonumber(t.weight) or 1
+            })
+            
+            sip_content = sip_content .. "register = " .. t.phone .. "@" .. t.server .. ":" .. t.password .. ":" .. t.phone .. "@" .. t.server .. "@" .. t.forward_server .. ":" .. t.port .. "\n"
+            
+            sip_content = sip_content .. "\n[" .. trunk_name .. "]\n"
+            sip_content = sip_content .. "host=" .. t.forward_server .. "\n"
+            sip_content = sip_content .. "username=" .. t.phone .. "@" .. t.server .. "\n"
+            sip_content = sip_content .. "secret=" .. t.password .. "\n"
+            sip_content = sip_content .. "type=friend\n"
+            sip_content = sip_content .. "fromdomain=" .. t.server .. "\n"
+            sip_content = sip_content .. "fromuser=" .. t.phone .. "\n"
+            sip_content = sip_content .. "insecure=port,invite\n"
+            sip_content = sip_content .. "dtmfmode=inband\n"
+            sip_content = sip_content .. "context=external\n"
+            sip_content = sip_content .. "nat=force_rport,comedia\n"
+            sip_content = sip_content .. "qualify=yes\n"
+            sip_content = sip_content .. "qualifyfreq=30\n"
+            sip_content = sip_content .. "session-timers=refuse\n"
+            if t.srtp == "1" then
+                sip_content = sip_content .. "encryption=yes\n"
+                sip_content = sip_content .. "srtp=yes\n"
+            end
         end
-        
-        sip_content = sip_content .. "\n[trunk_ims]\n"
-        sip_content = sip_content .. "host=" .. forward_server .. "\n"
-        sip_content = sip_content .. "username=" .. phone .. "@" .. server .. "\n"
-        sip_content = sip_content .. "secret=" .. password .. "\n"
-        sip_content = sip_content .. "type=friend\n"
-        sip_content = sip_content .. "fromdomain=" .. server .. "\n"
-        sip_content = sip_content .. "fromuser=" .. phone .. "\n"
-        sip_content = sip_content .. "insecure=port,invite\n"
-        sip_content = sip_content .. "dtmfmode=inband\n"
-        sip_content = sip_content .. "context=external\n"
-        sip_content = sip_content .. "nat=force_rport,comedia\n"
-        sip_content = sip_content .. "qualify=yes\n"
-        sip_content = sip_content .. "qualifyfreq=30\n"
-        sip_content = sip_content .. "session-timers=refuse\n"
-        sip_content = sip_content .. "register_timeout=30\n"
-        sip_content = sip_content .. "registration_timeout=30\n"
-    end
+    end)
     
     local extensions_info = {}
     uci:foreach("voip", "extension", function(s)
@@ -409,10 +421,26 @@ qualifyfreq=60
     
     fs.writefile(sip_conf, sip_content)
     
+    local default_extension = nil
+    uci:foreach("voip", "global", function(s)
+        if s.default_extension and s.default_extension ~= "" then
+            default_extension = s.default_extension
+        end
+    end)
+    
+    if not default_extension then
+        default_extension = uci:get("voip", "global", "default_extension") or ""
+    end
+    
+    local all_extensions = {}
+    for _, ext in ipairs(extensions_info) do
+        table.insert(all_extensions, ext.number)
+    end
+    
     local ext_content = [[
 [general]
 
-; Macro for outbound calls with recording
+; Macro for outbound calls with recording (support dynamic target)
 [macro-dialout]
 exten => s,1,Set(CALLER_RAW=${CALLERID(num)})
 exten => s,n,Set(CALLER=${FILTER(0-9,${CALLER_RAW})})
@@ -422,11 +450,12 @@ exten => s,n,Set(RECORD_ENABLED=${DB(record/${CALLER})})
 exten => s,n,GotoIf($["${RECORD_ENABLED}" = "1"]?record,1)
 exten => s,n,Dial(SIP/${CALLEE}@${TARGET},60,r)
 exten => s,n,Hangup()
+; Recording section
 exten => record,1,Set(CALLEE=${ARG1})
 exten => record,n,Set(RAW=${SHELL(date +%Y%m%d-%H%M%S)})
 exten => record,n,Set(TIMESTAMP=${FILTER(0-9-,${RAW})})
-exten => record,n,Set(FILE_NAME=/tmp/voip_records/${CALLER}_${CALLEE}_${TIMESTAMP})
-exten => record,n,MixMonitor(${FILE_NAME}.gsm)
+exten => record,n,Set(FILE_NAME=]] .. record_dir .. [[/${CALLER}_${CALLEE}_${TIMESTAMP})
+exten => record,n,MixMonitor(${FILE_NAME}]] .. file_ext_dot .. mixmonitor_opts .. [[)
 exten => record,n,Dial(SIP/${CALLEE}@${TARGET},60,r)
 exten => record,n,StopMixMonitor()
 exten => record,n,Hangup()
@@ -442,33 +471,77 @@ exten => _.,n,Hangup()
         local number = ext.number
         local ext_record = ext.record
         
+        ext_content = ext_content .. "exten => " .. number .. ",1,Set(DB(record/" .. number .. ")=" .. ext_record .. ")\n"
+        
         if record_enabled == "1" and ext_record == "1" then
-            ext_content = ext_content .. "exten => " .. number .. ",1,Set(DB(record/" .. number .. ")=" .. ext_record .. ")\n"
-            ext_content = ext_content .. "exten => " .. number .. ",n,Set(CALLER=${CALLERID(num)})\n"
-            ext_content = ext_content .. "exten => " .. number .. ",n,Set(CALLEE=" .. number .. ")\n"
             ext_content = ext_content .. "exten => " .. number .. ",n,Set(RAW=${SHELL(date +%Y%m%d-%H%M%S)})\n"
             ext_content = ext_content .. "exten => " .. number .. ",n,Set(TIMESTAMP=${FILTER(0-9-,${RAW})})\n"
-            ext_content = ext_content .. "exten => " .. number .. ",n,Set(FILE_NAME=" .. record_dir .. "/${CALLER}_${CALLEE}_${TIMESTAMP})\n"
+            ext_content = ext_content .. "exten => " .. number .. ",n,Set(FILE_NAME=" .. record_dir .. "/${CALLERID(num)}_" .. number .. "_${TIMESTAMP})\n"
             ext_content = ext_content .. "exten => " .. number .. ",n,MixMonitor(${FILE_NAME}" .. file_ext_dot .. mixmonitor_opts .. ")\n"
             ext_content = ext_content .. "exten => " .. number .. ",n,Dial(SIP/" .. number .. ",60)\n"
             ext_content = ext_content .. "exten => " .. number .. ",n,StopMixMonitor()\n"
             ext_content = ext_content .. "exten => " .. number .. ",n,Hangup()\n"
         else
-            ext_content = ext_content .. "exten => " .. number .. ",1,Set(DB(record/" .. number .. ")=" .. ext_record .. ")\n"
-            ext_content = ext_content .. "exten => " .. number .. ",n,Dial(SIP/" .. number .. ")\n"
+            ext_content = ext_content .. "exten => " .. number .. ",n,Dial(SIP/" .. number .. ",60)\n"
             ext_content = ext_content .. "exten => " .. number .. ",n,Hangup()\n"
         end
     end
     
-    if trunk_enabled == "1" then
-        ext_content = ext_content .. [[
+    if #trunks > 0 then
+        if #trunks == 1 then
+            local t = trunks[1]
+            ext_content = ext_content .. [[
 
-; Outbound dialing rules for PSTN
-exten => _1XX!,1,Macro(dialout,${EXTEN},trunk_ims)
-exten => _XXXXX!,1,Macro(dialout,${EXTEN},trunk_ims)
-exten => _XXXXXXXX!,1,Macro(dialout,${EXTEN},trunk_ims)
-exten => _1XXXXXXXXXX!,1,Macro(dialout,${EXTEN},trunk_ims)
+; Outbound dialing rules for PSTN (single trunk)
+exten => _1XX!,1,Macro(dialout,${EXTEN},]] .. t.name .. [[)
+exten => _XXXXX!,1,Macro(dialout,${EXTEN},]] .. t.name .. [[)
+exten => _XXXXXXXX!,1,Macro(dialout,${EXTEN},]] .. t.name .. [[)
+exten => _1XXXXXXXXXX!,1,Macro(dialout,${EXTEN},]] .. t.name .. [[)
 ]]
+        else
+            local dial_strings = {}
+            for _, trunk in ipairs(trunks) do
+                for i = 1, trunk.weight do
+                    table.insert(dial_strings, "SIP/${EXTEN}@" .. trunk.name)
+                end
+            end
+            local dial_all = table.concat(dial_strings, "&")
+            
+            ext_content = ext_content .. [[
+
+; Multi-trunk outbound with load balancing and failover
+[macro-multi_dial]
+exten => s,1,Set(CALLER=${CALLERID(num)})
+exten => s,n,Set(CALLEE=${ARG1})
+exten => s,n,Set(RECORD_ENABLED=${DB(record/${CALLER})})
+exten => s,n,GotoIf($["${RECORD_ENABLED}" = "1"]?record,1)
+exten => s,n,Dial(]] .. dial_all .. [[,60,r)
+exten => s,n,Hangup()
+exten => record,1,Set(CALLER=${CALLERID(num)})
+exten => record,n,Set(RAW=${SHELL(date +%Y%m%d-%H%M%S)})
+exten => record,n,Set(TIMESTAMP=${FILTER(0-9-,${RAW})})
+exten => record,n,Set(FILE_NAME=]] .. record_dir .. [[/${CALLER}_${CALLEE}_${TIMESTAMP})
+exten => record,n,MixMonitor(${FILE_NAME}]] .. file_ext_dot .. mixmonitor_opts .. [[)
+exten => record,n,Dial(]] .. dial_all .. [[,60,r)
+exten => record,n,StopMixMonitor()
+exten => record,n,Hangup()
+
+; Outbound dialing rules for PSTN (multi-trunk)
+exten => _1XX!,1,Macro(multi_dial,${EXTEN})
+exten => _XXXXX!,1,Macro(multi_dial,${EXTEN})
+exten => _XXXXXXXX!,1,Macro(multi_dial,${EXTEN})
+exten => _1XXXXXXXXXX!,1,Macro(multi_dial,${EXTEN})
+]]
+            
+            for _, trunk in ipairs(trunks) do
+                if trunk.prefix and trunk.prefix ~= "" then
+                    ext_content = ext_content .. "\n; Force route to trunk " .. trunk.name .. " (prefix: " .. trunk.prefix .. ")\n"
+                    ext_content = ext_content .. "exten => _" .. trunk.prefix .. ".,1,Verbose(2, Force routing to " .. trunk.name .. ": ${EXTEN:" .. string.len(trunk.prefix) .. "})\n"
+                    ext_content = ext_content .. "exten => _" .. trunk.prefix .. ".,n,Macro(dialout,${EXTEN:" .. string.len(trunk.prefix) .. "}," .. trunk.name .. ")\n"
+                    ext_content = ext_content .. "exten => _" .. trunk.prefix .. ".,n,Hangup()\n"
+                end
+            end
+        end
     end
     
     uci:foreach("voip", "peer", function(p)
@@ -485,34 +558,88 @@ exten => _1XXXXXXXXXX!,1,Macro(dialout,${EXTEN},trunk_ims)
 
 [external]
 exten => s,1,Progress()
-exten => s,n,Playback(vm-intro)
+exten => s,n,NoOp(Incoming PSTN call)
 ]]
     
-    if trunk_enabled == "1" then
-        if default_extension ~= "" then
-            ext_content = ext_content .. "exten => s,n,Goto(internal," .. default_extension .. ",1)\n"
-        else
-            local ring_all = ""
-            uci:foreach("voip", "extension", function(s)
-                if s.enabled == "1" then
-                    local number = s.number or s[".name"]
-                    if ring_all == "" then
-                        ring_all = "SIP/" .. number
-                    else
-                        ring_all = ring_all .. "&SIP/" .. number
-                    end
+    if #trunks > 0 then
+        if default_extension and default_extension ~= "" then
+            local default_ext_record = "0"
+            for _, ext in ipairs(extensions_info) do
+                if ext.number == default_extension then
+                    default_ext_record = ext.record
+                    break
                 end
-            end)
-            if ring_all ~= "" then
-                ext_content = ext_content .. "exten => s,n,Dial(" .. ring_all .. ",60)\n"
+            end
+            
+            if record_enabled == "1" and default_ext_record == "1" then
+                ext_content = ext_content .. [[
+exten => s,n,Set(CALLER_NUM=${FILTER(0-9,${CALLERID(num)})})
+exten => s,n,GotoIf($["${CALLER_NUM}" = ""]?unknown_caller,1)
+exten => s,n,Goto(do_record,1)
+
+exten => unknown_caller,1,Set(CALLER_NUM=unknown)
+exten => unknown_caller,n,Goto(do_record,1)
+
+exten => do_record,1,Set(RAW=${SHELL(date +%Y%m%d-%H%M%S)})
+exten => do_record,n,Set(TIMESTAMP=${FILTER(0-9-,${RAW})})
+exten => do_record,n,Set(FILE_NAME=]] .. record_dir .. [[/${CALLER_NUM}_]] .. default_extension .. [[_${TIMESTAMP})
+exten => do_record,n,MixMonitor(${FILE_NAME}]] .. file_ext_dot .. mixmonitor_opts .. [[)
+exten => do_record,n,Dial(SIP/]] .. default_extension .. [[,60)
+exten => do_record,n,StopMixMonitor()
+exten => do_record,n,Hangup()
+]]
+            else
+                ext_content = ext_content .. "exten => s,n,NoOp(No recording for " .. default_extension .. ")\n"
+                ext_content = ext_content .. "exten => s,n,Dial(SIP/" .. default_extension .. ",60)\n"
+                ext_content = ext_content .. "exten => s,n,Hangup()\n"
+            end
+        else
+            if #all_extensions > 0 then
+                local ring_all = ""
+                for i, ext in ipairs(all_extensions) do
+                    if i > 1 then
+                        ring_all = ring_all .. "&"
+                    end
+                    ring_all = ring_all .. "SIP/" .. ext
+                end
+                
+                ext_content = ext_content .. [[
+exten => s,n,Set(CALLER_NUM=${FILTER(0-9,${CALLERID(num)})})
+exten => s,n,GotoIf($["${CALLER_NUM}" = ""]?unknown_caller,1)
+exten => s,n,Goto(ring_all,1)
+
+exten => unknown_caller,1,Set(CALLER_NUM=unknown)
+exten => unknown_caller,n,Goto(ring_all,1)
+
+exten => ring_all,1,Set(DIAL_STRING=]] .. ring_all .. [[)
+exten => ring_all,n,Dial(${DIAL_STRING},60,rg(sub_record_check,s,1))
+exten => ring_all,n,Hangup()
+
+[sub_record_check]
+exten => s,1,NoOp(Checking recording for answered extension: ${DIALEDPEERNAME})
+exten => s,n,Set(ANSWERED_EXTEN=${FILTER(0-9,${DIALEDPEERNAME})})
+exten => s,n,Set(RECORD_ENABLED=${DB(record/${ANSWERED_EXTEN})})
+exten => s,n,GotoIf($["${RECORD_ENABLED}" = "1"]?record_start,1)
+exten => s,n,Return()
+
+exten => record_start,1,NoOp(Recording enabled for ${ANSWERED_EXTEN})
+exten => s,n,Set(RAW=${SHELL(date +%Y%m%d-%H%M%S)})
+exten => s,n,Set(TIMESTAMP=${FILTER(0-9-,${RAW})})
+exten => s,n,Set(FILE_NAME=]] .. record_dir .. [[/${CALLER_NUM}_${ANSWERED_EXTEN}_${TIMESTAMP})
+exten => s,n,MixMonitor(${FILE_NAME}]] .. file_ext_dot .. mixmonitor_opts .. [[)
+exten => s,n,Return()
+
+exten => h,1,StopMixMonitor()
+]]
             else
                 ext_content = ext_content .. "exten => s,n,Playback(invalid)\n"
+                ext_content = ext_content .. "exten => s,n,Hangup()\n"
             end
         end
     else
         ext_content = ext_content .. "exten => s,n,Playback(invalid)\n"
+        ext_content = ext_content .. "exten => s,n,Hangup()\n"
     end
-    ext_content = ext_content .. "exten => s,n,Hangup()\n"
     
     fs.writefile(extensions_conf, ext_content)
     
@@ -525,6 +652,16 @@ exten => s,n,Playback(vm-intro)
         end
     end
     
+    os.execute("asterisk -rx 'database deltree record' > /dev/null 2>&1 &")
+    os.execute("sleep 1")
+    
+    for _, ext in ipairs(extensions_info) do
+        if ext.number then
+            os.execute("asterisk -rx 'database put record " .. ext.number .. " " .. ext.record .. "' > /dev/null 2>&1 &")
+        end
+    end
+    
+    os.execute("sleep 1")
     os.execute("/etc/init.d/asterisk reload 2>/dev/null")
 end
 

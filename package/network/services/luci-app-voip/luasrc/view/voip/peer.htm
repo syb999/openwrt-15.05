@@ -132,7 +132,7 @@ function savePeer(name, rowId) {
 
 function deletePeer(name) {
     if (!name) return;
-    if (confirm('Delete server peer ' + name + '?')) {
+    if (confirm('<%:Delete server peer%> ' + name + '?')) {
         window.location.href = '<%=luci.dispatcher.build_url("admin", "services", "voip", "peer_delete")%>?name=' + encodeURIComponent(name);
     }
 }
@@ -142,19 +142,19 @@ function renderTable(peers) {
     html += '<table class="peer-table">';
     html += '<thead>';
     html += '<tr>';
-    html += '<th style="width:100px">Server Name</th>';
-    html += '<th style="width:50px">Prefix</th>';
-    html += '<th style="width:140px">Host/IP</th>';
-    html += '<th style="width:140px">ZeroTier IP</th>';
-    html += '<th style="width:60px">Port</th>';
-    html += '<th style="width:90px">Username</th>';
-    html += '<th style="width:90px">Password</th>';
-    html += '<th style="width:90px">Type</th>';
-    html += '<th style="width:70px">Context</th>';
-    html += '<th style="width:50px">NAT</th>';
-    html += '<th style="width:50px">Qualify</th>';
-    html += '<th style="width:90px">DTMF</th>';
-    html += '<th style="width:150px">Actions</th>';
+    html += '<th style="width:100px"><%:Server Name%></th>';
+    html += '<th style="width:50px"><%:Prefix%></th>';
+    html += '<th style="width:140px"><%:Host/IP%></th>';
+    html += '<th style="width:140px"><%:ZeroTier IP%></th>';
+    html += '<th style="width:60px"><%:Port%></th>';
+    html += '<th style="width:90px"><%:Username%></th>';
+    html += '<th style="width:90px"><%:Password%></th>';
+    html += '<th style="width:90px"><%:Type%></th>';
+    html += '<th style="width:70px"><%:Context%></th>';
+    html += '<th style="width:50px"><%:NAT%></th>';
+    html += '<th style="width:50px"><%:Qualify%></th>';
+    html += '<th style="width:90px"><%:DTMF Mode%></th>';
+    html += '<th style="width:150px"><%:Actions%></th>';
     html += '</tr>';
     html += '</thead><tbody>';
     
@@ -170,23 +170,23 @@ function renderTable(peers) {
         html += '<td><input type="text" id="username_' + rowId + '" value="' + escapeHtml(p.username || '') + '" /></td>';
         html += '<td><input type="password" id="password_' + rowId + '" value="' + escapeHtml(p.password || '') + '" /></td>';
         html += '<td><select id="type_' + rowId + '">';
-        html += '<option value="friend"' + (p.type == 'friend' ? ' selected' : '') + '>Friend</option>';
-        html += '<option value="peer"' + (p.type == 'peer' ? ' selected' : '') + '>Peer</option>';
-        html += '<option value="user"' + (p.type == 'user' ? ' selected' : '') + '>User</option>';
+        html += '<option value="friend"' + (p.type == 'friend' ? ' selected' : '') + '><%:Friend%></option>';
+        html += '<option value="peer"' + (p.type == 'peer' ? ' selected' : '') + '><%:Peer%></option>';
+        html += '<option value="user"' + (p.type == 'user' ? ' selected' : '') + '><%:User%></option>';
         html += '</select></td>';
         html += '<td><input type="text" id="context_' + rowId + '" value="' + escapeHtml(p.context) + '" /></td>';
         html += '<td style="text-align:center"><input type="checkbox" id="nat_' + rowId + '" value="1"' + (p.nat == '1' ? ' checked' : '') + ' /></td>';
         html += '<td style="text-align:center"><input type="checkbox" id="qualify_' + rowId + '" value="1"' + (p.qualify == '1' ? ' checked' : '') + ' /></td>';
         html += '<td><select id="dtmf_' + rowId + '">';
         html += '<option value="rfc2833"' + (p.dtmfmode == 'rfc2833' ? ' selected' : '') + '>RFC2833</option>';
-        html += '<option value="info"' + (p.dtmfmode == 'info' ? ' selected' : '') + '>INFO</option>';
-        html += '<option value="inband"' + (p.dtmfmode == 'inband' ? ' selected' : '') + '>Inband</option>';
+        html += '<option value="info"' + (p.dtmfmode == 'info' ? ' selected' : '') + '><%:SIP INFO%></option>';
+        html += '<option value="inband"' + (p.dtmfmode == 'inband' ? ' selected' : '') + '><%:Inband%></option>';
         html += '</select></td>';
         html += '<td class="actions">';
-        html += '<button class="btn-save" onclick="savePeer(\'' + escapeHtml(p.name) + '\', ' + rowId + ')">Save</button>';
-        html += '<button class="btn-delete" onclick="deletePeer(\'' + escapeHtml(p.name) + '\')">Delete</button>';
+        html += '<button class="btn-save" onclick="savePeer(\'' + escapeHtml(p.name) + '\', ' + rowId + ')"><%:Save%></button>';
+        html += '<button class="btn-delete" onclick="deletePeer(\'' + escapeHtml(p.name) + '\')"><%:Delete%></button>';
         html += '</td>';
-        html += '</table>';
+        html += '</tr>';
     }
     
     html += '</tbody>';
@@ -215,43 +215,43 @@ window.addEventListener('load', function() {
 </script>
 
 <div class="hint">
-    <strong>About Dial Prefix</strong><br>
-    Dial prefix to route calls to this server (e.g., 81 for extension 816001).<br>
-    <strong>ZeroTier IP:</strong> Optional. If provided, an additional peer will be created.
+    <strong><%:About Dial Prefix%></strong><br>
+    <%:Dial prefix to route calls to this server (e.g., 81 for extension 816001).%><br>
+    <strong><%:ZeroTier IP:%></strong> <%:Optional. If provided, an additional peer will be created.%>
 </div>
 
 <div id="peer-table-container"></div>
 
 <div class="add-area">
-    <div style="font-weight: bold; margin-bottom: 10px;">Add New Server Peer</div>
+    <div style="font-weight: bold; margin-bottom: 10px;"><%:Add New Server Peer%></div>
     <div class="add-row">
-        <input type="text" name="new_name" placeholder="Server Name" class="c-name" />
-        <input type="text" name="new_prefix" placeholder="Prefix" class="c-prefix" />
-        <input type="text" name="new_host" placeholder="Host/IP" class="c-host" />
-        <input type="text" name="new_zerotier" placeholder="ZeroTier IP" class="c-zerotier" />
-        <input type="text" name="new_port" placeholder="Port" value="5060" class="c-port" />
-        <input type="text" name="new_username" placeholder="Username" class="c-username" />
-        <input type="password" name="new_password" placeholder="Password" class="c-password" />
+        <input type="text" name="new_name" placeholder="<%:Server Name%>" class="c-name" />
+        <input type="text" name="new_prefix" placeholder="<%:Prefix%>" class="c-prefix" />
+        <input type="text" name="new_host" placeholder="<%:Host/IP%>" class="c-host" />
+        <input type="text" name="new_zerotier" placeholder="<%:ZeroTier IP%>" class="c-zerotier" />
+        <input type="text" name="new_port" placeholder="<%:Port%>" value="5060" class="c-port" />
+        <input type="text" name="new_username" placeholder="<%:Username%>" class="c-username" />
+        <input type="password" name="new_password" placeholder="<%:Password%>" class="c-password" />
         <select name="new_type" class="c-type">
-            <option value="friend">Friend</option>
-            <option value="peer">Peer</option>
-            <option value="user">User</option>
+            <option value="friend"><%:Friend%></option>
+            <option value="peer"><%:Peer%></option>
+            <option value="user"><%:User%></option>
         </select>
-        <input type="text" name="new_context" placeholder="Context" value="internal" class="c-context" />
-        <label class="c-nat"><input type="checkbox" name="new_nat" value="1" checked /> NAT</label>
-        <label class="c-qualify"><input type="checkbox" name="new_qualify" value="1" checked /> Qualify</label>
+        <input type="text" name="new_context" placeholder="<%:Context%>" value="internal" class="c-context" />
+        <label class="c-nat"><input type="checkbox" name="new_nat" value="1" checked /> <%:NAT%></label>
+        <label class="c-qualify"><input type="checkbox" name="new_qualify" value="1" checked /> <%:Qualify%></label>
         <select name="new_dtmf" class="c-dtmf">
             <option value="rfc2833">RFC2833</option>
-            <option value="info">SIP INFO</option>
-            <option value="inband">Inband</option>
+            <option value="info"><%:SIP INFO%></option>
+            <option value="inband"><%:Inband%></option>
         </select>
-        <input type="submit" value="Save New Peer" class="c-actions" style="background:#5cb85c; color:white; border:none; padding:6px 12px; cursor:pointer;" onclick="addNewPeer()" />
+        <input type="submit" value="<%:Save New Peer%>" class="c-actions" style="background:#5cb85c; color:white; border:none; padding:6px 12px; cursor:pointer;" onclick="addNewPeer()" />
     </div>
 </div>
 
 <div class="cbi-page-actions">
-    <input class="cbi-button cbi-button-reload" type="button" value="Refresh" onclick="loadPeers()" />
-    <input class="cbi-button cbi-button-reset" type="button" value="Back to Status" onclick="window.location='<%=luci.dispatcher.build_url('admin/services/voip/status')%>'" />
+    <input class="cbi-button cbi-button-reload" type="button" value="<%:Refresh%>" onclick="loadPeers()" />
+    <input class="cbi-button cbi-button-reset" type="button" value="<%:Back to Status%>" onclick="window.location='<%=luci.dispatcher.build_url('admin/services/voip/status')%>'" />
 </div>
 
 <script>
@@ -272,7 +272,7 @@ function addNewPeer() {
     };
     
     if (!data.name || !data.host) {
-        alert('Server Name and Host/IP are required');
+        alert('<%:Server Name and Host/IP are required%>');
         return;
     }
     
