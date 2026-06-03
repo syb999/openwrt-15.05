@@ -109,7 +109,7 @@ window.addEventListener('beforeunload', function() {
                 <div class="cbi-value-field">
                     <% 
                     local uci = require("luci.model.uci").cursor()
-                    local global_enabled = uci:get_first("voip", "global", "enabled") or "0"
+                    local global_enabled = uci:get("voip", "global", "enabled") or "0"
                     if global_enabled == "1" then 
                     %>
                         <span style="color: green">● <%:Enabled%></span>
