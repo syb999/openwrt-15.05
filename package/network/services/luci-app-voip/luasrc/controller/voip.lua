@@ -389,33 +389,12 @@ qualifyfreq=60
             if p.port and p.port ~= "" then
                 sip_content = sip_content .. "port=" .. p.port .. "\n"
             end
-            if p.username and p.username ~= "" then
-                sip_content = sip_content .. "username=" .. p.username .. "\n"
-            end
-            if p.password and p.password ~= "" then
-                sip_content = sip_content .. "secret=" .. p.password .. "\n"
-            end
             sip_content = sip_content .. "context=" .. context .. "\n"
             sip_content = sip_content .. "nat=" .. (p.nat == "1" and "yes" or "no") .. "\n"
             sip_content = sip_content .. "qualify=" .. (p.qualify == "1" and "yes" or "no") .. "\n"
             sip_content = sip_content .. "qualifyfreq=60\n"
             sip_content = sip_content .. "dtmfmode=" .. (p.dtmfmode or "rfc2833") .. "\n"
             sip_content = sip_content .. "canreinvite=no\n"
-            
-            if p.zerotier and p.zerotier ~= "" then
-                sip_content = sip_content .. "\n[" .. peer_name .. "_zt]\n"
-                sip_content = sip_content .. "type=peer\n"
-                sip_content = sip_content .. "host=" .. p.zerotier .. "\n"
-                if p.port and p.port ~= "" then
-                    sip_content = sip_content .. "port=" .. p.port .. "\n"
-                end
-                sip_content = sip_content .. "context=" .. context .. "\n"
-                sip_content = sip_content .. "nat=no\n"
-                sip_content = sip_content .. "qualify=" .. (p.qualify == "1" and "yes" or "no") .. "\n"
-                sip_content = sip_content .. "qualifyfreq=60\n"
-                sip_content = sip_content .. "dtmfmode=" .. (p.dtmfmode or "rfc2833") .. "\n"
-                sip_content = sip_content .. "canreinvite=no\n"
-            end
         end
     end)
     
@@ -676,9 +655,7 @@ function action_peer_data()
             name = p.name or "",
             dial_prefix = p.dial_prefix or "",
             host = p.host or "",
-            zerotier = p.zerotier or "",
             port = p.port or "5060",
-            username = p.username or "",
             type = p.type or "friend",
             context = p.context or "internal",
             nat = p.nat or "1",
@@ -718,10 +695,7 @@ function action_peer_add()
         uci:set("voip", section, "name", data.name)
         uci:set("voip", section, "dial_prefix", data.dial_prefix or "")
         uci:set("voip", section, "host", data.host)
-        uci:set("voip", section, "zerotier", data.zerotier or "")
         uci:set("voip", section, "port", data.port or "5060")
-        uci:set("voip", section, "username", data.username or "")
-        uci:set("voip", section, "password", data.password or "")
         uci:set("voip", section, "type", data.type or "friend")
         uci:set("voip", section, "context", data.context or "internal")
         uci:set("voip", section, "nat", data.nat or "0")
@@ -763,10 +737,7 @@ function action_peer_update()
         uci:set("voip", section, "name", data.name)
         uci:set("voip", section, "dial_prefix", data.dial_prefix or "")
         uci:set("voip", section, "host", data.host or "")
-        uci:set("voip", section, "zerotier", data.zerotier or "")
         uci:set("voip", section, "port", data.port or "5060")
-        uci:set("voip", section, "username", data.username or "")
-        uci:set("voip", section, "password", data.password or "")
         uci:set("voip", section, "type", data.type or "friend")
         uci:set("voip", section, "context", data.context or "internal")
         uci:set("voip", section, "nat", data.nat or "0")

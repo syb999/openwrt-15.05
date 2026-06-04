@@ -7,7 +7,7 @@
     -webkit-overflow-scrolling: touch;
 }
 .peer-table {
-    min-width: 1200px;
+    min-width: 900px;
     border-collapse: collapse;
 }
 .peer-table th, .peer-table td {
@@ -67,15 +67,12 @@
     display: flex;
     gap: 8px;
     align-items: center;
-    min-width: 1200px;
+    min-width: 900px;
 }
 .add-row .c-name { width: 100px; flex-shrink: 0; }
 .add-row .c-prefix { width: 50px; flex-shrink: 0; }
 .add-row .c-host { width: 140px; flex-shrink: 0; }
-.add-row .c-zerotier { width: 140px; flex-shrink: 0; }
 .add-row .c-port { width: 60px; flex-shrink: 0; }
-.add-row .c-username { width: 90px; flex-shrink: 0; }
-.add-row .c-password { width: 90px; flex-shrink: 0; }
 .add-row .c-type { width: 90px; flex-shrink: 0; }
 .add-row .c-context { width: 70px; flex-shrink: 0; }
 .add-row .c-nat { width: 50px; flex-shrink: 0; text-align: center; }
@@ -105,10 +102,7 @@ function savePeer(name, rowId) {
         name: document.getElementById('name_' + rowId).value,
         dial_prefix: document.getElementById('prefix_' + rowId).value,
         host: document.getElementById('host_' + rowId).value,
-        zerotier: document.getElementById('zerotier_' + rowId).value,
         port: document.getElementById('port_' + rowId).value,
-        username: document.getElementById('username_' + rowId).value,
-        password: document.getElementById('password_' + rowId).value,
         type: document.getElementById('type_' + rowId).value,
         context: document.getElementById('context_' + rowId).value,
         nat: document.getElementById('nat_' + rowId).checked ? '1' : '0',
@@ -145,10 +139,7 @@ function renderTable(peers) {
     html += '<th style="width:100px"><%:Server Name%></th>';
     html += '<th style="width:50px"><%:Prefix%></th>';
     html += '<th style="width:140px"><%:Host/IP%></th>';
-    html += '<th style="width:140px"><%:ZeroTier IP%></th>';
     html += '<th style="width:60px"><%:Port%></th>';
-    html += '<th style="width:90px"><%:Username%></th>';
-    html += '<th style="width:90px"><%:Password%></th>';
     html += '<th style="width:90px"><%:Type%></th>';
     html += '<th style="width:70px"><%:Context%></th>';
     html += '<th style="width:50px"><%:NAT%></th>';
@@ -165,10 +156,7 @@ function renderTable(peers) {
         html += '<td><input type="text" id="name_' + rowId + '" value="' + escapeHtml(p.name) + '" /></td>';
         html += '<td><input type="text" id="prefix_' + rowId + '" value="' + escapeHtml(p.dial_prefix) + '" /></td>';
         html += '<td><input type="text" id="host_' + rowId + '" value="' + escapeHtml(p.host) + '" /></td>';
-        html += '<td><input type="text" id="zerotier_' + rowId + '" value="' + escapeHtml(p.zerotier || '') + '" /></td>';
         html += '<td><input type="text" id="port_' + rowId + '" value="' + escapeHtml(p.port) + '" /></td>';
-        html += '<td><input type="text" id="username_' + rowId + '" value="' + escapeHtml(p.username || '') + '" /></td>';
-        html += '<td><input type="password" id="password_' + rowId + '" value="' + escapeHtml(p.password || '') + '" /></td>';
         html += '<td><select id="type_' + rowId + '">';
         html += '<option value="friend"' + (p.type == 'friend' ? ' selected' : '') + '><%:Friend%></option>';
         html += '<option value="peer"' + (p.type == 'peer' ? ' selected' : '') + '><%:Peer%></option>';
@@ -217,7 +205,6 @@ window.addEventListener('load', function() {
 <div class="hint">
     <strong><%:About Dial Prefix%></strong><br>
     <%:Dial prefix to route calls to this server (e.g., 81 for extension 816001).%><br>
-    <strong><%:ZeroTier IP:%></strong> <%:Optional. If provided, an additional peer will be created.%>
 </div>
 
 <div id="peer-table-container"></div>
@@ -228,10 +215,7 @@ window.addEventListener('load', function() {
         <input type="text" name="new_name" placeholder="<%:Server Name%>" class="c-name" />
         <input type="text" name="new_prefix" placeholder="<%:Prefix%>" class="c-prefix" />
         <input type="text" name="new_host" placeholder="<%:Host/IP%>" class="c-host" />
-        <input type="text" name="new_zerotier" placeholder="<%:ZeroTier IP%>" class="c-zerotier" />
         <input type="text" name="new_port" placeholder="<%:Port%>" value="5060" class="c-port" />
-        <input type="text" name="new_username" placeholder="<%:Username%>" class="c-username" />
-        <input type="password" name="new_password" placeholder="<%:Password%>" class="c-password" />
         <select name="new_type" class="c-type">
             <option value="friend"><%:Friend%></option>
             <option value="peer"><%:Peer%></option>
@@ -260,10 +244,7 @@ function addNewPeer() {
         name: document.querySelector('input[name="new_name"]').value,
         dial_prefix: document.querySelector('input[name="new_prefix"]').value,
         host: document.querySelector('input[name="new_host"]').value,
-        zerotier: document.querySelector('input[name="new_zerotier"]').value,
         port: document.querySelector('input[name="new_port"]').value,
-        username: document.querySelector('input[name="new_username"]').value,
-        password: document.querySelector('input[name="new_password"]').value,
         type: document.querySelector('select[name="new_type"]').value,
         context: document.querySelector('input[name="new_context"]').value,
         nat: document.querySelector('input[name="new_nat"]').checked ? '1' : '0',
