@@ -124,12 +124,6 @@ msgstr "密码"
 msgid "Inbound Context"
 msgstr "来电上下文"
 
-msgid "external"
-msgstr "external"
-
-msgid "internal"
-msgstr "internal"
-
 msgid "NAT Support"
 msgstr "NAT支持"
 
@@ -274,12 +268,6 @@ msgstr "User (仅呼入)"
 msgid "Host/IP"
 msgstr "主机/IP"
 
-msgid "ZeroTier IP"
-msgstr "ZeroTier IP"
-
-msgid "Username"
-msgstr "用户名"
-
 msgid "Type"
 msgstr "类型"
 
@@ -315,12 +303,6 @@ msgstr "关于拨号前缀"
 
 msgid "Dial prefix to route calls to this server (e.g., 81 for extension 816001)."
 msgstr "拨号前缀，用于将呼叫路由到此服务器（例如 81 表示拨打 816001）。"
-
-msgid "ZeroTier IP:"
-msgstr "ZeroTier IP："
-
-msgid "Optional. If provided, an additional peer will be created."
-msgstr "可选。如果提供，将创建一个额外的对端。"
 
 msgid "Add New Server Peer"
 msgstr "添加新服务器对端"
@@ -400,37 +382,102 @@ msgstr "启用NAT穿透。如果Asterisk在路由器后面，请保持启用。"
 msgid "Enable SRTP encryption for secure calls. Only enable if your provider supports it."
 msgstr "启用SRTP加密以保护通话安全。仅在提供商支持时启用。"
 
-# Missing peer.htm alert message
-msgid "Delete server peer"
-msgstr "删除服务器对端"
+msgid "Music File Name"
+msgstr "音乐文件名"
 
-msgid "Ringback Music"
-msgstr "回铃音乐"
+msgid "Number of times to play the music before dialing (1-6 recommended)"
+msgstr "拨号前播放音乐的次数（建议1-6次）"
 
-msgid "Configure ringback music played to callers while waiting"
-msgstr "配置主叫方等待时播放的回铃音乐"
+msgid "PSTN Incoming Handler"
+msgstr "PSTN 呼入处理"
 
-msgid "This feature plays music to the calling party while waiting for the called party to answer. Place your .gsm file in the specified directory."
-msgstr "此功能会在等待被叫方接听时，向主叫方播放音乐。请将您的.gsm文件放置在指定目录中"
+msgid "Configure how to handle incoming PSTN calls"
+msgstr "配置如何处理 PSTN 呼入电话"
 
-msgid "Ringback Music Settings"
-msgstr "回铃音乐设置"
+msgid "Choose how to process incoming PSTN calls. Place your .gsm files in /etc/asterisk/sounds/ for IVR prompts, or in /tmp/playback/ for ringback music."
+msgstr "选择 PSTN 呼入处理方式。IVR 提示音请将 .gsm 文件放在 /etc/asterisk/sounds/，回铃音乐请放在 /tmp/playback/。"
+
+msgid "PSTN Handler Settings"
+msgstr "PSTN 处理设置"
+
+msgid "Incoming Call Mode"
+msgstr "呼入模式"
+
+msgid "Normal (Standard Ringback)"
+msgstr "普通模式（标准振铃音）"
+
+msgid "Direct Dial with Ringback Music"
+msgstr "直拨模式（带回铃音乐）"
+
+msgid "IVR Menu"
+msgstr "IVR 菜单"
+
+msgid "Normal: standard ringback tone. Direct Dial: play music then ring extension. IVR Menu: play menu and wait for key press."
+msgstr "普通模式：标准振铃音。直拨模式：播放音乐后振铃分机。IVR 菜单：播放菜单等待按键选择。"
+
+msgid "Direct Dial Options"
+msgstr "直拨模式选项"
 
 msgid "Enable Ringback Music"
 msgstr "启用回铃音乐"
 
-msgid "Play music to callers while waiting for answer"
-msgstr "在等待接听时，为来电者播放音乐"
-
 msgid "Music Directory"
 msgstr "音乐目录"
 
-msgid "Music File Name"
-msgstr "音乐文件名"
+msgid "GSM file name without extension (e.g., 'ring' for ring.gsm)"
+msgstr "GSM 文件名（不含扩展名，如 ring.gsm 填写 ring）"
 
 msgid "Play Loop Count"
 msgstr "播放循环次数"
 
-msgid "Number of times to play the music before dialing (1-6 recommended)"
-msgstr "拨号前播放音乐的次数（建议1-6次）"
+msgid "IVR Menu Options"
+msgstr "IVR 菜单选项"
+
+msgid "Welcome Prompt"
+msgstr "欢迎提示音"
+
+msgid "GSM file name without extension (place in /etc/asterisk/sounds/)"
+msgstr "GSM 文件名（不含扩展名，放在 /etc/asterisk/sounds/ 目录）"
+
+msgid "GSM file name without extension (placed in the music directory)"
+msgid "不带扩展名的GSM文件名（放置在音乐目录中）"
+
+msgid "Timeout (seconds)"
+msgstr "超时时间（秒）"
+
+msgid "Invalid Prompt"
+msgstr "无效按键提示音"
+
+msgid "IVR Key Mapping"
+msgstr "IVR 按键映射"
+
+msgid "Key (0-9)"
+msgstr "按键（0-9）"
+
+msgid "Action"
+msgstr "动作"
+
+msgid "Dial Extension"
+msgstr "拨打分机"
+
+msgid "Hangup"
+msgstr "挂断"
+
+msgid "Target"
+msgstr "目标"
+
+msgid "Extension number"
+msgstr "分机号码"
+
+msgid "PSTN Incoming"
+msgstr "PSTN 呼入"
+
+msgid "PSTN Incoming Handler"
+msgstr "PSTN 呼入处理"
+
+msgid "Choose how to process incoming PSTN calls. Place your .gsm files in the directory specified below. For ringback music use 'ring.gsm', for IVR use 'ivr-welcome.gsm' and 'ivr-invalid.gsm'."
+msgstr "选择 PSTN 来电的处理方式。请将 .gsm 文件放到下面指定的目录中。回铃音乐使用 'ring.gsm'，IVR 使用 'ivr-welcome.gsm' 和 'ivr-invalid.gsm'。"
+
+msgid "PSTN Handler Settings"
+msgstr "PSTN 处理设置"
 
