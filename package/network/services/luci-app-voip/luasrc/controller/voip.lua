@@ -277,7 +277,8 @@ function generate_configs()
     local playback_enabled = uci:get("voip", "pstn_handler", "playback_enabled") or "0"
     local playback_dir = uci:get("voip", "pstn_handler", "playback_dir") or "/usr/share/asterisk/sounds"
     local playback_file = uci:get("voip", "pstn_handler", "playback_file") or "ring"
-    local playback_loop = tonumber(uci:get("voip", "pstn_handler", "playback_loop")) or 1
+    local raw_playback_loop = uci:get("voip", "pstn_handler", "playback_loop")
+    local playback_loop = tonumber(raw_playback_loop) or 1
     if playback_loop > 6 then
         playback_loop = 6
     end
