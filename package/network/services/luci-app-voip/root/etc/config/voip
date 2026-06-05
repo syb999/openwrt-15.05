@@ -28,3 +28,9 @@ config extension '6002'
 	option callerid 'User 6002'
 	option record '0'
 
+config playback
+    option enabled '0'
+    option dir '/tmp/playback'
+    option file 'ring'
+    option loop '1'
+
