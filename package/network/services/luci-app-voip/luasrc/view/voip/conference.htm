@@ -63,7 +63,7 @@ function escapeHtml(str) {
 }
 
 function refreshConferences() {
-    var url = '<%=luci.dispatcher.build_url("admin", "services", "voip", "conference_data")%>';
+    var url = '<%=luci.dispatcher.build_url("admin", "services", "voip", "conference_data")%>?_=' + new Date().getTime();
     XHR.get(url, null,
         function(xhr) {
             var data = JSON.parse(xhr.responseText);

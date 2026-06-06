@@ -1014,62 +1014,96 @@ function action_conference_data()
     luci.http.prepare_content("application/json")
     
     local data = { conferences = {} }
-    
-    local f = io.popen("asterisk -rx 'confbridge list' 2>/dev/null")
-    local conference_names = {}
-    
+    local rooms = {}
+
+    local callerid_map = {}
+    local f = io.popen("asterisk -rx 'core show channels concise' 2>/dev/null")
     if f then
         for line in f:lines() do
-            local name = line:match("^([%w_]+)%s+")
-            if name and not line:match("===") and not line:match("Conference Bridge") then
-                conference_names[name] = true
+            local parts = {}
+            for part in string.gmatch(line, "[^!]+") do
+                table.insert(parts, part)
+            end
+            if #parts >= 8 then
+                local channel = parts[1]
+                local callerid = parts[8]
+                if channel and callerid and callerid ~= "" and callerid ~= "(None)" then
+                    callerid_map[channel] = callerid
+                end
             end
         end
         f:close()
     end
     
-    for name in pairs(conference_names) do
-        local conf = { name = name, users = {}, locked = "No", user_count = 0 }
-        
-        local h = io.popen("asterisk -rx 'confbridge list' 2>/dev/null | grep '^" .. name .. "'")
-        if h then
-            local line = h:read("*line")
-            if line then
-                local parts = {}
-                for part in string.gmatch(line, "%S+") do
-                    table.insert(parts, part)
+    local room_names = {}
+    local g = io.popen("asterisk -rx 'confbridge list' 2>/dev/null")
+    if g then
+        for line in g:lines() do
+            local room_name = line:match("^(%d+)%s+")
+            if room_name then
+                table.insert(room_names, room_name)
+                rooms[room_name] = { users = {}, user_count = 0, locked = "No" }
+                if line:find("Yes") then
+                    rooms[room_name].locked = "Yes"
                 end
-                if #parts >= 4 then
-                    conf.locked = parts[4]
+            end
+        end
+        g:close()
+    end
+    
+    for _, room_name in ipairs(room_names) do
+        local cmd = "asterisk -rx 'confbridge list " .. room_name .. "' 2>/dev/null"
+        local h = io.popen(cmd)
+        if h then
+            local in_participants = false
+            for line in h:lines() do
+                if line:find("Channel") and line:find("CallerID") then
+                    in_participants = true
+                elseif line:find("===") then
+                elseif in_participants then
+                    local channel = line:match("^(%S+)")
+                    if channel and (channel:find("^SIP/") or channel:find("^IAX2/")) then
+                        local muted = "No"
+                        local flags = line:match("^%S+%s+(%S+)")
+                        if flags and (flags == "m" or flags == "M") then
+                            muted = "Yes"
+                        end
+                        local callerid = line:match("(%S+)$")
+                        if callerid and callerid ~= "CallerID" then
+                            local display_cid = callerid
+                            if channel:find("SIP/%d+%.%d+%.%d+%.%d+") then
+                                local cid = callerid_map[channel]
+                                if cid then
+                                    display_cid = "Remote End:" .. cid
+                                else
+                                    display_cid = "Remote End:" .. callerid
+                                end
+                            elseif channel:find("SIP/%d+%-") then
+                                display_cid = callerid
+                            else
+                                display_cid = callerid
+                            end
+                            table.insert(rooms[room_name].users, {
+                                channel = channel,
+                                callerid = display_cid,
+                                muted = muted
+                            })
+                            rooms[room_name].user_count = rooms[room_name].user_count + 1
+                        end
+                    end
                 end
             end
             h:close()
         end
-        
-        local g = io.popen("asterisk -rx 'confbridge list " .. name .. "' 2>/dev/null")
-        if g then
-            for line in g:lines() do
-                local channel = line:match("^(SIP/[%d%-]+)%s+")
-                if channel then
-                    local muted = "No"
-                    if line:match("%s+[mM]%s") or line:match("%s+[mM]%S") then
-                        muted = "Yes"
-                    end
-                    local callerid = line:match("%s+([^%s]+)%s*$")
-                    if callerid and callerid ~= "CallerID" then
-                        table.insert(conf.users, {
-                            channel = channel,
-                            callerid = callerid,
-                            muted = muted
-                        })
-                        conf.user_count = conf.user_count + 1
-                    end
-                end
-            end
-            g:close()
-        end
-        
-        table.insert(data.conferences, conf)
+    end
+    
+    for name, conf in pairs(rooms) do
+        table.insert(data.conferences, {
+            name = name,
+            users = conf.users,
+            user_count = conf.user_count,
+            locked = conf.locked
+        })
     end
     
     luci.http.write_json(data)
