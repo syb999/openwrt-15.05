@@ -28,6 +28,7 @@ function action_status_data()
     local data = {
         peers = {},
         server_peers = {},
+        iax_peers = {},
         calls = {}
     }
     
@@ -56,6 +57,40 @@ function action_status_data()
             end
         end
         f:close()
+    end
+    
+    local iax_f = io.popen("asterisk -rx 'iax2 show peers' 2>/dev/null")
+    if iax_f then
+        for line in iax_f:lines() do
+            if line:match("%d+%.%d+%.%d+%.%d+") and not line:match("iax2 peers") and not line:match("Name/Username") then
+                local name = line:match("^([%w_-]+)%s+")
+                local host = line:match("(%d+%.%d+%.%d+%.%d+)")
+                local port = line:match("%s+(%d+)%s+")
+                local status = "Unknown"
+                local latency = ""
+                
+                if line:match("UNREACHABLE") then
+                    status = "UNREACHABLE"
+                elseif line:match("OK") then
+                    status = "OK"
+                    local lat = line:match("OK%s*%((%d+)ms%)")
+                    if lat then latency = lat end
+                elseif line:match("UNKNOWN") then
+                    status = "UNKNOWN"
+                end
+                
+                if name and host then
+                    table.insert(data.iax_peers, {
+                        name = name,
+                        host = host,
+                        port = port or "4569",
+                        status = status,
+                        latency = latency
+                    })
+                end
+            end
+        end
+        iax_f:close()
     end
     
     local uci = require("luci.model.uci").cursor()
@@ -101,10 +136,21 @@ function action_status_data()
                     
                     if caller and callee and not calls_seen[caller .. "_" .. callee] then
                         calls_seen[caller .. "_" .. callee] = true
-                        table.insert(data.calls, {caller = caller, callee = callee})
+                        table.insert(data.calls, {caller = caller, callee = callee, type = "SIP"})
                     elseif callee and not calls_seen["_PSTN_" .. callee] then
                         calls_seen["_PSTN_" .. callee] = true
-                        table.insert(data.calls, {caller = "PSTN", callee = callee})
+                        table.insert(data.calls, {caller = "PSTN", callee = callee, type = "PSTN"})
+                    end
+                end
+            elseif line:match("IAX2/") then
+                local iax_match = line:match("^(IAX2/[%w_-]+%-%d+)")
+                if iax_match then
+                    local caller = iax_match:match("IAX2/([%w_-]+)%-%d+")
+                    local callee = line:match("(%d+)@internal")
+                    
+                    if caller and callee and not calls_seen["IAX2_" .. caller .. "_" .. callee] then
+                        calls_seen["IAX2_" .. caller .. "_" .. callee] = true
+                        table.insert(data.calls, {caller = "IAX2:" .. caller, callee = callee, type = "IAX2"})
                     end
                 end
             end
@@ -376,9 +422,8 @@ function generate_configs()
             for ext_len, _ in pairs(ext_lengths) do
                 local pattern = string.rep("X", ext_len)
                 local exten_pattern = "_" .. trunk.dial_prefix .. pattern
-                
-                iax_rules = iax_rules .. "\n; IAX2 route to " .. trunk.name .. " (prefix: " .. trunk.dial_prefix .. ")\n"
-                iax_rules = iax_rules .. "exten => " .. exten_pattern .. ",1,Dial(IAX2/" .. trunk.name .. "/${EXTEN:" .. prefix_len .. "},60)\n"
+                iax_rules = iax_rules .. "\n; IAX2 route to " .. trunk.name .. "\n"
+                iax_rules = iax_rules .. "exten => " .. exten_pattern .. ",1,Macro(iax-dialout,${EXTEN:" .. prefix_len .. "}," .. trunk.name .. ")\n"
             end
         end
     end
@@ -523,7 +568,7 @@ qualifyfreq=60
 
 [general]
 
-; Macro for outbound calls with recording
+; Macro for outbound calls with recording (SIP)
 [macro-dialout]
 exten => s,1,Set(CALLER_RAW=${CALLERID(num)})
 exten => s,n,Set(CALLER=${FILTER(0-9,${CALLER_RAW})})
@@ -534,7 +579,7 @@ exten => s,n,GotoIf($["${RECORD_ENABLED}" = "1"]?record,1)
 exten => s,n,Dial(SIP/${CALLEE}@${TARGET},60,r)
 exten => s,n,Hangup()
 
-; Recording section
+; Recording section for SIP
 exten => record,1,Set(CALLEE=${ARG1})
 exten => record,n,Set(RAW=${SHELL(date +%Y%m%d-%H%M%S)})
 exten => record,n,Set(TIMESTAMP=${FILTER(0-9-,${RAW})})
@@ -543,6 +588,27 @@ exten => record,n,MixMonitor(${FILE_NAME}]] .. file_ext_dot .. [[)
 exten => record,n,Dial(SIP/${CALLEE}@${TARGET},60,r)
 exten => record,n,StopMixMonitor()
 exten => record,n,Hangup()
+
+; Macro for IAX2 outbound calls with recording
+[macro-iax-dialout]
+exten => s,1,Set(CALLER_RAW=${CALLERID(num)})
+exten => s,n,Set(CALLER=${FILTER(0-9,${CALLER_RAW})})
+exten => s,n,Set(CALLEE=${ARG1})
+exten => s,n,Set(TARGET=${ARG2})
+exten => s,n,Set(RECORD_ENABLED=${DB(record/${CALLER})})
+exten => s,n,GotoIf($["${RECORD_ENABLED}" = "1"]?iax_record,1)
+exten => s,n,Dial(IAX2/${TARGET}/${CALLEE},60,r)
+exten => s,n,Hangup()
+
+; Recording section for IAX2
+exten => iax_record,1,Set(CALLEE=${ARG1})
+exten => iax_record,n,Set(RAW=${SHELL(date +%Y%m%d-%H%M%S)})
+exten => iax_record,n,Set(TIMESTAMP=${FILTER(0-9-,${RAW})})
+exten => iax_record,n,Set(FILE_NAME=]] .. record_dir .. [[/${CALLER}_${CALLEE}_${TIMESTAMP})
+exten => iax_record,n,MixMonitor(${FILE_NAME}]] .. file_ext_dot .. [[)
+exten => iax_record,n,Dial(IAX2/${TARGET}/${CALLEE},60,r)
+exten => iax_record,n,StopMixMonitor()
+exten => iax_record,n,Hangup()
 
 [default]
 exten => _.,1,Goto(internal,${EXTEN},1)
@@ -752,6 +818,7 @@ exten => do_record,n,Hangup()
 
 [external]
 exten => s,1,Progress()
+exten => s,n,NoOp(Incoming PSTN call)
 exten => s,n,Set(CALLER_NUM=${FILTER(0-9,${CALLERID(num)})})
 exten => s,n,GotoIf($["${CALLER_NUM}" = ""]?unknown_caller,1)
 exten => s,n,Goto(ring_all,1)
@@ -796,8 +863,19 @@ exten => h,1,StopMixMonitor()
         
         for ext_len, _ in pairs(ext_lengths) do
             local pattern = string.rep("X", ext_len)
-            from_iax_rules = from_iax_rules .. "exten => _" .. pattern .. ",1,Dial(SIP/${EXTEN},30)\n"
+            from_iax_rules = from_iax_rules .. "exten => _" .. pattern .. ",1,Set(CALLER_NUM=${CALLERID(num)})\n"
+            from_iax_rules = from_iax_rules .. "exten => _" .. pattern .. ",n,Set(TARGET_EXTEN=${EXTEN})\n"
+            from_iax_rules = from_iax_rules .. "exten => _" .. pattern .. ",n,Set(RECORD_ENABLED=${DB(record/${TARGET_EXTEN})})\n"
+            from_iax_rules = from_iax_rules .. "exten => _" .. pattern .. ",n,GotoIf($[\"${RECORD_ENABLED}\" = \"1\"]?iax_record,1)\n"
+            from_iax_rules = from_iax_rules .. "exten => _" .. pattern .. ",n,Dial(SIP/${TARGET_EXTEN},30)\n"
             from_iax_rules = from_iax_rules .. "exten => _" .. pattern .. ",n,Hangup()\n"
+            from_iax_rules = from_iax_rules .. "exten => iax_record,1,Set(RAW=${SHELL(date +%Y%m%d-%H%M%S)})\n"
+            from_iax_rules = from_iax_rules .. "exten => iax_record,n,Set(TIMESTAMP=${FILTER(0-9-,${RAW})})\n"
+            from_iax_rules = from_iax_rules .. "exten => iax_record,n,Set(FILE_NAME=" .. record_dir .. "/${CALLER_NUM}_${TARGET_EXTEN}_${TIMESTAMP})\n"
+            from_iax_rules = from_iax_rules .. "exten => iax_record,n,MixMonitor(${FILE_NAME}" .. file_ext_dot .. mixmonitor_opts .. ")\n"
+            from_iax_rules = from_iax_rules .. "exten => iax_record,n,Dial(SIP/${TARGET_EXTEN},30)\n"
+            from_iax_rules = from_iax_rules .. "exten => iax_record,n,StopMixMonitor()\n"
+            from_iax_rules = from_iax_rules .. "exten => iax_record,n,Hangup()\n"
         end
         
         ext_content = ext_content .. from_iax_rules

@@ -10,6 +10,16 @@
 <script type="text/javascript">
 var refreshInterval = null;
 
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
+
 function refreshStatus() {
     var url = '<%=luci.dispatcher.build_url("admin", "services", "voip", "status_data")%>';
     
@@ -28,13 +38,13 @@ function refreshStatus() {
                 else if (peer.status == 'UNREACHABLE') statusClass = 'status-unreachable';
                 
                 peersHtml += '<tr class="cbi-section-table-row">';
-                peersHtml += '<td class="cbi-section-table-cell">' + peer.name + '</td>';
-                peersHtml += '<td class="cbi-section-table-cell">' + peer.host + '</td>';
-                peersHtml += '<td class="cbi-section-table-cell"><span class="' + statusClass + '">' + peer.status + '</span></td>';
+                peersHtml += '<td class="cbi-section-table-cell">' + escapeHtml(peer.name) + '</td>';
+                peersHtml += '<td class="cbi-section-table-cell">' + escapeHtml(peer.host) + '</td>';
+                peersHtml += '<td class="cbi-section-table-cell"><span class="' + statusClass + '">' + escapeHtml(peer.status) + '</span></td>';
                 peersHtml += '</tr>';
             }
             if (data.peers.length == 0) {
-                peersHtml = '<tr class="cbi-section-table-row"><td class="cbi-section-table-cell" colspan="3"><%:No peers found%></td></table>';
+                peersHtml = '<tr class="cbi-section-table-row"><td class="cbi-section-table-cell" colspan="3"><%:No peers found%></td></tr>';
             }
             document.getElementById('peers-tbody').innerHTML = peersHtml;
             
@@ -48,10 +58,10 @@ function refreshStatus() {
                     else if (sp.status == 'UNREACHABLE') statusClass = 'status-unreachable';
                     
                     serverPeersHtml += '<tr class="cbi-section-table-row">';
-                    serverPeersHtml += '<td class="cbi-section-table-cell">' + sp.name + '</td>';
-                    serverPeersHtml += '<td class="cbi-section-table-cell">' + sp.host + '</td>';
-                    serverPeersHtml += '<td class="cbi-section-table-cell">' + (sp.port || '5060') + '</td>';
-                    serverPeersHtml += '<td class="cbi-section-table-cell"><span class="' + statusClass + '">' + sp.status + '</span></td>';
+                    serverPeersHtml += '<td class="cbi-section-table-cell">' + escapeHtml(sp.name) + '</td>';
+                    serverPeersHtml += '<td class="cbi-section-table-cell">' + escapeHtml(sp.host) + '</td>';
+                    serverPeersHtml += '<td class="cbi-section-table-cell">' + escapeHtml(sp.port || '5060') + '</td>';
+                    serverPeersHtml += '<td class="cbi-section-table-cell"><span class="' + statusClass + '">' + escapeHtml(sp.status) + '</span></td>';
                     serverPeersHtml += '</tr>';
                 }
             } else {
@@ -59,11 +69,36 @@ function refreshStatus() {
             }
             document.getElementById('server-peers-tbody').innerHTML = serverPeersHtml;
             
+            var iaxPeersHtml = '';
+            if (data.iax_peers && data.iax_peers.length > 0) {
+                for (var i = 0; i < data.iax_peers.length; i++) {
+                    var ip = data.iax_peers[i];
+                    var statusClass = '';
+                    if (ip.status == 'OK') statusClass = 'status-ok';
+                    else if (ip.status == 'UNKNOWN') statusClass = 'status-unknown';
+                    else if (ip.status == 'UNREACHABLE') statusClass = 'status-unreachable';
+                    
+                    iaxPeersHtml += '<tr class="cbi-section-table-row">';
+                    iaxPeersHtml += '<td class="cbi-section-table-cell">' + escapeHtml(ip.name) + '</td>';
+                    iaxPeersHtml += '<td class="cbi-section-table-cell">' + escapeHtml(ip.host || '-') + '</td>';
+                    iaxPeersHtml += '<td class="cbi-section-table-cell">4569</td>';
+                    iaxPeersHtml += '<td class="cbi-section-table-cell"><span class="' + statusClass + '">' + escapeHtml(ip.status) + '</span></td>';
+                    iaxPeersHtml += '</tr>';
+                }
+            } else {
+                iaxPeersHtml = '<tr class="cbi-section-table-row"><td class="cbi-section-table-cell" colspan="5"><%:No IAX2 peers configured%></td></tr>';
+            }
+            document.getElementById('iax-peers-tbody').innerHTML = iaxPeersHtml;
+            
             var callsHtml = '';
             for (var i = 0; i < data.calls.length; i++) {
                 var call = data.calls[i];
+                var displayCall = call.caller + ' → ' + call.callee;
+                if (call.type) {
+                    displayCall = '[' + call.type + '] ' + displayCall;
+                }
                 callsHtml += '<tr class="cbi-section-table-row">';
-                callsHtml += '<td class="cbi-section-table-cell">' + call.caller + ' → ' + call.callee + '</td>';
+                callsHtml += '<td class="cbi-section-table-cell">' + escapeHtml(displayCall) + '</td>';
                 callsHtml += '</tr>';
             }
             if (data.calls.length == 0) {
@@ -191,6 +226,22 @@ window.addEventListener('beforeunload', function() {
                     <th class="cbi-section-table-cell"><%:Status%></th>
                 </tr>
                 <tbody id="server-peers-tbody">
+                </tbody>
+            </table>
+        </div>
+    </fieldset>
+
+    <fieldset class="cbi-section">
+        <legend><%:IAX2 Peers%></legend>
+        <div class="cbi-section-node">
+            <table class="cbi-section-table">
+                <tr class="cbi-section-table-titles">
+                    <th class="cbi-section-table-cell"><%:Name%></th>
+                    <th class="cbi-section-table-cell"><%:Host%></th>
+                    <th class="cbi-section-table-cell"><%:Port%></th>
+                    <th class="cbi-section-table-cell"><%:Status%></th>
+                </tr>
+                <tbody id="iax-peers-tbody">
                 </tbody>
             </table>
         </div>
