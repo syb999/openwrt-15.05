@@ -481,3 +481,33 @@ msgstr "选择 PSTN 来电的处理方式。请将 .gsm 文件放到下面指定
 msgid "PSTN Handler Settings"
 msgstr "PSTN 处理设置"
 
+msgid "IAX2 Trunk"
+msgstr "IAX2 中继"
+
+msgid "Configure IAX2 trunks for multi-Asterisk interconnection"
+msgstr "配置多台 Asterisk 互联的 IAX2 中继"
+
+msgid "IAX2 trunks allow multiple Asterisk servers to interconnect. Each trunk represents a remote Asterisk server. Use dial prefix to route calls to the target server (e.g., prefix 81 means dial 816001 to reach extension 6001 on remote server)."
+msgstr "IAX2 中继允许多台 Asterisk 服务器互联。每个中继代表一台远程 Asterisk 服务器。使用拨号前缀将呼叫路由到目标服务器（例如前缀 81 表示拨打 816001 可到达远程服务器的分机 6001）。"
+
+msgid "IAX2 Global Settings"
+msgstr "IAX2 全局设置"
+
+msgid "Bind Port"
+msgstr "绑定端口"
+
+msgid "Bind Address"
+msgstr "绑定地址"
+
+msgid "0.0.0.0 for all interfaces, or specific IP address"
+msgstr "0.0.0.0 表示所有接口，或指定具体 IP 地址"
+
+msgid "IAX2 Trunks"
+msgstr "IAX2 中继列表"
+
+msgid "Remote Host/IP"
+msgstr "远程主机/IP"
+
+msgid "Secret"
+msgstr "密钥"
+

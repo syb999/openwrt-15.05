@@ -17,6 +17,7 @@ function index()
     entry({"admin", "services", "voip", "download_record"}, call("action_download_record"), nil)
     entry({"admin", "services", "voip", "delete_record"}, call("action_delete_record"), nil)
     entry({"admin", "services", "voip", "pstn_handler"}, cbi("voip/pstn_handler"), "PSTN Incoming", 7)
+    entry({"admin", "services", "voip", "iax2"}, cbi("voip/iax2"), "IAX2 Trunk", 8)
     entry({"admin", "services", "voip", "restart"}, call("action_restart"), nil)
     entry({"admin", "services", "voip", "apply"}, call("action_apply"), nil)
 end
@@ -266,6 +267,7 @@ function generate_configs()
     local sip_conf = "/etc/asterisk/sip.conf"
     local extensions_conf = "/etc/asterisk/extensions.conf"
     local musiconhold_conf = "/etc/asterisk/musiconhold.conf"
+    local iax_conf = "/etc/asterisk/iax.conf"
     
     local record_enabled = uci:get_first("voip", "record", "enabled") or "0"
     local record_dir = uci:get_first("voip", "record", "dir") or "/tmp/voip_records"
@@ -311,12 +313,77 @@ function generate_configs()
     
     fs.mkdir(playback_dir)
     
-    local playback_path = playback_dir .. "/" .. playback_file
-    local ivr_welcome_path = playback_dir .. "/" .. ivr_welcome
-    local ivr_invalid_path = playback_dir .. "/" .. ivr_invalid
-    
     local musiconhold_content = "\n[default]\nmode=files\ndirectory=/usr/share/asterisk/moh\n\n"
     fs.writefile(musiconhold_conf, musiconhold_content)
+    
+    local extensions_info = {}
+    uci:foreach("voip", "extension", function(s)
+        if s.enabled == "1" then
+            local number = s.number or s[".name"]
+            local secret = s.secret or "secret"
+            local callerid = s.callerid or ("Extension " .. number)
+            local ext_record = s.record or "0"
+            table.insert(extensions_info, {
+                number = number,
+                secret = secret,
+                callerid = callerid,
+                record = ext_record
+            })
+        end
+    end)
+    
+    local ext_lengths = {}
+    for _, ext in ipairs(extensions_info) do
+        local len = string.len(ext.number)
+        ext_lengths[len] = true
+    end
+    if not ext_lengths[3] then ext_lengths[3] = true end
+    if not ext_lengths[4] then ext_lengths[4] = true end
+    
+    local iax_trunks = {}
+    local iax_rules = ""
+    
+    uci:foreach("voip", "iax2_trunk", function(t)
+        if t.enabled == "1" and t.name and t.name ~= "" and t.host and t.host ~= "" then
+            table.insert(iax_trunks, {
+                name = t.name,
+                host = t.host,
+                port = t.port or "4569",
+                secret = t.secret,
+                dial_prefix = t.dial_prefix or "",
+                context = t.context or "from_iax",
+                qualify = t.qualify or "1"
+            })
+        end
+    end)
+    
+    local iax_bindport = uci:get("voip", "iax2", "bindport") or "4569"
+    local iax_bindaddr = uci:get("voip", "iax2", "bindaddr") or "0.0.0.0"
+    
+    local iax_content = "[general]\nbindport=" .. iax_bindport .. "\nbindaddr=" .. iax_bindaddr .. "\n\n"
+    
+    for _, trunk in ipairs(iax_trunks) do
+        iax_content = iax_content .. "[" .. trunk.name .. "]\n"
+        iax_content = iax_content .. "type=friend\n"
+        iax_content = iax_content .. "host=" .. trunk.host .. "\n"
+        iax_content = iax_content .. "port=" .. trunk.port .. "\n"
+        iax_content = iax_content .. "secret=" .. trunk.secret .. "\n"
+        iax_content = iax_content .. "context=" .. trunk.context .. "\n"
+        iax_content = iax_content .. "qualify=" .. (trunk.qualify == "1" and "yes" or "no") .. "\n\n"
+        
+        if trunk.dial_prefix and trunk.dial_prefix ~= "" then
+            local prefix_len = string.len(trunk.dial_prefix)
+            for ext_len, _ in pairs(ext_lengths) do
+                local pattern = string.rep("X", ext_len)
+                local exten_pattern = "_" .. trunk.dial_prefix .. pattern
+                
+                iax_rules = iax_rules .. "\n; IAX2 route to " .. trunk.name .. " (prefix: " .. trunk.dial_prefix .. ")\n"
+                iax_rules = iax_rules .. "exten => " .. exten_pattern .. ",1,Dial(IAX2/" .. trunk.name .. "/${EXTEN:" .. prefix_len .. "},60)\n"
+            end
+        end
+    end
+    
+    fs.writefile(iax_conf, iax_content)
     
     local sip_content = [[
 [general]
@@ -383,34 +450,24 @@ qualifyfreq=60
         end
     end)
     
-    local extensions_info = {}
-    uci:foreach("voip", "extension", function(s)
-        if s.enabled == "1" then
-            local number = s.number or s[".name"]
-            local secret = s.secret or "secret"
-            local callerid = s.callerid or ("Extension " .. number)
-            local ext_record = s.record or "0"
-            table.insert(extensions_info, {
-                number = number,
-                secret = secret,
-                callerid = callerid,
-                record = ext_record
-            })
-            sip_content = sip_content .. "\n[" .. number .. "]\n"
-            sip_content = sip_content .. "type=friend\n"
-            sip_content = sip_content .. "secret=" .. secret .. "\n"
-            sip_content = sip_content .. "host=dynamic\n"
-            sip_content = sip_content .. "context=internal\n"
-            sip_content = sip_content .. "dtmfmode=rfc2833\n"
-            sip_content = sip_content .. "nat=force_rport,comedia\n"
-            sip_content = sip_content .. "qualify=yes\n"
-            sip_content = sip_content .. "qualifyfreq=30\n"
-            sip_content = sip_content .. "rtupdate=yes\n"
-            sip_content = sip_content .. "rtcachefriends=yes\n"
-            sip_content = sip_content .. "session-timers=refuse\n"
-            sip_content = sip_content .. "callerid=\"" .. callerid .. "\" <" .. number .. ">\n"
-        end
-    end)
+    for _, ext in ipairs(extensions_info) do
+        local number = ext.number
+        local secret = ext.secret
+        local callerid = ext.callerid
+        sip_content = sip_content .. "\n[" .. number .. "]\n"
+        sip_content = sip_content .. "type=friend\n"
+        sip_content = sip_content .. "secret=" .. secret .. "\n"
+        sip_content = sip_content .. "host=dynamic\n"
+        sip_content = sip_content .. "context=internal\n"
+        sip_content = sip_content .. "dtmfmode=rfc2833\n"
+        sip_content = sip_content .. "nat=force_rport,comedia\n"
+        sip_content = sip_content .. "qualify=yes\n"
+        sip_content = sip_content .. "qualifyfreq=30\n"
+        sip_content = sip_content .. "rtupdate=yes\n"
+        sip_content = sip_content .. "rtcachefriends=yes\n"
+        sip_content = sip_content .. "session-timers=refuse\n"
+        sip_content = sip_content .. "callerid=\"" .. callerid .. "\" <" .. number .. ">\n"
+    end
     
     uci:foreach("voip", "peer", function(p)
         if p.name and p.name ~= "" and p.host and p.host ~= "" then
@@ -457,6 +514,10 @@ qualifyfreq=60
     for _, ext in ipairs(extensions_info) do
         table.insert(all_extensions, ext.number)
     end
+    
+    local playback_path = playback_dir .. "/" .. playback_file
+    local ivr_welcome_path = playback_dir .. "/" .. ivr_welcome
+    local ivr_invalid_path = playback_dir .. "/" .. ivr_invalid
     
     local ext_content = [[
 
@@ -587,6 +648,10 @@ exten => _1XXXXXXXXXX!,1,Macro(multi_dial,${EXTEN})
             ext_content = ext_content .. "exten => _" .. prefix .. ".,n,Hangup()\n"
         end
     end)
+    
+    if iax_rules ~= "" then
+        ext_content = ext_content .. "\n; ========== IAX2 Routing ==========\n" .. iax_rules
+    end
     
     if pstn_mode == "ivr" and #ivr_options > 0 then
         ext_content = ext_content .. [[
@@ -724,6 +789,18 @@ exten => s,n,Return()
 
 exten => h,1,StopMixMonitor()
 ]]
+    end
+    
+    if #iax_trunks > 0 then
+        local from_iax_rules = "\n\n; ========== IAX2 Incoming Calls ==========\n[from_iax]\n"
+        
+        for ext_len, _ in pairs(ext_lengths) do
+            local pattern = string.rep("X", ext_len)
+            from_iax_rules = from_iax_rules .. "exten => _" .. pattern .. ",1,Dial(SIP/${EXTEN},30)\n"
+            from_iax_rules = from_iax_rules .. "exten => _" .. pattern .. ",n,Hangup()\n"
+        end
+        
+        ext_content = ext_content .. from_iax_rules
     end
     
     fs.writefile(extensions_conf, ext_content)

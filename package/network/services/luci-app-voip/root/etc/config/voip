@@ -52,3 +52,26 @@ config pstn_handler 'pstn_handler'
 	option timeout '10'
 	option invalid 'ivr-invalid'
 
+config iax2
+    option bindport '4569'
+    option bindaddr '0.0.0.0'
+
+config iax2_trunk
+    option name 'server-a'
+    option enabled '1'
+    option host '192.168.1.10'
+    option port '4569'
+    option secret 'shared_secret'
+    option dial_prefix '81'
+    option context 'from_iax'
+    option qualify '1'
+
+config iax2_trunk
+    option name 'server-b'
+    option enabled '1'
+    option host '192.168.1.20'
+    option port '4569'
+    option secret 'shared_secret'
+    option dial_prefix '82'
+    option context 'from_iax'
+    option qualify '1'
