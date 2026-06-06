@@ -1,0 +1,251 @@
+<%+header%>
+<h2><%:Conference Management%></h2>
+
+<style>
+.btn { 
+    padding: 4px 8px; 
+    margin: 0 2px; 
+    border: none; 
+    border-radius: 3px; 
+    cursor: pointer;
+    font-size: 12px;
+}
+.btn-lock { background-color: #f0ad4e; color: white; }
+.btn-unlock { background-color: #5bc0de; color: white; }
+.btn-mute-all { background-color: #d9534f; color: white; }
+.btn-unmute-all { background-color: #5cb85c; color: white; }
+.btn-mute { background-color: #f0ad4e; color: white; }
+.btn-unmute { background-color: #5bc0de; color: white; }
+.btn-kick { background-color: #d9534f; color: white; }
+.btn-refresh { background-color: #337ab7; color: white; padding: 5px 15px; margin-bottom: 10px; }
+.conference-card {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f9f9f9;
+}
+.conference-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+}
+.conference-actions {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+.participant-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.participant-table th, .participant-table td {
+    padding: 8px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+.participant-table th {
+    background-color: #f2f2f2;
+}
+</style>
+
+<script type="text/javascript">
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
+
+function refreshConferences() {
+    var url = '<%=luci.dispatcher.build_url("admin", "services", "voip", "conference_data")%>';
+    XHR.get(url, null,
+        function(xhr) {
+            var data = JSON.parse(xhr.responseText);
+            var html = '';
+            
+            for (var i = 0; i < data.conferences.length; i++) {
+                var conf = data.conferences[i];
+                html += '<div class="conference-card">';
+                html += '<div class="conference-title">';
+                html += '<%:Conference Room%>: ' + escapeHtml(conf.name);
+                html += ' (' + conf.user_count + ' <%:participants%>)';
+                html += '</div>';
+                
+                html += '<div class="conference-actions">';
+                if (conf.locked === 'Yes') {
+                    html += '<button class="btn btn-unlock" onclick="unlockConference(\'' + escapeHtml(conf.name) + '\')"><%:Unlock%></button>';
+                } else {
+                    html += '<button class="btn btn-lock" onclick="lockConference(\'' + escapeHtml(conf.name) + '\')"><%:Lock%></button>';
+                }
+                html += '<button class="btn btn-mute-all" onclick="muteAll(\'' + escapeHtml(conf.name) + '\')"><%:Mute All%></button>';
+                html += '<button class="btn btn-unmute-all" onclick="unmuteAll(\'' + escapeHtml(conf.name) + '\')"><%:Unmute All%></button>';
+                html += '</div>';
+                
+                if (conf.users && conf.users.length > 0) {
+                    html += '<table class="participant-table">';
+                    html += '<thead>';
+                    html += '<tr>';
+                    html += '<th><%:Channel%></th>';
+                    html += '<th><%:CallerID%></th>';
+                    html += '<th><%:Actions%></th>';
+                    html += '</tr>';
+                    html += '</thead>';
+                    html += '<tbody>';
+                    
+                    for (var j = 0; j < conf.users.length; j++) {
+                        var user = conf.users[j];
+                        html += '<tr>';
+                        html += '<td>' + escapeHtml(user.channel) + '</td>';
+                        html += '<td>' + escapeHtml(user.callerid) + '</td>';
+                        html += '<td>';
+                        if (user.muted === 'Yes') {
+                            html += '<button class="btn btn-unmute" onclick="unmuteUser(\'' + escapeHtml(conf.name) + '\', \'' + escapeHtml(user.channel) + '\')"><%:Unmute%></button>';
+                        } else {
+                            html += '<button class="btn btn-mute" onclick="muteUser(\'' + escapeHtml(conf.name) + '\', \'' + escapeHtml(user.channel) + '\')"><%:Mute%></button>';
+                        }
+                        html += '<button class="btn btn-kick" onclick="kickUser(\'' + escapeHtml(user.channel) + '\')"><%:Kick%></button>';
+                        html += '</td>';
+                        html += '</tr>';
+                    }
+                    
+                    html += '</tbody>';
+                    html += '</tr>';
+                } else {
+                    html += '<div><%:No participants%></div>';
+                }
+                
+                html += '</div>';
+            }
+            
+            if (data.conferences.length == 0) {
+                html = '<div><%:No active conferences%></div>';
+            }
+            
+            document.getElementById('conference-list').innerHTML = html;
+        },
+        function() {
+            document.getElementById('conference-list').innerHTML = '<div><%:Load failed%></div>';
+        }
+    );
+}
+
+function lockConference(room) {
+    var url = '<%=luci.dispatcher.build_url("admin", "services", "voip", "conference_lock")%>?room=' + encodeURIComponent(room);
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4) {
+            refreshConferences();
+        }
+    };
+    xhr.send();
+}
+
+function unlockConference(room) {
+    var url = '<%=luci.dispatcher.build_url("admin", "services", "voip", "conference_unlock")%>?room=' + encodeURIComponent(room);
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4) {
+            refreshConferences();
+        }
+    };
+    xhr.send();
+}
+
+function muteAll(room) {
+    var url = '<%=luci.dispatcher.build_url("admin", "services", "voip", "conference_mute_all")%>?room=' + encodeURIComponent(room);
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.onload = function() {
+        refreshConferences();
+    };
+    xhr.onerror = function() {
+        alert('<%:Request failed%>');
+        refreshConferences();
+    };
+    xhr.send();
+}
+
+function unmuteAll(room) {
+    var url = '<%=luci.dispatcher.build_url("admin", "services", "voip", "conference_unmute_all")%>?room=' + encodeURIComponent(room);
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.onload = function() {
+        refreshConferences();
+    };
+    xhr.onerror = function() {
+        alert('<%:Request failed%>');
+        refreshConferences();
+    };
+    xhr.send();
+}
+
+function muteUser(room, channel) {
+    var url = '<%=luci.dispatcher.build_url("admin", "services", "voip", "conference_mute_user")%>?room=' + encodeURIComponent(room) + '&channel=' + encodeURIComponent(channel);
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.onload = function() {
+        refreshConferences();
+    };
+    xhr.onerror = function() {
+        alert('<%:Request failed%>');
+        refreshConferences();
+    };
+    xhr.send();
+}
+
+function unmuteUser(room, channel) {
+    var url = '<%=luci.dispatcher.build_url("admin", "services", "voip", "conference_unmute_user")%>?room=' + encodeURIComponent(room) + '&channel=' + encodeURIComponent(channel);
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.onload = function() {
+        refreshConferences();
+    };
+    xhr.onerror = function() {
+        alert('<%:Request failed%>');
+        refreshConferences();
+    };
+    xhr.send();
+}
+
+function kickUser(channel) {
+    if (confirm('<%:Kick this participant?%>')) {
+        var url = '<%=luci.dispatcher.build_url("admin", "services", "voip", "conference_kick")%>?channel=' + encodeURIComponent(channel);
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState == 4) {
+                refreshConferences();
+            }
+        };
+        xhr.send();
+    }
+}
+
+window.addEventListener('load', function() {
+    refreshConferences();
+    setInterval(refreshConferences, 5000);
+});
+</script>
+
+<div class="cbi-map">
+    <div class="cbi-section">
+        <div class="cbi-section-node">
+            <div style="margin-bottom: 15px;">
+                <button class="btn-refresh" onclick="refreshConferences()"><%:Refresh%></button>
+            </div>
+            <div id="conference-list">
+                <%:Loading...%>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%+footer%>

@@ -66,12 +66,8 @@ config iax2_trunk
     option context 'from_iax'
     option qualify '1'
 
-config iax2_trunk
-    option name 'server-b'
-    option enabled '1'
-    option host '192.168.1.20'
-    option port '4569'
-    option secret 'shared_secret'
-    option dial_prefix '82'
-    option context 'from_iax'
-    option qualify '1'
+config confbridge_global
+        option enable_moh '0'
+        option max_members '20'
+        option record_conference '0'
+

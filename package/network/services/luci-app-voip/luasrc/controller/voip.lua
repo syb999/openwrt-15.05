@@ -18,6 +18,16 @@ function index()
     entry({"admin", "services", "voip", "delete_record"}, call("action_delete_record"), nil)
     entry({"admin", "services", "voip", "pstn_handler"}, cbi("voip/pstn_handler"), "PSTN Incoming", 7)
     entry({"admin", "services", "voip", "iax2"}, cbi("voip/iax2"), "IAX2 Trunk", 8)
+    entry({"admin", "services", "voip", "confbridge"}, cbi("voip/confbridge"), "Conference Bridge", 9)
+    entry({"admin", "services", "voip", "conference"}, template("voip/conference"), "Conference Management", 10)
+    entry({"admin", "services", "voip", "conference_data"}, call("action_conference_data"), nil)
+    entry({"admin", "services", "voip", "conference_lock"}, call("action_conference_lock"), nil)
+    entry({"admin", "services", "voip", "conference_unlock"}, call("action_conference_unlock"), nil)
+    entry({"admin", "services", "voip", "conference_mute_all"}, call("action_conference_mute_all"), nil)
+    entry({"admin", "services", "voip", "conference_unmute_all"}, call("action_conference_unmute_all"), nil)
+    entry({"admin", "services", "voip", "conference_mute_user"}, call("action_conference_mute_user"), nil)
+    entry({"admin", "services", "voip", "conference_unmute_user"}, call("action_conference_unmute_user"), nil)
+    entry({"admin", "services", "voip", "conference_kick"}, call("action_conference_kick"), nil)
     entry({"admin", "services", "voip", "restart"}, call("action_restart"), nil)
     entry({"admin", "services", "voip", "apply"}, call("action_apply"), nil)
 end
@@ -314,6 +324,7 @@ function generate_configs()
     local extensions_conf = "/etc/asterisk/extensions.conf"
     local musiconhold_conf = "/etc/asterisk/musiconhold.conf"
     local iax_conf = "/etc/asterisk/iax.conf"
+    local confbridge_conf = "/etc/asterisk/confbridge.conf"
     
     local record_enabled = uci:get_first("voip", "record", "enabled") or "0"
     local record_dir = uci:get_first("voip", "record", "dir") or "/tmp/voip_records"
@@ -358,6 +369,7 @@ function generate_configs()
     end
     
     fs.mkdir(playback_dir)
+    fs.mkdir("/usr/share/asterisk/moh")
     
     local musiconhold_content = "\n[default]\nmode=files\ndirectory=/usr/share/asterisk/moh\n\n"
     fs.writefile(musiconhold_conf, musiconhold_content)
@@ -409,7 +421,7 @@ function generate_configs()
     local iax_content = "[general]\nbindport=" .. iax_bindport .. "\nbindaddr=" .. iax_bindaddr .. "\n\n"
     
     for _, trunk in ipairs(iax_trunks) do
-        iax_content = iax_content .. "[" .. trunk.name .. "]\n"
+        iax_content = iax_content .. "\n[" .. trunk.name .. "]\n"
         iax_content = iax_content .. "type=friend\n"
         iax_content = iax_content .. "host=" .. trunk.host .. "\n"
         iax_content = iax_content .. "port=" .. trunk.port .. "\n"
@@ -430,24 +442,21 @@ function generate_configs()
     
     fs.writefile(iax_conf, iax_content)
     
-    local sip_content = [[
-[general]
-context = default
-bindport = 5060
-bindaddr = 0.0.0.0
-allowguest = yes
-allowoverlap = yes
-dtmfmode = rfc2833
-alwaysauthreject = yes
-nat = yes
-allow = ulaw
-allow = alaw
-canreinvite = no
-rtcachefriends=yes
-rtsavesysname=yes
-qualifyfreq=60
+    local confbridge_content = "[default_bridge]\ntype=bridge\nmax_members=20\n\n[default_user]\ntype=user\n"
 
-]]
+    uci:foreach("voip", "conference", function(c)
+        if c.enabled == "1" and c.number and c.number ~= "" then
+            local num = c.number
+            local max = c.max_users or "10"
+            confbridge_content = confbridge_content .. "\n[bridge_" .. num .. "]\n"
+            confbridge_content = confbridge_content .. "type=bridge\n"
+            confbridge_content = confbridge_content .. "max_members=" .. max .. "\n"
+        end
+    end)
+    
+    fs.writefile(confbridge_conf, confbridge_content)
+    
+    local sip_content = "[general]\ncontext=default\nbindport=5060\nbindaddr=0.0.0.0\nallowguest=yes\nallowoverlap=yes\ndtfmode=rfc2833\nalwaysauthreject=yes\nnat=yes\nallow=ulaw\nallow=alaw\ncanreinvite=no\nrtcachefriends=yes\nrtsavesysname=yes\nqualifyfreq=60\n"
     
     local trunks = {}
     uci:foreach("voip", "trunk", function(t)
@@ -648,17 +657,27 @@ exten => _.,n,Hangup()
         end
     end
     
+    local conference_rules = ""
+    uci:foreach("voip", "conference", function(c)
+        if c.enabled == "1" and c.number and c.number ~= "" then
+            local num = c.number
+            conference_rules = conference_rules .. "\n; Conference Room " .. num .. "\n"
+            conference_rules = conference_rules .. "exten => " .. num .. ",1,ConfBridge(" .. num .. ")\n"
+        end
+    end)
+
+    if conference_rules ~= "" then
+        ext_content = ext_content .. conference_rules
+    end
+    
     if #trunks > 0 then
         if #trunks == 1 then
             local t = trunks[1]
-            ext_content = ext_content .. [[
-
-; Outbound dialing rules for PSTN (single trunk)
-exten => _1XX!,1,Macro(dialout,${EXTEN},]] .. t.name .. [[)
-exten => _XXXXX!,1,Macro(dialout,${EXTEN},]] .. t.name .. [[)
-exten => _XXXXXXXX!,1,Macro(dialout,${EXTEN},]] .. t.name .. [[)
-exten => _1XXXXXXXXXX!,1,Macro(dialout,${EXTEN},]] .. t.name .. [[)
-]]
+            ext_content = ext_content .. "\n; Outbound dialing rules for PSTN\n"
+            ext_content = ext_content .. "exten => _1XX!,1,Macro(dialout,${EXTEN}," .. t.name .. ")\n"
+            ext_content = ext_content .. "exten => _XXXXX!,1,Macro(dialout,${EXTEN}," .. t.name .. ")\n"
+            ext_content = ext_content .. "exten => _XXXXXXXX!,1,Macro(dialout,${EXTEN}," .. t.name .. ")\n"
+            ext_content = ext_content .. "exten => _1XXXXXXXXXX!,1,Macro(dialout,${EXTEN}," .. t.name .. ")\n"
         else
             local dial_strings = {}
             for _, trunk in ipairs(trunks) do
@@ -668,31 +687,27 @@ exten => _1XXXXXXXXXX!,1,Macro(dialout,${EXTEN},]] .. t.name .. [[)
             end
             local dial_all = table.concat(dial_strings, "&")
             
-            ext_content = ext_content .. [[
-
-; Multi-trunk outbound with load balancing
-[macro-multi_dial]
-exten => s,1,Set(CALLER=${CALLERID(num)})
-exten => s,n,Set(CALLEE=${ARG1})
-exten => s,n,Set(RECORD_ENABLED=${DB(record/${CALLER})})
-exten => s,n,GotoIf($["${RECORD_ENABLED}" = "1"]?record,1)
-exten => s,n,Dial(]] .. dial_all .. [[,60,r)
-exten => s,n,Hangup()
-exten => record,1,Set(CALLER=${CALLERID(num)})
-exten => record,n,Set(RAW=${SHELL(date +%Y%m%d-%H%M%S)})
-exten => record,n,Set(TIMESTAMP=${FILTER(0-9-,${RAW})})
-exten => record,n,Set(FILE_NAME=]] .. record_dir .. [[/${CALLER}_${CALLEE}_${TIMESTAMP})
-exten => record,n,MixMonitor(${FILE_NAME}]] .. file_ext_dot .. [[)
-exten => record,n,Dial(]] .. dial_all .. [[,60,r)
-exten => record,n,StopMixMonitor()
-exten => record,n,Hangup()
-
-; Outbound dialing rules for PSTN (multi-trunk)
-exten => _1XX!,1,Macro(multi_dial,${EXTEN})
-exten => _XXXXX!,1,Macro(multi_dial,${EXTEN})
-exten => _XXXXXXXX!,1,Macro(multi_dial,${EXTEN})
-exten => _1XXXXXXXXXX!,1,Macro(multi_dial,${EXTEN})
-]]
+            ext_content = ext_content .. "\n; Multi-trunk outbound with load balancing\n"
+            ext_content = ext_content .. "[macro-multi_dial]\n"
+            ext_content = ext_content .. "exten => s,1,Set(CALLER=${CALLERID(num)})\n"
+            ext_content = ext_content .. "exten => s,n,Set(CALLEE=${ARG1})\n"
+            ext_content = ext_content .. "exten => s,n,Set(RECORD_ENABLED=${DB(record/${CALLER})})\n"
+            ext_content = ext_content .. "exten => s,n,GotoIf($[\"${RECORD_ENABLED}\" = \"1\"]?record,1)\n"
+            ext_content = ext_content .. "exten => s,n,Dial(" .. dial_all .. ",60,r)\n"
+            ext_content = ext_content .. "exten => s,n,Hangup()\n"
+            ext_content = ext_content .. "exten => record,1,Set(CALLER=${CALLERID(num)})\n"
+            ext_content = ext_content .. "exten => record,n,Set(RAW=${SHELL(date +%Y%m%d-%H%M%S)})\n"
+            ext_content = ext_content .. "exten => record,n,Set(TIMESTAMP=${FILTER(0-9-,${RAW})})\n"
+            ext_content = ext_content .. "exten => record,n,Set(FILE_NAME=" .. record_dir .. "/${CALLER}_${CALLEE}_${TIMESTAMP})\n"
+            ext_content = ext_content .. "exten => record,n,MixMonitor(${FILE_NAME}" .. file_ext_dot .. ")\n"
+            ext_content = ext_content .. "exten => record,n,Dial(" .. dial_all .. ",60,r)\n"
+            ext_content = ext_content .. "exten => record,n,StopMixMonitor()\n"
+            ext_content = ext_content .. "exten => record,n,Hangup()\n"
+            ext_content = ext_content .. "\n; Outbound dialing rules for PSTN\n"
+            ext_content = ext_content .. "exten => _1XX!,1,Macro(multi_dial,${EXTEN})\n"
+            ext_content = ext_content .. "exten => _XXXXX!,1,Macro(multi_dial,${EXTEN})\n"
+            ext_content = ext_content .. "exten => _XXXXXXXX!,1,Macro(multi_dial,${EXTEN})\n"
+            ext_content = ext_content .. "exten => _1XXXXXXXXXX!,1,Macro(multi_dial,${EXTEN})\n"
             
             for _, trunk in ipairs(trunks) do
                 if trunk.prefix and trunk.prefix ~= "" then
@@ -716,23 +731,19 @@ exten => _1XXXXXXXXXX!,1,Macro(multi_dial,${EXTEN})
     end)
     
     if iax_rules ~= "" then
-        ext_content = ext_content .. "\n; ========== IAX2 Routing ==========\n" .. iax_rules
+        ext_content = ext_content .. "\n; IAX2 Routing\n" .. iax_rules
     end
     
     if pstn_mode == "ivr" and #ivr_options > 0 then
-        ext_content = ext_content .. [[
-
-[external]
-exten => s,1,Progress()
-exten => s,n,NoOp(Incoming PSTN call - IVR)
-exten => s,n,Goto(ivr-menu,s,1)
-
-[ivr-menu]
-exten => s,1,Answer()
-exten => s,n,Playback(]] .. ivr_welcome_path .. [[)
-exten => s,n,Read(digit,]] .. ivr_welcome_path .. [[,1,3,]] .. ivr_timeout .. [[)
-exten => s,n,Goto(ivr-menu,${digit},1)
-]]
+        ext_content = ext_content .. "\n[external]\n"
+        ext_content = ext_content .. "exten => s,1,Progress()\n"
+        ext_content = ext_content .. "exten => s,n,NoOp(Incoming PSTN call - IVR)\n"
+        ext_content = ext_content .. "exten => s,n,Goto(ivr-menu,s,1)\n"
+        ext_content = ext_content .. "\n[ivr-menu]\n"
+        ext_content = ext_content .. "exten => s,1,Answer()\n"
+        ext_content = ext_content .. "exten => s,n,Playback(" .. ivr_welcome_path .. ")\n"
+        ext_content = ext_content .. "exten => s,n,Read(digit," .. ivr_welcome_path .. ",1,3," .. ivr_timeout .. ")\n"
+        ext_content = ext_content .. "exten => s,n,Goto(ivr-menu,${digit},1)\n"
         
         for _, opt in ipairs(ivr_options) do
             if opt.action == "extension" then
@@ -742,32 +753,25 @@ exten => s,n,Goto(ivr-menu,${digit},1)
             end
         end
         
-        ext_content = ext_content .. [[
-exten => i,1,Playback(]] .. ivr_invalid_path .. [[)
-exten => i,n,Goto(ivr-menu,s,1)
-exten => t,1,Playback(]] .. ivr_invalid_path .. [[)
-exten => t,n,Hangup()
-]]
+        ext_content = ext_content .. "exten => i,1,Playback(" .. ivr_invalid_path .. ")\n"
+        ext_content = ext_content .. "exten => i,n,Goto(ivr-menu,s,1)\n"
+        ext_content = ext_content .. "exten => t,1,Playback(" .. ivr_invalid_path .. ")\n"
+        ext_content = ext_content .. "exten => t,n,Hangup()\n"
         
     elseif pstn_mode == "direct" then
-        ext_content = ext_content .. [[
-
-[external]
-exten => s,1,Progress()
-exten => s,n,NoOp(Incoming PSTN call - Direct Dial)
-exten => s,n,Set(CALLER_NUM=${FILTER(0-9,${CALLERID(num)})})
-exten => s,n,GotoIf($["${CALLER_NUM}" = ""]?unknown_caller,1)
-exten => s,n,Goto(do_record,1)
-
-exten => unknown_caller,1,Set(CALLER_NUM=unknown)
-exten => unknown_caller,n,Goto(do_record,1)
-
-exten => do_record,1,Answer()
-exten => do_record,n,Set(RAW=${SHELL(date +%Y%m%d-%H%M%S)})
-exten => do_record,n,Set(TIMESTAMP=${FILTER(0-9-,${RAW})})
-exten => do_record,n,Set(FILE_NAME=]] .. record_dir .. [[/${CALLER_NUM}_]] .. default_extension .. [[_${TIMESTAMP})
-exten => do_record,n,MixMonitor(${FILE_NAME}]] .. file_ext_dot .. mixmonitor_opts .. [[)
-]]
+        ext_content = ext_content .. "\n[external]\n"
+        ext_content = ext_content .. "exten => s,1,Progress()\n"
+        ext_content = ext_content .. "exten => s,n,NoOp(Incoming PSTN call - Direct Dial)\n"
+        ext_content = ext_content .. "exten => s,n,Set(CALLER_NUM=${FILTER(0-9,${CALLERID(num)})})\n"
+        ext_content = ext_content .. "exten => s,n,GotoIf($[\"${CALLER_NUM}\" = \"\"]?unknown_caller,1)\n"
+        ext_content = ext_content .. "exten => s,n,Goto(do_record,1)\n"
+        ext_content = ext_content .. "exten => unknown_caller,1,Set(CALLER_NUM=unknown)\n"
+        ext_content = ext_content .. "exten => unknown_caller,n,Goto(do_record,1)\n"
+        ext_content = ext_content .. "exten => do_record,1,Answer()\n"
+        ext_content = ext_content .. "exten => do_record,n,Set(RAW=${SHELL(date +%Y%m%d-%H%M%S)})\n"
+        ext_content = ext_content .. "exten => do_record,n,Set(TIMESTAMP=${FILTER(0-9-,${RAW})})\n"
+        ext_content = ext_content .. "exten => do_record,n,Set(FILE_NAME=" .. record_dir .. "/${CALLER_NUM}_" .. default_extension .. "_${TIMESTAMP})\n"
+        ext_content = ext_content .. "exten => do_record,n,MixMonitor(${FILE_NAME}" .. file_ext_dot .. mixmonitor_opts .. ")\n"
         
         if playback_enabled == "1" and playback_file ~= "" then
             for i = 1, playback_loop do
@@ -775,34 +779,27 @@ exten => do_record,n,MixMonitor(${FILE_NAME}]] .. file_ext_dot .. mixmonitor_opt
             end
         end
         
-        ext_content = ext_content .. [[
-exten => do_record,n,Dial(SIP/]] .. default_extension .. [[,60)
-exten => do_record,n,StopMixMonitor()
-exten => do_record,n,Hangup()
-]]
+        ext_content = ext_content .. "exten => do_record,n,Dial(SIP/" .. default_extension .. ",60)\n"
+        ext_content = ext_content .. "exten => do_record,n,StopMixMonitor()\n"
+        ext_content = ext_content .. "exten => do_record,n,Hangup()\n"
         
     else
-        ext_content = ext_content .. [[
-
-[external]
-exten => s,1,Progress()
-exten => s,n,NoOp(Incoming PSTN call - Normal)
-exten => s,n,Set(CALLER_NUM=${FILTER(0-9,${CALLERID(num)})})
-exten => s,n,GotoIf($["${CALLER_NUM}" = ""]?unknown_caller,1)
-exten => s,n,Goto(do_record,1)
-
-exten => unknown_caller,1,Set(CALLER_NUM=unknown)
-exten => unknown_caller,n,Goto(do_record,1)
-
-exten => do_record,1,Answer()
-exten => do_record,n,Set(RAW=${SHELL(date +%Y%m%d-%H%M%S)})
-exten => do_record,n,Set(TIMESTAMP=${FILTER(0-9-,${RAW})})
-exten => do_record,n,Set(FILE_NAME=]] .. record_dir .. [[/${CALLER_NUM}_]] .. default_extension .. [[_${TIMESTAMP})
-exten => do_record,n,MixMonitor(${FILE_NAME}]] .. file_ext_dot .. mixmonitor_opts .. [[)
-exten => do_record,n,Dial(SIP/]] .. default_extension .. [[,60)
-exten => do_record,n,StopMixMonitor()
-exten => do_record,n,Hangup()
-]]
+        ext_content = ext_content .. "\n[external]\n"
+        ext_content = ext_content .. "exten => s,1,Progress()\n"
+        ext_content = ext_content .. "exten => s,n,NoOp(Incoming PSTN call - Normal)\n"
+        ext_content = ext_content .. "exten => s,n,Set(CALLER_NUM=${FILTER(0-9,${CALLERID(num)})})\n"
+        ext_content = ext_content .. "exten => s,n,GotoIf($[\"${CALLER_NUM}\" = \"\"]?unknown_caller,1)\n"
+        ext_content = ext_content .. "exten => s,n,Goto(do_record,1)\n"
+        ext_content = ext_content .. "exten => unknown_caller,1,Set(CALLER_NUM=unknown)\n"
+        ext_content = ext_content .. "exten => unknown_caller,n,Goto(do_record,1)\n"
+        ext_content = ext_content .. "exten => do_record,1,Answer()\n"
+        ext_content = ext_content .. "exten => do_record,n,Set(RAW=${SHELL(date +%Y%m%d-%H%M%S)})\n"
+        ext_content = ext_content .. "exten => do_record,n,Set(TIMESTAMP=${FILTER(0-9-,${RAW})})\n"
+        ext_content = ext_content .. "exten => do_record,n,Set(FILE_NAME=" .. record_dir .. "/${CALLER_NUM}_" .. default_extension .. "_${TIMESTAMP})\n"
+        ext_content = ext_content .. "exten => do_record,n,MixMonitor(${FILE_NAME}" .. file_ext_dot .. mixmonitor_opts .. ")\n"
+        ext_content = ext_content .. "exten => do_record,n,Dial(SIP/" .. default_extension .. ",60)\n"
+        ext_content = ext_content .. "exten => do_record,n,StopMixMonitor()\n"
+        ext_content = ext_content .. "exten => do_record,n,Hangup()\n"
     end
     
     if default_extension == "" and #all_extensions > 0 then
@@ -814,20 +811,14 @@ exten => do_record,n,Hangup()
             ring_all = ring_all .. "SIP/" .. ext
         end
         
-        ext_content = ext_content .. [[
-
-[external]
-exten => s,1,Progress()
-exten => s,n,NoOp(Incoming PSTN call)
-exten => s,n,Set(CALLER_NUM=${FILTER(0-9,${CALLERID(num)})})
-exten => s,n,GotoIf($["${CALLER_NUM}" = ""]?unknown_caller,1)
-exten => s,n,Goto(ring_all,1)
-
-exten => unknown_caller,1,Set(CALLER_NUM=unknown)
-exten => unknown_caller,n,Goto(ring_all,1)
-
-exten => ring_all,1,Answer()
-]]
+        ext_content = ext_content .. "\n[external]\n"
+        ext_content = ext_content .. "exten => s,1,Progress()\n"
+        ext_content = ext_content .. "exten => s,n,Set(CALLER_NUM=${FILTER(0-9,${CALLERID(num)})})\n"
+        ext_content = ext_content .. "exten => s,n,GotoIf($[\"${CALLER_NUM}\" = \"\"]?unknown_caller,1)\n"
+        ext_content = ext_content .. "exten => s,n,Goto(ring_all,1)\n"
+        ext_content = ext_content .. "exten => unknown_caller,1,Set(CALLER_NUM=unknown)\n"
+        ext_content = ext_content .. "exten => unknown_caller,n,Goto(ring_all,1)\n"
+        ext_content = ext_content .. "exten => ring_all,1,Answer()\n"
         
         if pstn_mode == "direct" and playback_enabled == "1" and playback_file ~= "" then
             for i = 1, playback_loop do
@@ -835,32 +826,26 @@ exten => ring_all,1,Answer()
             end
         end
         
-        ext_content = ext_content .. [[
-exten => ring_all,n,Set(DIAL_STRING=]] .. ring_all .. [[)
-exten => ring_all,n,Dial(${DIAL_STRING},60,rg(sub_record_check,s,1))
-exten => ring_all,n,Hangup()
-
-[sub_record_check]
-exten => s,1,NoOp(Checking recording for answered extension: ${DIALEDPEERNAME})
-exten => s,n,Set(ANSWERED_EXTEN=${FILTER(0-9,${DIALEDPEERNAME})})
-exten => s,n,Set(RECORD_ENABLED=${DB(record/${ANSWERED_EXTEN})})
-exten => s,n,GotoIf($["${RECORD_ENABLED}" = "1"]?record_start,1)
-exten => s,n,Return()
-
-exten => record_start,1,NoOp(Recording enabled for ${ANSWERED_EXTEN})
-exten => s,n,Set(RAW=${SHELL(date +%Y%m%d-%H%M%S)})
-exten => s,n,Set(TIMESTAMP=${FILTER(0-9-,${RAW})})
-exten => s,n,Set(FILE_NAME=]] .. record_dir .. [[/${CALLER_NUM}_${ANSWERED_EXTEN}_${TIMESTAMP})
-exten => s,n,MixMonitor(${FILE_NAME}]] .. file_ext_dot .. mixmonitor_opts .. [[)
-exten => s,n,Return()
-
-exten => h,1,StopMixMonitor()
-]]
+        ext_content = ext_content .. "exten => ring_all,n,Set(DIAL_STRING=" .. ring_all .. ")\n"
+        ext_content = ext_content .. "exten => ring_all,n,Dial(${DIAL_STRING},60,rg(sub_record_check,s,1))\n"
+        ext_content = ext_content .. "exten => ring_all,n,Hangup()\n"
+        ext_content = ext_content .. "\n[sub_record_check]\n"
+        ext_content = ext_content .. "exten => s,1,NoOp(Checking recording for answered extension: ${DIALEDPEERNAME})\n"
+        ext_content = ext_content .. "exten => s,n,Set(ANSWERED_EXTEN=${FILTER(0-9,${DIALEDPEERNAME})})\n"
+        ext_content = ext_content .. "exten => s,n,Set(RECORD_ENABLED=${DB(record/${ANSWERED_EXTEN})})\n"
+        ext_content = ext_content .. "exten => s,n,GotoIf($[\"${RECORD_ENABLED}\" = \"1\"]?record_start,1)\n"
+        ext_content = ext_content .. "exten => s,n,Return()\n"
+        ext_content = ext_content .. "exten => record_start,1,NoOp(Recording enabled for ${ANSWERED_EXTEN})\n"
+        ext_content = ext_content .. "exten => s,n,Set(RAW=${SHELL(date +%Y%m%d-%H%M%S)})\n"
+        ext_content = ext_content .. "exten => s,n,Set(TIMESTAMP=${FILTER(0-9-,${RAW})})\n"
+        ext_content = ext_content .. "exten => s,n,Set(FILE_NAME=" .. record_dir .. "/${CALLER_NUM}_${ANSWERED_EXTEN}_${TIMESTAMP})\n"
+        ext_content = ext_content .. "exten => s,n,MixMonitor(${FILE_NAME}" .. file_ext_dot .. mixmonitor_opts .. ")\n"
+        ext_content = ext_content .. "exten => s,n,Return()\n"
+        ext_content = ext_content .. "exten => h,1,StopMixMonitor()\n"
     end
     
     if #iax_trunks > 0 then
-        local from_iax_rules = "\n\n; ========== IAX2 Incoming Calls ==========\n[from_iax]\n"
-        
+        local from_iax_rules = "\n[from_iax]\n"
         for ext_len, _ in pairs(ext_lengths) do
             local pattern = string.rep("X", ext_len)
             from_iax_rules = from_iax_rules .. "exten => _" .. pattern .. ",1,Set(CALLER_NUM=${CALLERID(num)})\n"
@@ -877,7 +862,6 @@ exten => h,1,StopMixMonitor()
             from_iax_rules = from_iax_rules .. "exten => iax_record,n,StopMixMonitor()\n"
             from_iax_rules = from_iax_rules .. "exten => iax_record,n,Hangup()\n"
         end
-        
         ext_content = ext_content .. from_iax_rules
     end
     
@@ -1024,4 +1008,134 @@ function action_peer_delete()
     end
     
     luci.http.redirect(luci.dispatcher.build_url("admin", "services", "voip", "peer"))
+end
+
+function action_conference_data()
+    luci.http.prepare_content("application/json")
+    
+    local data = { conferences = {} }
+    
+    local f = io.popen("asterisk -rx 'confbridge list' 2>/dev/null")
+    local conference_names = {}
+    
+    if f then
+        for line in f:lines() do
+            local name = line:match("^([%w_]+)%s+")
+            if name and not line:match("===") and not line:match("Conference Bridge") then
+                conference_names[name] = true
+            end
+        end
+        f:close()
+    end
+    
+    for name in pairs(conference_names) do
+        local conf = { name = name, users = {}, locked = "No", user_count = 0 }
+        
+        local h = io.popen("asterisk -rx 'confbridge list' 2>/dev/null | grep '^" .. name .. "'")
+        if h then
+            local line = h:read("*line")
+            if line then
+                local parts = {}
+                for part in string.gmatch(line, "%S+") do
+                    table.insert(parts, part)
+                end
+                if #parts >= 4 then
+                    conf.locked = parts[4]
+                end
+            end
+            h:close()
+        end
+        
+        local g = io.popen("asterisk -rx 'confbridge list " .. name .. "' 2>/dev/null")
+        if g then
+            for line in g:lines() do
+                local channel = line:match("^(SIP/[%d%-]+)%s+")
+                if channel then
+                    local muted = "No"
+                    if line:match("%s+[mM]%s") or line:match("%s+[mM]%S") then
+                        muted = "Yes"
+                    end
+                    local callerid = line:match("%s+([^%s]+)%s*$")
+                    if callerid and callerid ~= "CallerID" then
+                        table.insert(conf.users, {
+                            channel = channel,
+                            callerid = callerid,
+                            muted = muted
+                        })
+                        conf.user_count = conf.user_count + 1
+                    end
+                end
+            end
+            g:close()
+        end
+        
+        table.insert(data.conferences, conf)
+    end
+    
+    luci.http.write_json(data)
+end
+
+function action_conference_lock()
+    local room = luci.http.formvalue("room")
+    if room then
+        luci.sys.exec("asterisk -rx 'confbridge lock " .. room .. "'")
+    end
+    luci.http.prepare_content("application/json")
+    luci.http.write('{"result": "ok"}')
+end
+
+function action_conference_unlock()
+    local room = luci.http.formvalue("room")
+    if room then
+        luci.sys.exec("asterisk -rx 'confbridge unlock " .. room .. "'")
+    end
+    luci.http.prepare_content("application/json")
+    luci.http.write('{"result": "ok"}')
+end
+
+function action_conference_mute_all()
+    local room = luci.http.formvalue("room")
+    if room then
+        luci.sys.exec("asterisk -rx 'confbridge mute " .. room .. " all'")
+    end
+    luci.http.prepare_content("application/json")
+    luci.http.write('{"result": "ok"}')
+end
+
+function action_conference_unmute_all()
+    local room = luci.http.formvalue("room")
+    if room then
+        luci.sys.exec("asterisk -rx 'confbridge unmute " .. room .. " all'")
+    end
+    luci.http.prepare_content("application/json")
+    luci.http.write('{"result": "ok"}')
+end
+
+function action_conference_mute_user()
+    local room = luci.http.formvalue("room")
+    local channel = luci.http.formvalue("channel")
+    if room and channel then
+        luci.sys.exec("asterisk -rx 'confbridge mute " .. room .. " " .. channel .. "'")
+    end
+    luci.http.prepare_content("application/json")
+    luci.http.write('{"result": "ok"}')
+end
+
+function action_conference_unmute_user()
+    local room = luci.http.formvalue("room")
+    local channel = luci.http.formvalue("channel")
+    if room and channel then
+        luci.sys.exec("asterisk -rx 'confbridge unmute " .. room .. " " .. channel .. "'")
+    end
+    luci.http.prepare_content("application/json")
+    luci.http.write('{"result": "ok"}')
+end
+
+function action_conference_kick()
+    local channel = luci.http.formvalue("channel")
+    if channel then
+        luci.sys.exec("asterisk -rx 'channel request hangup " .. channel .. "'")
+    end
+    luci.http.prepare_content("application/json")
+    luci.http.write('{"result": "ok"}')
 end

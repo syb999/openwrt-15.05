@@ -511,3 +511,82 @@ msgstr "远程主机/IP"
 msgid "Secret"
 msgstr "密钥"
 
+# Conference Bridge
+msgid "Conference Bridge"
+msgstr "会议桥"
+
+msgid "Multi-party audio conferencing"
+msgstr "多人音频会议"
+
+msgid "Create conference rooms. Users can dial the room number to join. Multiple people can speak at the same time."
+msgstr "创建会议室。用户拨打会议室号码即可加入。多人可以同时发言。"
+
+msgid "Conference Rooms"
+msgstr "会议室"
+
+msgid "Room Number"
+msgstr "会议室号码"
+
+msgid "Conference room number (e.g., 300001)"
+msgstr "会议室号码（例如 300001）"
+
+msgid "Max Participants"
+msgstr "最大参与人数"
+
+msgid "Maximum participants (0 = unlimited)"
+msgstr "最大参与人数（0 = 无限制）"
+
+msgid "Conference Management"
+msgstr "会议管理"
+
+msgid "Conference Room"
+msgstr "会议室"
+
+msgid "participants"
+msgstr "人"
+
+msgid "Lock"
+msgstr "锁定"
+
+msgid "Unlock"
+msgstr "解锁"
+
+msgid "Mute All"
+msgstr "全员静音"
+
+msgid "Unmute All"
+msgstr "取消全员静音"
+
+msgid "Channel"
+msgstr "通道"
+
+msgid "CallerID"
+msgstr "来电号码"
+
+msgid "Actions"
+msgstr "操作"
+
+msgid "Mute"
+msgstr "静音"
+
+msgid "Unmute"
+msgstr "取消静音"
+
+msgid "Kick"
+msgstr "踢出"
+
+msgid "No participants"
+msgstr "暂无参与者"
+
+msgid "No active conferences"
+msgstr "暂无活跃会议室"
+
+msgid "Load failed"
+msgstr "加载失败"
+
+msgid "Request failed"
+msgstr "请求失败"
+
+msgid "Kick this participant?"
+msgstr "确定踢出此人？"
+
