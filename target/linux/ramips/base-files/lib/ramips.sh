@@ -178,6 +178,9 @@ ramips_board_detect() {
 	*"Edimax BR-6475nD")
 		name="br-6475nd"
 		;;
+	*"ENJOY LINK")
+		name="enjoylink"
+		;;
 	*"F7C027")
 		name="f7c027"
 		;;

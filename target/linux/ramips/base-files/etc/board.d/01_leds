@@ -120,6 +120,9 @@ case $board in
 	esr-9753)
 		set_wifi_led "rt2800pci-phy0::radio"
 		;;
+	enjoylink)
+		set_wifi_led "enjoylink:blue:wifi"
+		;;
 	ex2700)
 		ucidef_set_led_default "power_r" "POWER (red)" "ex2700:red:power" "0"
 		set_wifi_led "ex2700:green:router"

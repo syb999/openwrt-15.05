@@ -1,0 +1,143 @@
+/dts-v1/;
+
+/include/ "mt7628an.dtsi"
+
+/ {
+	compatible = "mediatek,linkit", "mediatek,mt7628an-soc";
+	model = "ENJOY LINK";
+
+	chosen {
+		bootargs = "console=ttyS0,57600";
+	};
+
+	memory@0 {
+		device_type = "memory";
+		reg = <0x0 0x8000000>;
+	};
+
+	pinctrl {
+		state_default: pinctrl0 {
+			gpio {
+				ralink,group = "gpio";
+				ralink,function = "gpio";
+			};
+		};
+	};
+
+	gpio-keys-polled {
+		compatible = "gpio-keys-polled";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		poll-interval = <20>;
+
+		reset {
+			label = "reset";
+			gpios = <&gpio1 8 1>;
+			linux,code = <0x198>;
+		};
+	};
+
+	gpio-leds {
+		compatible = "gpio-leds";
+
+		wifi {
+			label = "enjoylink:blue:wifi";
+			gpios = <&gpio1 12 1>;
+		};
+
+		led-left {
+			label = "enjoylink:blue:led-left";
+			gpios = <&gpio1 9 1>;
+		};
+
+		led-right {
+			label = "enjoylink:blue:led-right";
+			gpios = <&gpio1 10 1>;
+		};
+	};
+
+    sdhci@10130000 {
+        status = "okay";
+        mediatek,cd-high;
+    };
+
+	ethernet@10100000 {
+		mtd-mac-address = <&factory 0x28>;
+	};
+
+	bootstrap {
+		compatible = "mediatek,linkit";
+
+		status = "okay";
+	};
+
+	wmac@10300000 {
+		status = "okay";
+		ralink,mtd-eeprom = <&factory 0>;
+	};
+
+	palmbus@10000000 {
+		spi@b00 {
+			status = "okay";
+
+			pinctrl-names = "default";
+			pinctrl-0 = <&spi_pins>, <&spi_cs1_pins>;
+
+			m25p80@0 {
+				#address-cells = <1>;
+				#size-cells = <1>;
+				compatible = "mx25l25635e";
+				reg = <0 0>;
+				linux,modalias = "m25p80", "mx25l25635e";
+				spi-max-frequency = <40000000>;
+				m25p,chunked-io = <31>;
+
+				partition@0 {
+					label = "u-boot";
+					reg = <0x0 0x30000>;
+					read-only;
+				};
+
+				partition@30000 {
+					label = "u-boot-env";
+					reg = <0x30000 0x10000>;
+				};
+
+				factory: partition@40000 {
+					label = "factory";
+					reg = <0x40000 0x10000>;
+					read-only;
+				};
+
+				partition@50000 {
+					label = "firmware";
+					reg = <0x50000 0x1fb0000>;
+				};
+			};
+
+			spidev@1 {
+				#address-cells = <1>;
+				#size-cells = <1>;
+				compatible = "spidev";
+				reg = <1 0>;
+				spi-max-frequency = <40000000>;
+			};
+		};
+
+		uart1@d00 {
+			status = "okay";
+		};
+
+		uart1@d00 {
+			status = "okay";
+		};
+
+		uart2@e00 {
+			status = "okay";
+		};
+
+		pwm@5000 {
+			status = "okay";
+		};
+	};
+};

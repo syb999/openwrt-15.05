@@ -109,7 +109,7 @@
 		};
 
 		i2c: i2c@900 {
-			compatible = "mediatek,mt7628-i2c";
+			compatible = "ralink,i2c-mt7621";
 			reg = <0x900 0x100>;
 
 			resets = <&rstctrl 16>;
