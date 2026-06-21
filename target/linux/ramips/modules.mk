@@ -41,14 +41,14 @@ endef
 
 $(eval $(call KernelPackage,sdhci-mt7620))
 
+
 I2C_RALINK_MODULES:= \
   CONFIG_I2C_RALINK:drivers/i2c/busses/i2c-ralink
 
 define KernelPackage/i2c-ralink
   $(call i2c_defaults,$(I2C_RALINK_MODULES),59)
   TITLE:=Ralink I2C Controller
-  DEPENDS:=kmod-i2c-core @TARGET_ramips \
-	@!(TARGET_ramips_mt7621||TARGET_ramips_mt7628||TARGET_ramips_mt7688)
+  DEPENDS:=@TARGET_ramips @(!TARGET_ramips_mt7621) kmod-i2c-core
 endef
 
 define KernelPackage/i2c-ralink/description
@@ -61,18 +61,17 @@ $(eval $(call KernelPackage,i2c-ralink))
 I2C_MT7621_MODULES:= \
   CONFIG_I2C_MT7621:drivers/i2c/busses/i2c-mt7621
 
-define KernelPackage/i2c-mt7628
+define KernelPackage/i2c-mt7621
   $(call i2c_defaults,$(I2C_MT7621_MODULES),59)
-  TITLE:=MT7628/88 I2C Controller
-  DEPENDS:=kmod-i2c-core \
-	@(TARGET_ramips_mt7628||TARGET_ramips_mt7688)
+  TITLE:=MT7621 I2C Controller
+  DEPENDS:=@TARGET_ramips @TARGET_ramips_mt7621 kmod-i2c-core
 endef
 
-define KernelPackage/i2c-mt7628/description
+define KernelPackage/i2c-mt7621/description
  Kernel modules for enable mt7621 i2c controller.
 endef
 
-$(eval $(call KernelPackage,i2c-mt7628))
+$(eval $(call KernelPackage,i2c-mt7621))
 
 
 define KernelPackage/dma-ralink
