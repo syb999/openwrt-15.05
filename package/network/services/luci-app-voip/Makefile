@@ -22,7 +22,8 @@ define Package/luci-app-voip
            +asterisk13-res-rtp-multicast +asterisk13-res-srtp +asterisk13-app-verbose \
            +asterisk13-app-mixmonitor +asterisk13-format-wav +asterisk13-format-gsm \
            +asterisk13-codec-gsm +asterisk13-func-db +asterisk13-app-read \
-           +asterisk13-chan-iax2
+           +asterisk13-chan-iax2 +asterisk13-chan-rtp +asterisk13-bridge-native-rtp \
+           +asterisk13-func-config
   PKGARCH:=all
 endef
 
