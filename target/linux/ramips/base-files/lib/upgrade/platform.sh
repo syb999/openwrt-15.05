@@ -177,6 +177,17 @@ platform_check_image() {
 		}
 		return 0
 		;;
+	an1201l|\
+	hc5962|\
+	maipu-igw401-100-p|\
+	mir3g|\
+	mi-router-ac2100|\
+	nokia-a040wq |\
+	redmi-router-ac2100|\
+	zte-e8820s)
+		nand_do_platform_check "$board" "$1"
+		return $?
+		;;
 	wsr-1166)
 		[ "$magic" != "48445230" ] && {
 			echo "Invalid image type."

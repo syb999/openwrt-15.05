@@ -9,7 +9,7 @@ define Profile/Default
 	NAME:=Default Profile
 	PACKAGES:=\
 		kmod-usb-core kmod-usb3 \
-		kmod-ledtrig-usbdev
+		kmod-ledtrig-usbdev base-files busybox dropbear opkg 
 endef
 
 define Profile/Default/Description

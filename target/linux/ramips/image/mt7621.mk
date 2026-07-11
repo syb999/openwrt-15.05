@@ -157,3 +157,114 @@ define Device/xiaoyu-xy-c5
   IMAGE_SIZE := $(ralink_default_fw_size_32M)
 endef
 TARGET_DEVICES += xiaoyu-xy-c5
+
+#
+# MT7621 NAND flash based boards
+#
+define Device/an1201l
+  DTS := AN1201L
+  BLOCKSIZE := 128KiB
+  PAGESIZE := 2048
+  KERNEL_SIZE := 2097152
+  IMAGE_SIZE := 127232k
+  FILESYSTEMS := squashfs
+  IMAGES := factory.bin
+  IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
+endef
+TARGET_DEVICES += an1201l
+
+define Device/hc5962
+  DTS := HC5962
+  BLOCKSIZE := 128KiB
+  PAGESIZE := 2048
+  KERNEL_SIZE := 2097152
+  IMAGE_SIZE := 127232k
+  FILESYSTEMS := squashfs
+  IMAGES := factory.bin
+  IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
+endef
+TARGET_DEVICES += hc5962
+
+define Device/nokia-a040wq
+  DTS := NOKIA-A040WQ
+  BLOCKSIZE := 128KiB
+  PAGESIZE := 2048
+  KERNEL_SIZE := 2048k
+  IMAGE_SIZE := 124928k
+  FILESYSTEMS := squashfs
+  IMAGES := factory.bin
+  IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
+endef
+TARGET_DEVICES += nokia-a040wq
+
+define Device/maipu-igw401-100-p
+  DTS := MAIPU-IGW401-100-P
+  BLOCKSIZE := 128KiB
+  PAGESIZE := 2048
+  KERNEL_SIZE := 2097152
+  IMAGE_SIZE := 127232k
+  FILESYSTEMS := squashfs
+  IMAGES := factory.bin
+  IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
+endef
+TARGET_DEVICES += maipu-igw401-100-p
+
+define Device/mir3g
+  DTS := MIR3G
+  BLOCKSIZE := 128KiB
+  IMAGES := factory.bin
+  PAGESIZE := 2048
+  KERNEL_SIZE := 4096k
+  IMAGE_SIZE := 120320k
+  UBINIZE_OPTS := -E 5
+  FILESYSTEMS := squashfs
+  IMAGES += kernel1.bin rootfs0.bin
+  IMAGE/kernel1.bin := append-kernel
+  IMAGE/rootfs0.bin := append-ubi | check-size $$$$(IMAGE_SIZE)
+  IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
+endef
+TARGET_DEVICES += mir3g
+
+define Device/mi-router-ac2100
+  DTS := MI-ROUTER-AC2100
+  BLOCKSIZE := 128KiB
+  IMAGES := factory.bin
+  PAGESIZE := 2048
+  KERNEL_SIZE := 4096k
+  IMAGE_SIZE := 120320k
+  UBINIZE_OPTS := -E 5
+  FILESYSTEMS := squashfs
+  IMAGES += kernel1.bin rootfs0.bin
+  IMAGE/kernel1.bin := append-kernel
+  IMAGE/rootfs0.bin := append-ubi | check-size $$$$(IMAGE_SIZE)
+  IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
+endef
+TARGET_DEVICES += mi-router-ac2100
+
+define Device/redmi-router-ac2100
+  DTS := REDMI-ROUTER-AC2100
+  BLOCKSIZE := 128KiB
+  IMAGES := factory.bin
+  PAGESIZE := 2048
+  KERNEL_SIZE := 4096k
+  IMAGE_SIZE := 120320k
+  UBINIZE_OPTS := -E 5
+  FILESYSTEMS := squashfs
+  IMAGES += kernel1.bin rootfs0.bin
+  IMAGE/kernel1.bin := append-kernel
+  IMAGE/rootfs0.bin := append-ubi | check-size $$$$(IMAGE_SIZE)
+  IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
+endef
+TARGET_DEVICES += redmi-router-ac2100
+
+define Device/zte-e8820s
+  DTS := ZTE-E8820S
+  BLOCKSIZE := 128KiB
+  PAGESIZE := 2048
+  KERNEL_SIZE := 2097152
+  IMAGE_SIZE := 127232k
+  FILESYSTEMS := squashfs
+  IMAGES := factory.bin
+  IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
+endef
+TARGET_DEVICES += zte-e8820s
