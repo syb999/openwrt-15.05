@@ -3993,7 +3993,7 @@ Signed-off-by: John Crispin <blogic@openwrt.org>
 +	struct nand_oobfree oobfree[MTD_MAX_OOBFREE_ENTRIES];
 +};
 +*/
-+#define __DEBUG_NAND		1			/* Debug information on/off */
++#define __DEBUG_NAND		0			/* Debug information on/off */
 +
 +/* Debug message event */
 +#define DBG_EVT_NONE		0x00000000	/* No event */
