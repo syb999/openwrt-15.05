@@ -7,7 +7,7 @@ define Device/ENJOYLINK
   IMAGE_SIZE := $(ralink_default_fw_size_32M)
   SUPPORTED_DEVICES := enjoylink
   DEVICE_TITLE := ENJOY LINK
-  DEVICE_PACKAGES:= kmod-mt7603 panel-ap-setup
+  DEVICE_PACKAGES:= kmod-mt7603 panel-ap-setup i2c-tools kmod-i2c-gpio
 endef
 TARGET_DEVICES += ENJOYLINK
 

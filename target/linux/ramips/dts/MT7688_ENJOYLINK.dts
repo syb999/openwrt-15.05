@@ -3,7 +3,7 @@
 /include/ "mt7628an.dtsi"
 
 / {
-	compatible = "mediatek,linkit", "mediatek,mt7628an-soc";
+	compatible = "mediatek,enjoylink", "mediatek,mt7628an-soc";
 	model = "ENJOY LINK";
 
 	chosen {
@@ -18,7 +18,7 @@
 	pinctrl {
 		state_default: pinctrl0 {
 			gpio {
-				ralink,group = "gpio";
+				ralink,group = "i2c", "gpio", "refclk";
 				ralink,function = "gpio";
 			};
 		};
@@ -56,19 +56,22 @@
 		};
 	};
 
-    sdhci@10130000 {
-        status = "okay";
-        mediatek,cd-high;
-    };
+	i2c-gpio {
+		compatible = "i2c-gpio";
+		gpios = <&gpio0 5 0 
+			 &gpio0 11 0>;
+		i2c-gpio,delay-us = <50>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+	};
+
+	esw@10110000 {
+		status = "okay";
+		ralink,portmap = <0x01>;
+	};
 
 	ethernet@10100000 {
 		mtd-mac-address = <&factory 0x28>;
-	};
-
-	bootstrap {
-		compatible = "mediatek,linkit";
-
-		status = "okay";
 	};
 
 	wmac@10300000 {
@@ -125,18 +128,6 @@
 		};
 
 		uart1@d00 {
-			status = "okay";
-		};
-
-		uart1@d00 {
-			status = "okay";
-		};
-
-		uart2@e00 {
-			status = "okay";
-		};
-
-		pwm@5000 {
 			status = "okay";
 		};
 	};
