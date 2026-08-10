@@ -2,9 +2,18 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 
 #define DEFAULT_MAX_CMD_LENGTH 64
+
+/* Log file unchanged: keep a low-frequency fallback refresh so dynamic
+   $(cmd) content (e.g. $(date ...)) still updates without redrawing the
+   whole panel every second. Static-only logs fall back even less often.
+   Refresh is incremental (only changed pages are pushed), so 1 s here
+   costs a fraction of a full-frame redraw. */
+#define REFRESH_INTERVAL         1   /* dynamic content ($(...)) fallback */
+#define STATIC_REFRESH_INTERVAL 30   /* static content fallback */
 
 const uint8_t font5x7[] = {
     //   (32)
@@ -199,17 +208,35 @@ const uint8_t font5x7[] = {
     0x08, 0x08, 0x2A, 0x1C, 0x08
 };
 
-static const uint8_t init_sequence[] = {
+static const uint8_t init_sequence_64[] = {
     0xAE, 0xD5, 0x80, 0xA8, 0x3F, 0xD3, 0x00, 0x40,
     0x8D, 0x14, 0x20, 0x00, 0xA1, 0xC8, 0xDA, 0x12,
     0x81, 0xCF, 0xD9, 0xF1, 0xDB, 0x40, 0xA4, 0xA6, 0xAF
 };
 
+static const uint8_t init_sequence_32[] = {
+    0xAE, 0xD5, 0x80, 0xA8, 0x1F, 0xD3, 0x00, 0x40,
+    0x8D, 0x14, 0x20, 0x00, 0xA1, 0xC8, 0xDA, 0x02,
+    0x81, 0x8F, 0xD9, 0xF1, 0xDB, 0x40, 0xA4, 0xA6, 0xAF
+};
+
+static const uint8_t *init_sequence_for(SSD1306_Type type) {
+    return (type == SSD1306_128x32) ? init_sequence_32 : init_sequence_64;
+}
+
 static int i2c_write(SSD1306_Device *dev, const uint8_t *data, size_t len) {
-    if (write(dev->i2c_fd, data, len) != (ssize_t)len) {
-        return -1;
+    int retry = 3;
+    while (retry--) {
+        if (write(dev->i2c_fd, data, len) == (ssize_t)len) {
+            dev->i2c_fail = 0;
+            return 0;
+        }
+        usleep(10000);
     }
-    return 0;
+    perror("I2C write failed after retries");
+    if (dev->i2c_fail < 255)
+        dev->i2c_fail++;
+    return -1;
 }
 
 void write_command(SSD1306_Device *dev, uint8_t cmd) {
@@ -218,6 +245,8 @@ void write_command(SSD1306_Device *dev, uint8_t cmd) {
 }
 
 int ssd1306_init(SSD1306_Device *dev, const SSD1306_Config *config) {
+    if (!dev || !config) return -1;
+
     if ((dev->i2c_fd = open(config->i2c_bus, O_RDWR)) < 0) {
         perror("Failed to open I2C device");
         return -1;
@@ -229,23 +258,51 @@ int ssd1306_init(SSD1306_Device *dev, const SSD1306_Config *config) {
         return -1;
     }
 
-    for (size_t i = 0; i < sizeof(init_sequence); i++) {
-        write_command(dev, init_sequence[i]);
+    /* Absent-panel probe: without a device ACK this write fails immediately.
+       Bail out instead of running a busy error loop (which otherwise spins
+       on retries and perror logging forever). */
+    {
+        uint8_t probe[2] = {0x00, 0xAE};
+        if (write(dev->i2c_fd, probe, sizeof(probe)) != (ssize_t)sizeof(probe)) {
+            fprintf(stderr, "No SSD1306 detected at %s address 0x%02X - aborting\n",
+                    config->i2c_bus, config->i2c_addr);
+            close(dev->i2c_fd);
+            return -1;
+        }
+    }
+
+    const uint8_t *seq = init_sequence_for(config->type);
+    for (size_t i = 0; i < sizeof(init_sequence_64); i++) {
+        write_command(dev, seq[i]);
     }
 
     dev->config = *config;
-    dev->buffer = malloc(LOGICAL_WIDTH * LOGICAL_HEIGHT / 8);
+    dev->width = LOGICAL_WIDTH;
+    dev->height = (config->type == SSD1306_128x32) ? 32 : 64;
+
+    dev->buffer = malloc(dev->width * (dev->height / 8));
     if (!dev->buffer) {
         close(dev->i2c_fd);
         return -1;
     }
+    memset(dev->buffer, 0, dev->width * (dev->height / 8));
 
-    dev->buffer = malloc(LOGICAL_WIDTH * (LOGICAL_HEIGHT / 8));
-    memset(dev->buffer, 0, LOGICAL_WIDTH * (LOGICAL_HEIGHT / 8));
+    /* last_buffer tracks what the panel shows; init to 0xFF so the first
+       ssd1306_display() pushes every page (dirty vs blank buffer). */
+    dev->last_buffer = malloc(dev->width * (dev->height / 8));
+    if (!dev->last_buffer) {
+        free(dev->buffer);
+        close(dev->i2c_fd);
+        return -1;
+    }
+    memset(dev->last_buffer, 0xFF, dev->width * (dev->height / 8));
 
-    dev->scale = (config->type == SSD1306_128x64) ? 2 : 1;
     dev->last_state_change = 0;
-    
+    dev->last_mtime = 0;
+    dev->last_size = 0;
+    dev->last_refresh = 0;
+    dev->i2c_fail = 0;
+
     return 0;
 }
 
@@ -255,14 +312,15 @@ void ssd1306_cleanup(SSD1306_Device *dev) {
         close(dev->i2c_fd);
     }
     free(dev->buffer);
+    free(dev->last_buffer);
 }
 
 void ssd1306_clear(SSD1306_Device *dev) {
-    memset(dev->buffer, 0, LOGICAL_WIDTH * LOGICAL_HEIGHT / 8);
+    memset(dev->buffer, 0, dev->width * dev->height / 8);
 }
 
 void ssd1306_draw_char(SSD1306_Device *dev, uint8_t x, uint8_t y, char c) {
-    if (x >= LOGICAL_WIDTH || y >= LOGICAL_HEIGHT) return;
+    if (x >= dev->width || y >= dev->height) return;
     if (c < 32 || c > 126) c = '?';
     
     const uint8_t *glyph = &font5x7[(c - 32) * 5];
@@ -271,12 +329,12 @@ void ssd1306_draw_char(SSD1306_Device *dev, uint8_t x, uint8_t y, char c) {
     
     for (uint8_t col = 0; col < 5; col++) {
         if (bit_offset) {
-            dev->buffer[page * LOGICAL_WIDTH + x + col] |= (glyph[col] << bit_offset);
-            if (page + 1 < LOGICAL_HEIGHT/8) {
-                dev->buffer[(page + 1) * LOGICAL_WIDTH + x + col] |= (glyph[col] >> (8 - bit_offset));
+            dev->buffer[page * dev->width + x + col] |= (glyph[col] << bit_offset);
+            if (page + 1 < dev->height/8) {
+                dev->buffer[(page + 1) * dev->width + x + col] |= (glyph[col] >> (8 - bit_offset));
             }
         } else {
-            dev->buffer[page * LOGICAL_WIDTH + x + col] |= glyph[col];
+            dev->buffer[page * dev->width + x + col] |= glyph[col];
         }
     }
 }
@@ -287,13 +345,13 @@ void ssd1306_draw_string(SSD1306_Device *dev, uint8_t x, uint8_t y, const char *
     limited_str[20] = '\0';
     
     const char *p = limited_str;
-    while (*p && x < LOGICAL_WIDTH) {
+    while (*p && x < dev->width) {
         ssd1306_draw_char(dev, x, y, *p++);
         x += 6;
-        if (x >= LOGICAL_WIDTH - 5) {
+        if (x >= dev->width - 5) {
             x = 0;
             y += 8;
-            if (y >= LOGICAL_HEIGHT) break;
+            if (y >= dev->height) break;
         }
     }
 }
@@ -393,8 +451,9 @@ void parse_and_draw_shell(SSD1306_Device *dev, uint8_t x, uint8_t y, const char 
 void ssd1306_power(SSD1306_Device *dev, bool on) {
     if (on) {
         write_command(dev, 0xAF);
-        for (size_t i = 0; i < sizeof(init_sequence); i++) {
-            write_command(dev, init_sequence[i]);
+        const uint8_t *seq = init_sequence_for(dev->config.type);
+        for (size_t i = 0; i < sizeof(init_sequence_64); i++) {
+            write_command(dev, seq[i]);
         }
         ssd1306_display(dev);
     } else {
@@ -403,19 +462,23 @@ void ssd1306_power(SSD1306_Device *dev, bool on) {
 }
 
 void ssd1306_display(SSD1306_Device *dev) {
-    write_command(dev, 0x21);
-    write_command(dev, 0x00);
-    write_command(dev, LOGICAL_WIDTH - 1);
-    
-    write_command(dev, 0x22);
-    write_command(dev, 0x00);
-    write_command(dev, (LOGICAL_HEIGHT / 8) - 1);
-    
     uint8_t buf[LOGICAL_WIDTH + 1];
     buf[0] = 0x40;
-    
-    for (uint8_t page = 0; page < LOGICAL_HEIGHT/8; page++) {
-        memcpy(&buf[1], &dev->buffer[page * LOGICAL_WIDTH], LOGICAL_WIDTH);
+
+    /* Incremental refresh: compare each page against what the panel shows
+       and push only the changed ones. A 1-line clock update costs ~1 page
+       of I2C traffic instead of a full 8-page frame. */
+    for (uint8_t page = 0; page < dev->height/8; page++) {
+        const uint8_t *cur = &dev->buffer[page * dev->width];
+        uint8_t *last = &dev->last_buffer[page * dev->width];
+        if (memcmp(cur, last, dev->width) == 0)
+            continue;
+
+        memcpy(last, cur, dev->width);
+        write_command(dev, 0xB0 | page);   /* set page address */
+        write_command(dev, 0x00);          /* lower column start */
+        write_command(dev, 0x10);          /* higher column start */
+        memcpy(&buf[1], cur, dev->width);
         i2c_write(dev, buf, sizeof(buf));
     }
 }
@@ -428,7 +491,21 @@ void ssd1306_display_log(SSD1306_Device *dev) {
     snprintf(full_path, sizeof(full_path), "%s%s", 
             (dev->config.log_file[0] == '/') ? "" : "/",
             dev->config.log_file);
-    
+
+    /* Track log file changes (mtime/size). */
+    struct stat st;
+    bool changed = false;
+    if (stat(full_path, &st) == 0) {
+        if (st.st_mtime != dev->last_mtime || st.st_size != dev->last_size) {
+            changed = true;
+            dev->last_mtime = st.st_mtime;
+            dev->last_size = st.st_size;
+        }
+    } else {
+        /* File missing: error banner shows a live countdown, always redraw. */
+        changed = true;
+    }
+
     FILE *fp = fopen(full_path, "r");
     if (!fp) {
         if (dev->last_state_change == 0) {
@@ -449,23 +526,36 @@ void ssd1306_display_log(SSD1306_Device *dev) {
         ssd1306_display(dev);
         return;
     }
-    
-    dev->last_state_change = 0;
-    char line[LOGICAL_WIDTH + 1];
-    uint8_t line_num = 0;
-    ssd1306_clear(dev);
-    
-    while (line_num < 6 && fgets(line, sizeof(line), fp)) {
-        line[strcspn(line, "\r\n")] = 0;
 
-        if (strstr(line, "$(")) {
-            parse_and_draw_shell(dev, 0, line_num * 8, line);
-        } else {
-            ssd1306_draw_string(dev, 0, line_num * 8, line);
-        }
-        line_num++;
+    /* Read lines into a small buffer and detect dynamic $(cmd) content. */
+    char lines[8][LOGICAL_WIDTH + 1];
+    uint8_t line_count = 0;
+    bool has_dynamic = false;
+    while (line_count < dev->height/8 && fgets(lines[line_count], sizeof(lines[line_count]), fp)) {
+        lines[line_count][strcspn(lines[line_count], "\r\n")] = 0;
+        if (strstr(lines[line_count], "$("))
+            has_dynamic = true;
+        line_count++;
     }
-    
     fclose(fp);
+
+    /* Skip redraw when nothing changed: dynamic logs refresh every
+       REFRESH_INTERVAL s, static logs only every STATIC_REFRESH_INTERVAL s. */
+    if (!changed) {
+        time_t interval = has_dynamic ? REFRESH_INTERVAL : STATIC_REFRESH_INTERVAL;
+        if (now - dev->last_refresh < interval)
+            return;
+    }
+    dev->last_refresh = now;
+
+    dev->last_state_change = 0;
+    ssd1306_clear(dev);
+    for (uint8_t i = 0; i < line_count; i++) {
+        if (strstr(lines[i], "$(")) {
+            parse_and_draw_shell(dev, 0, i * 8, lines[i]);
+        } else {
+            ssd1306_draw_string(dev, 0, i * 8, lines[i]);
+        }
+    }
     ssd1306_display(dev);
 }

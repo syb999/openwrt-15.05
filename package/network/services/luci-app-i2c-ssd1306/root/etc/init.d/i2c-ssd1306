@@ -6,7 +6,7 @@ USE_PROCD=1
 start_service() {
 	enabled=$(uci get i2c-ssd1306.@i2c-ssd1306[0].enabled)
 	if [ $enabled -eq 0 ]; then
-		exit 0
+		return 0
 	fi
 
 	procd_open_instance
@@ -19,7 +19,7 @@ start_service() {
 	procd_close_instance
 
 	if [ ! -f "$(uci get i2c-ssd1306.@i2c-ssd1306[0].log_file)" -o ! -s "$(uci get i2c-ssd1306.@i2c-ssd1306[0].log_file)" ]; then
-		echo "  \$(date +%m-%d\ %H:%M:%S)" > /var/log/ssd1306.log
+		echo "  \$(date '+%m-%d %H:%M:%S')" > /var/log/ssd1306.log
 		echo "  HELLO, OPENWRT!" >> /var/log/ssd1306.log
 		echo "  LAN:\$(ifstatus lan | jsonfilter -e '@[\"ipv4-address\"][0].address')" >> /var/log/ssd1306.log
 		echo "  WAN:\$(ifstatus wan | jsonfilter -e '@[\"ipv4-address\"][0].address')" >> /var/log/ssd1306.log

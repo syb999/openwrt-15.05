@@ -12,7 +12,7 @@ end
 
 function act_status()
 	local e={}
-	e.running = luci.sys.call("pgrep -f /usr/sbin/i2c_ssd1306 > /dev/null")==0
+	e.running = luci.sys.call("pgrep -f '^/usr/sbin/i2c_ssd1306' > /dev/null")==0
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
 end

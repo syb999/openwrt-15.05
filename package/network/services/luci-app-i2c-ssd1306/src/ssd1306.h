@@ -12,8 +12,7 @@
 #include <linux/i2c-dev.h>
 #include <time.h>
 
-#define LOGICAL_WIDTH 128
-#define LOGICAL_HEIGHT 64
+#define LOGICAL_WIDTH 128   /* both 128x64 and 128x32 panels share this */
 
 typedef enum {
     SSD1306_128x32,
@@ -34,8 +33,14 @@ typedef struct {
     int i2c_fd;
     SSD1306_Config config;
     uint8_t *buffer;
-    uint8_t scale;
+    uint8_t *last_buffer;  /* copy of what was sent; for incremental refresh */
+    uint8_t width;
+    uint8_t height;
     time_t last_state_change;
+    time_t last_mtime;   /* log file mtime at last render (0 = unknown) */
+    off_t  last_size;    /* log file size at last render */
+    time_t last_refresh; /* last actual screen refresh timestamp */
+    uint8_t i2c_fail;    /* consecutive I2C write failures (0 = healthy) */
 } SSD1306_Device;
 
 int ssd1306_init(SSD1306_Device *dev, const SSD1306_Config *config);

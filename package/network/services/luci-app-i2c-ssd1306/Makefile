@@ -5,7 +5,7 @@
 
 include $(TOPDIR)/rules.mk
 
-LUCI_Title:=LuCI support for ssd1306 oled display
+LUCI_TITLE:=LuCI support for ssd1306 oled display
 LUCI_DEPENDS:=+libuci +kmod-i2c-core +i2c-tools
 
 include $(TOPDIR)/feeds/luci/luci.mk

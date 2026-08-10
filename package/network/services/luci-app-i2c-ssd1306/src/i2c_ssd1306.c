@@ -5,11 +5,28 @@
 
 #define MAX_DEVICES 1
 
+/* Consecutive seconds of I2C write failure before declaring the panel gone. */
+#define I2C_FAIL_LIMIT 20
+
 static volatile bool running = true;
 static SSD1306_Device device;
 
 void signal_handler(int sig) {
     running = false;
+}
+
+/* Cheap liveness probe: a 0-byte write sends only the I2C address (same
+   trick as i2cdetect's quick probe) and checks for the device ACK without
+   altering the display state. Runs every loop so an unplugged panel is
+   noticed even when display_log is skipping redraws (static log). */
+static int probe_panel(SSD1306_Device *dev) {
+    if (write(dev->i2c_fd, NULL, 0) >= 0) {
+        dev->i2c_fail = 0;
+        return 0;
+    }
+    if (dev->i2c_fail < 255)
+        dev->i2c_fail++;
+    return -1;
 }
 
 int load_uci_config(SSD1306_Config *config) {
@@ -41,6 +58,7 @@ int load_uci_config(SSD1306_Config *config) {
 
             const char *on_time = uci_lookup_option_string(ctx, s, "screen_on_time");
             const char *off_time = uci_lookup_option_string(ctx, s, "screen_off_time");
+            const char *screen_type = uci_lookup_option_string(ctx, s, "screen_type");
 
             config->enabled = enabled ? atoi(enabled) : 1;
             snprintf(config->i2c_bus, sizeof(config->i2c_bus), 
@@ -48,7 +66,8 @@ int load_uci_config(SSD1306_Config *config) {
             config->i2c_addr = addr ? (uint8_t)strtol(addr, NULL, 16) : 0x3C;
             snprintf(config->log_file, sizeof(config->log_file),
                     log ? log : "/var/log/ssd1306.log");
-            config->type = SSD1306_128x64;
+            config->type = (screen_type && strcmp(screen_type, "128x32") == 0)
+                           ? SSD1306_128x32 : SSD1306_128x64;
             config->screen_on_time = on_time ? atoi(on_time) : 10;
             config->screen_off_time = off_time ? atoi(off_time) : 10;
 
@@ -100,29 +119,51 @@ int main(int argc, char *argv[]) {
 
     time_t last_activity = time(NULL);
     bool screen_on = true;
+    int fail_seconds = 0;
 
     while (running) {
         time_t now = time(NULL);
         
-        if (screen_on) {
-            if (now - last_activity >= device.config.screen_on_time) {
-                write_command(&device, 0xAE);
-                screen_on = false;
-                last_activity = now;
-                continue;
-            }
-        } else {
-            if (now - last_activity >= device.config.screen_off_time) {
-                write_command(&device, 0xAF);
-                screen_on = true;
-                last_activity = now;
-                ssd1306_display_log(&device);
-                continue;
+        /* screen_off_time == 0 means "always on": never blank the panel,
+           so the screen does not blink at the end of each on-cycle. */
+        if (device.config.screen_off_time > 0) {
+            if (screen_on) {
+                if (now - last_activity >= device.config.screen_on_time) {
+                    write_command(&device, 0xAE);
+                    screen_on = false;
+                    last_activity = now;
+                    continue;
+                }
+            } else {
+                if (now - last_activity >= device.config.screen_off_time) {
+                    write_command(&device, 0xAF);
+                    screen_on = true;
+                    last_activity = now;
+                    ssd1306_display_log(&device);
+                    continue;
+                }
             }
         }
         
         if (screen_on) {
             ssd1306_display_log(&device);
+        }
+
+        /* Liveness probe independent of redraw frequency: catches an
+           unplugged panel even when the log is static and display_log
+           is skipping frames. */
+        probe_panel(&device);
+
+        /* Consecutive write failures mean the panel was unplugged/failed:
+           stop instead of spinning on retries and log spam forever. */
+        if (device.i2c_fail > 0) {
+            if (++fail_seconds >= I2C_FAIL_LIMIT) {
+                fprintf(stderr, "SSD1306 unreachable for %d s - assuming panel removed, exiting\n",
+                        I2C_FAIL_LIMIT);
+                break;
+            }
+        } else {
+            fail_seconds = 0;
         }
 
         sleep(1);

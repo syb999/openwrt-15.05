@@ -28,6 +28,12 @@ log_file.datatype = "string"
 log_file.default = "/var/log/ssd1306.log"
 log_file.rmempty = false
 
+screen_type = s:option(ListValue, "screen_type", translate("Screen type"))
+screen_type:value("128x64", translate("128x64"))
+screen_type:value("128x32", translate("128x32"))
+screen_type.default = "128x32"
+screen_type.rmempty = false
+
 screen_on_time = s:option(Value, "screen_on_time", translate("loop display duration"))
 screen_on_time.datatype = "uinteger"
 screen_on_time.default = "15"
@@ -37,5 +43,10 @@ screen_off_time = s:option(Value, "screen_off_time", translate("loop screen-off 
 screen_off_time.datatype = "uinteger"
 screen_off_time.default = "5"
 screen_off_time.rmempty = false
+
+function m.on_after_commit(self)
+    os.execute("/etc/init.d/i2c-ssd1306 restart >/dev/null 2>&1")
+end
+
 
 return m
