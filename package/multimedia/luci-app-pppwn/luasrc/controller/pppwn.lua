@@ -14,7 +14,7 @@ end
 
 function status()
 	local e = {}
-	e.running = luci.sys.call("pgrep pppwn >/dev/null") == 0
+	e.running = luci.sys.call("pidof pppwn >/dev/null") == 0
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
 end

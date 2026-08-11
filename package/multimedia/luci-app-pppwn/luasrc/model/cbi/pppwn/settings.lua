@@ -32,4 +32,8 @@ fwver.description = translate("900 means Ver 9.00 etc.")
 goldhen = s:option(DummyValue, "goldhen", translate("Download GoldHEN Payload BIN"))
 goldhen.description = translate("<a class='btn cbi-button cbi-button-apply' type='button' href=\"/goldhen.bin\" target=\"_blank\" />"..translate("Copy goldhen.bin to the root directory of an exfat/fat32 USB and insert it into your PS4.").."</a>")
 
+function m.on_after_commit(self)
+    os.execute("/etc/init.d/pppwn restart >/dev/null 2>&1")
+end
+
 return m

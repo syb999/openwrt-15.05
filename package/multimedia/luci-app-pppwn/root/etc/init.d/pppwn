@@ -16,17 +16,29 @@ start() {
 	
 	[ "${enable}" -gt 0 ] || return
 
-	$PROG --interface $source --fw $fwver --stage1 "/etc/pppwn/stage1_$fwver.bin" --stage2 "/etc/pppwn/stage2_$fwver.bin" -a > /var/log/pppwn.log &
+	$PROG --interface $source --fw $fwver --stage1 "/etc/pppwn/stage1_$fwver.bin" --stage2 "/etc/pppwn/stage2_$fwver.bin" -a > /var/log/pppwn.log 2>&1 &
 
 	if [ -e "/usr/bin/pppwnlog" ];then
 		if [ -z "$(busybox ps | grep pppwnlog | grep -v grep)" ];then
-			pppwnlog
+			# pppwnlog is an endless log forwarder (pppwn.log -> ssd1306.log).
+			# MUST run in background: running it in the foreground blocks
+			# /etc/init.d/pppwn restart forever, which hangs LuCI's
+			# "Applying changes" spinner on /etc/config/pppwn.
+			pppwnlog >/dev/null 2>&1 &
 		fi
 	fi
 
 }
 
 stop() {
-    busybox ps | grep -v "grep" | grep "$PROG" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1 &
-    echo "" > /var/log/pppwn.log
+	busybox ps | grep -v "grep" | grep "$PROG" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+	busybox ps | grep -v "grep" | grep "pppwnlog" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+	: > /var/log/pppwn.log
+	# Truncate the OLED log to 0 bytes (not 1-byte newline) so that
+	# /etc/init.d/i2c-ssd1306's "-s" check sees it as empty and regenerates
+	# its default display (date/HELLO/IP) instead of leaving the OLED blank.
+	: > /var/log/ssd1306.log
+	if [ -x /etc/init.d/i2c-ssd1306 ]; then
+		/etc/init.d/i2c-ssd1306 restart >/dev/null 2>&1
+	fi
 }
