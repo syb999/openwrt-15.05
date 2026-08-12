@@ -1,7 +1,10 @@
 #include "ssd1306.h"
 #include <string.h>
 #include <fcntl.h>
+#include <errno.h>
+#include <signal.h>
 #include <sys/ioctl.h>
+#include <sys/select.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 
@@ -14,6 +17,13 @@
    costs a fraction of a full-frame redraw. */
 #define REFRESH_INTERVAL         1   /* dynamic content ($(...)) fallback */
 #define STATIC_REFRESH_INTERVAL 30   /* static content fallback */
+
+/* --- $(cmd) execution hardening (see readme_c_review.md, fixes A+B) --- */
+#define CMD_TIMEOUT_SECS     5   /* max seconds a single $(cmd) may run      */
+#define CMD_BUDGET_SECS     10   /* max total $(cmd) time per display_log()  */
+#define CMD_FAST_INTERVAL    1   /* date/uptime/hostname/uname re-run cadence */
+#define CMD_SLOW_INTERVAL   15   /* everything else (ifstatus, ubus, ...)     */
+#define CMD_CACHE_MAX        8
 
 const uint8_t font5x7[] = {
     //   (32)
@@ -239,9 +249,9 @@ static int i2c_write(SSD1306_Device *dev, const uint8_t *data, size_t len) {
     return -1;
 }
 
-void write_command(SSD1306_Device *dev, uint8_t cmd) {
+int write_command(SSD1306_Device *dev, uint8_t cmd) {
     uint8_t buf[2] = {0x00, cmd};
-    i2c_write(dev, buf, 2);
+    return i2c_write(dev, buf, 2);
 }
 
 int ssd1306_init(SSD1306_Device *dev, const SSD1306_Config *config) {
@@ -383,27 +393,156 @@ static int is_safe_command(const char* cmd) {
     return allowed;
 }
 
-static char* exec_shell_command(const char* cmd) {
-    static char result[128] = {0};
-    FILE* fp = popen(cmd, "r");
-    if (fp == NULL) {
-        strcpy(result, "[CMD ERR]");
-        return result;
-    }
+/* ---- $(cmd) execution with timeout, frequency grading and budget ---- */
 
-    if (fgets(result, sizeof(result), fp) == NULL) {
-        strcpy(result, "[NO OUTPUT]");
-    }
-    pclose(fp);
+typedef struct {
+    char cmd[64];        /* full command string = cache key (parse_and_draw_shell
+                            caps commands at 63 chars, so 64 is always enough) */
+    time_t last_run;
+    char result[128];
+} CmdCacheEntry;
 
-    char* p = result;
-    while (*p) {
-        if (*p == '\n' || *p == '\r' || (*p < 32 && *p != '\t')) {
-            *p = ' ';
+static CmdCacheEntry cmd_cache[CMD_CACHE_MAX];
+static int cmd_cache_n = 0;
+static time_t cmd_budget_deadline = 0;   /* set per display_log() call */
+
+static int cmd_is_fast(const char *token) {
+    static const char *fast[] = { "date", "uptime", "hostname", "uname", NULL };
+    for (int i = 0; fast[i]; i++)
+        if (strcmp(token, fast[i]) == 0)
+            return 1;
+    return 0;
+}
+
+static void sanitize_output(char *s) {
+    for (; *s; s++) {
+        if (*s == '\n' || *s == '\r' || (*s < 32 && *s != '\t'))
+            *s = ' ';
+    }
+}
+
+/* Return cached output if this command ran recently enough, else NULL.
+   Key is the FULL command string: two commands sharing a first token
+   (e.g. "ifstatus lan ..." vs "ifstatus wan ...") must NOT collide. */
+static char *cmd_cache_get(const char *cmd, const char *token, char *out, size_t out_sz) {
+    for (int i = 0; i < cmd_cache_n; i++) {
+        if (strcmp(cmd_cache[i].cmd, cmd) == 0) {
+            time_t interval = cmd_is_fast(token) ? CMD_FAST_INTERVAL : CMD_SLOW_INTERVAL;
+            if (time(NULL) - cmd_cache[i].last_run < interval) {
+                snprintf(out, out_sz, "%s", cmd_cache[i].result);
+                return out;
+            }
+            return NULL;
         }
-        p++;
     }
-    
+    return NULL;
+}
+
+static void cmd_cache_put(const char *cmd, const char *token, const char *result) {
+    time_t now = time(NULL);
+    for (int i = 0; i < cmd_cache_n; i++) {
+        if (strcmp(cmd_cache[i].cmd, cmd) == 0) {
+            cmd_cache[i].last_run = now;
+            snprintf(cmd_cache[i].result, sizeof(cmd_cache[i].result), "%s", result);
+            return;
+        }
+    }
+    if (cmd_cache_n < CMD_CACHE_MAX) {
+        snprintf(cmd_cache[cmd_cache_n].cmd, sizeof(cmd_cache[cmd_cache_n].cmd), "%s", cmd);
+        cmd_cache[cmd_cache_n].last_run = now;
+        snprintf(cmd_cache[cmd_cache_n].result, sizeof(cmd_cache[cmd_cache_n].result), "%s", result);
+        cmd_cache_n++;
+    }
+}
+
+static char *exec_shell_command(const char *cmd) {
+    static char result[128] = {0};
+    char token[16] = {0};
+    size_t i = 0;
+
+    /* First whitespace/pipe-delimited token identifies the command. */
+    while (cmd[i] && cmd[i] != ' ' && cmd[i] != '\t' && cmd[i] != '|' &&
+           i < sizeof(token) - 1) {
+        token[i] = cmd[i];
+        i++;
+    }
+    token[i] = '\0';
+
+    /* Frequency gate: fast commands 1 s, slow commands 15 s. */
+    if (token[0] && cmd_cache_get(cmd, token, result, sizeof(result)))
+        return result;
+
+    /* Whole-refresh budget: a batch of hung commands must never freeze the
+       panel for tens of seconds; skip the rest and retry next refresh. */
+    if (time(NULL) > cmd_budget_deadline) {
+        strcpy(result, "[BUSY]");
+        goto out;
+    }
+
+    {
+        int fds[2];
+        if (pipe(fds) != 0) {
+            strcpy(result, "[PIPE ERR]");
+            goto out;
+        }
+
+        pid_t pid = fork();
+        if (pid < 0) {
+            close(fds[0]);
+            close(fds[1]);
+            strcpy(result, "[FORK ERR]");
+            goto out;
+        }
+
+        if (pid == 0) {
+            /* Child: own process group so a timeout can kill the whole
+               pipeline (sh + ubus + jsonfilter), not just the shell. */
+            setpgid(0, 0);
+            alarm(0);                    /* don't inherit the watchdog timer */
+            close(fds[0]);
+            dup2(fds[1], STDOUT_FILENO);
+            close(fds[1]);
+            execl("/bin/sh", "sh", "-c", cmd, (char *)NULL);
+            _exit(127);
+        }
+
+        close(fds[1]);
+
+        struct timeval tv = { CMD_TIMEOUT_SECS, 0 };
+        fd_set rfds;
+        FD_ZERO(&rfds);
+        FD_SET(fds[0], &rfds);
+        int sel = select(fds[0] + 1, &rfds, NULL, NULL, &tv);
+
+        ssize_t n = 0;
+        if (sel > 0) {
+            n = read(fds[0], result, sizeof(result) - 1);
+            if (n < 0)
+                n = 0;
+            if (n == 0)
+                strcpy(result, "[NO OUTPUT]");
+        } else {
+            /* Timeout: kill the whole process group, show a marker. */
+            kill(-pid, SIGKILL);
+            strcpy(result, "[TIMEOUT]");
+        }
+        if (n > 0)
+            result[n] = '\0';
+        close(fds[0]);
+
+        /* Reap; retry EINTR so no orphan can survive a signal. */
+        while (waitpid(pid, NULL, 0) == -1 && errno == EINTR)
+            ;
+    }
+
+out:
+    sanitize_output(result);
+    /* Cache successes and [TIMEOUT] (anti-hammer); don't cache transient
+       [BUSY]/[PIPE ERR]/[FORK ERR] so they retry on the next refresh. */
+    if (token[0] && strncmp(result, "[BUSY]", 6) != 0 &&
+        strncmp(result, "[PIPE ERR]", 10) != 0 &&
+        strncmp(result, "[FORK ERR]", 10) != 0)
+        cmd_cache_put(cmd, token, result);
     return result;
 }
 
@@ -461,31 +600,49 @@ void ssd1306_power(SSD1306_Device *dev, bool on) {
     }
 }
 
-void ssd1306_display(SSD1306_Device *dev) {
+/* Push one page (128 bytes) to the panel. Every attempt re-addresses the
+   page first, so a partial/failed transfer (column pointer mid-page) can
+   never corrupt subsequent data. Returns 0 on success. */
+static int write_page(SSD1306_Device *dev, uint8_t page, const uint8_t *data) {
     uint8_t buf[LOGICAL_WIDTH + 1];
     buf[0] = 0x40;
+    memcpy(&buf[1], data, dev->width);
 
+    int attempts = 3;
+    while (attempts--) {
+        if (write_command(dev, 0xB0 | page) == 0 &&
+            write_command(dev, 0x00) == 0 &&
+            write_command(dev, 0x10) == 0 &&
+            i2c_write(dev, buf, sizeof(buf)) == 0)
+            return 0;
+        usleep(10000);
+    }
+    return -1;
+}
+
+void ssd1306_display(SSD1306_Device *dev) {
     /* Incremental refresh: compare each page against what the panel shows
-       and push only the changed ones. A 1-line clock update costs ~1 page
-       of I2C traffic instead of a full 8-page frame. */
+       and push only the changed ones. last_buffer is updated ONLY after a
+       successful transfer: a failed write leaves the page dirty so the next
+       refresh retries it (self-healing, no permanent desync = no garbling
+       after hours of occasional I2C glitches). */
     for (uint8_t page = 0; page < dev->height/8; page++) {
         const uint8_t *cur = &dev->buffer[page * dev->width];
         uint8_t *last = &dev->last_buffer[page * dev->width];
         if (memcmp(cur, last, dev->width) == 0)
             continue;
-
-        memcpy(last, cur, dev->width);
-        write_command(dev, 0xB0 | page);   /* set page address */
-        write_command(dev, 0x00);          /* lower column start */
-        write_command(dev, 0x10);          /* higher column start */
-        memcpy(&buf[1], cur, dev->width);
-        i2c_write(dev, buf, sizeof(buf));
+        if (write_page(dev, page, cur) == 0)
+            memcpy(last, cur, dev->width);
     }
 }
 
 void ssd1306_display_log(SSD1306_Device *dev) {
     const time_t now = time(NULL);
     const time_t error_min_duration = 5;
+
+    /* Refresh-wide command budget (see CMD_BUDGET_SECS): bounds the total
+       time spent running $(cmd) so one bad refresh can't freeze the panel. */
+    cmd_budget_deadline = now + CMD_BUDGET_SECS;
     
     char full_path[128];
     snprintf(full_path, sizeof(full_path), "%s%s", 

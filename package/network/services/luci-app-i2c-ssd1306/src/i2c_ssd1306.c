@@ -8,11 +8,24 @@
 /* Consecutive seconds of I2C write failure before declaring the panel gone. */
 #define I2C_FAIL_LIMIT 20
 
+/* If a full main-loop iteration takes longer than this, something is stuck
+   (wedged I2C, etc.): die so procd restarts a fresh instance instead of
+   freezing the panel forever. Longer than the worst-case display_log budget
+   (CMD_BUDGET_SECS) + sleep, so it never fires during normal refresh. */
+#define WATCHDOG_SECS 20
+
 static volatile bool running = true;
 static SSD1306_Device device;
 
 void signal_handler(int sig) {
     running = false;
+}
+
+void watchdog_handler(int sig) {
+    (void)sig;
+    /* No cleanup: if we're here the main loop is stuck, don't trust the
+       code path. procd will respawn a fresh instance. */
+    _exit(1);
 }
 
 /* Cheap liveness probe: a 0-byte write sends only the I2C address (same
@@ -101,6 +114,8 @@ int main(int argc, char *argv[]) {
 
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
+    signal(SIGALRM, watchdog_handler);
+    signal(SIGPIPE, SIG_IGN);
 
     printf("Initializing on %s (0x%02X)\n", config.i2c_bus, config.i2c_addr);
     if (ssd1306_init(&device, &config) != 0) {
@@ -122,6 +137,7 @@ int main(int argc, char *argv[]) {
     int fail_seconds = 0;
 
     while (running) {
+        alarm(WATCHDOG_SECS);   /* re-arm each iteration: fires only on a hang */
         time_t now = time(NULL);
         
         /* screen_off_time == 0 means "always on": never blank the panel,
@@ -169,6 +185,7 @@ int main(int argc, char *argv[]) {
         sleep(1);
     }
 
+    alarm(0);
     ssd1306_cleanup(&device);
     return 0;
 }
