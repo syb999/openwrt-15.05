@@ -336,6 +336,9 @@ int ssd1306_init(SSD1306_Device *dev, const SSD1306_Config *config) {
     dev->last_size = 0;
     dev->last_refresh = 0;
     dev->i2c_fail = 0;
+    dev->burnin_shift = 0;
+    dev->burnin_shifted = false;
+    dev->burnin_next = 0;
 
     return 0;
 }
@@ -362,6 +365,7 @@ void ssd1306_draw_char(SSD1306_Device *dev, uint8_t x, uint8_t y, char c) {
     uint8_t bit_offset = y % 8;
     
     for (uint8_t col = 0; col < dev->font_width; col++) {
+        if (x + col >= dev->width) break;   /* clip at right edge (burn-in shift) */
         if (bit_offset) {
             dev->buffer[page * dev->width + x + col] |= (glyph[col] << bit_offset);
             if (page + 1 < dev->height/8) {
@@ -736,9 +740,9 @@ void ssd1306_display_log(SSD1306_Device *dev) {
     ssd1306_clear(dev);
     for (uint8_t i = 0; i < line_count; i++) {
         if (strstr(lines[i], "$(")) {
-            parse_and_draw_shell(dev, 0, i * 8, lines[i]);
+            parse_and_draw_shell(dev, dev->burnin_shift, i * 8, lines[i]);
         } else {
-            ssd1306_draw_string(dev, 0, i * 8, lines[i]);
+            ssd1306_draw_string(dev, dev->burnin_shift, i * 8, lines[i]);
         }
     }
     ssd1306_display(dev);

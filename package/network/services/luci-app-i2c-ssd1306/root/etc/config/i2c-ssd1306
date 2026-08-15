@@ -7,3 +7,4 @@ config i2c-ssd1306
 	option screen_type '128x32'
 	option screen_on_time '15'
 	option screen_off_time '5'
+	option anti_burnin '1'

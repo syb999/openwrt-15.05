@@ -42,6 +42,39 @@ static int probe_panel(SSD1306_Device *dev) {
     return -1;
 }
 
+/* --- Anti burn-in ---
+   OLED pixels degrade when the SAME pixels stay lit for a long time. Every
+   toggle shifts the whole content 1..3 px right (random), then restores it
+   on the next toggle, alternating forever. The content is redrawn through
+   dev->burnin_shift, so shifting is purely a render-time offset: no extra
+   I2C traffic, and the panel state (on/off) is untouched.
+
+   Two trigger modes (user spec):
+   - screen_off_time > 0 (screen blanks periodically): toggle on EVERY
+     screen-off edge. First off -> shift right 1..3 px; next off -> back
+     to default; repeat.
+   - screen_off_time == 0 (always on): no off edges exist, so drive the
+     toggles from an internal 60 s timer in the main loop.
+*/
+#define BURNIN_MIN_SHIFT 1
+#define BURNIN_MAX_SHIFT 3
+#define BURNIN_INTERVAL  300  /* seconds, always-on mode (5 min: effective
+                                 burn-in protection, imperceptible motion) */
+
+static void burnin_toggle(SSD1306_Device *dev) {
+    if (!dev->config.anti_burnin)
+        return;
+    if (dev->burnin_shifted) {
+        dev->burnin_shifted = false;
+        dev->burnin_shift = 0;
+    } else {
+        dev->burnin_shifted = true;
+        dev->burnin_shift = BURNIN_MIN_SHIFT +
+            (uint8_t)(rand() % (BURNIN_MAX_SHIFT - BURNIN_MIN_SHIFT + 1));
+    }
+    dev->burnin_next = time(NULL) + BURNIN_INTERVAL;
+}
+
 int load_uci_config(SSD1306_Config *config) {
     struct uci_context *ctx = uci_alloc_context();
     if (!ctx) {
@@ -72,6 +105,7 @@ int load_uci_config(SSD1306_Config *config) {
             const char *on_time = uci_lookup_option_string(ctx, s, "screen_on_time");
             const char *off_time = uci_lookup_option_string(ctx, s, "screen_off_time");
             const char *screen_type = uci_lookup_option_string(ctx, s, "screen_type");
+            const char *anti_burnin = uci_lookup_option_string(ctx, s, "anti_burnin");
 
             config->enabled = enabled ? atoi(enabled) : 1;
             snprintf(config->i2c_bus, sizeof(config->i2c_bus), 
@@ -87,6 +121,7 @@ int load_uci_config(SSD1306_Config *config) {
                 config->type = SSD1306_128x64;
             config->screen_on_time = on_time ? atoi(on_time) : 10;
             config->screen_off_time = off_time ? atoi(off_time) : 10;
+            config->anti_burnin = anti_burnin ? atoi(anti_burnin) : 1;  /* default on */
 
             ret = 0;
             break;
@@ -140,6 +175,12 @@ int main(int argc, char *argv[]) {
     bool screen_on = true;
     int fail_seconds = 0;
 
+    /* Anti burn-in: seed the RNG and arm the always-on timer. */
+    srand((unsigned)time(NULL) ^ (unsigned)getpid());
+    device.burnin_shifted = false;
+    device.burnin_shift = 0;
+    device.burnin_next = time(NULL) + BURNIN_INTERVAL;
+
     while (running) {
         alarm(WATCHDOG_SECS);   /* re-arm each iteration: fires only on a hang */
         time_t now = time(NULL);
@@ -152,6 +193,7 @@ int main(int argc, char *argv[]) {
                     write_command(&device, 0xAE);
                     screen_on = false;
                     last_activity = now;
+                    burnin_toggle(&device);   /* shift on every screen-off edge */
                     continue;
                 }
             } else {
@@ -162,6 +204,11 @@ int main(int argc, char *argv[]) {
                     ssd1306_display_log(&device);
                     continue;
                 }
+            }
+        } else {
+            /* Always-on: no off edges, drive the shift from an internal timer. */
+            if (now >= device.burnin_next) {
+                burnin_toggle(&device);
             }
         }
         

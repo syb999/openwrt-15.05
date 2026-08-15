@@ -32,6 +32,7 @@ typedef struct {
     SSD1306_Type type;
     uint16_t screen_on_time;
     uint16_t screen_off_time;
+    bool anti_burnin;
 } SSD1306_Config;
 
 typedef struct {
@@ -50,6 +51,9 @@ typedef struct {
     uint8_t font_width;       /* glyph columns: 5 (5x7) or 3 (3x5) */
     uint8_t font_step;        /* advance per char: font_width+1 normally,
                                  5 for 5x7-on-96x16 (zero spacing) */
+    uint8_t burnin_shift;     /* anti burn-in horizontal pixel shift (0..3) */
+    bool burnin_shifted;      /* current shift applied (toggle state) */
+    time_t burnin_next;       /* next shift time for always-on mode (0=off) */
 } SSD1306_Device;
 
 int ssd1306_init(SSD1306_Device *dev, const SSD1306_Config *config);

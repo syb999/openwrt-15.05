@@ -45,6 +45,11 @@ screen_off_time.datatype = "uinteger"
 screen_off_time.default = "5"
 screen_off_time.rmempty = false
 
+anti_burnin = s:option(Flag, "anti_burnin", translate("Anti burn-in"))
+anti_burnin.default = 1
+anti_burnin.rmempty = false
+anti_burnin.description = translate("Shift the content a few pixels periodically to prevent OLED burn-in. When screen-off duration > 0, the shift changes every time the screen turns off; when screen-off duration = 0 (always on), the shift changes every 5 minutes.")
+
 function m.on_after_commit(self)
     os.execute("/etc/init.d/i2c-ssd1306 restart >/dev/null 2>&1")
 end
