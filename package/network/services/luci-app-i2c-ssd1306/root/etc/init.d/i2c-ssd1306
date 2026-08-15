@@ -18,11 +18,30 @@ start_service() {
 	procd_set_param respawn
 	procd_close_instance
 
-	if [ ! -f "$(uci get i2c-ssd1306.@i2c-ssd1306[0].log_file)" -o ! -s "$(uci get i2c-ssd1306.@i2c-ssd1306[0].log_file)" ]; then
-		echo "  \$(date '+%m-%d %H:%M:%S')" > /var/log/ssd1306.log
-		echo "  HELLO, OPENWRT!" >> /var/log/ssd1306.log
-		echo "  LAN:\$(ifstatus lan | jsonfilter -e '@[\"ipv4-address\"][0].address')" >> /var/log/ssd1306.log
-		echo "  WAN:\$(ifstatus wan | jsonfilter -e '@[\"ipv4-address\"][0].address')" >> /var/log/ssd1306.log
+	log_file=$(uci get i2c-ssd1306.@i2c-ssd1306[0].log_file)
+	[ -z "$log_file" ] && log_file=/var/log/ssd1306.log
+	screen_type=$(uci get i2c-ssd1306.@i2c-ssd1306[0].screen_type)
+
+	# 96x16 (SSD1315) only has 2 rows: time + WAN IP. Other panels get 4 rows.
+	# Regenerate when the line count no longer matches, so switching
+	# screen_type and restarting rewrites the log automatically.
+	expected_lines=4
+	[ "$screen_type" = "96x16" ] && expected_lines=2
+	actual_lines=$(wc -l < "$log_file" 2>/dev/null || echo 0)
+
+	if [ ! -f "$log_file" -o ! -s "$log_file" -o "$actual_lines" -ne "$expected_lines" ]; then
+		if [ "$expected_lines" = "2" ]; then
+			# 96x16: no leading spaces. The 4x6 font steps 5px/char, so
+			# 19 chars = 95px already fills the 96px panel; "WAN:255.255.255.255"
+			# (19 chars) would overflow with any indent.
+			echo "\$(date '+%m-%d %H:%M:%S')" > "$log_file"
+			echo "WAN:\$(ifstatus wan | jsonfilter -e '@[\"ipv4-address\"][0].address')" >> "$log_file"
+		else
+			echo "  \$(date '+%m-%d %H:%M:%S')" > "$log_file"
+			echo "  HELLO, OPENWRT!" >> "$log_file"
+			echo "  LAN:\$(ifstatus lan | jsonfilter -e '@[\"ipv4-address\"][0].address')" >> "$log_file"
+			echo "  WAN:\$(ifstatus wan | jsonfilter -e '@[\"ipv4-address\"][0].address')" >> "$log_file"
+		fi
 	fi
 }
 
@@ -34,4 +53,3 @@ restart() {
     stop
     start
 }
-

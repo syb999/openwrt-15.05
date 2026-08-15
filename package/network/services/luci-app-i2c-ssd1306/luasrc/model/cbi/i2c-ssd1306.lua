@@ -31,6 +31,7 @@ log_file.rmempty = false
 screen_type = s:option(ListValue, "screen_type", translate("Screen type"))
 screen_type:value("128x64", translate("128x64"))
 screen_type:value("128x32", translate("128x32"))
+screen_type:value("96x16", translate("96x16"))
 screen_type.default = "128x32"
 screen_type.rmempty = false
 

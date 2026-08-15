@@ -12,11 +12,16 @@
 #include <linux/i2c-dev.h>
 #include <time.h>
 
-#define LOGICAL_WIDTH 128   /* both 128x64 and 128x32 panels share this */
+/* LOGICAL_WIDTH is the fixed buffer ceiling (largest supported panel).
+   Actual panel geometry is dev->width/dev->height: 128x32, 128x64, or
+   96x16 (SSD1315 0.69"). All fixed arrays use this ceiling; all I2C
+   transfers use dev->width so a 96-wide panel sends 96 bytes/page. */
+#define LOGICAL_WIDTH 128
 
 typedef enum {
     SSD1306_128x32,
-    SSD1306_128x64
+    SSD1306_128x64,
+    SSD1306_96x16
 } SSD1306_Type;
 
 typedef struct {
@@ -41,6 +46,10 @@ typedef struct {
     off_t  last_size;    /* log file size at last render */
     time_t last_refresh; /* last actual screen refresh timestamp */
     uint8_t i2c_fail;    /* consecutive I2C write failures (0 = healthy) */
+    const uint8_t *font;      /* active font table (5x7 or 3x5) */
+    uint8_t font_width;       /* glyph columns: 5 (5x7) or 3 (3x5) */
+    uint8_t font_step;        /* advance per char: font_width+1 normally,
+                                 5 for 5x7-on-96x16 (zero spacing) */
 } SSD1306_Device;
 
 int ssd1306_init(SSD1306_Device *dev, const SSD1306_Config *config);

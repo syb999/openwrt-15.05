@@ -79,8 +79,12 @@ int load_uci_config(SSD1306_Config *config) {
             config->i2c_addr = addr ? (uint8_t)strtol(addr, NULL, 16) : 0x3C;
             snprintf(config->log_file, sizeof(config->log_file),
                     log ? log : "/var/log/ssd1306.log");
-            config->type = (screen_type && strcmp(screen_type, "128x32") == 0)
-                           ? SSD1306_128x32 : SSD1306_128x64;
+            if (screen_type && strcmp(screen_type, "96x16") == 0)
+                config->type = SSD1306_96x16;
+            else if (screen_type && strcmp(screen_type, "128x32") == 0)
+                config->type = SSD1306_128x32;
+            else
+                config->type = SSD1306_128x64;
             config->screen_on_time = on_time ? atoi(on_time) : 10;
             config->screen_off_time = off_time ? atoi(off_time) : 10;
 

@@ -230,7 +230,18 @@ static const uint8_t init_sequence_32[] = {
     0x81, 0x8F, 0xD9, 0xF1, 0xDB, 0x40, 0xA4, 0xA6, 0xAF
 };
 
+/* SSD1315 (0.69" 96x16): same instruction set as SSD1306, differs in
+   multiplex ratio (0x0F = 16 rows), COM pin config and contrast. */
+static const uint8_t init_sequence_16[] = {
+    0xAE, 0xD5, 0x80, 0xA8, 0x0F, 0xD3, 0x00, 0x40,
+    0x8D, 0x14, 0x20, 0x00, 0xA1, 0xC8, 0xDA, 0x02,
+    0x81, 0xAF, 0xD9, 0xF1, 0xDB, 0x40, 0xA4, 0xA6, 0xAF
+};
+
+/* All three init sequences are the same length (25 bytes); the loops in
+   ssd1306_init()/ssd1306_power() use sizeof(init_sequence_64) as bound. */
 static const uint8_t *init_sequence_for(SSD1306_Type type) {
+    if (type == SSD1306_96x16) return init_sequence_16;
     return (type == SSD1306_128x32) ? init_sequence_32 : init_sequence_64;
 }
 
@@ -287,8 +298,21 @@ int ssd1306_init(SSD1306_Device *dev, const SSD1306_Config *config) {
     }
 
     dev->config = *config;
-    dev->width = LOGICAL_WIDTH;
-    dev->height = (config->type == SSD1306_128x32) ? 32 : 64;
+    /* Geometry is fully dynamic: 96x16 is 96 wide (SSD1315), the 128-wide
+       panels use LOGICAL_WIDTH. height/8 pages drive buffers, page-range
+       commands and the line loop everywhere else. */
+    dev->width = (config->type == SSD1306_96x16) ? 96 : LOGICAL_WIDTH;
+    dev->height = (config->type == SSD1306_128x32) ? 32 :
+                  (config->type == SSD1306_96x16)  ? 16 : 64;
+
+    /* 96x16 is only 96px wide: the normal 5x7 spacing (6px/char) fits 16
+       chars per line, which truncates IPs. Squeeze the SAME 5x7 font to
+       zero spacing (5px/char, 19 chars/line) so "WAN:255.255.255.255"
+       fits on one line while keeping full 5x7 readability (4x6 was too
+       thin/blocky). */
+    dev->font = font5x7;
+    dev->font_width = 5;
+    dev->font_step = (config->type == SSD1306_96x16) ? 5 : 6;
 
     dev->buffer = malloc(dev->width * (dev->height / 8));
     if (!dev->buffer) {
@@ -333,11 +357,11 @@ void ssd1306_draw_char(SSD1306_Device *dev, uint8_t x, uint8_t y, char c) {
     if (x >= dev->width || y >= dev->height) return;
     if (c < 32 || c > 126) c = '?';
     
-    const uint8_t *glyph = &font5x7[(c - 32) * 5];
+    const uint8_t *glyph = &dev->font[(c - 32) * dev->font_width];
     uint8_t page = y / 8;
     uint8_t bit_offset = y % 8;
     
-    for (uint8_t col = 0; col < 5; col++) {
+    for (uint8_t col = 0; col < dev->font_width; col++) {
         if (bit_offset) {
             dev->buffer[page * dev->width + x + col] |= (glyph[col] << bit_offset);
             if (page + 1 < dev->height/8) {
@@ -350,15 +374,16 @@ void ssd1306_draw_char(SSD1306_Device *dev, uint8_t x, uint8_t y, char c) {
 }
 
 void ssd1306_draw_string(SSD1306_Device *dev, uint8_t x, uint8_t y, const char *str) {
-    char limited_str[22] = {0};
-    strncpy(limited_str, str, 20);
-    limited_str[20] = '\0';
+    char limited_str[28] = {0};
+    strncpy(limited_str, str, 26);
+    limited_str[26] = '\0';
     
     const char *p = limited_str;
+    uint8_t step = dev->font_step;
     while (*p && x < dev->width) {
         ssd1306_draw_char(dev, x, y, *p++);
-        x += 6;
-        if (x >= dev->width - 5) {
+        x += step;
+        if (x >= dev->width - dev->font_width) {
             x = 0;
             y += 8;
             if (y >= dev->height) break;
@@ -600,9 +625,11 @@ void ssd1306_power(SSD1306_Device *dev, bool on) {
     }
 }
 
-/* Push one page (128 bytes) to the panel. Every attempt re-addresses the
-   page first, so a partial/failed transfer (column pointer mid-page) can
-   never corrupt subsequent data. Returns 0 on success. */
+/* Push one page to the panel (dev->width bytes of data, NOT the fixed
+   buffer ceiling: a 96-wide panel must send exactly 96 bytes, otherwise
+   uninitialized tail bytes would leak onto the bus). Every attempt
+   re-addresses the page first, so a partial/failed transfer (column
+   pointer mid-page) can never corrupt subsequent data. Returns 0. */
 static int write_page(SSD1306_Device *dev, uint8_t page, const uint8_t *data) {
     uint8_t buf[LOGICAL_WIDTH + 1];
     buf[0] = 0x40;
@@ -613,7 +640,7 @@ static int write_page(SSD1306_Device *dev, uint8_t page, const uint8_t *data) {
         if (write_command(dev, 0xB0 | page) == 0 &&
             write_command(dev, 0x00) == 0 &&
             write_command(dev, 0x10) == 0 &&
-            i2c_write(dev, buf, sizeof(buf)) == 0)
+            i2c_write(dev, buf, dev->width + 1) == 0)
             return 0;
         usleep(10000);
     }
