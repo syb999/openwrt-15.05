@@ -1,0 +1,274 @@
+<%#
+LuCI - Lua Configuration Interface
+IPTV EPG 总览: 服务控制 + 频道列表 + 一键拉取
+-%>
+
+<%+header%>
+<h2><%:IPTV EPG 总览%></h2>
+
+<div class="cbi-map">
+	<div class="cbi-map-descr">
+		<%:IPTV EPG 服务: 路由自动添加 / Cookie 保活 / CGI / 定时拉取%>
+	</div>
+
+	<div style="margin:10px 0;">
+		<span style="font-weight:bold;"><%:服务状态:%></span>
+		<span id="iptv_epg_svc_state" style="color:#666;"><%:查询中...%></span>
+		<input type="button" value="<%:启动服务%>" class="cbi-button cbi-button-apply" onclick="iptv_epg_svc('start')" />
+		<input type="button" value="<%:停止服务%>" class="cbi-button cbi-button-reset" onclick="iptv_epg_svc('stop')" />
+		<input type="button" value="<%:重启服务%>" class="cbi-button cbi-button-reset" onclick="iptv_epg_svc('restart')" />
+		<input type="button" value="<%:一键获取 Cookie (机顶盒开机+打开EPG时点, 抓取验证20秒)%>" class="cbi-button cbi-button-apply" onclick="iptv_epg_cookie()" />
+		<input type="button" value="<%:一键抓取频道表 (需有效Cookie, 重建频道名/ID/组播地址)%>" class="cbi-button cbi-button-apply" onclick="iptv_epg_channels_fetch()" />
+	</div>
+
+	<div style="margin:10px 0;">
+		<input type="button" value="<%:一键拉取 EPG (UCI设定频道, 7天)%>" class="cbi-button cbi-button-apply" onclick="iptv_epg_fetch()" />
+		<input type="button" value="<%:刷新频道列表%>" class="cbi-button cbi-button-reset" onclick="iptv_epg_channels()" />
+		<span id="iptv_epg_status" style="margin-left:10px;color:#666;"></span>
+	</div>
+
+	<table class="cbi-section-table" id="iptv_epg_chtable">
+		<tr class="cbi-section-table-titles">
+			<th class="cbi-section-table-cell"><%:频道名%></th>
+			<th class="cbi-section-table-cell"><%:EPG ID%></th>
+			<th class="cbi-section-table-cell"><%:mixNo%></th>
+			<th class="cbi-section-table-cell"><%:操作%></th>
+		</tr>
+		<tr><td colspan="4" class="cbi-section-table-descr"><%:加载中...%></td></tr>
+	</table>
+
+		<div id="iptv_epg_result" style="margin-top:10px;display:none;">
+			<div style="font-weight:bold;"><%:拉取结果 / 状态%></div>
+			<pre id="iptv_epg_result_text" style="background:#f8f8f8;padding:10px;border:1px solid #ddd;max-height:300px;overflow:auto;font-size:12px;"></pre>
+		</div>
+
+			<div style="margin-top:20px;padding:10px;background:#fffbe6;border:1px solid #e6c300;border-radius:4px;">
+				<div style="font-weight:bold;color:#333;"><%:DIYP 播放器配置 (直播 + EPG 点击回看)%></div>
+				<div style="margin:6px 0;font-size:13px;line-height:1.6;">
+					<%:1. DIYP 设置 → 接口设置 → EPG接口 填:%><br>
+					<code style="background:#f0f0f0;padding:2px 6px;display:inline-block;margin:4px 0;">http://<%- =luci.sys.exec("/usr/bin/iptv_epg ip 2>/dev/null"):gsub("%s+", "") -%>/cgi-bin/epg.cgi</code><br>
+					<%:2. 频道源 (DIYP IPTV.txt) 用 TVOD 格式 (关键! 路径含 TVOD, DIYP 才支持 EPG 点击回看):%><br>
+					<textarea readonly style="width:100%;height:120px;font-family:monospace;font-size:12px;margin:6px 0;background:#f8f8f8;border:1px solid #ccc;"><%-
+						local host = luci.sys.exec("/usr/bin/iptv_epg ip 2>/dev/null"):gsub("%s+", "")
+						if host == "" then host = luci.sys.hostname() end
+						local uci = require("luci.model.uci").cursor()
+						uci:foreach("iptv_epg", "channel", function(s)
+							local name = s.name or ""
+							local udp = s.udp or ""
+							if name ~= "" and udp ~= "" then
+								io.write(name .. ",http://" .. host .. "/cgi-bin/TVOD/play.cgi?url=http://" .. host .. ":7088/udp/" .. udp .. "&amp;ch=" .. name .. "\n")
+							end
+						end)
+					-%></textarea><br>
+					<a href="<%=luci.dispatcher.build_url("admin/services/iptv_epg/txt")%>" class="cbi-button cbi-button-apply"><%:下载 IPTV.txt%></a>
+					<div style="margin-top:6px;font-size:12px;color:#666;">
+						<%:说明: url=直播源(msd_lite 7088组播转单播), ch=频道别名. 点频道=直播, 点EPG节目=自动回看 (DIYP 自动附加 playseek).%>
+					</div>
+				</div>
+			</div>
+
+			<div style="margin-top:20px;padding:10px;background:#e8f5e9;border:1px solid #4caf50;border-radius:4px;">
+				<div style="font-weight:bold;color:#333;"><%:TVBox 播放器配置 (直播 + EPG 回看)%></div>
+				<div style="margin:6px 0;font-size:13px;line-height:1.6;">
+					<%:1. TVBox 设置 → 配置 → 数据源地址 填 (必需, 含直播分组):%><br>
+					<code style="background:#f0f0f0;padding:2px 6px;display:inline-block;margin:4px 0;">http://<%- =luci.sys.exec("/usr/bin/iptv_epg ip 2>/dev/null"):gsub("%s+", "") -%>/tvbox_config.json</code><br>
+					<%:2. 直播源地址 填 (数据源未含 lives 时才需要):%><br>
+					<code style="background:#f0f0f0;padding:2px 6px;display:inline-block;margin:4px 0;">http://<%- =luci.sys.exec("/usr/bin/iptv_epg ip 2>/dev/null"):gsub("%s+", "") -%>/iptv_tvbox.txt</code><br>
+					<%:3. EPG地址 填:%><br>
+					<code style="background:#f0f0f0;padding:2px 6px;display:inline-block;margin:4px 0;">http://<%- =luci.sys.exec("/usr/bin/iptv_epg ip 2>/dev/null"):gsub("%s+", "") -%>/cgi-bin/epg.cgi</code><br>
+					<div style="margin-top:6px;font-size:12px;color:#666;">
+						<%:说明: 数据源地址=tvbox_config.json (含 lives 直播分组, 指向 iptv_tvbox.txt). 点频道=直播, 点EPG已播完节目=自动回看 (TVBox 自动拼 playseek). 播放列表由"一键拉取"自动生成.%>
+					</div>
+				</div>
+			</div>
+		</div>
+
+<script type="text/javascript">
+function iptv_epg_svc(action) {
+	var st = document.getElementById('iptv_epg_svc_state');
+	st.innerHTML = '<%:执行中...%>';
+	XHR.get('<%=luci.dispatcher.build_url("admin/services/iptv_epg/service")%>?action=' + action, null,
+		function(xhr, d) {
+			var s = '';
+			if (d.enabled) s += '<%:已启用%>';
+			else s += '<%:未启用%>';
+			if (d.running) s += ' / <%:运行中%>';
+			else s += ' / <%:已停止%>';
+			st.innerHTML = s;
+		},
+		function(x) { st.innerHTML = '<%:失败%>'; }
+	);
+}
+
+function iptv_epg_status() {
+	var rs = document.getElementById('iptv_epg_result');
+	var rt = document.getElementById('iptv_epg_result_text');
+	XHR.get('<%=luci.dispatcher.build_url("admin/services/iptv_epg/status")%>', null,
+		function(xhr, d) {
+			rs.style.display = 'block';
+			rt.innerHTML = d.lines ? d.lines.join('\n') : '(empty)';
+		},
+		function(x) { }
+	);
+	iptv_epg_svc('none');
+}
+
+function iptv_epg_channels() {
+	var tb = document.getElementById('iptv_epg_chtable');
+	var st = document.getElementById('iptv_epg_status');
+	st.innerHTML = '<%:加载频道列表...%>';
+	XHR.get('<%=luci.dispatcher.build_url("admin/services/iptv_epg/channels")%>', null,
+		function(xhr, d) {
+			if (!d || !d.length) {
+				tb.innerHTML = '<tr><td colspan="4"><%:无频道数据或 cookie 失效%></td></tr>';
+				st.innerHTML = '';
+				return;
+			}
+			var html = '<tr class="cbi-section-table-titles">' +
+				'<th class="cbi-section-table-cell"><%:频道名%></th>' +
+				'<th class="cbi-section-table-cell"><%:EPG ID%></th>' +
+				'<th class="cbi-section-table-cell"><%:mixNo%></th>' +
+				'<th class="cbi-section-table-cell"><%:操作%></th></tr>';
+			for (var i = 0; i < d.length; i++) {
+				html += '<tr class="cbi-section-table-row">' +
+					'<td class="cbi-section-table-cell">' + d[i].name + '</td>' +
+					'<td class="cbi-section-table-cell" style="font-family:monospace;">' + d[i].id + '</td>' +
+					'<td class="cbi-section-table-cell">' + (d[i].mix || d[i].udp || '') + '</td>' +
+					'<td class="cbi-section-table-cell">' +
+						'<a href="javascript:void(0)" onclick="iptv_epg_move(' + i + ', -1)" style="text-decoration:none;font-size:16px;font-weight:bold;color:#333;margin-right:6px;" title="上移">&#9650;</a>' +
+						'<a href="javascript:void(0)" onclick="iptv_epg_move(' + i + ', 1)" style="text-decoration:none;font-size:16px;font-weight:bold;color:#333;" title="下移">&#9660;</a>' +
+						'</td></tr>';
+			}
+			tb.innerHTML = html;
+			st.innerHTML = '<%:共 %>' + d.length + '<%: 个频道%>';
+		},
+		function(x) {
+			st.innerHTML = '<%:加载失败%>';
+		}
+	);
+}
+
+function iptv_epg_move(idx, delta) {
+	var dir = (delta < 0) ? 'up' : 'down';
+	var sel_idx = idx + 1;  // JS 0-based → 段序号 1-based
+	var url = '<%=luci.dispatcher.build_url("admin/services/iptv_epg/swap")%>' + '/' + dir + '/' + sel_idx;
+	XHR.get(url, null, function(xhr) {
+		var st = document.getElementById('iptv_epg_status');
+		if (xhr.status == 200) {
+			iptv_epg_channels();  // 刷新列表
+		} else {
+			st.innerHTML = '<%:移动失败 (%>'+xhr.status+'<%:)%>';
+		}
+	});
+}
+
+function iptv_epg_cookie() {
+	var st = document.getElementById('iptv_epg_status');
+	var rs = document.getElementById('iptv_epg_result');
+	var rt = document.getElementById('iptv_epg_result_text');
+	st.innerHTML = '<%:抓取 Cookie 中 (20秒)... 请确保机顶盒开机并打开 EPG 界面%>';
+	rs.style.display = '';
+	rt.innerHTML = '<%:抓取中, 请稍候...%>';
+	XHR.get('<%=luci.dispatcher.build_url("admin/services/iptv_epg/cookie_fetch")%>', null, function(xhr) {
+		rt.innerHTML = xhr.responseText.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+		if (xhr.responseText.indexOf('✅') >= 0 || xhr.responseText.indexOf('已抓取') >= 0) {
+			st.innerHTML = '<%:Cookie 已更新!%>';
+		} else {
+			st.innerHTML = '<%:Cookie 抓取未成功 (见下方详情)%>';
+		}
+	});
+}
+
+function iptv_epg_channels_fetch() {
+	var st = document.getElementById('iptv_epg_status');
+	var rs = document.getElementById('iptv_epg_result');
+	var rt = document.getElementById('iptv_epg_result_text');
+	st.innerHTML = '<%:抓取频道表中 (需有效 Cookie, 约10秒)...%>';
+	rs.style.display = '';
+	rt.innerHTML = '<%:抓取中, 请稍候...%>';
+	XHR.get('<%=luci.dispatcher.build_url("admin/services/iptv_epg/channels_fetch")%>', null, function(xhr) {
+		rt.innerHTML = xhr.responseText.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+		if (xhr.responseText.indexOf('已重建') >= 0) {
+			st.innerHTML = '<%:频道表已重建!%>';
+			iptv_epg_channels();  // 刷新列表
+		} else {
+			st.innerHTML = '<%:抓取未成功 (先获取 Cookie, 见下方详情)%>';
+		}
+	});
+}
+
+function iptv_epg_fetch(channel) {
+	var st = document.getElementById('iptv_epg_status');
+	var rs = document.getElementById('iptv_epg_result');
+	var rt = document.getElementById('iptv_epg_result_text');
+	rs.style.display = 'block';
+	rt.innerHTML = '<%:拉取中...%>';
+	st.innerHTML = channel ? '<%:拉取 %>' + decodeURIComponent(channel) : '<%:拉取全部频道...%>';
+	// 检查是否有已保存的 selected 频道 (无则提示去频道选择页)
+	if (!channel) {
+		XHR.get('<%=luci.dispatcher.build_url("admin/services/iptv_epg/selected_count")%>', null,
+			function(xhr2, d2) {
+				if (d2.count == 0) {
+					rt.innerHTML = '<%:警告: 未设置已选频道! 请先到"频道选择"页勾选频道并保存, 否则将拉取默认7频道.%>';
+					st.innerHTML = '';
+					return;
+				}
+				do_fetch(channel, st, rs, rt);
+			},
+			function(x) { do_fetch(channel, st, rs, rt); }
+		);
+	} else {
+		do_fetch(channel, st, rs, rt);
+	}
+}
+
+function do_fetch(channel, st, rs, rt) {
+	var url = '<%=luci.dispatcher.build_url("admin/services/iptv_epg/fetch")%>' + (channel ? '?channel=' + channel : '');
+	XHR.get(url, null,
+		function(xhr, d) {
+			// 后台异步拉取: 立即返回"已启动", 之后轮询 fetch_log 接口看进度
+			rt.innerHTML = d.lines ? d.lines.join('\n') : '(empty)';
+			st.innerHTML = '<%:拉取中 (后台), 每5秒刷新进度...%>';
+			iptv_epg_poll(0);
+		},
+		function(x) {
+			rt.innerHTML = '<%:拉取启动失败%>';
+			st.innerHTML = '';
+		}
+	);
+}
+
+// 轮询 fetch 日志 (每 5 秒, 最多 120 次 = 10 分钟)
+function iptv_epg_poll(times) {
+	if (times > 120) {
+		document.getElementById('iptv_epg_status').innerHTML = '<%:拉取仍在进行 (超10分钟), 可手动刷新%>';
+		return;
+	}
+	XHR.get('<%=luci.dispatcher.build_url("admin/services/iptv_epg/fetch_log")%>', null,
+		function(xhr, d) {
+			var rt = document.getElementById('iptv_epg_result_text');
+			var st = document.getElementById('iptv_epg_status');
+			if (d.lines) rt.innerHTML = d.lines.join('\n').split('\n').slice(-15).join('\n');
+			// 检查是否完成 (日志含"完成: 缓存目录"或"播放列表已同步")
+			var joined = (d.lines || []).join('\n');
+			if (joined.indexOf('完成') >= 0 || joined.indexOf('播放列表已同步') >= 0) {
+				st.innerHTML = '<%:完成, 正在刷新...%>';
+				iptv_epg_channels();
+				iptv_epg_status();
+				setTimeout(function() { st.innerHTML = '<%:完成%>'; }, 1500);
+				return;
+			}
+			setTimeout(function() { iptv_epg_poll(times + 1); }, 5000);
+		},
+		function(x) {
+			setTimeout(function() { iptv_epg_poll(times + 1); }, 5000);
+		}
+	);
+}
+
+iptv_epg_channels();
+iptv_epg_svc('none');
+iptv_epg_status();
+</script>
+
+<%+footer%>

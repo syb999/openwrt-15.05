@@ -1,0 +1,47 @@
+config iptv_epg 'main'
+	option epg_host '218.83.165.67:8084'
+	# 回看/TS 流服务器 (电信公共基础设施, 可按地区修改)
+	option tvod_host '124.75.26.15:6610'
+	option cookie_file '/tmp/stb_cookie.txt'
+	# 有效 cookie 备份 (机顶盒关机/重启后自动写回; 失效后由 daemon 抓取更新)
+	option cookie_backup ''
+	# 机顶盒位置: A面 (直连设备, 抓 br-lan) / B面 (经VXLAN隧道) / C面 (自定义接口)
+	option stb_side 'B'
+	option stb_iface 'br-lan'
+	# 账号直登认证 (宽带账号自动过滤 ad 前缀; SN 自动补零到 32 位) — 公共版默认留空, 用户自行填写或由 daemon 自动采集
+	option broadband_uid ''
+	option stb_sn ''
+	# 机顶盒 MAC (自动发现用; 换机顶盒后修改此项) — 公共版默认留空, daemon 自动采集
+	option stb_mac ''
+	# 机顶盒 IP (可选, 默认按 stb_mac 从 ARP 自动发现)
+	option stb_ip ''
+	# 机顶盒 GUID (回看服务器校验用, 可选; 留空则回看请求不带 XClientGUID 头) — daemon 自动采集
+	option stb_guid ''
+	# 私钥下载直链 (可选, 账号直登用; 国内可达的网盘/自建服务器直链)
+	option getkey_url ''
+	option cate_id '000406'
+	option cache_dir '/tmp'
+	option prefetch_enabled '1'
+	option prefetch_hour '2'
+	option prefetch_minute '30'
+	option prefetch_days '7'
+	option ua 'webkit;Resolution(PAL,720P,1080P)'
+	# 专网路由 (电信公共基础设施, 可按地区修改; daemon 还会自动学习新服务器 IP)
+	option route_target '218.83.165.67'
+	option route_extra '124.75.26.15 222.68.208.73 218.83.165.50 124.75.29.176'
+	option iptv_gateway '30.170.0.1'
+	option iptv_iface 'iptv'
+	# 服务控制
+	option service_enabled '1'
+	option cookie_daemon '1'
+	option cgi_enabled '1'
+	# 认证 (账号直登, 参考 sh-tel-iptv-spider) — 电信公共基础设施, 可按地区修改
+	option auth_enabled '0'
+	option auth_uid ''
+	option auth_sn ''
+	option auth_mac ''
+	option auth_ip ''
+	option auth_host '222.68.208.73:7001'
+	option auth_host2 '124.75.29.176:7001'
+	option auth_host3 '218.83.165.50'
+	option auth_stb_type 'B860A'

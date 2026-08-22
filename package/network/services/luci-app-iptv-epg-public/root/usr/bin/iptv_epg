@@ -1,0 +1,724 @@
+#!/bin/sh
+# ============================================================
+# iptv_epg — IPTV EPG 管理工具 (luci-app-iptv-epg 后端)
+# 上海电信 IPTV, 复用电信 EPG 接口 (getChannelCate/getChannelList/getPreCurNextProg)
+# 用法:
+#   iptv_epg channels         列出全部频道(名称+ID+组播地址)
+#   iptv_epg categories       列出全部分类
+#   iptv_epg fetch            一键拉取 UCI 设定频道 (今日起 N 天, 默认7天)
+#   iptv_epg fetch 新闻综合   拉取指定频道
+#   iptv_epg status           查看缓存/状态/cookie
+#   iptv_epg route            添加/修复专网路由
+#   iptv_epg cookied             查看 cookie 状态
+# 依赖: /tmp/stb_cookie.txt (epg_cookie_daemon 保活)
+# ============================================================
+
+COOKIE_FILE=${EPG_COOKIE:-/tmp/stb_cookie.txt}
+# 服务器地址: 环境变量 → uci 配置 → 电信默认 (可配置, 防电信改 IP)
+EPG_HOST=${EPG_HOST:-$(uci get iptv_epg.main.epg_host 2>/dev/null)}
+[ -n "$EPG_HOST" ] || EPG_HOST=218.83.165.67:8084
+CATE_ID=${CATE_ID:-000406}
+CACHE_DIR=${CACHE_DIR:-/tmp}
+UA='webkit;Resolution(PAL,720P,1080P)'
+CH_URL="http://$EPG_HOST/iptvepg/frame1413/function/ajax/epg7getChannelByAjax.jsp"
+REF="http://$EPG_HOST/iptvepg/frame1413/IPM/modules/channel/channellist_trailer_pro.html"
+ORIGIN="http://$EPG_HOST"
+GW=${GW:-$(uci get iptv_epg.main.iptv_gateway 2>/dev/null)}
+[ -n "$GW" ] || GW=30.170.0.1
+IFACE=${IFACE:-$(uci get iptv_epg.main.iptv_iface 2>/dev/null)}
+[ -n "$IFACE" ] || IFACE=iptv
+ROUTE_TARGET=${ROUTE_TARGET:-$(uci get iptv_epg.main.route_target 2>/dev/null)}
+[ -n "$ROUTE_TARGET" ] || ROUTE_TARGET=218.83.165.67
+DAYS=${DAYS:-7}
+
+require_cookie() {
+  [ -f "$COOKIE_FILE" ] || { echo "ERR: 无 cookie $COOKIE_FILE (daemon 保活中, 需机顶盒流量)"; return 1; }
+  COOKIE=$(cat "$COOKIE_FILE")
+  [ -n "$COOKIE" ] || { echo "ERR: cookie 为空"; return 1; }
+  return 0
+}
+
+# ---------- 路由管理 ----------
+# 自动适配接口: 按机顶盒位置选择专网接口, 不存在则回退
+#   B面 (A设备拓扑): vxlan_iptv → br-iptv → iptv → br-wan
+#   A面 (普通路由器/机顶盒直连LAN): iptv → br-lan → br-wan → eth0.2
+# 优先选"存在且有 IP"的接口 (兼容 iptv/br-iptv/eth0.2 等不同命名)
+# 网关: 配置优先 (iptv_gateway), 否则从接口路由自动推断, 最后默认 30.170.0.1
+route_iface() {
+  local SIDE=$(uci get iptv_epg.main.stb_side 2>/dev/null)
+  # 第一优先: uci network.iptv 的 ifname 列表里"存在且有 IP"的那个 (如 br-iptv/vxlan_iptv)
+  # eth0.85 可能是纯桥成员(无 IP), 真正有 IP 的是 br-iptv
+  local IPTV_IFS=$(uci get network.iptv.ifname 2>/dev/null)
+  local ii
+  for ii in $IPTV_IFS; do
+    [ -d "/sys/class/net/$ii" ] || continue
+    local II_IP=$(ip addr show "$ii" 2>/dev/null | grep 'inet ' | head -1)
+    [ -n "$II_IP" ] && { echo "$ii"; return 0; }
+  done
+  # 第二优先: 有 30.170.x 网段 IP 的接口 (上海电信专网特征网段)
+  local i
+  for i in /sys/class/net/*; do
+    local IN=${i#/sys/class/net/}
+    [ "$IN" = "lo" ] && continue
+    local IP=$(ip addr show "$IN" 2>/dev/null | grep 'inet ' | awk '{print $2}' | head -1)
+    case "$IP" in
+      30.170.*) echo "$IN"; return 0 ;;
+    esac
+  done
+  local ORDER=""
+  if [ "$SIDE" = "A" ]; then
+    ORDER="iptv eth0.85 br-lan br-wan eth0.2 vxlan_iptv br-iptv"
+  else
+    ORDER="vxlan_iptv br-iptv iptv eth0.85 br-wan br-lan eth0.2"
+  fi
+  # 第三轮: 存在且有 IP 的接口
+  for i in $ORDER; do
+    [ -d "/sys/class/net/$i" ] || continue
+    local IP2=$(ip addr show "$i" 2>/dev/null | grep 'inet ' | head -1)
+    [ -n "$IP2" ] && { echo "$i"; return 0; }
+  done
+  # 第四轮: 只存在 (无 IP 也能走, 如纯桥)
+  for i in $ORDER; do
+    [ -d "/sys/class/net/$i" ] && { echo "$i"; return 0; }
+  done
+  echo "br-lan"
+}
+
+route_gw() {
+  # 配置优先
+  local G=$(uci get iptv_epg.main.iptv_gateway 2>/dev/null)
+  [ -n "$G" ] && { echo "$G"; return 0; }
+  # 从接口路由推断: 找 218.x 网段的历史网关
+  G=$(ip route show 2>/dev/null | grep -E '218\.83\.165\.67|30\.170\.' | head -1 | awk '{print $3}')
+  [ -n "$G" ] && { echo "$G"; return 0; }
+  echo "30.170.0.1"
+}
+
+cmd_route() {
+  local RIF=$(route_iface)
+  local RG=$(route_gw)
+  local IPTV_IP=$(ip addr show "$RIF" 2>/dev/null | grep 'inet ' | awk '{print $2}' | cut -d/ -f1)
+  echo "接口: $RIF (IP: ${IPTV_IP:-无}), 网关: $RG"
+  # 多路由目标: EPG接口 + 回看流 + 认证服务器 — 全部走专网!
+  # 基础目标: route_target (uci) + route_extra (uci, 空格分隔列表, 电信公共基础设施可配置)
+  # 学习路由: daemon 抓包自动发现并追加到 /etc/epg_routes.txt (电信改服务器 IP 后自动适配, 无需改配置)
+  local EXTRA=$(uci get iptv_epg.main.route_extra 2>/dev/null)
+  local TARGETS="${ROUTE_TARGET} ${EXTRA}"
+  [ -f /etc/epg_routes.txt ] && TARGETS="$TARGETS $(grep -vE '^#|^$' /etc/epg_routes.txt 2>/dev/null | tr '\n' ' ')"
+  local T
+  for T in $TARGETS; do
+    if ip route show 2>/dev/null | grep -q "^$T "; then
+      echo "路由已存在: $(ip route show 2>/dev/null | grep "^$T " | head -1)"
+    else
+      if [ -n "$IPTV_IP" ]; then
+        ip route add $T/32 via $RG dev $RIF src $IPTV_IP 2>/dev/null \
+          && echo "路由已添加: $T via $RG dev $RIF" \
+          || echo "路由添加失败: $T (尝试无 src)"
+      fi
+      if ! ip route show 2>/dev/null | grep -q "^$T "; then
+        ip route add $T/32 via $RG dev $RIF 2>/dev/null \
+          && echo "路由已添加(无src): $T via $RG dev $RIF" \
+          || echo "路由添加失败: $T"
+      fi
+    fi
+  done
+  # 持久化
+  if ! uci show network 2>/dev/null | grep -q "network.epgroute"; then
+    uci set network.epgroute=route
+    uci set network.epgroute.target="$ROUTE_TARGET"
+    uci set network.epgroute.netmask='255.255.255.255'
+    uci set network.epgroute.gateway="$RG"
+    uci set network.epgroute.interface="$RIF"
+    uci set network.epgroute.metric='100'
+    uci commit network
+    echo "已持久化到 network.epgroute (iface=$RIF gw=$RG)"
+  fi
+}
+
+# ---------- 频道列表 ----------
+# 输出: 名称|ID|mixNo|code|流地址 (流地址可能为空, 从 sourceURL/playUrl/rtp 提取)
+# 注意: 电信响应字段顺序不固定; busybox 无 paste, 用 sed 按字段提取
+cmd_channels() {
+  require_cookie || return 1
+  curl -s --max-time 15 "$CH_URL" -H "Cookie: $COOKIE" -H "User-Agent: $UA" -H "Referer: $REF" -H "Origin: $ORIGIN" \
+    -d "action=getChannelList&cateID=$CATE_ID&type=" 2>/dev/null | \
+    tr '{' '\n' | grep '"name"' | while IFS= read -r LINE; do
+      CODE=$(echo "$LINE" | sed -n 's/.*"code":"\([^"]*\)".*/\1/p')
+      NAME=$(echo "$LINE" | sed -n 's/.*"name":"\([^"]*\)".*/\1/p')
+      ID=$(echo "$LINE" | sed -n 's/.*"ID":"\([^"]*\)".*/\1/p')
+      MIX=$(echo "$LINE" | sed -n 's/.*"mixNo":"\([^"]*\)".*/\1/p')
+      # 流地址 (组播/单播源): sourceURL / playUrl / rtp / rtsp, 可能没有
+      SRC=$(echo "$LINE" | sed -n 's/.*"sourceURL":"\([^"]*\)".*/\1/p')
+      [ -z "$SRC" ] && SRC=$(echo "$LINE" | sed -n 's/.*"playUrl":"\([^"]*\)".*/\1/p')
+      [ -z "$SRC" ] && SRC=$(echo "$LINE" | grep -oE '(rtp|rtsp|udp)://[^"]+' | head -1)
+      [ -n "$NAME" ] && [ -n "$ID" ] && printf "%s|%s|%s|%s|%s\n" "$NAME" "$ID" "$MIX" "$CODE" "$SRC"
+    done
+}
+
+# ---------- 一键抓取并重建频道映射表 (channel_map.txt) ----------
+# 公共版零频道数据: 机顶盒开机 + cookie 有效后运行, 自动重建 名称|EPG_ID|组播地址
+# 组播地址: 优先 EPG 接口返回的流地址, 缺则用 multicast_map.txt 按名称/名称SD/名称HD 补
+cmd_channels_save() {
+  require_cookie || return 1
+  local MAP=/usr/share/iptv_epg/channel_map.txt
+  local MC=/usr/share/iptv_epg/multicast_map.txt
+  local TMP=/tmp/channel_map.new
+  : > "$TMP"
+  cmd_channels | while IFS= read -r LINE; do
+    local NAME=$(echo "$LINE" | cut -d'|' -f1)
+    local ID=$(echo "$LINE" | cut -d'|' -f2)
+    local SRC=$(echo "$LINE" | cut -d'|' -f5)
+    local UDP="$SRC"
+    [ -z "$UDP" ] && UDP=$(grep "^$NAME|" "$MC" 2>/dev/null | head -1 | cut -d'|' -f2)
+    [ -z "$UDP" ] && UDP=$(grep "^${NAME}SD|" "$MC" 2>/dev/null | head -1 | cut -d'|' -f2)
+    [ -z "$UDP" ] && UDP=$(grep "^${NAME}HD|" "$MC" 2>/dev/null | head -1 | cut -d'|' -f2)
+    # 清理协议前缀+路径, 统一 host:port (play.cgi 走 udpxy 需要组播格式; 单播源用户自行处理)
+    UDP=$(echo "$UDP" | sed 's#^[a-z]*://##; s#/.*##')
+    echo "$NAME|$ID|$UDP" >> "$TMP"
+  done
+  if [ -s "$TMP" ]; then
+    cp "$MAP" "$MAP.bak" 2>/dev/null
+    mv "$TMP" "$MAP"
+    local WITH_UDP=$(grep -cE '^[^|]+\|[^|]+\|[^|]+$' "$MAP" 2>/dev/null)
+    echo "✅ 已重建频道映射表: $(wc -l < "$MAP") 个频道 (含组播/流地址: $WITH_UDP)"
+  else
+    rm -f "$TMP"
+    echo "❌ 抓取失败 (cookie 无效? 先获取 cookie 再试)"
+    return 1
+  fi
+}
+
+# ---------- 分类 ----------
+cmd_categories() {
+  require_cookie || return 1
+  PROPS_URL="http://$EPG_HOST/iptvepg/frame1413/function/ajax/epg7getProperties.jsp"
+  curl -s --max-time 10 "$PROPS_URL" -H "Cookie: $COOKIE" -H "User-Agent: $UA" -H "Referer: $REF" -H "Origin: $ORIGIN" \
+    -d 'action=getChannelCate' 2>/dev/null | \
+    grep -oE '{"name":"[^"]*","id":"[^"]*"}' | sed 's/{"name":"//;s/","id":"/|/;s/"}/|/'
+}
+
+# ---------- 拉取单频道单日 → 缓存 ----------
+# 优先用 getChannelProg (一次拉10天, 参考 sh-tel-iptv-spider 项目)
+# 返回: {"data":[{"name":"...","startTime":ms,"endTime":ms,"ID":"...","channelID":"...","mixNo":"..."}]}
+fetch_one() {
+  local NAME="$1" ID="$2" DATE="$3"
+  local CODE CACHE_FILE DAY_START DAY_END OUT TMP2
+  # HD 频道节目与标清相同: 若传了 HD 名但标清名在 channel_map 有更合适的 CHID, 复用标清
+  # (例如 CCTV-5HD → CCTV-5; 但注意有些频道只有 HD 版, 保留原 ID)
+  case "$NAME" in
+    *HD)
+      local SD_NAME="${NAME%HD}"
+      local SD_ID=$(grep "^${SD_NAME}|" /usr/share/iptv_epg/channel_map.txt 2>/dev/null | cut -d'|' -f2 | head -1)
+      if [ -n "$SD_ID" ] && [ "$SD_ID" != "$ID" ]; then
+        # 用标清 CHID 拉取 → 缓存与标清共享
+        ID="$SD_ID"
+      fi
+      ;;
+  esac
+  DAY_START=$(date -d "$DATE 00:00:00" +%s 2>/dev/null)
+  [ -n "$DAY_START" ] || { echo "SKIP $NAME $DATE (bad date)"; return; }
+  # 时区修正: 电信接口按北京时间 epoch 解释
+  # 设备可能是 UTC 或 CST: 用 date %z 偏移统一换算 (POSIX 兼容)
+  TZOFF=$(date +%z)
+  TZH=$(echo "$TZOFF" | cut -c2-3 | awk '{print $1+0}')   # 时区小时 (UTC=0, CST=8)
+  # 请求方向: 电信期望"北京 00:00"的假epoch = 本地00:00 - (TZH-8)h
+  DAY_START=$((DAY_START - (TZH - 8) * 3600))
+  CACHE_FILE="$CACHE_DIR/epg_cache_${ID}_${DATE}.json"
+  # 缓存 6 小时有效
+  if [ -f "$CACHE_FILE" ]; then
+    local AGE=$(( $(date +%s) - $(date -r "$CACHE_FILE" +%s) ))
+    if [ "$AGE" -lt 21600 ]; then
+      # 检查名字索引是否已生成 (旧缓存可能没索引)
+      local ENC=$(printf '%s' "$NAME" | xxd -p | tr -d ' \n' | tr 'a-f' 'A-F' | sed 's/\(..\)/%\1/g')
+      if [ -f "$CACHE_DIR/epg_by_name/$ENC/$DATE.json" ]; then
+        echo "HIT  $NAME $DATE"
+      else
+        # 缓存有但索引缺: 补索引
+        mkdir -p "$CACHE_DIR/epg_by_name/$ENC"
+        cp "$CACHE_FILE" "$CACHE_DIR/epg_by_name/$ENC/$DATE.json"
+        echo "HIT+ $NAME $DATE (补索引)"
+      fi
+      return
+    fi
+  fi
+  # 一次拉 7 天 (今天-6天 00:00 到 今天 24:00), 减少电信请求 7 倍!
+  # 频道 code 可选(getChannelProg 只需 channelID)。从本地 cache 拿, 不重新请求电信!
+  CODE=$(grep -F "|$NAME|" "$CACHE_DIR/epg_channellist.cache" 2>/dev/null | cut -d'|' -f3)
+  # startTime/endTime: 北京 00:00 的假epoch (毫秒)
+  DAY_END=$((DAY_START + 7*86400 - 1))
+  TMP2=$(mktemp /tmp/epg_prog.XXXXXX)
+  # getChannelProg: 参考 sh-tel-iptv-spider, 传 code+channelID (code 可空, channelID 必须)
+  # 超时保护: 🔴 不用外层 timeout 命令 (busybox/OpenWrt 很多设备没装 timeout → curl 不执行 → 静默失败!)
+  #            直接用 curl --max-time 8 (完整版 curl 支持), 电信不响应时快速跳过
+  if [ -n "$CODE" ]; then
+    curl -s --max-time 8 "$CH_URL" -H "Cookie: $COOKIE" -H "User-Agent: $UA" -H "Referer: $REF" -H "Origin: $ORIGIN" \
+      -d "action=getChannelProg&code=$CODE&channelID=$ID&startTime=${DAY_START}000&endTime=${DAY_END}000&offset=0&limit=2000" 2>/dev/null > "$TMP2"
+  else
+    curl -s --max-time 8 "$CH_URL" -H "Cookie: $COOKIE" -H "User-Agent: $UA" -H "Referer: $REF" -H "Origin: $ORIGIN" \
+      -d "action=getChannelProg&channelID=$ID&startTime=${DAY_START}000&endTime=${DAY_END}000&offset=0&limit=2000" 2>/dev/null > "$TMP2"
+  fi
+  # 按 { 分块提取: name/startTime/endTime (字段顺序不固定)
+  # 一次拉 7 天 → 按 strftime(%F) 分组, 写入 /tmp/epg_7d.<CHID>.<日期>.json
+  tr '{' '\n' < "$TMP2" | grep '"name"' | awk '
+{
+  n=""; st=""; et=""
+  if (match($0, /"name":"[^"]*"/)) { n=substr($0, RSTART+8, RLENGTH-9) }
+  if (match($0, /"startTime":[0-9]+/)) { st=substr($0, RSTART+12, RLENGTH-12) }
+  if (match($0, /"endTime":[0-9]+/)) { et=substr($0, RSTART+10, RLENGTH-10) }
+  if (n != "" && st != "" && et != "") {
+    d=strftime("%F", st/1000)
+    # 每个日期一个临时文件 (追加)
+    f="/tmp/epg_7d." d ".json"
+    s=strftime("%H:%M", st/1000); e=strftime("%H:%M", et/1000)
+    gsub(/\\/, "\\\\", n); gsub(/"/, "\\\"", n)
+    print "{\"start\":\"" s "\",\"end\":\"" e "\",\"title\":\"" n "\"}" >> f
+  }
+}' 2>/dev/null
+  # 对 7 天中的每一天: 组装 JSON → 写缓存 + 索引
+  local DD
+  local i7=0
+  while [ $i7 -lt 7 ]; do
+    DD=$(date -d "@$(( DAY_START + i7*86400 + (TZH-8)*3600 ))" +%F 2>/dev/null)
+    [ -z "$DD" ] && break
+    local PART=/tmp/epg_7d.$DD.json
+    local OUT=/tmp/epg_out_${ID}_${DD}.json
+    if [ -s "$PART" ]; then
+      echo "{\"channel_name\":\"$NAME\",\"date\":\"$DD\",\"epg_data\":[" > "$OUT"
+      awk '{print $0 ","}' "$PART" | sed '$ s/,$//' >> "$OUT"
+      echo "]}" >> "$OUT"
+      # 写缓存
+      cp "$OUT" "$CACHE_DIR/epg_cache_${ID}_${DD}.json"
+      # 写名字索引
+      local ENC2=$(printf '%s' "$NAME" | xxd -p | tr -d ' \n' | tr 'a-f' 'A-F' | sed 's/\(..\)/%\1/g')
+      mkdir -p "$CACHE_DIR/epg_by_name/$ENC2"
+      cp "$OUT" "$CACHE_DIR/epg_by_name/$ENC2/$DD.json"
+      echo "OK   $NAME $DD ($(grep -c '"title"' "$OUT")条)"
+    fi
+    rm -f "$PART" "$OUT"
+    i7=$((i7+1))
+  done
+  rm -f "$TMP2"
+}
+
+# ---------- 分批后台拉取 (每批 BATCH 个频道, 防单次超时) ----------
+# 用法: iptv_epg fetch_bg [频道名]  — 无参数拉全部 selected, 有参数拉单个
+cmd_fetch_bg() {
+  # 单实例锁: 同 fetch (杀 >60s 的旧进程)
+  local NOW_S=$(date +%s)
+  local OLD_PIDS=""
+  local p
+  for p in /proc/[0-9]*/cmdline; do
+    local cl=$(cat "$p" 2>/dev/null | tr '\0' ' ')
+    case "$cl" in
+      "/usr/bin/iptv_epg fetch_bg"*|"/bin/sh /usr/bin/iptv_epg fetch_bg"*)
+        local pid=${p%/cmdline}; pid=${pid#/proc/}
+        [ "$pid" = "$$" ] && continue
+        local START=$(stat -c %Y "/proc/$pid" 2>/dev/null)
+        [ -z "$START" ] && continue
+        if [ $((NOW_S - START)) -gt 60 ]; then
+          OLD_PIDS="$OLD_PIDS $pid"
+        fi
+        ;;
+    esac
+  done
+  [ -n "$OLD_PIDS" ] && for OP in $OLD_PIDS; do kill -9 "$OP" 2>/dev/null; done
+  [ -n "$OLD_PIDS" ] && { sleep 1; echo "[fetch_bg] 已清理卡死旧进程"; }
+
+  require_cookie || return 1
+  local DAYS2=$(uci get iptv_epg.main.prefetch_days 2>/dev/null)
+  [ -n "$DAYS2" ] && DAYS=$DAYS2
+  local BATCH=10
+  local DATE_LIST="" D
+  local i=0 NOW
+  NOW=$(date +%s)
+  while [ $i -lt $DAYS ]; do
+    D=$(date -d "@$(( NOW - i*86400 ))" +%F 2>/dev/null)
+    [ -n "$D" ] || D=$(date -d "@$(( NOW - i*86400 ))" +%F)
+    DATE_LIST="$DATE_LIST $D"
+    i=$((i+1))
+  done
+
+  # 频道列表: 指定频道或全部 selected
+  if [ -n "$1" ]; then
+    local CH=$(selected_channels | grep "^$1|" | head -1)
+    [ -z "$CH" ] && CH=$(uci_channels | grep "^$1|" | head -1)
+    [ -z "$CH" ] && CH=$(uci_channels | grep "|$1|" | head -1)
+    [ -z "$CH" ] && { echo "未找到频道: $1"; exit 1; }
+    local NAME=$(echo "$CH" | cut -d'|' -f1)
+    local ID=$(echo "$CH" | cut -d'|' -f2)
+    echo "[fetch_bg] 拉取单频道: $NAME"
+    # 🔴 加速: 每频道只拉 1 次 (fetch_one 内部一次拉 7 天), 锚点=DATE_LIST 最早日期覆盖过去7天+未来
+    #    原来对 7 个日期循环调用 fetch_one = 7 倍请求 + 7 倍进程 → 弱设备 CPU 爆炸!
+    local ANCHOR=$(echo $DATE_LIST | awk '{print $NF}')
+    fetch_one "$NAME" "$ID" "$ANCHOR"
+    # 降级: 锚点(最早日期)可能无数据, 用今天重试一次 (最多 2 次请求/频道)
+    if ! ls ${CACHE_DIR}/epg_cache_${ID}_*.json >/dev/null 2>&1; then
+      fetch_one "$NAME" "$ID" "$(echo $DATE_LIST | awk '{print $1}')"
+    fi
+  else
+    local CHLIST=$(selected_channels)
+    [ -z "$CHLIST" ] && { echo "[fetch_bg] 未设置 selected 频道"; CHLIST=$(uci_channels); }
+    echo "[fetch_bg] 共 $(echo "$CHLIST" | grep -c .) 个频道, 每批 $BATCH 个"
+    # 🔴 加速: 锚点=最早日期, 每频道只拉 1 次 (原 7 次循环 → CPU/请求减 7 倍)
+    local ANCHOR=$(echo $DATE_LIST | awk '{print $NF}')
+    local TODAY=$(echo $DATE_LIST | awk '{print $1}')
+    # 分批: 每批 BATCH 个频道, 批间不 sleep (串行防弱设备打爆)
+    local TOTAL=0
+    echo "$CHLIST" | while IFS= read -r LINE; do
+      [ -z "$LINE" ] && continue
+      local NAME=$(echo "$LINE" | cut -d'|' -f1)
+      local ID=$(echo "$LINE" | cut -d'|' -f2)
+      fetch_one "$NAME" "$ID" "$ANCHOR"
+      # 降级: 锚点无数据时用今天重试一次
+      if ! ls ${CACHE_DIR}/epg_cache_${ID}_*.json >/dev/null 2>&1; then
+        fetch_one "$NAME" "$ID" "$TODAY"
+      fi
+      TOTAL=$((TOTAL+1))
+      echo "[fetch_bg] 进度: $TOTAL/$(echo "$CHLIST" | grep -c .) 频道"
+    done
+  fi
+  echo "[fetch_bg] 完成"
+  gen_iptv_txt
+}
+
+# ---------- 从 UCI 获取设定频道 (name|epg_id) ----------
+uci_channels() {
+  # 遍历 iptv_epg 的 channel 段, 输出: 名称|EPG_ID|组播地址
+  # 注意: 段名已改 ASCII (ch1-ch7), uci show 输出 'iptv_epg.ch1=channel'
+  uci show iptv_epg 2>/dev/null | grep '=channel$' | while read -r LINE; do
+    local SEC=$(echo "$LINE" | sed 's/=channel$//')
+    local NAME=$(uci get "$SEC.name" 2>/dev/null)
+    local ID=$(uci get "$SEC.epg_id" 2>/dev/null)
+    local UDP=$(uci get "$SEC.udp" 2>/dev/null)
+    [ -n "$NAME" ] && echo "$NAME|$ID|$UDP"
+  done
+}
+
+# 从 selected 段获取选定频道 (LuCI 勾选, 方便调试)
+# selected 段: config selected 'sel1' + option ch1 '频道名' + option id1 'epg_id'
+# 输出: 名称|EPG_ID| (直接用 id, 不依赖 UCI channel 段)
+selected_channels() {
+  # 遍历所有 sel 段
+  uci show iptv_epg 2>/dev/null | grep '=selected$' | while read -r LINE; do
+    local SEC=$(echo "$LINE" | sed 's/=selected$//')   # iptv_epg.sel1
+    local IDX=$(echo "$SEC" | grep -oE '[0-9]+$')       # 1
+    local NAME=$(uci get "$SEC.ch$IDX" 2>/dev/null)
+    local ID=$(uci get "$SEC.id$IDX" 2>/dev/null)
+    [ -z "$NAME" ] && continue
+    # 🔴 ID 缺失时从 channel_map 补 (旧数据/保存缺 id 的兼容 — 否则 selected 全部被过滤, fetch 误回退 UCI channel)
+    if [ -z "$ID" ]; then
+      ID=$(grep -F "|$NAME|" /usr/share/iptv_epg/channel_map.txt 2>/dev/null | cut -d'|' -f2 | head -1)
+    fi
+    [ -n "$ID" ] && echo "$NAME|$ID|"
+  done
+}
+
+# ---------- 一键拉取 (只拉 UCI 设定频道, 今日起 DAYS 天) ----------
+cmd_fetch() {
+  # ---------- 单实例锁: 防并发重复拉取 ----------
+  # 之前用 flock 有死锁风险: exec 9> 的 fd 被子进程继承, 子进程(curl/awk)不退出锁不释放
+  # → 改为: 检测并杀掉"卡死的旧 fetch"(精确匹配 /usr/bin/iptv_epg fetch, 不误杀 ssh)
+  # 只杀"运行超过 60 秒"的旧 fetch (正常拉取每频道几秒, 卡死=电信超时8s×N频道, 60s 足够判断)
+  local NOW_S=$(date +%s)
+  local OLD_PIDS=""
+  local p
+  for p in /proc/[0-9]*/cmdline; do
+    local cl=$(cat "$p" 2>/dev/null | tr '\0' ' ')
+    case "$cl" in
+      "/usr/bin/iptv_epg fetch"*|"/bin/sh /usr/bin/iptv_epg fetch"*)
+        local pid=${p%/cmdline}; pid=${pid#/proc/}
+        [ "$pid" = "$$" ] && continue
+        # 检查进程年龄
+        local START=$(stat -c %Y "/proc/$pid" 2>/dev/null)
+        [ -z "$START" ] && continue
+        local AGE=$((NOW_S - START))
+        if [ "$AGE" -gt 60 ]; then
+          OLD_PIDS="$OLD_PIDS $pid"
+        fi
+        ;;
+    esac
+  done
+  if [ -n "$OLD_PIDS" ]; then
+    echo "检测到卡死的旧拉取进程 (运行>60s, PID:$OLD_PIDS), 终止..."
+    for OP in $OLD_PIDS; do
+      kill -9 "$OP" 2>/dev/null
+    done
+    # 杀残留 curl (电信请求, 防止孤儿继续等)
+    for p in /proc/[0-9]*/cmdline; do
+      local cl2=$(cat "$p" 2>/dev/null | tr '\0' ' ')
+      case "$cl2" in
+        *"curl"*"getChannelProg"*|*"curl"*"getChannelList"*)
+          local cpid=${p%/cmdline}; cpid=${cpid#/proc/}
+          kill -9 "$cpid" 2>/dev/null
+          ;;
+      esac
+    done
+    sleep 1
+    echo "已清理, 开始新拉取"
+  fi
+  require_cookie || return 1
+  local DAYS2=$(uci get iptv_epg.main.prefetch_days 2>/dev/null)
+  [ -n "$DAYS2" ] && DAYS=$DAYS2
+  # 生成日期列表: 今天起往前 DAYS 天 (过去+今天, 未来节目单未发布没意义)
+  # DIYP 显示: 今天+过去 7 天记录
+  local DATE_LIST="" D
+  local i=0 NOW
+  NOW=$(date +%s)
+  while [ $i -lt $DAYS ]; do
+    D=$(date -d "@$(( NOW - i*86400 ))" +%F 2>/dev/null)
+    [ -n "$D" ] || D=$(date -d "@$(( NOW - i*86400 ))" +%F)
+    DATE_LIST="$DATE_LIST $D"
+    i=$((i+1))
+  done
+
+  # MT7688 单核弱 CPU: 完全串行, 一次只拉 1 个 (避免打爆设备)
+  # 指定频道?
+  if [ -n "$1" ]; then
+    local TARGET="$1" NAME ID CH
+    # 先从 UCI 找
+    CH=$(uci_channels | grep "^$TARGET|" | head -1)
+    [ -z "$CH" ] && CH=$(uci_channels | grep "|$TARGET|" | head -1)
+    [ -z "$CH" ] && { CH=$(cmd_channels | grep "^$TARGET|" | head -1); }
+    [ -z "$CH" ] && { echo "未找到频道: $TARGET"; echo "可用: iptv_epg channels"; exit 1; }
+    NAME=$(echo "$CH" | cut -d'|' -f1)
+    ID=$(echo "$CH" | cut -d'|' -f2)
+    for D in $DATE_LIST; do
+      fetch_one "$NAME" "$ID" "$D"
+    done
+  else
+    # 频道来源: ① selected 段 (LuCI 勾选, 方便调试) ② UCI channel 段
+    local CHLIST2=$(selected_channels)
+    if [ -z "$CHLIST2" ]; then
+      echo "未设置 selected 频道, 用 UCI channel 段"
+      CHLIST2=$(uci_channels)
+    fi
+    if [ -z "$CHLIST2" ]; then
+      echo "UCI 未配置频道, 尝试从电信列表拉全部"
+      CHLIST2=$(cmd_channels | cut -d'|' -f1-2)
+    fi
+    echo "$CHLIST2" | while IFS= read -r LINE; do
+      [ -z "$LINE" ] && continue
+      local NAME=$(echo "$LINE" | cut -d'|' -f1)
+      local ID=$(echo "$LINE" | cut -d'|' -f2)
+      for D in $DATE_LIST; do
+        fetch_one "$NAME" "$ID" "$D"
+      done
+    done
+  fi
+  echo "完成: 缓存目录 $CACHE_DIR ($DAYS 天, $(ls $CACHE_DIR/epg_cache_*.json 2>/dev/null | wc -l) 个文件)"
+  # 清理过期缓存 (保留最近 DAYS+1 天, 防止 /tmp 撑爆)
+  local KEEP_DAYS=$((DAYS + 1))
+  find "$CACHE_DIR" -name 'epg_cache_*.json' -mtime +$KEEP_DAYS -delete 2>/dev/null || true
+  # 🔴 名字索引缓存 (epg.cgi 快速路径 /tmp/epg_by_name/) 同样清理 — 否则无限累积撑爆 /tmp!
+  find "$CACHE_DIR/epg_by_name" -name '*.json' -mtime +$KEEP_DAYS -delete 2>/dev/null || true
+  # 清理空的编码目录 (删完文件后残留的空目录)
+  find "$CACHE_DIR/epg_by_name" -type d -empty -delete 2>/dev/null || true
+  # 残留临时拆分文件 (fetch 中断时可能遗留)
+  find "$CACHE_DIR" -maxdepth 1 -name 'epg_7d.*.json' -mtime +1 -delete 2>/dev/null || true
+  # 同步生成 DIYP IPTV.txt (selected 频道, TVOD 格式)
+  gen_iptv_txt
+}
+
+# ---------- 获取本机可访问 IP (播放器用) ----------
+# 按机顶盒位置智能选择 + 多级回退:
+#   B面 (A设备场景, 播放器在主路由网段): br-wan → uci wan → br-lan → uci lan → 任意非loopback
+#   A面 (普通路由器, 播放器在LAN网段):   uci lan → br-lan → br-wan → 任意非loopback
+# 最后兜底默认值
+get_host_ip() {
+  local SIDE=$(uci get iptv_epg.main.stb_side 2>/dev/null)
+  local HOST=""
+  local if_ip
+  if_ip() { ip addr show "$1" 2>/dev/null | grep 'inet ' | awk '{print $2}' | cut -d/ -f1 | head -1; }
+  if [ "$SIDE" = "A" ]; then
+    # A面: 播放器在 LAN 网段 → LAN IP 优先
+    HOST=$(uci get network.lan.ipaddr 2>/dev/null)
+    [ -z "$HOST" ] && HOST=$(if_ip br-lan)
+    [ -z "$HOST" ] && HOST=$(if_ip br-wan)
+  else
+    # B面 (默认): 播放器在主路由网段 → WAN 口优先
+    HOST=$(if_ip br-wan)
+    [ -z "$HOST" ] && HOST=$(uci get network.wan.ipaddr 2>/dev/null)
+    [ -z "$HOST" ] && HOST=$(if_ip br-lan)
+    [ -z "$HOST" ] && HOST=$(uci get network.lan.ipaddr 2>/dev/null)
+  fi
+  # 任意非 loopback 接口兜底 (兼容 eth0/eth0.2 等非桥接接口)
+  [ -z "$HOST" ] && HOST=$(ip -o addr show 2>/dev/null | awk '$4 ~ /^inet/ && $2 != "lo" && $2 !~ /^(docker|veth|br-|tun|wg)/ {print $4}' | cut -d/ -f1 | head -1)
+  echo "$HOST"
+}
+
+# ---------- 生成 DIYP IPTV.txt (TVOD 格式, 直播+回看) ----------
+# 输出: /tmp/iptv_tv.txt (selected 频道), 无 selected 用 UCI channel 段
+gen_iptv_txt() {
+  # 输出到 /www (持久, 路由器重启不丢, 播放器直接访问)
+  local OUT_DIYP=/www/iptv_tv.txt      # DIYP 专用 (TVOD 路径, 回看识别)
+  local OUT_TVBOX=/www/iptv_tvbox.txt  # TVBox 专用 (play.cgi 直连)
+  local HOST=$(get_host_ip)
+  : > "$OUT_DIYP"
+  : > "$OUT_TVBOX"
+  # selected 频道: name + channel_map 补 udp
+  selected_channels | while IFS= read -r LINE; do
+    [ -z "$LINE" ] && continue
+    local NAME=$(echo "$LINE" | cut -d'|' -f1)
+    local UDP=$(grep "^$NAME|" /usr/share/iptv_epg/channel_map.txt 2>/dev/null | cut -d'|' -f3)
+    [ -z "$UDP" ] && UDP=$(uci_channels | grep "^$NAME|" | cut -d'|' -f3)
+    if [ -n "$UDP" ]; then
+      # DIYP: TVOD 路径 (点击 EPG 节目自动回看)
+      echo "$NAME,http://$HOST/cgi-bin/TVOD/play.cgi?url=http://$HOST:7088/udp/$UDP&ch=$NAME" >> "$OUT_DIYP"
+      # TVBox: play.cgi 直连 (TVBox 点击 EPG 自动拼 playseek 回看)
+      echo "$NAME,http://$HOST/cgi-bin/play.cgi?url=http://$HOST:7088/udp/$UDP&ch=$NAME" >> "$OUT_TVBOX"
+    fi
+  done
+  # 无 selected 输出: 退回 UCI channel 段
+  if [ ! -s "$OUT_DIYP" ]; then
+    uci_channels | while IFS= read -r LINE; do
+      [ -z "$LINE" ] && continue
+      local NAME=$(echo "$LINE" | cut -d'|' -f1)
+      local UDP=$(echo "$LINE" | cut -d'|' -f3)
+      if [ -n "$UDP" ]; then
+        echo "$NAME,http://$HOST/cgi-bin/TVOD/play.cgi?url=http://$HOST:7088/udp/$UDP&ch=$NAME" >> "$OUT_DIYP"
+        echo "$NAME,http://$HOST/cgi-bin/play.cgi?url=http://$HOST:7088/udp/$UDP&ch=$NAME" >> "$OUT_TVBOX"
+      fi
+    done
+  fi
+  echo "播放列表已同步:"
+  echo "  DIYP:  $OUT_DIYP  ($(wc -l < "$OUT_DIYP") 频道)"
+  echo "  TVBox: $OUT_TVBOX ($(wc -l < "$OUT_TVBOX") 频道)"
+  echo "  http://$HOST/iptv_tv.txt"
+  echo "  http://$HOST/iptv_tvbox.txt"
+  # TVBox 数据源 (配置 JSON, lives 指向 TVBox 播放列表)
+  cat > /www/tvbox_config.json << EOF2
+{
+  "lives": [
+    {
+      "name": "上海IPTV",
+      "type": 0,
+      "url": "http://$HOST/iptv_tvbox.txt",
+      "epg": "http://$HOST/cgi-bin/epg.cgi"
+    }
+  ],
+  "sites": [],
+  "spider": "",
+  "wallpaper": "",
+  "livePlayHeaders": []
+}
+EOF2
+  echo "  TVBox 数据源: http://$HOST/tvbox_config.json"
+}
+
+# ---------- cookie 状态 ----------
+cmd_cookie() {
+  # 手动抓取模式: iptv_epg cookie fetch [秒数]
+  if [ "$1" = "fetch" ]; then
+    local SECS=${2:-20}
+    echo "=== 手动抓取 cookie (${SECS}秒) ==="
+    # 按机顶盒位置自动适配接口 (兼容主路由: 无 vxlan/br-iptv 时回退 br-lan/br-wan)
+    local SIDE=$(uci get iptv_epg.main.stb_side 2>/dev/null)
+    local CAP_IFACE=br-lan
+    if [ "$SIDE" = "A" ]; then
+      CAP_IFACE=br-lan
+      [ -d /sys/class/net/br-lan ] || CAP_IFACE=br-wan
+    else
+      CAP_IFACE=vxlan_iptv
+      [ -d /sys/class/net/vxlan_iptv ] || CAP_IFACE=br-iptv
+      [ -d /sys/class/net/br-iptv ] || CAP_IFACE=br-wan
+    fi
+    # 机顶盒 IP 自动发现 (按 stb_mac 从 ARP), 找不到则用配置或不限 IP
+    local EPG_IP=$(echo "$EPG_HOST" | cut -d: -f1)
+    local EPG_PORT=$(echo "$EPG_HOST" | cut -d: -f2)
+    local FILTER="host $EPG_IP and tcp port $EPG_PORT"
+    local STBMAC=$(uci get iptv_epg.main.stb_mac 2>/dev/null)
+    [ -n "$STBMAC" ] || STBMAC=''
+    local STBIP=$(cat /proc/net/arp 2>/dev/null | grep -i "$STBMAC" | awk '{print $1}' | head -1)
+    [ -n "$STBIP" ] || STBIP=$(uci get iptv_epg.main.stb_ip 2>/dev/null)
+    [ -n "$STBIP" ] && FILTER="$FILTER and host $STBIP"
+    echo "抓包接口: $CAP_IFACE, 过滤: $FILTER"
+    rm -f /tmp/epg_cookie_cap.txt
+    tcpdump -i "$CAP_IFACE" -nn -s 0 -A -c 20 "$FILTER" > /tmp/epg_cookie_cap.txt 2>/dev/null &
+    local TP=$!
+    # 限时等待 (busybox 无 timeout)
+    local T=0
+    while kill -0 "$TP" 2>/dev/null && [ "$T" -lt "$SECS" ]; do sleep 1; T=$((T+1)); done
+    kill -9 "$TP" 2>/dev/null
+    local CAPSIZE=$(wc -c < /tmp/epg_cookie_cap.txt 2>/dev/null || echo 0)
+    echo "抓到: $CAPSIZE 字节"
+    # 提取 Cookie 头 (请求方向, 最长一行)
+    local NEWCK=$(grep -aoE 'Cookie: [^\r\n]+' /tmp/epg_cookie_cap.txt 2>/dev/null | sed 's/^.*Cookie: //' | awk '{ print length($0), $0 }' | sort -rn | head -1 | cut -d' ' -f2-)
+    rm -f /tmp/epg_cookie_cap.txt
+    if [ -n "$NEWCK" ]; then
+      # 有效性验证 (HTTP 200 才写)
+      local CODE=$(curl -s --max-time 8 -o /dev/null -w '%{http_code}' "$CH_URL" \
+        -H "Cookie: $NEWCK" -H "User-Agent: $UA" -d 'action=getChannelList&cateID=000406&type=' 2>/dev/null)
+      if [ "$CODE" = "200" ]; then
+        echo "$NEWCK" > "$COOKIE_FILE"
+        echo "✅ cookie 已抓取并验证 (HTTP 200): $(echo "$NEWCK" | cut -c1-50)..."
+      else
+        echo "❌ 抓到的 cookie 验证失败 (HTTP $CODE), 未写入"
+      fi
+    else
+      echo "❌ 未抓到 Cookie 头 (机顶盒需开机并打开 EPG 界面)"
+    fi
+    return 0
+  fi
+  # 默认: 状态查询
+  # daemon 是否运行: 检查 pidfile (pgrep -f 会误匹配自身 shell)
+  local DAEMON_RUN="no"
+  if [ -f /var/run/epg_cookie_daemon.pid ]; then
+    local DPID=$(cat /var/run/epg_cookie_daemon.pid 2>/dev/null)
+    kill -0 "$DPID" 2>/dev/null && DAEMON_RUN="yes"
+  fi
+  if [ -f "$COOKIE_FILE" ]; then
+    local SIZE=$(wc -c < "$COOKIE_FILE")
+    local MTIME=$(date -r "$COOKIE_FILE" '+%F %T' 2>/dev/null)
+    echo "cookie: $COOKIE_FILE ($SIZE 字节, 更新于 $MTIME)"
+    if [ "$DAEMON_RUN" = "yes" ]; then
+      echo "daemon: 运行中 (保活)"
+    else
+      echo "daemon: 未运行"
+    fi
+  else
+    echo "cookie: 不存在 (等待机顶盒流量)"
+    if [ "$DAEMON_RUN" = "yes" ]; then
+      echo "daemon: 运行中 (等待抓取)"
+    else
+      echo "daemon: 未运行 (启动服务: /etc/init.d/iptv-epg start)"
+    fi
+  fi
+}
+
+# ---------- 状态 ----------
+cmd_status() {
+  echo "=== IPTV EPG 状态 ==="
+  cmd_cookie
+  echo "缓存: $(ls $CACHE_DIR/epg_cache_*.json 2>/dev/null | wc -l) 个文件"
+  echo "UCI 频道: $(uci_channels | wc -l) 个"
+  echo "路由:"
+  ip route show 2>/dev/null | grep "$ROUTE_TARGET" | head -1 || echo "  (未添加, 运行 iptv_epg route)"
+  echo "CGI: $([ -f /www/cgi-bin/epg.cgi ] && echo 就绪 || echo 缺失)"
+  echo "crontab:"
+  grep 'iptv_epg fetch' /etc/crontabs/root 2>/dev/null || echo "  (未设置)"
+  echo "最近缓存:"
+  ls -lt $CACHE_DIR/epg_cache_*.json 2>/dev/null | head -3 | awk '{print "  " $6" "$7" "$8" "$9}'
+}
+
+# ---------- main ----------
+case "$1" in
+  channels)
+    # 优先 UCI 配置频道 (快, 含组播地址), 无则拉电信列表
+    CHLIST=$(uci_channels)
+    if [ -n "$CHLIST" ]; then
+      echo "$CHLIST"
+    else
+      cmd_channels
+    fi
+    ;;
+  categories)  cmd_categories ;;
+  channels-save) cmd_channels_save ;;
+  fetch)       cmd_fetch "$2" ;;
+  status)      cmd_status ;;
+  route)       cmd_route ;;
+  cookie)      cmd_cookie "$2" ;;
+  ip)          get_host_ip ;;
+  gen)         gen_iptv_txt ;;
+  fetch_bg)    cmd_fetch_bg "$2" ;;
+  *) echo "用法: iptv_epg {channels|categories|channels-save|fetch [频道名]|fetch_bg|status|route|cookie|ip|gen}"; exit 1 ;;
+esac

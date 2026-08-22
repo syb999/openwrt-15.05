@@ -1,0 +1,295 @@
+#!/bin/sh /etc/rc.common
+# ============================================================
+# iptv-epg — IPTV EPG 服务 (luci-app-iptv-epg)
+# 管理: 路由 + cookie保活daemon + CGI服务 + 定时拉取
+# 启用条件: /etc/config/iptv_epg 存在且 main.prefetch_enabled='1'
+# ============================================================
+
+START=90
+STOP=10
+
+# 扩展命令: status (rc.common 需要 EXTRA_COMMANDS 声明才会把 status 当命令分发)
+EXTRA_COMMANDS="status"
+EXTRA_HELP="        status          Show service status"
+
+# 注意: 不能设 USE_PROCD(任何非空值都会让 rc.common 走 procd 块,
+# 用 procd 的 start_service() 覆盖我们的 start() → daemon 不启动)。
+# 不设置 USE_PROCD → rc.common 用旧风格 start()/stop()。
+
+# 读取配置
+EPG_CONF=/etc/config/iptv_epg
+COOKIE_FILE=$(uci get iptv_epg.main.cookie_file 2>/dev/null)
+[ -n "$COOKIE_FILE" ] || COOKIE_FILE=/tmp/stb_cookie.txt
+EPG_HOST=$(uci get iptv_epg.main.epg_host 2>/dev/null)
+[ -n "$EPG_HOST" ] || EPG_HOST=218.83.165.67:8084
+GW=$(uci get iptv_epg.main.iptv_gateway 2>/dev/null)
+[ -n "$GW" ] || GW=30.170.0.1
+IFACE=$(uci get iptv_epg.main.iptv_iface 2>/dev/null)
+[ -n "$IFACE" ] || IFACE=iptv
+ROUTE_TARGET=$(uci get iptv_epg.main.route_target 2>/dev/null)
+[ -n "$ROUTE_TARGET" ] || ROUTE_TARGET=218.83.165.67
+
+start() {
+	[ -f "$EPG_CONF" ] || return 0
+	# 检查服务启用 (service_enabled, 默认1)
+	local SVC=$(uci get iptv_epg.main.service_enabled 2>/dev/null)
+	[ "$SVC" = "0" ] && { echo "iptv-epg: 服务未启用 (service_enabled=0), 跳过启动"; return 0; }
+	echo "=== iptv-epg start ==="
+	# 0. 恢复备份 cookie (重启后 /tmp 清空, 机顶盒关机时唯一有效会话)
+	restore_cookie
+	# 1. 添加专网路由 (218.83.165.67 走 br-iptv)
+	ensure_route
+	# 1.5 账号直登: cookie 无效时自动重新认证 (宽带账号+SN+MAC, 不依赖机顶盒)
+	auto_auth
+	# 2. 启动 cookie 保活 daemon (保证长期有效)
+	local CD=$(uci get iptv_epg.main.cookie_daemon 2>/dev/null)
+	[ "$CD" != "0" ] && start_cookie_daemon
+	# 3. 部署 CGI 服务 (epg.cgi 必须在 /www/cgi-bin/)
+	local CGI=$(uci get iptv_epg.main.cgi_enabled 2>/dev/null)
+	[ "$CGI" != "0" ] && ensure_cgi
+	# 4. 设置定时拉取 crontab
+	setup_crontab
+	# 5. 首次拉取 (非阻塞, 仅当启用预取且有cookie时)
+	local PF=$(uci get iptv_epg.main.prefetch_enabled 2>/dev/null)
+	if [ "$PF" != "0" ] && [ -f "$COOKIE_FILE" ]; then
+		/usr/bin/iptv_epg fetch >/dev/null 2>&1 &
+	fi
+	echo "=== iptv-epg started ==="
+}
+
+stop() {
+	echo "=== iptv-epg stop ==="
+	# 停 cookie daemon (精确 pid + /proc 扫描兜底, 兼容不同 busybox)
+	if [ -f /var/run/epg_cookie_daemon.pid ]; then
+		local DPID=$(cat /var/run/epg_cookie_daemon.pid 2>/dev/null)
+		kill -9 "$DPID" 2>/dev/null
+		rm -f /var/run/epg_cookie_daemon.pid
+	fi
+	# /proc 扫描杀 daemon 和 tcpdump (不依赖 ps 格式/killall)
+	local p
+	for p in /proc/[0-9]*; do
+		local cl=$(cat "$p/cmdline" 2>/dev/null | tr '\0' ' ')
+		case "$cl" in
+			*epg_cookie_daemon*|*tcpdump*) kill -9 "${p#/proc/}" 2>/dev/null ;;
+		esac
+	done
+	# 停 crontab
+	remove_crontab
+	echo "=== iptv-epg stopped ==="
+}
+
+# ---------- 状态查询 (扩展命令: /etc/init.d/iptv-epg status) ----------
+status() {
+	echo "=== iptv-epg 状态 ==="
+	# daemon
+	if [ -f /var/run/epg_cookie_daemon.pid ]; then
+		local DPID=$(cat /var/run/epg_cookie_daemon.pid 2>/dev/null)
+		if kill -0 "$DPID" 2>/dev/null; then
+			echo "cookie daemon: 运行中 (PID $DPID)"
+		else
+			echo "cookie daemon: 已停止 (pidfile 残留)"
+		fi
+	else
+		echo "cookie daemon: 未运行"
+	fi
+	# cookie 文件
+	if [ -f "$COOKIE_FILE" ]; then
+		local SIZE=$(wc -c < "$COOKIE_FILE" 2>/dev/null)
+		local MT=$(date -r "$COOKIE_FILE" "+%F %T" 2>/dev/null)
+		echo "cookie 文件: $COOKIE_FILE (${SIZE} 字节, $MT)"
+	else
+		echo "cookie 文件: 不存在"
+	fi
+	# 缓存
+	local NCACHE=$(ls /tmp/epg_cache_*.json 2>/dev/null | wc -l)
+	echo "EPG 缓存: $NCACHE 个文件"
+	# 路由
+	if ip route get "$ROUTE_TARGET" 2>/dev/null | grep -q 'via'; then
+		echo "专网路由: 已配置"
+	else
+		echo "专网路由: 未配置"
+	fi
+	# crontab
+	if grep -q 'iptv_epg fetch' /etc/crontabs/root 2>/dev/null; then
+		echo "定时拉取: 已设置"
+	else
+		echo "定时拉取: 未设置"
+	fi
+	# CGI
+	if [ -x /www/cgi-bin/epg.cgi ] && [ -x /www/cgi-bin/play.cgi ]; then
+		echo "CGI: 就绪 (epg.cgi/play.cgi)"
+	else
+		echo "CGI: 缺失"
+	fi
+	echo "=== 结束 ==="
+}
+
+# 账号直登自动认证: 配置了宽带账号+SN 且 cookie 无效时, 重新获取 (不依赖机顶盒)
+auto_auth() {
+	local UIDC=$(uci get iptv_epg.main.broadband_uid 2>/dev/null)
+	local SNC=$(uci get iptv_epg.main.stb_sn 2>/dev/null)
+	[ -n "$UIDC" ] || [ -n "$SNC" ] || { echo "  未配置宽带账号/SN, 跳过账号认证"; return 0; }
+	if [ -s "$COOKIE_FILE" ]; then
+		local V=$(curl -s -m 8 -o /dev/null -w '%{http_code}' \
+			"http://${EPG_HOST}/iptvepg/frame1413/function/ajax/epg7getChannelByAjax.jsp" \
+			-H "Cookie: $(cat "$COOKIE_FILE")" -H 'User-Agent: webkit' \
+			-d 'action=getChannelList&cateID=000406&type=' 2>/dev/null)
+		[ "$V" = "200" ] && { echo "  cookie 有效, 跳过账号认证"; return 0; }
+	fi
+	echo "  cookie 无效, 账号直登重新认证..."
+	/usr/bin/epg_auth.sh
+}
+
+# 恢复备份 cookie (重启后 /tmp 清空, 机顶盒关机时唯一有效会话)
+# 规则: cookie 文件不存在 或 内容无效(空/仅空格) 时才写回备份值
+restore_cookie() {
+	local BK=$(uci get iptv_epg.main.cookie_backup 2>/dev/null)
+	[ -z "$BK" ] && return 0
+	if [ ! -s "$COOKIE_FILE" ]; then
+		echo "$BK" > "$COOKIE_FILE"
+		echo "  cookie 已从备份恢复: $(echo "$BK" | cut -c1-40)..."
+	else
+		echo "  cookie 文件存在 ($(wc -c < "$COOKIE_FILE") 字节), 保留"
+	fi
+}
+
+# 路由确保 (自动适配接口, 兼容 iptv/br-iptv/br-lan 等不同命名)
+ensure_route() {
+	# 多路由目标: route_target + route_extra (uci 可配置, 电信公共基础设施) — 全部走专网!
+	local EXTRA=$(uci get iptv_epg.main.route_extra 2>/dev/null)
+	local TARGETS="${ROUTE_TARGET} ${EXTRA}"
+	local T
+	for T in $TARGETS; do
+		local TP="${T}/32"
+		# 检查是否已有
+		if ip route show 2>/dev/null | grep -q "^$T "; then
+			echo "  路由已存在: $T"
+			continue
+		fi
+		# 自动选接口: ①network.iptv.ifname 里有 IP 的 ②有 30.170.x IP 的 ③按 stb_side 顺序
+		local SIDE=$(uci get iptv_epg.main.stb_side 2>/dev/null)
+		local RIF=""
+		local IPTV_IFS=$(uci get network.iptv.ifname 2>/dev/null)
+		local ii
+		for ii in $IPTV_IFS; do
+			[ -d "/sys/class/net/$ii" ] || continue
+			local II_IP=$(ip addr show "$ii" 2>/dev/null | grep 'inet ' | head -1)
+			[ -n "$II_IP" ] && { RIF="$ii"; break; }
+		done
+		[ -z "$RIF" ] && for i in /sys/class/net/*; do
+			local IN=${i#/sys/class/net/}
+			[ "$IN" = "lo" ] && continue
+			local IP3=$(ip addr show "$IN" 2>/dev/null | grep 'inet ' | awk '{print $2}' | head -1)
+			case "$IP3" in
+				30.170.*) RIF="$IN"; break ;;
+			esac
+		done
+		if [ -z "$RIF" ]; then
+			local ORDER=""
+			if [ "$SIDE" = "A" ]; then
+				ORDER="iptv eth0.85 br-lan br-wan eth0.2 vxlan_iptv br-iptv"
+			else
+				ORDER="vxlan_iptv br-iptv iptv eth0.85 br-wan br-lan eth0.2"
+			fi
+			for i in $ORDER; do
+				[ -d "/sys/class/net/$i" ] || continue
+				local IP4=$(ip addr show "$i" 2>/dev/null | grep 'inet ' | head -1)
+				if [ -n "$IP4" ]; then RIF="$i"; break; fi
+			done
+		fi
+		[ -z "$RIF" ] && for i in $ORDER; do
+			[ -d "/sys/class/net/$i" ] && { RIF="$i"; break; }
+		done
+		[ -z "$RIF" ] && RIF="br-lan"
+		# 网关: 配置优先, 否则默认
+		local GW2="$GW"
+		[ -n "$GW2" ] || GW2="30.170.0.1"
+		local IPTV_IP=$(ip addr show "$RIF" 2>/dev/null | grep 'inet ' | awk '{print $2}' | cut -d/ -f1)
+		[ -n "$IPTV_IP" ] && echo "  $RIF IP: $IPTV_IP"
+		ip route add $TP via $GW2 dev $RIF src $IPTV_IP 2>/dev/null && echo "  路由已添加: $TP via $GW2 dev $RIF" \
+			|| { ip route add $TP via $GW2 dev $RIF 2>/dev/null && echo "  路由已添加(无src): $TP via $GW2 dev $RIF" || echo "  路由添加失败: $TP"; }
+	done
+	# 持久化到 network 配置
+	if ! uci show network 2>/dev/null | grep -q "network.epgroute"; then
+		uci set network.epgroute=route
+		uci set network.epgroute.target="$ROUTE_TARGET"
+		uci set network.epgroute.netmask='255.255.255.255'
+		uci set network.epgroute.gateway="$GW2"
+		uci set network.epgroute.interface="$RIF"
+		uci set network.epgroute.metric='100'
+		uci commit network
+		echo "  已持久化到 network.epgroute (iface=$RIF)"
+	fi
+}
+
+# cookie daemon 保活
+start_cookie_daemon() {
+	# 用 pidfile 判断是否已在运行 (pgrep -f 会误匹配自身 shell)
+	if [ -f /var/run/epg_cookie_daemon.pid ]; then
+		local DPID=$(cat /var/run/epg_cookie_daemon.pid 2>/dev/null)
+		if kill -0 "$DPID" 2>/dev/null; then
+			echo "  cookie daemon 已在运行 (pid $DPID)"
+			return 0
+		fi
+		rm -f /var/run/epg_cookie_daemon.pid
+	fi
+	if [ -x /usr/bin/epg_cookie_daemon.sh ]; then
+		# 单实例启动
+		nohup /usr/bin/epg_cookie_daemon.sh >/dev/null 2>&1 &
+		echo "  cookie daemon 已启动"
+	else
+		echo "  警告: /usr/bin/epg_cookie_daemon.sh 不存在"
+	fi
+}
+
+# CGI 部署 (epg.cgi 打包在包内, 安装时已放好; 这里检查可执行)
+ensure_cgi() {
+	if [ -f /www/cgi-bin/epg.cgi ]; then
+		chmod 755 /www/cgi-bin/epg.cgi
+		echo "  epg.cgi 就绪: /www/cgi-bin/epg.cgi"
+	else
+		echo "  警告: /www/cgi-bin/epg.cgi 不存在 (请检查安装)"
+	fi
+	# TVOD 符号链接 (DIYP 5.2.0 回看识别关键!)
+	if [ -f /www/cgi-bin/play.cgi ]; then
+		chmod 755 /www/cgi-bin/play.cgi
+		if [ -f /www/cgi-bin/TVOD/play.cgi ]; then
+			echo "  TVOD 链接就绪: /www/cgi-bin/TVOD/play.cgi"
+		else
+			mkdir -p /www/cgi-bin/TVOD
+			ln -sf ../play.cgi /www/cgi-bin/TVOD/play.cgi
+			echo "  TVOD 链接已创建"
+		fi
+	fi
+	if [ -f /www/cgi-bin/tsproxy.cgi ]; then
+		chmod 755 /www/cgi-bin/tsproxy.cgi
+		echo "  tsproxy.cgi 就绪"
+	fi
+}
+
+# crontab 定时拉取 (自定义时间)
+setup_crontab() {
+	local HOUR=$(uci get iptv_epg.main.prefetch_hour 2>/dev/null)
+	local MIN=$(uci get iptv_epg.main.prefetch_minute 2>/dev/null)
+	[ -n "$HOUR" ] || HOUR=2
+	[ -n "$MIN" ] || MIN=30
+	local ENABLED=$(uci get iptv_epg.main.prefetch_enabled 2>/dev/null)
+	remove_crontab
+	if [ "$ENABLED" = "1" ] || [ -z "$ENABLED" ]; then
+		# 去重: 若已存在同样行则不再添加 (防重复); 日志先截 100 行再追加 (防 /tmp 撑爆)
+		if ! grep -q 'iptv_epg fetch' /etc/crontabs/root 2>/dev/null; then
+			echo "$MIN $HOUR * * * tail -100 /tmp/iptv_epg.log > /tmp/iptv_epg.log.tmp 2>/dev/null && mv /tmp/iptv_epg.log.tmp /tmp/iptv_epg.log; /usr/bin/iptv_epg fetch >> /tmp/iptv_epg.log 2>&1" >> /etc/crontabs/root
+			/etc/init.d/cron restart 2>/dev/null
+			echo "  定时拉取已设置: 每天 $HOUR:$MIN"
+		else
+			echo "  定时拉取已存在, 跳过"
+		fi
+	fi
+}
+
+remove_crontab() {
+	if [ -f /etc/crontabs/root ]; then
+		sed -i '/iptv_epg fetch/d' /etc/crontabs/root
+	fi
+	/etc/init.d/cron restart 2>/dev/null
+}

@@ -1,0 +1,50 @@
+#!/bin/sh
+# luci-app-iptv-epg 初始化: 首次安装生成配置并启用服务
+# 公共版: 只生成 main 段 (默认值), 频道由用户在设置页自行选择
+
+if [ ! -f /etc/config/iptv_epg ]; then
+	cat > /etc/config/iptv_epg <<'EOF'
+config iptv_epg 'main'
+	option epg_host '218.83.165.67:8084'
+	option tvod_host '124.75.26.15:6610'
+	option cookie_file '/tmp/stb_cookie.txt'
+	option cookie_backup ''
+	option stb_side 'B'
+	option stb_iface 'br-lan'
+	option broadband_uid ''
+	option stb_sn ''
+	option stb_mac ''
+	option stb_ip ''
+	option stb_guid ''
+	option getkey_url ''
+	option cate_id '000406'
+	option cache_dir '/tmp'
+	option prefetch_enabled '1'
+	option prefetch_hour '2'
+	option prefetch_minute '30'
+	option prefetch_days '7'
+	option ua 'webkit;Resolution(PAL,720P,1080P)'
+	option route_target '218.83.165.67'
+	option route_extra '124.75.26.15 222.68.208.73 218.83.165.50 124.75.29.176'
+	option iptv_gateway '30.170.0.1'
+	option iptv_iface 'iptv'
+	option service_enabled '1'
+	option cookie_daemon '1'
+	option cgi_enabled '1'
+	option auth_enabled '0'
+	option auth_uid ''
+	option auth_sn ''
+	option auth_mac ''
+	option auth_ip ''
+	option auth_host '222.68.208.73:7001'
+	option auth_host2 '124.75.29.176:7001'
+	option auth_host3 '218.83.165.50'
+	option auth_stb_type 'B860A'
+EOF
+fi
+
+# 启用 init.d 服务
+/etc/init.d/iptv-epg enable 2>/dev/null
+/etc/init.d/iptv-epg start 2>/dev/null
+
+exit 0

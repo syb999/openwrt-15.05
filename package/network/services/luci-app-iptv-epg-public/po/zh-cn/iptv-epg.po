@@ -1,0 +1,175 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: luci-app-iptv-epg 2.0.0\n"
+"Language-Team: Chinese (simplified)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "IPTV EPG 管理"
+msgstr "IPTV EPG 管理"
+
+msgid "IPTV EPG 总览"
+msgstr "IPTV EPG 总览"
+
+msgid "总览"
+msgstr "总览"
+
+msgid "设置"
+msgstr "设置"
+
+msgid "服务控制"
+msgstr "服务控制"
+
+msgid "基本设置"
+msgstr "基本设置"
+
+msgid "专网路由 (电信EPG)"
+msgstr "专网路由 (电信EPG)"
+
+msgid "定时预取 (每日更新)"
+msgstr "定时预取 (每日更新)"
+
+msgid "频道列表 (只拉取这些频道)"
+msgstr "频道列表 (只拉取这些频道)"
+
+msgid "启用服务 (init.d)"
+msgstr "启用服务 (init.d)"
+
+msgid "Cookie 保活 daemon"
+msgstr "Cookie 保活 daemon"
+
+msgid "启用 CGI 服务 (epg.cgi)"
+msgstr "启用 CGI 服务 (epg.cgi)"
+
+msgid "EPG 服务器"
+msgstr "EPG 服务器"
+
+msgid "Cookie 文件"
+msgstr "Cookie 文件"
+
+msgid "频道分类 ID"
+msgstr "频道分类 ID"
+
+msgid "缓存目录"
+msgstr "缓存目录"
+
+msgid "路由目标 IP"
+msgstr "路由目标 IP"
+
+msgid "IPTV 网关"
+msgstr "IPTV 网关"
+
+msgid "IPTV 接口"
+msgstr "IPTV 接口"
+
+msgid "启用定时预取"
+msgstr "启用定时预取"
+
+msgid "预取小时 (0-23)"
+msgstr "预取小时 (0-23)"
+
+msgid "预取分钟 (0-59)"
+msgstr "预取分钟 (0-59)"
+
+msgid "预取天数 (保持记录)"
+msgstr "预取天数 (保持记录)"
+
+msgid "只拉取下方频道列表中的频道, 从今天起 N 天"
+msgstr "只拉取下方频道列表中的频道, 从今天起 N 天"
+
+msgid "频道名"
+msgstr "频道名"
+
+msgid "组播地址"
+msgstr "组播地址"
+
+msgid "EPG ID"
+msgstr "EPG ID"
+
+msgid "IPTV EPG 服务: 路由自动添加 / Cookie 保活 / CGI / 定时拉取"
+msgstr "IPTV EPG 服务: 路由自动添加 / Cookie 保活 / CGI / 定时拉取"
+
+msgid "服务状态:"
+msgstr "服务状态:"
+
+msgid "查询中..."
+msgstr "查询中..."
+
+msgid "启动服务"
+msgstr "启动服务"
+
+msgid "停止服务"
+msgstr "停止服务"
+
+msgid "重启服务"
+msgstr "重启服务"
+
+msgid "一键拉取 EPG (UCI设定频道, 7天)"
+msgstr "一键拉取 EPG (UCI设定频道, 7天)"
+
+msgid "刷新频道列表"
+msgstr "刷新频道列表"
+
+msgid "频道列表 (来自电信 EPG 服务器)"
+msgstr "频道列表 (来自电信 EPG 服务器)"
+
+msgid "拉取结果 / 状态"
+msgstr "拉取结果 / 状态"
+
+msgid "mixNo"
+msgstr "mixNo"
+
+msgid "操作"
+msgstr "操作"
+
+msgid "加载中..."
+msgstr "加载中..."
+
+msgid "无频道数据或 cookie 失效"
+msgstr "无频道数据或 cookie 失效"
+
+msgid "拉取"
+msgstr "拉取"
+
+msgid "共 "
+msgstr "共 "
+
+msgid " 个频道"
+msgstr " 个频道"
+
+msgid "拉取中..."
+msgstr "拉取中..."
+
+msgid "拉取全部频道..."
+msgstr "拉取全部频道..."
+
+msgid "完成"
+msgstr "完成"
+
+msgid "拉取失败"
+msgstr "拉取失败"
+
+msgid "加载频道列表..."
+msgstr "加载频道列表..."
+
+msgid "加载失败"
+msgstr "加载失败"
+
+msgid "已启用"
+msgstr "已启用"
+
+msgid "未启用"
+msgstr "未启用"
+
+msgid "运行中"
+msgstr "运行中"
+
+msgid "已停止"
+msgstr "已停止"
+
+msgid "失败"
+msgstr "失败"
+
+msgid "执行中..."
+msgstr "执行中..."

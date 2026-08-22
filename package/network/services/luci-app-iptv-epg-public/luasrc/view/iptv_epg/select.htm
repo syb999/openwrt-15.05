@@ -1,0 +1,119 @@
+<%#
+LuCI - Lua Configuration Interface
+IPTV EPG 频道选择: 从全部硬编码频道中勾选要获取 EPG 的
+-%>
+
+<%+header%>
+<h2><%:IPTV EPG 频道选择%></h2>
+
+<div class="cbi-map">
+	<div class="cbi-map-descr">
+		<%:从可用频道中勾选要获取 EPG 的频道 (只拉选中的, 方便调试). 组播地址可在设置页手动补. 保存后点总览页的"一键拉取"即只拉选中频道.%>
+	</div>
+
+	<div style="margin:10px 0;">
+		<input type="button" value="<%:保存选中频道%>" class="cbi-button cbi-button-apply" onclick="iptv_epg_save()" />
+		<input type="button" value="<%:全选%>" class="cbi-button cbi-button-reset" onclick="iptv_epg_select_all()" />
+		<input type="button" value="<%:清空%>" class="cbi-button cbi-button-reset" onclick="iptv_epg_clear()" />
+		<span id="iptv_epg_sel_status" style="margin-left:10px;color:#666;"></span>
+	</div>
+
+	<div id="iptv_epg_chlist" style="margin:10px 0;max-height:500px;overflow:auto;border:1px solid #ddd;padding:10px;background:#fff;">
+		<%:加载频道列表...%>
+	</div>
+</div>
+
+<script type="text/javascript">
+var iptv_epg_all_chs = [];
+
+function iptv_epg_load() {
+	XHR.get('<%=luci.dispatcher.build_url("admin/services/iptv_epg/channels_all")%>', null,
+		function(xhr, d) {
+			iptv_epg_all_chs = d || [];
+			XHR.get('<%=luci.dispatcher.build_url("admin/services/iptv_epg/selected")%>', null,
+				function(xhr2, sel) {
+					sel = sel || [];
+					var html = '';
+					for (var i = 0; i < iptv_epg_all_chs.length; i++) {
+						var c = iptv_epg_all_chs[i];
+						var checked = '';
+						for (var j = 0; j < sel.length; j++) {
+							if (sel[j] == c.name) { checked = 'checked'; break; }
+						}
+						html += '<label style="display:inline-block;width:180px;margin:2px 4px;font-size:12px;">' +
+							'<input type="checkbox" name="ch" value="' + c.name + '" ' + checked + ' onchange="iptv_epg_count()" /> ' +
+							c.name + '</label>';
+					}
+					document.getElementById('iptv_epg_chlist').innerHTML = html;
+					iptv_epg_count();
+				});
+		},
+		function(xhr) {
+			document.getElementById('iptv_epg_chlist').innerHTML = '<%:加载失败%>';
+		}
+	);
+}
+
+function iptv_epg_count() {
+	var boxes = document.getElementsByName('ch');
+	var n = 0;
+	for (var i = 0; i < boxes.length; i++) if (boxes[i].checked) n++;
+	document.getElementById('iptv_epg_sel_status').innerHTML = '<%:已选 %>' + n + '<%: 个频道%>';
+}
+
+function iptv_epg_select_all() {
+	var boxes = document.getElementsByName('ch');
+	for (var i = 0; i < boxes.length; i++) boxes[i].checked = true;
+	iptv_epg_count();
+}
+
+function iptv_epg_clear() {
+	var boxes = document.getElementsByName('ch');
+	for (var i = 0; i < boxes.length; i++) boxes[i].checked = false;
+	iptv_epg_count();
+}
+
+function iptv_epg_save() {
+	var boxes = document.getElementsByName('ch');
+	var names = [];
+	for (var i = 0; i < boxes.length; i++) if (boxes[i].checked) names.push(boxes[i].value);
+	// 传 name:id 对 (频道名 + epg_id)
+	var pairs = [];
+	for (var i = 0; i < iptv_epg_all_chs.length; i++) {
+		var c = iptv_epg_all_chs[i];
+		for (var j = 0; j < names.length; j++) {
+			if (c.name == names[j]) { pairs.push(c.name + ':' + c.id); break; }
+		}
+	}
+	var st = document.getElementById('iptv_epg_sel_status');
+	st.innerHTML = '<%:保存中...%>';
+	// 分块 GET 保存 (每批 30 个, 避免 URL 超长) — 第一块覆盖, 后续追加
+	var base = '<%=luci.dispatcher.build_url("admin/services/iptv_epg/save_selected")%>';
+	var BATCH = 30;
+	function save_batch(idx, append) {
+		var chunk = pairs.slice(idx, idx + BATCH);
+		var url = base + '/' + encodeURIComponent(chunk.join(',')) + (append ? '/1' : '');
+		XHR.get(url, null, function(xhr) {
+			if (xhr.status != 200) {
+				st.innerHTML = '<%:保存失败 (%>'+xhr.status+'<%:)%>';
+				return;
+			}
+			if (idx + BATCH < pairs.length) {
+				save_batch(idx + BATCH, true);
+			} else {
+				st.innerHTML = '<%:已保存 %>' + names.length + '<%: 个频道 (点总览页一键拉取生效)%>';
+			}
+		});
+	}
+	if (pairs.length == 0) {
+		// 全不选 = 清空
+		XHR.get(base + '/', null, function(xhr) { st.innerHTML = '<%:已清空%>'; });
+	} else {
+		save_batch(0, false);
+	}
+}
+
+iptv_epg_load();
+</script>
+
+<%+footer%>
