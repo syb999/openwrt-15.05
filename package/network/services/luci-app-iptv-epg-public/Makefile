@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-iptv-epg
-PKG_VERSION:=2.9.0
+PKG_VERSION:=2.11.29
 PKG_RELEASE:=1
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
@@ -66,10 +66,17 @@ define Package/luci-app-iptv-epg/install
 	# Config
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) ./root/etc/config/iptv_epg $(1)/etc/config/
-	# Channel map (name|EPG_ID|multicast)
+	# 公共版: 不内置私钥 (电信账号直登不可用, 走机顶盒抓包采集)
+	# Channel map (name|EPG_ID|multicast) — 按运营商分文件, channel_map.txt 由 init.d 软链接
 	$(INSTALL_DIR) $(1)/usr/share/iptv_epg
+	$(INSTALL_DATA) ./root/usr/share/iptv_epg/channel_map_telecom.txt $(1)/usr/share/iptv_epg/
+	$(INSTALL_DATA) ./root/usr/share/iptv_epg/channel_map_unicom.txt $(1)/usr/share/iptv_epg/
+	$(INSTALL_DATA) ./root/usr/share/iptv_epg/multicast_map.txt $(1)/usr/share/iptv_epg/
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./root/etc/uci-defaults/iptv-epg $(1)/etc/uci-defaults/
+	# hotplug: 修复 msd_lite 在 IPTV 接口前启动 (重启后无法播放)
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
+	$(INSTALL_BIN) ./root/etc/hotplug.d/iface/30-iptv-epg-msdlite $(1)/etc/hotplug.d/iface/
 	# i18n (15.05 uses po2lmo)
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/i18n
 	po2lmo ./po/zh-cn/iptv-epg.po $(1)/usr/lib/lua/luci/i18n/iptv-epg.zh-cn.lmo

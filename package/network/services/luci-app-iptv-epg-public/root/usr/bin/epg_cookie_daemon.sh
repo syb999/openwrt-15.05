@@ -8,8 +8,16 @@
 # ============================================================
 
 COOKIE_FILE=${EPG_COOKIE:-/tmp/stb_cookie.txt}
-# EPG 服务器: uci 配置 (epg_host, 可配置防电信改 IP) → 电信默认
+PROVIDER=$(uci get iptv_epg.main.provider 2>/dev/null)
+[ -n "$PROVIDER" ] || PROVIDER=telecom
+# EPG 服务器: uci epg_host → 按运营商默认 (telecom=上海电信, unicom=上海联通实测地址)
 EPG_SRV=$(uci get iptv_epg.main.epg_host 2>/dev/null)
+if [ -z "$EPG_SRV" ]; then
+  case "$PROVIDER" in
+    unicom) EPG_SRV=10.223.2.76:33200 ;;
+    *) EPG_SRV=218.83.165.67:8084 ;;
+  esac
+fi
 [ -n "$EPG_SRV" ] || EPG_SRV=218.83.165.67:8084
 EPG_HOST=${EPG_SRV%:*}
 EPG_PORT=${EPG_SRV##*:}
@@ -20,6 +28,7 @@ REF="http://$EPG_HOST:$EPG_PORT/iptvepg/frame1413/portal/play_pro.html"
 # 监听接口: 按机顶盒位置自动适配
 # B面: 优先 vxlan_iptv (隧道接口, A+光猫场景), 无则 br-iptv, 再则 br-wan
 # A面: 优先 br-lan, 无则 br-wan
+# 联通: vxlan_inet (A/B 拓扑单隧道) 或 br-lan (机顶盒直连)
 # 主路由部署 (无 vxlan/br-iptv): 自动回退到 br-lan/br-wan (机顶盒直连)
 IFACE=$(uci get iptv_epg.main.stb_side 2>/dev/null)
 if [ "$IFACE" = "A" ]; then
@@ -31,9 +40,15 @@ elif [ "$IFACE" = "C" ]; then
   [ -n "$IFACE" ] && [ -d "/sys/class/net/$IFACE" ] || IFACE=br-lan
   [ -d /sys/class/net/br-lan ] || IFACE=br-wan
 else
-  IFACE=vxlan_iptv
-  [ -d /sys/class/net/vxlan_iptv ] || IFACE=br-iptv
-  [ -d /sys/class/net/br-iptv ] || IFACE=br-wan
+  if [ "$PROVIDER" = "unicom" ]; then
+    IFACE=vxlan_inet
+    [ -d /sys/class/net/vxlan_inet ] || IFACE=br-lan
+    [ -d /sys/class/net/br-lan ] || IFACE=br-wan
+  else
+    IFACE=vxlan_iptv
+    [ -d /sys/class/net/vxlan_iptv ] || IFACE=br-iptv
+    [ -d /sys/class/net/br-iptv ] || IFACE=br-wan
+  fi
 fi
 # 机顶盒 MAC (自动发现用; 换机顶盒后改 config 的 stb_mac)
 STB_MAC=$(uci get iptv_epg.main.stb_mac 2>/dev/null)
@@ -50,6 +65,56 @@ log() {
     [ "${LC:-0}" -gt 100 ] && tail -100 /tmp/epg_cookie_daemon.log > /tmp/epg_cookie_daemon.log.tmp 2>/dev/null && mv /tmp/epg_cookie_daemon.log.tmp /tmp/epg_cookie_daemon.log
   fi
   echo "[$(date '+%F %T')] $*" >> /tmp/epg_cookie_daemon.log
+}
+
+# ---------- 联通会话采集 (机顶盒流量 → /etc/epg_unicom_sess.txt) ----------
+# 从机顶盒 EPG 流量提取:
+#   JSESSIONID (EPG 门户会话) / TEMPKEY+USERTOKEN (getchannellistHWCU 三件套)
+#   AUTHENTICATOR+userToken (ValidAuthenticationHWCU 登录, 重放用) / STBID / USERID / MAC
+collect_unicom_sess() {
+  local CAP=/tmp/epg_cookie_cap.txt
+  local SESS=/etc/epg_unicom_sess.txt
+  [ -f "$CAP" ] || return 0
+  # JSESSIONID: 请求 Cookie 优先, 其次登录响应 Set-Cookie
+  local NEW_SID=$(grep -oE 'JSESSIONID=[A-Z0-9]{20,}' "$CAP" 2>/dev/null | head -1 | cut -d= -f2)
+  [ -z "$NEW_SID" ] && NEW_SID=$(grep -oE 'Set-Cookie: JSESSIONID=[A-Z0-9]{20,}' "$CAP" 2>/dev/null | head -1 | grep -oE '[A-Z0-9]{20,}')
+  # getchannellistHWCU 三件套 (请求体参数)
+  local NEW_TK=$(grep -oE 'tempKey=[A-F0-9]+' "$CAP" 2>/dev/null | head -1 | cut -d= -f2)
+  local NEW_UT=$(grep -oE '[?&]UserToken=[A-Za-z0-9+/=]+' "$CAP" 2>/dev/null | head -1 | cut -d= -f2)
+  [ -z "$NEW_UT" ] && NEW_UT=$(grep -oE '^UserToken=[A-Za-z0-9+/=]+' "$CAP" 2>/dev/null | head -1 | cut -d= -f2)
+  # ValidAuthenticationHWCU 登录参数 (重放用)
+  local NEW_AUTH=$(grep -oE 'Authenticator=[A-F0-9]+' "$CAP" 2>/dev/null | head -1 | cut -d= -f2)
+  local NEW_UTOKEN=$(grep -oE 'userToken=[A-F0-9]+' "$CAP" 2>/dev/null | head -1 | cut -d= -f2)
+  local NEW_STBID=$(grep -oE 'STBID=[0-9A-Z]+' "$CAP" 2>/dev/null | head -1 | cut -d= -f2)
+  local NEW_UID=$(grep -oE 'UserID=[A-Z0-9]+' "$CAP" 2>/dev/null | head -1 | cut -d= -f2)
+  local NEW_MAC=$(grep -oE 'mac=[0-9A-Fa-f:%]+' "$CAP" 2>/dev/null | head -1 | cut -d= -f2 | tr '[:lower:]' '[:upper:]')
+  # 合并旧值 (部分字段可能本次没抓到) — 注意: . "$SESS" 加载的是 JSESSIONID/TEMPKEY 等名, 不是 OLD_*
+  [ -f "$SESS" ] && . "$SESS" 2>/dev/null
+  [ -n "$NEW_SID" ] || NEW_SID="$JSESSIONID"
+  [ -n "$NEW_TK" ] || NEW_TK="$TEMPKEY"
+  [ -n "$NEW_UT" ] || NEW_UT="$USERTOKEN"
+  [ -n "$NEW_AUTH" ] || NEW_AUTH="$AUTHENTICATOR"
+  [ -n "$NEW_UTOKEN" ] || NEW_UTOKEN="$USERTOKEN_EPG"
+  [ -n "$NEW_STBID" ] || NEW_STBID="$STBID"
+  [ -n "$NEW_UID" ] || NEW_UID="$USERID"
+  [ -n "$NEW_MAC" ] || NEW_MAC="$MAC"
+  [ -n "$NEW_SID" ] || [ -n "$NEW_TK" ] || [ -n "$NEW_AUTH" ] || return 0
+  local TMP=/tmp/epg_unicom_sess.tmp
+  : > "$TMP"
+  [ -n "$NEW_SID" ] && echo "JSESSIONID='$NEW_SID'" >> "$TMP"
+  [ -n "$NEW_TK" ] && echo "TEMPKEY='$NEW_TK'" >> "$TMP"
+  [ -n "$NEW_UT" ] && echo "USERTOKEN='$NEW_UT'" >> "$TMP"
+  [ -n "$NEW_AUTH" ] && echo "AUTHENTICATOR='$NEW_AUTH'" >> "$TMP"
+  [ -n "$NEW_UTOKEN" ] && echo "USERTOKEN_EPG='$NEW_UTOKEN'" >> "$TMP"
+  [ -n "$NEW_STBID" ] && echo "STBID='$NEW_STBID'" >> "$TMP"
+  [ -n "$NEW_UID" ] && echo "USERID='$NEW_UID'" >> "$TMP"
+  [ -n "$NEW_MAC" ] && echo "MAC='$NEW_MAC'" >> "$TMP"
+  if [ -f "$SESS" ] && cmp -s "$SESS" "$TMP"; then
+    rm -f "$TMP"
+  else
+    mv "$TMP" "$SESS"
+    log "联通会话已采集: SID=${NEW_SID:-无} TEMPKEY=${NEW_TK:-无} AUTH=${NEW_AUTH:+有}"
+  fi
 }
 
 # 更新 cookie
@@ -94,6 +159,13 @@ update_cookie() {
     return 0
   fi
   echo "$COOKIES" > "$COOKIE_FILE"
+  # 🔴 固化到 uci cookie_backup (公共版无账号直登, 这是唯一持久化途径!)
+  #    重启后 restore_cookie 恢复 → 不用重新开机顶盒抓包
+  local BK=$(uci get iptv_epg.main.cookie_backup 2>/dev/null)
+  if [ "$BK" != "$COOKIES" ]; then
+    uci set iptv_epg.main.cookie_backup="$COOKIES"
+    uci commit iptv_epg 2>/dev/null
+  fi
   log "cookie 已更新 (验证通过 HTTP 200, $CLEN 字节): $(echo "$COOKIES" | cut -c1-60)..."
   return 0
 }
@@ -167,9 +239,14 @@ while true; do
   # ① 请求方向: Cookie: 头 (机顶盒认证会话) ② 响应方向: Set-Cookie (刷新)
   # busybox 无 timeout 命令, tcpdump 无流量会一直等 → 用后台 + sleep + kill 实现限时
   # 最多等 20 秒; -c 20 抓足够包 (提高拿到完整 Cookie 头的概率)
-  # 抓包范围: 端口过滤 (不锁 host) — 电信换服务器 IP 后新 IP 流量也能抓到 → 路由自动学习
-  # 8084=EPG 7001=认证 6610=回看流 (回看服务器 124.75.26.15:6610)
-  CAP_FILTER="tcp port $EPG_PORT or tcp port 7001 or tcp port 6610"
+  # 抓包范围: cap_ports (uci, 空格分隔) — 电信默认 8084/7001/6610; 联通按实际抓包改; 留空抓全部
+  CAP_PORTS=$(uci get iptv_epg.main.cap_ports 2>/dev/null)
+  CAP_FILTER=""
+  for P in $CAP_PORTS; do
+    [ -n "$CAP_FILTER" ] && CAP_FILTER="$CAP_FILTER or "
+    CAP_FILTER="${CAP_FILTER}tcp port $P"
+  done
+  [ -n "$CAP_FILTER" ] || CAP_FILTER="tcp"
   [ -n "$STB_IP" ] && CAP_FILTER="($CAP_FILTER) and host $STB_IP"
   tcpdump -i "$IFACE" -nn -s 0 -A -c 20 \
     "$CAP_FILTER" > /tmp/epg_cookie_cap.txt 2>/dev/null &
@@ -181,6 +258,10 @@ while true; do
     i=$((i+1))
   done
   kill -9 "$TCAP_PID" 2>/dev/null
+  if [ "$PROVIDER" = "unicom" ]; then
+    # 联通: 采集 EPG 会话 (JSESSIONID/tempKey/UserToken/Authenticator), 不做电信 cookie/路由学习
+    collect_unicom_sess
+  else
   # 提取: Cookie 请求头 (优先) + Set-Cookie 响应
   # 只取最长的一个 Cookie 头 (多段/多包会重复, 全取会叠加!)
   RESULT=$(grep -oE 'Cookie: [^\r\n]+' /tmp/epg_cookie_cap.txt 2>/dev/null | awk '{ print length($0), $0 }' | sort -rn | head -1 | cut -d' ' -f2-)
@@ -229,6 +310,17 @@ while true; do
       mv "$INFO_TMP" "$INFO_FILE"
       log "机顶盒身份已采集: GUID=${NEW_GUID:-无} MAC=${NEW_MAC:-无} SN=${NEW_SN:-无} UID=${NEW_UID:-无} AUTH_IP=${NEW_AUTHIP:-无}"
     fi
+    # 🔴 同步到 config (LuCI 设置页显示真实值, 不再空/误导)
+    #    仅当 config 为空时写 (手动配置优先), 值变化才 commit (防 flash 磨损)
+    local UCI_CHANGED=0
+    [ -n "$NEW_GUID" ] && [ -z "$(uci get iptv_epg.main.stb_guid 2>/dev/null)" ] && { uci set iptv_epg.main.stb_guid="$NEW_GUID"; UCI_CHANGED=1; }
+    [ -n "$NEW_MAC" ] && [ -z "$(uci get iptv_epg.main.stb_mac 2>/dev/null)" ] && { uci set iptv_epg.main.stb_mac="$NEW_MAC"; UCI_CHANGED=1; }
+    [ -n "$NEW_SN" ] && [ -z "$(uci get iptv_epg.main.stb_sn 2>/dev/null)" ] && { uci set iptv_epg.main.stb_sn="$NEW_SN"; UCI_CHANGED=1; }
+    [ -n "$NEW_UID" ] && [ -z "$(uci get iptv_epg.main.broadband_uid 2>/dev/null)" ] && { uci set iptv_epg.main.broadband_uid="$NEW_UID"; UCI_CHANGED=1; }
+    if [ "$UCI_CHANGED" = "1" ]; then
+      uci commit iptv_epg 2>/dev/null
+      log "机顶盒身份已同步到 config (LuCI 设置页显示)"
+    fi
   fi
   # ---------- 路由学习 (电信改服务器 IP 后自动适配) ----------
   # 从抓包提取目标 IP (请求方向=服务器), 排除机顶盒/本机/网关, 自动加专网路由
@@ -261,6 +353,8 @@ while true; do
   if [ -n "$RESULT" ]; then
     update_cookie "$RESULT" || log "抓到 cookie 但无关键字段"
   fi
+  fi
+
 
   # 每次循环间隔, 避免 tcpdump 连续重启
   sleep 2

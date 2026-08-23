@@ -21,7 +21,12 @@ EPG_CONF=/etc/config/iptv_epg
 COOKIE_FILE=$(uci get iptv_epg.main.cookie_file 2>/dev/null)
 [ -n "$COOKIE_FILE" ] || COOKIE_FILE=/tmp/stb_cookie.txt
 EPG_HOST=$(uci get iptv_epg.main.epg_host 2>/dev/null)
-[ -n "$EPG_HOST" ] || EPG_HOST=218.83.165.67:8084
+if [ -z "$EPG_HOST" ]; then
+	case "$(uci get iptv_epg.main.provider 2>/dev/null)" in
+		unicom) : ;;  # 联通: 待抓包填写
+		*) EPG_HOST=218.83.165.67:8084 ;;
+	esac
+fi
 GW=$(uci get iptv_epg.main.iptv_gateway 2>/dev/null)
 [ -n "$GW" ] || GW=30.170.0.1
 IFACE=$(uci get iptv_epg.main.iptv_iface 2>/dev/null)
@@ -31,16 +36,115 @@ ROUTE_TARGET=$(uci get iptv_epg.main.route_target 2>/dev/null)
 
 start() {
 	[ -f "$EPG_CONF" ] || return 0
+	# 0. provider 切换检测: 电信↔联通 EPG 数据 ID 体系不同 (ch... vs 数字), 缓存混用会错乱
+	#    记录上次 provider 到 /tmp (重启后 /tmp 清空=首次启动, 无需清); 变更时清 EPG 缓存 + 恢复对应频道表
+	local CUR_P=$(uci get iptv_epg.main.provider 2>/dev/null)
+	[ -n "$CUR_P" ] || CUR_P=telecom
+	# 电信频道表备份 (包内预置=电信表; 联通 channels-save 会覆盖 → 切回电信时恢复)
+	if [ ! -f /usr/share/iptv_epg/channel_map_telecom.txt ] && [ -f /usr/share/iptv_epg/channel_map.txt ]; then
+		cp /usr/share/iptv_epg/channel_map.txt /usr/share/iptv_epg/channel_map_telecom.txt 2>/dev/null
+	fi
+	if [ -f /tmp/epg_provider.txt ]; then
+		local OLD_P=$(cat /tmp/epg_provider.txt 2>/dev/null)
+		if [ "$OLD_P" != "$CUR_P" ]; then
+			# 🔴 切换隔离: 只清 EPG 缓存 (ID 体系不同防错乱), 不碰另一模式的运行时数据
+			#    (电信 cookie /tmp/stb_cookie.txt、联通会话 /etc/epg_unicom_sess.txt 都保留!)
+			rm -f /tmp/epg_cache_*.json 2>/dev/null
+			rm -rf /tmp/epg_by_name 2>/dev/null
+			# 🔴 切联通: 删除电信专网路由 (防残留误走错误出口)
+			#    切电信: ensure_route 在下方自动重新添加 (route replace)
+			if [ "$CUR_P" = "unicom" ]; then
+				local TEL_EXTRA=$(uci get iptv_epg.main.route_extra 2>/dev/null)
+				local TEL_ROUTES="${ROUTE_TARGET} ${TEL_EXTRA}"
+				local tr
+				for tr in $TEL_ROUTES; do
+					ip route del $tr/32 2>/dev/null && echo "已删除电信专网路由: $tr/32"
+				done
+			fi
+			# EPG 服务器/抓包端口: 仅在旧值是"旧 provider 默认或空"时自动更新,
+			#    用户自定义值 (非默认) 一律保留, 不覆盖!
+			local DEF_EPG="218.83.165.67:8084"
+			[ "$CUR_P" = "unicom" ] && DEF_EPG="10.223.2.76:33200"
+			local DEF_PORTS="8084 7001 6610"
+			[ "$CUR_P" = "unicom" ] && DEF_PORTS="9001 33200 80"
+			local CUR_EPG=$(uci get iptv_epg.main.epg_host 2>/dev/null)
+			local CUR_PORTS=$(uci get iptv_epg.main.cap_ports 2>/dev/null)
+			case "$CUR_EPG" in
+				"218.83.165.67:8084"|"10.223.2.76:33200"|"") uci set iptv_epg.main.epg_host="$DEF_EPG";;
+			esac
+			case "$CUR_PORTS" in
+				"8084 7001 6610"|"9001 33200 80"|"") uci set iptv_epg.main.cap_ports="$DEF_PORTS";;
+			esac
+			uci commit iptv_epg 2>/dev/null
+			echo "iptv-epg: provider $OLD_P → $CUR_P, EPG 缓存已清理 (另一模式数据保留)"
+		fi
+	fi
+	echo "$CUR_P" > /tmp/epg_provider.txt
+	# 0.5 频道表软链接: channel_map.txt → channel_map_<provider>.txt
+	#    (telecom/unicom 各自独立文件; 切换 provider 或重装 ipk 后自动指向正确表)
+	if [ -f /usr/share/iptv_epg/channel_map_${CUR_P}.txt ]; then
+		ln -sf channel_map_${CUR_P}.txt /usr/share/iptv_epg/channel_map.txt
+	fi
+	# 0.6 联通会话: 公共版无预置模板, 靠 daemon 抓机顶盒流量采集
+	#    (采集后写 /etc/epg_unicom_sess.txt 持久化, 重启不丢, 无需重新抓包!)
 	# 检查服务启用 (service_enabled, 默认1)
 	local SVC=$(uci get iptv_epg.main.service_enabled 2>/dev/null)
 	[ "$SVC" = "0" ] && { echo "iptv-epg: 服务未启用 (service_enabled=0), 跳过启动"; return 0; }
 	echo "=== iptv-epg start ==="
-	# 0. 恢复备份 cookie (重启后 /tmp 清空, 机顶盒关机时唯一有效会话)
-	restore_cookie
-	# 1. 添加专网路由 (218.83.165.67 走 br-iptv)
-	ensure_route
-	# 1.5 账号直登: cookie 无效时自动重新认证 (宽带账号+SN+MAC, 不依赖机顶盒)
-	auto_auth
+	# 🔴 provider 隔离: 联通模式跳过电信专用逻辑 (专网路由/账号直登/cookie 恢复)
+	#    但保留电信 cookie 文件 (切回电信还能用, 不主动清除对方数据)
+	if [ "$CUR_P" != "unicom" ]; then		# 0. 公共版: 不内置账号 (电信靠机顶盒抓包采集)
+		# 0.1 auth_ip 自动同步: 专网接口 DHCP IP 变化时更新 (认证绑定源 IP, 旧 IP 会导致 4kLogAuth 失败)
+		#    优先 network.iptv 桥接口 / br-iptv / eth0.85 的当前 inet IP
+		local AUTH_IF=$(uci get network.iptv.ifname 2>/dev/null)
+		[ -z "$AUTH_IF" ] && AUTH_IF="br-iptv"
+		local AUTH_IP_NOW=""
+		for ai in $AUTH_IF; do
+			case "$ai" in
+				*" "*|*) [ -d "/sys/class/net/$ai" ] || continue
+					AUTH_IP_NOW=$(ip addr show "$ai" 2>/dev/null | grep 'inet ' | grep -v 127 | awk '{print $2}' | cut -d/ -f1 | head -1)
+					[ -n "$AUTH_IP_NOW" ] && break ;;
+			esac
+		done
+		[ -z "$AUTH_IP_NOW" ] && AUTH_IP_NOW=$(ip addr show br-iptv 2>/dev/null | grep 'inet ' | grep -v 127 | awk '{print $2}' | cut -d/ -f1 | head -1)
+		if [ -n "$AUTH_IP_NOW" ] && [ "$(uci get iptv_epg.main.auth_ip 2>/dev/null)" != "$AUTH_IP_NOW" ]; then
+			uci set iptv_epg.main.auth_ip="$AUTH_IP_NOW"
+			uci commit iptv_epg
+			echo "auth_ip 已同步为专网当前 IP: $AUTH_IP_NOW"
+		fi
+		# 0.2 清理辅助源 IP: epg_auth.sh 会把 auth_ip add 到接口, DHCP 换 IP 后旧值残留
+		#    (旧辅助源 IP 与网关同子网 → 内核选源优先它 → 服务器不响应! 只留 DHCP 主 IP)
+		#    ⚠️ 用桥名 br-iptv (network.iptv.ifname 是成员 eth0.85/vxlan_iptv, 无 IP)
+		local BR_IF="br-iptv"
+		if [ -d "/sys/class/net/$BR_IF" ]; then
+			local BR_MAIN=$(ip addr show "$BR_IF" 2>/dev/null | grep 'inet ' | grep -v 127 | awk '{print $2}' | head -1)
+			if [ -n "$BR_MAIN" ]; then
+				local ipx
+				for ipx in $(ip addr show "$BR_IF" 2>/dev/null | grep 'inet ' | grep -v 127 | awk '{print $2}'); do
+					[ "$ipx" = "$BR_MAIN" ] || { ip addr del "$ipx" dev "$BR_IF" 2>/dev/null && echo "已清理辅助源 IP: $ipx ($BR_IF)"; }
+				done
+			fi
+		fi
+		# 0. 恢复备份 cookie (重启后 /tmp 清空, 机顶盒关机时唯一有效会话)
+		restore_cookie
+		# 1. 添加专网路由 (218.83.165.67 走 br-iptv)
+		ensure_route
+		# 1.5 账号直登: cookie 无效时自动重新认证 (宽带账号+SN+MAC, 不依赖机顶盒)
+		auto_auth
+	else
+		# 🔴 联通模式: 清理电信专网路由 (运行时 + uci 持久化), 防残留误走
+		#    (安装/电信模式遗留的 network.epgroute 会被 netifd 自动加回!)
+		local TEL_EXTRA_U=$(uci get iptv_epg.main.route_extra 2>/dev/null)
+		local TU
+		for TU in ${ROUTE_TARGET} ${TEL_EXTRA_U}; do
+			ip route del $TU/32 2>/dev/null
+		done
+		if uci get network.epgroute >/dev/null 2>&1; then
+			uci delete network.epgroute 2>/dev/null
+			uci commit network 2>/dev/null
+			echo "已清理电信持久化路由 (network.epgroute)"
+		fi
+	fi
 	# 2. 启动 cookie 保活 daemon (保证长期有效)
 	local CD=$(uci get iptv_epg.main.cookie_daemon 2>/dev/null)
 	[ "$CD" != "0" ] && start_cookie_daemon
@@ -49,10 +153,27 @@ start() {
 	[ "$CGI" != "0" ] && ensure_cgi
 	# 4. 设置定时拉取 crontab
 	setup_crontab
-	# 5. 首次拉取 (非阻塞, 仅当启用预取且有cookie时)
+	# 5. 首次拉取 (非阻塞, 按 provider 分支)
+	#    🔴 重启后 /tmp 缓存清空, 必须自动恢复 EPG!
+	#    🔴 联通模式: 检查会话文件 (不是电信 cookie!) — 曾致联通重启后从不自动拉取
+	#    🔴 用 fetch_bg (尊重 selected 勾选, 联通会话预检+自动login; fetch 可能回退全部)
 	local PF=$(uci get iptv_epg.main.prefetch_enabled 2>/dev/null)
-	if [ "$PF" != "0" ] && [ -f "$COOKIE_FILE" ]; then
-		/usr/bin/iptv_epg fetch >/dev/null 2>&1 &
+	if [ "$PF" != "0" ]; then
+		if [ "$CUR_P" = "unicom" ]; then
+			[ -f /etc/epg_unicom_sess.txt ] && /usr/bin/iptv_epg fetch_bg >/dev/null 2>&1 &
+		else
+			# 🔴 电信: 等 cookie 出现再拉 (重启后 /tmp 清空, auto_auth 后台认证要几秒-几十秒;
+			#    旧逻辑立即检查 cookie 不存在 → 永不拉取! restore_cookie 有备份才立即有)
+			(
+				local WC=0
+				while [ $WC -lt 30 ]; do
+					[ -f "$COOKIE_FILE" ] && break
+					sleep 2
+					WC=$((WC+1))
+				done
+				[ -f "$COOKIE_FILE" ] && /usr/bin/iptv_epg fetch_bg >/dev/null 2>&1
+			) &
+		fi
 	fi
 	echo "=== iptv-epg started ==="
 }
@@ -128,7 +249,13 @@ status() {
 auto_auth() {
 	local UIDC=$(uci get iptv_epg.main.broadband_uid 2>/dev/null)
 	local SNC=$(uci get iptv_epg.main.stb_sn 2>/dev/null)
-	[ -n "$UIDC" ] || [ -n "$SNC" ] || { echo "  未配置宽带账号/SN, 跳过账号认证"; return 0; }
+	[ -n "$UIDC" ] || [ -n "$SNC" ] || { echo "  未配置宽带账号/SN, 跳过账号认证 (公共版: 靠机顶盒抓包采集 cookie)"; return 0; }
+	# 🔴 公共版: 无 RSA 私钥则账号直登不可用 (4kLogAuth 需要私钥签名), 跳过!
+	#    私有版才有 /etc/iptv_epg_rsa.pem (由用户自行部署)
+	if [ ! -f /etc/iptv_epg_rsa.pem ]; then
+		echo "  公共版: 无 RSA 私钥, 跳过账号直登 (靠机顶盒抓包采集 cookie)"
+		return 0
+	fi
 	if [ -s "$COOKIE_FILE" ]; then
 		local V=$(curl -s -m 8 -o /dev/null -w '%{http_code}' \
 			"http://${EPG_HOST}/iptvepg/frame1413/function/ajax/epg7getChannelByAjax.jsp" \
@@ -136,8 +263,10 @@ auto_auth() {
 			-d 'action=getChannelList&cateID=000406&type=' 2>/dev/null)
 		[ "$V" = "200" ] && { echo "  cookie 有效, 跳过账号认证"; return 0; }
 	fi
-	echo "  cookie 无效, 账号直登重新认证..."
-	/usr/bin/epg_auth.sh
+	echo "  cookie 无效, 账号直登重新认证... (后台执行, 不阻塞启动)"
+	# 🔴 后台执行: epg_auth.sh 多步认证 (每步 -m 10) 最坏 60-120s,
+	#    同步执行会阻塞 init.d restart → LuCI 切换页面一直转圈!
+	/usr/bin/epg_auth.sh >/dev/null 2>&1 &
 }
 
 # 恢复备份 cookie (重启后 /tmp 清空, 机顶盒关机时唯一有效会话)
@@ -158,6 +287,22 @@ ensure_route() {
 	# 多路由目标: route_target + route_extra (uci 可配置, 电信公共基础设施) — 全部走专网!
 	local EXTRA=$(uci get iptv_epg.main.route_extra 2>/dev/null)
 	local TARGETS="${ROUTE_TARGET} ${EXTRA}"
+	# 🔴 重启后等专网接口就绪 (DHCP 需要几秒-几十秒, 否则选不到接口 → 路由添加失败!)
+	local W=0
+	while [ $W -lt 30 ]; do
+		local HAS_IPTV_IP=""
+		local WAIT_IFS=$(uci get network.iptv.ifname 2>/dev/null)
+		local wi
+		for wi in $WAIT_IFS br-iptv eth0.85; do
+			[ -d "/sys/class/net/$wi" ] || continue
+			if ip addr show "$wi" 2>/dev/null | grep -q 'inet '; then HAS_IPTV_IP=1; break; fi
+		done
+		[ -n "$HAS_IPTV_IP" ] && break
+		sleep 1
+		W=$((W+1))
+	done
+	[ $W -gt 0 ] && [ $W -lt 30 ] && echo "  专网接口就绪 (等待 ${W}s)"
+	[ $W -ge 30 ] && echo "  警告: 专网接口 30s 未就绪 (DHCP 可能失败)"
 	local T
 	for T in $TARGETS; do
 		local TP="${T}/32"
@@ -206,8 +351,10 @@ ensure_route() {
 		[ -n "$GW2" ] || GW2="30.170.0.1"
 		local IPTV_IP=$(ip addr show "$RIF" 2>/dev/null | grep 'inet ' | awk '{print $2}' | cut -d/ -f1)
 		[ -n "$IPTV_IP" ] && echo "  $RIF IP: $IPTV_IP"
-		ip route add $TP via $GW2 dev $RIF src $IPTV_IP 2>/dev/null && echo "  路由已添加: $TP via $GW2 dev $RIF" \
-			|| { ip route add $TP via $GW2 dev $RIF 2>/dev/null && echo "  路由已添加(无src): $TP via $GW2 dev $RIF" || echo "  路由添加失败: $TP"; }
+		# 🔴 用 replace + onlink: ① DHCP 换 IP 后旧路由(src 旧IP)残留会冲突 ② 网关 30.170.0.1
+		#    与 DHCP IP (可能 30.171.x) 不同网段 → 必须 onlink 强制 (否则 Network is unreachable!)
+		ip route replace $TP via $GW2 dev $RIF src $IPTV_IP onlink 2>/dev/null && echo "  路由已添加: $TP via $GW2 dev $RIF src $IPTV_IP" \
+			|| { ip route replace $TP via $GW2 dev $RIF onlink 2>/dev/null && echo "  路由已添加(无src): $TP via $GW2 dev $RIF" || echo "  路由添加失败: $TP"; }
 	done
 	# 持久化到 network 配置
 	if ! uci show network 2>/dev/null | grep -q "network.epgroute"; then
@@ -217,6 +364,8 @@ ensure_route() {
 		uci set network.epgroute.gateway="$GW2"
 		uci set network.epgroute.interface="$RIF"
 		uci set network.epgroute.metric='100'
+		# onlink: 网关 30.170.0.1 与 DHCP IP (30.171.x) 不同网段, 必须强制
+		uci set network.epgroute.onlink='1'
 		uci commit network
 		echo "  已持久化到 network.epgroute (iface=$RIF)"
 	fi
@@ -274,13 +423,22 @@ setup_crontab() {
 	[ -n "$HOUR" ] || HOUR=2
 	[ -n "$MIN" ] || MIN=30
 	local ENABLED=$(uci get iptv_epg.main.prefetch_enabled 2>/dev/null)
+	local PROVIDER=$(uci get iptv_epg.main.provider 2>/dev/null)
+	[ -n "$PROVIDER" ] || PROVIDER=telecom
 	remove_crontab
 	if [ "$ENABLED" = "1" ] || [ -z "$ENABLED" ]; then
 		# 去重: 若已存在同样行则不再添加 (防重复); 日志先截 100 行再追加 (防 /tmp 撑爆)
 		if ! grep -q 'iptv_epg fetch' /etc/crontabs/root 2>/dev/null; then
-			echo "$MIN $HOUR * * * tail -100 /tmp/iptv_epg.log > /tmp/iptv_epg.log.tmp 2>/dev/null && mv /tmp/iptv_epg.log.tmp /tmp/iptv_epg.log; /usr/bin/iptv_epg fetch >> /tmp/iptv_epg.log 2>&1" >> /etc/crontabs/root
+			if [ "$PROVIDER" = "unicom" ]; then
+				# 联通: 每日先重放 login 换新 JSESSIONID (凭抓包账号信息, 完全脱离机顶盒!)
+				#       再 fetch_bg 全量拉 EPG; ⚠️ login 会踢机顶盒会话, 凌晨机顶盒通常关机无感
+				echo "$MIN $HOUR * * * tail -100 /tmp/iptv_epg.log > /tmp/iptv_epg.log.tmp 2>/dev/null && mv /tmp/iptv_epg.log.tmp /tmp/iptv_epg.log; /usr/bin/iptv_epg login >/dev/null 2>&1; /usr/bin/iptv_epg fetch_bg >> /tmp/iptv_epg.log 2>&1" >> /etc/crontabs/root
+				echo "  联通定时拉取已设置: 每天 $HOUR:$MIN (login 重放 + 全量频道, 脱离机顶盒)"
+			else
+				echo "$MIN $HOUR * * * tail -100 /tmp/iptv_epg.log > /tmp/iptv_epg.log.tmp 2>/dev/null && mv /tmp/iptv_epg.log.tmp /tmp/iptv_epg.log; /usr/bin/iptv_epg fetch >> /tmp/iptv_epg.log 2>&1" >> /etc/crontabs/root
+				echo "  定时拉取已设置: 每天 $HOUR:$MIN"
+			fi
 			/etc/init.d/cron restart 2>/dev/null
-			echo "  定时拉取已设置: 每天 $HOUR:$MIN"
 		else
 			echo "  定时拉取已存在, 跳过"
 		fi

@@ -184,12 +184,18 @@ function act_txt()
 	end
 	luci.http.prepare_content("text/plain; charset=utf-8")
 	luci.http.header("Content-Disposition", "attachment; filename=IPTV.txt")
+	local provider = uci:get("iptv_epg", "main", "provider") or "telecom"
 	local wrote = 0
 	if #sel > 0 then
 		for _, name in ipairs(sel) do
 			local info = cmap[name] or {}
 			if info.udp ~= "" then
-				luci.http.write(name .. ",http://" .. host .. "/cgi-bin/TVOD/play.cgi?url=http://" .. host .. ":7088/udp/" .. info.udp .. "&ch=" .. name .. "\n")
+				if provider == "unicom" then
+					-- 联通: HLS 单播直放 (不经 play.cgi, 无 udpxy)
+					luci.http.write(name .. "," .. info.udp .. "\n")
+				else
+					luci.http.write(name .. ",http://" .. host .. "/cgi-bin/TVOD/play.cgi?url=http://" .. host .. ":7088/udp/" .. info.udp .. "&ch=" .. name .. "\n")
+				end
 				wrote = wrote + 1
 			end
 		end
@@ -200,21 +206,25 @@ function act_txt()
 			local name = s.name or ""
 			local udp = s.udp or ""
 			if name ~= "" and udp ~= "" then
-				luci.http.write(name .. ",http://" .. host .. "/cgi-bin/TVOD/play.cgi?url=http://" .. host .. ":7088/udp/" .. udp .. "&ch=" .. name .. "\n")
+				if provider == "unicom" then
+					luci.http.write(name .. "," .. udp .. "\n")
+				else
+					luci.http.write(name .. ",http://" .. host .. "/cgi-bin/TVOD/play.cgi?url=http://" .. host .. ":7088/udp/" .. udp .. "&ch=" .. name .. "\n")
+				end
 			end
 		end)
 	end
 end
 
--- 全部可用频道 (JSON: 从 channel_map.txt 读; 组播地址可为空 — 公共版用户先抓频道表拉 EPG, 直播地址可后补)
+-- 全部可用频道 (JSON: 从 channel_map.txt 读, 只显示有组播地址的)
 function act_channels_all()
 	local e = {}
 	local mf = io.open("/usr/share/iptv_epg/channel_map.txt", "r")
 	if mf then
 		for line in mf:lines() do
 			local name, id, udp = line:match("^([^|]+)|([^|]*)|(.*)$")
-			if name then
-				e[#e+1] = { name = name, id = id or "", udp = udp or "" }
+			if name and udp and udp ~= "" then
+				e[#e+1] = { name = name, id = id or "", udp = udp }
 			end
 		end
 		mf:close()

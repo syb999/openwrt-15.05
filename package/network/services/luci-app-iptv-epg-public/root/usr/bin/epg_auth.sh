@@ -7,6 +7,14 @@
 # 参考: sh-tel-iptv-spider 认证流程 (4kLogAuth -> r4k -> ottAuth -> portal)
 # ============================================================
 
+# 🔴 单实例锁: 认证慢时 (每步 -m 10) 多次触发 (如多次 restart) 会堆积进程
+AUTH_PID=/var/run/epg_auth.pid
+if [ -f "$AUTH_PID" ] && kill -0 "$(cat "$AUTH_PID" 2>/dev/null)" 2>/dev/null; then
+  exit 0
+fi
+echo $$ > "$AUTH_PID" 2>/dev/null
+trap 'rm -f "$AUTH_PID"' EXIT
+
 RSAPEM=/etc/iptv_epg_rsa.pem
 LOG=/tmp/epg_auth.log
 # 日志轮转: 保留最近 100 行 (防止 /tmp 61.5M 被日志撑爆)
@@ -89,6 +97,12 @@ CKJ=/tmp/auth_cookies.txt
 rm -f $CKJ
 
 # ---------- 1. 4kLogAuth ----------
+# 🔴 账号直登仅上海电信 (4kLogAuth/私钥/RSA 协议); 联通模式请用机顶盒抓包模式
+if [ "$(uci get iptv_epg.main.provider 2>/dev/null)" = "unicom" ]; then
+  echo "[$(date '+%F %T')] ERR: 账号直登仅支持上海电信; 上海联通请用机顶盒抓包模式 (配置 stb_side, 勿填账号/SN)" >> "$LOG"
+  echo "ERR: 账号直登仅上海电信; 联通用抓包模式"
+  exit 1
+fi
 # 认证服务器: uci auth_host / auth_host2 (可配置, 电信公共基础设施) → 电信默认
 SRV1=`uci get iptv_epg.main.auth_host 2>/dev/null`
 [ -n "$SRV1" ] || SRV1=222.68.208.73:7001

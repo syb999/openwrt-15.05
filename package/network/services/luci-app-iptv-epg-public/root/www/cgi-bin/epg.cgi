@@ -6,23 +6,37 @@
 #        ch=频道名或频道ID, date=YYYY-MM-DD (默认今天)
 # 返回 (DIYP 5.2.0 兼容格式):
 #   {"channel_name":"...","date":"...","epg_data":[{"start":"HH:MM","end":"HH:MM","title":"..."}]}
-# 快速路径: /tmp/epg_by_name/<URL编码频道名>/<date>.json (预取生成, 0.1s)
+# 快速路径: "$CACHE_DIR/epg_by_name"/<URL编码频道名>/<date>.json (预取生成, 0.1s)
 # ============================================================
 
 CJ=/tmp/stb_cookie.txt
+PROVIDER=$(uci get iptv_epg.main.provider 2>/dev/null)
+[ -n "$PROVIDER" ] || PROVIDER=telecom
 # 本机地址 (动态获取, 设备 IP 变化后回看 URL 不失效)
 HOST=$(/usr/bin/iptv_epg ip 2>/dev/null)
 [ -z "$HOST" ] && HOST=$(uci get network.wan.ipaddr 2>/dev/null)
 [ -z "$HOST" ] && HOST=$(uci get network.lan.ipaddr 2>/dev/null)
-# EPG 服务器 (uci epg_host, 可配置防电信改 IP) → 电信默认
+# EPG 服务器 (uci epg_host, 可配置防改 IP) → 按运营商默认
 EPG_HOST=$(uci get iptv_epg.main.epg_host 2>/dev/null)
-[ -n "$EPG_HOST" ] || EPG_HOST=218.83.165.67:8084
-CH_URL="http://$EPG_HOST/iptvepg/frame1413/function/ajax/epg7getChannelByAjax.jsp"
-REF="http://$EPG_HOST/iptvepg/frame1413/IPM/modules/channel/channellist_trailer_pro.html"
+if [ -z "$EPG_HOST" ]; then
+  if [ "$PROVIDER" = "unicom" ]; then
+    EPG_HOST=10.223.2.76:33200
+  else
+    EPG_HOST=218.83.165.67:8084
+  fi
+fi
+if [ "$PROVIDER" = "unicom" ]; then
+  CH_URL="http://$EPG_HOST/EPG/jsp/jkjiaoyutest/en/function/ajax/epg7getChannelByAjax.jsp"
+  REF="http://$EPG_HOST/EPG/jsp/jkjiaoyutest/en/IPM/modules/channel/play_pro.html"
+else
+  CH_URL="http://$EPG_HOST/iptvepg/frame1413/function/ajax/epg7getChannelByAjax.jsp"
+  REF="http://$EPG_HOST/iptvepg/frame1413/IPM/modules/channel/channellist_trailer_pro.html"
+fi
 UA='webkit;Resolution(PAL,720P,1080P)'
 ORIGIN="http://$EPG_HOST"
 CACHE_TTL=86400
-CACHE_DIR=/tmp
+CACHE_DIR=/tmp/epg_cache
+mkdir -p "$CACHE_DIR" 2>/dev/null
 
 echo "Content-Type: application/json; charset=utf-8"
 echo "Cache-Control: no-cache"
@@ -63,8 +77,12 @@ esac
 
 [ -z "$CH" ] && { echo '{"channel_name":"未提供","date":"'$(date +%F)'","epg_data":[]}'; exit 0; }
 [ -z "$DATE" ] && DATE=$(date +%F)
-[ -f "$CJ" ] || { echo "{\"channel_name\":\"$CH\",\"date\":\"$DATE\",\"epg_data\":[]}"; exit 0; }
-COOKIE=$(cat "$CJ")
+# 电信模式: 无 cookie 无法拉 EPG → 快速返回空; 联通模式: 走缓存/JSESSIONID 会话, 不需要电信 cookie
+if [ "$PROVIDER" != "unicom" ] && [ ! -f "$CJ" ]; then
+  echo "{\"channel_name\":\"$CH\",\"date\":\"$DATE\",\"epg_data\":[]}"
+  exit 0
+fi
+COOKIE=$(cat "$CJ" 2>/dev/null)
 
 # ---------- 频道名别名映射 ----------
 # 兼容 TVBox 内置 epg_data.json 的 epgid (EpgUtil.getEpgInfo 用 epgid 请求)
@@ -106,7 +124,7 @@ quick_hit() {
   local qname="$1"
   [ -z "$qname" ] && return 1
   local ENC=$(printf '%s' "$qname" | xxd -p | tr -d ' \n' | tr 'a-f' 'A-F' | sed 's/\(..\)/%\1/g')
-  local NCF="/tmp/epg_by_name/${ENC}/${DATE}.json"
+  local NCF="$CACHE_DIR/epg_by_name/${ENC}/${DATE}.json"
   if [ -f "$NCF" ]; then
     if [ $(( $(date +%s) - $(date -r "$NCF" +%s) )) -lt "$CACHE_TTL" ]; then
       cat "$NCF"
@@ -117,7 +135,7 @@ quick_hit() {
   local QDEC=$(printf '%b' "$(echo "$ENC" | sed 's/%/\\x/g')" 2>/dev/null)
   [ -z "$QDEC" ] && QDEC="$qname"
   local dir
-  for dir in /tmp/epg_by_name/*/; do
+  for dir in "$CACHE_DIR/epg_by_name"/*/; do
     [ -d "$dir" ] || continue
     local DEN=$(basename "$dir")
     local DDEC=$(printf '%b' "$(echo "$DEN" | sed 's/%/\\x/g')" 2>/dev/null)
@@ -140,11 +158,14 @@ quick_hit() {
 quick_hit "$CH" && exit 0
 [ "$CH_ALIAS" != "$CH" ] && quick_hit "$CH_ALIAS" && exit 0
 
-# ---------- 找 channelID (硬编码优先, getChannelList 兜底防电信更新) ----------
+# ---------- 找 channelID (channel_map.txt 优先 → 硬编码兜底 → getChannelList 兜底) ----------
 case "$CH" in
   ch[0-9a-f]*) CHID="$CH" ;;
   *)
-    # 硬编码全频道映射 (168 个, 电信频道 ID 固定; 2026-08-17 拉取)
+    # ① 频道映射表优先 (联通=数字ID 20000030; 电信=ch...; channels-save 重建后自动适配)
+    CHID=$(grep "^$CH_ALIAS|" /usr/share/iptv_epg/channel_map.txt 2>/dev/null | head -1 | cut -d'|' -f2)
+    if [ -z "$CHID" ] && [ "$PROVIDER" != "unicom" ]; then
+    # ② 硬编码全频道映射 (168 个, 电信频道 ID 固定; 2026-08-17 拉取) — 🔴 仅电信, 联通查不到则空 (防电信ID污染联通)
     case "$CH_ALIAS" in
       新闻综合) CHID="ch00000000000000001485" ;;
       东方卫视) CHID="ch00000000000000001058" ;;
@@ -315,8 +336,9 @@ case "$CH" in
       延边卫视) CHID="ch00000000000000001813" ;;
       家庭理财) CHID="ch00000000000000001593" ;;
     esac
-    # 兜底: 电信更新 channel ID 时, 从 getChannelList 查 (awk 快速提取)
-    if [ -z "$CHID" ]; then
+    fi
+    # 兜底: 电信更新 channel ID 时, 从 getChannelList 查 (awk 快速提取) — 🔴 仅电信接口
+    if [ -z "$CHID" ] && [ "$PROVIDER" != "unicom" ]; then
       CHID=$(curl -s --max-time 10 "$CH_URL" -H "Cookie: $COOKIE" -H "User-Agent: $UA" -H "Referer: $REF" -H "Origin: $ORIGIN" -d 'action=getChannelList&cateID=000406&type=' 2>/dev/null | \
         tr '{' '\n' | grep '"name"' | awk -v want="$CH_ALIAS" '{
           if (match($0, /"name":"[^"]*"/)) { n=substr($0, RSTART+8, RLENGTH-9) }
@@ -370,8 +392,27 @@ TZH=$(echo "$TZOFF" | cut -c2-3 | awk '{print $1+0}')   # 时区小时 (UTC=0, C
 DAY_START=$((DAY_START - (TZH - 8) * 3600))
 DAY_END=$((DAY_START + 86399))
 TMP=$(mktemp /tmp/epg_cgi.XXXXXX)
-curl -s --max-time 10 "$CH_URL" -H "Cookie: $COOKIE" -H "User-Agent: $UA" -H "Referer: $REF" -H "Origin: $ORIGIN" \
-  -d "action=getChannelProg&channelID=$CHID&startTime=${DAY_START}000&endTime=${DAY_END}000&offset=0&limit=500" 2>/dev/null > "$TMP"
+if [ "$PROVIDER" = "unicom" ]; then
+  # 联通: getChannelProg 兼容 (需 JSESSIONID 会话, daemon 采集 / iptv_epg login)
+  if [ -f /etc/epg_unicom_sess.txt ]; then
+    . /etc/epg_unicom_sess.txt 2>/dev/null
+    curl -s --max-time 10 -X POST "$CH_URL" -H "Cookie: JSESSIONID=$JSESSIONID" -H "User-Agent: $UA" -H "Referer: $REF" -H "Origin: $ORIGIN" \
+      -H "Content-Type: application/x-www-form-urlencoded" \
+      -d "action=getChannelProg&channelID=$CHID&startTime=${DAY_START}000&endTime=${DAY_END}000&offset=0&limit=500" 2>/dev/null > "$TMP"
+    # 🔴 会话失效自动保活: 无节目数据 → 重放 login 换新 JSESSIONID → 重试一次
+    #    (login 凭抓包账号 token, 不依赖机顶盒; ⚠️ 会踢机顶盒会话, 机顶盒自动重认证)
+    if ! grep -q '"name"' "$TMP" 2>/dev/null; then
+      /usr/bin/iptv_epg login >/dev/null 2>&1
+      . /etc/epg_unicom_sess.txt 2>/dev/null
+      curl -s --max-time 10 -X POST "$CH_URL" -H "Cookie: JSESSIONID=$JSESSIONID" -H "User-Agent: $UA" -H "Referer: $REF" -H "Origin: $ORIGIN" \
+        -H "Content-Type: application/x-www-form-urlencoded" \
+        -d "action=getChannelProg&channelID=$CHID&startTime=${DAY_START}000&endTime=${DAY_END}000&offset=0&limit=500" 2>/dev/null > "$TMP"
+    fi
+  fi
+else
+  curl -s --max-time 10 "$CH_URL" -H "Cookie: $COOKIE" -H "User-Agent: $UA" -H "Referer: $REF" -H "Origin: $ORIGIN" \
+    -d "action=getChannelProg&channelID=$CHID&startTime=${DAY_START}000&endTime=${DAY_END}000&offset=0&limit=500" 2>/dev/null > "$TMP"
+fi
 
 # 拉取失败/空 → 降级: 返回旧缓存(即使过期), 保证 DIYP 有数据
 if ! grep -q '"name"' "$TMP" 2>/dev/null; then
@@ -413,22 +454,39 @@ tr '{' '\n' < "$TMP" | grep '"name"' | awk '
   ps_start=strftime("%Y%m%d%H%M%S", st); ps_end=strftime("%Y%m%d%H%M%S", et)
   printf "{\"start\":\"%s\",\"end\":\"%s\",\"title\":\"%s\",\"url\":\"http://%s/cgi-bin/play.cgi?ch=%s&playseek=%s-%s\"}\n", s, e, name, host, chraw, ps_start, ps_end
 }' >> "$OUT"
-awk 'NR==n{print; next} {print $0 ","}' n=$(wc -l < "$OUT") "$OUT" > "$OUT.new" && mv "$OUT.new" "$OUT"
+# 组装 JSON: 表头行(第1行)和最后一行不加逗号, 中间节目行加逗号 (修复实时拉取时表头被加逗号 bug)
+awk 'NR==1 || NR==n {print; next} {print $0 ","}' n=$(wc -l < "$OUT") "$OUT" > "$OUT.new" && mv "$OUT.new" "$OUT"
 echo "]}" >> "$OUT"
 
 # 写缓存 + 名字索引
 if grep -q '"title"' "$OUT"; then
   cp "$OUT" "$CACHE_FILE"
   # 轻量清理: 名字索引缓存文件数超阈值才触发 (正常 0 开销; 防止 fetch 不跑时 epg_by_name 无限累积)
-  if [ -d /tmp/epg_by_name ]; then
-    if [ $(find /tmp/epg_by_name -name '*.json' 2>/dev/null | wc -l) -gt 2000 ]; then
-      find /tmp/epg_by_name -name '*.json' -mtime +8 -delete 2>/dev/null
-      find /tmp/epg_by_name -type d -empty -delete 2>/dev/null
+  # 🔴 按文件名日期清理 (YYYY-MM-DD.json 早于今天-8天删除, 不依赖 mtime)
+  if [ -d "$CACHE_DIR/epg_by_name" ]; then
+    if [ $(find "$CACHE_DIR/epg_by_name" -name '*.json' 2>/dev/null | wc -l) -gt 2000 ]; then
+      local DAYS2=$(uci get iptv_epg.main.prefetch_days 2>/dev/null)
+      [ -n "$DAYS2" ] || DAYS2=7
+      # 🔴 保留窗口含明天预告: 今天-(DAYS2-1) ~ 今天+1 (共 DAYS2+1 天 json)
+      #    例如 8-23 保留 8-17~8-24, 8-24 删 8-17 保留 8-18~8-25
+      local CUTOFF=$(date -d "@$(( $(date +%s) - (DAYS2-1)*86400 ))" +%F 2>/dev/null)
+      [ -n "$CUTOFF" ] || CUTOFF=$(date +%F)
+      find "$CACHE_DIR/epg_by_name" -name '*.json' 2>/dev/null | while read -r F2; do
+        local FD=$(basename "$F2" .json)
+        case "$FD" in
+          20[0-9][0-9]-[0-9][0-9]-[0-9][0-9])
+            local FD_NUM=$(echo "$FD" | tr -d '-')
+            local CUT_NUM=$(echo "$CUTOFF" | tr -d '-')
+            [ "${FD_NUM:-0}" -lt "${CUT_NUM:-0}" ] && rm -f "$F2" 2>/dev/null
+            ;;
+        esac
+      done
+      find "$CACHE_DIR/epg_by_name" -type d -empty -delete 2>/dev/null
     fi
   fi
   if [ -n "$CH_RAW" ] && [ -n "$DATE_RAW" ]; then
-    mkdir -p "/tmp/epg_by_name/${CH_RAW}"
-    cp "$OUT" "/tmp/epg_by_name/${CH_RAW}/${DATE_RAW}.json"
+    mkdir -p "$CACHE_DIR/epg_by_name/${CH_RAW}"
+    cp "$OUT" "$CACHE_DIR/epg_by_name/${CH_RAW}/${DATE_RAW}.json"
   fi
 fi
 rm -f "$TMP"

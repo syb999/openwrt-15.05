@@ -1,8 +1,18 @@
 config iptv_epg 'main'
+	# 运营商模式: telecom=上海电信 (默认) / unicom=上海联通 (实测适配 2026-08)
+	option provider 'telecom'
+	# 抓包端口 (空格分隔, 机顶盒访问的服务器端口; 联通=9001认证+33200 EPG+80 业务)
+	option cap_ports '8084 7001 6610'
 	option epg_host '218.83.165.67:8084'
 	# 回看/TS 流服务器 (电信公共基础设施, 可按地区修改)
 	option tvod_host '124.75.26.15:6610'
+	# 联通模式服务器 (实测 2026-08-22, provider=unicom 时生效; 可覆盖)
+	option unicom_auth_host '20.249.255.250:9001'
+	option unicom_eds_host '20.254.1.12:8082'
+	option unicom_tvod_host '10.223.6.29:80'
 	option cookie_file '/tmp/stb_cookie.txt'
+	# DIYP/TVBox 服务地址来源: auto=自动 / wan=WAN口 / lan=LAN口 / 接口名(br-lan,eth0...) / 具体IP
+	option host_source 'auto'
 	# 有效 cookie 备份 (机顶盒关机/重启后自动写回; 失效后由 daemon 抓取更新)
 	option cookie_backup ''
 	# 机顶盒位置: A面 (直连设备, 抓 br-lan) / B面 (经VXLAN隧道) / C面 (自定义接口)

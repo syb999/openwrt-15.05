@@ -16,11 +16,26 @@ rm -f /tmp/play_m1.txt /tmp/play_m2.txt /tmp/play_s1.txt /tmp/play_s2.txt /tmp/p
 # ============================================================
 
 CJ=/tmp/stb_cookie.txt
-# EPG 服务器 (uci epg_host, 可配置防电信改 IP) → 电信默认
+PROVIDER=$(uci get iptv_epg.main.provider 2>/dev/null)
+[ -n "$PROVIDER" ] || PROVIDER=telecom
+# EPG 服务器 (uci epg_host, 可配置防改 IP) → 按运营商默认
 EPG_HOST=$(uci get iptv_epg.main.epg_host 2>/dev/null)
-[ -n "$EPG_HOST" ] || EPG_HOST=218.83.165.67:8084
-AJAX_URL="http://$EPG_HOST/iptvepg/frame1413/function/ajax/epg7getChannelByAjax.jsp"
-REF="http://$EPG_HOST/iptvepg/frame1413/IPM/modules/channel/play_pro.html"
+if [ -z "$EPG_HOST" ]; then
+  if [ "$PROVIDER" = "unicom" ]; then
+    EPG_HOST=10.223.2.76:33200
+  else
+    EPG_HOST=218.83.165.67:8084
+  fi
+fi
+if [ "$PROVIDER" = "unicom" ]; then
+  # 联通: EPG 门户路径 + 流服务器 (直播/回看 HLS 直通)
+  AJAX_URL="http://$EPG_HOST/EPG/jsp/jkjiaoyutest/en/function/ajax/epg7getChannelByAjax.jsp"
+  REF="http://$EPG_HOST/EPG/jsp/jkjiaoyutest/en/IPM/modules/channel/play_pro.html"
+  UNICOM_SESS=/etc/epg_unicom_sess.txt
+else
+  AJAX_URL="http://$EPG_HOST/iptvepg/frame1413/function/ajax/epg7getChannelByAjax.jsp"
+  REF="http://$EPG_HOST/iptvepg/frame1413/IPM/modules/channel/play_pro.html"
+fi
 UA='webkit;Resolution(PAL,720P,1080P)'
 
 # ---------- 参数 ----------
@@ -28,7 +43,9 @@ QS="$QUERY_STRING"
 CH=$(echo "$QS" | awk -F'[&;]' '{for(i=1;i<=NF;i++){if($i~/^ch=/){sub(/^ch=/,"",$i);print $i;exit}}}')
 PLAYSEEK=$(echo "$QS" | awk -F'[&;]' '{for(i=1;i<=NF;i++){if($i~/^playseek=/){sub(/^playseek=/,"",$i);print $i;exit}}}')
 # url 参数: DIYP 点击 EPG 节目时可能带 url=<直播源>&playseek=<时间> (自动切换直播/回看)
-URL_ARG=$(echo "$QS" | awk -F'[&;]' '{for(i=1;i<=NF;i++){if($i~/^url=/){sub(/^url=/,"",$i);print $i;exit}}}')
+# url 参数: 联通 HLS URL 内含 & (fmt/rrsip/zoneoffset...), 不能按 & 简单切!
+# 从 url= 取到 &ch= 或 &playseek= 之前 (列表拼接的后续参数), HLS 自身参数名不含 ch/playseek
+URL_ARG=$(echo "$QS" | sed -n 's/^.*url=//p' | sed 's/&\(ch\|playseek\)=.*//' | head -1)
 # 兼容 TVBox bug: 用 ? 而非 & 拼接 playseek → ch 值变成 "频道名?playseek=..."
 # (TVBox LivePlayActivity: getUrl() + "?playseek=", 但 url 已含 ?url= 参数)
 if [ -n "$CH" ]; then
@@ -101,6 +118,16 @@ CHID=${CHINFO##*|}
 
 # ---------- 无 playseek = 直播: 302 到本机 7088 ----------
 if [ -z "$PLAYSEEK" ] || [ "$PLAYSEEK" = "-" ] || [ "$PLAYSEEK" = "{utc:YmdHMS}-{utcend:YmdHMS}" ] || [ "$PLAYSEEK" = " " ] || [ "$PLAYSEEK" = "%20" ]; then
+  if [ "$PROVIDER" = "unicom" ]; then
+    # 联通: 直播 = HLS 单播, 频道表第三列存完整 m3u8 URL → 直接 302 直通
+    [ -n "$UDP" ] || { echo "Status: 404"; echo "Content-Type: text/plain"; echo ""; echo "no live url for: $CH"; exit 0; }
+    echo "Status: 302 Found"
+    echo "Location: $UDP"
+    echo "Content-Type: text/plain"
+    echo ""
+    echo "redirect to unicom live: $UDP"
+    exit 0
+  fi
   # 本机 IP: 统一走 /usr/bin/iptv_epg ip (按 stb_side 智能选择, 兼容多设备部署)
   LOCAL_IP=$(/usr/bin/iptv_epg ip 2>/dev/null)
   [ -z "$LOCAL_IP" ] && LOCAL_IP="127.0.0.1"
@@ -116,6 +143,26 @@ fi
 # playseek 格式:
 #   YYYYMMDDHHMMSS-YYYYMMDDHHMMSS  固定时段
 #   last-1h / last-30m              最近 N 小时/分钟 (自动计算, 回看频道永不过期!)
+if [ "$PROVIDER" = "unicom" ]; then
+  # 联通回看: TVOD HLS (需节目ID+accountinfo, 待频道数据实测后适配)
+  # 临时: 若频道表第三列已是 TVOD 模板(含 {playseek} 占位)则替换直通
+  if [ -n "$UDP" ] && echo "$UDP" | grep -q '{playseek}'; then
+    PS=$(echo "$PLAYSEEK" | tr -d '{}' )
+    PS_ENC=$(echo "$PS" | sed 's/:/%3A/g')
+    TARGET=$(echo "$UDP" | sed "s/{playseek}/$PS_ENC/g")
+    echo "Status: 302 Found"
+    echo "Location: $TARGET"
+    echo "Content-Type: text/plain"
+    echo ""
+    echo "redirect to unicom tvod: $TARGET"
+    exit 0
+  fi
+  echo "Status: 501"
+  echo "Content-Type: text/plain"
+  echo ""
+  echo "unicom tvod: 回看待频道数据实测后适配"
+  exit 0
+fi
 [ -f "$CJ" ] || { echo "Status: 500"; echo "Content-Type: text/plain"; echo ""; echo "no cookie"; exit 0; }
 COOKIE=$(cat "$CJ")
 

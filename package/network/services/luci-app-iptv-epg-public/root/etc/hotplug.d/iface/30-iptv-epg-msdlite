@@ -1,0 +1,21 @@
+#!/bin/sh
+# 🔴 修复: 重启后 msd_lite 可能在 IPTV 接口就绪前启动 → 无组播源无法播放
+#   IPTV 接口 (iptv/br-iptv/eth0.85) ifup 后重启 msd_lite, 确保绑定到就绪接口
+#   🔴 自动修正 source: 组播实际在 br-iptv (桥收 vxlan 隧道组播), eth0.85 收不到!
+#   由 luci-app-iptv-epg 提供 (hotplug.d/iface)
+[ "$ACTION" = "ifup" ] || exit 0
+case "$INTERFACE" in
+  iptv|br-iptv|iptv_epg)
+    sleep 2
+    if [ -x /etc/init.d/msd_lite ]; then
+      # 组播桥存在时, source 必须用 br-iptv (隧道组播只在桥上, eth0.85 收不到 → 播放 503)
+      if [ -d /sys/class/net/br-iptv ]; then
+        uci set msd_lite.config.source='br-iptv'
+        uci commit msd_lite 2>/dev/null
+      fi
+      /etc/init.d/msd_lite restart 2>/dev/null
+      logger -t iptv-epg "msd_lite 已重启 (IPTV 接口 $INTERFACE 就绪)"
+    fi
+    ;;
+esac
+exit 0

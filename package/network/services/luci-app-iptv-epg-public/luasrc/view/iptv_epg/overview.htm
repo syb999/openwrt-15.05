@@ -3,8 +3,42 @@ LuCI - Lua Configuration Interface
 IPTV EPG 总览: 服务控制 + 频道列表 + 一键拉取
 -%>
 
+<%
+-- 频道表空提示: 首次抓包后需一键抓取频道表 (公共版无预置频道表!)
+local nixio_fs = require("nixio").fs
+local fm = io.open("/usr/share/iptv_epg/channel_map.txt", "r")
+local fcnt = 0
+if fm then
+  for _ in fm:lines() do fcnt = fcnt + 1 end
+  fm:close()
+end
+if fcnt < 5 then
+%>
+<div style="margin:10px 0;padding:10px;background:#fff3cd;border:1px solid #f0ad4e;border-radius:4px;color:#856404;">
+	<b><%:⚠️ 频道表为空 (公共版无预置频道表):%></b>
+	<%:请① 开启 IPTV 机顶盒并打开直播/EPG (daemon 自动抓包采集 cookie/会话); ② 点击上方"一键抓取频道表"按钮, 自动按当前格式生成频道列表。生成后 EPG/播放自动可用。%>
+</div>
+<%
+end
+%>
+
 <%+header%>
 <h2><%:IPTV EPG 总览%></h2>
+
+<%
+-- 联通模式会话缺失警告: 无 /etc/epg_unicom_sess.txt 时提示开机顶盒抓包
+local uci_warn = require("luci.model.uci").cursor()
+local prov_warn = uci_warn:get("iptv_epg", "main", "provider") or "telecom"
+local nixio_fs = require("nixio").fs
+if prov_warn == "unicom" and not nixio_fs.access("/etc/epg_unicom_sess.txt") then
+%>
+<div style="margin:10px 0;padding:10px;background:#fdecea;border:1px solid #e53935;border-radius:4px;color:#b71c1c;">
+	<b><%:⚠️ 联通会话文件缺失 (/etc/epg_unicom_sess.txt):%></b>
+	<%:无法拉取 EPG。请① 开机顶盒并打开直播/EPG (daemon 自动抓包采集会话); 或② 从其他已配置联通模式的设备复制该文件。获取后 EPG/频道抓取自动可用。%>
+</div>
+<%
+end
+%>
 
 <div class="cbi-map">
 	<div class="cbi-map-descr">
@@ -49,16 +83,21 @@ IPTV EPG 总览: 服务控制 + 频道列表 + 一键拉取
 					<code style="background:#f0f0f0;padding:2px 6px;display:inline-block;margin:4px 0;">http://<%- =luci.sys.exec("/usr/bin/iptv_epg ip 2>/dev/null"):gsub("%s+", "") -%>/cgi-bin/epg.cgi</code><br>
 					<%:2. 频道源 (DIYP IPTV.txt) 用 TVOD 格式 (关键! 路径含 TVOD, DIYP 才支持 EPG 点击回看):%><br>
 					<textarea readonly style="width:100%;height:120px;font-family:monospace;font-size:12px;margin:6px 0;background:#f8f8f8;border:1px solid #ccc;"><%-
-						local host = luci.sys.exec("/usr/bin/iptv_epg ip 2>/dev/null"):gsub("%s+", "")
-						if host == "" then host = luci.sys.hostname() end
-						local uci = require("luci.model.uci").cursor()
-						uci:foreach("iptv_epg", "channel", function(s)
-							local name = s.name or ""
-							local udp = s.udp or ""
-							if name ~= "" and udp ~= "" then
-								io.write(name .. ",http://" .. host .. "/cgi-bin/TVOD/play.cgi?url=http://" .. host .. ":7088/udp/" .. udp .. "&amp;ch=" .. name .. "\n")
-							end
-						end)
+												local host = luci.sys.exec("/usr/bin/iptv_epg ip 2>/dev/null"):gsub("%s+", "")
+												if host == "" then host = luci.sys.hostname() end
+												local uci = require("luci.model.uci").cursor()
+												local provider = uci:get("iptv_epg", "main", "provider") or "telecom"
+												uci:foreach("iptv_epg", "channel", function(s)
+													local name = s.name or ""
+													local udp = s.udp or ""
+													if name ~= "" and udp ~= "" then
+														if provider == "unicom" then
+															io.write(name .. "," .. udp .. "\n")
+														else
+															io.write(name .. ",http://" .. host .. "/cgi-bin/TVOD/play.cgi?url=http://" .. host .. ":7088/udp/" .. udp .. "&amp;ch=" .. name .. "\n")
+														end
+													end
+												end)
 					-%></textarea><br>
 					<a href="<%=luci.dispatcher.build_url("admin/services/iptv_epg/txt")%>" class="cbi-button cbi-button-apply"><%:下载 IPTV.txt%></a>
 					<div style="margin-top:6px;font-size:12px;color:#666;">
@@ -133,7 +172,7 @@ function iptv_epg_channels() {
 				html += '<tr class="cbi-section-table-row">' +
 					'<td class="cbi-section-table-cell">' + d[i].name + '</td>' +
 					'<td class="cbi-section-table-cell" style="font-family:monospace;">' + d[i].id + '</td>' +
-					'<td class="cbi-section-table-cell">' + (d[i].mix || d[i].udp || '') + '</td>' +
+										'<td class="cbi-section-table-cell">' + (d[i].mix || (d[i].udp ? d[i].udp.substring(0, 40) + (d[i].udp.length > 40 ? '...' : '') : '') ) + '</td>' +
 					'<td class="cbi-section-table-cell">' +
 						'<a href="javascript:void(0)" onclick="iptv_epg_move(' + i + ', -1)" style="text-decoration:none;font-size:16px;font-weight:bold;color:#333;margin-right:6px;" title="上移">&#9650;</a>' +
 						'<a href="javascript:void(0)" onclick="iptv_epg_move(' + i + ', 1)" style="text-decoration:none;font-size:16px;font-weight:bold;color:#333;" title="下移">&#9660;</a>' +
