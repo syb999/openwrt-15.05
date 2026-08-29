@@ -487,6 +487,7 @@ set_private_routes() {
 	HBSRV=$(uget hb_host)
 	LBS=$(uget lb_subnets)
 	IRT=$(uget iptv_routes)
+	[ -z "$IRT" ] && IRT="10.192.0.0/16"
 	del_private_routes
 	[ -z "$GW" ] && return 0
 	# IPTV carrier DNS / service subnets (e.g. 10.192.0.0/16) live inside

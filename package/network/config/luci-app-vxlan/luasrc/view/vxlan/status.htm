@@ -1,5 +1,5 @@
 <%#
- luci-app-vxlan status page (server-side Lua rendering, no XHR)
+ luci-app-vxlan status page - framework rendered once, data refreshed via XHR
 -%>
 
 <%+header%>
@@ -8,6 +8,7 @@
 local sys  = require "luci.sys"
 local disp = require "luci.dispatcher"
 
+-- initial render: read status once, JS refreshes values afterwards
 local raw = sys.exec("/usr/bin/vxlan-link status 2>&1") or ""
 local st = {}
 for line in raw:gmatch("[^\r\n]+") do
@@ -17,19 +18,48 @@ end
 
 local function yn(v, okval)
 	if v == okval then
-		return '<span style="color:#0a0;font-weight:bold">' .. v .. '</span>'
+		return '<span class="badge badge-ok" data-k="' .. (v or "") .. '">' .. v .. '</span>'
 	elseif v == nil or v == "" then
-		return '<span style="color:#999">-</span>'
+		return '<span class="badge badge-na">-</span>'
 	else
-		return '<span style="color:#c00;font-weight:bold">' .. v .. '</span>'
+		return '<span class="badge badge-bad">' .. v .. '</span>'
 	end
 end
 
 local function val(v)
 	if v == nil or v == "" then
-		return '<span style="color:#999">-</span>'
+		return '<span class="muted">-</span>'
 	end
 	return luci.util.pcdata(v)
+end
+
+local function tunstate(s)
+	if s == nil or s == "" then return '<span class="badge badge-na">-</span>' end
+	if s:match("bridged") then return '<span class="badge badge-ok">bridged</span>' end
+	if s:match("absent") or s:match("DOWN") then return '<span class="badge badge-bad">absent</span>' end
+	return '<span class="badge badge-warn">' .. luci.util.pcdata(s) .. '</span>'
+end
+
+local function fmt(n)
+	if not n or n < 0 then return "-" end
+	if n >= 1073741824 then return string.format("%.2f GiB", n/1073741824)
+	elseif n >= 1048576 then return string.format("%.2f MiB", n/1048576)
+	elseif n >= 1024 then return string.format("%.1f KiB", n/1024)
+	else return tostring(n) .. " B" end
+end
+
+-- split a whitespace string into chip spans (wraps to multiple lines)
+local function chips(s)
+	local out, n = {}, 0
+	for w in (s or ""):gmatch("%S+") do
+		n = n + 1
+		if n <= 40 then
+			out[#out+1] = '<span class="vx-chip">' .. luci.util.pcdata(w) .. '</span>'
+		end
+	end
+	if n == 0 then return '<span class="muted">-</span>' end
+	if n > 40 then out[#out+1] = '<span class="vx-chip vx-chip-dim">+' .. (n-40) .. '</span>' end
+	return table.concat(out, " ")
 end
 
 local role_txt = (st.role == "client") and "Client / Receiver (B)" or "Server / Transmitter (A)"
@@ -37,7 +67,128 @@ local prov_txt = (st.provider == "unicom") and "Unicom (plain L2 extension)" or 
 local is_client = (st.role == "client")
 local is_telecom = (st.provider ~= "unicom")
 local function t(s) return translate(s) end
+
+local npeers = 0
+if st.peers then for _ in st.peers:gmatch("%S+") do npeers = npeers + 1 end end
 %>
+
+<style type="text/css">
+/* vxlan status page styling - v4 orange palette */
+.vx-status { font-family: inherit; }
+.vx-hero { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 16px 0; }
+.vx-card {
+	flex: 1 1 200px;
+	background: linear-gradient(150deg, #ffffff 0%, #eaf7f5 100%);
+	border: 1px solid #9ed8d0; border-radius: 10px; padding: 12px 16px;
+	box-shadow: 0 2px 6px rgba(180,110,30,.12), 0 1px 2px rgba(0,0,0,.05);
+	transition: transform .18s ease, box-shadow .18s ease;
+}
+.vx-card:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(180,110,30,.22); }
+.vx-card .vx-label { font-size: 11px; color: #0e9a8e; text-transform: uppercase; letter-spacing: .06em; font-weight: 800; }
+.vx-card .vx-value { font-size: 16px; font-weight: 800; margin-top: 4px; word-break: break-all; color: #0b5f57; }
+.vx-card .vx-sub { font-size: 11px; color: #2d7d74; margin-top: 3px; }
+
+.badge {
+	display: inline-block; padding: 2px 10px; border-radius: 999px;
+	font-size: 11px; font-weight: 800; line-height: 1.7; letter-spacing: .02em;
+	box-shadow: 0 1px 3px rgba(0,0,0,.12);
+}
+.badge-ok   { background: linear-gradient(150deg,#d5f5da,#9fe8ab); color: #0b6b22; border: 1px solid #4cbf63; }
+.badge-bad  { background: linear-gradient(150deg,#fddcdc,#f8abab); color: #a0141d; border: 1px solid #e0555e; }
+.badge-warn { background: linear-gradient(150deg,#ffeecb,#ffd789); color: #8a5300; border: 1px solid #e0a83c; }
+.badge-na   { background: linear-gradient(150deg,#eef0f3,#d5d9df); color: #6d7683; border: 1px solid #aab2bd; }
+
+.vx-health {
+	display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center;
+	border: 1px solid #8ccbc2; border-radius: 10px; padding: 10px 16px;
+	margin: 10px 0 16px 0;
+	background: linear-gradient(90deg, #e4f5f2 0%, #cdeae5 100%);
+	box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 1px 4px rgba(180,110,30,.12);
+}
+.vx-health .h-item { font-size: 12px; color: #1b6a62; font-weight: 600; }
+.vx-health .h-item b { font-weight: 700; }
+
+.vx-sections { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+.vx-section {
+	background: linear-gradient(180deg, #ffffff 0%, #effaf8 100%);
+	border: 1px solid #9ed8d0; border-radius: 10px; padding: 12px 16px;
+	box-shadow: 0 2px 8px rgba(180,110,30,.10);
+}
+.vx-section h3 {
+	margin: 0 0 8px 0; font-size: 14px; font-weight: 800; color: #157a70;
+	border-bottom: 2px solid #a8d8d0; padding-bottom: 7px;
+	display: flex; align-items: baseline; gap: 8px; letter-spacing: .02em;
+}
+.vx-section h3 .traffic { font-weight: 400; }
+.vx-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dotted #c5ded8; font-size: 13px; }
+.vx-row:last-child { border-bottom: none; }
+.vx-row .k { color: #1b6a62; padding-right: 10px; font-weight: 600; }
+.vx-row .v { text-align: right; word-break: break-all; color: #0d5249; font-weight: 500; }
+.vx-row .traffic { font-size: 11px; color: #2d7d74; font-family: monospace; white-space: nowrap; }
+.vx-row .muted { color: #5f9a92; }
+
+.vx-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.vx-actions .cbi-button { margin: 0; }
+
+.vx-topo {
+	background: linear-gradient(180deg, #e0f2ef 0%, #c8e6e0 100%);
+	border: 1px solid #8ccbc2; border-radius: 10px; padding: 14px;
+	margin-bottom: 14px; text-align: center; box-shadow: 0 2px 8px rgba(180,110,30,.12);
+}
+.vx-topo .topo-box {
+	display: inline-block; background: #fff; border: 2px solid #17a99c; border-radius: 8px;
+	padding: 7px 16px; margin: 0 6px; font-size: 12px; font-weight: 800; color: #116d63;
+	box-shadow: 0 2px 6px rgba(180,110,30,.15);
+}
+.vx-topo .topo-link { display: inline-block; font-size: 14px; color: #0e9a8e; margin: 0 2px; font-weight: 800; }
+.vx-topo .topo-box.dim { border-color: #c9a878; color: #3d7d74; background: #faf3e8; box-shadow: none; }
+.vx-topo .topo-box.ok { border-color: #1f9d4e; color: #0d6e2e; background: linear-gradient(150deg,#d9f5e0,#a8e8b8); }
+.vx-live { font-size: 11px; color: #2d7d74; margin-top: 8px; font-weight: 600; }
+.vx-live .dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:#17a04a; margin-right:5px; vertical-align:middle; animation: vxblink 1.6s infinite; }
+@keyframes vxblink { 0%,100% { opacity:1; } 50% { opacity:.25; } }
+
+.vx-btn {
+	cursor: pointer; font-size: 11px; color: #fff; font-weight: 700;
+	padding: 2px 10px; border: none; border-radius: 8px;
+	background: linear-gradient(150deg, #17a99c, #0e8a7f);
+	box-shadow: 0 1px 3px rgba(180,110,30,.25); margin-left: 6px; vertical-align: middle;
+}
+.vx-btn:hover { background: linear-gradient(150deg, #0f9c8f, #0c7c72); }
+.vx-detail {
+	margin: 6px 0 2px 0; padding: 8px 10px;
+	background: #effaf8; border: 1px solid #9ed8d0; border-radius: 8px;
+	display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
+}
+.vx-chip {
+	display: inline-block; padding: 1px 8px; border-radius: 6px;
+	background: #fff; border: 1px solid #8fcec4; font-size: 11px;
+	color: #1b6a62; font-family: monospace;
+}
+.vx-chip-dim { background: #e2f3ef; color: #5f9a92; border-style: dashed; }
+@media (prefers-color-scheme: dark) {
+	.vx-card { background: linear-gradient(150deg,#1d2f2c,#162320); border-color: #3d6b64; }
+	.vx-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.6); }
+	.vx-card .vx-label { color: #4fd6c8; }
+	.vx-card .vx-value { color: #a8e8e0; }
+	.vx-card .vx-sub { color: #7fbdb4; }
+	.vx-section { background: linear-gradient(180deg,#192825,#131e1c); border-color: #3d6b64; }
+	.vx-topo, .vx-health { background: linear-gradient(180deg,#162421,#101a18); border-color: #33544e; }
+	.vx-health .h-item { color: #a8d8cf; }
+	.vx-topo .topo-box { background: #1f302d; border-color: #17a99c; color: #8fe0d4; box-shadow: 0 2px 8px rgba(0,0,0,.5); }
+	.vx-topo .topo-box.dim { border-color: #3d6b64; color: #7fbdb4; background: #1a2a27; }
+	.vx-topo .topo-box.ok { border-color: #1f9d4e; background: #13241a; color: #6cc28a; }
+	.vx-row { border-bottom-color: #2a413c; }
+	.vx-row .k { color: #a8d8cf; }
+	.vx-row .v { color: #e8d4b8; }
+	.vx-row .traffic { color: #7fbdb4; }
+	.vx-row .muted { color: #5f9a92; }
+	.vx-section h3 { color: #8fe0d4; border-bottom-color: #33544e; }
+	.vx-live { color: #7fbdb4; }
+	.vx-detail { background: #1a2a27; border-color: #3d6b64; }
+	.vx-chip { background: #1f302d; border-color: #3d6b64; color: #a8d8cf; }
+	.vx-chip-dim { background: #151f1d; color: #5f9a92; }
+}
+</style>
 
 <h2 name="content"><%:VXLAN Networking Status%></h2>
 
@@ -51,96 +202,227 @@ local function t(s) return translate(s) end
 <br />
 <% end %>
 
-<fieldset class="cbi-section">
-	<legend><%:General%></legend>
-	<table class="cbi-section-table">
-		<tr><td width="30%"><%:Role%></td><td><%=t(role_txt)%></td></tr>
-		<tr><td><%:Provider Mode%></td><td><%=t(prov_txt)%></td></tr>
-		<tr><td><%:Region%></td><td><% if st.region == "other" then %><span style="color:#c00;font-weight:bold"><%:Other region (untested)%></span><% else %>Shanghai<% end %></td></tr>
-		<tr><td><%:Wireless Device%></td><td><%=val(st.radio)%></td></tr>
-		<% if st.role == "server" and st.peers and st.peers:match(" ") then %>
-		<tr><td><%:Multi-client%></td><td><%=luci.util.pcdata(st.peers)%> <small><%:(N VXLAN tunnels)%></small></td></tr>
-		<% end %>
-		<tr><td>VoIP Network</td><td><% if st.voip_enable == "1" then %><span style="color:#0a0;font-weight:bold"><%:Enabled (dedicated vxlan_voip tunnel)%></span> <small><%=val(st.vxlan_voip)%> <%=val(st.br_voip)%></small><% else %>Disabled<% end %></td></tr>
-		<tr><td><%:Service Enabled%></td><td><%=yn(st.enabled, "1")%></td></tr>
-		<tr><td><%:SoC Detection%></td><td><%=yn(st.soc, "supported")%> <small><%=luci.util.pcdata(st.soc_id or "")%></small></td></tr>
-		<tr><td><%:Wireless Mode%></td><td><%=val(st.wifi_mode)%> / SSID <%=val(st.wifi_ssid)%></td></tr>
-	</table>
-</fieldset>
+<div class="vx-status" id="vxroot">
 
-<fieldset class="cbi-section">
-	<legend><%:Tunnels%></legend>
-	<table class="cbi-section-table">
-		<tr><td width="30%"><%:Backhaul%></td><td><%=val(st.backhaul)%> <small><%:device%>: <%=val(st.backhaul_dev)%></small></td></tr>
-		<tr><td><%:Peer Underlay Reachable%></td><td><%=yn(st.peer_underlay, "up")%></td></tr>
-		<tr><td>vxlan_inet</td><td><%=val(st.vxlan_inet)%> <%:Status%>: <%=yn(st.vxlan_inet_state, "UNKNOWN")%></td></tr>
-		<% if is_telecom then %>
-		<tr><td>vxlan_iptv</td><td><%=val(st.vxlan_iptv)%> <%:Status%>: <%=yn(st.vxlan_iptv_state, "UNKNOWN")%></td></tr>
-		<% end %>
-		<% if st.voip_enable == "1" then %>
-		<tr><td>vxlan_voip</td><td><%=val(st.vxlan_voip)%> <%:Status%>: <%=yn(st.vxlan_voip_state, "UNKNOWN")%></td></tr>
-		<% end %>
-		<% if is_client then %>
-		<tr><td><%:Overlay Gateway Reachable%></td><td><%=yn(st.overlay_gw, "up")%></td></tr>
-		<% end %>
-	</table>
-	<small><%:Note: UNKNOWN link state on vxlan interfaces is normal on the 15.05 kernel. In bridge mode vxlan itself has no address; bridged(brX) is normal, absent means down.%></small>
-</fieldset>
+<div class="vx-health" id="vxhealth">
+	<span class="h-item"><%:Service%>: <span id="d-enabled"><%=yn(st.enabled, "1")%></span></span>
+	<span class="h-item"><%:SoC%>: <span id="d-soc"><%=yn(st.soc, "supported")%></span></span>
+	<span class="h-item"><%:Underlay%>: <span id="d-peer_underlay"><%=yn(st.peer_underlay, "up")%></span></span>
+	<span class="h-item">vxlan_inet: <span id="d-vxlan_inet"><%=tunstate(st.vxlan_inet)%></span></span>
+	<% if is_telecom then %><span class="h-item">vxlan_iptv: <span id="d-vxlan_iptv"><%=tunstate(st.vxlan_iptv)%></span></span><% end %>
+	<% if st.voip_enable == "1" then %><span class="h-item">vxlan_voip: <span id="d-vxlan_voip"><%=tunstate(st.vxlan_voip)%></span></span><% end %>
+	<% if is_client then %><span class="h-item"><%:Overlay GW%>: <span id="d-overlay_gw"><%=yn(st.overlay_gw, "up")%></span></span><% end %>
+	<span class="vx-live" style="margin-left:auto"><span class="dot"></span><%:Live%> · <span id="vxlast">-</span></span>
+</div>
 
-<fieldset class="cbi-section">
-	<legend><%:Network Interfaces%></legend>
-	<table class="cbi-section-table">
-		<tr><td width="30%">br-lan</td><td><%=val(st.br_lan)%></td></tr>
-		<% if is_telecom then %>
-		<tr><td>br-iptv</td><td><%=val(st.br_iptv)%></td></tr>
-		<% end %>
-		<% if st.voip_enable == "1" then %>
-		<tr><td>br-voip</td><td><%=val(st.br_voip)%></td></tr>
-		<% end %>
-		<tr><td><%:Uplink%></td><td><%=val(st.wan)%></td></tr>
-		<tr><td><%:Default Route%></td><td><code><%=val(st.default_route)%></code></td></tr>
-		<% if st.msd_lite then %>
-		<tr><td>msd_lite</td><td><%=yn((st.msd_lite:match("^running") and "running" or st.msd_lite), "running")%> <%=luci.util.pcdata(st.msd_lite)%></td></tr>
-		<% end %>
-	</table>
-</fieldset>
+<div class="vx-topo">
+	<% if st.wifi_mode == "ap" then %>
+	<div class="topo-box">LAN/STB<br/><small>(br-lan)</small></div>
+	<span class="topo-link">&lt;==&gt;</span>
+	<div class="topo-box ok">VXLAN<br/><small>wireless backhaul</small></div>
+	<span class="topo-link">&lt;==&gt;</span>
+	<div class="topo-box">WAN/Internet<br/><small>(br-wan)</small></div>
+	<% else %>
+	<div class="topo-box ok">AP (Server)<br/><small>VXLAN tunnels</small></div>
+	<span class="topo-link">&lt;==&gt;</span>
+	<div class="topo-box">WLAN STA<br/><small>(backhaul)</small></div>
+	<span class="topo-link">&lt;==&gt;</span>
+	<div class="topo-box">LAN/STB<br/><small>(br-lan)</small></div>
+	<% end %>
+	<% if is_telecom then %>
+	<span class="topo-link"> &nbsp;|&nbsp; </span>
+	<div class="topo-box dim">IPTV<br/><small>(br-iptv)</small></div>
+	<% end %>
+	<% if st.voip_enable == "1" then %>
+	<span class="topo-link"> &nbsp;|&nbsp; </span>
+	<div class="topo-box dim">VoIP<br/><small>(br-voip)</small></div>
+	<% end %>
+	<div style="margin-top:6px"><small class="muted"><%:Wireless backhaul + VXLAN overlay%>: SSID <b><%=val(st.wifi_ssid)%></b> / <%=val(st.backhaul)%></small></div>
+</div>
 
-<fieldset class="cbi-section">
-	<legend><%:Firewall%></legend>
-	<table class="cbi-section-table">
-		<% if is_telecom then %>
-		<tr><td width="30%"><%:IPTV zone (br-iptv + tunnel)%></td>
-			<td><% if st.fw_iptv_zone and st.fw_iptv_zone:match("^present") then %>
-				<span style="color:#0a0;font-weight:bold"><%=luci.util.pcdata(st.fw_iptv_zone)%></span>
-			<% else %>
-				<span style="color:#c00;font-weight:bold"><%:MISSING - iptv/vxlan_iptv not in any zone%></span>
-			<% end %></td></tr>
+<div class="vx-hero">
+	<div class="vx-card">
+		<div class="vx-label"><%:Role%></div>
+		<div class="vx-value"><%=t(role_txt)%></div>
+		<div class="vx-sub"><%=t(prov_txt)%> / <%:Region%>: <% if st.region == "other" then %><span style="color:#c00"><%:Other (untested)%></span><% else %>Shanghai<% end %></div>
+	</div>
+	<div class="vx-card">
+		<div class="vx-label"><%:Wireless%></div>
+		<div class="vx-value"><%=val(st.wifi_mode)%> / <%=val(st.wifi_ssid)%></div>
+		<div class="vx-sub"><%=val(st.radio)%> / <%=val(st.backhaul_dev)%></div>
+	</div>
+	<div class="vx-card">
+		<div class="vx-label"><%:Peers%></div>
+		<div class="vx-value" id="d-npeers"><%=npeers%></div>
+		<% local pe = st.peers or ""
+		   local p1, prest = pe:match("^(%S+)%s*(.*)$")
+		   if not p1 then p1 = pe end %>
+		<div class="vx-sub" id="d-peers"><code><%=luci.util.pcdata(p1)%></code>
+			<% if prest and prest ~= "" then %>
+			<button type="button" class="vx-btn" onclick="vxToggle('peers-detail')"><%=npeers-1%> more</button>
+			<% end %>
+		</div>
+		<% if prest and prest ~= "" then %>
+		<div class="vx-detail" id="peers-detail" style="display:none"><%=chips(prest)%></div>
 		<% end %>
-		<tr><td width="30%"><%:Default Forward Policy%></td><td><%=val(st.fw_forward_policy)%></td></tr>
-		<tr><td>bridge-nf-call-iptables</td><td><%=yn(st.bridge_nf, "0")%> <small><%:(0 = bridge L2 forwarding bypasses iptables; this solution requires 0)%></small></td></tr>
-	</table>
+	</div>
+	<div class="vx-card">
+		<div class="vx-label"><%:Uplink%></div>
+		<div class="vx-value" id="d-wan"><%=val(st.wan)%></div>
+		<div class="vx-sub"><%:Default Route%>: <code id="d-default_route"><%=val(st.default_route)%></code></div>
+	</div>
+</div>
+
+<div class="vx-sections">
+
+<div class="vx-section">
+	<h3><%:Tunnels%> <small class="traffic">rx / tx</small></h3>
+	<div class="vx-row"><span class="k"><%:Backhaul%></span><span class="v"><span id="d-backhaul"><%=val(st.backhaul)%></span> <span class="muted">(<span id="d-backhaul_dev"><%=val(st.backhaul_dev)%></span>)</span></span></div>
+	<div class="vx-row"><span class="k"><%:Peer Underlay Reachable%></span><span class="v" id="d-peer_underlay2"><%=yn(st.peer_underlay, "up")%></span></div>
+	<div class="vx-row"><span class="k">vxlan_inet</span><span class="v"><span id="d-tun_inet"><%=tunstate(st.vxlan_inet)%></span> <span class="traffic" id="d-tr_inet">- / -</span></span></div>
+	<% if is_telecom then %>
+	<div class="vx-row"><span class="k">vxlan_iptv</span><span class="v"><span id="d-tun_iptv"><%=tunstate(st.vxlan_iptv)%></span> <span class="traffic" id="d-tr_iptv">- / -</span></span></div>
+	<% end %>
+	<% if st.voip_enable == "1" then %>
+	<div class="vx-row"><span class="k">vxlan_voip</span><span class="v"><span id="d-tun_voip"><%=tunstate(st.vxlan_voip)%></span> <span class="traffic" id="d-tr_voip">- / -</span></span></div>
+	<% end %>
+	<% if is_client then %>
+	<div class="vx-row"><span class="k"><%:Overlay Gateway Reachable%></span><span class="v" id="d-overlay_gw2"><%=yn(st.overlay_gw, "up")%></span></div>
+	<% end %>
+	<div style="margin-top:6px"><small class="muted"><%:Note: UNKNOWN link state on vxlan interfaces is normal on the 15.05 kernel. bridged(brX) is normal; absent means down.%></small></div>
+</div>
+
+<div class="vx-section">
+	<h3><%:Network Interfaces%></h3>
+	<div class="vx-row"><span class="k">br-lan</span><span class="v"><code id="d-br_lan"><%=val(st.br_lan)%></code></span></div>
+	<% if is_telecom then %>
+	<div class="vx-row"><span class="k">br-iptv</span><span class="v"><code id="d-br_iptv"><%=val(st.br_iptv)%></code></span></div>
+	<% end %>
+	<% if st.voip_enable == "1" then %>
+	<div class="vx-row"><span class="k">br-voip</span><span class="v"><code id="d-br_voip"><%=val(st.br_voip)%></code></span></div>
+	<% end %>
+	<div class="vx-row"><span class="k"><%:Uplink%></span><span class="v"><code><%=val(st.wan)%></code></span></div>
+	<div class="vx-row"><span class="k"><%:Default Route%></span><span class="v"><code><%=val(st.default_route)%></code></span></div>
+	<% if st.msd_lite then %>
+	<div class="vx-row"><span class="k">msd_lite</span><span class="v"><%=yn((st.msd_lite:match("^running") and "running" or st.msd_lite), "running")%> <span class="muted"><%=luci.util.pcdata(st.msd_lite)%></span></span></div>
+	<% end %>
+</div>
+
+<div class="vx-section">
+	<h3><%:Firewall%></h3>
+	<% if is_telecom then %>
+	<div class="vx-row"><span class="k"><%:IPTV zone (br-iptv + tunnel)%></span>
+		<span class="v"><% if st.fw_iptv_zone and st.fw_iptv_zone:match("^present") then %>
+			<span class="badge badge-ok">present</span>
+			<button type="button" class="vx-btn" onclick="vxToggle('zone-detail')"><%:Show members%></button>
+		<% else %>
+			<span class="badge badge-bad"><%:MISSING%></span>
+		<% end %></span></div>
+	<% if st.fw_iptv_zone and st.fw_iptv_zone:match("^present") then %>
+	<div class="vx-detail" id="zone-detail" style="display:none"><%=chips((st.fw_iptv_zone:gsub("^present %( *","")):gsub(" %)* *$",""))%></div>
+	<% end %>
+	<% end %>
+	<div class="vx-row"><span class="k"><%:Default Forward Policy%></span><span class="v"><%=val(st.fw_forward_policy)%></span></div>
+	<div class="vx-row"><span class="k">bridge-nf-call-iptables</span><span class="v"><%=yn(st.bridge_nf, "0")%> <span class="muted"><%:(0 required)%></span></span></div>
 	<% if is_telecom and st.fw_iptv_zone and not st.fw_iptv_zone:match("^present") then %>
-	<div style="color:#c00">
+	<div style="color:#c00;margin-top:6px;font-size:12px">
 		<%:br-iptv and vxlan_iptv are not in any Firewall zone. It only works because the Default Forward Policy is ACCEPT; tightening to REJECT will break STB forwarding (while DHCP still works - very hard to diagnose). Click "Rebuild Firewall" below.%>
 	</div>
 	<% end %>
 	<form method="post" action="<%=disp.build_url("admin/network/vxlan/act_fw")%>">
 		<input type="submit" class="cbi-button" value="<%:Rebuild Firewall (no restart)%>" />
 	</form>
-</fieldset>
+</div>
 
-<fieldset class="cbi-section">
-	<legend><%:Actions%></legend>
-	<p><%:"Apply Network Config" writes the settings into network / wireless / dhcp / firewall and restarts the network.%>
+<div class="vx-section">
+	<h3><%:Actions%></h3>
+	<p style="font-size:12px;color:#777"><%:"Apply Network Config" writes the settings into network / wireless / dhcp / firewall and restarts the network.%>
 	<strong style="color:#c00"><%:After applying, this device's IP and interface roles change and the current SSH / LuCI session will drop - make sure you can reconnect from the new address.%></strong></p>
+	<div class="vx-actions">
 	<form method="post" action="<%=disp.build_url("admin/network/vxlan/act_apply")%>"
 		onsubmit="return confirm('Apply network config?\n\nNetwork will restart and this connection will drop.');">
 		<input type="submit" class="cbi-button cbi-button-apply" value="<%:Apply Network Config (drops network)%>" />
 	</form>
-	<br />
 	<form method="get" action="<%=disp.build_url("admin/network/vxlan/status")%>">
-		<input type="submit" class="cbi-button" value="<%:Refresh%>" />
+		<input type="submit" class="cbi-button cbi-button-reload" value="<%:Refresh%>" />
 	</form>
-</fieldset>
+	</div>
+</div>
+
+</div>
+</div>
+
+<script type="text/javascript">
+//<![CDATA[
+(function(){
+	var URL = '<%=disp.build_url("admin/network/vxlan/act_status")%>';
+	// toggle a hidden detail block (independent line, does not break row layout)
+	window.vxToggle = function(id) {
+		var el = document.getElementById(id);
+		if (el) el.style.display = (el.style.display === 'none') ? 'block' : 'none';
+	};
+	var MAP = {
+		'enabled':'d-enabled', 'soc':'d-soc', 'peer_underlay':'d-peer_underlay',
+		'vxlan_inet':'d-vxlan_inet', 'vxlan_iptv':'d-vxlan_iptv', 'vxlan_voip':'d-vxlan_voip',
+		'overlay_gw':'d-overlay_gw', 'backhaul':'d-backhaul', 'backhaul_dev':'d-backhaul_dev',
+		'peer_underlay2':'d-peer_underlay2', 'br_lan':'d-br_lan', 'br_iptv':'d-br_iptv',
+		'br_voip':'d-br_voip', 'wan':'d-wan', 'default_route':'d-default_route',
+		'peers':'d-peers'
+	};
+	function badge(v, okv) {
+		if (v === okv) return '<span class="badge badge-ok">' + v + '</span>';
+		if (!v) return '<span class="badge badge-na">-</span>';
+		return '<span class="badge badge-bad">' + v + '</span>';
+	}
+	function tunstate(v) {
+		if (!v) return '<span class="badge badge-na">-</span>';
+		if (v.indexOf('bridged') >= 0) return '<span class="badge badge-ok">bridged</span>';
+		if (v.indexOf('absent') >= 0 || v.indexOf('DOWN') >= 0) return '<span class="badge badge-bad">absent</span>';
+		return '<span class="badge badge-warn">' + v + '</span>';
+	}
+	function fmt(n) {
+		if (n == null || n < 0) return '-';
+		if (n >= 1073741824) return (n/1073741824).toFixed(2) + ' GiB';
+		if (n >= 1048576) return (n/1048576).toFixed(2) + ' MiB';
+		if (n >= 1024) return (n/1024).toFixed(1) + ' KiB';
+		return n + ' B';
+	}
+	function tick() {
+		var x = new XMLHttpRequest();
+		x.open('GET', URL, true);
+		x.onreadystatechange = function(){
+			if (x.readyState !== 4 || x.status !== 200) return;
+			var d;
+			try { d = JSON.parse(x.responseText); } catch(e) { return; }
+			for (var k in MAP) {
+				var el = document.getElementById(MAP[k]);
+				if (el && d[k] !== undefined) {
+					if (k === 'enabled' || k === 'soc' || k === 'peer_underlay' || k === 'overlay_gw')
+						el.innerHTML = badge(d[k], (k === 'soc') ? 'supported' : 'up');
+					else if (k === 'vxlan_inet' || k === 'vxlan_iptv' || k === 'vxlan_voip')
+						el.innerHTML = tunstate(d[k]);
+					else el.innerHTML = d[k] || '-';
+				}
+			}
+			// tunnel traffic
+			var tr = { 'd-tr_inet':'vxlan_inet', 'd-tr_iptv':'vxlan_iptv', 'd-tr_voip':'vxlan_voip' };
+			for (var elid in tr) {
+				var el2 = document.getElementById(elid);
+				if (el2 && d[tr[elid]+'_rx'] !== undefined)
+					el2.innerHTML = fmt(d[tr[elid]+'_rx']) + ' / ' + fmt(d[tr[elid]+'_tx']);
+			}
+			var l = document.getElementById('vxlast');
+			if (l) {
+				var now = new Date();
+				l.innerHTML = ('0'+now.getHours()).slice(-2) + ':' + ('0'+now.getMinutes()).slice(-2) + ':' + ('0'+now.getSeconds()).slice(-2);
+			}
+		};
+		x.send();
+	}
+	tick();
+	setInterval(tick, 5000);
+})();
+//]]>
+</script>
 
 <%+footer%>

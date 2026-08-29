@@ -19,7 +19,7 @@ switch VLANs (switch_mode=hw).
 LUCI_DEPENDS:=+luci-base +kmod-vxlan +vxlan
 LUCI_PKGARCH:=all
 
-PKG_VERSION:=1.3.15
+PKG_VERSION:=1.3.25
 PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 

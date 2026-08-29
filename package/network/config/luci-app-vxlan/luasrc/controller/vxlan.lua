@@ -24,8 +24,21 @@ end
 
 function act_status()
 	local out = sys.exec("/usr/bin/vxlan-link status 2>&1") or ""
-	http.prepare_content("text/plain; charset=utf-8")
-	http.write(out)
+	local st = {}
+	for line in out:gmatch("[^\r\n]+") do
+		local k, v = line:match("^([%w_]+)=(.*)$")
+		if k then st[k] = v end
+	end
+	-- traffic counters (bytes) for each tunnel
+	for _, dev in ipairs({ "vxlan_inet", "vxlan_iptv", "vxlan_voip",
+	                       "vxlan_inet_p2", "vxlan_iptv_p2", "vxlan_voip_p2" }) do
+		local rx = tonumber(sys.exec("cat /sys/class/net/" .. dev .. "/statistics/rx_bytes 2>/dev/null") or "0") or 0
+		local tx = tonumber(sys.exec("cat /sys/class/net/" .. dev .. "/statistics/tx_bytes 2>/dev/null") or "0") or 0
+		st[dev .. "_rx"] = rx
+		st[dev .. "_tx"] = tx
+	end
+	http.prepare_content("application/json; charset=utf-8")
+	http.write_json(st)
 end
 
 -- Applying restarts the network, so the script backgrounds itself; we return
