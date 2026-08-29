@@ -1,0 +1,25 @@
+<%#
+ luci-app-vxlan log page
+-%>
+
+<%+header%>
+
+<%
+local sys  = require "luci.sys"
+local disp = require "luci.dispatcher"
+local txt = sys.exec("tail -80 /tmp/vxlan-link.log 2>/dev/null") or ""
+if txt == "" then txt = "(Log empty - entries appear after \"Apply Network Config\")" end
+%>
+
+<h2 name="content"><%:VXLAN Networking Log%></h2>
+
+<fieldset class="cbi-section">
+	<legend><%:Last 80 lines%></legend>
+	<textarea readonly="readonly" wrap="off" rows="26" style="width:100%;font-family:monospace"><%=luci.util.pcdata(txt)%></textarea>
+</fieldset>
+
+<form method="get" action="<%=disp.build_url("admin/network/vxlan/log")%>">
+	<input type="submit" class="cbi-button" value="<%:Refresh%>" />
+</form>
+
+<%+footer%>

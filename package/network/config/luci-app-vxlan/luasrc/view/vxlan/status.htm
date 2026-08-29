@@ -1,0 +1,146 @@
+<%#
+ luci-app-vxlan status page (server-side Lua rendering, no XHR)
+-%>
+
+<%+header%>
+
+<%
+local sys  = require "luci.sys"
+local disp = require "luci.dispatcher"
+
+local raw = sys.exec("/usr/bin/vxlan-link status 2>&1") or ""
+local st = {}
+for line in raw:gmatch("[^\r\n]+") do
+	local k, v = line:match("^([%w_]+)=(.*)$")
+	if k then st[k] = v end
+end
+
+local function yn(v, okval)
+	if v == okval then
+		return '<span style="color:#0a0;font-weight:bold">' .. v .. '</span>'
+	elseif v == nil or v == "" then
+		return '<span style="color:#999">-</span>'
+	else
+		return '<span style="color:#c00;font-weight:bold">' .. v .. '</span>'
+	end
+end
+
+local function val(v)
+	if v == nil or v == "" then
+		return '<span style="color:#999">-</span>'
+	end
+	return luci.util.pcdata(v)
+end
+
+local role_txt = (st.role == "client") and "Client / Receiver (B)" or "Server / Transmitter (A)"
+local prov_txt = (st.provider == "unicom") and "Unicom (plain L2 extension)" or "Telecom (VLAN mux + private routes)"
+local is_client = (st.role == "client")
+local is_telecom = (st.provider ~= "unicom")
+local function t(s) return translate(s) end
+%>
+
+<h2 name="content"><%:VXLAN Networking Status%></h2>
+
+<% if st.soc ~= "supported" then %>
+<div class="cbi-section" style="border:2px solid #c00;padding:8px">
+	<strong style="color:#c00"><%:Unsupported SoC%></strong><br />
+	<%:This solution extends layer-2 over wireless backhaul + VXLAN, supporting mt76x8 (MT7628/MT7688), ar71xx (AR7240/7241/7242/AR9331/9341/9342/9344/QCA9531/9533/9556/9558/9561/9563/TP9343), ramips (RT3052/5350/MT7620/MT7621), arm and x86 platforms.%><br />
+	<%:Detected: %> <code><%=luci.util.pcdata(st.soc_id or "?")%></code><br />
+	<%:Boards with a full hardware switch VLAN table should use hardware VLANs instead; to force anyway, enable "Force Run on Unrecognized SoC" in Settings -> Advanced.%>
+</div>
+<br />
+<% end %>
+
+<fieldset class="cbi-section">
+	<legend><%:General%></legend>
+	<table class="cbi-section-table">
+		<tr><td width="30%"><%:Role%></td><td><%=t(role_txt)%></td></tr>
+		<tr><td><%:Provider Mode%></td><td><%=t(prov_txt)%></td></tr>
+		<tr><td><%:Region%></td><td><% if st.region == "other" then %><span style="color:#c00;font-weight:bold"><%:Other region (untested)%></span><% else %>Shanghai<% end %></td></tr>
+		<tr><td><%:Wireless Device%></td><td><%=val(st.radio)%></td></tr>
+		<% if st.role == "server" and st.peers and st.peers:match(" ") then %>
+		<tr><td><%:Multi-client%></td><td><%=luci.util.pcdata(st.peers)%> <small><%:(N VXLAN tunnels)%></small></td></tr>
+		<% end %>
+		<tr><td>VoIP Network</td><td><% if st.voip_enable == "1" then %><span style="color:#0a0;font-weight:bold"><%:Enabled (dedicated vxlan_voip tunnel)%></span> <small><%=val(st.vxlan_voip)%> <%=val(st.br_voip)%></small><% else %>Disabled<% end %></td></tr>
+		<tr><td><%:Service Enabled%></td><td><%=yn(st.enabled, "1")%></td></tr>
+		<tr><td><%:SoC Detection%></td><td><%=yn(st.soc, "supported")%> <small><%=luci.util.pcdata(st.soc_id or "")%></small></td></tr>
+		<tr><td><%:Wireless Mode%></td><td><%=val(st.wifi_mode)%> / SSID <%=val(st.wifi_ssid)%></td></tr>
+	</table>
+</fieldset>
+
+<fieldset class="cbi-section">
+	<legend><%:Tunnels%></legend>
+	<table class="cbi-section-table">
+		<tr><td width="30%"><%:Backhaul%></td><td><%=val(st.backhaul)%> <small><%:device%>: <%=val(st.backhaul_dev)%></small></td></tr>
+		<tr><td><%:Peer Underlay Reachable%></td><td><%=yn(st.peer_underlay, "up")%></td></tr>
+		<tr><td>vxlan_inet</td><td><%=val(st.vxlan_inet)%> <%:Status%>: <%=yn(st.vxlan_inet_state, "UNKNOWN")%></td></tr>
+		<% if is_telecom then %>
+		<tr><td>vxlan_iptv</td><td><%=val(st.vxlan_iptv)%> <%:Status%>: <%=yn(st.vxlan_iptv_state, "UNKNOWN")%></td></tr>
+		<% end %>
+		<% if st.voip_enable == "1" then %>
+		<tr><td>vxlan_voip</td><td><%=val(st.vxlan_voip)%> <%:Status%>: <%=yn(st.vxlan_voip_state, "UNKNOWN")%></td></tr>
+		<% end %>
+		<% if is_client then %>
+		<tr><td><%:Overlay Gateway Reachable%></td><td><%=yn(st.overlay_gw, "up")%></td></tr>
+		<% end %>
+	</table>
+	<small><%:Note: UNKNOWN link state on vxlan interfaces is normal on the 15.05 kernel. In bridge mode vxlan itself has no address; bridged(brX) is normal, absent means down.%></small>
+</fieldset>
+
+<fieldset class="cbi-section">
+	<legend><%:Network Interfaces%></legend>
+	<table class="cbi-section-table">
+		<tr><td width="30%">br-lan</td><td><%=val(st.br_lan)%></td></tr>
+		<% if is_telecom then %>
+		<tr><td>br-iptv</td><td><%=val(st.br_iptv)%></td></tr>
+		<% end %>
+		<% if st.voip_enable == "1" then %>
+		<tr><td>br-voip</td><td><%=val(st.br_voip)%></td></tr>
+		<% end %>
+		<tr><td><%:Uplink%></td><td><%=val(st.wan)%></td></tr>
+		<tr><td><%:Default Route%></td><td><code><%=val(st.default_route)%></code></td></tr>
+		<% if st.msd_lite then %>
+		<tr><td>msd_lite</td><td><%=yn((st.msd_lite:match("^running") and "running" or st.msd_lite), "running")%> <%=luci.util.pcdata(st.msd_lite)%></td></tr>
+		<% end %>
+	</table>
+</fieldset>
+
+<fieldset class="cbi-section">
+	<legend><%:Firewall%></legend>
+	<table class="cbi-section-table">
+		<% if is_telecom then %>
+		<tr><td width="30%"><%:IPTV zone (br-iptv + tunnel)%></td>
+			<td><% if st.fw_iptv_zone and st.fw_iptv_zone:match("^present") then %>
+				<span style="color:#0a0;font-weight:bold"><%=luci.util.pcdata(st.fw_iptv_zone)%></span>
+			<% else %>
+				<span style="color:#c00;font-weight:bold"><%:MISSING - iptv/vxlan_iptv not in any zone%></span>
+			<% end %></td></tr>
+		<% end %>
+		<tr><td width="30%"><%:Default Forward Policy%></td><td><%=val(st.fw_forward_policy)%></td></tr>
+		<tr><td>bridge-nf-call-iptables</td><td><%=yn(st.bridge_nf, "0")%> <small><%:(0 = bridge L2 forwarding bypasses iptables; this solution requires 0)%></small></td></tr>
+	</table>
+	<% if is_telecom and st.fw_iptv_zone and not st.fw_iptv_zone:match("^present") then %>
+	<div style="color:#c00">
+		<%:br-iptv and vxlan_iptv are not in any Firewall zone. It only works because the Default Forward Policy is ACCEPT; tightening to REJECT will break STB forwarding (while DHCP still works - very hard to diagnose). Click "Rebuild Firewall" below.%>
+	</div>
+	<% end %>
+	<form method="post" action="<%=disp.build_url("admin/network/vxlan/act_fw")%>">
+		<input type="submit" class="cbi-button" value="<%:Rebuild Firewall (no restart)%>" />
+	</form>
+</fieldset>
+
+<fieldset class="cbi-section">
+	<legend><%:Actions%></legend>
+	<p><%:"Apply Network Config" writes the settings into network / wireless / dhcp / firewall and restarts the network.%>
+	<strong style="color:#c00"><%:After applying, this device's IP and interface roles change and the current SSH / LuCI session will drop - make sure you can reconnect from the new address.%></strong></p>
+	<form method="post" action="<%=disp.build_url("admin/network/vxlan/act_apply")%>"
+		onsubmit="return confirm('Apply network config?\n\nNetwork will restart and this connection will drop.');">
+		<input type="submit" class="cbi-button cbi-button-apply" value="<%:Apply Network Config (drops network)%>" />
+	</form>
+	<br />
+	<form method="get" action="<%=disp.build_url("admin/network/vxlan/status")%>">
+		<input type="submit" class="cbi-button" value="<%:Refresh%>" />
+	</form>
+</fieldset>
+
+<%+footer%>

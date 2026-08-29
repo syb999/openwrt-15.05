@@ -1,0 +1,1361 @@
+#!/bin/sh
+# luci-app-vxlan core script
+# VXLAN wireless mesh for single-port MT7628/MT7688 boards.
+# Derived from enjoylink_A_config.sh / enjoylink_B_config.sh.
+#
+# Roles:   server = uplink side (AP + tunnel origin)
+#          client = STB side  (STA + tunnel endpoint)
+# Provider: telecom = VLAN trunk + private routes + msd_lite
+#           unicom  = plain L2 extension over one tunnel
+
+CFG=vxlan_link
+LOG=/tmp/vxlan-link.log
+HPDIR=/etc/hotplug.d/iface
+SELFHEAL_PID=/var/run/vxlan-selfheal.pid
+
+log() {
+	if [ -f "$LOG" ]; then
+		LC=$(wc -l < "$LOG" 2>/dev/null)
+		[ "${LC:-0}" -gt 100 ] && tail -100 "$LOG" > "$LOG.tmp" 2>/dev/null && mv "$LOG.tmp" "$LOG"
+	fi
+	echo "[$(date '+%F %T')] $*" >> "$LOG"
+}
+
+say() { echo "$*"; log "$*"; }
+
+uget() { uci -q get "$CFG.settings.$1" 2>/dev/null; }
+
+# ---------------- SoC / platform detection ----------------
+# Two supported platforms:
+#   mt76x8  (MT7628/MT7688): single-port ESW, per-port untag is a single bit
+#           -> hardware VLAN table cannot express a trunk. We DISABLE the ESW
+#           VLAN table and use kernel 8021q software tagging instead.
+#   ar71xx  (AR7240/7241/7242/AR9331/9341/9342/9344/QCA9531/9533/9556/9558/9561/9563/TP9343): ag71xx dual MAC (eth0=switch CPU,
+#           eth1=independent WAN) + real switch chip with full hardware VLAN
+#           table -> we configure hardware VLANs via swconfig instead.
+soc_id() {
+	{
+		tr '\0' ' ' < /proc/device-tree/compatible 2>/dev/null
+		echo
+		grep -i 'system type' /proc/cpuinfo 2>/dev/null | cut -d: -f2
+		grep -i 'machine' /proc/cpuinfo 2>/dev/null | cut -d: -f2
+		cat /tmp/sysinfo/board_name 2>/dev/null
+	} 2>/dev/null | tr 'A-Z' 'a-z' | tr '\011\012' '  ' | tr -s ' ' | sed 's/^ *//; s/ *$//'
+}
+
+is_mt76x8() {
+	case "$(soc_id)" in
+		*mt7628*|*mt7688*|*7628an*|*7688an*) return 0 ;;
+	esac
+	return 1
+}
+
+is_ar71xx() {
+	case "$(soc_id)" in
+		*ar9331*|*ar9341*|*ar9342*|*ar9344*|*qca9531*|*qca9533*|*tp9343*|*ar7240*|*ar7241*|*ar7242*|*qca9556*|*qca9558*|*qca9561*|*qca9563*|*ar71xx*|*ath79*) return 0 ;;
+	esac
+	return 1
+}
+
+# ramips: RT3052/RT5350/MT7620/MT7621 share the ralink switch family
+# (esw_rt3050 / gsw_mt7621). MT7620/MT7621/MT7628AN have full hardware VLAN
+# tables (multi-port routers) -> swconfig hardware VLANs.
+# RT3052/RT5350 are same driver family as MT7688; single-port boards use
+# software 8021q, multi-port boards can use hardware VLANs too.
+is_ramips() {
+	case "$(soc_id)" in
+		*rt3052*|*rt3050*|*rt3352*|*rt5350*|*rt5350f*|*mt7620*|*mt7621*|*ralink*) return 0 ;;
+	esac
+	return 1
+}
+
+is_arm() {
+	case "$(soc_id)" in
+		*arm*|*aarch64*|*rockchip*|*amlogic*|*allwinner*|*bcm2835*|*sunxi*|*meson*|*rk33*|*rk35*) return 0 ;;
+	esac
+	return 1
+}
+
+is_x86() {
+	case "$(soc_id)" in
+		*x86*|*i386*|*i486*|*i586*|*i686*|*amd64*|*x86_64*|*intel*|*amd*|*via*|*atom*|*core*) return 0 ;;
+	esac
+	return 1
+}
+
+platform() {
+	local U
+	# uname -m is the most reliable for arm/x86 (no device-tree on x86)
+	U=$(uname -m 2>/dev/null)
+	case "$U" in
+		x86_64|i386|i486|i586|i686|amd64) echo x86; return 0 ;;
+		armv5*|armv6*|armv7*|armv8*|aarch64*) echo arm; return 0 ;;
+	esac
+	is_mt76x8 && { echo mt76x8; return 0; }
+	is_ar71xx && { echo ar71xx; return 0; }
+	is_ramips && { echo ramips; return 0; }
+	is_arm && { echo arm; return 0; }
+	is_x86 && { echo x86; return 0; }
+	echo other
+}
+
+# switch mode decision.
+# Wireless-mesh use case is interface-agnostic: every platform works with
+# kernel 8021q software tagging (arm/x86 included - plain Linux stack).
+#   auto (default): software 8021q everywhere. Multi-port boards may set
+#                   switch_mode=hw to use swconfig hardware VLANs instead.
+#   hw: force hardware switch VLANs (swconfig)
+#   sw: force software 8021q (disable ESW VLAN table / plain iface)
+switch_mode() {
+	local M
+	M=$(uget switch_mode)
+	[ -z "$M" ] && M=auto
+	case "$M" in
+		hw) echo hw; return 0 ;;
+		sw) echo sw; return 0 ;;
+	esac
+	echo sw
+}
+
+soc_guard() {
+	local P
+	P=$(platform)
+	[ "$P" != "other" ] && return 0
+	[ "$(uget force_soc)" = "1" ] && {
+		say "WARNING: unknown SoC but force_soc=1, continuing (platform defaults: mt76x8)"
+		return 0
+	}
+	say "ERROR: unsupported SoC. This package supports:"
+	say "  mt76x8: MT7628/MT7688"
+	say "  ar71xx: AR7240/7241/7242, AR9331, AR9341/9342/9344, QCA9531/9533,"
+	say "          QCA9556/9558, QCA9561/9563, TP9343 (ath79 family)"
+	say "  ramips: RT3052/RT5350/MT7620/MT7621"
+	say "  arm / x86 (generic)"
+	say "  detected: $(soc_id)"
+	say "  Set force_soc=1 to override (not recommended)."
+	return 1
+}
+
+# ---------------- switch configuration (platform-aware) ----------------
+# mt76x8 single-port: disable the ESW VLAN table, use kernel 8021q software
+# tagging. multi-port platforms: configure hardware switch VLANs (swconfig).
+disable_esw_vlan() {
+	uci set network.@switch[0].enable_vlan='0' 2>/dev/null
+	uci set network.@switch[0].alternate_vlan_disable='1' 2>/dev/null
+	for i in 7 6 5 4 3 2 1 0; do
+		uci -q delete network.@switch_vlan[$i] 2>/dev/null
+	done
+}
+
+# Hardware VLAN layout (swconfig), shared by ar71xx and ramips multi-port.
+# VLAN1    = LAN ports (untagged) + CPU (untagged)
+# VLAN<wan_vlan> = WAN port (untagged) + CPU (tagged)     [if wan_vlan set]
+# VLAN<iptv_vid> = IPTV port (untagged) + CPU (tagged)
+# VLAN<voip_vid> = VoIP port (untagged) + CPU (tagged)    [if voip_enable]
+# Defaults fit the common 5-port layout (0-3 LAN, 4 = IPTV, CPU 6).
+# Overridable via UCI: sw_dev, sw_cpu_port, sw_lan_ports, sw_iptv_port,
+# sw_voip_port, sw_wan_port, wan_vlan.
+config_hw_vlan() {
+	local CPU LANP IPTVP VOIPP WANP VID VVID WVID SW
+	CPU=$(uget sw_cpu_port);    [ -z "$CPU" ]  && CPU=6
+	LANP=$(uget sw_lan_ports);  [ -z "$LANP" ] && LANP="0 1 2 3"
+	IPTVP=$(uget sw_iptv_port); [ -z "$IPTVP" ] && IPTVP=4
+	VOIPP=$(uget sw_voip_port)
+	WANP=$(uget sw_wan_port)
+	VID=$(uget iptv_vid);   [ -z "$VID" ]  && VID=85
+	VVID=$(uget voip_vid);  [ -z "$VVID" ] && VVID=46
+	WVID=$(uget wan_vlan);  [ -z "$WVID" ] && WVID=2
+	SW=$(uget sw_dev); [ -z "$SW" ] && SW=switch0
+
+	# ensure enable_vlan=1 so the table is active
+	uci set network.@switch[0].enable_vlan='1' 2>/dev/null
+	uci set network.@switch[0].reset='1' 2>/dev/null
+	# remove stale switch_vlan sections, rebuild
+	for i in 7 6 5 4 3 2 1 0; do
+		uci -q delete network.@switch_vlan[$i] 2>/dev/null
+	done
+	uci add network switch_vlan >/dev/null 2>&1
+	uci set network.@switch_vlan[-1].device="$SW"
+	uci set network.@switch_vlan[-1].vlan='1'
+	uci set network.@switch_vlan[-1].ports="$LANP ${CPU}t"
+	if [ -n "$WANP" ]; then
+		uci add network switch_vlan >/dev/null 2>&1
+		uci set network.@switch_vlan[-1].device="$SW"
+		uci set network.@switch_vlan[-1].vlan="$WVID"
+		uci set network.@switch_vlan[-1].ports="$WANP ${CPU}t"
+	fi
+	uci add network switch_vlan >/dev/null 2>&1
+	uci set network.@switch_vlan[-1].device="$SW"
+	uci set network.@switch_vlan[-1].vlan="$VID"
+	uci set network.@switch_vlan[-1].ports="$IPTVP ${CPU}t"
+	if [ "$(uget voip_enable)" = "1" ] && [ -n "$VOIPP" ]; then
+		uci add network switch_vlan >/dev/null 2>&1
+		uci set network.@switch_vlan[-1].device="$SW"
+		uci set network.@switch_vlan[-1].vlan="$VVID"
+		uci set network.@switch_vlan[-1].ports="$VOIPP ${CPU}t"
+	fi
+	say "  hw-vlan: vlan1=$LANP+${CPU}t, vlan$VID=$IPTVP+${CPU}t${VOIPP:+, vlan$VVID=$VOIPP+${CPU}t}"
+}
+
+switch_configure() {
+	case "$(switch_mode)" in
+		hw) config_hw_vlan ;;
+		sw) disable_esw_vlan ;;
+	esac
+}
+
+wifi_reset() {
+	while uci -q show wireless 2>/dev/null | grep -q 'wifi-iface'; do
+		OLD=$(uci -q show wireless 2>/dev/null | grep -oE '@wifi-iface\[[0-9]+\]' | head -1)
+		[ -z "$OLD" ] && break
+		uci -q delete wireless.$OLD 2>/dev/null
+	done
+}
+
+radio_name() {
+	local R
+	R=$(uci -q show wireless 2>/dev/null | sed -n "s/^wireless\.\(radio[0-9]*\)=wifi-device$/\1/p" | head -1)
+	[ -z "$R" ] && R=radio0
+	echo "$R"
+}
+
+wifi_iface() {
+	# $1=mode(ap|sta) $2=ssid $3=pass
+	local R
+	R=$(uget radio)
+	[ -z "$R" ] && R=$(radio_name)
+	wifi_reset
+	uci add wireless wifi-iface >/dev/null 2>&1
+	uci set wireless.@wifi-iface[-1].device="$R"
+	uci set wireless.@wifi-iface[-1].network='backhaul'
+	uci set wireless.@wifi-iface[-1].mode="$1"
+	uci set wireless.@wifi-iface[-1].ssid="$2"
+	uci set wireless.@wifi-iface[-1].encryption='psk2'
+	uci set wireless.@wifi-iface[-1].key="$3"
+	uci set wireless.$R.disabled='0' 2>/dev/null
+}
+
+set_backhaul() {
+	uci -q delete network.backhaul 2>/dev/null
+	uci set network.backhaul=interface
+	uci set network.backhaul.proto='static'
+	uci set network.backhaul.ipaddr="$1"
+	uci set network.backhaul.netmask="$2"
+}
+
+set_vxlan() {
+	# Legacy helper kept for reference; vxlan interfaces are now created
+	# directly with ip link (see vxlan_dev_add) to bypass netifd, because
+	# 15.05 netifd repeatedly setup/teardown-storms UNKNOWN vxlan interfaces
+	# when the peer is offline - normal client-offline behavior.
+	:
+}
+
+# ---------- direct vxlan device management (bypass netifd) ----------
+# Root cause fix for the load storm: netifd 15.05 (proto/vxlan.sh) respawns
+# setup/teardown for every vxlan interface whose peer is unreachable (client
+# offline is NORMAL). Creating the devices ourselves with ip link + bridging
+# them with brctl means netifd never sees them -> no storm, kernel vxlan is
+# silent while the peer is away.
+
+vxlan_dev_add() {
+	# $1=name $2=vni $3=peer $4=tunlink
+	local NAME VNI PEER TUN T
+	NAME="$1"; VNI="$2"; PEER="$3"; TUN="$4"
+	ip link show "$NAME" >/dev/null 2>&1 && return 0
+	# dstport 4789 (IANA): explicit, standard. After 'apply' the wifi reload
+	# takes 30-60s on MT7688-class SoCs, so first WAIT for the tunlink
+	# (wlan0) to be up AND addressed - blind retries for a few seconds are
+	# not enough. Timeout 90s, then give up.
+	T=0
+	while [ $T -lt 45 ]; do
+		if ip link show "$TUN" >/dev/null 2>&1 && \
+		   ip -4 addr show dev "$TUN" 2>/dev/null | grep -q 'inet '; then
+			break
+		fi
+		sleep 2
+		T=$((T+1))
+	done
+	if ! ip link show "$TUN" >/dev/null 2>&1; then
+		say "  ERROR: tunlink $TUN never appeared, cannot create $NAME"
+		return 1
+	fi
+	if ! ip -4 addr show dev "$TUN" 2>/dev/null | grep -q 'inet '; then
+		say "  WARNING: tunlink $TUN up but no address; still trying $NAME"
+	fi
+	# unicast remote mode (default, safe on wireless: point-to-point, no
+	# loop, rate control + retransmit). Each peer gets its own VNI (see
+	# cmd_vxlan_build) because kernel 3.18 forbids duplicate VNI per device.
+	if ip link add "$NAME" type vxlan id "$VNI" remote "$PEER" dev "$TUN" dstport 4789 2>/dev/null; then
+		ip link set "$NAME" up 2>/dev/null
+		say "  vxlan dev $NAME: vni=$VNI peer=$PEER dev=$TUN dstport=4789 (unicast)"
+		return 0
+	fi
+	say "  ERROR: cannot create vxlan dev $NAME (peer=$PEER, tun=$TUN)"
+	return 1
+}
+
+vxlan_dev_del() {
+	ip link del "$1" 2>/dev/null
+}
+
+bridge_add() {
+	# $1=bridge $2=member
+	ip link show "$2" >/dev/null 2>&1 || return 1
+	brctl addif "$1" "$2" 2>/dev/null
+	ip link set "$2" up 2>/dev/null
+}
+
+# Create all vxlan devices for the current peer list and bridge them in.
+# Runs AFTER /etc/init.d/network restart (bridges exist by then).
+cmd_vxlan_build() {
+	local ROLE PROV BH TUN N I P VNI1 VNI2 VV
+	ROLE=$(uget role); PROV=$(uget provider)
+	BH=$(uget backhaul_ip)
+	TUN=$(logical_dev backhaul)
+	VNI1=$(uget vni_inet); VNI2=$(uget vni_iptv); VV=$(uget voip_vni)
+	[ -z "$VV" ] && VV=300
+
+	# remove all managed vxlan devices first (idempotent re-apply)
+	N=1
+	while true; do
+		if [ "$N" = "1" ]; then
+			ip link del vxlan_inet 2>/dev/null
+			ip link del vxlan_iptv 2>/dev/null
+			ip link del vxlan_voip 2>/dev/null
+		else
+			ip link del vxlan_inet_p$N 2>/dev/null
+			ip link del vxlan_iptv_p$N 2>/dev/null
+			ip link del vxlan_voip_p$N 2>/dev/null
+		fi
+		N=$((N+1))
+		[ "$N" -gt 10 ] && break
+	done
+
+	# create tunnels - one unicast interface per peer, each with its OWN VNI.
+	# Kernel 3.18 forbids duplicate VNI on the same underlay device, so peer1
+	# uses the configured base VNI, peer2 = base+1, peer3 = base+2, ...
+	# Unicast is mandatory on wireless: multicast-group mode would loop
+	# (bridge flood -> vxlan re-encapsulate -> group -> all peers -> bridge
+	# flood ...) and kills IPTV multicast (low-rate no-retransmit on air).
+	I=1
+	while P=$(peer_nth $I); [ -n "$P" ]; do
+		if [ "$ROLE" = "client" ] && [ "$I" != "1" ]; then
+			I=$((I+1))
+			continue
+		fi
+		if [ "$I" = "1" ]; then
+			vxlan_dev_add vxlan_inet  "$((VNI1 + 0))" "$P" "$TUN"
+			[ "$PROV" != "unicom" ] && vxlan_dev_add vxlan_iptv  "$((VNI2 + 0))" "$P" "$TUN"
+			[ "$(uget voip_enable)" = "1" ] && vxlan_dev_add vxlan_voip "$((VV + 0))" "$P" "$TUN"
+		else
+			vxlan_dev_add vxlan_inet_p$I  "$((VNI1 + I - 1))" "$P" "$TUN"
+			[ "$PROV" != "unicom" ] && vxlan_dev_add vxlan_iptv_p$I  "$((VNI2 + I - 1))" "$P" "$TUN"
+			[ "$(uget voip_enable)" = "1" ] && vxlan_dev_add vxlan_voip_p$I "$((VV + I - 1))" "$P" "$TUN"
+			say "  peer$I=$P -> vxlan_*_p$I (vni ${VNI1}+$((I-1)) / ${VNI2}+$((I-1)) / ${VV}+$((I-1)))"
+		fi
+		I=$((I+1))
+	done
+
+	# bridge them in (br-lan / br-iptv / br-voip)
+	I=1
+	while P=$(peer_nth $I); [ -n "$P" ]; do
+		if [ "$ROLE" = "client" ] && [ "$I" != "1" ]; then
+			I=$((I+1))
+			continue
+		fi
+		if [ "$I" = "1" ]; then
+			bridge_add br-lan vxlan_inet
+			[ "$PROV" != "unicom" ] && bridge_add br-iptv vxlan_iptv
+			[ "$(uget voip_enable)" = "1" ] && bridge_add br-voip vxlan_voip
+		else
+			bridge_add br-lan vxlan_inet_p$I
+			[ "$PROV" != "unicom" ] && bridge_add br-iptv vxlan_iptv_p$I
+			[ "$(uget voip_enable)" = "1" ] && bridge_add br-voip vxlan_voip_p$I
+		fi
+		I=$((I+1))
+	done
+	say "vxlan devices built: $(ip -br link 2>/dev/null | grep -c vxlan) total, peer list: $(peer_list)"
+}
+
+lan_zone() {
+	uci -q show firewall 2>/dev/null | sed -n "s/^firewall\.\([^.]*\)\.name='lan'$/\1/p" | head -1
+}
+
+fw_lan_networks() {
+	local Z
+	Z=$(lan_zone)
+	[ -z "$Z" ] && return 0
+	for N in "$@"; do
+		uci -q show firewall.$Z.network 2>/dev/null | grep -q "'$N'" || \
+			uci add_list firewall.$Z.network="$N"
+	done
+}
+
+fw_vxlan_udp() {
+	uci -q show firewall 2>/dev/null | grep -q "name='vxlan_udp'" && return 0
+	uci add firewall rule >/dev/null
+	uci set firewall.@rule[-1].name='vxlan_udp'
+	uci set firewall.@rule[-1].src='*'
+	uci set firewall.@rule[-1].dest_port='4789'
+	uci set firewall.@rule[-1].proto='udp'
+	uci set firewall.@rule[-1].target='ACCEPT'
+}
+
+# Dedicated zone for the IPTV bridge and its tunnel.
+# Without it both interfaces fall outside every zone and only work by accident,
+# relying on firewall defaults forward=ACCEPT plus bridge-nf=0. Tightening
+# defaults to forward=REJECT (the normal hardening step) would silently break
+# STB traffic while DHCP still works (input/output path), which is very hard
+# to diagnose. Keep it isolated: no forwarding to lan/wan, no masq.
+fw_iptv_zone() {
+	local Z N
+	Z=$(uci -q show firewall 2>/dev/null | sed -n "s/^firewall\.\([^.]*\)\.name='vxlan'$/\1/p" | head -1)
+	if [ -z "$Z" ]; then
+		uci add firewall zone >/dev/null
+		Z='@zone[-1]'
+		uci set firewall.$Z.name='vxlan'
+		uci set firewall.$Z.input='ACCEPT'
+		uci set firewall.$Z.output='ACCEPT'
+		uci set firewall.$Z.forward='ACCEPT'
+		uci set firewall.$Z.masq='0'
+		uci set firewall.$Z.mtu_fix='0'
+	fi
+	# 'iptv' is the br-iptv bridge, 'vxlan_iptv' is the tunnel logical iface.
+	# Both must be listed, otherwise fw3 never emits rules for them.
+	# Multi-client: vxlan_iptv_pN also join the zone.
+	# VoIP: br-voip (logical 'voip') + vxlan_voip (+pN) join too.
+	for N in iptv vxlan_iptv $(uci -q show network 2>/dev/null | grep -oE "network\.vxlan_iptv_p[0-9]+=interface" | sed "s/network\.\(vxlan_iptv_p[0-9]*\)=interface/\1/") voip vxlan_voip $(uci -q show network 2>/dev/null | grep -oE "network\.vxlan_voip_p[0-9]+=interface" | sed "s/network\.\(vxlan_voip_p[0-9]*\)=interface/\1/"); do
+		uci -q show firewall.$Z.network 2>/dev/null | grep -q "'$N'" || \
+			uci add_list firewall.$Z.network="$N"
+	done
+}
+
+fw_iptv_zone_del() {
+	local Z
+	Z=$(uci -q show firewall 2>/dev/null | sed -n "s/^firewall\.\([^.]*\)\.name='vxlan'$/\1/p" | head -1)
+	[ -n "$Z" ] && uci -q delete firewall.$Z 2>/dev/null
+	return 0
+}
+
+set_upstream_dns() {
+	uci -q delete dhcp.@dnsmasq[0].server 2>/dev/null
+	[ -n "$1" ] && uci add_list dhcp.@dnsmasq[0].server="$1"
+	[ -n "$2" ] && uci add_list dhcp.@dnsmasq[0].server="$2"
+	uci set dhcp.@dnsmasq[0].noresolv='1'
+}
+
+# DHCP server for the STB side. option125 empty => not sent at all.
+set_stb_dhcp() {
+	local OPT
+	OPT=$(uget option125)
+	uci set dhcp.lan.ignore='0'
+	uci set dhcp.lan.start='50'
+	uci set dhcp.lan.limit='150'
+	uci set dhcp.lan.leasetime='12h'
+	uci -q delete dhcp.lan.dhcp_option 2>/dev/null
+	uci -q delete dhcp.lan.dhcp_option_force 2>/dev/null
+	if [ -n "$OPT" ]; then
+		uci add_list dhcp.lan.dhcp_option_force="$OPT"
+		uci add_list dhcp.lan.dhcp_option='15'
+		uci add_list dhcp.lan.dhcp_option='28'
+	fi
+}
+
+del_private_routes() {
+	for R in r_epg r_lb r_lb2 r_lb3 r_hb r_idns r_idns2 r_idns3; do
+		uci -q delete network.$R 2>/dev/null
+	done
+}
+
+# Private (carrier walled-garden) routes via the IPTV bridge.
+# Gateway for private-plane routes. NEVER hardcode the carrier gateway:
+# operators have been known to renumber IPTV/VoIP planes (happened in this
+# deployment!). The DHCP-assigned router on br-iptv is the only source of
+# truth; fall back to the configured value only before a lease exists.
+private_gw() {
+	local GW
+	GW=$(ip route show dev br-iptv 2>/dev/null | awk '/^default/ {print $3; exit}')
+	[ -z "$GW" ] && GW=$(uget iptv_gateway)
+	echo "$GW"
+}
+
+set_private_routes() {
+	local GW EPGSRV HBSRV LBS IRT I N M
+	GW=$(private_gw)
+	EPGSRV=$(uget epg_host)
+	HBSRV=$(uget hb_host)
+	LBS=$(uget lb_subnets)
+	IRT=$(uget iptv_routes)
+	del_private_routes
+	[ -z "$GW" ] && return 0
+	# IPTV carrier DNS / service subnets (e.g. 10.192.0.0/16) live inside
+	# the IPTV plane; DHCP does NOT deliver them (no option 121 - captured).
+	I=0
+	for N in $IRT; do
+		I=$((I+1))
+		[ "$I" -gt 3 ] && break
+		if [ "${N#*/}" != "$N" ]; then
+			P="${N#*/}"
+			N="${N%/*}"
+			M=""; BITS=$P; OCT=0
+			while [ $OCT -lt 4 ]; do
+				if [ $BITS -ge 8 ]; then O=$((255)); BITS=$((BITS-8))
+				elif [ $BITS -gt 0 ]; then O=$((256 - (1 << (8 - BITS)))); BITS=0
+				else O=0; fi
+				[ -n "$M" ] && M="$M."
+				M="$M$O"
+				OCT=$((OCT+1))
+			done
+		else
+			M='255.255.255.0'
+		fi
+		case "$I" in
+			1) S=r_idns ;;
+			2) S=r_idns2 ;;
+			3) S=r_idns3 ;;
+		esac
+		uci set network.$S=route
+		uci set network.$S.interface='iptv'
+		uci set network.$S.target="$N"
+		uci set network.$S.netmask="$M"
+		uci set network.$S.gateway="$GW"
+		uci set network.$S.metric='200'
+	done
+	if [ -n "$EPGSRV" ]; then
+		uci set network.r_epg=route
+		uci set network.r_epg.interface='iptv'
+		uci set network.r_epg.target="$EPGSRV"
+		uci set network.r_epg.netmask='255.255.255.255'
+		uci set network.r_epg.gateway="$GW"
+		uci set network.r_epg.metric='100'
+	fi
+	I=0
+	for N in $LBS; do
+		I=$((I+1))
+		[ "$I" -gt 3 ] && break
+		if [ "${N#*/}" != "$N" ]; then
+			P="${N#*/}"
+			N="${N%/*}"
+			M=""; BITS=$P; OCT=0
+			while [ $OCT -lt 4 ]; do
+				if [ $BITS -ge 8 ]; then O=$((255)); BITS=$((BITS-8))
+				elif [ $BITS -gt 0 ]; then O=$((256 - (1 << (8 - BITS)))); BITS=0
+				else O=0; fi
+				[ -n "$M" ] && M="$M."
+				M="$M$O"
+				OCT=$((OCT+1))
+			done
+		else
+			M='255.255.255.0'
+		fi
+		case "$I" in
+			1) S=r_lb ;;
+			2) S=r_lb2 ;;
+			3) S=r_lb3 ;;
+		esac
+		uci set network.$S=route
+		uci set network.$S.interface='iptv'
+		uci set network.$S.target="$N"
+		uci set network.$S.netmask="$M"
+		uci set network.$S.gateway="$GW"
+	done
+	if [ -n "$HBSRV" ]; then
+		uci set network.r_hb=route
+		uci set network.r_hb.interface='iptv'
+		uci set network.r_hb.target="$HBSRV"
+		uci set network.r_hb.netmask='255.255.255.255'
+		uci set network.r_hb.gateway="$GW"
+	fi
+}
+
+hotplug_vxlan_up() {
+	mkdir -p "$HPDIR" 2>/dev/null
+	cat > "$HPDIR/99-vxlan-up" << 'EOF'
+[ "$ACTION" = "ifup" ] || [ "$ACTION" = "ifupdate" ] || exit 0
+case "$INTERFACE" in
+	vxlan_*) ip link set "$INTERFACE" up 2>/dev/null ;;
+esac
+EOF
+	chmod +x "$HPDIR/99-vxlan-up"
+}
+
+# netifd 15.05 does not reliably install onlink routes for non-directly
+# connected peers, so re-add the peer LAN route on every ifup.
+hotplug_peer_route() {
+	local SUB
+	SUB="$1"
+	mkdir -p "$HPDIR" 2>/dev/null
+	if [ -z "$SUB" ]; then
+		rm -f "$HPDIR/99-vxlan-peer-route" 2>/dev/null
+		return 0
+	fi
+	cat > "$HPDIR/99-vxlan-peer-route" << EOF
+[ "\$ACTION" = "ifup" ] || [ "\$ACTION" = "ifupdate" ] || exit 0
+case "\$INTERFACE" in
+	lan|br-lan|vxlan_*) ip route replace $SUB dev br-lan 2>/dev/null ;;
+esac
+EOF
+	chmod +x "$HPDIR/99-vxlan-peer-route"
+}
+
+hotplug_msd() {
+	mkdir -p "$HPDIR" 2>/dev/null
+	if [ "$1" = "off" ]; then
+		rm -f "$HPDIR/99-msd-lite-up" 2>/dev/null
+		return 0
+	fi
+	cat > "$HPDIR/99-msd-lite-up" << 'EOF'
+[ "$ACTION" = "ifup" ] || [ "$ACTION" = "ifupdate" ] || exit 0
+case "$INTERFACE" in
+	iptv) /etc/init.d/msd_lite restart 2>/dev/null ;;
+esac
+EOF
+	chmod +x "$HPDIR/99-msd-lite-up"
+}
+
+bridge_nf_off() {
+	echo 0 > /proc/sys/net/bridge/bridge-nf-call-iptables 2>/dev/null
+	echo 0 > /proc/sys/net/bridge/bridge-nf-call-ip6tables 2>/dev/null
+	grep -q 'bridge-nf-call-iptables' /etc/rc.local 2>/dev/null && return 0
+	{
+		grep -v '^exit 0' /etc/rc.local 2>/dev/null
+		echo '# vxlan L2 bridge: disable bridge-nf'
+		echo 'echo 0 > /proc/sys/net/bridge/bridge-nf-call-iptables 2>/dev/null'
+		echo 'echo 0 > /proc/sys/net/bridge/bridge-nf-call-ip6tables 2>/dev/null'
+		echo 'exit 0'
+	} > /etc/rc.local.new 2>/dev/null
+	mv /etc/rc.local.new /etc/rc.local 2>/dev/null
+}
+
+setup_msd() {
+	local PORT
+	PORT=$(uget msd_port)
+	[ -z "$PORT" ] && PORT=7088
+	uci -q show msd_lite >/dev/null 2>&1 || {
+		say "  msd_lite not installed, skipped"
+		return 0
+	}
+	uci set msd_lite.@msd_lite[0].interface='br-iptv'
+	uci set msd_lite.@msd_lite[0].bind='0.0.0.0'
+	uci set msd_lite.@msd_lite[0].port="$PORT"
+	uci commit msd_lite
+	hotplug_msd on
+	/etc/init.d/msd_lite restart 2>/dev/null
+	say "  msd_lite on br-iptv port $PORT"
+}
+
+clean_legacy() {
+	# old standalone selfheal from the shell-script era
+	sed -i '/vxlan_selfheal/d' /etc/rc.local 2>/dev/null
+	rm -f "$HPDIR/99-route-brlan" 2>/dev/null
+}
+
+# ---------------- VoIP private network (Shanghai Telecom VLAN 46) ----------------
+# Dedicated vxlan_voip tunnel + br-voip bridge (independent of IPTV).
+# DHCP discovered 28.132.57.78/17, gw 28.132.127.254 (Cisco HSRP virtual gw),
+# DHCP server 28.132.127.252. ICMP is blocked on this plane.
+voip_extra_members() {
+	echo ""
+}
+
+voip_configure() {
+	local ENA VID VNI BH I N M S P
+	ENA=$(uget voip_enable)
+	# cleanup regardless - rerunning apply must not leak old config
+	# (r_voip = legacy static route names, r_voipd = walled-garden routes)
+	for R in r_voip r_voip2 r_voip3 r_voipd r_voipd2 r_voipd3; do
+		uci -q delete network.$R 2>/dev/null
+	done
+	# remove stale tunnel/bridge segments when disabled or re-applying
+	uci -q delete network.vxlan_voip 2>/dev/null
+	# clean ALL vxlan_voip_pN leftovers first; they get recreated below only
+	# for peers that still exist (extra peers loop). This is the missing piece
+	# that caused the vxlan.sh setup/teardown storm when peer count shrank.
+	N=2
+	while uci -q get network.vxlan_voip_p$N >/dev/null 2>&1; do
+		uci -q delete network.vxlan_voip_p$N 2>/dev/null
+		N=$((N+1))
+	done
+	[ "$ENA" != "1" ] && return 0
+	VID=$(uget voip_vid); VNI=$(uget voip_vni)
+	[ -z "$VID" ] && VID=46
+	[ -z "$VNI" ] && VNI=300
+	# br-voip: eth0.<vid> only in UCI; vxlan_voip device is added at runtime
+	# by cmd_vxlan_build (brctl addif) so netifd never touches it.
+	# proto=dhcp so br-voip itself grabs a 28.132.x address (like br-iptv),
+	# which also brings the kernel direct route scope link automatically.
+	uci set network.voip=interface
+	uci set network.voip.ifname="eth0.$VID"
+	uci set network.voip.type='bridge'
+	uci set network.voip.proto='dhcp'
+	uci set network.voip.metric='300'
+	uci set network.voip.delegate='0'
+	# peerdns=1: the carrier's VoIP DNS (e.g. 15.192.252.188 / 15.192.251.188)
+	# lives INSIDE the VoIP plane and is only reachable there. peerdns=0
+	# would park it in netifd's "inactive" list and the phone/ATA would get
+	# no usable DNS. Verified by traceroute: it goes via 28.132.127.252.
+	uci set network.voip.peerdns='1'
+	# The VoIP plane needs the carrier's walled-garden routes (DNS servers
+	# like 15.192.0.0/16, softswitch/SIP servers, etc). DHCP does NOT deliver
+	# them (no option 121 in the ACK - captured). They must be added
+	# explicitly via the DHCP-assigned gateway (runtime probe, so a carrier
+	# renumber keeps working). voip_routes is space-separated CIDRs.
+	local ROUTES GWV I2 S2 N2 M2
+	ROUTES=$(uget voip_routes)
+	[ -z "$ROUTES" ] && ROUTES="15.192.0.0/16"
+	GWV=$(ip route show dev br-voip 2>/dev/null | awk '/^default/ {print $3; exit}')
+	[ -z "$GWV" ] && GWV=$(uget voip_gateway)
+	[ -z "$GWV" ] && GWV=28.132.127.254
+	I2=0
+	for N2 in $ROUTES; do
+		I2=$((I2+1))
+		[ "$I2" -gt 3 ] && break
+		if [ "${N2#*/}" != "$N2" ]; then
+			P="${N2#*/}"
+			N2="${N2%/*}"
+			M2=""; BITS=$P; OCT=0
+			while [ $OCT -lt 4 ]; do
+				if [ $BITS -ge 8 ]; then O=$((255)); BITS=$((BITS-8))
+				elif [ $BITS -gt 0 ]; then O=$((256 - (1 << (8 - BITS)))); BITS=0
+				else O=0; fi
+				[ -n "$M2" ] && M2="$M2."
+				M2="$M2$O"
+				OCT=$((OCT+1))
+			done
+		else
+			M2='255.255.255.0'
+		fi
+		case "$I2" in
+			1) S2=r_voipd ;;
+			2) S2=r_voipd2 ;;
+			3) S2=r_voipd3 ;;
+		esac
+		uci set network.$S2=route
+		uci set network.$S2.interface='voip'
+		uci set network.$S2.target="$N2"
+		uci set network.$S2.netmask="$M2"
+		uci set network.$S2.gateway="$GWV"
+		uci set network.$S2.metric='300'
+	done
+	say "  voip: br-voip(eth0.$VID, vxlan_voip runtime) + DHCP route + walled-garden $ROUTES via $GWV"
+}
+
+# ---------------- multi-client support (server side) ----------------
+# netifd vxlan proto supports ONE peeraddr. For 1:N we create one vxlan
+# interface per extra peer (vxlan_inet / vxlan_inet_p2 / vxlan_inet_p3 ...),
+# all bridged into br-lan/br-iptv; the bridge learns MACs and floods/forwards
+# correctly. peer_list is space-separated IPs. First peer keeps legacy names
+# (vxlan_inet / vxlan_iptv), extra peers get _p<N> suffixes.
+peer_list() {
+	# Single field peer_ips (space separated, may hold one or many peers).
+	# Fall back to legacy peer_ip / peer_list fields for old configs.
+	local LIST
+	LIST=$(uget peer_ips)
+	if [ -z "$LIST" ]; then
+		LIST=$(uget peer_ip)
+		[ -n "$(uget peer_list)" ] && LIST="$LIST $(uget peer_list)"
+	fi
+	echo "$LIST"
+}
+
+# return the N-th peer (1-based). empty when absent
+peer_nth() {
+	local LIST N C P
+	LIST=$(peer_list)
+	N="$1"; C=0
+	for P in $LIST; do
+		C=$((C+1))
+		[ "$C" = "$N" ] && { echo "$P"; return 0; }
+	done
+	return 1
+}
+
+# vxlan interfaces are NOT created as netifd UCI sections anymore (see
+# cmd_vxlan_build). This helper only purges any stale UCI vxlan sections so a
+# re-apply never leaves old config behind.
+apply_vxlan_multi() {
+	local N
+	# purge all vxlan interface sections (old netifd-managed approach)
+	N=1
+	while true; do
+		if [ "$N" = "1" ]; then
+			uci -q delete network.vxlan_inet 2>/dev/null
+			uci -q delete network.vxlan_iptv 2>/dev/null
+			uci -q delete network.vxlan_voip 2>/dev/null
+		else
+			uci -q delete network.vxlan_inet_p$N 2>/dev/null
+			uci -q delete network.vxlan_iptv_p$N 2>/dev/null
+			uci -q delete network.vxlan_voip_p$N 2>/dev/null
+		fi
+		N=$((N+1))
+		[ "$N" -gt 10 ] && break
+	done
+}
+
+# Bridge members are physical interfaces only; vxlan devices are added at
+# runtime by cmd_vxlan_build (brctl addif) so netifd never manages them.
+lan_members() {
+	echo "$1"
+}
+
+iptv_members() {
+	echo "$1"
+}
+
+# resolve wan_if / lan_if.
+# Wireless-mesh design: read the device's CURRENT runtime layout instead of
+# hard-coding per-SoC port maps.
+#   server -> use the existing 'wan' logical interface's device (or eth1/eth0
+#             fallback depending on what exists)
+#   client -> use the existing 'lan' bridge's physical member (usually eth0)
+# User override via wan_if / lan_if wins.
+runtime_wan_dev() {
+	# current wan logical iface -> real device (eth1, eth0.2, eth0, ...).
+	# wan may itself be a bridge (br-wan): take its first physical member.
+	local D M
+	D=$(ubus call network.interface.wan status 2>/dev/null | \
+		grep -o '"l3_device": *"[^"]*"' | head -1 | cut -d'"' -f4)
+	case "$D" in
+		br-*)
+			M=$(ls /sys/class/net/"$D"/brif/ 2>/dev/null | \
+				grep -Ev '^(vxlan|br-|lo|wlan)' | head -1)
+			[ -n "$M" ] && D="$M"
+			;;
+	esac
+	[ -z "$D" ] && D=eth1
+	echo "$D"
+}
+
+runtime_lan_dev() {
+	# current lan logical iface -> real device. lan is usually a bridge
+	# (br-lan); read its true members from sysfs (busybox brctl show lists
+	# ALL bridges, not just the requested one - unreliable).
+	local D M
+	D=$(ubus call network.interface.lan status 2>/dev/null | \
+		grep -o '"l3_device": *"[^"]*"' | head -1 | cut -d'"' -f4)
+	case "$D" in
+		br-*)
+			M=$(ls /sys/class/net/"$D"/brif/ 2>/dev/null | \
+				grep -Ev '^(vxlan|br-|lo|wlan)' | head -1)
+			[ -n "$M" ] && D="$M"
+			;;
+	esac
+	[ -z "$D" ] && D=eth0
+	echo "$D"
+}
+
+wan_if_name() {
+	local W
+	W=$(uget wan_if)
+	[ -z "$W" ] && W=$(runtime_wan_dev)
+	echo "$W"
+}
+
+lan_if_name() {
+	local L
+	L=$(uget lan_if)
+	[ -z "$L" ] && L=$(runtime_lan_dev)
+	echo "$L"
+}
+
+# ---------------- role x provider ----------------
+apply_server_telecom() {
+	local BH PEER VNI1 VNI2 WIF LIF LIP LMASK SUB SMASK VID
+	BH=$(uget backhaul_ip); PEER=$(peer_nth 1)
+	VNI1=$(uget vni_inet); VNI2=$(uget vni_iptv)
+	WIF=$(wan_if_name); LIF=$(lan_if_name)
+	LIP=$(uget lan_ip); LMASK=$(uget lan_mask)
+	SUB=$(uget peer_lan_subnet); SMASK=$(uget peer_lan_mask)
+	VID=$(uget iptv_vid)
+
+	switch_configure
+	uci set network.wan=interface
+	uci set network.wan.ifname="$WIF"
+	uci set network.wan.proto='dhcp'
+
+	uci -q delete network.iptv 2>/dev/null
+	uci set network.iptv=interface
+	uci set network.iptv.ifname="$WIF.$VID"
+	uci set network.iptv.type='bridge'
+	uci set network.iptv.proto='dhcp'
+	uci set network.iptv.hostname="$(uget iptv_hostname)"
+	uci set network.iptv.metric='200'
+	uci set network.iptv.delegate='0'
+	uci set network.iptv.peerdns='1'
+
+	set_backhaul "$BH" "$(uget backhaul_mask)"
+	wifi_iface ap "$(uget ssid)" "$(uget key)"
+	apply_vxlan_multi server
+
+	uci set network.lan.ifname="$LIF"
+	uci set network.lan.proto='static'
+	uci set network.lan.ipaddr="$LIP"
+	uci set network.lan.netmask="$LMASK"
+
+	uci -q delete network.r_b 2>/dev/null
+	uci set network.r_b=route
+	uci set network.r_b.interface='lan'
+	uci set network.r_b.target="$SUB"
+	uci set network.r_b.netmask="$SMASK"
+
+	voip_configure
+	set_private_routes
+	set_upstream_dns "$(uget dns1)" "$(uget dns2)"
+	set_stb_dhcp
+	fw_lan_networks backhaul
+	fw_iptv_zone
+	fw_vxlan_udp
+	bridge_nf_off
+	hotplug_vxlan_up
+	hotplug_peer_route ""
+	hotplug_msd off
+	clean_legacy
+	say "server/telecom: wan=$WIF, br-lan=$LIP ($LIF+vxlan_inet), br-iptv=$WIF.$VID+vxlan_iptv, peer route $SUB"
+}
+
+apply_server_unicom() {
+	local BH PEER VNI1 WIF LIF LIP LMASK SUB SMASK
+	BH=$(uget backhaul_ip); PEER=$(peer_nth 1)
+	VNI1=$(uget vni_inet)
+	WIF=$(wan_if_name); LIF=$(lan_if_name)
+	LIP=$(uget lan_ip); LMASK=$(uget lan_mask)
+	SUB=$(uget peer_lan_subnet); SMASK=$(uget peer_lan_mask)
+
+	switch_configure
+	uci -q delete network.wan 2>/dev/null
+	uci set network.wan=interface
+	uci set network.wan.ifname="$WIF"
+	uci set network.wan.proto='dhcp'
+
+	uci -q delete network.iptv 2>/dev/null
+	uci -q delete network.vxlan_iptv 2>/dev/null
+	uci -q delete network.r_def 2>/dev/null
+	del_private_routes
+
+	set_backhaul "$BH" "$(uget backhaul_mask)"
+	wifi_iface ap "$(uget ssid)" "$(uget key)"
+	apply_vxlan_multi server
+	voip_configure
+
+	uci set network.lan.ifname="$LIF"
+	uci set network.lan.proto='static'
+	uci set network.lan.ipaddr="$LIP"
+	uci set network.lan.netmask="$LMASK"
+
+	uci -q delete network.r_b 2>/dev/null
+	uci set network.r_b=route
+	uci set network.r_b.interface='lan'
+	uci set network.r_b.target="$SUB"
+	uci set network.r_b.netmask="$SMASK"
+	uci set network.r_b.onlink='1'
+
+	# STB is served by the client side, keep our dnsmasq out of the way
+	uci set dhcp.lan.ignore='1'
+	uci -q delete dhcp.lan.dhcp_option_force 2>/dev/null
+
+	fw_lan_networks backhaul
+	fw_iptv_zone_del
+	fw_vxlan_udp
+	hotplug_vxlan_up
+	hotplug_peer_route "$(netmask_cidr "$SUB" "$SMASK")"
+	hotplug_msd off
+	clean_legacy
+	say "server/unicom: wan=$WIF (NAT), br-lan=$LIP ($LIF+vxlan_inet), peer route $SUB, dnsmasq off"
+}
+
+apply_client_telecom() {
+	local BH PEER VNI1 VNI2 LIP LMASK LMAC IMAC GW ASUB VID
+	BH=$(uget backhaul_ip); PEER=$(peer_nth 1)
+	VNI1=$(uget vni_inet); VNI2=$(uget vni_iptv)
+	LIP=$(uget lan_ip); LMASK=$(uget lan_mask)
+	LMAC=$(uget lan_mac); IMAC=$(uget iptv_mac)
+	GW=$(uget gw_ip); ASUB=$(uget peer_lan_subnet)
+	VID=$(uget iptv_vid)
+
+	switch_configure
+	wifi_iface sta "$(uget ssid)" "$(uget key)"
+	set_backhaul "$BH" "$(uget backhaul_mask)"
+	set_vxlan vxlan_inet "$BH" "$PEER" "$VNI1"
+	set_vxlan vxlan_iptv "$BH" "$PEER" "$VNI2"
+
+	# single-wire trunk: untagged -> br-lan, tagged VID -> br-iptv
+	uci set network.lan.ifname='eth0'
+	uci set network.lan.proto='static'
+	uci set network.lan.ipaddr="$LIP"
+	uci set network.lan.netmask="$LMASK"
+	if [ -n "$LMAC" ]; then
+		uci set network.lan.macaddr="$LMAC"
+	else
+		uci -q delete network.lan.macaddr 2>/dev/null
+	fi
+
+	uci -q delete network.iptv 2>/dev/null
+	uci set network.iptv=interface
+	uci set network.iptv.ifname="eth0.$VID"
+	uci set network.iptv.type='bridge'
+	uci set network.iptv.proto='dhcp'
+	[ -n "$IMAC" ] && uci set network.iptv.macaddr="$IMAC"
+	uci set network.iptv.metric='200'
+	uci set network.iptv.delegate='0'
+	uci set network.iptv.peerdns='1'
+
+	set_private_routes
+
+	uci -q delete network.r_l2 2>/dev/null
+	uci set network.r_l2=route
+	uci set network.r_l2.interface='lan'
+	uci set network.r_l2.target="$ASUB"
+	uci set network.r_l2.netmask="$(uget peer_lan_mask)"
+
+	uci -q delete network.r_def 2>/dev/null
+	uci set network.r_def=route
+	uci set network.r_def.interface='lan'
+	uci set network.r_def.target='0.0.0.0'
+	uci set network.r_def.netmask='0.0.0.0'
+	uci set network.r_def.gateway="$GW"
+	uci set network.r_def.onlink='1'
+
+	uci -q delete network.wan 2>/dev/null
+
+	fw_iptv_zone
+	fw_lan_networks backhaul
+	fw_vxlan_udp
+	bridge_nf_off
+	set_upstream_dns "$(uget dns1)" "$(uget dns2)"
+	set_stb_dhcp
+	hotplug_vxlan_up
+	hotplug_peer_route ""
+	[ "$(uget msd_enable)" = "1" ] && setup_msd || hotplug_msd off
+	clean_legacy
+	say "client/telecom: br-lan=$LIP (eth0+vxlan_inet), br-iptv=eth0.$VID+vxlan_iptv, default via $GW"
+}
+
+apply_client_unicom() {
+	local BH PEER VNI1 LIP LMASK LMAC GW
+	BH=$(uget backhaul_ip); PEER=$(peer_nth 1)
+	VNI1=$(uget vni_inet)
+	LIP=$(uget lan_ip); LMASK=$(uget lan_mask)
+	LMAC=$(uget lan_mac); GW=$(uget gw_ip)
+
+	switch_configure
+	wifi_iface sta "$(uget ssid)" "$(uget key)"
+	set_backhaul "$BH" "$(uget backhaul_mask)"
+	apply_vxlan_multi client
+	voip_configure
+
+	uci set network.lan.ifname='eth0'
+	uci set network.lan.proto='static'
+	uci set network.lan.ipaddr="$LIP"
+	uci set network.lan.netmask="$LMASK"
+	if [ -n "$LMAC" ]; then
+		uci set network.lan.macaddr="$LMAC"
+	else
+		uci -q delete network.lan.macaddr 2>/dev/null
+	fi
+
+	uci -q delete network.iptv 2>/dev/null
+	uci -q delete network.vxlan_iptv 2>/dev/null
+	uci -q delete network.wan 2>/dev/null
+	uci -q delete network.r_l2 2>/dev/null
+	del_private_routes
+
+	uci -q delete network.r_def 2>/dev/null
+	uci set network.r_def=route
+	uci set network.r_def.interface='lan'
+	uci set network.r_def.target='0.0.0.0'
+	uci set network.r_def.netmask='0.0.0.0'
+	uci set network.r_def.gateway="$GW"
+	uci set network.r_def.onlink='1'
+
+	fw_lan_networks backhaul
+	fw_iptv_zone_del
+	fw_vxlan_udp
+	bridge_nf_off
+	set_upstream_dns "$(uget dns1)" "$(uget dns2)"
+	set_stb_dhcp
+	hotplug_vxlan_up
+	hotplug_peer_route ""
+	hotplug_msd off
+	clean_legacy
+	say "client/unicom: br-lan=$LIP (eth0+vxlan_inet), default via $GW, bridge-nf off"
+}
+
+netmask_cidr() {
+	# $1=network $2=netmask -> a.b.c.d/NN (only common masks)
+	local N M B
+	N="$1"; M="$2"
+	case "$M" in
+		255.255.255.255) B=32 ;;
+		255.255.255.0)   B=24 ;;
+		255.255.0.0)     B=16 ;;
+		255.0.0.0)       B=8 ;;
+		*)               B=24 ;;
+	esac
+	[ -z "$N" ] && return 0
+	echo "$N/$B"
+}
+
+# ---------------- commands ----------------
+cmd_apply() {
+	local ROLE PROV REGION
+	ROLE=$(uget role); PROV=$(uget provider)
+	REGION=$(uget region)
+	[ -z "$ROLE" ] && ROLE=server
+	[ -z "$PROV" ] && PROV=telecom
+	[ -z "$REGION" ] && REGION=shanghai
+
+	# Non-Shanghai regions: carrier private networks are unknown and untested.
+	# Fall back to the Shanghai-Unicom-style DHCP mode (no VLAN trunk, no
+	# private routes). NOTE: this path is NOT tested on other operators.
+	if [ "$REGION" != "shanghai" ]; then
+		if [ "$PROV" != "unicom" ]; then
+			say "WARNING: region=$REGION: falling back to unicom-style DHCP mode (untested)"
+		fi
+		PROV=unicom
+	fi
+
+	soc_guard || return 1
+
+	say "==== apply: role=$ROLE provider=$PROV region=$REGION ===="
+	cp /etc/config/network /etc/config/network.vxlanbak 2>/dev/null
+	cp /etc/config/wireless /etc/config/wireless.vxlanbak 2>/dev/null
+
+	case "$ROLE/$PROV" in
+		server/telecom) apply_server_telecom ;;
+		server/unicom)  apply_server_unicom ;;
+		client/telecom) apply_client_telecom ;;
+		client/unicom)  apply_client_unicom ;;
+		*) say "ERROR: unknown role/provider $ROLE/$PROV"; return 1 ;;
+	esac
+
+	uci commit network
+	uci commit wireless
+	uci commit dhcp
+	uci commit firewall
+	say "committed, restarting network in background"
+	# 15.05 /sbin/wifi has no 'up', use reload.
+	# vxlan devices are created AFTER network restart by cmd_vxlan_build
+	# (direct ip link, not netifd-managed) - this is what keeps the server
+	# stable when clients are offline (no netifd vxlan.sh storm).
+	( sleep 2
+	  /etc/init.d/network restart
+	  sleep 3
+	  wifi reload
+	  /etc/init.d/dnsmasq restart
+	  /etc/init.d/firewall restart
+	  # wait for the backhaul wlan to come up before building vxlan devices
+	  # (wifi reload takes 30-60s on MT7688-class; vxlan_dev_add also waits,
+	  # but this makes the log cleaner and the first tunnel snappier)
+	  local W=0 BD
+	  BD=$(logical_dev backhaul)
+	  [ -z "$BD" ] && BD=wlan0
+	  while [ $W -lt 45 ]; do
+	    ip link show "$BD" >/dev/null 2>&1 && ip -4 addr show dev "$BD" 2>/dev/null | grep -q 'inet ' && break
+	    sleep 2
+	    W=$((W+1))
+	  done
+	  "$0" vxlan-build
+	  [ "$(uget role)" = "client" ] && [ "$(uget selfheal)" = "1" ] && "$0" selfheal &
+	) >/dev/null 2>&1 &
+	say "==== apply done ===="
+	return 0
+}
+
+# Re-apply only the firewall parts. Useful because the full 'apply' restarts
+# the network (drops SSH/LuCI), while firewall fixes do not need that.
+cmd_fw() {
+	local PROV
+	PROV=$(uget provider)
+	[ -z "$PROV" ] && PROV=telecom
+	# vxlan devices are not netifd interfaces; zone membership covers the
+	# bridges (iptv/voip) and the backhaul network only.
+	fw_lan_networks backhaul
+	if [ "$PROV" != "unicom" ]; then
+		fw_iptv_zone
+	else
+		fw_iptv_zone_del
+	fi
+	fw_vxlan_udp
+	bridge_nf_off
+	uci commit firewall
+	/etc/init.d/firewall restart >/dev/null 2>&1
+	say "firewall re-applied for provider=$PROV (network untouched)"
+}
+
+cmd_selfheal() {
+	local PEER MAXW MAXR GW I A BH
+	PEER=$(peer_nth 1)
+	GW=$(uget gw_ip)
+	MAXW=120; MAXR=3
+	echo $$ > "$SELFHEAL_PID" 2>/dev/null
+	log "selfheal start (peer=$PEER)"
+	I=0
+	while [ $I -lt $MAXW ]; do
+		BH=$(ip addr show backhaul 2>/dev/null | grep -c 'inet ')
+		[ "${BH:-0}" -ge 1 ] && { log "backhaul up (${I}s)"; break; }
+		sleep 2
+		I=$((I+2))
+	done
+	sleep 5
+	A=0
+	while [ $A -lt $MAXR ]; do
+		A=$((A+1))
+		log "tunnel check #$A"
+		if ping -c 2 -W 3 "$PEER" >/dev/null 2>&1; then
+			if [ "$(uget provider)" = "unicom" ]; then
+				if ip addr show vxlan_inet 2>/dev/null | grep -q 'inet '; then
+					log "tunnel ok (underlay + vxlan_inet addressed)"
+					rm -f "$SELFHEAL_PID" 2>/dev/null
+					return 0
+				fi
+			else
+				if ping -c 2 -W 3 "$GW" >/dev/null 2>&1; then
+					log "tunnel ok (underlay + overlay reachable)"
+					rm -f "$SELFHEAL_PID" 2>/dev/null
+					return 0
+				fi
+			fi
+			log "underlay ok but overlay down, rebuilding"
+		else
+			log "underlay down (wifi?), retry"
+		fi
+		# vxlan devices are not netifd-managed; rebuild them directly
+		cmd_vxlan_build
+		if [ "$(uget provider)" != "unicom" ]; then
+			/etc/init.d/msd_lite restart 2>/dev/null
+		fi
+		sleep 8
+	done
+	log "selfheal failed"
+	rm -f "$SELFHEAL_PID" 2>/dev/null
+	return 1
+}
+
+iface_ip() {
+	ip addr show "$1" 2>/dev/null | grep 'inet ' | head -1 | awk '{print $2}'
+}
+
+# Resolve a netifd logical interface to its real L3 device.
+# 'backhaul' has no bridge, its address lives on wlan0, so looking up the
+# logical name directly finds nothing.
+logical_dev() {
+	local D
+	D=$(ubus call network.interface."$1" status 2>/dev/null | \
+		grep -o '"l3_device": *"[^"]*"' | head -1 | cut -d'"' -f4)
+	[ -z "$D" ] && D=$(ubus call network.interface."$1" status 2>/dev/null | \
+		grep -o '"device": *"[^"]*"' | head -1 | cut -d'"' -f4)
+	[ -z "$D" ] && D="$1"
+	echo "$D"
+}
+
+logical_ip() {
+	iface_ip "$(logical_dev "$1")"
+}
+
+# A vxlan interface bridged into br-lan/br-iptv has no address of its own;
+# report membership instead of an empty field.
+vxlan_state() {
+	local IFC IP
+	IFC="$1"
+	ip link show "$IFC" >/dev/null 2>&1 || { echo "absent"; return 0; }
+	IP=$(iface_ip "$IFC")
+	[ -n "$IP" ] && { echo "$IP"; return 0; }
+	if brctl show 2>/dev/null | grep -q "$IFC"; then
+		echo "bridged ($(brctl show 2>/dev/null | awk -v i="$IFC" '$NF==i {print b} /^br/ {b=$1}' | head -1))"
+	else
+		echo "up, no address"
+	fi
+}
+
+cmd_status() {
+	local ROLE PROV PEER GW
+	ROLE=$(uget role); PROV=$(uget provider)
+	PEER=$(peer_nth 1); GW=$(uget gw_ip)
+	echo "role=$ROLE"
+	echo "provider=$PROV"
+	echo "region=$(uget region)"
+	echo "enabled=$(uget enabled)"
+	echo "radio=$(uget radio)"
+	echo "peers=$(peer_list)"
+	echo "voip_enable=$(uget voip_enable)"
+	if [ "$(platform)" != "other" ]; then
+		echo "soc=supported"
+	else
+		echo "soc=unsupported"
+	fi
+	echo "soc_id=$(soc_id)"
+	echo "wifi_mode=$(uci -q get wireless.@wifi-iface[0].mode)"
+	echo "wifi_ssid=$(uci -q get wireless.@wifi-iface[0].ssid)"
+	echo "backhaul=$(logical_ip backhaul)"
+	echo "backhaul_dev=$(logical_dev backhaul)"
+	echo "vxlan_inet=$(vxlan_state vxlan_inet)"
+	echo "vxlan_inet_state=$(ip link show vxlan_inet 2>/dev/null | grep -oE 'state [A-Z]*' | awk '{print $2}')"
+	echo "vxlan_iptv=$(vxlan_state vxlan_iptv)"
+	echo "vxlan_iptv_state=$(ip link show vxlan_iptv 2>/dev/null | grep -oE 'state [A-Z]*' | awk '{print $2}')"
+	echo "vxlan_voip=$(vxlan_state vxlan_voip)"
+	echo "vxlan_voip_state=$(ip link show vxlan_voip 2>/dev/null | grep -oE 'state [A-Z]*' | awk '{print $2}')"
+	echo "br_voip=$(iface_ip br-voip)"
+	echo "br_lan=$(iface_ip br-lan)"
+	echo "br_iptv=$(iface_ip br-iptv)"
+	WANIP=$(iface_ip "$(wan_if_name)")
+	[ -z "$WANIP" ] && WANIP=$(iface_ip br-wan)
+	echo "wan=$WANIP"
+	# peer reachability: short timeout so the status page (server-side
+	# rendered) never stalls for seconds when clients are offline.
+	if [ -n "$PEER" ] && ping -c 1 -W 1 "$PEER" >/dev/null 2>&1; then
+		echo "peer_underlay=up"
+	else
+		echo "peer_underlay=down"
+	fi
+	if [ "$ROLE" = "client" ] && [ -n "$GW" ] && ping -c 1 -W 1 "$GW" >/dev/null 2>&1; then
+		echo "overlay_gw=up"
+	elif [ "$ROLE" = "client" ]; then
+		echo "overlay_gw=down"
+	fi
+	if [ "$ROLE" = "client" ] && [ "$PROV" != "unicom" ]; then
+		if pgrep msd_lite >/dev/null 2>&1; then
+			echo "msd_lite=running port $(uget msd_port)"
+		else
+			echo "msd_lite=stopped"
+		fi
+	fi
+	if [ "$PROV" != "unicom" ]; then
+		if uci -q show firewall 2>/dev/null | grep -q "name='vxlan'"; then
+			ZN=$(uci -q show firewall 2>/dev/null | sed -n "s/^firewall\.\([^.]*\)\.name='vxlan'$/\1/p" | head -1)
+			echo "fw_iptv_zone=present ($(uci -q get firewall.$ZN.network 2>/dev/null | tr '\n' ' '))"
+		else
+			echo "fw_iptv_zone=MISSING"
+		fi
+	fi
+	echo "fw_forward_policy=$(uci -q get firewall.@defaults[0].forward)"
+	echo "bridge_nf=$(cat /proc/sys/net/bridge/bridge-nf-call-iptables 2>/dev/null)"
+	echo "default_route=$(ip route show default 2>/dev/null | head -1)"
+}
+
+cmd_stop() {
+	if [ -f "$SELFHEAL_PID" ]; then
+		kill "$(cat $SELFHEAL_PID)" 2>/dev/null
+		rm -f "$SELFHEAL_PID" 2>/dev/null
+	fi
+	hotplug_msd off
+	rm -f "$HPDIR/99-vxlan-up" "$HPDIR/99-vxlan-peer-route" 2>/dev/null
+	say "hotplug hooks removed, selfheal stopped (network config left untouched)"
+}
+
+case "$1" in
+	apply)      cmd_apply ;;
+	fw)         cmd_fw ;;
+	vxlan-build) cmd_vxlan_build ;;
+	status)     cmd_status ;;
+	selfheal)   cmd_selfheal ;;
+	soc)        [ "$(platform)" != "other" ] && echo "supported ($(platform)): $(soc_id)" || echo "unsupported: $(soc_id)" ;;
+	hotplug)    hotplug_vxlan_up; say "hotplug reinstalled" ;;
+	stop)       cmd_stop ;;
+	*)
+		echo "Usage: $0 {apply|fw|vxlan-build|status|selfheal|soc|hotplug|stop}"
+		echo "  apply  full config + network restart (drops connectivity)"
+		echo "  fw     firewall only, no network restart"
+		exit 1
+		;;
+esac

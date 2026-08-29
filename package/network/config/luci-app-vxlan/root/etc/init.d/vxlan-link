@@ -1,0 +1,72 @@
+#!/bin/sh /etc/rc.common
+# luci-app-vxlan service
+# NOTE: no USE_PROCD here on purpose. Setting USE_PROCD=0 still makes
+# rc.common take the procd path ([ -n "$USE_PROCD" ] is true for "0"),
+# which would shadow our start()/stop().
+
+START=95
+STOP=10
+
+# apply/status are not rc.common built-ins, declare them so they can be called
+EXTRA_COMMANDS="apply status vxlan-build"
+EXTRA_HELP="	apply	Write network/wireless/dhcp/firewall config and restart network
+	status	Show role, tunnel and interface status
+	vxlan-build	Recreate vxlan devices (direct ip link, not netifd)"
+
+BIN=/usr/bin/vxlan-link
+
+# NOTE: do NOT name this 'enabled' - that is an rc.common built-in action
+# (queries the /etc/rc.d symlinks). Overriding it breaks service state
+# detection for opkg and LuCI.
+is_enabled() {
+	[ "$(uci -q get vxlan_link.settings.enabled)" = "1" ]
+}
+
+start() {
+	if ! is_enabled; then
+		echo "vxlan_link disabled, not starting"
+		return 0
+	fi
+	if ! $BIN soc | grep -q '^supported'; then
+		echo "vxlan_link: unsupported SoC, refusing to start"
+		echo "  $($BIN soc)"
+		[ "$(uci -q get vxlan_link.settings.force_soc)" = "1" ] || return 1
+	fi
+	# Network config itself lives in /etc/config/network (already committed by
+	# 'apply'), so boot only needs the vxlan devices rebuilt (they are NOT
+	# netifd-managed), the hotplug hooks and the selfheal watchdog.
+	# Wait for bridges to exist first (netifd brings them up asynchronously).
+	local n=0
+	while [ $n -lt 30 ] && ! brctl show br-lan >/dev/null 2>&1; do
+		sleep 1
+		n=$((n+1))
+	done
+	$BIN vxlan-build
+	$BIN hotplug
+	if [ "$(uci -q get vxlan_link.settings.role)" = "client" ] && \
+	   [ "$(uci -q get vxlan_link.settings.selfheal)" = "1" ]; then
+		( $BIN selfheal ) >/dev/null 2>&1 &
+		echo "vxlan_link: vxlan built, hotplug installed, selfheal started"
+	else
+		echo "vxlan_link: vxlan built, hotplug installed"
+	fi
+}
+
+stop() {
+	$BIN stop
+}
+
+restart() {
+	stop
+	sleep 1
+	start
+}
+
+# Re-apply the full network configuration (restarts network, drops SSH).
+apply() {
+	$BIN apply
+}
+
+status() {
+	$BIN status
+}
