@@ -1,0 +1,370 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Power Socket"
+msgstr "电源插座"
+
+msgid "For Zigbee smart plugs / sockets."
+msgstr "用于 Zigbee 智能插座。需要已配对设备。"
+
+msgid "Power ON"
+msgstr "打开电源"
+
+msgid "Power OFF"
+msgstr "关闭电源"
+
+msgid "Light Control"
+msgstr "灯光控制"
+
+msgid "For Zigbee light bulbs. Requires a paired device."
+msgstr "用于 Zigbee 灯泡。需要已配对设备。"
+
+msgid "light_Switch"
+msgstr "灯泡开关"
+
+msgid "Turn ON"
+msgstr "打开"
+
+msgid "Turn OFF"
+msgstr "关闭"
+
+msgid "Brightness"
+msgstr "亮度"
+
+msgid "Set"
+msgstr "设置"
+
+msgid "Hue"
+msgstr "色调"
+
+msgid "Saturation"
+msgstr "饱和度"
+
+msgid "HVAC / Environment"
+msgstr "空调 / 环境"
+
+msgid "Target temperature"
+msgstr "目标温度"
+
+msgid "Operation mode"
+msgstr "工作模式"
+
+msgid "Heat"
+msgstr "制热"
+
+msgid "Cool"
+msgstr "制冷"
+
+msgid "Fan only"
+msgstr "仅风扇"
+
+msgid "Fan mode"
+msgstr "风扇模式"
+
+msgid "Auto"
+msgstr "自动"
+
+msgid "Low"
+msgstr "低"
+
+msgid "Medium"
+msgstr "中"
+
+msgid "High"
+msgstr "高"
+
+msgid "Scenes"
+msgstr "场景"
+
+msgid "Scene 1"
+msgstr "场景 1"
+
+msgid "Save"
+msgstr "保存"
+
+msgid "Run"
+msgstr "运行"
+
+msgid "Delete"
+msgstr "删除"
+
+msgid "Scene 2"
+msgstr "场景 2"
+
+msgid "Scene 3"
+msgstr "场景 3"
+
+msgid "Custom command"
+msgstr "自定义命令"
+
+msgid "Send any JSON command to the coordinator (e.g. curtain position, lock, etc). Requires a paired device."
+msgstr "向协调器发送任意 JSON 命令（如窗帘位置、门锁等）。需要已配对设备。"
+
+msgid "Send"
+msgstr "发送"
+
+msgid "AT Console"
+msgstr "AT 控制台"
+
+msgid "Read-only commands only. Dangerous commands (RESET/LEAVE/FORM/SETMAC) are blocked."
+msgstr "仅只读命令。危险命令（RESET/LEAVE/FORM/SETMAC）已屏蔽。"
+
+msgid "version"
+msgstr "版本"
+
+msgid "address"
+msgstr "地址"
+
+msgid "scan all"
+msgstr "扫描全部"
+
+msgid "channel 11"
+msgstr "信道 11"
+
+msgid "Daemon Status"
+msgstr "守护进程状态"
+
+msgid "Show status JSON"
+msgstr "显示状态 JSON"
+
+msgid "Zigbee Devices"
+msgstr "Zigbee 设备"
+
+msgid "Devices appear here after joining during a pairing window. You can name each device for easy identification."
+msgstr "设备在配对窗口入网后显示在此。可为每个设备命名便于识别。"
+
+msgid "Slot"
+msgstr "槽位"
+
+msgid "Status"
+msgstr "状态"
+
+msgid "Occupied"
+msgstr "占用"
+
+msgid "Custom name"
+msgstr "自定义名称"
+
+msgid "Action"
+msgstr "动作"
+
+msgid "Refresh"
+msgstr "刷新"
+
+msgid "Open pairing window (60s)"
+msgstr "打开配对窗口（60秒）"
+
+msgid "Gateway Link (Multi-Gateway)"
+msgstr "网关互联（多网关）"
+
+msgid "All gateways are discovered from /etc/gw-link/peers.conf. Each gateway runs zigbeed -serve; devices across all networks can be managed and linked."
+msgstr "所有网关从 /etc/gw-link/peers.conf 发现。每个网关运行 zigbeed -serve；跨网络设备可统一管理和联动。"
+
+msgid "My IP (tell the peer gateway)"
+msgstr "本机 IP（告知对端网关）"
+
+msgid "loading..."
+msgstr "加载中..."
+
+msgid "Gateway List (editable)"
+msgstr "网关列表（可编辑）"
+
+msgid "Peer IP changes with the network environment!"
+msgstr "对端 IP 会随网络环境变化！"
+
+msgid "IP addresses are assigned by DHCP. When a gateway is moved to another router / network segment, its IP will change. Always enter the peer gateway's CURRENT IP (check it on the peer's own Status page). A wrong IP shows OFFLINE."
+msgstr "IP 由 DHCP 分配。网关移到其他路由器/网段时 IP 会变。请始终填写对端网关的当前 IP（在对端状态页查看）。IP 错误会显示离线。"
+
+msgid "Peer port"
+msgstr "对端端口"
+
+msgid "peer runs gw-link"
+msgstr "对端运行 gw-link"
+
+msgid "or"
+msgstr "或"
+
+msgid "peer runs zigbeed only"
+msgstr "对端仅运行 zigbeed"
+
+msgid "Do NOT use 1883 - that is the MQTT port, not the link port."
+msgstr "不要使用 1883 - 那是 MQTT 端口，不是互联端口。"
+
+msgid "Adding a peer restarts gw-link automatically."
+msgstr "添加对端会自动重启 gw-link。"
+
+msgid "label (optional)"
+msgstr "标签（可选）"
+
+msgid "Add"
+msgstr "添加"
+
+msgid "Reload"
+msgstr "重载"
+
+msgid "Link Rules"
+msgstr "联动规则"
+
+msgid "When a control command matches a rule trigger, the linked command is sent to the target gateway automatically."
+msgstr "当控制命令匹配规则触发时，联动命令自动发送到目标网关。"
+
+msgid "Name"
+msgstr "名称"
+
+msgid "Trigger"
+msgstr "触发"
+
+msgid "Manual"
+msgstr "手动"
+
+msgid "Cross-Gateway Control"
+msgstr "跨网关控制"
+
+msgid "Target"
+msgstr "目标"
+
+msgid "This gateway"
+msgstr "本网关"
+
+msgid "Pair 60s"
+msgstr "配对 60秒"
+
+msgid "This gateway (self)"
+msgstr "本网关（自身）"
+
+msgid "Channel"
+msgstr "信道"
+
+msgid "no gateways"
+msgstr "无网关"
+
+msgid "no peers"
+msgstr "无对端"
+
+msgid "IP required"
+msgstr "需要 IP"
+
+msgid "Invalid IP"
+msgstr "无效 IP"
+
+msgid "Invalid port"
+msgstr "无效端口"
+
+msgid "Gateway Options"
+msgstr "网关选项"
+
+msgid "Enable"
+msgstr "启用"
+
+msgid "Disabled"
+msgstr "已禁用"
+
+msgid "Enabled"
+msgstr "已启用"
+
+msgid "Serial device"
+msgstr "串口设备"
+
+msgid "Baud rate"
+msgstr "波特率"
+
+msgid "Zigbee channel"
+msgstr "Zigbee 信道"
+
+msgid "PAN ID"
+msgstr "PAN ID"
+
+msgid "Extended PAN ID"
+msgstr "扩展 PAN ID"
+
+msgid "Network key"
+msgstr "网络密钥"
+
+msgid "Poll interval (s)"
+msgstr "轮询间隔（秒）"
+
+msgid "MQTT bridge"
+msgstr "MQTT 桥接"
+
+msgid "MQTT bridge: connects to local mosquitto (1883), publishes device state and subscribes control commands. Use with Home Assistant via zigbee2mqtt-style topics."
+msgstr "MQTT 桥接：连接本地 mosquitto (1883)，发布设备状态并订阅控制命令。可通过 zigbee2mqtt 风格主题配合 Home Assistant 使用。"
+
+msgid "Leave channel/PAN ID/extended PAN ID/network key empty - real values are read from the coordinator and shown on Status page."
+msgstr "信道/PAN ID/扩展 PAN ID/网络密钥留空 - 实际值从协调器读取并显示在状态页。"
+
+msgid "Save &amp; Apply"
+msgstr "保存并应用"
+
+msgid "Rebuild coordinator network? This temporarily starts the vendor DeviceHub to reform the network."
+msgstr "重建协调器网络？将临时启动原厂 DeviceHub 重新建网。"
+
+msgid "Rebuild started, waiting (~60s)..."
+msgstr "重建已启动，等待（约60秒）..."
+
+msgid "Rebuild started, checking..."
+msgstr "重建已启动，检查中..."
+
+msgid "Timeout, check /tmp/zigbeed_rebuild.log"
+msgstr "超时，请查看 /tmp/zigbeed_rebuild.log"
+
+msgid "Zigbee Gateway Status"
+msgstr "Zigbee 网关状态"
+
+msgid "running"
+msgstr "运行中"
+
+msgid "down"
+msgstr "已停止"
+
+msgid "gw-link"
+msgstr "网关互联"
+
+msgid "Coordinator"
+msgstr "协调器"
+
+msgid "repairing / lost"
+msgstr "修复中 / 丢失"
+
+msgid "Firmware"
+msgstr "固件"
+
+msgid "Coordinator MAC"
+msgstr "协调器 MAC"
+
+msgid "ExtPAN"
+msgstr "扩展PAN"
+
+msgid "Last update"
+msgstr "最后更新"
+
+msgid "Rebuild network"
+msgstr "重建网络"
+
+msgid "Pairing"
+msgstr "配对"
+
+msgid "Open (custom s)"
+msgstr "打开（自定义秒）"
+
+msgid "Close pairing"
+msgstr "关闭配对"
+
+msgid "Rebuild coordinator network? This will temporarily start the vendor DeviceHub to reform the network. Channel and PAN ID will change."
+msgstr "重建协调器网络？将临时启动原厂 DeviceHub 重新建网。信道和 PAN ID 会改变。"
+
+msgid "Zigbee Gateway"
+msgstr "Zigbee 网关"
+
+msgid "Devices"
+msgstr "设备"
+
+msgid "Control"
+msgstr "控制"
+
+msgid "Gateway Link"
+msgstr "网关互联"
+
+msgid "Coordinator network parameters lost - repair in progress. If this persists, click "Rebuild network"."
+msgstr "协调器网络参数丢失 - 修复中。若持续，请点击"重建网络"。"
+

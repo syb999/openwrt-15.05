@@ -1,0 +1,98 @@
+<%+header%>
+<style>
+.zg-wrap { max-width: 960px; }
+.zg-card { background: #fff; border: 1px solid #e8c9a0; border-radius: 10px; padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(192,122,42,.15); }
+.zg-card h3 { margin: 0 0 10px; font-size: 14px; color: #6b3d10; border-bottom: 2px solid #e8c9a0; padding-bottom: 6px; }
+.zg-btn { background: linear-gradient(150deg, #e89a3c, #c97a20); color: #fff; border: none; border-radius: 6px; padding: 7px 14px; cursor: pointer; font-weight: bold; }
+.zg-btn-red { background: linear-gradient(150deg, #e0555e, #c03040); }
+.zg-btn-gray { background: linear-gradient(150deg, #a0a0a0, #808080); }
+.zg-table { width: 100%; border-collapse: collapse; }
+.zg-table th, .zg-table td { border: 1px solid #e8c9a0; padding: 6px 8px; text-align: left; font-size: 13px; }
+.zg-table th { background: #fdf3e6; color: #6b3d10; }
+.zg-badge { display: inline-block; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: bold; }
+.zg-badge-ok { background: #d2f0d2; color: #1a7a1a; border: 1px solid #4cbf63; }
+.zg-badge-na { background: #e8e8e8; color: #666; border: 1px solid #aaa; }
+.zg-name { border: 1px solid #e8c9a0; border-radius: 4px; padding: 3px 6px; width: 130px; font-size: 13px; }
+.zg-note { color: #888; font-size: 12px; margin-top: 6px; }
+.zg-msg { margin-top: 8px; color: #c07a2a; font-size: 12px; min-height: 16px; }
+@media (prefers-color-scheme: dark) {
+  .zg-card { background: #26282c; border-color: #4a3a20; }
+  .zg-card h3 { color: #e89a3c; border-color: #4a3a20; }
+  .zg-table th, .zg-table td { border-color: #4a3a20; }
+  .zg-table th { background: #33291c; color: #e89a3c; }
+  .zg-name { background: #1e2024; color: #ddd; border-color: #4a3a20; }
+}
+</style>
+<div class="zg-wrap">
+<div class="zg-card">
+<h3><%:Zigbee Devices%></h3>
+<div class="zg-note"><%:Devices appear here after joining during a pairing window. You can name each device for easy identification.%></div>
+<table class="zg-table" style="margin-top:10px;">
+<thead><tr>
+<th><%:Slot%></th><th><%:Status%></th><th><%:Occupied%></th><th><%:Custom name%></th><th><%:Action%></th>
+</tr></thead>
+<tbody id="d_dev_rows"><tr><td colspan="5">...</td></tr></tbody>
+</table>
+<div class="zg-msg" id="d_msg"></div>
+<div style="margin-top:10px; display:flex; gap:8px;">
+<button class="zg-btn" onclick="zg_devices()"><%:Refresh%></button>
+<button class="zg-btn zg-btn-gray" onclick="zg_pair()"><%:Open pairing window (60s)%></button>
+</div>
+</div>
+</div>
+<script type="text/javascript">
+var ZG_ACT = '<%=luci.dispatcher.build_url("admin/services/zigbeed/actions")%>';
+var ZG_DEVICES = null;
+
+function zg_setmsg(t) { document.getElementById('d_msg').textContent = t || ''; }
+
+function zg_devices() {
+	XHR.get(ZG_ACT + '/devices', null, function(xhr, d) {
+		var tb = document.getElementById('d_dev_rows');
+		if (!d || !d.data) { tb.innerHTML = '<tr><td colspan="5">error</td></tr>'; return; }
+		try {
+			var s = JSON.parse(d.data);
+			ZG_DEVICES = s.devices || [];
+			var html = '';
+			if (ZG_DEVICES.length) {
+				for (var i = 0; i < ZG_DEVICES.length; i++) {
+					var dev = ZG_DEVICES[i];
+					var key = 'slot' + dev.slot;
+					var name = dev.name || '';
+					var occ = dev.occupied ? '<span class="zg-badge zg-badge-ok">' + 'yes' + '</span>'
+					                        : '<span class="zg-badge zg-badge-na">' + 'no' + '</span>';
+					html += '<tr>' +
+						'<td>' + dev.slot + '</td>' +
+						'<td>0x' + (dev.slot_status ? dev.slot_status.toString(16) : '0') + '</td>' +
+						'<td>' + occ + '</td>' +
+						'<td><input class="zg-name" id="nm_' + key + '" value="' + name + '" placeholder="' + 'name' + '"></td>' +
+						'<td><button class="zg-btn" onclick="zg_setname(\'' + key + '\')">' + 'Save' + '</button></td>' +
+						'</tr>';
+				}
+			} else {
+				html = '<tr><td colspan="5">' + 'no devices' + '</td></tr>';
+			}
+			tb.innerHTML = html;
+		} catch(e) { tb.innerHTML = '<tr><td colspan="5">parse error</td></tr>'; }
+	});
+}
+
+function zg_setname(key) {
+	var el = document.getElementById('nm_' + key);
+	if (!el) return;
+	var name = el.value.trim();
+	XHR.get(ZG_ACT + '/setname/' + key + '/' + encodeURIComponent(name), null, function(xhr, d) {
+		zg_setmsg((d && d.data) ? d.data : 'saved');
+		setTimeout(zg_devices, 500);
+	});
+}
+
+function zg_pair() {
+	XHR.get(ZG_ACT + '/join/60', null, function(xhr, d) {
+		zg_setmsg((d && d.data) ? d.data : 'pairing window opened');
+	});
+}
+
+zg_devices();
+</script>
+<%+footer%>

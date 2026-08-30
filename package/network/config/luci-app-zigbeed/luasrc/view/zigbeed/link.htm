@@ -1,0 +1,253 @@
+<%+header%>
+<style>
+.zg-wrap { max-width: 1100px; }
+.zg-card { background: #fff; border: 1px solid #e8c9a0; border-radius: 10px; padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(192,122,42,.15); }
+.zg-card h3 { margin: 0 0 10px; font-size: 14px; color: #6b3d10; border-bottom: 2px solid #e8c9a0; padding-bottom: 6px; }
+.zg-btn { background: linear-gradient(150deg, #e89a3c, #c97a20); color: #fff; border: none; border-radius: 6px; padding: 7px 14px; cursor: pointer; font-weight: bold; }
+.zg-btn-red { background: linear-gradient(150deg, #d9534f, #c9302c); }
+.zg-btn-gray { background: linear-gradient(150deg, #888, #666); }
+.zg-result { font-family: monospace; font-size: 12px; background: #fdf3e6; border: 1px solid #e8c9a0; border-radius: 6px; padding: 8px; margin-top: 8px; white-space: pre-wrap; max-height: 300px; overflow-y: auto; display: none; }
+.zg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.zg-gw { background: #fdf9f0; border: 1px solid #e8c9a0; border-radius: 8px; padding: 10px; }
+.zg-gw h4 { margin: 0 0 8px; font-size: 13px; color: #6b3d10; }
+.zg-row { display: flex; justify-content: space-between; font-size: 12px; padding: 3px 0; border-bottom: 1px dashed #e8c9a0; }
+.zg-row label { color: #888; }
+.zg-badge { padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; }
+.zg-badge-ok { background: #d4edda; color: #155724; }
+.zg-badge-na { background: #f8d7da; color: #721c24; }
+.zg-note { color: #888; font-size: 12px; margin-top: 6px; }
+.zg-sel { padding: 5px; border: 1px solid #e8c9a0; border-radius: 4px; }
+@media (prefers-color-scheme: dark) {
+  .zg-card { background: #26282c; border-color: #4a3a20; }
+  .zg-card h3 { color: #e89a3c; border-color: #4a3a20; }
+  .zg-gw { background: #1e2024; border-color: #4a3a20; }
+  .zg-gw h4 { color: #e89a3c; }
+  .zg-row { border-color: #4a3a20; }
+  .zg-result { background: #33291c; border-color: #4a3a20; color: #ddd; }
+  .zg-sel { background: #1e2024; color: #ddd; border-color: #4a3a20; }
+}
+</style>
+<div class="zg-wrap">
+<div class="zg-card">
+<h3><%:Gateway Link (Multi-Gateway)%></h3>
+<div class="zg-note"><%:All gateways are discovered from /etc/gw-link/peers.conf. Each gateway runs zigbeed -serve; devices across all networks can be managed and linked.%></div>
+<div class="zg-note" style="margin-top:6px;padding:6px 8px;background:#fdf3e6;border:1px dashed #e8c9a0;border-radius:6px;"><b><%:My IP (tell the peer gateway)%>:</b> <span id="zg_myip"><%:loading...%></span></div>
+<div id="gw_grid" class="zg-grid" style="margin-top:10px;"><%:loading...%></div>
+<div style="margin-top:10px;">
+<button class="zg-btn" onclick="zg_refresh()"><%:Refresh%></button>
+</div>
+</div>
+
+<div class="zg-card">
+<h3><%:Gateway List (editable)%></h3>
+<div style="background:#fff3cd;border:1px solid #e8c9a0;border-radius:6px;padding:8px;margin-bottom:8px;font-size:12px;color:#6b3d10;">
+<b>⚠️ <%:Peer IP changes with the network environment!%></b><br>
+<%:IP addresses are assigned by DHCP. When a gateway is moved to another router / network segment, its IP will change. Always enter the peer gateway's CURRENT IP (check it on the peer's own Status page). A wrong IP shows OFFLINE.%>
+</div>
+<div class="zg-note"><%:Peer port%>: <b>8890</b> (<%:peer runs gw-link%>) <%:or%> <b>8888</b> (<%:peer runs zigbeed only%>). ⚠️ <%:Do NOT use 1883 - that is the MQTT port, not the link port.%> <%:Adding a peer restarts gw-link automatically.%></div>
+<div class="zg-result" id="zg_peer_list" style="display:block; max-height:200px;"><%:loading...%></div>
+<div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-top:8px;">
+<input type="text" id="peer_host" placeholder="192.168.1.100" style="padding:5px; border:1px solid #e8c9a0; border-radius:4px; width:130px;">
+<input type="number" id="peer_port" value="8890" min="1" max="65535" style="padding:5px; border:1px solid #e8c9a0; border-radius:4px; width:70px;">
+<input type="text" id="peer_label" placeholder="<%:label (optional)%>" style="padding:5px; border:1px solid #e8c9a0; border-radius:4px; width:110px;">
+<button class="zg-btn" onclick="zg_peer_add()"><%:Add%></button>
+<button class="zg-btn zg-btn-gray" onclick="zg_peers_load()"><%:Reload%></button>
+</div>
+</div>
+
+<div class="zg-card">
+<h3><%:Link Rules%></h3>
+<div class="zg-note"><%:When a control command matches a rule trigger, the linked command is sent to the target gateway automatically.%></div>
+<table style="width:100%; border-collapse:collapse; margin-top:8px; font-size:12px;">
+<thead><tr style="background:#fdf3e6;"><th style="padding:4px;border:1px solid #e8c9a0;">ID</th><th style="padding:4px;border:1px solid #e8c9a0;"><%:Name%></th><th style="padding:4px;border:1px solid #e8c9a0;"><%:Trigger%></th><th style="padding:4px;border:1px solid #e8c9a0;"><%:Action%></th><th style="padding:4px;border:1px solid #e8c9a0;"><%:Manual%></th></tr></thead>
+<tbody id="r_rows"><tr><td colspan="5">...</td></tr></tbody>
+</table>
+<div class="zg-result" id="zg_rules_result"></div>
+</div>
+
+<div class="zg-card">
+<h3><%:Cross-Gateway Control%></h3>
+<div class="zg-row">
+<label><%:Target%>:</label>
+<select id="c_gw" class="zg-sel">
+<option value="self"><%:This gateway%></option>
+</select>
+<button class="zg-btn" onclick="zg_ctl('{"State":"1"}')"><%:Turn ON%></button>
+<button class="zg-btn zg-btn-red" onclick="zg_ctl('{"State":"0"}')"><%:Turn OFF%></button>
+<button class="zg-btn zg-btn-gray" onclick="zg_pair()"><%:Pair 60s%></button>
+</div>
+<div class="zg-result" id="zg_ctl_result"></div>
+</div>
+</div>
+<script type="text/javascript">
+var ZG_LINK = '<%=luci.dispatcher.build_url("admin/services/zigbeed/actions/gwlink")%>';
+var ZG_ACT_PEERS = '<%=luci.dispatcher.build_url("admin/services/zigbeed/actions")%>';
+var GW_NAMES = {};   /* ip -> 显示名 */
+
+function esc(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+function zg_refresh() {
+	XHR.get(ZG_LINK + '/peers', null, function(xhr, d) {
+		try {
+			var outer = JSON.parse(xhr.responseText);
+			var p = (typeof outer.data === 'string') ? JSON.parse(outer.data) : (outer.data || {});
+			GW_NAMES = {};
+			var sel = document.getElementById('c_gw');
+			sel.innerHTML = '<option value="self"><%:This gateway%></option>';
+			if (p.peers) {
+				for (var i = 0; i < p.peers.length; i++) {
+					var g = p.peers[i];
+					GW_NAMES[g.host] = g.label || ('GW' + (i+1));
+					var opt = document.createElement('option');
+					opt.value = g.host;
+					opt.textContent = GW_NAMES[g.host] + ' (' + g.host + ')';
+					sel.appendChild(opt);
+				}
+			}
+		} catch(e) {}
+	});
+	XHR.get(ZG_LINK + '/status', null, function(xhr, d) {
+		try {
+			var outer = JSON.parse(xhr.responseText);
+			var s = (typeof outer.data === 'string') ? JSON.parse(outer.data) : (outer.data || {});
+			var grid = document.getElementById('gw_grid');
+			var html = '';
+			/* self */
+			var st = s.self || {};
+			html += '<div class="zg-gw"><h4><%:This gateway (self)%></h4>';
+			html += '<div class="zg-row"><label><%:Status%>:</label><span>' + (st.coordinator_mac ? '<span class="zg-badge zg-badge-ok">online</span>' : '<span class="zg-badge zg-badge-na">' + esc(st.error||'down') + '</span>') + '</span></div>';
+			html += '<div class="zg-row"><label>MAC:</label><span>' + esc(st.coordinator_mac||'-') + '</span></div>';
+			html += '<div class="zg-row"><label><%:Channel%>:</label><span>' + esc(st.channel||'-') + '</span></div>';
+			html += '<div class="zg-row"><label>PAN:</label><span>' + esc(st.panid||'-') + '</span></div></div>';
+			/* all peers (keys other than self) */
+			for (var k in s) {
+				if (k === 'self') continue;
+				var pt = s[k] || {};
+				var name = GW_NAMES[k] || k;
+				html += '<div class="zg-gw"><h4>' + esc(name) + ' (' + esc(k) + ')</h4>';
+				html += '<div class="zg-row"><label><%:Status%>:</label><span>' + (pt.coordinator_mac ? '<span class="zg-badge zg-badge-ok">online</span>' : '<span class="zg-badge zg-badge-na">' + esc(pt.error||'down') + '</span>') + '</span></div>';
+				html += '<div class="zg-row"><label>MAC:</label><span>' + esc(pt.coordinator_mac||'-') + '</span></div>';
+				html += '<div class="zg-row"><label><%:Channel%>:</label><span>' + esc(pt.channel||'-') + '</span></div>';
+				html += '<div class="zg-row"><label>PAN:</label><span>' + esc(pt.panid||'-') + '</span></div></div>';
+			}
+			grid.innerHTML = html || '<%:no gateways%>';
+		} catch(e) { document.getElementById('gw_grid').innerHTML = 'parse error'; }
+	});
+	XHR.get(ZG_LINK + '/rules', null, function(xhr, d) {
+		try {
+			var or = JSON.parse(xhr.responseText);
+			var r = (typeof or.data === 'string') ? JSON.parse(or.data) : (or.data || {});
+			var rows = document.getElementById('r_rows');
+			if (r.rules && r.rules.length) {
+				var html = '';
+				for (var i = 0; i < r.rules.length; i++) {
+					var ru = r.rules[i];
+					html += '<tr><td style="padding:4px;border:1px solid #e8c9a0;">' + ru.id + '</td><td style="padding:4px;border:1px solid #e8c9a0;">' + esc(ru.name) + '</td><td style="padding:4px;border:1px solid #e8c9a0;">' + esc(ru.trigger) + '</td><td style="padding:4px;border:1px solid #e8c9a0;">' + esc(ru.action) + '</td><td style="padding:4px;border:1px solid #e8c9a0;"><button class="zg-btn" onclick="zg_trigger(' + ru.id + ')">Run</button></td></tr>';
+				}
+				rows.innerHTML = html;
+			} else {
+				rows.innerHTML = '<tr><td colspan="5">no rules</td></tr>';
+			}
+		} catch(e) { rows.innerHTML = '<tr><td colspan="5">parse error</td></tr>'; }
+	});
+}
+
+function zg_peers_load() {
+	var el = document.getElementById('zg_peer_list');
+	XHR.get(ZG_ACT_PEERS + '/peers_conf', null, function(xhr, d) {
+		try {
+			var outer = JSON.parse(xhr.responseText);
+			var txt = (typeof outer.data === 'string') ? outer.data : (outer.data || '');
+			var html = '';
+			var lines = txt.split(/\n+/);
+			for (var i = 0; i < lines.length; i++) {
+				var ln = lines[i].trim();
+				if (!ln || ln.charAt(0) === '#') continue;
+				var host = ln.split(/\s+/)[0].split(':')[0];
+				html += '<div style="display:flex; justify-content:space-between; align-items:center; padding:3px 0; border-bottom:1px dashed #e8c9a0;"><span>' + esc(ln) + '</span>' +
+					'<button class="zg-btn zg-btn-red" style="padding:2px 8px; font-size:11px;" onclick="zg_peer_del(\'' + esc(host) + '\')">del</button></div>';
+			}
+			el.innerHTML = html || '<%:no peers%>';
+		} catch(e) { el.textContent = 'parse error: ' + e.message; }
+	});
+}
+
+function zg_peer_add() {
+	var host = document.getElementById('peer_host').value.trim();
+	var port = document.getElementById('peer_port').value.trim() || '8890';
+	var label = document.getElementById('peer_label').value.trim();
+	if (!host) { alert('<%:IP required%>'); return; }
+	if (!/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) { alert('<%:Invalid IP%>: ' + host); return; }
+	var p = parseInt(port, 10);
+	if (isNaN(p) || p < 1 || p > 65535) { alert('<%:Invalid port%>: ' + port); return; }
+	var el = document.getElementById('zg_peer_list');
+	el.textContent = 'adding ' + host + ':' + p + '...';
+	XHR.get(ZG_ACT_PEERS + '/peers_edit/add/' + encodeURIComponent(host + ':' + p + '/' + label), null, function(xhr, d) {
+		try {
+			var r = JSON.parse(xhr.responseText);
+			el.textContent = (r.data && typeof r.data === 'string') ? r.data : xhr.responseText;
+		} catch(e) { el.textContent = xhr.responseText; }
+		setTimeout(zg_peers_load, 1500);
+		setTimeout(zg_refresh, 2500);
+	});
+}
+
+function zg_peer_del(host) {
+	if (!confirm('Remove ' + host + '?')) return;
+	var el = document.getElementById('zg_peer_list');
+	el.textContent = 'removing ' + host + '...';
+	XHR.get(ZG_ACT_PEERS + '/peers_edit/del/' + encodeURIComponent(host), null, function(xhr, d) {
+		el.textContent = (d && d.data) ? d.data : xhr.responseText;
+		setTimeout(zg_peers_load, 1500);
+		setTimeout(zg_refresh, 2500);
+	});
+}
+
+function zg_trigger(id) {
+	var el = document.getElementById('zg_rules_result');
+	el.style.display = 'block';
+	el.textContent = '... trigger ' + id;
+	XHR.get(ZG_LINK + '/trigger/' + id, null, function(xhr, d) {
+		el.textContent = xhr.responseText;
+	});
+}
+
+function zg_ctl(json) {
+	var el = document.getElementById('zg_ctl_result');
+	var gw = document.getElementById('c_gw').value;
+	el.style.display = 'block';
+	el.textContent = '... ' + gw + ' ' + json;
+	XHR.get(ZG_LINK + '/control/' + gw + '/' + encodeURIComponent(json), null, function(xhr, d) {
+		el.textContent = xhr.responseText;
+	});
+}
+
+function zg_pair() {
+	var el = document.getElementById('zg_ctl_result');
+	var gw = document.getElementById('c_gw').value;
+	el.style.display = 'block';
+	el.textContent = '... pair ' + gw;
+	XHR.get(ZG_LINK + '/pair/' + gw + '/60', null, function(xhr, d) {
+		el.textContent = xhr.responseText;
+	});
+}
+
+zg_peers_load();
+zg_refresh();
+/* 本机 IP (告知对端用) */
+XHR.get(ZG_ACT_PEERS + '/myip', null, function(xhr, d) {
+	try {
+		var outer = JSON.parse(xhr.responseText);
+		var ips = (typeof outer.data === 'string') ? JSON.parse(outer.data) : (outer.data || []);
+		var el = document.getElementById('zg_myip');
+		if (ips && ips.length) {
+			var parts = [];
+			for (var i = 0; i < ips.length; i++) parts.push('<b>' + esc(ips[i].iface) + '</b> ' + esc(ips[i].addr));
+			el.innerHTML = parts.join(' &nbsp; ');
+		} else {
+			el.textContent = '-';
+		}
+	} catch(e) { document.getElementById('zg_myip').textContent = 'error'; }
+});
+setInterval(zg_refresh, 15000);
+</script>

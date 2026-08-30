@@ -1,0 +1,116 @@
+<%+header%>
+<style>
+.zg-wrap { max-width: 960px; }
+.zg-card { background: #fff; border: 1px solid #e8c9a0; border-radius: 10px; padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(192,122,42,.15); }
+.zg-card h3 { margin: 0 0 10px; font-size: 14px; color: #6b3d10; border-bottom: 2px solid #e8c9a0; padding-bottom: 6px; }
+.zg-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+.zg-row label { min-width: 140px; color: #5a360f; font-weight: bold; }
+.zg-inp { width: 260px; padding: 6px; border: 1px solid #e8c9a0; border-radius: 4px; }
+.zg-btn { background: linear-gradient(150deg, #e89a3c, #c97a20); color: #fff; border: none; border-radius: 6px; padding: 8px 18px; cursor: pointer; font-weight: bold; }
+.zg-result { font-family: monospace; font-size: 12px; background: #fdf3e6; border: 1px solid #e8c9a0; border-radius: 6px; padding: 8px; margin-top: 8px; white-space: pre-wrap; display: none; }
+.zg-note { color: #888; font-size: 12px; margin-top: 6px; }
+@media (prefers-color-scheme: dark) {
+  .zg-card { background: #26282c; border-color: #4a3a20; }
+  .zg-card h3 { color: #e89a3c; border-color: #4a3a20; }
+  .zg-row label { color: #e89a3c; }
+  .zg-inp { background: #1e2024; color: #ddd; border-color: #4a3a20; }
+  .zg-result { background: #33291c; border-color: #4a3a20; color: #ddd; }
+}
+</style>
+<div class="zg-wrap">
+<div class="zg-card">
+<h3><%:Gateway Options%></h3>
+<div class="zg-row">
+<label><%:Enable%>:</label>
+<select id="s_enabled" class="zg-inp">
+<option value="0"><%:Disabled%></option>
+<option value="1"><%:Enabled%></option>
+</select>
+</div>
+<div class="zg-row"><label><%:Serial device%>:</label><input id="s_device" class="zg-inp" value="/dev/ttyS1"></div>
+<div class="zg-row"><label><%:Baud rate%>:</label><input id="s_baud" class="zg-inp" value="115200"></div>
+<div class="zg-row"><label><%:Zigbee channel%>:</label><input id="s_channel" class="zg-inp" value=""></div>
+<div class="zg-row"><label><%:PAN ID%>:</label><input id="s_panid" class="zg-inp" value=""></div>
+<div class="zg-row"><label><%:Extended PAN ID%>:</label><input id="s_extpanid" class="zg-inp" value=""></div>
+<div class="zg-row"><label><%:Network key%>:</label><input id="s_key" class="zg-inp" value=""></div>
+<div class="zg-row"><label><%:Poll interval (s)%>:</label><input id="s_poll" class="zg-inp" value="30"></div>
+<div class="zg-row">
+<label><%:MQTT bridge%>:</label>
+<select id="s_mqtt" class="zg-inp">
+<option value="0"><%:Disabled%></option>
+<option value="1"><%:Enabled%></option>
+</select>
+</div>
+<div class="zg-note"><%:MQTT bridge: connects to local mosquitto (1883), publishes device state and subscribes control commands. Use with Home Assistant via zigbee2mqtt-style topics.%></div>
+<div class="zg-note"><%:Leave channel/PAN ID/extended PAN ID/network key empty - real values are read from the coordinator and shown on Status page.%></div>
+<div style="margin-top:12px;">
+<button class="zg-btn" onclick="zg_save()"><%:Save &amp; Apply%></button>
+</div>
+<div class="zg-result" id="zg_save_result"></div>
+</div>
+</div>
+<script type="text/javascript">
+var ZG_ACT = '<%=luci.dispatcher.build_url("admin/services/zigbeed/actions")%>';
+function zg_load() {
+	XHR.get(ZG_ACT + '/getconf', null, function(xhr, d) {
+		if (!d || !d.data) return;
+		try {
+			var c = JSON.parse(d.data);
+			document.getElementById('s_enabled').value = c.enabled || '0';
+			document.getElementById('s_device').value = c.device || '/dev/ttyS1';
+			document.getElementById('s_baud').value = c.baud || '115200';
+			document.getElementById('s_channel').value = c.channel || '';
+			document.getElementById('s_panid').value = c.panid || '';
+			document.getElementById('s_extpanid').value = c.extpanid || '';
+			document.getElementById('s_key').value = c.network_key || '';
+			document.getElementById('s_poll').value = c.poll || '30';
+			document.getElementById('s_mqtt').value = c.mqtt || '0';
+		} catch(e) {}
+	});
+}
+function zg_rebuild() {
+	if (!confirm('<%:Rebuild coordinator network? This temporarily starts the vendor DeviceHub to reform the network.%>')) return;
+	var el = document.getElementById('zg_msg');
+	el.textContent = '<%:Rebuild started, waiting (~60s)...%>';
+	XHR.get(ZG_ACT + '/rebuild', null, function(xhr, d) {
+		el.textContent = '<%:Rebuild started, checking...%>';
+		var t = 0;
+		var iv = setInterval(function() {
+			t += 5;
+			if (t > 150) { clearInterval(iv); el.textContent = '<%:Timeout, check /tmp/zigbeed_rebuild.log%>'; return; }
+			XHR.get(ZG_ACT + '/rebuild_status', null, function(xhr2, d2) {
+				try {
+					var o2 = JSON.parse(xhr2.responseText);
+					var txt = (typeof o2.data === 'string') ? o2.data : '';
+					if (txt.indexOf('OK:') >= 0 || txt.indexOf('FAIL:') >= 0) {
+						clearInterval(iv);
+						el.textContent = txt;
+					}
+				} catch(e) {}
+			});
+		}, 5000);
+	});
+}
+
+function zg_save() {
+	var el = document.getElementById('zg_save_result');
+	el.style.display = 'block';
+	el.textContent = '...';
+	var params = [
+		'enabled=' + document.getElementById('s_enabled').value,
+		'device=' + encodeURIComponent(document.getElementById('s_device').value),
+		'baud=' + encodeURIComponent(document.getElementById('s_baud').value),
+		'channel=' + encodeURIComponent(document.getElementById('s_channel').value),
+		'panid=' + encodeURIComponent(document.getElementById('s_panid').value),
+		'extpanid=' + encodeURIComponent(document.getElementById('s_extpanid').value),
+		'network_key=' + encodeURIComponent(document.getElementById('s_key').value),
+		'poll=' + encodeURIComponent(document.getElementById('s_poll').value),
+		'mqtt=' + encodeURIComponent(document.getElementById('s_mqtt').value)
+	].join('&');
+	XHR.get(ZG_ACT + '/save/' + encodeURIComponent(params), null, function(xhr, d) {
+		el.textContent = (d && d.data) ? d.data : (xhr.responseText || 'saved');
+	});
+}
+zg_load();
+</script>
+<%+footer%>

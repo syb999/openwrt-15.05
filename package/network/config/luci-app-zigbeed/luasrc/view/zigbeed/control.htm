@@ -1,0 +1,144 @@
+<%+header%>
+<style>
+.zg-wrap { max-width: 960px; }
+.zg-card { background: #fff; border: 1px solid #e8c9a0; border-radius: 10px; padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(192,122,42,.15); }
+.zg-card h3 { margin: 0 0 10px; font-size: 14px; color: #6b3d10; border-bottom: 2px solid #e8c9a0; padding-bottom: 6px; }
+.zg-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+.zg-row label { min-width: 110px; color: #5a360f; font-weight: bold; }
+.zg-btn { background: linear-gradient(150deg, #e89a3c, #c97a20); color: #fff; border: none; border-radius: 6px; padding: 7px 14px; cursor: pointer; font-weight: bold; }
+.zg-btn-red { background: linear-gradient(150deg, #e0555e, #c03040); }
+.zg-btn-gray { background: linear-gradient(150deg, #a0a0a0, #808080); }
+.zg-result { font-family: monospace; font-size: 12px; background: #fdf3e6; border: 1px solid #e8c9a0; border-radius: 6px; padding: 8px; margin-top: 8px; white-space: pre-wrap; max-height: 220px; overflow-y: auto; display: none; }
+.zg-note { color: #888; font-size: 12px; margin-top: 6px; }
+.zg-range { width: 200px; vertical-align: middle; }
+.zg-num { width: 80px; padding: 5px; border: 1px solid #e8c9a0; border-radius: 4px; }
+.zg-text { flex: 1; padding: 6px; border: 1px solid #e8c9a0; border-radius: 4px; min-width: 220px; }
+@media (prefers-color-scheme: dark) {
+  .zg-card { background: #26282c; border-color: #4a3a20; }
+  .zg-card h3 { color: #e89a3c; border-color: #4a3a20; }
+  .zg-row label { color: #e89a3c; }
+  .zg-result { background: #33291c; border-color: #4a3a20; color: #ddd; }
+}
+</style>
+<div class="zg-wrap">
+<div class="zg-result" id="zg_ctl_result"></div>
+<div class="zg-card">
+<h3><%:Power Socket%></h3>
+<div class="zg-note"><%:For Zigbee smart plugs / sockets.%></div>
+<div class="zg-row">
+<button class="zg-btn" onclick='zg_ctl("{\"State\":\"1\"}")'><%:Power ON%></button>
+<button class="zg-btn zg-btn-red" onclick='zg_ctl("{\"State\":\"0\"}")'><%:Power OFF%></button>
+</div>
+</div>
+<div class="zg-card">
+<h3><%:Light Control%></h3>
+<div class="zg-note"><%:For Zigbee light bulbs. Requires a paired device.%></div>
+<div class="zg-row">
+<label><%:light_Switch%>:</label>
+<button class="zg-btn" onclick='zg_ctl("{\"State\":\"1\"}")'><%:Turn ON%></button>
+<button class="zg-btn zg-btn-red" onclick='zg_ctl("{\"State\":\"0\"}")'><%:Turn OFF%></button>
+</div>
+<div class="zg-row">
+<label><%:Brightness%>:</label>
+<input type="range" class="zg-range" id="zg_lv" min="0" max="255" value="128" oninput="document.getElementById('zg_lv_val').textContent=this.value">
+<span id="zg_lv_val">128</span>
+<button class="zg-btn" onclick='zg_ctl(zg_json("Level", document.getElementById("zg_lv").value))'><%:Set%></button>
+</div>
+<div class="zg-row">
+<label><%:Hue%>:</label>
+<input type="range" class="zg-range" id="zg_hue" min="0" max="360" value="100" oninput="document.getElementById('zg_hue_val').textContent=this.value">
+<span id="zg_hue_val">100</span>
+<button class="zg-btn" onclick='zg_ctl(zg_json("HUE", document.getElementById("zg_hue").value))'><%:Set%></button>
+</div>
+<div class="zg-row">
+<label><%:Saturation%>:</label>
+<input type="range" class="zg-range" id="zg_sat" min="0" max="255" value="200" oninput="document.getElementById('zg_sat_val').textContent=this.value">
+<span id="zg_sat_val">200</span>
+<button class="zg-btn" onclick='zg_ctl(zg_json("Saturation", document.getElementById("zg_sat").value))'><%:Set%></button>
+</div>
+</div>
+<div class="zg-card">
+<h3><%:HVAC / Environment%></h3>
+<div class="zg-row">
+<label><%:Target temperature%>:</label>
+<input type="number" class="zg-num" id="zg_temp" min="16" max="30" value="24">
+<button class="zg-btn" onclick='zg_ctl(zg_json("Temperature", document.getElementById("zg_temp").value))'><%:Set%></button>
+</div>
+<div class="zg-row">
+<label><%:Operation mode%>:</label>
+<button class="zg-btn" onclick='zg_ctl("{\"WorkMode\":\"1\"}")'><%:Heat%></button>
+<button class="zg-btn" onclick='zg_ctl("{\"WorkMode\":\"0\"}")'><%:Cool%></button>
+<button class="zg-btn zg-btn-gray" onclick='zg_ctl("{\"WorkMode\":\"2\"}")'><%:Fan only%></button>
+</div>
+<div class="zg-row">
+<label><%:Fan mode%>:</label>
+<button class="zg-btn" onclick='zg_ctl("{\"FanMode\":\"0\"}")'><%:Auto%></button>
+<button class="zg-btn" onclick='zg_ctl("{\"FanMode\":\"1\"}")'><%:Low%></button>
+<button class="zg-btn" onclick='zg_ctl("{\"FanMode\":\"2\"}")'><%:Medium%></button>
+<button class="zg-btn" onclick='zg_ctl("{\"FanMode\":\"3\"}")'><%:High%></button>
+</div>
+</div>
+<div class="zg-card">
+<h3><%:Scenes%></h3>
+<div class="zg-row">
+<label><%:Scene 1%>:</label>
+<button class="zg-btn" onclick='zg_ctl("{\"Action\":\"A\",\"GroupId\":\"1\",\"SceneId\":\"1\"}")'><%:Save%></button>
+<button class="zg-btn" onclick='zg_ctl("{\"Action\":\"E\",\"GroupId\":\"1\",\"SceneId\":\"1\"}")'><%:Run%></button>
+<button class="zg-btn zg-btn-red" onclick='zg_ctl("{\"Action\":\"D\",\"GroupId\":\"1\",\"SceneId\":\"1\"}")'><%:Delete%></button>
+</div>
+<div class="zg-row">
+<label><%:Scene 2%>:</label>
+<button class="zg-btn" onclick='zg_ctl("{\"Action\":\"A\",\"GroupId\":\"1\",\"SceneId\":\"2\"}")'><%:Save%></button>
+<button class="zg-btn" onclick='zg_ctl("{\"Action\":\"E\",\"GroupId\":\"1\",\"SceneId\":\"2\"}")'><%:Run%></button>
+<button class="zg-btn zg-btn-red" onclick='zg_ctl("{\"Action\":\"D\",\"GroupId\":\"1\",\"SceneId\":\"2\"}")'><%:Delete%></button>
+</div>
+<div class="zg-row">
+<label><%:Scene 3%>:</label>
+<button class="zg-btn" onclick='zg_ctl("{\"Action\":\"A\",\"GroupId\":\"1\",\"SceneId\":\"3\"}")'><%:Save%></button>
+<button class="zg-btn" onclick='zg_ctl("{\"Action\":\"E\",\"GroupId\":\"1\",\"SceneId\":\"3\"}")'><%:Run%></button>
+<button class="zg-btn zg-btn-red" onclick='zg_ctl("{\"Action\":\"D\",\"GroupId\":\"1\",\"SceneId\":\"3\"}")'><%:Delete%></button>
+</div>
+</div>
+<div class="zg-card">
+<h3><%:Custom command%></h3>
+<div class="zg-note"><%:Send any JSON command to the coordinator (e.g. curtain position, lock, etc). Requires a paired device.%></div>
+<div class="zg-row">
+<input type="text" class="zg-text" id="zg_custom" placeholder='{"State":"1"}'>
+<button class="zg-btn" onclick='zg_ctl(document.getElementById("zg_custom").value)'><%:Send%></button>
+</div>
+</div>
+</div>
+<script type="text/javascript">
+var ZG_CTL = '<%=luci.dispatcher.build_url("admin/services/zigbeed/actions/control")%>';
+/* 构造单字段 JSON (避免 onclick 内字符串引号冲突) */
+function zg_json(k, v) { return '{"' + k + '":"' + v + '"}'; }
+function zg_ctl(json) {
+	var el = document.getElementById('zg_ctl_result');
+	el.style.display = 'block';
+	el.textContent = '... ' + json;
+	/* 原生 XHR: 显示一切响应/错误 (LuCI XHR 封装失败时静默, 改用原生定位) */
+	var x = new XMLHttpRequest();
+	x.open('GET', ZG_CTL + '/' + encodeURIComponent(json), true);
+	x.onreadystatechange = function() {
+		if (x.readyState == 4) {
+			var txt = x.responseText || '(空响应)';
+			/* 解码 LuCI JSON 包装 + 内层 \u0022 转义 */
+			try {
+				var outer = JSON.parse(txt);
+				if (typeof outer.data === 'string') {
+					try { txt = JSON.stringify(JSON.parse(outer.data), null, 1); }
+					catch(e) { txt = outer.data; }
+				} else if (outer.error) {
+					txt = '错误: ' + outer.error;
+				} else {
+					txt = JSON.stringify(outer, null, 1);
+				}
+			} catch(e) { /* 非 JSON, 原样显示 */ }
+			el.textContent = 'HTTP ' + x.status + ': ' + txt;
+		}
+	};
+	x.onerror = function() { el.textContent = '网络错误: 无法连接 LuCI action (会话过期?)'; };
+	x.send();
+}
+</script>
+<%+footer%>

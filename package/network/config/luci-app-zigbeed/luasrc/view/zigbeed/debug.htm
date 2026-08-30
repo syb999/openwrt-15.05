@@ -1,0 +1,58 @@
+<%+header%>
+<style>
+.zg-wrap { max-width: 960px; }
+.zg-card { background: #fff; border: 1px solid #e8c9a0; border-radius: 10px; padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(192,122,42,.15); }
+.zg-card h3 { margin: 0 0 10px; font-size: 14px; color: #6b3d10; border-bottom: 2px solid #e8c9a0; padding-bottom: 6px; }
+.zg-btn { background: linear-gradient(150deg, #e89a3c, #c97a20); color: #fff; border: none; border-radius: 6px; padding: 7px 14px; cursor: pointer; font-weight: bold; }
+.zg-result { font-family: monospace; font-size: 12px; background: #fdf3e6; border: 1px solid #e8c9a0; border-radius: 6px; padding: 8px; margin-top: 8px; white-space: pre-wrap; max-height: 300px; overflow-y: auto; display: none; }
+.zg-sel { width: 300px; padding: 6px; border: 1px solid #e8c9a0; border-radius: 4px; }
+.zg-note { color: #888; font-size: 12px; margin-top: 6px; }
+@media (prefers-color-scheme: dark) {
+  .zg-card { background: #26282c; border-color: #4a3a20; }
+  .zg-card h3 { color: #e89a3c; border-color: #4a3a20; }
+  .zg-result { background: #33291c; border-color: #4a3a20; color: #ddd; }
+  .zg-sel { background: #1e2024; color: #ddd; border-color: #4a3a20; }
+}
+</style>
+<div class="zg-wrap">
+<div class="zg-card">
+<h3><%:AT Console%></h3>
+<div class="zg-note"><%:Read-only commands only. Dangerous commands (RESET/LEAVE/FORM/SETMAC) are blocked.%></div>
+<div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+<select id="zg_at_sel" class="zg-sel">
+<option value="AT+VER">AT+VER (<%:version%>)</option>
+<option value="AT+SHOWADDR">AT+SHOWADDR (<%:address%>)</option>
+<option value="AT+SCANCHMASK=07FFF800">AT+SCANCHMASK=07FFF800 (<%:scan all%>)</option>
+<option value="AT+SETCH=0B">AT+SETCH=0B (<%:channel 11%>)</option>
+</select>
+<button class="zg-btn" onclick="zg_raw()"><%:Run%></button>
+</div>
+<div class="zg-result" id="zg_raw_result"></div>
+</div>
+<div class="zg-card">
+<h3><%:Daemon Status%></h3>
+<button class="zg-btn" onclick="zg_status()"><%:Show status JSON%></button>
+<div class="zg-result" id="zg_status_result"></div>
+</div>
+</div>
+<script type="text/javascript">
+var ZG_ACT = '<%=luci.dispatcher.build_url("admin/services/zigbeed/actions")%>';
+function zg_raw() {
+	var el = document.getElementById('zg_raw_result');
+	var sel = document.getElementById('zg_at_sel');
+	el.style.display = 'block';
+	el.textContent = '... ' + sel.value;
+	XHR.get(ZG_ACT + '/raw/' + encodeURIComponent(sel.value), null, function(xhr, d) {
+		el.textContent = (d && d.data) ? d.data : (xhr.responseText || 'no response');
+	});
+}
+function zg_status() {
+	var el = document.getElementById('zg_status_result');
+	el.style.display = 'block';
+	el.textContent = '...';
+	XHR.get(ZG_ACT + '/status', null, function(xhr, d) {
+		el.textContent = (d && d.data) ? d.data : (xhr.responseText || 'no response');
+	});
+}
+</script>
+<%+footer%>

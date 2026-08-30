@@ -1,0 +1,147 @@
+<%+header%>
+<style>
+.zg-wrap { max-width: 960px; }
+.zg-card { background: #fff; border: 1px solid #e8c9a0; border-radius: 10px; padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(192,122,42,.15); }
+.zg-card h3 { margin: 0 0 10px; font-size: 14px; color: #6b3d10; border-bottom: 2px solid #e8c9a0; padding-bottom: 6px; }
+.zg-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+.zg-row label { min-width: 110px; color: #5a360f; font-weight: bold; }
+.zg-row .v { color: #333; font-family: monospace; }
+.zg-btn { background: linear-gradient(150deg, #e89a3c, #c97a20); color: #fff; border: none; border-radius: 6px; padding: 7px 14px; cursor: pointer; font-weight: bold; }
+.zg-btn-red { background: linear-gradient(150deg, #e0555e, #c03040); }
+.zg-btn-gray { background: linear-gradient(150deg, #a0a0a0, #808080); }
+.zg-badge { display: inline-block; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: bold; }
+.zg-badge-ok { background: #d2f0d2; color: #1a7a1a; border: 1px solid #4cbf63; }
+.zg-badge-na { background: #e8e8e8; color: #666; border: 1px solid #aaa; }
+.zg-badge-warn { background: #fff3cd; color: #856404; border: 1px solid #d8b84a; }
+.zg-result { font-family: monospace; font-size: 12px; background: #fdf3e6; border: 1px solid #e8c9a0; border-radius: 6px; padding: 8px; margin-top: 8px; white-space: pre-wrap; max-height: 220px; overflow-y: auto; display: none; }
+.zg-note { color: #888; font-size: 12px; margin-top: 6px; }
+@media (prefers-color-scheme: dark) {
+  .zg-card { background: #26282c; border-color: #4a3a20; }
+  .zg-card h3 { color: #e89a3c; border-color: #4a3a20; }
+  .zg-row .v { color: #ddd; }
+  .zg-result { background: #33291c; border-color: #4a3a20; color: #ddd; }
+}
+</style>
+<%
+-- ===== server-side 读取状态 (无 JS 解析, 最可靠) =====
+local f = io.open("/tmp/zigbeed_status.json", "r")
+local st = {}
+if f then
+    local raw = f:read("*a")
+    f:close()
+    -- 简单 JSON 字段提取 (状态文件格式固定)
+    local function gv(k)
+        local v = raw:match('"' .. k .. '"%s*:%s*"([^"]+)"')
+        if v then return v end
+        v = raw:match('"' .. k .. '"%s*:%s*(%d+)')
+        return v or "?"
+    end
+    st.mac = gv("coordinator_mac")
+    st.ch = gv("channel")
+    st.pan = gv("panid")
+    st.extpan = gv("extpanid")
+    st.key = gv("network_key")
+    st.ts = gv("ts")
+    st.ok = (st.ch ~= "?") and (st.ch ~= "")
+else
+    st.ok = false
+end
+-- 进程状态
+-- 端口检测 (读 /proc/net/tcp, 无 fork 偶发失败): 8888=zigbeed 8890=gw-link
+local function port_up(port)
+	local f = io.open("/proc/net/tcp", "r")
+	if not f then return false end
+	local hex = string.format("%04X", port)
+	for line in f:lines() do
+		if line:find(":" .. hex) then f:close(); return true end
+	end
+	f:close()
+	return false
+end
+local zb_running = port_up(8888)
+local gl_running = port_up(8890)
+local dh_running = false
+if io.popen("pidof DeviceHub 2>/dev/null"):read("*l") then dh_running = true end
+local repairing = (not st.ok) or dh_running
+%>
+<div class="zg-wrap">
+<div class="zg-card">
+<h3><%:Zigbee Gateway Status%></h3>
+<div class="zg-row"><label>zigbeed:</label><span class="v">
+<% if zb_running then %><span class="zg-badge zg-badge-ok"><%:running%></span>
+<% else %><span class="zg-badge zg-badge-na"><%:down%></span><% end %>
+</span></div>
+<div class="zg-row"><label><%:gw-link%>:</label><span class="v">
+<% if gl_running then %><span class="zg-badge zg-badge-ok"><%:running%></span>
+<% else %><span class="zg-badge zg-badge-na"><%:down%></span><% end %>
+</span></div>
+<div class="zg-row"><label><%:Coordinator%>:</label><span class="v">
+<% if repairing then %><span class="zg-badge zg-badge-warn"><%:repairing / lost%></span>
+<% else %><span class="zg-badge zg-badge-ok"><%:running%></span><% end %>
+</span></div>
+<div class="zg-row"><label><%:Firmware%>:</label><span class="v">REXENSE HA COO (EFR32MG1B)</span></div>
+<div class="zg-row"><label><%:Coordinator MAC%>:</label><span class="v"><%=st.mac or "?"%></span></div>
+<div class="zg-row"><label><%:Channel%>:</label><span class="v"><%=st.ch or "?"%></span></div>
+<div class="zg-row"><label>PAN ID:</label><span class="v"><%=st.pan or "?"%></span></div>
+<div class="zg-row"><label><%:ExtPAN%>:</label><span class="v"><%=st.extpan or "?"%></span></div>
+<div class="zg-row"><label><%:Network key%>:</label><span class="v"><%=st.key or "?"%></span></div>
+<div class="zg-row"><label><%:Last update%>:</label><span class="v"><%=st.ts or "?"%></span></div>
+<% if repairing then %>
+<div class="zg-note" style="color:#856404; background:#fff3cd; border:1px solid #d8b84a; border-radius:6px; padding:10px; margin-top:8px;">
+<%:Coordinator network parameters lost - repair in progress. If this persists, click "Rebuild network".%>
+</div>
+<% end %>
+<div style="margin-top:10px;">
+<button class="zg-btn zg-btn-red" onclick="zg_rebuild()"><%:Rebuild network%></button>
+<button class="zg-btn zg-btn-gray" onclick="location.reload()"><%:Refresh%></button>
+</div>
+</div>
+<div class="zg-card">
+<h3><%:Pairing%></h3>
+<div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+<button class="zg-btn" onclick="zg_action('join','60')"><%:Open pairing window (60s)%></button>
+<span><%:or%></span>
+<input type="number" id="zg_sec" min="10" max="600" value="120" style="width:70px; padding:5px; border:1px solid #e8c9a0; border-radius:4px;">
+<button class="zg-btn" onclick="zg_action('join', document.getElementById('zg_sec').value)"><%:Open (custom s)%></button>
+<button class="zg-btn zg-btn-red" onclick="zg_action('join','0')"><%:Close pairing%></button>
+</div>
+<div class="zg-result" id="zg_result"></div>
+</div>
+</div>
+<script type="text/javascript">
+var ZG_ACT = '<%=luci.dispatcher.build_url("admin/services/zigbeed/actions")%>';
+function zg_action(act, arg) {
+	var el = document.getElementById('zg_result');
+	el.style.display = 'block';
+	el.textContent = '... ' + act + '/' + arg;
+	XHR.get(ZG_ACT + '/' + act + '/' + arg, null, function(xhr, d) {
+		el.textContent = (d && d.data) ? d.data : (xhr.responseText || 'no response');
+	});
+}
+function zg_rebuild() {
+	if (!confirm('<%:Rebuild coordinator network? This will temporarily start the vendor DeviceHub to reform the network. Channel and PAN ID will change.%>')) return;
+	var el = document.getElementById('zg_result');
+	el.style.display = 'block';
+	el.textContent = '<%:Rebuild started, waiting (~60s)...%>';
+	XHR.get(ZG_ACT + '/rebuild', null, function(xhr, d) {
+		el.textContent = '<%:Rebuild started, checking...%>';
+		var t = 0;
+		var iv = setInterval(function() {
+			t += 5;
+			if (t > 150) { clearInterval(iv); el.textContent = '<%:Timeout, check /tmp/zigbeed_rebuild.log%>'; return; }
+			XHR.get(ZG_ACT + '/rebuild_status', null, function(xhr2, d2) {
+				try {
+					var o2 = JSON.parse(xhr2.responseText);
+					var txt = (typeof o2.data === 'string') ? o2.data : '';
+					if (txt.indexOf('OK:') >= 0 || txt.indexOf('FAIL:') >= 0) {
+						clearInterval(iv);
+						el.textContent = txt;
+						setTimeout(function(){ location.reload(); }, 4000);
+					}
+				} catch(e) {}
+			});
+		}, 5000);
+	});
+}
+</script>
+<%+footer%>

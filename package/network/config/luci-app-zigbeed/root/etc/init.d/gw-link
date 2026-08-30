@@ -1,0 +1,36 @@
+#!/bin/sh /etc/rc.common
+# gw-link - 多网关互联服务
+# 从 /etc/gw-link/peers.conf 读取对端网关列表 (每行 "ip:port [label]")
+# 参考 iptv-epg: 不用 USE_PROCD, 旧风格 start()/stop()
+
+START=96
+STOP=9
+
+PROG=/usr/bin/gw-link
+PIDFILE=/var/run/gw-link.pid
+PEERS_CONF=/etc/gw-link/peers.conf
+
+start() {
+	config_load zigbeed
+	config_get_bool enabled options 'enabled' 0
+	[ "$enabled" -eq 1 ] || return 0
+
+	[ -f "$PIDFILE" ] && kill -0 "$(cat $PIDFILE)" 2>/dev/null && return 0
+
+	# 等待 zigbeed 就绪 (最多 30 秒)
+	local i=0
+	while [ $i -lt 30 ]; do
+		wget -q -T 2 -O /dev/null http://127.0.0.1:8888/ping 2>/dev/null && break
+		sleep 1
+		i=$((i+1))
+	done
+
+	$PROG 8890 8888 "$PEERS_CONF" > /tmp/gwlink.log 2>&1 &
+	echo $! > "$PIDFILE"
+}
+
+stop() {
+	[ -f "$PIDFILE" ] && kill "$(cat $PIDFILE)" 2>/dev/null
+	killall gw-link 2>/dev/null
+	rm -f "$PIDFILE"
+}
