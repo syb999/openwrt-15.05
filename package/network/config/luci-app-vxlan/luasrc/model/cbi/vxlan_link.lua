@@ -71,14 +71,23 @@ o.datatype = "ip4addr"
 o.default = "172.16.9.1"
 o.rmempty = false
 
-o = s:taboption("backhaul", Value, "peer_ips", translate("Peer Backhaul IP (one or more)"),
-	translate("Space-separated peer underlay addresses, same subnet as local. One peer = one IP, " ..
-		"multiple peers = multiple IPs (e.g. 172.16.9.2 172.16.9.3 172.16.9.4). " ..
-		"Multi-peer is server-only: creates a dedicated VXLAN tunnel per peer bridged into br-lan/br-iptv/br-voip; " ..
+o = s:taboption("backhaul", Value, "peer_ips", translate("Server Backhaul IP"),
+	translate("Client-only: the server (AP) underlay address, same subnet as local. " ..
+		"e.g. local=172.16.9.2 -> server=172.16.9.1"))
+o.datatype = "ip4addr"
+o.placeholder = "172.16.9.1"
+o.rmempty = false
+o:depends("role", "client")
+
+o = s:taboption("backhaul", Value, "peer_ips_list", translate("Peer Backhaul IPs (one or more)"),
+	translate("Server-only: space-separated client underlay addresses, same subnet as local. " ..
+		"One peer = one IP, multiple peers = multiple IPs (e.g. 172.16.9.2 172.16.9.3 172.16.9.4). " ..
+		"Each peer gets a dedicated VXLAN tunnel bridged into br-lan/br-iptv/br-voip; " ..
 		"offline peers do not affect the server (tunnels are managed directly by the script, not netifd)."))
 o.placeholder = "172.16.9.2 172.16.9.3"
 o.datatype = "string"
 o.rmempty = false
+o:depends("role", "server")
 
 o = s:taboption("backhaul", Value, "backhaul_mask", translate("Backhaul Netmask"))
 o.datatype = "ip4addr"
@@ -166,10 +175,12 @@ o.default = "zte"
 o:depends("provider", "telecom")
 
 o = s:taboption("iptv", Value, "iptv_gateway", translate("Private Gateway"),
-	translate("Next-hop for private routes; leave empty to skip private routes"))
+	translate("Next-hop for private routes; leave empty to skip private routes. " ..
+		"Shanghai Telecom IPTV DHCP assigns EITHER 30.170.0.0/16 or 30.171.0.0/16 - " ..
+		"the gateway is auto-detected from the DHCP lease, this value is only a fallback"))
 o.datatype = "ip4addr"
 o.rmempty = true
-o.placeholder = "30.170.0.1"
+o.placeholder = "30.170.0.1 / 30.171.0.1"
 o:depends("provider", "telecom")
 
 o = s:taboption("iptv", Value, "iptv_routes", translate("IPTV Walled-Garden Routes"),

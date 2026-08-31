@@ -267,6 +267,9 @@ vxlan_dev_add() {
 	# takes 30-60s on MT7688-class SoCs, so first WAIT for the tunlink
 	# (wlan0) to be up AND addressed - blind retries for a few seconds are
 	# not enough. Timeout 90s, then give up.
+	# 🔴 注意: mt7628 STA 驱动关联后 wlan0 可能长期显示 "mode DORMANT"
+	#    (实测已关联稳定后仍是 DORMANT, 且此时 vxlan 能建) → 不能等 DORMANT 消失!
+	#    竞态靠下方的"创建失败重试"解决。
 	T=0
 	while [ $T -lt 45 ]; do
 		if ip link show "$TUN" >/dev/null 2>&1 && \
@@ -286,11 +289,19 @@ vxlan_dev_add() {
 	# unicast remote mode (default, safe on wireless: point-to-point, no
 	# loop, rate control + retransmit). Each peer gets its own VNI (see
 	# cmd_vxlan_build) because kernel 3.18 forbids duplicate VNI per device.
-	if ip link add "$NAME" type vxlan id "$VNI" remote "$PEER" dev "$TUN" dstport 4789 2>/dev/null; then
-		ip link set "$NAME" up 2>/dev/null
-		say "  vxlan dev $NAME: vni=$VNI peer=$PEER dev=$TUN dstport=4789 (unicast)"
-		return 0
-	fi
+	# 🔴 创建失败重试: DORMANT 消失后驱动可能还要一两秒才完全就绪,
+	#    一次 ip link add 失败不代表真失败, 重试 5 次 (间隔 2s) 再放弃。
+	local TRIES=0
+	while [ $TRIES -lt 5 ]; do
+		if ip link add "$NAME" type vxlan id "$VNI" remote "$PEER" dev "$TUN" dstport 4789 2>/dev/null; then
+			ip link set "$NAME" up 2>/dev/null
+			say "  vxlan dev $NAME: vni=$VNI peer=$PEER dev=$TUN dstport=4789 (unicast)"
+			return 0
+		fi
+		TRIES=$((TRIES+1))
+		say "  retry $TRIES/5: vxlan dev $NAME (peer=$PEER, tun=$TUN)"
+		sleep 2
+	done
 	say "  ERROR: cannot create vxlan dev $NAME (peer=$PEER, tun=$TUN)"
 	return 1
 }
@@ -471,11 +482,25 @@ del_private_routes() {
 # Private (carrier walled-garden) routes via the IPTV bridge.
 # Gateway for private-plane routes. NEVER hardcode the carrier gateway:
 # operators have been known to renumber IPTV/VoIP planes (happened in this
-# deployment!). The DHCP-assigned router on br-iptv is the only source of
-# truth; fall back to the configured value only before a lease exists.
+# deployment!). Shanghai Telecom IPTV DHCP hands out EITHER 30.170.0.0/16
+# or 30.171.0.0/16 (both are valid carrier planes - observed in the wild).
+# The DHCP-assigned router on br-iptv is the only source of truth; fall back
+# to the configured value only before a lease exists.
 private_gw() {
-	local GW
+	local GW IP
+	# ① DHCP 默认路由的网关 (30.170.0.1 或 30.171.0.1, 看这次 DHCP 给哪个网段)
 	GW=$(ip route show dev br-iptv 2>/dev/null | awk '/^default/ {print $3; exit}')
+	# ② 从 br-iptv 自身 IP 推导: 30.170.x → 30.170.0.1, 30.171.x → 30.171.0.1
+	#    (内核直连路由 30.171.0.0/16 dev br-iptv scope link 无 via 字段, 网关隐含为网段 .1;
+	#     从接口 IP 推导最可靠, 两个网段都覆盖)
+	if [ -z "$GW" ]; then
+		IP=$(ip -4 addr show dev br-iptv 2>/dev/null | awk '$1=="inet" {print $2; exit}')
+		case "$IP" in
+			30.170.*) GW=30.170.0.1 ;;
+			30.171.*) GW=30.171.0.1 ;;
+		esac
+	fi
+	# ③ 配置兜底 (仅 DHCP/直连都拿不到时)
 	[ -z "$GW" ] && GW=$(uget iptv_gateway)
 	echo "$GW"
 }
@@ -690,6 +715,15 @@ voip_configure() {
 	uci set network.voip.ifname="eth0.$VID"
 	uci set network.voip.type='bridge'
 	uci set network.voip.proto='dhcp'
+	# 🔴 br-voip 桥 MAC 必须独立 (eth0.$VID 继承 eth0 MAC, 与 wlan0 underlay 冲突)
+	#    持久化固定随机 MAC (02: 本地管理位), 与 lan/iptv 的修复一致。
+	local GMACV=$(uci get vxlan_link.settings.voip_mac_fixed 2>/dev/null)
+	if [ -z "$GMACV" ]; then
+		GMACV="02:$(hexdump -n5 -e '5/1 ":%02x"' /dev/urandom 2>/dev/null | sed 's/^://')"
+		uci set vxlan_link.settings.voip_mac_fixed="$GMACV"
+		uci commit vxlan_link
+	fi
+	uci set network.voip.macaddr="$GMACV"
 	uci set network.voip.metric='300'
 	uci set network.voip.delegate='0'
 	# peerdns=1: the carrier's VoIP DNS (e.g. 15.192.252.188 / 15.192.251.188)
@@ -749,13 +783,13 @@ voip_configure() {
 # correctly. peer_list is space-separated IPs. First peer keeps legacy names
 # (vxlan_inet / vxlan_iptv), extra peers get _p<N> suffixes.
 peer_list() {
-	# Single field peer_ips (space separated, may hold one or many peers).
-	# Fall back to legacy peer_ip / peer_list fields for old configs.
+	# 🔴 新格式 (按 role 分字段): client 读 peer_ips (单个服务端IP), server 读 peer_ips_list (多个对端IP)
+	#    cbi 按 role 只显示对应字段, 不再兼容旧格式
 	local LIST
-	LIST=$(uget peer_ips)
-	if [ -z "$LIST" ]; then
-		LIST=$(uget peer_ip)
-		[ -n "$(uget peer_list)" ] && LIST="$LIST $(uget peer_list)"
+	if [ "$(uget role)" = "client" ]; then
+		LIST=$(uget peer_ips)
+	else
+		LIST=$(uget peer_ips_list)
 	fi
 	echo "$LIST"
 }
@@ -863,6 +897,12 @@ lan_if_name() {
 # ---------------- role x provider ----------------
 apply_server_telecom() {
 	local BH PEER VNI1 VNI2 WIF LIF LIP LMASK SUB SMASK VID
+	# 🔴 一次性迁移: 旧固件 server 配置存 peer_ips, 新格式只认 peer_ips_list
+	if [ -n "$(uget peer_ips)" ]; then
+		uci set vxlan_link.settings.peer_ips_list="$(uget peer_ips)"
+		uci delete vxlan_link.settings.peer_ips 2>/dev/null
+		uci commit vxlan_link
+	fi
 	BH=$(uget backhaul_ip); PEER=$(peer_nth 1)
 	VNI1=$(uget vni_inet); VNI2=$(uget vni_iptv)
 	WIF=$(wan_if_name); LIF=$(lan_if_name)
@@ -917,6 +957,12 @@ apply_server_telecom() {
 
 apply_server_unicom() {
 	local BH PEER VNI1 WIF LIF LIP LMASK SUB SMASK
+	# 🔴 一次性迁移: 旧固件 server 配置存 peer_ips, 新格式只认 peer_ips_list
+	if [ -n "$(uget peer_ips)" ]; then
+		uci set vxlan_link.settings.peer_ips_list="$(uget peer_ips)"
+		uci delete vxlan_link.settings.peer_ips 2>/dev/null
+		uci commit vxlan_link
+	fi
 	BH=$(uget backhaul_ip); PEER=$(peer_nth 1)
 	VNI1=$(uget vni_inet)
 	WIF=$(wan_if_name); LIF=$(lan_if_name)
@@ -977,18 +1023,36 @@ apply_client_telecom() {
 	switch_configure
 	wifi_iface sta "$(uget ssid)" "$(uget key)"
 	set_backhaul "$BH" "$(uget backhaul_mask)"
-	set_vxlan vxlan_inet "$BH" "$PEER" "$VNI1"
-	set_vxlan vxlan_iptv "$BH" "$PEER" "$VNI2"
+	# 🔴 修复: client/telecom 曾缺失 apply_vxlan_multi (unicom 有, telecom 漏了)!
+	#    set_vxlan 是空函数 (vxlan 设备由后台 vxlan-build 用 ip link 直接创建),
+	#    但 apply_vxlan_multi 负责清理旧 UCI vxlan 段 — 缺失导致旧配置残留,
+	#    且与 unicom 行为不一致。补上, 保证 client/telecom 与 client/unicom 一致。
+	apply_vxlan_multi client
 
 	# single-wire trunk: untagged -> br-lan, tagged VID -> br-iptv
 	uci set network.lan.ifname='eth0'
 	uci set network.lan.proto='static'
 	uci set network.lan.ipaddr="$LIP"
 	uci set network.lan.netmask="$LMASK"
+	# 🔴 修复 (client 隧道数据面不通的根因!): 桥 MAC 必须独立, 不能继承 eth0!
+	#    client 是 STA: wlan0(underlay)和 eth0/br-lan(overlay)硬件同 MAC (a0:9d:c1:0a:33:36),
+	#    内核桥默认继承第一个成员 (eth0) 的 MAC → vxlan 隧道内外层同 MAC →
+	#    server 的 vxlan FDB 把 overlay MAC 和 underlay MAC 混淆 → 单播不通 (ARP 通但 ICMP 不通)!
+	#    server 端 network.lan 有显式 macaddr (00:7e:56:00:36:87) 所以正常。
+	#    → client 必须显式设置独立桥 MAC。lan_mac 配置优先; 否则生成固定随机 MAC
+	#      并持久化到 uci (不能每次 apply 都变, 否则 server ARP 一直混乱)。
 	if [ -n "$LMAC" ]; then
 		uci set network.lan.macaddr="$LMAC"
 	else
-		uci -q delete network.lan.macaddr 2>/dev/null
+		local GMAC=$(uci get vxlan_link.settings.lan_mac_fixed 2>/dev/null)
+		if [ -z "$GMAC" ]; then
+			# 本地管理位随机 MAC: 02:xx:xx:xx:xx:xx (与厂商 MAC 不冲突)
+			# 🔴 hexdump 5/1 ":%02x" 输出开头带冒号 (:xx:xx...), 必须 sed 去掉!
+			GMAC="02:$(hexdump -n5 -e '5/1 ":%02x"' /dev/urandom 2>/dev/null | sed 's/^://')"
+			uci set vxlan_link.settings.lan_mac_fixed="$GMAC"
+			uci commit vxlan_link
+		fi
+		uci set network.lan.macaddr="$GMAC"
 	fi
 
 	uci -q delete network.iptv 2>/dev/null
@@ -996,10 +1060,27 @@ apply_client_telecom() {
 	uci set network.iptv.ifname="eth0.$VID"
 	uci set network.iptv.type='bridge'
 	uci set network.iptv.proto='dhcp'
-	[ -n "$IMAC" ] && uci set network.iptv.macaddr="$IMAC"
+	# 🔴 同样: br-iptv 桥 MAC 必须独立 (eth0.85 继承 eth0 MAC, 与 wlan0 underlay 冲突)
+	#    iptv_mac 配置优先; 否则持久化固定随机 MAC (02: 本地管理位)。
+	if [ -n "$IMAC" ]; then
+		uci set network.iptv.macaddr="$IMAC"
+	else
+		local GMAC2=$(uci get vxlan_link.settings.iptv_mac_fixed 2>/dev/null)
+		if [ -z "$GMAC2" ]; then
+			GMAC2="02:$(hexdump -n5 -e '5/1 ":%02x"' /dev/urandom 2>/dev/null | sed 's/^://')"
+			uci set vxlan_link.settings.iptv_mac_fixed="$GMAC2"
+			uci commit vxlan_link
+		fi
+		uci set network.iptv.macaddr="$GMAC2"
+	fi
 	uci set network.iptv.metric='200'
 	uci set network.iptv.delegate='0'
 	uci set network.iptv.peerdns='1'
+
+	# 🔴 修复: client/telecom 曾缺失 voip_configure (unicom 有, telecom 漏了)!
+	#    → client 端 br-voip/vxlan_voip 完全不配置, VoIP 不可用。
+	#    补上, 与 client/unicom 一致。
+	voip_configure
 
 	set_private_routes
 
@@ -1139,7 +1220,8 @@ cmd_apply() {
 	# vxlan devices are created AFTER network restart by cmd_vxlan_build
 	# (direct ip link, not netifd-managed) - this is what keeps the server
 	# stable when clients are offline (no netifd vxlan.sh storm).
-	( sleep 2
+	(
+	  sleep 2
 	  /etc/init.d/network restart
 	  sleep 3
 	  wifi reload
@@ -1156,6 +1238,24 @@ cmd_apply() {
 	    sleep 2
 	    W=$((W+1))
 	  done
+	  # 🔴 修复 (client STA 连不上 server 的运行时根因):
+	  #    STA 模式 wifi reload 后 wlan0 关联成功但 backhaul 接口可能没 up/没地址,
+	  #    此时直接 vxlan-build 会用无地址 underlay 建隧道 → 数据面不通!
+	  #    → 等不到 inet 时: 重试 wifi reload 再等一轮 (STA 关联是异步的),
+	  #      仍失败则明确报错, 不要静默建半吊子隧道。
+	  if ! ip -4 addr show dev "$BD" 2>/dev/null | grep -q 'inet '; then
+	    say "WARNING: $BD (backhaul) has no IPv4 after ${W}x2s; reloading wifi once and re-waiting"
+	    wifi reload
+	    W=0
+	    while [ $W -lt 45 ]; do
+	      ip link show "$BD" >/dev/null 2>&1 && ip -4 addr show dev "$BD" 2>/dev/null | grep -q 'inet ' && break
+	      sleep 2
+	      W=$((W+1))
+	    done
+	  fi
+	  if ! ip -4 addr show dev "$BD" 2>/dev/null | grep -q 'inet '; then
+	    say "ERROR: $BD (backhaul) still has no IPv4 after wifi reload; vxlan tunnel will be BROKEN (client cannot reach server)"
+	  fi
 	  "$0" vxlan-build
 	  [ "$(uget role)" = "client" ] && [ "$(uget selfheal)" = "1" ] && "$0" selfheal &
 	) >/dev/null 2>&1 &
