@@ -99,11 +99,132 @@ static int open_serial(const char *dev, int baud)
 /* 串口收发日志 (诊断: 定位协调器何时/如何出错) */
 static FILE *g_slog = NULL;
 
+/* 🔴🔴 独立会话命令 (2026-09-01 根治"守护进程读不到 kA"):
+   协调器固件对"长会话重复 RTOKEN"只回 Default 段 (330/441B 无 kA),
+   但每次"新串口会话"的 RTOKEN 返回完整响应 (Default + *kA 网络参数)。
+   实测: rtoken/-cmd (短会话) 每次都能读到 kA, 守护进程 (长会话) 读不到。
+   → 轮询用独立 fd 打开串口 (模拟短会话) 发命令, 读完关闭。
+   flock 与 serve 子进程的 tty_fd 互斥, 安全。 */
+static int send_cmd_session(const char *cmd, char *resp, int rlen, int wait_s)
+{
+    /* 🔴🔴 2026-09-01 修复: SESS 用阻塞 fd (和 rtoken 一致)!
+       之前 open_serial 用 O_NONBLOCK — 协调器固件对非阻塞串口会话
+       响应行为不同 (read 立即 EAGAIN, 多段响应间隔长时错过 kA 帧)。
+       实测: rtoken (阻塞) 每次能读到 kA, zigbeed SESS (非阻塞) 读不到 →
+       channel 永远 "?" → 误判真空 → 误触发 rebuild!
+       → 独立短会话必须用阻塞 fd。 */
+    int pfd = open(g_dev, O_RDWR | O_NOCTTY);
+    if (pfd < 0) {
+        /* 🔴🔴 外部占用容错: 串口被外部工具 (rtoken/minicom/echo) 占用时
+           open/配置可能失败 — 记录并返回 -1, 调用方跳过本次轮询不累计 miss */
+        if (g_slog) {
+            fprintf(g_slog, "[%ld] SESS !! 串口打开失败 (外部占用?), 跳过本次\n", (long)time(NULL));
+            fflush(g_slog);
+        }
+        return -1;
+    }
+    /* 配置串口 (阻塞模式, 与 rtoken 一致) */
+    struct termios t;
+    memset(&t, 0, sizeof(t));
+    tcgetattr(pfd, &t);
+    cfmakeraw(&t);
+    t.c_cflag &= ~(CSIZE | PARENB | CSTOPB);
+    t.c_cflag |= CS8 | CLOCAL | CREAD;
+    speed_t sp;
+    switch (g_baud) {
+        case 9600:   sp = B9600; break;
+        case 19200:  sp = B19200; break;
+        case 38400:  sp = B38400; break;
+        case 57600:  sp = B57600; break;
+        case 115200: sp = B115200; break;
+        default:     sp = B115200;
+    }
+    cfsetispeed(&t, sp);
+    cfsetospeed(&t, sp);
+    t.c_cc[VMIN] = 0;
+    t.c_cc[VTIME] = 2;
+    tcsetattr(pfd, TCSANOW, &t);
+    /* 串口互斥锁: 与 serve 子进程的 tty_fd flock 互斥 */
+    flock(pfd, LOCK_EX);
+    tcflush(pfd, TCIOFLUSH);
+    if (!g_slog) g_slog = fopen("/tmp/zigbeed_serial.log", "a");
+    if (g_slog) {
+        fprintf(g_slog, "[%ld] SESS-TX: %s", (long)time(NULL), cmd);
+        fflush(g_slog);
+    }
+    int n = write(pfd, cmd, strlen(cmd));
+    if (n < 0) { perror("write"); close(pfd); return -1; }
+    int total = 0;
+    time_t start = time(NULL);
+    while (total < rlen - 1 && time(NULL) - start < wait_s) {
+        int r = read(pfd, resp + total, rlen - 1 - total);
+        if (r > 0) total += r;
+        else if (r < 0 && errno != EAGAIN && errno != EWOULDBLOCK) break;
+        else msleep(10);
+    }
+    resp[total] = 0;
+    if (g_slog) {
+        int show = total > 160 ? 160 : total;
+        fprintf(g_slog, "[%ld] SESS-RX(%d): %.*s\n", (long)time(NULL), total, show, resp);
+        if (total <= 0)
+            fprintf(g_slog, "[%ld] !! SESS 无响应/超时 (%s)\n", (long)time(NULL), cmd);
+        fflush(g_slog);
+    }
+    flock(pfd, LOCK_UN);
+    close(pfd);
+    return total;
+}
+
 /* 发送命令并读取响应 (最长 wait_s 秒), 返回字节数 */
 static int send_cmd(const char *cmd, char *resp, int rlen, int wait_s)
 {
     /* 串口互斥锁: 多模式 (serve子进程/mqtt/daemon) 共享 ttyS1 */
     flock(tty_fd, LOCK_EX);
+    /* 🔴🔴 修复 (异步 kA 帧被 tcflush 冲掉):
+       协调器会异步推送 *kA 网络参数帧 (如会话建立后 ~10s), 原代码
+       tcflush(TCIOFLUSH) 在发命令前清空接收缓冲 → kA 被冲掉 →
+       守护进程永远读不到 kA → channel 永远 "?" (出厂信任网络误判丢)。
+       → 先非阻塞读一次缓冲 (捕获已推送的 kA), 再 tcflush + 发命令。 */
+    char prebuf[512];
+    int pren = read(tty_fd, prebuf, sizeof(prebuf) - 1);
+    if (pren > 0) {
+        prebuf[pren] = 0;
+        if (g_slog) {
+            fprintf(g_slog, "[%ld] PRE-RX(%d): %.*s\n", (long)time(NULL), pren, pren > 160 ? 160 : pren, prebuf);
+            fflush(g_slog);
+        }
+        /* 预读有数据 (含异步 kA) → 作为响应前缀, 继续发命令读完整响应 */
+        int total = pren;
+        if (total >= rlen) total = rlen - 1;
+        memcpy(resp, prebuf, total);
+        tcflush(tty_fd, TCIOFLUSH);
+        if (!g_slog) g_slog = fopen("/tmp/zigbeed_serial.log", "a");
+        if (g_slog) {
+            fprintf(g_slog, "[%ld] TX: %s", (long)time(NULL), cmd);
+            fflush(g_slog);
+        }
+        int n = write(tty_fd, cmd, strlen(cmd));
+        if (n < 0) { perror("write"); return -1; }
+        time_t start = time(NULL);
+        while (total < rlen - 1 && time(NULL) - start < wait_s) {
+            int r = read(tty_fd, resp + total, rlen - 1 - total);
+            if (r > 0) total += r;
+            else if (r < 0 && errno != EAGAIN && errno != EWOULDBLOCK) break;
+            else msleep(10);
+        }
+        resp[total] = 0;
+        if (g_slog) {
+            int show = total > 160 ? 160 : total;
+            fprintf(g_slog, "[%ld] RX(%d): %.*s\n", (long)time(NULL), total, show, resp);
+            if (total <= 0)
+                fprintf(g_slog, "[%ld] !! 无响应/超时 (%s)\n", (long)time(NULL), cmd);
+            else if (strstr(resp, "Default configuration restored") && !strstr(resp, "kA"))
+                fprintf(g_slog, "[%ld] !! 网络参数空 (Default, 无 kA) - %s\n", (long)time(NULL), cmd);
+            fflush(g_slog);
+        }
+        flock(tty_fd, LOCK_UN);
+        return total;
+    }
     tcflush(tty_fd, TCIOFLUSH);
     if (!g_slog) g_slog = fopen("/tmp/zigbeed_serial.log", "a");
     if (g_slog) {
@@ -256,7 +377,7 @@ static int form_network(const char *channel, const char *panid,
     msleep(1500);
 
     /* 验证 */
-    n = send_cmd("AT+RTOKEN\r\n", resp, sizeof(resp), 2);
+    n = send_cmd("AT+RTOKEN\r\n", resp, sizeof(resp), 12);
     if (n > 0) {
         write_status_json(resp, n);
         FILE *f = fopen("/tmp/zigbeed_status.json", "r");
@@ -277,9 +398,13 @@ static int ensure_network(void)
 {
     char resp[RESP_MAX];
 
-    /* 重试 3 次读取, 排除瞬时失败 (协调器忙/时序) */
+    /* 🔴🔴 关键: 协调器在串口会话建立后 ~10s 才异步推送 *kA 网络参数帧
+       (实测: 会话建立后第一次 AT+SHOWADDR RX(197) 含 kA, 之后轮询不带)。
+       启动后先等 12s 让 kA 推送到达, send_cmd 的 PRE-RX 预读能捕获它。 */
+    msleep(12000);
+    /* 重试 3 次读取 (用独立短会话 RTOKEN — 长会话读不到 kA, 短会话能读到) */
     for (int attempt = 0; attempt < 3; attempt++) {
-        int n = send_cmd("AT+RTOKEN\r\n", resp, sizeof(resp), 2);
+        int n = send_cmd_session("AT+RTOKEN\r\n", resp, sizeof(resp), 12);
         if (n <= 0) { msleep(1000); continue; }
 
         write_status_json(resp, n);
@@ -395,23 +520,31 @@ static void write_status_json(const char *resp, int n)
                                 frame[13], frame[12], frame[11], frame[10]);
                         coor_found = 1;
                     }
-                    /* *kA 网络参数块: [32..35]=F2 03 00 00 */
-                    if (frame[32] == 0xF2 && frame[33] == 0x03) {
-                        /* 从 RTOKEN 响应已知布局:
-                           [36]=0x48? [37..44]=协调器MAC [45..46]=00 00
-                           [47..48]=PANID 小端 [49..56]=扩展PANID
-                           [57..72]=网络密钥16B [73]=信道 [74]=0x06 */
-                        if (flen > 74) {
-                            sprintf(panid, "%02X%02X", frame[48], frame[47]);
+                    /* *kA 网络参数块 — 🔴🔴 动态定位 F2 03!
+                       2026-09-01 实测: 协调器 kA 帧的 F2 03 偏移不稳定
+                       (有时 [31][32], 有时 [33][34], 差 2 字节 = 响应可能带
+                       CRLF/前导差异) → 固定偏移必然出错!
+                       → 在帧内扫描 F2 03, 找到后从该位置解析 (实测精确定位):
+                       F2 03 之后: [0]=00 [1]=00 [2]=48 [3]=2C [4..11]=MAC
+                       [12..13]=00 00 [14..15]=00 00? [16..17]=PANID 小端
+                       [18..25]=扩展PANID [26..41]=网络密钥16B [42]=信道 */
+                    for (int k = 3; k < flen - 44; k++) {
+                        if (frame[k] == 0xF2 && frame[k+1] == 0x03
+                            && k + 42 < flen) {
+                            /* 🔴🔴 实测微调: 密钥 [k+25..40] 16B, 信道 [k+41]
+                               (v18 用 [k+26..41] 密钥 + [k+42] 信道差 1:
+                               密钥首字节吞了信道值, channel 少 1) */
+                            sprintf(panid, "%02X%02X", frame[k+16], frame[k+15]);
                             sprintf(extpanid, "%02X%02X%02X%02X%02X%02X%02X%02X",
-                                    frame[56], frame[55], frame[54], frame[53],
-                                    frame[52], frame[51], frame[50], frame[49]);
+                                    frame[k+25], frame[k+24], frame[k+23], frame[k+22],
+                                    frame[k+21], frame[k+20], frame[k+19], frame[k+18]);
                             sprintf(nwkkey, "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
-                                    frame[72], frame[71], frame[70], frame[69],
-                                    frame[68], frame[67], frame[66], frame[65],
-                                    frame[64], frame[63], frame[62], frame[61],
-                                    frame[60], frame[59], frame[58], frame[57]);
-                            sprintf(channel, "%d", frame[73]);
+                                    frame[k+40], frame[k+39], frame[k+38], frame[k+37],
+                                    frame[k+36], frame[k+35], frame[k+34], frame[k+33],
+                                    frame[k+32], frame[k+31], frame[k+30], frame[k+29],
+                                    frame[k+28], frame[k+27], frame[k+26], frame[k+25]);
+                            sprintf(channel, "%d", frame[k+41]);
+                            break;
                         }
                     }
                     /* 邻居槽位: [32..35]=D0 07 NN 00 */
@@ -446,13 +579,29 @@ static void write_status_json(const char *resp, int n)
     fprintf(f, "  \"slot_count\": %d\n", slot_cnt);
     fprintf(f, "}\n");
     fclose(f);
+    /* 🔴🔴 诊断: channel 解析失败 (?) 时保存原始响应供分析 */
+    if (channel[0] == '?') {
+        FILE *dbg = fopen("/tmp/zigbeed_raw_rx.txt", "w");
+        if (dbg) {
+            fwrite(resp, 1, n > 400 ? 400 : n, dbg);
+            fclose(dbg);
+        }
+    }
+    /* 🔴🔴 诊断: 每次解析都保存 (分析实际帧布局) */
+    {
+        FILE *dbg = fopen("/tmp/zigbeed_frame.txt", "w");
+        if (dbg) {
+            fwrite(resp, 1, n > 200 ? 200 : n, dbg);
+            fclose(dbg);
+        }
+    }
 }
 
 /* ---------- 状态命令 ---------- */
 static int status_cmd(void)
 {
     char resp[RESP_MAX];
-    int n = send_cmd("AT+RTOKEN\r\n", resp, sizeof(resp), 2);
+    int n = send_cmd("AT+RTOKEN\r\n", resp, sizeof(resp), 12);
     if (n <= 0) {
         printf("{\"error\": \"no response\"}\n");
         return 1;
@@ -520,7 +669,7 @@ static const char *dev_type_name(int model)
 static int devices_cmd(void)
 {
     char resp[RESP_MAX];
-    int n = send_cmd("AT+RTOKEN\r\n", resp, sizeof(resp), 2);
+    int n = send_cmd("AT+RTOKEN\r\n", resp, sizeof(resp), 12);
     if (n <= 0) {
         printf("{\"error\": \"no response\"}\n");
         return 1;
@@ -983,8 +1132,20 @@ static void set_last_auto_rebuild(time_t t)
 static void poll_and_maybe_rebuild(mqtt_client *cli, int mqtt_fd)
 {
     char resp[RESP_MAX];
-    int n = send_cmd("AT+RTOKEN\r\n", resp, sizeof(resp), 2);
+    /* 🔴🔴 轮询用独立短会话读 RTOKEN (根治读不到 kA):
+       协调器固件对长会话重复 RTOKEN 只回 Default 段 (无 kA),
+       但新串口会话的 RTOKEN 返回完整响应 (Default + *kA)。
+       实测: rtoken/-cmd 短会话每次都能读到 kA, 守护进程长会话读不到。
+       → send_cmd_session 打开独立 fd (模拟 -cmd 新会话), 读完关闭。 */
+    int n = send_cmd_session("AT+RTOKEN\r\n", resp, sizeof(resp), 12);
     static int miss = 0;
+    if (n < 0) {
+        /* 🔴🔴 外部占用容错: 串口被外部工具占用时跳过本次, 不累计 miss,
+           不触发任何误判 — 用户随时可以手动放命令, 守护进程必须容忍 */
+        printf("[轮询] 串口被外部占用, 跳过本次轮询\n");
+        fflush(stdout);
+        return;
+    }
     if (n > 0) {
         write_status_json(resp, n);
         devices_cmd();
@@ -997,28 +1158,26 @@ static void poll_and_maybe_rebuild(mqtt_client *cli, int mqtt_fd)
             fclose(f);
             body[bl] = 0;
             if (strstr(body, "\"channel\": \"?")) {
-                if (++miss >= 3 && time(NULL) - get_last_auto_rebuild() > 600) {
-                    miss = 0;
-                    /* 直接 rebuild (手动验证 100% 成功):
-                       Flash 有网 -> GPIO36 复位加载恢复; Flash 空 -> DeviceHub 建网
-                       不要先 AT+RESTORE (会污染协调器 Flash 导致建网失败) */
-                    printf("[自动] 协调器读空, 自动重建网络...\n");
+                /* 🔴🔴🔴 2026-09-01 用户定论: 放弃自动 rebuild!
+                   每次检测到协调器参数丢失后, 暂停自动 rebuild (只提示)。
+                   手动 rebuild 由用户/LuCI 按钮触发 (DeviceHub 建网可靠)。
+                   → miss 累计只作提示计数, 绝不 system(rebuild)。 */
+                miss++;
+                if (miss == 1 || miss % 20 == 0) {
+                    printf("[检测] 协调器网络参数丢失 (短会话 RTOKEN 无 kA), 已暂停自动 rebuild。\n");
+                    printf("[检测] 请在 LuCI 设置页点击\"重建网络\"手动执行 DeviceHub 建网。\n");
                     fflush(stdout);
-                    set_last_auto_rebuild(time(NULL));
-                    system("sh /usr/bin/zigbeed-rebuild.sh > /tmp/zigbeed_auto_rebuild.log 2>&1 &");
                 }
             } else {
                 miss = 0;
             }
         }
     } else {
-        if (++miss >= 3 && time(NULL) - get_last_auto_rebuild() > 600) {
-            miss = 0;
-            /* 直接 rebuild (同主分支: 不要先 AT+RESTORE 污染 Flash) */
-            printf("[自动] 协调器无响应, 自动重建网络...\n");
+        /* 短会话也无响应 = 协调器疑似异常 — 只提示, 不自动 rebuild (用户定论) */
+        miss++;
+        if (miss == 1 || miss % 20 == 0) {
+            printf("[检测] 协调器短会话无响应, 已暂停自动 rebuild。请手动重建网络。\n");
             fflush(stdout);
-            set_last_auto_rebuild(time(NULL));
-            system("sh /usr/bin/zigbeed-rebuild.sh > /tmp/zigbeed_auto_rebuild.log 2>&1 &");
         }
     }
 }
@@ -1171,8 +1330,10 @@ static int gateway_main(int serve_port, const char *mqtt_host, int mqtt_port)
                 fflush(stdout);
             }
         }
-        /* 轮询 (5s) + 自动恢复 (协调器参数丢失时自动重建) */
-        if (time(NULL) - last_poll > 5) {
+        /* 轮询 (15s) + 自动恢复 (协调器参数丢失时自动重建)
+           🔴 间隔从 5s 提到 15s: 协调器 RTOKEN 完整响应 (含 kA 帧) 需要 ~10s,
+           5s 间隔 + 4s 等待必然重叠且读不全 → 轮询永远读到 "?" 误判丢参数! */
+        if (time(NULL) - last_poll > 15) {
             poll_and_maybe_rebuild(&cli, mqtt_fd);
             last_poll = time(NULL);
         }
@@ -1284,7 +1445,7 @@ static int serve_loop(int port)
             char resp[RESP_MAX];
             /* 提取路径和参数 */
             if (strncmp(path, "/status", 7) == 0) {
-                int n = send_cmd("AT+RTOKEN\r\n", resp, sizeof(resp), 2);
+                int n = send_cmd("AT+RTOKEN\r\n", resp, sizeof(resp), 12);
                 char body[2048];
                 if (n > 0) {
                     write_status_json(resp, n);
@@ -1627,7 +1788,7 @@ static int mqtt_loop(const char *host, int port)
                 last_ping = time(NULL);
             }
             if (time(NULL) - last_status > 30) {
-                int n = send_cmd("AT+RTOKEN\r\n", resp, sizeof(resp), 2);
+                int n = send_cmd("AT+RTOKEN\r\n", resp, sizeof(resp), 12);
                 if (n > 0) {
                     write_status_json(resp, n);
                     devices_cmd();  /* 更新设备文件 (供 discovery 使用) */
@@ -1673,7 +1834,7 @@ static void daemon_loop(void)
     printf("[守护] 轮询状态 + 监听设备事件 (30s 周期), 写 /tmp/zigbeed_status.json\n");
 
     /* 先做一次初始状态 */
-    int n = send_cmd("AT+RTOKEN\r\n", resp, sizeof(resp), 2);
+    int n = send_cmd("AT+RTOKEN\r\n", resp, sizeof(resp), 12);
     if (n > 0) write_status_json(resp, n);
 
     while (running) {
@@ -1708,7 +1869,7 @@ static void daemon_loop(void)
         }
 
         /* 周期状态轮询 */
-        n = send_cmd("AT+RTOKEN\r\n", resp, sizeof(resp), 2);
+        n = send_cmd("AT+RTOKEN\r\n", resp, sizeof(resp), 12);
         if (n > 0) {
             write_status_json(resp, n);
             printf("[%ld] 状态已更新\n", (long)time(NULL));
