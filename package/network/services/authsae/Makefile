@@ -12,7 +12,7 @@ PKG_VERSION:=2014-06-09
 PKG_RELEASE=$(PKG_SOURCE_VERSION)
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://github.com/cozybit/authsae.git
+PKG_SOURCE_URL:=https://github.com/cozybit/authsae.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=8531ab158910a525d4bcbb3ad02c08342f6987f2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
@@ -36,6 +36,18 @@ define Package/authsae
 endef
 
 TARGET_CFLAGS += -D_GNU_SOURCE
+
+# authsae's CMakeLists uses PKG_CHECK_MODULES(libcrypto/libconfig) which
+# shells out to pkg-config. Without the cross pkg-config environment it
+# finds the HOST's libcrypto.pc (/usr/include) and the build fails on
+# openssl/opensslconf.h. Point PKG_CONFIG at the OpenWrt cross pkg-config
+# (wrapper rewrites prefix via STAGING_PREFIX) and PKG_CONFIG_PATH at the
+# target staging .pc files so -I/-L resolve into the target staging dir.
+define Build/Configure
+	PKG_CONFIG="$(STAGING_DIR_HOST)/bin/pkg-config" \
+	PKG_CONFIG_PATH="$(STAGING_DIR)/usr/lib/pkgconfig" \
+	$(call Build/Configure/Default)
+endef
 
 define Package/authsae/install
 	$(INSTALL_DIR) $(1)/usr/bin
