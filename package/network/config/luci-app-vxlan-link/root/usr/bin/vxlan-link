@@ -1,6 +1,6 @@
 #!/bin/sh
 # luci-app-vxlan core script
-# VXLAN wireless mesh for single-port MT7628/MT7688 boards.
+# VXLAN wireless bridge for single-port MT7628/MT7688 boards.
 # Derived from enjoylink_A_config.sh / enjoylink_B_config.sh.
 #
 # Roles:   server = uplink side (AP + tunnel origin)
@@ -100,7 +100,7 @@ platform() {
 }
 
 # switch mode decision.
-# Wireless-mesh use case is interface-agnostic: every platform works with
+# Every platform works with
 # kernel 8021q software tagging (arm/x86 included - plain Linux stack).
 #   auto (default): software 8021q everywhere. Multi-port boards may set
 #                   switch_mode=hw to use swconfig hardware VLANs instead.
@@ -221,9 +221,12 @@ radio_name() {
 
 wifi_iface() {
 	# $1=mode(ap|sta) $2=ssid $3=pass
-	local R
+	local R CH
 	R=$(uget radio)
 	[ -z "$R" ] && R=$(radio_name)
+	# server (AP): fixed backhaul channel from the app config; client (STA)
+	# follows the AP automatically so it never pins a channel.
+	CH=$(uget channel)
 	wifi_reset
 	uci add wireless wifi-iface >/dev/null 2>&1
 	uci set wireless.@wifi-iface[-1].device="$R"
@@ -233,6 +236,14 @@ wifi_iface() {
 	uci set wireless.@wifi-iface[-1].encryption='psk2'
 	uci set wireless.@wifi-iface[-1].key="$3"
 	uci set wireless.$R.disabled='0' 2>/dev/null
+	# fixed backhaul channel: server pins the AP channel; client may pin the
+	# STA scan channel (optional). empty/auto = radio picks / normal roaming
+	if [ -n "$CH" ] && [ "$CH" != "auto" ]; then
+		uci set wireless.$R.channel="$CH"
+		say "  backhaul radio channel=$CH (fixed)"
+	else
+		uci -q delete wireless.$R.channel 2>/dev/null
+	fi
 }
 
 set_backhaul() {
@@ -349,6 +360,7 @@ cmd_vxlan_build() {
 	# Unicast is mandatory on wireless: multicast-group mode would loop
 	# (bridge flood -> vxlan re-encapsulate -> group -> all peers -> bridge
 	# flood ...) and kills IPTV multicast (low-rate no-retransmit on air).
+	# client builds only peer1 (single server); server builds ALL peers.
 	I=1
 	while P=$(peer_nth $I); [ -n "$P" ]; do
 		if [ "$ROLE" = "client" ] && [ "$I" != "1" ]; then
@@ -839,7 +851,7 @@ iptv_members() {
 }
 
 # resolve wan_if / lan_if.
-# Wireless-mesh design: read the device's CURRENT runtime layout instead of
+# Read the device's CURRENT runtime layout instead of
 # hard-coding per-SoC port maps.
 #   server -> use the existing 'wan' logical interface's device (or eth1/eth0
 #             fallback depending on what exists)
@@ -1220,7 +1232,13 @@ cmd_apply() {
 	# vxlan devices are created AFTER network restart by cmd_vxlan_build
 	# (direct ip link, not netifd-managed) - this is what keeps the server
 	# stable when clients are offline (no netifd vxlan.sh storm).
+	# 🔴 trap '' HUP: this whole background job (network restart -> wifi ->
+	#    wait for backhaul -> vxlan-build -> selfheal) must outlive the caller.
+	#    When apply is triggered over SSH/LuCI the session-end SIGHUP would
+	#    kill the subshell, so vxlan devices and selfheal never come up and
+	#    the client's overlay stays dead even after backhaul gets an IP.
 	(
+	  trap '' HUP
 	  sleep 2
 	  /etc/init.d/network restart
 	  sleep 3
@@ -1257,6 +1275,15 @@ cmd_apply() {
 	    say "ERROR: $BD (backhaul) still has no IPv4 after wifi reload; vxlan tunnel will be BROKEN (client cannot reach server)"
 	  fi
 	  "$0" vxlan-build
+	  # 🔴 server 无线 AP 起来慢 (30-60s on MT7688): 首次 vxlan-build 可能赶上
+	  #    驱动未完全就绪 (backhaul 已有 IP 但 ip link add vxlan 仍失败, 5 次
+	  #    重试共 10s 不够) → 若 0 个设备, 25s 后补跑一次 (此时驱动必已就绪)。
+	  #    server 无 selfheal (只有 client 自愈), 所以这里必须自己兜底。
+	  if ! ip link show 2>/dev/null | grep -q vxlan; then
+	    say "first vxlan-build left no vxlan devices; retrying in 25s"
+	    sleep 25
+	    "$0" vxlan-build
+	  fi
 	  [ "$(uget role)" = "client" ] && [ "$(uget selfheal)" = "1" ] && "$0" selfheal &
 	) >/dev/null 2>&1 &
 	say "==== apply done ===="
