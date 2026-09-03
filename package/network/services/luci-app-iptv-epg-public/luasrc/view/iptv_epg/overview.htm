@@ -3,25 +3,6 @@ LuCI - Lua Configuration Interface
 IPTV EPG 总览: 服务控制 + 频道列表 + 一键拉取
 -%>
 
-<%
--- 频道表空提示: 首次抓包后需一键抓取频道表 (公共版无预置频道表!)
-local nixio_fs = require("nixio").fs
-local fm = io.open("/usr/share/iptv_epg/channel_map.txt", "r")
-local fcnt = 0
-if fm then
-  for _ in fm:lines() do fcnt = fcnt + 1 end
-  fm:close()
-end
-if fcnt < 5 then
-%>
-<div style="margin:10px 0;padding:10px;background:#fff3cd;border:1px solid #f0ad4e;border-radius:4px;color:#856404;">
-	<b><%:⚠️ 频道表为空 (公共版无预置频道表):%></b>
-	<%:请① 开启 IPTV 机顶盒并打开直播/EPG (daemon 自动抓包采集 cookie/会话); ② 点击上方"一键抓取频道表"按钮, 自动按当前格式生成频道列表。生成后 EPG/播放自动可用。%>
-</div>
-<%
-end
-%>
-
 <%+header%>
 <h2><%:IPTV EPG 总览%></h2>
 
@@ -35,6 +16,24 @@ if prov_warn == "unicom" and not nixio_fs.access("/etc/epg_unicom_sess.txt") the
 <div style="margin:10px 0;padding:10px;background:#fdecea;border:1px solid #e53935;border-radius:4px;color:#b71c1c;">
 	<b><%:⚠️ 联通会话文件缺失 (/etc/epg_unicom_sess.txt):%></b>
 	<%:无法拉取 EPG。请① 开机顶盒并打开直播/EPG (daemon 自动抓包采集会话); 或② 从其他已配置联通模式的设备复制该文件。获取后 EPG/频道抓取自动可用。%>
+</div>
+<%
+end
+%>
+
+<%
+-- 频道表空提示: 首次抓包后需一键抓取频道表 (公共版无预置频道表!)
+local fm = io.open("/usr/share/iptv_epg/channel_map.txt", "r")
+local fcnt = 0
+if fm then
+  for _ in fm:lines() do fcnt = fcnt + 1 end
+  fm:close()
+end
+if fcnt < 5 then
+%>
+<div style="margin:10px 0;padding:10px;background:#fff3cd;border:1px solid #f0ad4e;border-radius:4px;color:#856404;">
+	<b><%:⚠️ 频道表为空 (公共版无预置频道表):%></b>
+	<%:请① 开启 IPTV 机顶盒并打开直播/EPG (daemon 自动抓包采集 cookie/会话); ② 点击上方"一键抓取频道表"按钮, 自动按当前格式生成频道列表。生成后 EPG/播放自动可用。%>
 </div>
 <%
 end

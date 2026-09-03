@@ -64,22 +64,48 @@ echo "[$(date '+%F %T')] UID=$UID SN=$SN MAC=$MAC IP_BIND=$IP_BIND" >> "$LOG"
 # ① 专网路由统一交给 iptv_epg route (复用系统验证过的逻辑: 智能选接口 + 带src降级 + 持久化)
 #    iptv_epg route 会添加 route_target + route_extra (uci 可配置)
 /usr/bin/iptv_epg route >/dev/null 2>&1 || true
-# ② 认证源 IP (机顶盒绑定 IP 作为 secondary) — 需要知道专网接口
-#    接口选择优先级: network.iptv.ifname -> 有 30.170.x IP 的接口 -> iptv/br-iptv/br-lan
-IPIF=$(uci get network.iptv.ifname 2>/dev/null)
-if [ -z "$IPIF" ] || [ ! -d "/sys/class/net/$IPIF" ]; then
-  IPIF=""
-  for I in $(ip -o addr show 2>/dev/null | awk '$4 ~ /^30\.170\./ {print $2}'); do
-    IPIF="$I"
-    break
+# ② 认证源 IP — 🔴 2.11.37: auth_ip 不无脑信任 uci/采集的写死值!
+#    实测 (2026-09-03 vxlan 组网): 两台设备各带自己的 auth_ip 值,
+#    经 vxlan_iptv 桥成同一 L2 后若有重复即冲突 → 认证必失败。
+#    正确: 认证源 IP = 本机专网接口的 DHCP 主 IP (每台设备各自独立)。
+#    优先用 IPIF 的 inet 主地址; 仅在 IPIF 无地址时才 add uci auth_ip。
+#    (曾优先 ifname=eth0.85: 有历史认证源IP 静态残留 → 认证路由指死网关 → 4kLogAuth 失败!
+#     必须选 DHCP 动态接口 br-iptv, udhcpc 活跃且 30.171.x 可用)
+IPIF=""
+for I in $(uci get network.iptv.ifname 2>/dev/null) br-iptv; do
+  [ -d "/sys/class/net/$I" ] || continue
+  [ -f "/var/run/udhcpc-$I.pid" ] || continue
+  IPIF="$I"; break
+done
+# 全接口: DHCP 活跃 + 专网网段 (30.170.x/30.171.x)
+if [ -z "$IPIF" ]; then
+  for I in $(ip -o addr show 2>/dev/null | awk '$4 ~ /^30\.17[01]\./ {print $2}'); do
+    [ -f "/var/run/udhcpc-$I.pid" ] || continue
+    IPIF="$I"; break
+  done
+fi
+# 兼容: 无 udhcpc 场景, 静态专网网段
+if [ -z "$IPIF" ]; then
+  for I in $(ip -o addr show 2>/dev/null | awk '$4 ~ /^30\.17[01]\./ {print $2}'); do
+    IPIF="$I"; break
   done
 fi
 [ -z "$IPIF" ] && IPIF=iptv
 [ -d "/sys/class/net/$IPIF" ] || IPIF=br-iptv
 [ -d "/sys/class/net/$IPIF" ] || IPIF=br-lan
 [ -d "/sys/class/net/$IPIF" ] || { echo "ERR: 找不到专网接口"; exit 1; }
-# 加认证源 IP (幂等, 失败仅警告不中断 — 部分环境无需源IP匹配)
-if [ -n "$IP_BIND" ] && ! ip addr show "$IPIF" 2>/dev/null | grep -q " $IP_BIND/"; then
+# IPIF 的 inet 主 IP (DHCP 真地址) — 认证源首选
+IPIF_MAIN=$(ip addr show "$IPIF" 2>/dev/null | grep 'inet ' | grep -v 127 | awk '{print $2}' | cut -d/ -f1 | head -1)
+if [ -n "$IPIF_MAIN" ] && [ -n "$IP_BIND" ] && [ "$IPIF_MAIN" != "$IP_BIND" ]; then
+  echo "[$(date '+%F %T')] 认证源 IP 改用专网接口主 IP: $IP_BIND -> $IPIF_MAIN (写死 auth_ip 与共享 L2 冲突)" >> "$LOG"
+  # 把写死值从接口上清掉 (若之前 add 过残留), 避免共享 L2 重复 IP
+  if ip addr show "$IPIF" 2>/dev/null | grep -q " $IP_BIND/"; then
+    ip addr del $IP_BIND/16 dev "$IPIF" 2>/dev/null && echo "[$(date '+%F %T')] 已删除写死冲突源 IP: $IP_BIND ($IPIF)" >> "$LOG"
+  fi
+  IP_BIND="$IPIF_MAIN"
+fi
+# 无接口主 IP 时才 add uci auth_ip 作为候选 (幂等, 失败仅警告不中断)
+if [ -z "$IPIF_MAIN" ] && [ -n "$IP_BIND" ] && ! ip addr show "$IPIF" 2>/dev/null | grep -q " $IP_BIND/"; then
   ip addr add $IP_BIND/16 dev "$IPIF" 2>/dev/null \
     && echo "[$(date '+%F %T')] 已添加认证源IP $IP_BIND -> $IPIF" >> "$LOG" \
     || echo "[$(date '+%F %T')] 警告: 添加源IP $IP_BIND 失败 (忽略)" >> "$LOG"

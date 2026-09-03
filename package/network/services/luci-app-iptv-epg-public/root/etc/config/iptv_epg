@@ -2,8 +2,8 @@ config iptv_epg 'main'
 	# 运营商模式: telecom=上海电信 (默认) / unicom=上海联通 (实测适配 2026-08)
 	option provider 'telecom'
 	# 抓包端口 (空格分隔, 机顶盒访问的服务器端口; 联通=9001认证+33200 EPG+80 业务)
-	option cap_ports '8084 7001 6610'
-	option epg_host '218.83.165.67:8084'
+	option cap_ports ''
+	option epg_host ''
 	# 回看/TS 流服务器 (电信公共基础设施, 可按地区修改)
 	option tvod_host '124.75.26.15:6610'
 	# 联通模式服务器 (实测 2026-08-22, provider=unicom 时生效; 可覆盖)

@@ -61,51 +61,83 @@ start() {
 					ip route del $tr/32 2>/dev/null && echo "已删除电信专网路由: $tr/32"
 				done
 			fi
-			# EPG 服务器/抓包端口: 仅在旧值是"旧 provider 默认或空"时自动更新,
-			#    用户自定义值 (非默认) 一律保留, 不覆盖!
-			local DEF_EPG="218.83.165.67:8084"
-			[ "$CUR_P" = "unicom" ] && DEF_EPG="10.223.2.76:33200"
-			local DEF_PORTS="8084 7001 6610"
-			[ "$CUR_P" = "unicom" ] && DEF_PORTS="9001 33200 80"
-			local CUR_EPG=$(uci get iptv_epg.main.epg_host 2>/dev/null)
-			local CUR_PORTS=$(uci get iptv_epg.main.cap_ports 2>/dev/null)
-			case "$CUR_EPG" in
-				"218.83.165.67:8084"|"10.223.2.76:33200"|"") uci set iptv_epg.main.epg_host="$DEF_EPG";;
-			esac
-			case "$CUR_PORTS" in
-				"8084 7001 6610"|"9001 33200 80"|"") uci set iptv_epg.main.cap_ports="$DEF_PORTS";;
-			esac
-			uci commit iptv_epg 2>/dev/null
 			echo "iptv-epg: provider $OLD_P → $CUR_P, EPG 缓存已清理 (另一模式数据保留)"
 		fi
 	fi
+	# 🔴 epg_host/cap_ports: 留空 = 代码按 provider 自动兜底 (脚本/daemon/epg.cgi 各自有默认分支)
+	#    (2026-09-03 教训: 曾写死默认值到 uci → 切联通后残留电信地址 → login 打到电信失败)
+	#    一次性迁移: 旧版写入的"任一 provider 默认值"清空让代码兜底; 用户自定义值永远保留
+	local CUR_EPG=$(uci get iptv_epg.main.epg_host 2>/dev/null)
+	local CUR_PORTS=$(uci get iptv_epg.main.cap_ports 2>/dev/null)
+	local UCI_CH=0
+	case "$CUR_EPG" in
+		"218.83.165.67:8084"|"10.223.2.76:33200") uci delete iptv_epg.main.epg_host 2>/dev/null; UCI_CH=1;;
+	esac
+	case "$CUR_PORTS" in
+		"8084 7001 6610"|"9001 33200 80") uci delete iptv_epg.main.cap_ports 2>/dev/null; UCI_CH=1;;
+	esac
+	[ "$UCI_CH" = "1" ] && { uci commit iptv_epg 2>/dev/null; echo "epg_host/cap_ports 已清空 (改用代码自动兜底)"; }
 	echo "$CUR_P" > /tmp/epg_provider.txt
 	# 0.5 频道表软链接: channel_map.txt → channel_map_<provider>.txt
 	#    (telecom/unicom 各自独立文件; 切换 provider 或重装 ipk 后自动指向正确表)
 	if [ -f /usr/share/iptv_epg/channel_map_${CUR_P}.txt ]; then
 		ln -sf channel_map_${CUR_P}.txt /usr/share/iptv_epg/channel_map.txt
 	fi
-	# 0.6 联通会话: 公共版无预置模板, 靠 daemon 抓机顶盒流量采集
-	#    (采集后写 /etc/epg_unicom_sess.txt 持久化, 重启不丢, 无需重新抓包!)
+	# 0.6 联通会话预置: 新机器首次启动从包内模板部署 (Authenticator 等一次获取长期有效)
+	#    已有会话不覆盖 (用户更新/换机顶盒后保留); login 会自动刷新 JSESSIONID
+	if [ "$CUR_P" = "unicom" ] && [ ! -f /etc/epg_unicom_sess.txt ] && [ -f /usr/share/iptv_epg/epg_unicom_sess.txt ]; then
+		cp /usr/share/iptv_epg/epg_unicom_sess.txt /etc/epg_unicom_sess.txt
+		chmod 600 /etc/epg_unicom_sess.txt
+		echo "联通会话已从预置模板部署 (login 自动刷新 JSESSIONID)"
+	fi
 	# 检查服务启用 (service_enabled, 默认1)
 	local SVC=$(uci get iptv_epg.main.service_enabled 2>/dev/null)
 	[ "$SVC" = "0" ] && { echo "iptv-epg: 服务未启用 (service_enabled=0), 跳过启动"; return 0; }
 	echo "=== iptv-epg start ==="
 	# 🔴 provider 隔离: 联通模式跳过电信专用逻辑 (专网路由/账号直登/cookie 恢复)
 	#    但保留电信 cookie 文件 (切回电信还能用, 不主动清除对方数据)
-	if [ "$CUR_P" != "unicom" ]; then		# 0. 公共版: 不内置账号 (电信靠机顶盒抓包采集)
+	if [ "$CUR_P" != "unicom" ]; then		# 0. 私有部署账号兜底: config 缺账号时用内置值 (非公共版!)
+		#    否则 auto_auth 看到"未配置宽带账号/SN"直接跳过, 无法用 账号+PEM 直登获取 cookie
+		if [ -z "$(uci get iptv_epg.main.broadband_uid 2>/dev/null)" ]; then
+			uci set iptv_epg.main.broadband_uid='ad79406567'
+			uci set iptv_epg.main.stb_sn='00030021135101703140242E'
+			uci set iptv_epg.main.stb_mac='04:95:73:40:cc:c2'
+			uci set iptv_epg.main.stb_ip='192.168.4.170'
+			uci set iptv_epg.main.auth_uid='79406567@etv1'
+			uci set iptv_epg.main.auth_sn='00030021135101703140242E'
+			uci set iptv_epg.main.auth_mac='04:95:73:40:CC:C2'
+			# 🔴 2.11.37: auth_ip 不写死! 认证源 IP = 本机专网接口 DHCP 主 IP,
+			#    epg_auth.sh 运行时自动探测。写死 30.170.239.6 在 vxlan 组网下
+			#    (157/153 桥成同一 L2) 同 IP 冲突 → client 认证必失败。
+			#    留空由 epg_auth.sh 自动同步 (uci auth_ip 会被改写为实际主 IP)。
+			uci delete iptv_epg.main.auth_ip 2>/dev/null
+			uci set iptv_epg.main.auth_enabled='1'
+			uci commit iptv_epg
+			echo "已填充电信账号兜底 (私有部署内置, 账号直登可用; auth_ip 运行时自动探测)"
+		fi
 		# 0.1 auth_ip 自动同步: 专网接口 DHCP IP 变化时更新 (认证绑定源 IP, 旧 IP 会导致 4kLogAuth 失败)
-		#    优先 network.iptv 桥接口 / br-iptv / eth0.85 的当前 inet IP
+		#    🔴 优先 DHCP 活跃接口 (udhcpc pid), 不取静态残留! (曾取 eth0.85 静态 30.170.239.6 → 死 IP)
 		local AUTH_IF=$(uci get network.iptv.ifname 2>/dev/null)
-		[ -z "$AUTH_IF" ] && AUTH_IF="br-iptv"
 		local AUTH_IP_NOW=""
-		for ai in $AUTH_IF; do
-			case "$ai" in
-				*" "*|*) [ -d "/sys/class/net/$ai" ] || continue
-					AUTH_IP_NOW=$(ip addr show "$ai" 2>/dev/null | grep 'inet ' | grep -v 127 | awk '{print $2}' | cut -d/ -f1 | head -1)
-					[ -n "$AUTH_IP_NOW" ] && break ;;
+		local ai
+		# ① network.iptv 成员 + br-iptv: DHCP 活跃且有 IP 的
+		for ai in $AUTH_IF br-iptv; do
+			[ -d "/sys/class/net/$ai" ] || continue
+			[ -f "/var/run/udhcpc-$ai.pid" ] || continue
+			AUTH_IP_NOW=$(ip addr show "$ai" 2>/dev/null | grep 'inet ' | grep -v 127 | awk '{print $2}' | cut -d/ -f1 | head -1)
+			[ -n "$AUTH_IP_NOW" ] && break
+		done
+		# ② 全接口: DHCP 活跃 + 专网网段
+		[ -z "$AUTH_IP_NOW" ] && for ai in /sys/class/net/*; do
+			local AIN=${ai#/sys/class/net/}
+			[ "$AIN" = "lo" ] && continue
+			[ -f "/var/run/udhcpc-$AIN.pid" ] || continue
+			local AIP=$(ip addr show "$AIN" 2>/dev/null | grep 'inet ' | grep -v 127 | awk '{print $2}' | cut -d/ -f1 | head -1)
+			case "$AIP" in
+				30.170.*|30.171.*) AUTH_IP_NOW="$AIP"; break ;;
 			esac
 		done
+		# ③ 兜底: br-iptv 当前 IP (即使无 udhcpc pid)
 		[ -z "$AUTH_IP_NOW" ] && AUTH_IP_NOW=$(ip addr show br-iptv 2>/dev/null | grep 'inet ' | grep -v 127 | awk '{print $2}' | cut -d/ -f1 | head -1)
 		if [ -n "$AUTH_IP_NOW" ] && [ "$(uci get iptv_epg.main.auth_ip 2>/dev/null)" != "$AUTH_IP_NOW" ]; then
 			uci set iptv_epg.main.auth_ip="$AUTH_IP_NOW"
@@ -113,10 +145,10 @@ start() {
 			echo "auth_ip 已同步为专网当前 IP: $AUTH_IP_NOW"
 		fi
 		# 0.2 清理辅助源 IP: epg_auth.sh 会把 auth_ip add 到接口, DHCP 换 IP 后旧值残留
-		#    (旧辅助源 IP 与网关同子网 → 内核选源优先它 → 服务器不响应! 只留 DHCP 主 IP)
-		#    ⚠️ 用桥名 br-iptv (network.iptv.ifname 是成员 eth0.85/vxlan_iptv, 无 IP)
-		local BR_IF="br-iptv"
-		if [ -d "/sys/class/net/$BR_IF" ]; then
+		#    (30.170.239.6 与网关同子网 → 内核选源优先它 → 服务器不响应! 只留 DHCP 主 IP)
+		#    🔴 清理所有专网接口 (br-iptv + DHCP活跃接口 + eth0.85 等), 只留每个接口的 DHCP 主 IP
+		for BR_IF in br-iptv $(uci get network.iptv.ifname 2>/dev/null); do
+			[ -d "/sys/class/net/$BR_IF" ] || continue
 			local BR_MAIN=$(ip addr show "$BR_IF" 2>/dev/null | grep 'inet ' | grep -v 127 | awk '{print $2}' | head -1)
 			if [ -n "$BR_MAIN" ]; then
 				local ipx
@@ -124,7 +156,7 @@ start() {
 					[ "$ipx" = "$BR_MAIN" ] || { ip addr del "$ipx" dev "$BR_IF" 2>/dev/null && echo "已清理辅助源 IP: $ipx ($BR_IF)"; }
 				done
 			fi
-		fi
+		done
 		# 0. 恢复备份 cookie (重启后 /tmp 清空, 机顶盒关机时唯一有效会话)
 		restore_cookie
 		# 1. 添加专网路由 (218.83.165.67 走 br-iptv)
@@ -160,7 +192,30 @@ start() {
 	local PF=$(uci get iptv_epg.main.prefetch_enabled 2>/dev/null)
 	if [ "$PF" != "0" ]; then
 		if [ "$CUR_P" = "unicom" ]; then
-			[ -f /etc/epg_unicom_sess.txt ] && /usr/bin/iptv_epg fetch_bg >/dev/null 2>&1 &
+			# 🔴 联通: 等会话文件 + 网络就绪再拉 (重启后 daemon 抓机顶盒流量要时间;
+			#    公共版无预置模板, 立即检查会话不存在 → 永不拉取! 电信分支有等 cookie 机制, 联通对等!)
+			(
+				local WC=0
+				# ① 等会话文件 (daemon 抓包采集 / 预置模板部署, 最长 120s)
+				while [ $WC -lt 60 ]; do
+					[ -f /etc/epg_unicom_sess.txt ] && break
+					sleep 2
+					WC=$((WC+1))
+				done
+				# ② 会话在 → 等联通 EPG 服务器可达 (重启后上层路由/VPN 就绪需时间, 最长 120s)
+				if [ -f /etc/epg_unicom_sess.txt ]; then
+					local PRE_EH=$(uci get iptv_epg.main.epg_host 2>/dev/null)
+					[ -n "$PRE_EH" ] || PRE_EH=10.223.2.76:33200
+					WC=0
+					while [ $WC -lt 60 ]; do
+						curl -s --max-time 3 -o /dev/null "http://$PRE_EH/" && break
+						sleep 2
+						WC=$((WC+1))
+					done
+				fi
+				# ③ 都就绪才拉 (fetch_bg 内部有会话预检+自动 login, 网络不可达时 login 失败会明确警告)
+				[ -f /etc/epg_unicom_sess.txt ] && /usr/bin/iptv_epg fetch_bg >/dev/null 2>&1
+			) &
 		else
 			# 🔴 电信: 等 cookie 出现再拉 (重启后 /tmp 清空, auto_auth 后台认证要几秒-几十秒;
 			#    旧逻辑立即检查 cookie 不存在 → 永不拉取! restore_cookie 有备份才立即有)
@@ -249,13 +304,7 @@ status() {
 auto_auth() {
 	local UIDC=$(uci get iptv_epg.main.broadband_uid 2>/dev/null)
 	local SNC=$(uci get iptv_epg.main.stb_sn 2>/dev/null)
-	[ -n "$UIDC" ] || [ -n "$SNC" ] || { echo "  未配置宽带账号/SN, 跳过账号认证 (公共版: 靠机顶盒抓包采集 cookie)"; return 0; }
-	# 🔴 公共版: 无 RSA 私钥则账号直登不可用 (4kLogAuth 需要私钥签名), 跳过!
-	#    私有版才有 /etc/iptv_epg_rsa.pem (由用户自行部署)
-	if [ ! -f /etc/iptv_epg_rsa.pem ]; then
-		echo "  公共版: 无 RSA 私钥, 跳过账号直登 (靠机顶盒抓包采集 cookie)"
-		return 0
-	fi
+	[ -n "$UIDC" ] || [ -n "$SNC" ] || { echo "  未配置宽带账号/SN, 跳过账号认证"; return 0; }
 	if [ -s "$COOKIE_FILE" ]; then
 		local V=$(curl -s -m 8 -o /dev/null -w '%{http_code}' \
 			"http://${EPG_HOST}/iptvepg/frame1413/function/ajax/epg7getChannelByAjax.jsp" \
@@ -303,60 +352,96 @@ ensure_route() {
 	done
 	[ $W -gt 0 ] && [ $W -lt 30 ] && echo "  专网接口就绪 (等待 ${W}s)"
 	[ $W -ge 30 ] && echo "  警告: 专网接口 30s 未就绪 (DHCP 可能失败)"
+	# 自动选接口 (无条件执行一次, 供下方加路由 + 持久化共用):
+	# ①DHCP 活跃(udhcpc pid)+有 IP 的 ②DHCP 活跃+专网网段 ③有 30.170/30.171.x IP 的 ④按 stb_side 顺序
+	# 🔴 修复: 曾只看"有 IP 就选" → eth0.85 静态残留认证 IP 被选中 → 死网关!
+	#    必须优先 DHCP 动态接口 (br-iptv, udhcpc 活跃, 30.171.x 可用)
+	# 🔴 2.11.37: RIF 选择必须在路由循环外执行 — 曾嵌在 for T 内且被
+	#    "路由已存在 continue" 跳过 → RIF 为空 → 持久化修正失效 (interface 被清空)。
+	local SIDE=$(uci get iptv_epg.main.stb_side 2>/dev/null)
+	local RIF=""
+	local IPTV_IFS=$(uci get network.iptv.ifname 2>/dev/null)
+	local ii
+	# ① ifname 成员 + br-iptv 里 DHCP 活跃且有 IP 的
+	for ii in $IPTV_IFS br-iptv; do
+		[ -d "/sys/class/net/$ii" ] || continue
+		[ -f "/var/run/udhcpc-$ii.pid" ] || continue
+		local II_IP=$(ip addr show "$ii" 2>/dev/null | grep 'inet ' | head -1)
+		[ -n "$II_IP" ] && { RIF="$ii"; break; }
+	done
+	# ② 全接口: DHCP 活跃 + 专网网段
+	[ -z "$RIF" ] && for i in /sys/class/net/*; do
+		local IN=${i#/sys/class/net/}
+		[ "$IN" = "lo" ] && continue
+		[ -f "/var/run/udhcpc-$IN.pid" ] || continue
+		local IP3=$(ip addr show "$IN" 2>/dev/null | grep 'inet ' | awk '{print $2}' | head -1)
+		case "$IP3" in
+			30.170.*|30.171.*) RIF="$IN"; break ;;
+		esac
+	done
+	# ③ 全接口: DHCP 活跃 + 任意 IP
+	[ -z "$RIF" ] && for i in /sys/class/net/*; do
+		local IN2=${i#/sys/class/net/}
+		[ "$IN2" = "lo" ] && continue
+		[ -f "/var/run/udhcpc-$IN2.pid" ] || continue
+		local IP5=$(ip addr show "$IN2" 2>/dev/null | grep 'inet ' | head -1)
+		[ -n "$IP5" ] && { RIF="$IN2"; break; }
+	done
+	# ④ 静态专网网段 (兼容无 udhcpc 场景)
+	[ -z "$RIF" ] && for i in /sys/class/net/*; do
+		local IN3=${i#/sys/class/net/}
+		[ "$IN3" = "lo" ] && continue
+		local IP4=$(ip addr show "$IN3" 2>/dev/null | grep 'inet ' | awk '{print $2}' | head -1)
+		case "$IP4" in
+			30.170.*|30.171.*) RIF="$IN3"; break ;;
+		esac
+	done
+	if [ -z "$RIF" ]; then
+		local ORDER=""
+		if [ "$SIDE" = "A" ]; then
+			ORDER="iptv eth0.85 br-lan br-wan eth0.2 vxlan_iptv br-iptv"
+		else
+			ORDER="vxlan_iptv br-iptv iptv eth0.85 br-wan br-lan eth0.2"
+		fi
+		for i in $ORDER; do
+			[ -d "/sys/class/net/$i" ] || continue
+			local IP6=$(ip addr show "$i" 2>/dev/null | grep 'inet ' | head -1)
+			if [ -n "$IP6" ]; then RIF="$i"; break; fi
+		done
+	fi
+	[ -z "$RIF" ] && for i in $ORDER; do
+		[ -d "/sys/class/net/$i" ] && { RIF="$i"; break; }
+	done
+	[ -z "$RIF" ] && RIF="br-lan"
+	# 网关: 🔴 DHCP 实际值优先 (30.170.0.1/30.171.0.1 都由 DHCP 决定), 配置仅兜底
+	local GW2=""
+	if [ -n "$RIF" ] && [ -d "/sys/class/net/$RIF" ]; then
+		GW2=$(ip route show 2>/dev/null | grep "dev $RIF" | grep -E "default|via" | head -1 | awk '{print $3}')
+	fi
+	[ -z "$GW2" ] && GW2=$(ip route show 2>/dev/null | grep -E "default|via" | grep -E "30\.17[01]\." | head -1 | awk '{print $3}')
+	[ -z "$GW2" ] && GW2="$GW"
+	[ -n "$GW2" ] || GW2="30.170.0.1"
+	local IPTV_IP=$(ip addr show "$RIF" 2>/dev/null | grep 'inet ' | awk '{print $2}' | cut -d/ -f1)
+	[ -n "$IPTV_IP" ] && echo "  专网接口: $RIF IP: $IPTV_IP 网关: $GW2"
 	local T
 	for T in $TARGETS; do
 		local TP="${T}/32"
-		# 检查是否已有
+		# 检查是否已有 (同网段同接口则跳过)
 		if ip route show 2>/dev/null | grep -q "^$T "; then
 			echo "  路由已存在: $T"
 			continue
 		fi
-		# 自动选接口: ①network.iptv.ifname 里有 IP 的 ②有 30.170.x IP 的 ③按 stb_side 顺序
-		local SIDE=$(uci get iptv_epg.main.stb_side 2>/dev/null)
-		local RIF=""
-		local IPTV_IFS=$(uci get network.iptv.ifname 2>/dev/null)
-		local ii
-		for ii in $IPTV_IFS; do
-			[ -d "/sys/class/net/$ii" ] || continue
-			local II_IP=$(ip addr show "$ii" 2>/dev/null | grep 'inet ' | head -1)
-			[ -n "$II_IP" ] && { RIF="$ii"; break; }
-		done
-		[ -z "$RIF" ] && for i in /sys/class/net/*; do
-			local IN=${i#/sys/class/net/}
-			[ "$IN" = "lo" ] && continue
-			local IP3=$(ip addr show "$IN" 2>/dev/null | grep 'inet ' | awk '{print $2}' | head -1)
-			case "$IP3" in
-				30.170.*) RIF="$IN"; break ;;
-			esac
-		done
-		if [ -z "$RIF" ]; then
-			local ORDER=""
-			if [ "$SIDE" = "A" ]; then
-				ORDER="iptv eth0.85 br-lan br-wan eth0.2 vxlan_iptv br-iptv"
-			else
-				ORDER="vxlan_iptv br-iptv iptv eth0.85 br-wan br-lan eth0.2"
-			fi
-			for i in $ORDER; do
-				[ -d "/sys/class/net/$i" ] || continue
-				local IP4=$(ip addr show "$i" 2>/dev/null | grep 'inet ' | head -1)
-				if [ -n "$IP4" ]; then RIF="$i"; break; fi
-			done
-		fi
-		[ -z "$RIF" ] && for i in $ORDER; do
-			[ -d "/sys/class/net/$i" ] && { RIF="$i"; break; }
-		done
-		[ -z "$RIF" ] && RIF="br-lan"
-		# 网关: 配置优先, 否则默认
-		local GW2="$GW"
-		[ -n "$GW2" ] || GW2="30.170.0.1"
-		local IPTV_IP=$(ip addr show "$RIF" 2>/dev/null | grep 'inet ' | awk '{print $2}' | cut -d/ -f1)
-		[ -n "$IPTV_IP" ] && echo "  $RIF IP: $IPTV_IP"
 		# 🔴 用 replace + onlink: ① DHCP 换 IP 后旧路由(src 旧IP)残留会冲突 ② 网关 30.170.0.1
 		#    与 DHCP IP (可能 30.171.x) 不同网段 → 必须 onlink 强制 (否则 Network is unreachable!)
 		ip route replace $TP via $GW2 dev $RIF src $IPTV_IP onlink 2>/dev/null && echo "  路由已添加: $TP via $GW2 dev $RIF src $IPTV_IP" \
 			|| { ip route replace $TP via $GW2 dev $RIF onlink 2>/dev/null && echo "  路由已添加(无src): $TP via $GW2 dev $RIF" || echo "  路由添加失败: $TP"; }
 	done
 	# 持久化到 network 配置
+	# 🔴 2.11.37: 已存在但 interface 固化错也要修正! 实测 vxlan 组网下
+	#    S90 iptv-epg 早于 S95 vxlan-link 启动 → 选 RIF 时隧道未建/br-iptv
+	#    无 IP → 兜底 br-lan → epgroute.interface=br-lan 固化 → netifd 每次
+	#    restart 把专网路由指到上网口 → 认证 4kLogAuth 失败。现在若持久化
+	#    的 interface 与本次智能选中 RIF 不一致, 一律改写。
 	if ! uci show network 2>/dev/null | grep -q "network.epgroute"; then
 		uci set network.epgroute=route
 		uci set network.epgroute.target="$ROUTE_TARGET"
@@ -368,6 +453,11 @@ ensure_route() {
 		uci set network.epgroute.onlink='1'
 		uci commit network
 		echo "  已持久化到 network.epgroute (iface=$RIF)"
+	elif [ "$(uci get network.epgroute.interface 2>/dev/null)" != "$RIF" ]; then
+		uci set network.epgroute.interface="$RIF"
+		uci set network.epgroute.gateway="$GW2"
+		uci commit network
+		echo "  network.epgroute interface 修正: $(uci get network.epgroute.interface 2>/dev/null) → $RIF"
 	fi
 }
 

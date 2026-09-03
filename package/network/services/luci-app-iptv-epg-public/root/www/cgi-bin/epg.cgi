@@ -49,24 +49,30 @@ DATE_RAW=$(echo "$QS" | awk -F'[&;]' '{for(i=1;i<=NF;i++){if($i~/^date=/){sub(/^
 [ -z "$DATE_RAW" ] && DATE_RAW=$(date +%F)
 
 # ---------- URL 解码 ----------
+# 🔴 性能: 原实现逐字符 while+cut+printf (中文频道名 12 字节 = 48+ 次 fork, MT7688 卡顿!)
+#    → 用 awk 单进程解码 (index 查表法 hex→dec; OpenWrt 的 /usr/bin/awk = busybox awk, 不支持 strtonum!)
 url_decode() {
-  local s="$1" out="" byte hex
-  s=$(echo "$s" | sed 's/+/ /g')
-  while [ -n "$s" ]; do
-    case "$s" in
-      %??*)
-        hex=$(echo "$s" | cut -c2-3)
-        byte=$(printf '%03o' "0x$hex")
-        out="$out$(printf "\\$byte")"
-        s=$(echo "$s" | cut -c4-)
-        ;;
-      *)
-        out="$out$(echo "$s" | cut -c1)"
-        s=$(echo "$s" | cut -c2-)
-        ;;
-    esac
-  done
-  echo "$out"
+  echo "$1" | awk 'function hexval(ch,   pos) {
+    pos = index("0123456789ABCDEFabcdef", ch)
+    if (pos <= 0) return 0
+    if (pos <= 16) return pos - 1
+    return pos - 17
+}
+{
+    s=$0; gsub(/\+/," ",s); out=""
+    while (s != "") {
+      if (match(s, /^%[0-9A-Fa-f][0-9A-Fa-f]/)) {
+        h1=substr(s,2,1); h2=substr(s,3,1)
+        byte = hexval(h1)*16 + hexval(h2)
+        out = out sprintf("%c", byte)
+        s=substr(s,4)
+      } else {
+        out = out substr(s,1,1)
+        s=substr(s,2)
+      }
+    }
+    print out
+  }'
 }
 CH=$(url_decode "$CH_RAW")
 DATE=$(url_decode "$DATE_RAW")
@@ -117,41 +123,31 @@ alias_map() {
 }
 CH_ALIAS=$(alias_map "$CH")
 
-# ---------- 快速缓存命中 (增强): 按解码名 / alias名 / 模糊匹配 多路径查找 ----------
-# 预取索引目录 = 频道名 URL 编码; 但 TVBox 用 epgid (如 CCTV1/CDTV1) 请求,
-# 且索引可能是带 HD 后缀的高清频道名 (CCTV-11HD) → 需模糊匹配
+# ---------- 快速缓存命中 (增强): 按解码名 / alias名 / 编码层候选 多路径查找 ----------
+# 预取索引目录 = 频道名 URL 编码; TVBox 可能用别名 (CCTV1/CDTV1) 或 HD 后缀名请求
+# 🔴 性能: 原实现遍历 epg_by_name 全部目录 + 每目录 4 次 fork 解码 (106频道×4=400+ fork,
+#    MT7688 上 1-2 秒卡顿 = 切台不即时主因!) → 改为编码层直接试候选路径, 0 遍历 0 解码
 quick_hit() {
   local qname="$1"
   [ -z "$qname" ] && return 1
   local ENC=$(printf '%s' "$qname" | xxd -p | tr -d ' \n' | tr 'a-f' 'A-F' | sed 's/\(..\)/%\1/g')
   local NCF="$CACHE_DIR/epg_by_name/${ENC}/${DATE}.json"
+  # 🔴 存在即返回 (节目单为预发布数据, fetch 每日刷新; 缓存存在就优先, 避免切台等实时拉取)
   if [ -f "$NCF" ]; then
-    if [ $(( $(date +%s) - $(date -r "$NCF" +%s) )) -lt "$CACHE_TTL" ]; then
-      cat "$NCF"
+    cat "$NCF"
+    return 0
+  fi
+  # 编码层候选: 请求 CCTV-11 但索引是 CCTV-11HD/CCTV-11SD (HD=%48%44, SD=%53%44)
+  # 只 test -f 3 个候选路径, 不遍历目录 (0 fork 解码)
+  local CAND FN2
+  for CAND in "${ENC}%48%44" "${ENC}%53%44"; do
+    FN2="$CACHE_DIR/epg_by_name/$CAND/$DATE.json"
+    # 🔴 存在即返回 (节目单为预发布数据, fetch 每日刷新; 缓存存在就优先, 避免切台等实时拉取)
+    if [ -f "$FN2" ]; then
+      # 修正响应里的 channel_name (索引是 HD 名, 请求是原名)
+      sed "s/\"channel_name\":\"[^\"]*\"/\"channel_name\":\"$qname\"/" "$FN2"
       return 0
     fi
-  fi
-  # 模糊匹配: 请求 CCTV-11 但索引只有 CCTV-11HD → 遍历目录找前缀/包含
-  local QDEC=$(printf '%b' "$(echo "$ENC" | sed 's/%/\\x/g')" 2>/dev/null)
-  [ -z "$QDEC" ] && QDEC="$qname"
-  local dir
-  for dir in "$CACHE_DIR/epg_by_name"/*/; do
-    [ -d "$dir" ] || continue
-    local DEN=$(basename "$dir")
-    local DDEC=$(printf '%b' "$(echo "$DEN" | sed 's/%/\\x/g')" 2>/dev/null)
-    # 索引名以请求名开头 (CCTV-11HD 以 CCTV-11 开头) 或 请求名以索引名开头
-    case "$DDEC" in
-      "$QDEC"*|"$QDEC"HD|"$QDEC"SD)
-        local FN="${dir}${DATE}.json"
-        if [ -f "$FN" ]; then
-          if [ $(( $(date +%s) - $(date -r "$FN" +%s) )) -lt "$CACHE_TTL" ]; then
-            # 修正响应里的 channel_name (索引是 HD 名, 请求是原名)
-            sed "s/\"channel_name\":\"[^\"]*\"/\"channel_name\":\"$qname\"/" "$FN"
-            return 0
-          fi
-        fi
-        ;;
-    esac
   done
   return 1
 }
@@ -352,15 +348,13 @@ esac
 
 # ---------- 缓存检查 (按 CHID+日期) ----------
 CACHE_FILE="$CACHE_DIR/epg_cache_${CHID}_${DATE}.json"
+# 🔴 存在即返回 (节目单为预发布数据, fetch 每日刷新; 缓存存在就优先, 避免切台等实时拉取)
 if [ -f "$CACHE_FILE" ]; then
-  AGE=$(( $(date +%s) - $(date -r "$CACHE_FILE" +%s) ))
-  if [ "$AGE" -lt "$CACHE_TTL" ]; then
-    case "$CH" in
-      ch[0-9a-f]*) cat "$CACHE_FILE" ;;
-      *) sed "s/\"channel_name\":\"[^\"]*\"/\"channel_name\":\"$CH\"/" "$CACHE_FILE" ;;
-    esac
-    exit 0
-  fi
+  case "$CH" in
+    ch[0-9a-f]*) cat "$CACHE_FILE" ;;
+    *) sed "s/\"channel_name\":\"[^\"]*\"/\"channel_name\":\"$CH\"/" "$CACHE_FILE" ;;
+  esac
+  exit 0
 fi
 
 # ---------- 实时拉取防并发锁 (弱设备保护) ----------
@@ -377,8 +371,8 @@ if ! flock -n 9 2>/dev/null; then
   fi
   exit 0
 fi
-# 拿到锁后双检: 别的请求可能刚写好缓存
-if [ -f "$CACHE_FILE" ] && [ $(( $(date +%s) - $(date -r "$CACHE_FILE" +%s) )) -lt "$CACHE_TTL" ]; then
+# 拿到锁后双检: 别的请求可能刚写好缓存 (存在即返回, 不依赖 TTL)
+if [ -f "$CACHE_FILE" ]; then
   cat "$CACHE_FILE"
   exit 0
 fi
@@ -461,28 +455,22 @@ echo "]}" >> "$OUT"
 # 写缓存 + 名字索引
 if grep -q '"title"' "$OUT"; then
   cp "$OUT" "$CACHE_FILE"
-  # 轻量清理: 名字索引缓存文件数超阈值才触发 (正常 0 开销; 防止 fetch 不跑时 epg_by_name 无限累积)
-  # 🔴 按文件名日期清理 (YYYY-MM-DD.json 早于今天-8天删除, 不依赖 mtime)
-  if [ -d "$CACHE_DIR/epg_by_name" ]; then
-    if [ $(find "$CACHE_DIR/epg_by_name" -name '*.json' 2>/dev/null | wc -l) -gt 2000 ]; then
-      local DAYS2=$(uci get iptv_epg.main.prefetch_days 2>/dev/null)
-      [ -n "$DAYS2" ] || DAYS2=7
-      # 🔴 保留窗口含明天预告: 今天-(DAYS2-1) ~ 今天+1 (共 DAYS2+1 天 json)
-      #    例如 8-23 保留 8-17~8-24, 8-24 删 8-17 保留 8-18~8-25
-      local CUTOFF=$(date -d "@$(( $(date +%s) - (DAYS2-1)*86400 ))" +%F 2>/dev/null)
-      [ -n "$CUTOFF" ] || CUTOFF=$(date +%F)
-      find "$CACHE_DIR/epg_by_name" -name '*.json' 2>/dev/null | while read -r F2; do
-        local FD=$(basename "$F2" .json)
-        case "$FD" in
-          20[0-9][0-9]-[0-9][0-9]-[0-9][0-9])
-            local FD_NUM=$(echo "$FD" | tr -d '-')
-            local CUT_NUM=$(echo "$CUTOFF" | tr -d '-')
-            [ "${FD_NUM:-0}" -lt "${CUT_NUM:-0}" ] && rm -f "$F2" 2>/dev/null
-            ;;
-        esac
-      done
-      find "$CACHE_DIR/epg_by_name" -type d -empty -delete 2>/dev/null
+  # 轻量异常检测: 🔴 实时路径绝不删除文件 (会卡播放器请求, 影响使用体验!)
+  #   超阈值只写标记 /tmp/epg_cache_clean_needed, 实际清理由 fetch 拉完全部频道后统一执行
+  #   (epg.cgi 实时拉取历史日期会重写旧文件刷新 mtime → fetch 侧必须按文件名日期清理, 不能按 mtime!)
+  #   🔴 标记已存在 → 已检测出异常待清理, 直接跳过检测 (零开销, 直到 fetch 清完删标记)
+  if [ ! -f /tmp/epg_cache_clean_needed ]; then
+    # 时间戳节流: 每 6 小时最多检测一次 (正常 0 开销, 防弱设备每次请求都 find 遍历)
+    local CLTS=/tmp/epg_cache_clean_ts
+    local CLNOW=$(date +%s)
+    if [ ! -f "$CLTS" ]; then touch "$CLTS" 2>/dev/null
+    else
+      local CLAGE=$(( CLNOW - $(date -r "$CLTS" +%s 2>/dev/null || echo 0) ))
+      [ "$CLAGE" -gt 21600 ] && touch "$CLTS" 2>/dev/null
     fi
+    # 只读检测: 阈值 2000 (正常 106频道×8天=848 flat+848 索引=1696; 超 2000 说明 fetch 长期未清理)
+    local TOT_JSON=$(find "$CACHE_DIR" -maxdepth 2 -name '*.json' 2>/dev/null | wc -l)
+    [ "$TOT_JSON" -gt 2000 ] && touch /tmp/epg_cache_clean_needed 2>/dev/null
   fi
   if [ -n "$CH_RAW" ] && [ -n "$DATE_RAW" ]; then
     mkdir -p "$CACHE_DIR/epg_by_name/${CH_RAW}"

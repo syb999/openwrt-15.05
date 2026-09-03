@@ -45,9 +45,11 @@ s2 = m:section(NamedSection, "main", "iptv_epg", translate("基本设置"))
 s2.addremove = false
 
 o = s2:option(Value, "epg_host", translate("EPG 服务器"))
-o.default = "218.83.165.67:8084"
-o.rmempty = false
-o.description = translate("EPG 服务器地址 (电信默认 218.83.165.67:8084; 联通默认 10.223.2.76:33200, 切联通后自动生效, 一般无需修改)")
+-- 🔴 留空 = 按运营商自动兜底 (电信 218.83.165.67:8084 / 联通 10.223.2.76:33200)
+--    绝不写死默认值! (2026-09-03: 静态电信默认误导切联通用户 + 保存写回电信 IP → login 打到电信失败)
+--    留空后脚本/daemon/epg.cgi 均按 provider 自动选服务器 (iptv_epg 18-27 / daemon 16-24 / epg.cgi 19-25)
+o.rmempty = true
+o.description = translate("EPG 服务器地址。留空 = 按运营商自动选择 (电信 218.83.165.67:8084 / 联通 10.223.2.76:33200)。仅在运营商默认服务器变更时手动填写")
 
 o = s2:option(Value, "tvod_host", translate("回看/TS 流服务器"))
 o.default = "124.75.26.15:6610"
@@ -99,9 +101,10 @@ o.default = "telecom"
 o.description = translate("切换运营商适配: 上海电信/上海联通参数均已内置 (EPG 门户/认证/直播服务器为实测地址)。联通模式: daemon 自动采集机顶盒会话 (JSESSIONID+tempKey+UserToken), 频道抓取/EPG 拉取/直播直通全自动; 会话失效时可在命令行 iptv_epg login 重放认证 (⚠️ 会触发机顶盒重新认证)")
 
 o = s3:option(Value, "cap_ports", translate("抓包端口 (空格分隔)"))
-o.default = "8084 7001 6610"
-o.rmempty = false
-o.description = translate("daemon 抓包监听的服务器端口列表 (电信: 8084 EPG / 7001 认证 / 6610 回看; 联通: 9001 认证 / 33200 EPG / 80 业务, 已按 provider 自动切换, 一般无需修改)")
+-- 🔴 留空 = 抓全部端口 (daemon 从流量自动识别), 或按运营商: 电信 8084 7001 6610 / 联通 9001 33200 80
+--    绝不写死默认值 (同 epg_host 教训, 2026-09-03)
+o.rmempty = true
+o.description = translate("daemon 抓包监听的服务器端口列表。留空 = 自动 (电信默认 8084/7001/6610, 联通默认 9001/33200/80; 留空抓全部端口也能工作)。一般无需修改")
 
 o = s3:option(Value, "iptv_gateway", translate("IPTV 网关"))
 o.default = "30.170.0.1"
@@ -127,25 +130,22 @@ o.default = "br-lan"
 o.description = translate("部署在主路由等无 vxlan/br-iptv 环境时, 手动指定抓包接口 (如 br-lan / eth0.2 / br-wan)。接口不存在时自动回退 br-lan→br-wan")
 
 o = s3:option(Value, "broadband_uid", translate("宽带账号 (EPG 认证用)"))
-o.default = ""
 o.placeholder = "adXXXXXXXX 或 XXXX@etv1"
 o:depends("provider", "telecom")
 protect_telecom(o)
-o.description = translate("输入宽带 PPPoE 账号(如 adXXXXXXXX)。系统自动去掉 ad 前缀拼 @etv1 作为 EPG 认证账号; 也可直接填完整账号(如 XXXXXXXX@etv1)。公共版不内置账号, 由机顶盒抓包自动采集; 联通模式无需填写")
+o.description = translate("输入宽带 PPPoE 账号(格式如 adXXXXXXXX)。系统自动去掉 ad 前缀拼 @etv1 作为 EPG 认证账号; 也可直接填完整账号(如 XXXXXXXX@etv1)。留空则走机顶盒抓包自动采集。联通模式自动采集, 无需填写")
 
 o = s3:option(Value, "stb_sn", translate("机顶盒 SN (EPG 认证用)"))
-o.default = ""
 o.placeholder = "机顶盒背面 SN 序列号"
 o:depends("provider", "telecom")
 protect_telecom(o)
-o.description = translate("机顶盒背面标签的 SN 序列号。认证时自动在前面补 0 到 32 位。联通模式自动采集, 无需填写")
+o.description = translate("机顶盒背面标签的 SN 序列号。认证时自动在前面补 0 到 32 位。留空则走机顶盒抓包自动采集。联通模式自动采集, 无需填写")
 
 o = s3:option(Value, "stb_mac", translate("机顶盒 MAC (自动发现/认证用)"))
-o.default = ""
 o.placeholder = "AA:BB:CC:DD:EE:FF"
 o:depends("provider", "telecom")
 protect_telecom(o)
-o.description = translate("换机顶盒后修改为此新机顶盒的 MAC 地址。联通模式自动采集, 无需填写")
+o.description = translate("换机顶盒后修改为此新机顶盒的 MAC 地址。留空则按抓包流量自动发现。联通模式自动采集, 无需填写")
 
 o = s3:option(Value, "getkey_url", translate("私钥下载直链 (可选)"))
 o.default = ""
@@ -155,7 +155,6 @@ protect_telecom(o)
 o.description = translate("账号直登需要 RSA 私钥 (公共版不内置)。填私钥文件的直链 (网盘/自建服务器, 国内可达) 后自动下载; 留空则尝试 GitHub 提取或手动放置 /etc/iptv_epg_rsa.pem。联通模式不需要私钥")
 
 o = s3:option(Value, "stb_ip", translate("机顶盒 IP (可选, 默认按 MAC 自动发现)"))
-o.default = ""
 o.placeholder = "192.168.1.100"
 o:depends("provider", "telecom")
 protect_telecom(o)

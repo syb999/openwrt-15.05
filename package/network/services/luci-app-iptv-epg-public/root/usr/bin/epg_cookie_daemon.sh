@@ -182,10 +182,14 @@ fi
 echo $$ > "$PIDFILE"
 log "启动 (pid $$)"
 
-# 认证模式: 配置了宽带账号+SN → 用账号直登续期 (不依赖机顶盒, 不刷抓包噪音)
+# 认证模式: 仅电信模式 + 配置了宽带账号+SN → 用账号直登续期 (不依赖机顶盒, 不刷抓包噪音)
+# 🔴 必须检查 provider=telecom! (2026-09-03 现场: 私有版预置电信账号, 切联通后 AUTH_MODE 仍激活
+#    → 联通网络连不上电信服务器 → 每 300s 刷 "cookie 失效 HTTP 000 账号直登续期" 误导日志 + 调 epg_auth.sh)
 # 未配置(机顶盒场景/其他地区) → 保留抓包模式
 AUTH_MODE=""
-[ -n "$(uci get iptv_epg.main.broadband_uid 2>/dev/null)" ] && [ -n "$(uci get iptv_epg.main.stb_sn 2>/dev/null)" ] && AUTH_MODE=1
+if [ "$PROVIDER" = "telecom" ] && [ -n "$(uci get iptv_epg.main.broadband_uid 2>/dev/null)" ] && [ -n "$(uci get iptv_epg.main.stb_sn 2>/dev/null)" ]; then
+  AUTH_MODE=1
+fi
 CH_URL="http://$EPG_HOST:$EPG_PORT/iptvepg/frame1413/function/ajax/epg7getChannelByAjax.jsp"
 
 # 循环: 认证模式(续期) 或 抓包模式(机顶盒流量)

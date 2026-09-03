@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-iptv-epg
-PKG_VERSION:=2.11.29
+PKG_VERSION:=2.11.37
 PKG_RELEASE:=1
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
@@ -66,7 +66,7 @@ define Package/luci-app-iptv-epg/install
 	# Config
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) ./root/etc/config/iptv_epg $(1)/etc/config/
-	# 公共版: 不内置私钥 (电信账号直登不可用, 走机顶盒抓包采集)
+	# 公共版: 不打包私钥/联通会话模板 (账号直登不可用, 走机顶盒抓包采集)
 	# Channel map (name|EPG_ID|multicast) — 按运营商分文件, channel_map.txt 由 init.d 软链接
 	$(INSTALL_DIR) $(1)/usr/share/iptv_epg
 	$(INSTALL_DATA) ./root/usr/share/iptv_epg/channel_map_telecom.txt $(1)/usr/share/iptv_epg/

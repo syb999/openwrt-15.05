@@ -78,6 +78,13 @@ unicom_sess_save() {
 #    踢掉机顶盒当前 EPG 会话 → 机顶盒自动重新认证(直播退出→认证页面)!
 #    优先用 daemon 采集的机顶盒 JSESSIONID (共享会话不踢); 仅在会话失效时 login
 cmd_unicom_login() {
+  # 🔴 provider 守卫: AUTH_URL/VAUTH_URL 在脚本顶部按 PROVIDER 生成 (unicom 才是联通服务器),
+  #     telecom 模式下跑 login 会打到电信服务器 → 拿不到 EncryptToken → 误报 "Authenticator 失效"
+  #     (2026-09-03 157 现场: provider=telecom 手动 login 失败, 切 unicom 后一次成功)
+  if [ "$PROVIDER" != "unicom" ]; then
+    echo "❌ 当前 provider=$PROVIDER, 联通 login 仅在 unicom 模式有效 (LuCI 运营商切换后重试)"
+    return 1
+  fi
   echo "⚠️ 联通 login 会踢掉机顶盒 EPG 会话 (账号单会话), 机顶盒将自动重新认证"
   unicom_sess || return 1
   [ -n "$AUTHENTICATOR" ] || { echo "ERR: 会话缺 Authenticator (需机顶盒抓包一次或从其他机器复制)"; return 1; }
@@ -121,23 +128,46 @@ require_cookie() {
 # 网关: 配置优先 (iptv_gateway), 否则从接口路由自动推断, 最后默认 30.170.0.1
 route_iface() {
   local SIDE=$(uci get iptv_epg.main.stb_side 2>/dev/null)
-  # 第一优先: uci network.iptv 的 ifname 列表里"存在且有 IP"的那个 (如 br-iptv/vxlan_iptv)
-  # eth0.85 可能是纯桥成员(无 IP), 真正有 IP 的是 br-iptv
+  # 🔴 修复: 优先"DHCP 活跃 + 专网网段"的接口, 不选静态残留 IP!
+  #    (曾用 ifname 成员有 IP 即选: eth0.85 有历史认证源 IP <旧静态IP>(静态残留,
+  #     epg_auth.sh 之前 add 的) → 路由指到死网关 30.170.0.1 → 认证/EPG 全挂;
+  #     真正可用的是 br-iptv(DHCP 拿 <DHCP当前IP>, udhcpc 活跃))
+  # DHCP 活跃判定: /var/run/udhcpc-<iface>.pid 存在 = netifd 在管 DHCP (OpenWrt 标准)
   local IPTV_IFS=$(uci get network.iptv.ifname 2>/dev/null)
+  # 第一优先: ifname 成员里 DHCP 活跃且有 IP 的 (br-iptv/eth0.85 等, 排除纯成员)
   local ii
-  for ii in $IPTV_IFS; do
+  for ii in $IPTV_IFS br-iptv; do
     [ -d "/sys/class/net/$ii" ] || continue
+    [ -f "/var/run/udhcpc-$ii.pid" ] || continue
     local II_IP=$(ip addr show "$ii" 2>/dev/null | grep 'inet ' | head -1)
     [ -n "$II_IP" ] && { echo "$ii"; return 0; }
   done
-  # 第二优先: 有 30.170.x 网段 IP 的接口 (上海电信专网特征网段)
+  # 第二优先: 全接口里 DHCP 活跃 + 专网特征网段 (30.170.x/30.171.x 上海电信专网)
   local i
   for i in /sys/class/net/*; do
     local IN=${i#/sys/class/net/}
     [ "$IN" = "lo" ] && continue
+    [ -f "/var/run/udhcpc-$IN.pid" ] || continue
     local IP=$(ip addr show "$IN" 2>/dev/null | grep 'inet ' | awk '{print $2}' | head -1)
     case "$IP" in
-      30.170.*) echo "$IN"; return 0 ;;
+      30.170.*|30.171.*) echo "$IN"; return 0 ;;
+    esac
+  done
+  # 第三优先: 全接口里 DHCP 活跃且有 IP 的 (任意网段)
+  for i in /sys/class/net/*; do
+    local IN2=${i#/sys/class/net/}
+    [ "$IN2" = "lo" ] && continue
+    [ -f "/var/run/udhcpc-$IN2.pid" ] || continue
+    local IP3=$(ip addr show "$IN2" 2>/dev/null | grep 'inet ' | head -1)
+    [ -n "$IP3" ] && { echo "$IN2"; return 0; }
+  done
+  # 第四优先: 有 30.170.x 网段 IP 的接口 (静态专网, 兼容无 udhcpc 场景)
+  for i in /sys/class/net/*; do
+    local IN3=${i#/sys/class/net/}
+    [ "$IN3" = "lo" ] && continue
+    local IP4=$(ip addr show "$IN3" 2>/dev/null | grep 'inet ' | awk '{print $2}' | head -1)
+    case "$IP4" in
+      30.170.*|30.171.*) echo "$IN3"; return 0 ;;
     esac
   done
   local ORDER=""
@@ -146,13 +176,13 @@ route_iface() {
   else
     ORDER="vxlan_iptv br-iptv iptv eth0.85 br-wan br-lan eth0.2"
   fi
-  # 第三轮: 存在且有 IP 的接口
+  # 第五轮: 存在且有 IP 的接口
   for i in $ORDER; do
     [ -d "/sys/class/net/$i" ] || continue
-    local IP2=$(ip addr show "$i" 2>/dev/null | grep 'inet ' | head -1)
-    [ -n "$IP2" ] && { echo "$i"; return 0; }
+    local IP5=$(ip addr show "$i" 2>/dev/null | grep 'inet ' | head -1)
+    [ -n "$IP5" ] && { echo "$i"; return 0; }
   done
-  # 第四轮: 只存在 (无 IP 也能走, 如纯桥)
+  # 第六轮: 只存在 (无 IP 也能走, 如纯桥)
   for i in $ORDER; do
     [ -d "/sys/class/net/$i" ] && { echo "$i"; return 0; }
   done
@@ -160,12 +190,21 @@ route_iface() {
 }
 
 route_gw() {
-  # 配置优先
-  local G=$(uci get iptv_epg.main.iptv_gateway 2>/dev/null)
+  # 🔴 网关判定: DHCP 实际值优先! 30.170.0.1 / 30.171.0.1 都是有效专网网关,
+  #    具体用哪个由 DHCP 分配决定 (不同环境/不同光猫会给不同网关)
+  #    → 优先从 DHCP 活跃接口 (route_iface) 的默认路由/直连路由取实际网关
+  #    配置 iptv_gateway 仅作兜底 (DHCP 判定失败时), 不优先!
+  local RIF=$(route_iface)
+  if [ -n "$RIF" ] && [ -d "/sys/class/net/$RIF" ]; then
+    local G=$(ip route show 2>/dev/null | grep "dev $RIF" | grep -E "default|via" | head -1 | awk '{print $3}')
+    [ -n "$G" ] && { echo "$G"; return 0; }
+  fi
+  # 全接口: DHCP 活跃接口的默认路由网关 (30.170/30.171 都认)
+  G=$(ip route show 2>/dev/null | grep -E "default|via" | grep -E "30\.17[01]\." | head -1 | awk '{print $3}')
   [ -n "$G" ] && { echo "$G"; return 0; }
-  # 从接口路由推断: 找 218.x 网段的历史网关
-  G=$(ip route show 2>/dev/null | grep -E '218\.83\.165\.67|30\.170\.' | head -1 | awk '{print $3}')
-  [ -n "$G" ] && { echo "$G"; return 0; }
+  # 配置兜底 (用户手动指定)
+  local GC=$(uci get iptv_epg.main.iptv_gateway 2>/dev/null)
+  [ -n "$GC" ] && { echo "$GC"; return 0; }
   echo "30.170.0.1"
 }
 
@@ -472,8 +511,10 @@ fetch_one() {
 }
 
 # ---------- 清理过期缓存 (长时间运行防 /tmp 膨胀) ----------
-# epg_cache_*.json: 按 mtime 超期删除 (fetch 完成/开头都调)
-# epg_by_name/<编码>/<日期>.json: 🔴 按文件名日期 (YYYY-MM-DD) 早于 今天-KEEP_DAYS 删除 (不依赖 mtime, 更精确)
+# epg_cache_*.json: 🔴 按文件名日期 (YYYY-MM-DD) 早于 今天-KEEP_DAYS 删除
+#    (不依赖 mtime! epg.cgi 实时拉取历史日期会重写旧文件刷新 mtime → mtime 清理永久失效,
+#     这是"8-17 的文件 8-31 还在"的根因)
+# epg_by_name/<编码>/<日期>.json: 同样按文件名日期删除
 clean_old_cache() {
   local DAYS2=$(uci get iptv_epg.main.prefetch_days 2>/dev/null)
   [ -n "$DAYS2" ] || DAYS2=7
@@ -482,15 +523,24 @@ clean_old_cache() {
   #    (曾误用 DAYS+1 做起点 → 只留 7 天缺预告; 又误改起点 → 9 天; 最终: 起点=今天-(DAYS2-1))
   local CUTOFF=$(date -d "@$(( $(date +%s) - (DAYS2-1)*86400 ))" +%F 2>/dev/null)
   [ -n "$CUTOFF" ] || CUTOFF=$(date +%F)
-  # epg_cache: mtime 超期 (中间缓存, 宽松保留 +1 天)
-  find "$CACHE_DIR" -name 'epg_cache_*.json' -mtime +$((DAYS2+1)) -delete 2>/dev/null || true
-  find "$CACHE_DIR/epg_by_name" -name '*.json' 2>/dev/null | while read -r F2; do
-    local FD=$(basename "$F2" .json)
+  local CUT_NUM=$(echo "$CUTOFF" | tr -d '-')
+  # 统一按文件名日期清理 (epg_cache_<ID>_<日期>.json + epg_by_name/<编码>/<日期>.json)
+  find "$CACHE_DIR" -maxdepth 1 -name 'epg_cache_*.json' 2>/dev/null | while read -r F2; do
+    # 文件名: epg_cache_ch..._2026-08-17.json → 提取尾部日期
+    local FD=$(basename "$F2" .json | sed 's/^epg_cache_//; s/^[^_]*_//')
     case "$FD" in
       20[0-9][0-9]-[0-9][0-9]-[0-9][0-9])
         # 日期转数字比较 (2026-08-01 → 20260801), busybox test 数字比较最稳
         local FD_NUM=$(echo "$FD" | tr -d '-')
-        local CUT_NUM=$(echo "$CUTOFF" | tr -d '-')
+        [ "${FD_NUM:-0}" -lt "${CUT_NUM:-0}" ] && rm -f "$F2" 2>/dev/null
+        ;;
+    esac
+  done
+  find "$CACHE_DIR/epg_by_name" -name '*.json' 2>/dev/null | while read -r F2; do
+    local FD=$(basename "$F2" .json)
+    case "$FD" in
+      20[0-9][0-9]-[0-9][0-9]-[0-9][0-9])
+        local FD_NUM=$(echo "$FD" | tr -d '-')
         [ "${FD_NUM:-0}" -lt "${CUT_NUM:-0}" ] && rm -f "$F2" 2>/dev/null
         ;;
     esac
@@ -498,6 +548,9 @@ clean_old_cache() {
   find "$CACHE_DIR/epg_by_name" -type d -empty -delete 2>/dev/null || true
   # 残留临时拆分文件
   find "$CACHE_DIR" -maxdepth 1 -name 'epg_7d.*.json' -mtime +1 -delete 2>/dev/null || true
+  # 🔴 清理完成 → 删除异常标记 (epg.cgi 检测到超阈值会写 /tmp/epg_cache_clean_needed,
+  #    只标记不删除; 这里 fetch 拉完全部频道后统一清理, 清完删标记, 标记生命周期闭环)
+  rm -f /tmp/epg_cache_clean_needed 2>/dev/null || true
 }
 
 # ---------- 分批后台拉取 (每批 BATCH 个频道, 防单次超时) ----------
@@ -543,6 +596,10 @@ cmd_fetch_bg() {
     DATE_LIST="$DATE_LIST $D"
     i=$((i+1))
   done
+  # 🔴 明天预告: 服务器单次 getChannelProg 最多返回 7 天, 8 天窗口的最后一天(明天)会被截断!
+  #    → 必须单独补拉明天 (锚点窗口覆盖不到; epg.cgi 单日窗口能拿到 = 服务器确实有明天数据)
+  local TOMORROW=$(date -d "@$(( NOW + 86400 ))" +%F 2>/dev/null)
+  [ -n "$TOMORROW" ] || TOMORROW=$(date -d "tomorrow" +%F 2>/dev/null)
 
   # 频道列表: 指定频道或全部 selected
   if [ -n "$1" ]; then
@@ -553,11 +610,14 @@ cmd_fetch_bg() {
     local NAME=$(echo "$CH" | cut -d'|' -f1)
     local ID=$(echo "$CH" | cut -d'|' -f2)
     echo "[fetch_bg] 拉取单频道: $NAME"
-    # 🔴 加速: 每频道只拉 1 次 (fetch_one 内部一次拉 7 天), 锚点=DATE_LIST 最早日期覆盖过去7天+未来
+    # 🔴 加速: 每频道只拉 2 次 (fetch_one 内部一次拉 8 天窗口: 过去6天+今天+明天),
+    #    锚点=DATE_LIST 最早日期覆盖过去7天; 明天单独补拉 (服务器单次最多返回7天, 第8天会被截断)
     #    原来对 7 个日期循环调用 fetch_one = 7 倍请求 + 7 倍进程 → 弱设备 CPU 爆炸!
     local ANCHOR=$(echo $DATE_LIST | awk '{print $NF}')
     fetch_one "$NAME" "$ID" "$ANCHOR"
-    # 降级: 锚点(最早日期)可能无数据, 用今天重试一次 (最多 2 次请求/频道)
+    # 🔴 补拉明天预告 (锚点 8 天窗口的最后一天会被服务器截断, 单独请求明天保证写入)
+    [ -n "$TOMORROW" ] && fetch_one "$NAME" "$ID" "$TOMORROW"
+    # 降级: 锚点(最早日期)可能无数据, 用今天重试一次 (最多 3 次请求/频道)
     if ! ls ${CACHE_DIR}/epg_cache_${ID}_*.json >/dev/null 2>&1; then
       fetch_one "$NAME" "$ID" "$(echo $DATE_LIST | awk '{print $1}')"
     fi
@@ -594,6 +654,8 @@ cmd_fetch_bg() {
       local NAME=$(echo "$LINE" | cut -d'|' -f1)
       local ID=$(echo "$LINE" | cut -d'|' -f2)
       fetch_one "$NAME" "$ID" "$ANCHOR"
+      # 🔴 补拉明天预告 (锚点 8 天窗口的最后一天会被服务器截断, 单独请求明天保证写入)
+      [ -n "$TOMORROW" ] && fetch_one "$NAME" "$ID" "$TOMORROW"
       # 降级: 锚点无数据时用今天重试一次
       if ! ls ${CACHE_DIR}/epg_cache_${ID}_*.json >/dev/null 2>&1; then
         fetch_one "$NAME" "$ID" "$TODAY"
@@ -614,6 +676,9 @@ cmd_fetch_bg() {
     done
   fi
   echo "[fetch_bg] 完成"
+  # 🔴 全部频道拉取完毕后, 统一执行完整缓存清理 (含异常标记处理: epg.cgi 检测到超阈值只标记
+  #    不删除; 这里按文件名日期清理过期缓存 + 删标记 — 清理动作只在拉取完成后执行, 不影响播放器实时请求)
+  clean_old_cache
   # 🔴 清理不在本次频道列表的旧缓存 (selected 缩小后, 旧频道缓存残留导致"拉了全部"误判 + /tmp 堆积)
   local KEEP_IDS=$(echo "$CHLIST" | cut -d'|' -f2 | sort -u)
   local CF
@@ -721,6 +786,10 @@ cmd_fetch() {
     DATE_LIST="$DATE_LIST $D"
     i=$((i+1))
   done
+  # 🔴 明天预告: 服务器单次 getChannelProg 最多返回 7 天, 8 天窗口的最后一天(明天)会被截断!
+  #    → 必须单独补拉明天 (即使今天的 8 天窗口已含明天, fetch_one 缓存命中也会跳过, 零额外请求)
+  local TOMORROW=$(date -d "@$(( NOW + 86400 ))" +%F 2>/dev/null)
+  [ -n "$TOMORROW" ] || TOMORROW=$(date -d "tomorrow" +%F 2>/dev/null)
 
   # MT7688 单核弱 CPU: 完全串行, 一次只拉 1 个 (避免打爆设备)
   # 指定频道?
@@ -739,6 +808,8 @@ cmd_fetch() {
     for D in $DATE_LIST; do
       fetch_one "$NAME" "$ID" "$D"
     done
+    # 🔴 补拉明天预告 (锚点 8 天窗口的最后一天会被服务器截断, 单独请求明天保证写入)
+    [ -n "$TOMORROW" ] && fetch_one "$NAME" "$ID" "$TOMORROW"
   else
     # 频道来源: ① selected 段 (LuCI 勾选, 方便调试) ② UCI channel 段
     local CHLIST2=$(selected_channels)
@@ -757,6 +828,8 @@ cmd_fetch() {
       for D in $DATE_LIST; do
         fetch_one "$NAME" "$ID" "$D"
       done
+      # 🔴 补拉明天预告 (锚点 8 天窗口的最后一天会被服务器截断, 单独请求明天保证写入)
+      [ -n "$TOMORROW" ] && fetch_one "$NAME" "$ID" "$TOMORROW"
     done
   fi
   echo "完成: 缓存目录 $CACHE_DIR ($DAYS 天, $(ls $CACHE_DIR/epg_cache_*.json 2>/dev/null | wc -l) 个文件)"
