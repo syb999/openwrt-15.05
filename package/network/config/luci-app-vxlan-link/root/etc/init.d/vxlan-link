@@ -43,8 +43,14 @@ start() {
 	done
 	$BIN vxlan-build
 	$BIN hotplug
-	if [ "$(uci -q get vxlan_link.settings.role)" = "client" ] && \
-	   [ "$(uci -q get vxlan_link.settings.selfheal)" = "1" ]; then
+	# 🔴 1.3.27: selfheal 守护对 client 和 server 都启用 (vxlan-build 在
+	#    开机早期可能因 wifi/backhaul 未就绪失败, 守护会持续兜底重建)。
+	#    先杀旧 selfheal 再启新, 防叠加。
+	if [ -f /var/run/vxlan-selfheal.pid ]; then
+		kill "$(cat /var/run/vxlan-selfheal.pid)" 2>/dev/null
+		rm -f /var/run/vxlan-selfheal.pid 2>/dev/null
+	fi
+	if [ "$(uci -q get vxlan_link.settings.selfheal)" = "1" ]; then
 		( $BIN selfheal ) >/dev/null 2>&1 &
 		echo "vxlan_link: vxlan built, hotplug installed, selfheal started"
 	else

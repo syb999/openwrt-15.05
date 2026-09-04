@@ -41,8 +41,12 @@ function act_status()
 	http.write_json(st)
 end
 
--- Applying restarts the network, so the script backgrounds itself; we return
--- immediately instead of waiting for the HTTP request to be cut off.
+--- Applying restarts the network, so the script backgrounds itself; we return
+--- immediately instead of waiting for the HTTP request to be cut off.
+--- 🔴 1.3.28: 只用纯 "&" 触发! 脚本 cmd_apply 内部已自行
+---    "( trap '' HUP; network restart; ... ) >/dev/null 2>&1 &" 完全脱离,
+---    不依赖外部 nohup/setsid: busybox 15.05 无 setsid, nohup 是 coreutils
+---    的 (/usr/bin/nohup) 非 busybox applet, 未装则 apply 不启动 → 宁可不依赖。
 function act_apply()
 	sys.call("/usr/bin/vxlan-link apply >/dev/null 2>&1 &")
 	http.prepare_content("text/plain; charset=utf-8")

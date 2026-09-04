@@ -1,4 +1,12 @@
 #!/bin/sh
+# 🔴 1.3.28: PATH 必须把 /usr/sbin 放最前! 本机 /sbin/ip 是 BusyBox ip
+#    (不支持 vxlan: ip link add type vxlan → "RTNETLINK answers: Invalid
+#    argument"), /usr/sbin/ip 才是 iproute2 (vxlan OK)。LuCI CGI 触发的
+#    apply 继承 PATH=/sbin:/usr/sbin:/bin:/usr/bin → 命中 busybox ip →
+#    vxlan-build 全失败 (实测 08:22-08:26 持续 Invalid argument, 而 SSH
+#    手动因 shell hash 到 /usr/sbin/ip 成功)。统一强制 iproute2。
+PATH=/usr/sbin:/sbin:/usr/bin:/bin
+export PATH
 # luci-app-vxlan core script
 # VXLAN wireless bridge for single-port MT7628/MT7688 boards.
 # Derived from enjoylink_A_config.sh / enjoylink_B_config.sh.
@@ -106,6 +114,11 @@ platform() {
 #                   switch_mode=hw to use swconfig hardware VLANs instead.
 #   hw: force hardware switch VLANs (swconfig)
 #   sw: force software 8021q (disable ESW VLAN table / plain iface)
+#   keep: DO NOT touch switch config at all. Required for vendor boxes whose
+#         eth0.x VLAN split is done by the ESW hardware VLAN table itself
+#         (e.g. enjoylink 157: lan=eth0.1/wan=eth0.2 via ESW). Running the
+#         default sw path there clears enable_vlan + switch_vlan sections
+#         and the management address disappears after network restart.
 switch_mode() {
 	local M
 	M=$(uget switch_mode)
@@ -113,6 +126,7 @@ switch_mode() {
 	case "$M" in
 		hw) echo hw; return 0 ;;
 		sw) echo sw; return 0 ;;
+		keep) echo keep; return 0 ;;
 	esac
 	echo sw
 }
@@ -201,6 +215,7 @@ switch_configure() {
 	case "$(switch_mode)" in
 		hw) config_hw_vlan ;;
 		sw) disable_esw_vlan ;;
+		keep) say "  switch untouched (mode=keep, vendor ESW VLAN preserved)" ;;
 	esac
 }
 
@@ -300,20 +315,36 @@ vxlan_dev_add() {
 	# unicast remote mode (default, safe on wireless: point-to-point, no
 	# loop, rate control + retransmit). Each peer gets its own VNI (see
 	# cmd_vxlan_build) because kernel 3.18 forbids duplicate VNI per device.
-	# 🔴 创建失败重试: DORMANT 消失后驱动可能还要一两秒才完全就绪,
-	#    一次 ip link add 失败不代表真失败, 重试 5 次 (间隔 2s) 再放弃。
-	local TRIES=0
-	while [ $TRIES -lt 5 ]; do
-		if ip link add "$NAME" type vxlan id "$VNI" remote "$PEER" dev "$TUN" dstport 4789 2>/dev/null; then
+	# 创建失败重试: DORMANT 消失后驱动可能还要一两秒才完全就绪,
+	# 一次 ip link add 失败不代表真失败。🔴 1.3.27: 错误不能吞!
+	# 之前 2>/dev/null 导致自动流程失败原因完全不可见 (实测 20:06/20:21
+	# 自动 vxlan-build 全失败但手动成功, 真实错误被静默)。每次失败把
+	# stderr 记入日志, 重试窗口 30x2s=60s (驱动就绪可能要 30-60s)。
+	local TRIES=0 ERR=""
+	while [ $TRIES -lt 30 ]; do
+		ERR=$(ip link add "$NAME" type vxlan id "$VNI" remote "$PEER" dev "$TUN" dstport 4789 2>&1)
+		if [ -z "$ERR" ]; then
 			ip link set "$NAME" up 2>/dev/null
 			say "  vxlan dev $NAME: vni=$VNI peer=$PEER dev=$TUN dstport=4789 (unicast)"
 			return 0
 		fi
+		# 🔴 1.3.28: "File exists" = 并发 build (apply 补跑与 selfheal 并行)
+		#    先到的进程已创建设备 → 幂等成功, 不重试 30 次刷屏误导日志!
+		#    实测 06:40: 一个进程成功创建后另一进程刷 30x "File exists"。
+		if echo "$ERR" | grep -q "File exists"; then
+			if ip link show "$NAME" >/dev/null 2>&1; then
+				ip link set "$NAME" up 2>/dev/null
+				say "  vxlan dev $NAME: already exists (concurrent build), ok"
+				return 0
+			fi
+		fi
 		TRIES=$((TRIES+1))
-		say "  retry $TRIES/5: vxlan dev $NAME (peer=$PEER, tun=$TUN)"
+		if [ $((TRIES % 5)) = 0 ] || [ $TRIES = 1 ]; then
+			say "  retry $TRIES/30: vxlan dev $NAME failed: $ERR"
+		fi
 		sleep 2
 	done
-	say "  ERROR: cannot create vxlan dev $NAME (peer=$PEER, tun=$TUN)"
+	say "  ERROR: cannot create vxlan dev $NAME (peer=$PEER, tun=$TUN): $ERR"
 	return 1
 }
 
@@ -330,7 +361,27 @@ bridge_add() {
 
 # Create all vxlan devices for the current peer list and bridge them in.
 # Runs AFTER /etc/init.d/network restart (bridges exist by then).
+# 🔴 1.3.28: 互斥锁 — 实测 LuCI apply 的 vxlan-build 与常驻 selfheal 的
+#    rebuild 并发执行: 各自先删再建, 互相删掉对方刚建的设备 → 持续
+#    Invalid argument。用 mkdir 原子锁串行化 (busybox 无 flock)。
+#    🔴 ts 必须存 epoch 时间戳 (date +%s), 曾误存 PID → 僵死判断
+#    (now - PID) 恒 > 阈值 → 锁被并发进程强拆 → 锁形同虚设!
 cmd_vxlan_build() {
+	local LOCK=/tmp/vxlan-build.lock
+	local LW=0
+	while ! mkdir "$LOCK" 2>/dev/null; do
+		LW=$((LW+1))
+		[ $LW -ge 90 ] && { say "  ERROR: vxlan-build lock busy 180s, giving up (concurrent apply/selfheal?)"; return 1; }
+		# 锁持有者超过 300s 视为僵死, 强拆 (正常 build 最坏 3 设备 x 60s + 余量)
+		local LTS=$(cat "$LOCK/ts" 2>/dev/null || echo 0)
+		if [ -d "$LOCK" ] && [ $(( $(date +%s) - LTS )) -gt 300 ] 2>/dev/null; then
+			say "  vxlan-build lock stale (${LTS}), breaking"
+			rm -rf "$LOCK" 2>/dev/null
+			continue
+		fi
+		sleep 2
+	done
+	date +%s > "$LOCK/ts" 2>/dev/null || true
 	local ROLE PROV BH TUN N I P VNI1 VNI2 VV
 	ROLE=$(uget role); PROV=$(uget provider)
 	BH=$(uget backhaul_ip)
@@ -399,6 +450,7 @@ cmd_vxlan_build() {
 		I=$((I+1))
 	done
 	say "vxlan devices built: $(ip -br link 2>/dev/null | grep -c vxlan) total, peer list: $(peer_list)"
+	rm -rf /tmp/vxlan-build.lock 2>/dev/null
 }
 
 lan_zone() {
@@ -674,13 +726,15 @@ setup_msd() {
 		say "  msd_lite not installed, skipped"
 		return 0
 	}
+	# NOTE: 不控制 msd_lite 的 enable 开关 (用户要求: msd_lite 由自身/
+	# LuCI 管理, 只要 iptv 接口正常它就能用)。这里只保证配置指向 br-iptv。
 	uci set msd_lite.@msd_lite[0].interface='br-iptv'
 	uci set msd_lite.@msd_lite[0].bind='0.0.0.0'
 	uci set msd_lite.@msd_lite[0].port="$PORT"
 	uci commit msd_lite
 	hotplug_msd on
 	/etc/init.d/msd_lite restart 2>/dev/null
-	say "  msd_lite on br-iptv port $PORT"
+	say "  msd_lite configured on br-iptv port $PORT"
 }
 
 clean_legacy() {
@@ -933,6 +987,22 @@ apply_server_telecom() {
 	uci set network.iptv.type='bridge'
 	uci set network.iptv.proto='dhcp'
 	uci set network.iptv.hostname="$(uget iptv_hostname)"
+	# 🔴 1.3.27: server 端 br-iptv 也必须用独立随机 MAC! client 端早已
+	#    有 iptv_mac/iptv_mac_fixed 逻辑, server 端漏了 → br-iptv 继承
+	#    eth0 物理 MAC, 与 wlan0 underlay/eth0 同 MAC → 本机 IPTV DHCP
+	#    拿不到 IP (电信按 MAC 分配/认证, 同 MAC 冲突)。与 client 相同:
+	#    iptv_mac 配置优先, 否则持久化固定随机 MAC (02: 本地管理位)。
+	if [ -n "$(uget iptv_mac)" ]; then
+		uci set network.iptv.macaddr="$(uget iptv_mac)"
+	else
+		GMAC2=$(uci get vxlan_link.settings.iptv_mac_fixed 2>/dev/null)
+		if [ -z "$GMAC2" ]; then
+			GMAC2="02:$(hexdump -n5 -e '5/1 ":%02x"' /dev/urandom 2>/dev/null | sed 's/^://')"
+			uci set vxlan_link.settings.iptv_mac_fixed="$GMAC2"
+			uci commit vxlan_link
+		fi
+		uci set network.iptv.macaddr="$GMAC2"
+	fi
 	uci set network.iptv.metric='200'
 	uci set network.iptv.delegate='0'
 	uci set network.iptv.peerdns='1'
@@ -1120,6 +1190,8 @@ apply_client_telecom() {
 	set_stb_dhcp
 	hotplug_vxlan_up
 	hotplug_peer_route ""
+	# msd_lite 开关由系统自身/LuCI 管理, vxlan-link 只按配置决定是否
+	# 把 msd_lite 指向 br-iptv, 不强制 enable。
 	[ "$(uget msd_enable)" = "1" ] && setup_msd || hotplug_msd off
 	clean_legacy
 	say "client/telecom: br-lan=$LIP (eth0+vxlan_inet), br-iptv=eth0.$VID+vxlan_iptv, default via $GW"
@@ -1211,6 +1283,10 @@ cmd_apply() {
 
 	soc_guard || return 1
 
+	# 🔴 1.3.28: apply 主进程也要 trap '' HUP! LuCI act_apply 用纯
+	#    "cmd &" 触发 (无 setsid/nohup 依赖), uhttpd 请求结束时会给进程组
+	#    发 SIGHUP → 若主进程在 fork 内部后台子 shell 前被杀, 整条链断掉。
+	trap '' HUP
 	say "==== apply: role=$ROLE provider=$PROV region=$REGION ===="
 	cp /etc/config/network /etc/config/network.vxlanbak 2>/dev/null
 	cp /etc/config/wireless /etc/config/wireless.vxlanbak 2>/dev/null
@@ -1248,13 +1324,15 @@ cmd_apply() {
 	  # wait for the backhaul wlan to come up before building vxlan devices
 	  # (wifi reload takes 30-60s on MT7688-class; vxlan_dev_add also waits,
 	  # but this makes the log cleaner and the first tunnel snappier)
-	  local W=0 BD
+	  # NOTE: no 'local' here - this whole block is a subshell, not a function
+	  # (ash/busybox would error on local in a subshell).
+	  W=0; BD=""
 	  BD=$(logical_dev backhaul)
 	  [ -z "$BD" ] && BD=wlan0
 	  while [ $W -lt 45 ]; do
-	    ip link show "$BD" >/dev/null 2>&1 && ip -4 addr show dev "$BD" 2>/dev/null | grep -q 'inet ' && break
-	    sleep 2
-	    W=$((W+1))
+	  	ip link show "$BD" >/dev/null 2>&1 && ip -4 addr show dev "$BD" 2>/dev/null | grep -q 'inet ' && break
+	  	sleep 2
+	  	W=$((W+1))
 	  done
 	  # 🔴 修复 (client STA 连不上 server 的运行时根因):
 	  #    STA 模式 wifi reload 后 wlan0 关联成功但 backhaul 接口可能没 up/没地址,
@@ -1262,29 +1340,51 @@ cmd_apply() {
 	  #    → 等不到 inet 时: 重试 wifi reload 再等一轮 (STA 关联是异步的),
 	  #      仍失败则明确报错, 不要静默建半吊子隧道。
 	  if ! ip -4 addr show dev "$BD" 2>/dev/null | grep -q 'inet '; then
-	    say "WARNING: $BD (backhaul) has no IPv4 after ${W}x2s; reloading wifi once and re-waiting"
-	    wifi reload
-	    W=0
-	    while [ $W -lt 45 ]; do
-	      ip link show "$BD" >/dev/null 2>&1 && ip -4 addr show dev "$BD" 2>/dev/null | grep -q 'inet ' && break
-	      sleep 2
-	      W=$((W+1))
-	    done
+	  	say "WARNING: $BD (backhaul) has no IPv4 after ${W}x2s; reloading wifi once and re-waiting"
+	  	wifi reload
+	  	W=0
+	  	while [ $W -lt 45 ]; do
+	  		ip link show "$BD" >/dev/null 2>&1 && ip -4 addr show dev "$BD" 2>/dev/null | grep -q 'inet ' && break
+	  		sleep 2
+	  		W=$((W+1))
+	  	done
 	  fi
 	  if ! ip -4 addr show dev "$BD" 2>/dev/null | grep -q 'inet '; then
-	    say "ERROR: $BD (backhaul) still has no IPv4 after wifi reload; vxlan tunnel will be BROKEN (client cannot reach server)"
+	  say "ERROR: $BD (backhaul) still has no IPv4 after wifi reload; vxlan tunnel will be BROKEN (client cannot reach server)"
+	  fi
+	  # 🔴 1.3.28: 建隧道前先停旧 selfheal! 否则旧守护的周期 rebuild 与本
+	  #    apply 的 vxlan-build 并发 → 互删设备 → Invalid argument (实测 08:14
+	  #    双 retry 序列)。selfheal 在 build 完成后由下方重新拉起。
+	  if [ -f "$SELFHEAL_PID" ]; then
+	    kill "$(cat "$SELFHEAL_PID")" 2>/dev/null
+	    rm -f "$SELFHEAL_PID" 2>/dev/null
+	    say "stopped previous selfheal before vxlan-build (avoid concurrent rebuild)"
 	  fi
 	  "$0" vxlan-build
-	  # 🔴 server 无线 AP 起来慢 (30-60s on MT7688): 首次 vxlan-build 可能赶上
-	  #    驱动未完全就绪 (backhaul 已有 IP 但 ip link add vxlan 仍失败, 5 次
-	  #    重试共 10s 不够) → 若 0 个设备, 25s 后补跑一次 (此时驱动必已就绪)。
-	  #    server 无 selfheal (只有 client 自愈), 所以这里必须自己兜底。
-	  if ! ip link show 2>/dev/null | grep -q vxlan; then
-	    say "first vxlan-build left no vxlan devices; retrying in 25s"
-	    sleep 25
+	  # 🔴 1.3.28: server 无线 AP 起来慢 (30-60s on MT7688): 首次 vxlan-build
+	  #    可能赶上驱动未完全就绪 → ip link add Invalid argument (实测 06:23
+	  #    apply 后持续 8 分钟失败, 06:33 同样错误 7s 后重试即成功 = 短暂窗口)。
+	  #    修复: 不再串行补跑 20 轮 (每轮 ~3 分钟, 失败时阻塞 selfheal 无法兜底),
+	  #    改为快速试 3 次后无条件启动 selfheal 并行守护 — selfheal 每 30s 查
+	  #    一次 + vxlan_dev_add 内部 30x2s 重试, 覆盖窗口绰绰有余。
+	  R=0
+	  while ! ip link show 2>/dev/null | grep -q vxlan; do
+	    R=$((R+1))
+	    [ $R -gt 3 ] && { say "no vxlan after 3 quick tries; selfheal will keep retrying"; break; }
+	    say "no vxlan devices yet (quick retry $R/3), waiting 10s"
+	    sleep 10
 	    "$0" vxlan-build
+	  done
+	  # selfheal 守护: client 与 server 都启用 (server 也需要自愈兜底)。
+	  # 无条件启动 (即使上面 build 成功, 守护还负责补桥成员/断线重建)。
+	  # 由 /etc/init.d/vxlan-link stop 收掉。先杀旧 selfheal 再启新防叠加。
+	  if [ "$(uget selfheal)" = "1" ]; then
+	    if [ -f "$SELFHEAL_PID" ]; then
+	      kill "$(cat "$SELFHEAL_PID")" 2>/dev/null
+	      rm -f "$SELFHEAL_PID" 2>/dev/null
+	    fi
+	    "$0" selfheal >/dev/null 2>&1 &
 	  fi
-	  [ "$(uget role)" = "client" ] && [ "$(uget selfheal)" = "1" ] && "$0" selfheal &
 	) >/dev/null 2>&1 &
 	say "==== apply done ===="
 	return 0
@@ -1312,52 +1412,98 @@ cmd_fw() {
 }
 
 cmd_selfheal() {
-	local PEER MAXW MAXR GW I A BH
+	# 🔴 1.3.27: selfheal 从"试 3 轮就退出"改为"常驻守护"。
+	# 旧版 MAXR=3: client 开机时 wifi/backhaul 还没就绪 → 3 轮全失败 →
+	# "selfheal failed" 永久退出 → 用户之后手动连上 backhaul 也再没人
+	# 重建隧道 (实测 153: 20:27 selfheal failed, 20:39 手动 vxlan-build
+	# 才通, 期间 iptv/voip/网络全断)。守护循环只在收到 stop 时退出。
+	local PEER GW CYCLE DEVOK ROLE
 	PEER=$(peer_nth 1)
 	GW=$(uget gw_ip)
-	MAXW=120; MAXR=3
+	ROLE=$(uget role)
+	[ -z "$ROLE" ] && ROLE=server
 	echo $$ > "$SELFHEAL_PID" 2>/dev/null
-	log "selfheal start (peer=$PEER)"
-	I=0
-	while [ $I -lt $MAXW ]; do
-		BH=$(ip addr show backhaul 2>/dev/null | grep -c 'inet ')
-		[ "${BH:-0}" -ge 1 ] && { log "backhaul up (${I}s)"; break; }
+	log "selfheal start (peer=$PEER, role=$ROLE, watchdog mode)"
+	# 阶段1: 等 backhaul (STA 关联是异步的, wifi reload 后可能 30-120s)
+	# server 的 backhaul 是 AP 侧静态地址, 通常很快; client 才需要长等。
+	# NOTE: backhaul 是 netifd 逻辑接口, 地址实际在 wlan0 上 → 必须用
+	# logical_dev 解析, 直接 `ip addr show backhaul` 永远查不到地址!
+	local I=0 BD2
+	BD2=$(logical_dev backhaul)
+	[ -z "$BD2" ] && BD2=wlan0
+	while [ $I -lt 150 ]; do
+		[ -f "$SELFHEAL_PID" ] || return 0
+		if ip -4 addr show dev "$BD2" 2>/dev/null | grep -q 'inet '; then
+			log "backhaul up on $BD2 (${I}x2s)"
+			break
+		fi
 		sleep 2
-		I=$((I+2))
+		I=$((I+1))
 	done
-	sleep 5
-	A=0
-	while [ $A -lt $MAXR ]; do
-		A=$((A+1))
-		log "tunnel check #$A"
-		if ping -c 2 -W 3 "$PEER" >/dev/null 2>&1; then
-			if [ "$(uget provider)" = "unicom" ]; then
-				if ip addr show vxlan_inet 2>/dev/null | grep -q 'inet '; then
-					log "tunnel ok (underlay + vxlan_inet addressed)"
-					rm -f "$SELFHEAL_PID" 2>/dev/null
-					return 0
+	sleep 3
+	CYCLE=0
+	while [ -f "$SELFHEAL_PID" ]; do
+		CYCLE=$((CYCLE+1))
+		# underlay 没地址 → 无线可能断了, 等下一轮 (不做破坏性重建)
+		if ! ip -4 addr show dev "$BD2" 2>/dev/null | grep -q 'inet '; then
+			log "watch #$CYCLE: backhaul ($BD2) down, waiting"
+			sleep 15
+			continue
+		fi
+		# vxlan 设备缺失 → 重建 (这是 apply/启动时序失败后的兜底)
+		if ! ip link show vxlan_inet >/dev/null 2>&1; then
+			log "watch #$CYCLE: vxlan_inet missing, rebuilding"
+			cmd_vxlan_build
+			if [ "$(uget provider)" != "unicom" ]; then
+				/etc/init.d/msd_lite restart 2>/dev/null
+			fi
+		else
+			# 🔴 1.3.27: network restart / ifup 会重建 bridge 并踢掉 vxlan
+			#    成员 (netifd 只按 UCI ifname 加 eth0.x)! 实测 apply 后
+			#    br-iptv 里 vxlan_iptv 丢失 → client 的 DHCP discover 进不了
+			#    桥 → 出不了 eth0.85 → IPTV 拿不到 IP。守护每轮检查设备
+			#    是否在对应桥里, 丢了只补 brctl addif (不重建设备, 避免
+			#    抖动)。检查映射: vxlan_inet→br-lan, vxlan_iptv→br-iptv,
+			#    vxlan_voip→br-voip (voip 设备仅 voip_enable 时存在)。
+			for MV in "vxlan_inet:br-lan" "vxlan_iptv:br-iptv" "vxlan_voip:br-voip"; do
+				DEV=${MV%%:*}; BR=${MV##*:}
+				ip link show "$DEV" >/dev/null 2>&1 || continue
+				[ -d "/sys/class/net/$BR" ] || continue
+				if ! ls /sys/class/net/$BR/brif/ 2>/dev/null | grep -qx "$DEV"; then
+					log "watch #$CYCLE: $DEV not in $BR, re-adding"
+					brctl addif "$BR" "$DEV" 2>/dev/null
+					ip link set "$DEV" up 2>/dev/null
 				fi
-			else
-				if ping -c 2 -W 3 "$GW" >/dev/null 2>&1; then
-					log "tunnel ok (underlay + overlay reachable)"
-					rm -f "$SELFHEAL_PID" 2>/dev/null
-					return 0
+			done
+			if [ "$ROLE" = "client" ]; then
+				# 设备在, 但 overlay 不通 (桥接/路由层问题) → 周期探活
+				# server 不做 peer 探活: client 离线对 server 是正常状态
+				# (内核 vxlan 静默), 探活只会导致无谓重建和日志刷屏。
+				DEVOK=1
+				if [ -n "$PEER" ] && ! ping -c 1 -W 2 "$PEER" >/dev/null 2>&1; then
+					DEVOK=0
+				fi
+				if [ "$DEVOK" = "1" ] && [ "$(uget provider)" != "unicom" ] && \
+				   [ -n "$GW" ] && ! ping -c 1 -W 2 "$GW" >/dev/null 2>&1; then
+					DEVOK=0
+				fi
+				if [ "$DEVOK" = "0" ]; then
+					log "watch #$CYCLE: vxlan exists but peer/gw unreachable, rebuilding"
+					cmd_vxlan_build
+					if [ "$(uget provider)" != "unicom" ]; then
+						/etc/init.d/msd_lite restart 2>/dev/null
+					fi
+					sleep 5
 				fi
 			fi
-			log "underlay ok but overlay down, rebuilding"
-		else
-			log "underlay down (wifi?), retry"
 		fi
-		# vxlan devices are not netifd-managed; rebuild them directly
-		cmd_vxlan_build
-		if [ "$(uget provider)" != "unicom" ]; then
-			/etc/init.d/msd_lite restart 2>/dev/null
-		fi
-		sleep 8
+		# 守护间隔: 10s 太快会刷日志, 30s 一探足够 (peer 离线时内核 vxlan
+		# 本来就静默, 不需要我们频繁动作)
+		sleep 30
 	done
-	log "selfheal failed"
+	log "selfheal stopped (pid file removed)"
 	rm -f "$SELFHEAL_PID" 2>/dev/null
-	return 1
+	return 0
 }
 
 iface_ip() {
@@ -1417,11 +1563,22 @@ cmd_status() {
 	echo "wifi_ssid=$(uci -q get wireless.@wifi-iface[0].ssid)"
 	echo "backhaul=$(logical_ip backhaul)"
 	echo "backhaul_dev=$(logical_dev backhaul)"
-	echo "vxlan_inet=$(vxlan_state vxlan_inet)"
+	# peer reachability must be computed BEFORE tunnel states: a vxlan dev
+	# being "bridged" is only a LOCAL fact (device created + in bridge);
+	# with the peer offline the tunnel carries nothing. Report it honestly.
+	# 🔴 1.3.28: peer down → tunnel line shows "bridged (br-x) [peer down]"
+	#    so the status page can warn instead of a misleading green "bridged".
+	local PEERUP=0
+	if [ -n "$PEER" ] && ping -c 1 -W 1 "$PEER" >/dev/null 2>&1; then
+		PEERUP=1
+	fi
+	local TSUF=""
+	[ "$PEERUP" = "0" ] && TSUF=" [peer down]"
+	echo "vxlan_inet=$(vxlan_state vxlan_inet)$TSUF"
 	echo "vxlan_inet_state=$(ip link show vxlan_inet 2>/dev/null | grep -oE 'state [A-Z]*' | awk '{print $2}')"
-	echo "vxlan_iptv=$(vxlan_state vxlan_iptv)"
+	echo "vxlan_iptv=$(vxlan_state vxlan_iptv)$TSUF"
 	echo "vxlan_iptv_state=$(ip link show vxlan_iptv 2>/dev/null | grep -oE 'state [A-Z]*' | awk '{print $2}')"
-	echo "vxlan_voip=$(vxlan_state vxlan_voip)"
+	echo "vxlan_voip=$(vxlan_state vxlan_voip)$TSUF"
 	echo "vxlan_voip_state=$(ip link show vxlan_voip 2>/dev/null | grep -oE 'state [A-Z]*' | awk '{print $2}')"
 	echo "br_voip=$(iface_ip br-voip)"
 	echo "br_lan=$(iface_ip br-lan)"
@@ -1429,9 +1586,8 @@ cmd_status() {
 	WANIP=$(iface_ip "$(wan_if_name)")
 	[ -z "$WANIP" ] && WANIP=$(iface_ip br-wan)
 	echo "wan=$WANIP"
-	# peer reachability: short timeout so the status page (server-side
-	# rendered) never stalls for seconds when clients are offline.
-	if [ -n "$PEER" ] && ping -c 1 -W 1 "$PEER" >/dev/null 2>&1; then
+	# peer underlay (reported again for the page's Underlay badge)
+	if [ "$PEERUP" = "1" ]; then
 		echo "peer_underlay=up"
 	else
 		echo "peer_underlay=down"

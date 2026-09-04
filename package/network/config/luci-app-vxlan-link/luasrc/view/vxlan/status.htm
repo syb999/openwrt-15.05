@@ -35,6 +35,11 @@ end
 
 local function tunstate(s)
 	if s == nil or s == "" then return '<span class="badge badge-na">-</span>' end
+	-- 🔴 peer down: vxlan dev "bridged" is only a local fact; with the
+	-- peer offline the tunnel carries nothing. Show warn, not green OK.
+	if s:match("peer down") then
+		return '<span class="badge badge-warn">' .. luci.util.pcdata(s) .. '</span>'
+	end
 	if s:match("bridged") then return '<span class="badge badge-ok">bridged</span>' end
 	if s:match("absent") or s:match("DOWN") then return '<span class="badge badge-bad">absent</span>' end
 	return '<span class="badge badge-warn">' .. luci.util.pcdata(s) .. '</span>'
@@ -382,6 +387,7 @@ if st.peers then for _ in st.peers:gmatch("%S+") do npeers = npeers + 1 end end
 	}
 	function tunstate(v) {
 		if (!v) return '<span class="badge badge-na">-</span>';
+		if (v.indexOf('peer down') >= 0) return '<span class="badge badge-warn">' + v + '</span>';
 		if (v.indexOf('bridged') >= 0) return '<span class="badge badge-ok">bridged</span>';
 		if (v.indexOf('absent') >= 0 || v.indexOf('DOWN') >= 0) return '<span class="badge badge-bad">absent</span>';
 		return '<span class="badge badge-warn">' + v + '</span>';
