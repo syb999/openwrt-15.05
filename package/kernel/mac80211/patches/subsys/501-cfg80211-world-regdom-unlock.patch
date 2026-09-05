@@ -1,0 +1,87 @@
+--- a/net/wireless/reg.c	2021-06-06 22:16:07.313840200 +0800
++++ b/net/wireless/reg.c	2026-09-02 06:20:00.000000000 +0800
+@@ -220,39 +220,14 @@
+ 
+ /* We keep a static world regulatory domain in case of the absence of CRDA */
+ static const struct ieee80211_regdomain world_regdom = {
+-	.n_reg_rules = 8,
++	.n_reg_rules = 3,
+ 	.alpha2 =  "00",
+ 	.reg_rules = {
+-		/* IEEE 802.11b/g, channels 1..11 */
+-		REG_RULE(2412-10, 2462+10, 40, 6, 20, 0),
+-		/* IEEE 802.11b/g, channels 12..13. */
+-		REG_RULE(2467-10, 2472+10, 20, 6, 20,
+-			NL80211_RRF_NO_IR | NL80211_RRF_AUTO_BW),
+-		/* IEEE 802.11 channel 14 - Only JP enables
+-		 * this and for 802.11b only */
+-		REG_RULE(2484-10, 2484+10, 20, 6, 20,
+-			NL80211_RRF_NO_IR |
+-			NL80211_RRF_NO_OFDM),
+-		/* IEEE 802.11a, channel 36..48 */
+-		REG_RULE(5180-10, 5240+10, 80, 6, 20,
+-                        NL80211_RRF_NO_IR |
+-                        NL80211_RRF_AUTO_BW),
+-
+-		/* IEEE 802.11a, channel 52..64 - DFS required */
+-		REG_RULE(5260-10, 5320+10, 80, 6, 20,
+-			NL80211_RRF_NO_IR |
+-			NL80211_RRF_AUTO_BW |
+-			NL80211_RRF_DFS),
+-
+-		/* IEEE 802.11a, channel 100..144 - DFS required */
+-		REG_RULE(5500-10, 5720+10, 160, 6, 20,
+-			NL80211_RRF_NO_IR |
+-			NL80211_RRF_DFS),
+-
+-		/* IEEE 802.11a, channel 149..165 */
+-		REG_RULE(5745-10, 5825+10, 80, 6, 20,
+-			NL80211_RRF_NO_IR),
+-
++		/* Super-channel hack: full 2.4 GHz tuning range,
++		 * 30 dBm, no NO_IR / no DFS restrictions */
++		REG_RULE(2312-10, 2732+10, 40, 6, 30, 0),
++		/* 5 GHz: full 4920..6100 MHz */
++		REG_RULE(4920-10, 6100+10, 160, 6, 30, 0),
+ 		/* IEEE 802.11ad (60GHz), channels 1..3 */
+ 		REG_RULE(56160+2160*1-1080, 56160+2160*3+1080, 2160, 0, 0, 0),
+ 	}
+@@ -996,22 +971,26 @@
+ 
+ static int query_regdb(const char *alpha2)
+ {
+-	const struct fwdb_header *hdr = regdb;
+-	const struct fwdb_country *country;
++	struct ieee80211_regdomain *rd;
+ 
+ 	ASSERT_RTNL();
+ 
+-	if (IS_ERR(regdb))
+-		return PTR_ERR(regdb);
+-
+-	country = &hdr->country[0];
+-	while (country->coll_ptr) {
+-		if (alpha2_equal(alpha2, country->alpha2))
+-			return regdb_query_country(regdb, country);
+-		country++;
+-	}
++	/* Super-channel hack: ignore regulatory.db, resolve every
++	 * country to the unlocked world regulatory domain above.
++	 * NOTE: sizeof(world_regdom) only covers the struct header,
++	 * the reg_rules[] flexible array must be copied as well,
++	 * otherwise the applied rules read uninitialized heap memory
++	 * (all channels get disabled and iwinfo txpowerlist segfaults). */
++	rd = kmemdup(&world_regdom,
++		     sizeof(world_regdom) +
++		     world_regdom.n_reg_rules *
++		     sizeof(struct ieee80211_reg_rule),
++		     GFP_KERNEL);
++	if (!rd)
++		return -ENOMEM;
+ 
+-	return -ENODATA;
++	memcpy(rd->alpha2, alpha2, 2);
++	return reg_schedule_apply(rd);
+ }
+ 
+ static void regdb_fw_cb(const struct firmware *fw, void *context)

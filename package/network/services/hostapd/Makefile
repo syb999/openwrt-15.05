@@ -505,7 +505,6 @@ define Package/hostapd-utils
   TITLE:=IEEE 802.1x Authenticator (utils)
   URL:=http://hostap.epitest.fi/
   DEPENDS:=@$(subst $(space),||,$(foreach pkg,$(HOSTAPD_PROVIDERS),PACKAGE_$(pkg)))
-  VARIANT:=*
 endef
 
 define Package/hostapd-utils/description
@@ -519,7 +518,6 @@ define Package/wpa-cli
   SUBMENU:=WirelessAPD
   DEPENDS:=@$(subst $(space),||,$(foreach pkg,$(SUPPLICANT_PROVIDERS),PACKAGE_$(pkg)))
   TITLE:=WPA Supplicant command line control utility
-  VARIANT:=*
 endef
 
 define Package/eapol-test/Default
@@ -716,12 +714,12 @@ Package/hostapd-openssl/install = $(Package/hostapd/install)
 Package/hostapd-wolfssl/install = $(Package/hostapd/install)
 Package/hostapd-mbedtls/install = $(Package/hostapd/install)
 
-ifneq ($(LOCAL_TYPE),supplicant)
-  define Package/hostapd-utils/install
+define Package/hostapd-utils/install
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hostapd/hostapd_cli $(1)/usr/sbin/
-  endef
-endif
+	@if [ -f "$(PKG_BUILD_DIR)/hostapd/hostapd_cli" ]; then \
+		$(INSTALL_BIN) $(PKG_BUILD_DIR)/hostapd/hostapd_cli $(1)/usr/sbin/; \
+	fi
+endef
 
 define Package/wpad/install
 	$(call Install/hostapd,$(1))
@@ -756,12 +754,12 @@ Package/wpa-supplicant-mesh-openssl/install = $(Package/wpa-supplicant/install)
 Package/wpa-supplicant-mesh-wolfssl/install = $(Package/wpa-supplicant/install)
 Package/wpa-supplicant-mesh-mbedtls/install = $(Package/wpa-supplicant/install)
 
-ifneq ($(LOCAL_TYPE),hostapd)
-  define Package/wpa-cli/install
+define Package/wpa-cli/install
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(CP) $(PKG_BUILD_DIR)/wpa_supplicant/wpa_cli $(1)/usr/sbin/
-  endef
-endif
+	@if [ -f "$(PKG_BUILD_DIR)/wpa_supplicant/wpa_cli" ]; then \
+		$(CP) $(PKG_BUILD_DIR)/wpa_supplicant/wpa_cli $(1)/usr/sbin/; \
+	fi
+endef
 
 ifeq ($(BUILD_VARIANT),supplicant-full-internal)
   define Package/eapol-test/install

@@ -1,0 +1,66 @@
+--- a/net/mac80211/scan.c
++++ b/net/mac80211/scan.c
+@@ -29,6 +29,42 @@
+ #define IEEE80211_CHANNEL_TIME (HZ / 33)
+ #define IEEE80211_PASSIVE_CHANNEL_TIME (HZ / 9)
+ 
++/*
++ * Extended 2.4 GHz channels (2312-2407 MHz and 2487-2732 MHz, added by
++ * the extended channel support) take long to settle at the band edge, so
++ * the default scan dwell (30 ms active, 111 ms passive) may never capture
++ * a beacon there. Use a long dwell for these channels, but only for
++ * targeted scans (a handful of channels, e.g. a client pinned to a fixed
++ * frequency) so full scans stay fast.
++ */
++#define IEEE80211_EXT_CHAN_DWELL (HZ)
++#define IEEE80211_TARGETED_SCAN_MAX_CHANNELS 4
++
++static bool ieee80211_scan_is_ext_2g(struct ieee80211_channel *chan)
++{
++	return chan && chan->band == NL80211_BAND_2GHZ &&
++	       (chan->center_freq < 2412 || chan->center_freq > 2484);
++}
++
++static unsigned long
++ieee80211_scan_targeted_dwell(struct ieee80211_local *local,
++			      struct ieee80211_channel *chan,
++			      unsigned long base_dwell)
++{
++	struct cfg80211_scan_request *scan_req;
++
++	if (!ieee80211_scan_is_ext_2g(chan))
++		return base_dwell;
++
++	scan_req = rcu_dereference_protected(local->scan_req,
++					     lockdep_is_held(&local->mtx));
++	if (scan_req &&
++	    scan_req->n_channels <= IEEE80211_TARGETED_SCAN_MAX_CHANNELS)
++		return IEEE80211_EXT_CHAN_DWELL;
++
++	return base_dwell;
++}
++
+ void ieee80211_rx_bss_put(struct ieee80211_local *local,
+ 			  struct ieee80211_bss *bss)
+ {
+@@ -658,7 +694,9 @@
+ 	 * After sending probe requests, wait for probe responses
+ 	 * on the channel.
+ 	 */
+-	*next_delay = IEEE80211_CHANNEL_TIME;
++	*next_delay = ieee80211_scan_targeted_dwell(local,
++						    local->hw.conf.chandef.chan,
++						    IEEE80211_CHANNEL_TIME);
+ 	local->next_scan_state = SCAN_DECISION;
+ }
+ 
+@@ -984,7 +1022,8 @@
+ 	 */
+ 	if ((chan->flags & (IEEE80211_CHAN_NO_IR | IEEE80211_CHAN_RADAR)) ||
+ 	    !scan_req->n_ssids) {
+-		*next_delay = IEEE80211_PASSIVE_CHANNEL_TIME;
++		*next_delay = ieee80211_scan_targeted_dwell(local, chan,
++						IEEE80211_PASSIVE_CHANNEL_TIME);
+ 		local->next_scan_state = SCAN_DECISION;
+ 		return;
+ 	}

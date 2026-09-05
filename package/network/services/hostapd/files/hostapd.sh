@@ -1305,6 +1305,7 @@ wpa_supplicant_add_network() {
 		basic_rate mcast_rate \
 		ieee80211w ieee80211r fils ocv \
 		multi_ap \
+		scan_freq \
 		default_disabled
 
 	case "$auth_type" in
@@ -1354,6 +1355,11 @@ wpa_supplicant_add_network() {
 		[ "$multi_ap" = 1 ] && append network_data "multi_ap_backhaul_sta=1" "$N$T"
 		[ "$default_disabled" = 1 ] && append network_data "disabled=1" "$N$T"
 	}
+
+	# optional: restrict scanning of this network to the given
+	# frequency/frequencies (e.g. a client pinned to a fixed-frequency
+	# AP); no effect when unset
+	[ -n "$scan_freq" ] && append network_data "scan_freq=$scan_freq" "$N$T"
 
 	[ -n "$ocv" ] && append network_data "ocv=$ocv" "$N$T"
 

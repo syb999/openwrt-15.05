@@ -1,0 +1,32 @@
+--- a/net/wireless/util.c
++++ b/net/wireless/util.c
+@@ -82,6 +82,9 @@
+ 	case NL80211_BAND_2GHZ:
+ 		if (chan == 14)
+ 			return MHZ_TO_KHZ(2484);
++		else if (chan >= 237 && chan <= 255)
++			/* extended low 2.4 GHz: ch 237..255 -> 2312..2402 MHz */
++			return MHZ_TO_KHZ(2407 + (chan - 256) * 5);
+ 		else if (chan != 0 && chan <= 65)
+ 			return MHZ_TO_KHZ(2407 + chan * 5);
+ 		break;
+@@ -146,9 +149,16 @@
+ 	/* see 802.11 17.3.8.3.2 and Annex J */
+ 	if (freq == 2484)
+ 		return 14;
+-	else if (freq < 2484)
+-		return (freq - 2407) / 5;
+-	else if (freq <= 2732)
++	else if (freq < 2484) {
++		if (freq >= 2412)
++			return (freq - 2407) / 5;
++		if (freq <= 2402)
++			/* extended low 2.4 GHz: 2312..2402 MHz -> ch 237..255
++			 * (u8 wrap of the standard formula, matches the
++			 * hostapd/hardware channel numbering) */
++			return (freq - 2407) / 5 + 256;
++		return 0;
++	} else if (freq <= 2732)
+ 		/* extended 2.4 GHz band: 2487..2732 MHz -> ch 16..65 */
+ 		return (freq - 2407) / 5;
+ 	else if (freq >= 4910 && freq <= 4980)

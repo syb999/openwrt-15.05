@@ -1,0 +1,212 @@
+--- a/drivers/net/wireless/ath/ath10k/mac.c
++++ b/drivers/net/wireless/ath/ath10k/mac.c
+@@ -9390,6 +9390,77 @@
+ 	CHAN2G(12, 2467, 0),
+ 	CHAN2G(13, 2472, 0),
+ 	CHAN2G(14, 2484, 0),
++	/* Super-channel hack: extended 2.4 GHz channels (2312..2732 MHz) */
++	CHAN2G(2312, 2312, 0), /* 2312 MHz */
++	CHAN2G(2317, 2317, 0), /* 2317 MHz */
++	CHAN2G(2322, 2322, 0), /* 2322 MHz */
++	CHAN2G(2327, 2327, 0), /* 2327 MHz */
++	CHAN2G(2332, 2332, 0), /* 2332 MHz */
++	CHAN2G(2337, 2337, 0), /* 2337 MHz */
++	CHAN2G(2342, 2342, 0), /* 2342 MHz */
++	CHAN2G(2347, 2347, 0), /* 2347 MHz */
++	CHAN2G(2352, 2352, 0), /* 2352 MHz */
++	CHAN2G(2357, 2357, 0), /* 2357 MHz */
++	CHAN2G(2362, 2362, 0), /* 2362 MHz */
++	CHAN2G(2367, 2367, 0), /* 2367 MHz */
++	CHAN2G(2372, 2372, 0), /* 2372 MHz */
++	CHAN2G(2377, 2377, 0), /* 2377 MHz */
++	CHAN2G(2382, 2382, 0), /* 2382 MHz */
++	CHAN2G(2387, 2387, 0), /* 2387 MHz */
++	CHAN2G(2392, 2392, 0), /* 2392 MHz */
++	CHAN2G(2397, 2397, 0), /* 2397 MHz */
++	CHAN2G(2402, 2402, 0), /* 2402 MHz */
++	CHAN2G(2407, 2407, 0), /* 2407 MHz */
++	CHAN2G(2487, 2487, 0), /* 2487 MHz */
++	CHAN2G(2492, 2492, 0), /* 2492 MHz */
++	CHAN2G(2497, 2497, 0), /* 2497 MHz */
++	CHAN2G(2502, 2502, 0), /* 2502 MHz */
++	CHAN2G(2507, 2507, 0), /* 2507 MHz */
++	CHAN2G(2512, 2512, 0), /* 2512 MHz */
++	CHAN2G(2517, 2517, 0), /* 2517 MHz */
++	CHAN2G(2522, 2522, 0), /* 2522 MHz */
++	CHAN2G(2527, 2527, 0), /* 2527 MHz */
++	CHAN2G(2532, 2532, 0), /* 2532 MHz */
++	CHAN2G(2537, 2537, 0), /* 2537 MHz */
++	CHAN2G(2542, 2542, 0), /* 2542 MHz */
++	CHAN2G(2547, 2547, 0), /* 2547 MHz */
++	CHAN2G(2552, 2552, 0), /* 2552 MHz */
++	CHAN2G(2557, 2557, 0), /* 2557 MHz */
++	CHAN2G(2562, 2562, 0), /* 2562 MHz */
++	CHAN2G(2567, 2567, 0), /* 2567 MHz */
++	CHAN2G(2572, 2572, 0), /* 2572 MHz */
++	CHAN2G(2577, 2577, 0), /* 2577 MHz */
++	CHAN2G(2582, 2582, 0), /* 2582 MHz */
++	CHAN2G(2587, 2587, 0), /* 2587 MHz */
++	CHAN2G(2592, 2592, 0), /* 2592 MHz */
++	CHAN2G(2597, 2597, 0), /* 2597 MHz */
++	CHAN2G(2602, 2602, 0), /* 2602 MHz */
++	CHAN2G(2607, 2607, 0), /* 2607 MHz */
++	CHAN2G(2612, 2612, 0), /* 2612 MHz */
++	CHAN2G(2617, 2617, 0), /* 2617 MHz */
++	CHAN2G(2622, 2622, 0), /* 2622 MHz */
++	CHAN2G(2627, 2627, 0), /* 2627 MHz */
++	CHAN2G(2632, 2632, 0), /* 2632 MHz */
++	CHAN2G(2637, 2637, 0), /* 2637 MHz */
++	CHAN2G(2642, 2642, 0), /* 2642 MHz */
++	CHAN2G(2647, 2647, 0), /* 2647 MHz */
++	CHAN2G(2652, 2652, 0), /* 2652 MHz */
++	CHAN2G(2657, 2657, 0), /* 2657 MHz */
++	CHAN2G(2662, 2662, 0), /* 2662 MHz */
++	CHAN2G(2667, 2667, 0), /* 2667 MHz */
++	CHAN2G(2672, 2672, 0), /* 2672 MHz */
++	CHAN2G(2677, 2677, 0), /* 2677 MHz */
++	CHAN2G(2682, 2682, 0), /* 2682 MHz */
++	CHAN2G(2687, 2687, 0), /* 2687 MHz */
++	CHAN2G(2692, 2692, 0), /* 2692 MHz */
++	CHAN2G(2697, 2697, 0), /* 2697 MHz */
++	CHAN2G(2702, 2702, 0), /* 2702 MHz */
++	CHAN2G(2707, 2707, 0), /* 2707 MHz */
++	CHAN2G(2712, 2712, 0), /* 2712 MHz */
++	CHAN2G(2717, 2717, 0), /* 2717 MHz */
++	CHAN2G(2722, 2722, 0), /* 2722 MHz */
++	CHAN2G(2727, 2727, 0), /* 2727 MHz */
++	CHAN2G(2732, 2732, 0), /* 2732 MHz */
+ };
+ 
+ static const struct ieee80211_channel ath10k_5ghz_channels[] = {
+@@ -9420,6 +9491,106 @@
+ 	CHAN5G(165, 5825, 0),
+ 	CHAN5G(169, 5845, 0),
+ 	CHAN5G(173, 5865, 0),
++	/* Super-channel hack: extended 5 GHz channels (4920..6100 MHz) */
++	CHAN5G(4920, 4920, 0), /* 4920 MHz */
++	CHAN5G(4925, 4925, 0), /* 4925 MHz */
++	CHAN5G(4930, 4930, 0), /* 4930 MHz */
++	CHAN5G(4935, 4935, 0), /* 4935 MHz */
++	CHAN5G(4940, 4940, 0), /* 4940 MHz */
++	CHAN5G(4945, 4945, 0), /* 4945 MHz */
++	CHAN5G(4950, 4950, 0), /* 4950 MHz */
++	CHAN5G(4955, 4955, 0), /* 4955 MHz */
++	CHAN5G(4960, 4960, 0), /* 4960 MHz */
++	CHAN5G(4965, 4965, 0), /* 4965 MHz */
++	CHAN5G(4970, 4970, 0), /* 4970 MHz */
++	CHAN5G(4975, 4975, 0), /* 4975 MHz */
++	CHAN5G(4980, 4980, 0), /* 4980 MHz */
++	CHAN5G(4985, 4985, 0), /* 4985 MHz */
++	CHAN5G(4990, 4990, 0), /* 4990 MHz */
++	CHAN5G(4995, 4995, 0), /* 4995 MHz */
++	CHAN5G(5000, 5000, 0), /* 5000 MHz */
++	CHAN5G(5005, 5005, 0), /* 5005 MHz */
++	CHAN5G(5010, 5010, 0), /* 5010 MHz */
++	CHAN5G(5015, 5015, 0), /* 5015 MHz */
++	CHAN5G(5020, 5020, 0), /* 5020 MHz */
++	CHAN5G(5025, 5025, 0), /* 5025 MHz */
++	CHAN5G(5030, 5030, 0), /* 5030 MHz */
++	CHAN5G(5035, 5035, 0), /* 5035 MHz */
++	CHAN5G(5040, 5040, 0), /* 5040 MHz */
++	CHAN5G(5045, 5045, 0), /* 5045 MHz */
++	CHAN5G(5050, 5050, 0), /* 5050 MHz */
++	CHAN5G(5055, 5055, 0), /* 5055 MHz */
++	CHAN5G(5060, 5060, 0), /* 5060 MHz */
++	CHAN5G(5065, 5065, 0), /* 5065 MHz */
++	CHAN5G(5070, 5070, 0), /* 5070 MHz */
++	CHAN5G(5075, 5075, 0), /* 5075 MHz */
++	CHAN5G(5080, 5080, 0), /* 5080 MHz */
++	CHAN5G(5085, 5085, 0), /* 5085 MHz */
++	CHAN5G(5090, 5090, 0), /* 5090 MHz */
++	CHAN5G(5095, 5095, 0), /* 5095 MHz */
++	CHAN5G(5100, 5100, 0), /* 5100 MHz */
++	CHAN5G(5105, 5105, 0), /* 5105 MHz */
++	CHAN5G(5110, 5110, 0), /* 5110 MHz */
++	CHAN5G(5115, 5115, 0), /* 5115 MHz */
++	CHAN5G(5120, 5120, 0), /* 5120 MHz */
++	CHAN5G(5125, 5125, 0), /* 5125 MHz */
++	CHAN5G(5130, 5130, 0), /* 5130 MHz */
++	CHAN5G(5135, 5135, 0), /* 5135 MHz */
++	CHAN5G(5140, 5140, 0), /* 5140 MHz */
++	CHAN5G(5145, 5145, 0), /* 5145 MHz */
++	CHAN5G(5150, 5150, 0), /* 5150 MHz */
++	CHAN5G(5155, 5155, 0), /* 5155 MHz */
++	CHAN5G(5160, 5160, 0), /* 5160 MHz */
++	CHAN5G(5165, 5165, 0), /* 5165 MHz */
++	CHAN5G(5170, 5170, 0), /* 5170 MHz */
++	CHAN5G(5175, 5175, 0), /* 5175 MHz */
++	CHAN5G(5870, 5870, 0), /* 5870 MHz */
++	CHAN5G(5875, 5875, 0), /* 5875 MHz */
++	CHAN5G(5880, 5880, 0), /* 5880 MHz */
++	CHAN5G(5885, 5885, 0), /* 5885 MHz */
++	CHAN5G(5890, 5890, 0), /* 5890 MHz */
++	CHAN5G(5895, 5895, 0), /* 5895 MHz */
++	CHAN5G(5900, 5900, 0), /* 5900 MHz */
++	CHAN5G(5905, 5905, 0), /* 5905 MHz */
++	CHAN5G(5910, 5910, 0), /* 5910 MHz */
++	CHAN5G(5915, 5915, 0), /* 5915 MHz */
++	CHAN5G(5920, 5920, 0), /* 5920 MHz */
++	CHAN5G(5925, 5925, 0), /* 5925 MHz */
++	CHAN5G(5930, 5930, 0), /* 5930 MHz */
++	CHAN5G(5935, 5935, 0), /* 5935 MHz */
++	CHAN5G(5940, 5940, 0), /* 5940 MHz */
++	CHAN5G(5945, 5945, 0), /* 5945 MHz */
++	CHAN5G(5950, 5950, 0), /* 5950 MHz */
++	CHAN5G(5955, 5955, 0), /* 5955 MHz */
++	CHAN5G(5960, 5960, 0), /* 5960 MHz */
++	CHAN5G(5965, 5965, 0), /* 5965 MHz */
++	CHAN5G(5970, 5970, 0), /* 5970 MHz */
++	CHAN5G(5975, 5975, 0), /* 5975 MHz */
++	CHAN5G(5980, 5980, 0), /* 5980 MHz */
++	CHAN5G(5985, 5985, 0), /* 5985 MHz */
++	CHAN5G(5990, 5990, 0), /* 5990 MHz */
++	CHAN5G(5995, 5995, 0), /* 5995 MHz */
++	CHAN5G(6000, 6000, 0), /* 6000 MHz */
++	CHAN5G(6005, 6005, 0), /* 6005 MHz */
++	CHAN5G(6010, 6010, 0), /* 6010 MHz */
++	CHAN5G(6015, 6015, 0), /* 6015 MHz */
++	CHAN5G(6020, 6020, 0), /* 6020 MHz */
++	CHAN5G(6025, 6025, 0), /* 6025 MHz */
++	CHAN5G(6030, 6030, 0), /* 6030 MHz */
++	CHAN5G(6035, 6035, 0), /* 6035 MHz */
++	CHAN5G(6040, 6040, 0), /* 6040 MHz */
++	CHAN5G(6045, 6045, 0), /* 6045 MHz */
++	CHAN5G(6050, 6050, 0), /* 6050 MHz */
++	CHAN5G(6055, 6055, 0), /* 6055 MHz */
++	CHAN5G(6060, 6060, 0), /* 6060 MHz */
++	CHAN5G(6065, 6065, 0), /* 6065 MHz */
++	CHAN5G(6070, 6070, 0), /* 6070 MHz */
++	CHAN5G(6075, 6075, 0), /* 6075 MHz */
++	CHAN5G(6080, 6080, 0), /* 6080 MHz */
++	CHAN5G(6085, 6085, 0), /* 6085 MHz */
++	CHAN5G(6090, 6090, 0), /* 6090 MHz */
++	CHAN5G(6095, 6095, 0), /* 6095 MHz */
++	CHAN5G(6100, 6100, 0), /* 6100 MHz */
+ 	/* If you add more, you may need to change ATH10K_MAX_5G_CHAN */
+ 	/* And you will definitely need to change ATH10K_NUM_CHANS in core.h */
+ };
+--- a/drivers/net/wireless/ath/ath10k/core.h
++++ b/drivers/net/wireless/ath/ath10k/core.h
+@@ -38,7 +38,7 @@
+ #define WMI_READY_TIMEOUT (5 * HZ)
+ #define ATH10K_FLUSH_TIMEOUT_HZ (5 * HZ)
+ #define ATH10K_CONNECTION_LOSS_HZ (3 * HZ)
+-#define ATH10K_NUM_CHANS 41
++#define ATH10K_NUM_CHANS 210
+ #define ATH10K_MAX_5G_CHAN 173
+ 
+ /* Antenna noise floor */
+--- a/drivers/net/wireless/ath/ath10k/wmi.c
++++ b/drivers/net/wireless/ath/ath10k/wmi.c
+@@ -2551,6 +2551,11 @@
+ 		status->band = NL80211_BAND_2GHZ;
+ 	} else if (channel >= 36 && channel <= ATH10K_MAX_5G_CHAN) {
+ 		status->band = NL80211_BAND_5GHZ;
++	} else if (ar->rx_channel) {
++		/* Super-channel hack: on extended channels the firmware
++		 * reports non-standard channel numbers, trust the current
++		 * operating channel instead. */
++		status->band = ar->rx_channel->band;
+ 	} else {
+ 		/* Shouldn't happen unless list of advertised channels to
+ 		 * mac80211 has been changed.

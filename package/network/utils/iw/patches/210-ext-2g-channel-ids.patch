@@ -1,0 +1,43 @@
+--- a/util.c
++++ b/util.c
+@@ -165,13 +165,16 @@
+ {
+ 	/* see 802.11 17.3.8.3.2 and Annex J
+ 	 * there are overlapping channel numbers in 5GHz and 2GHz bands */
+-	if (chan <= 0)
++	if (chan <= 0 && !(band == NL80211_BAND_2GHZ && chan >= -19))
+ 		return 0; /* not supported */
+ 	switch (band) {
+ 	case NL80211_BAND_2GHZ:
+ 		if (chan == 14)
+ 			return 2484;
+-		else if (chan < 14)
++		else if (chan >= 237 && chan <= 255)
++			/* extended low 2.4 GHz: ch 237..255 -> 2312..2402 MHz */
++			return 2407 + (chan - 256) * 5;
++		else if (chan != 0 && chan <= 65)
+ 			return 2407 + chan * 5;
+ 		break;
+ 	case NL80211_BAND_5GHZ:
+@@ -202,11 +205,19 @@
+ 	/* see 802.11-2007 17.3.8.3.2 and Annex J */
+ 	if (freq == 2484)
+ 		return 14;
++	else if (freq < 2484) {
++		if (freq >= 2412)
++			return (freq - 2407) / 5;
++		if (freq <= 2402)
++			/* extended low 2.4 GHz: 2312..2402 MHz -> ch 237..255 */
++			return (freq - 2407) / 5 + 256;
++		return 0;
++	} else if (freq <= 2732)
++		/* extended 2.4 GHz band: 2487..2732 MHz -> ch 16..65 */
++		return (freq - 2407) / 5;
+ 	/* see 802.11ax D6.1 27.3.23.2 and Annex E */
+ 	else if (freq == 5935)
+ 		return 2;
+-	else if (freq < 2484)
+-		return (freq - 2407) / 5;
+ 	else if (freq >= 4910 && freq <= 4980)
+ 		return (freq - 4000) / 5;
+ 	else if (freq < 5950)
