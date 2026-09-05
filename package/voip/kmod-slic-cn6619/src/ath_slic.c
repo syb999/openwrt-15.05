@@ -167,7 +167,7 @@ static int ath_slic_open(struct inode *inode, struct file *filp)
 		return -EINVAL;		/* need R/W (stock requires O_RDWR) */
 
 	filp->private_data = &slic_devs[minor];
-	pr_info("ath_slic: open minor=%d flags=0x%x\n", minor, filp->f_flags);
+	pr_debug("ath_slic: open minor=%d flags=0x%x\n", minor, filp->f_flags);
 	return 0;
 }
 
@@ -177,7 +177,7 @@ static ssize_t ath_slic_read(struct file *filp, char __user *buf,
 	struct ath_slic_dev *d = filp->private_data;
 	ssize_t r;
 
-	pr_info("ath_slic: read count=%zu\n", count);
+	pr_debug("ath_slic: read count=%zu\n", count);
 	if (count > ATH_SLIC_RING_RX)
 		count = ATH_SLIC_RING_RX;
 
@@ -197,7 +197,7 @@ static ssize_t ath_slic_write(struct file *filp, const char __user *buf,
 {
 	struct ath_slic_dev *d = filp->private_data;
 
-	pr_info("ath_slic: write count=%zu\n", count);
+	pr_debug("ath_slic: write count=%zu\n", count);
 	if (count > ATH_SLIC_RING_TX)
 		count = ATH_SLIC_RING_TX;
 
@@ -246,18 +246,18 @@ static long ath_slic_ioctl(struct file *filp, unsigned int cmd,
 		if (len == 4) {		/* read register */
 			v = slic_reg_read_cs1(reg);
 			buf[3] = v;
-			pr_info("ath_slic: ioctl READ reg=0x%02x -> 0x%02x\n",
+			pr_debug("ath_slic: ioctl READ reg=0x%02x -> 0x%02x\n",
 			       reg, v);
 			if (copy_to_user((void __user *)arg, buf, 260))
 				return -EFAULT;
 			return 0;
 		} else if (len == 3) {	/* write register */
-			pr_info("ath_slic: ioctl WRITE reg=0x%02x = 0x%02x\n",
+			pr_debug("ath_slic: ioctl WRITE reg=0x%02x = 0x%02x\n",
 			       reg, data);
 			slic_reg_write_cs1(reg, data & 0xff);
 			return 0;
 		}
-		pr_info("ath_slic: ioctl CMD len=%u reg=0x%02x data=0x%02x\n",
+		pr_debug("ath_slic: ioctl CMD len=%u reg=0x%02x data=0x%02x\n",
 		       len, reg, data);
 		return 0;
 	}
@@ -267,7 +267,7 @@ static long ath_slic_ioctl(struct file *filp, unsigned int cmd,
 		if (cmd < ATH_SLIC_IOCTL_BASE || cmd >= ATH_SLIC_IOCTL_BASE + 17)
 			return -EINVAL;
 	}
-	pr_info("ath_slic: ioctl idx=%d arg=0x%lx\n", idx, arg);
+	pr_debug("ath_slic: ioctl idx=%d arg=0x%lx\n", idx, arg);
 
 	switch (idx) {
 	case 0:		/* read-modify-write MBOX +0x14 (DMA policy/ctrl) */
@@ -297,7 +297,7 @@ static long ath_slic_ioctl(struct file *filp, unsigned int cmd,
 		 * (not the 0x80044E23+i table).  Until the SPI control
 		 * path is implemented, treat it as a no-op success so
 		 * fvphone init can proceed past the SLIC reset step. */
-		pr_info("ath_slic: ioctl unknown cmd=0x%x idx=%d\n", cmd, idx);
+		pr_warn("ath_slic: ioctl unknown cmd=0x%x idx=%d\n", cmd, idx);
 		return 0;
 	}
 }
@@ -340,7 +340,7 @@ static int slic_proc_show(struct seq_file *m, void *v)
 
 static int slic_proc_open(struct inode *inode, struct file *file)
 {
-	pr_info("ath_slic: proc open flags=0x%x\n", file->f_flags);
+	pr_debug("ath_slic: proc open flags=0x%x\n", file->f_flags);
 	return single_open(file, slic_proc_show, NULL);
 }
 
@@ -348,9 +348,9 @@ static ssize_t slic_proc_read(struct file *file, char __user *buf,
 			      size_t count, loff_t *ppos)
 {
 	ssize_t r;
-	pr_info("ath_slic: proc read count=%zu pos=%lld\n", count, *ppos);
+	pr_debug("ath_slic: proc read count=%zu pos=%lld\n", count, *ppos);
 	r = seq_read(file, buf, count, ppos);
-	pr_info("ath_slic: proc read ret=%zd\n", r);
+	pr_debug("ath_slic: proc read ret=%zd\n", r);
 	return r;
 }
 
