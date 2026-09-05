@@ -132,17 +132,6 @@ cpe510)
 	ucidef_set_led_rssi "rssihigh" "RSSIHIGH" "tp-link:green:link4" "wlan0" "76" "100" "-75" "13"
 	;;
 
-baicells-cn6619)
-	ucidef_set_led_default "tel" "TEL" "cn6619:green:tel" "0"
-	ucidef_set_rssimon "wlan0" "40000" "1"
-	ucidef_set_led_rssi "rssilow" "RSSILOW" "cn6619:green:rssilow" "wlan0" "1" "100" "0" "13"
-	ucidef_set_led_rssi "rssimedium" "RSSIMEDIUM" "cn6619:green:rssimedium" "wlan0" "26" "100" "-25" "13"
-	ucidef_set_led_rssi "rssihigh" "RSSIHIGH" "cn6619:green:rssihigh" "wlan0" "51" "100" "-50" "13"
-	ucidef_set_led_rssi "rssimax" "RSSIMAX" "cn6619:green:rssimax" "wlan0" "76" "100" "-75" "13"
-	ucidef_set_led_netdev "lan" "LAN" "cn6619:green:lan" "eth0"
-	ucidef_set_led_default "wps" "WPS" "cn6619:green:wps" "0"
-	;;
-
 db120)
 	ucidef_set_led_usbdev "usb" "USB" "db120:green:usb" "1-1"
 	;;
@@ -408,6 +397,12 @@ pisen-wfr101n)
 
 pisen-wmb001n)
 	ucidef_set_led_wlan "wlan" "WLAN" "pisen:blue:wlan" "phy0radio"
+	;;
+
+zmwr2500)
+	ucidef_set_led_netdev "lte" "LTE" "zmtel:green:lte" "eth2"
+	ucidef_set_led_netdev "tel" "TEL" "zmtel:green:tel" "eth0"
+	ucidef_set_led_wlan "wlan" "WLAN" "zmtel:green:wps" "phy0radio"
 	;;
 
 pisen-wmm003n)

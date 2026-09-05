@@ -261,6 +261,7 @@ platform_check_image() {
 	carambola2 | \
 	belair20e11 | \
 	e8820 | \
+	zmwr2500 | \
 	weio )
 		[ "$magic" != "2705" ] && {
 			echo "Invalid image type."
@@ -375,7 +376,6 @@ platform_check_image() {
 	tl-wa830re-v2 | \
 	tl-wr841n-v7 | \
 	tl-wr841n-v8 | \
-	baicells-cn6619 | \
 	tl-wr841n-v9 | \
 	tl-wr841n-v11 | \
 	tl-mw300-r4 | \

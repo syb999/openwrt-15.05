@@ -1,0 +1,38 @@
+#!/bin/sh /etc/rc.common
+# CN6619 (ZM-WR2500) VoIP: start stock fvphone on OpenWrt 15.05
+# Requires kmod-slic-cn6619 (slicdrv: /dev/aci0-1 + /proc/slic ioctl)
+START=99
+STOP=10
+
+VOIP_DIR=/opt/voip
+CFG_SRC=$VOIP_DIR/fv_voip.cfg
+
+start() {
+	# SLIC char/proc links fvphone expects
+	mkdir -p /tmp/dev /etc/voip
+	ln -sf /proc/slic /tmp/dev/slic0 2>/dev/null
+	ln -sf /proc/slic /dev/slic0 2>/dev/null
+
+	# voice/tone config files fvphone reads
+	cp -f $CFG_SRC /tmp/fv_voip.cfg 2>/dev/null
+	[ -e /etc/voip/fv_voip_tones_china.cfg ] || \
+		cp -f $VOIP_DIR/fv_voip_tones_china.cfg /etc/voip/ 2>/dev/null
+	[ -e /etc/signature ] || cp -f $VOIP_DIR/signature /etc/signature 2>/dev/null
+
+	# management proxy (fvcli channel) + fvphone daemon
+	[ -e /tmp/voipcmd_proxy.pid ] || {
+		LD_LIBRARY_PATH=$VOIP_DIR $VOIP_DIR/voipcmd_proxy >/dev/null 2>&1 &
+	}
+	cd /tmp && LD_LIBRARY_PATH=$VOIP_DIR $VOIP_DIR/looprun 3 $VOIP_DIR/fvphone \
+		>/dev/null 2>&1 &
+}
+
+stop() {
+	killall fvphone looprun voipcmd_proxy 2>/dev/null
+}
+
+restart() {
+	stop
+	sleep 1
+	start
+}

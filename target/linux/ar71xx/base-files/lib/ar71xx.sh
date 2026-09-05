@@ -436,9 +436,6 @@ ar71xx_board_detect() {
 		name="cpe510"
 		tplink_pharos_board_detect
 		;;
-	*"BaiCells CN6619")
-		name="baicells-cn6619"
-		;;
 	*"DB120 reference board")
 		name="db120"
 		;;
@@ -896,6 +893,9 @@ ar71xx_board_detect() {
 	*"PISEN_WMB001N")
 		name="pisen-wmb001n"
 		;;
+	*"ZM-WR2500")
+		name="zmwr2500"
+		;;
 	*"PISEN_WPR003N")
 		name="pisen-wpr003n"
 		;;
@@ -1070,6 +1070,14 @@ ar71xx_board_detect() {
 	*"HiWiFi HC6361")
 		name="hiwifi-hc6361"
 		;;
+	esac
+
+	# ZM-WR2500 / CN6619 explicit fallback (large-case quirk: patterns inside
+	# the big machine case above do not match this board on busybox ash)
+	case "$machine" in
+		*ZM-WR2500*|*CN6619*)
+			name="zmwr2500"
+			;;
 	esac
 
 	[ -z "$AR71XX_MODEL" ] && [ "${machine:0:8}" = 'TP-LINK ' ] && \

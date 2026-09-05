@@ -646,6 +646,18 @@ define Device/pisen-wmb001n
 endef
 TARGET_DEVICES += pisen-wmb001n
 
+# ZMTEL ZM-WR2500 (CN6619): AR9341 4G LTE CPE.
+# 16MB standard OpenWrt layout (after uboot_mod replace):
+# 128k u-boot + 64k u-boot-env + 16128k firmware (0x30000-0xFF0000) + 64k art.
+# Kernel uImage at firmware base - uboot_mod bootm 0x9f030000.
+define Device/zmwr2500
+    BOARDNAME := ZM-WR2500
+    DEVICE_PROFILE := ZMWR2500
+    IMAGE_SIZE := 16128k
+    CONSOLE := ttyS0,115200
+endef
+TARGET_DEVICES += zmwr2500
+
 define Device/pisen-wmm003n
     $(Device/tplink-8mlzma)
     BOARDNAME := PISEN-WMM003N
@@ -723,13 +735,6 @@ define Device/tl-wr743nd-v2
     CONSOLE := ttyATH0,115200
 endef
 TARGET_DEVICES += pisen-wmm003n tl-wr740n-v4 tl-wr740n-v5 tl-wr740n-v6 tl-wr741nd-v1 tl-wr741nd-v2 tl-wr741nd-v4 tl-wr741nd-v5 mw153r tl-wr743nd-v2
-
-define Device/baicells-cn6619
-    $(Device/tplink-16mlzma)
-    BOARDNAME := BAICELLS-CN6619
-    DEVICE_PROFILE := baicells-cn6619
-    TPLINK_HWID := 0x08410018
-endef
 
 define Device/fap-022wld
     $(Device/tplink-16mlzma)
@@ -828,7 +833,7 @@ define Device/tl-wr847n-v8
     DEVICE_PROFILE := TLWR841
     TPLINK_HWID := 0x08470008
 endef
-TARGET_DEVICES += baicells-cn6619 fap-022wld ikuai-ap kisslink-nb1210 kisslink-nb1210-i2s urouter-plus wap2600-211-pe tl-wr841n-v8 tl-wr841n-v9 tl-wr841n-v10 tl-wr841n-v11 tl-mw300-r4 tl-wr842n-v2 tl-wr843nd-v1 tl-wr847n-v8
+TARGET_DEVICES += fap-022wld ikuai-ap kisslink-nb1210 kisslink-nb1210-i2s urouter-plus wap2600-211-pe tl-wr841n-v8 tl-wr841n-v9 tl-wr841n-v10 tl-wr841n-v11 tl-mw300-r4 tl-wr842n-v2 tl-wr843nd-v1 tl-wr847n-v8
 
 define Device/pisen-wfr101n
     $(Device/tplink-16mlzma)
