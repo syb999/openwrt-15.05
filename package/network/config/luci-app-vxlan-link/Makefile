@@ -15,7 +15,8 @@ layer 2 extension over one tunnel). Platforms: MT7628/MT7688, \
 AR9331/9341/QCA9531, RT3052/5350/MT7620/MT7621, arm, x86. The design reads \
 the device's current wan/lan layout at runtime; multi-port boards may use \
 hardware switch VLANs (switch_mode=hw).
-LUCI_DEPENDS:=+luci-base +kmod-vxlan +vxlan
+LUCI_DEPENDS:=+luci-base +kmod-vxlan +vxlan \
+              +kmod-br-netfilter +kmod-8021q
 LUCI_PKGARCH:=all
 
 PKG_VERSION:=1.3.29
