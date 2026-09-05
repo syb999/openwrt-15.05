@@ -201,17 +201,26 @@ sub parse_package_metadata($) {
 		/^License: \s*(.+)\s*$/ and $pkg->{license} = $1;
 		/^LicenseFiles: \s*(.+)\s*$/ and $pkg->{licensefiles} = $1;
 		/^Default: \s*(.+)\s*$/ and $pkg->{default} = $1;
-		/^Provides: \s*(.+)\s*$/ and do {
+		/^Provides: \s*(.+?)\s*$/ and do {
 			my @vpkg = split /\s+/, $1;
 			foreach my $vpkg (@vpkg) {
-				$package{$vpkg} or $package{$vpkg} = {
-					name => $vpkg,
-					vdepends => [],
-					src => $src,
-					subdir => $subdir,
-					makefile => $makefile
-				};
-				push @{$package{$vpkg}->{vdepends}}, $pkg->{name};
+				my $vp = $package{$vpkg};
+				# only register a virtual dependency when the target name
+				# is not a real package itself (one that has its own
+				# Package record / Title).  Otherwise a real package that
+				# is also provided by others (e.g. dnsmasq provided by
+				# dnsmasq-dhcpv6/dnsmasq-full) would be treated as a
+				# virtual package and never built.
+				if (!$vp || !defined $vp->{title}) {
+					$vp ||= {
+						name => $vpkg,
+						vdepends => [],
+						src => $src,
+						subdir => $subdir,
+						makefile => $makefile
+					};
+					push @{$vp->{vdepends}}, $pkg->{name};
+				}
 			}
 		};
 		/^Menu-Depends: \s*(.+)\s*$/ and $pkg->{mdepends} = [ split /\s+/, $1 ];
