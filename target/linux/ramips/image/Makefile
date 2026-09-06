@@ -531,7 +531,9 @@ endif
 # MT7621 Profiles
 #
 
+ifeq ($(SUBTARGET),mt7621)
 include mt7621.mk
+endif
 
 #
 # MT7628 Profiles
