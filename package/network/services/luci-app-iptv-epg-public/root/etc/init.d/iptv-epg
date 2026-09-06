@@ -5,7 +5,7 @@
 # 启用条件: /etc/config/iptv_epg 存在且 main.prefetch_enabled='1'
 # ============================================================
 
-START=90
+START=96
 STOP=10
 
 # 扩展命令: status (rc.common 需要 EXTRA_COMMANDS 声明才会把 status 当命令分发)
