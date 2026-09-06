@@ -192,9 +192,15 @@ function adbpairwifi.write(self, section)
 	local out
 	if pp and pc and pp ~= "" and pc ~= "" then
 		out = luci.util.exec(string.format("HOME=/root adb pair %s:%s %s 2>&1; echo pair_exit=$?", ip, pp, pc))
-		out = out .. luci.util.exec(string.format("\nHOME=/root adb connect %s:%s 2>&1", ip, port))
+		-- A stale (offline) transport for the target serial makes connect say
+		-- "already connected" without redoing the handshake. Kick it first.
+		luci.util.exec(string.format("HOME=/root adb disconnect %s:%s >/dev/null 2>&1", ip, port))
+		out = out .. "\n" .. luci.util.exec(string.format("HOME=/root adb connect %s:%s 2>&1; echo connect_exit=$?", ip, port))
 	else
 		out = luci.util.exec(string.format("HOME=/root adb connect %s:%s 2>&1; echo connect_exit=$?", ip, port))
+	end
+	if out and out:find("unable to connect", 1, true) then
+		out = out .. "\n提示: 连不上通常是端口不对。Android 11+ 无线调试的\"连接端口\"是手机『无线调试』页中 IP address and Port 那行显示的随机端口(每次重开无线调试/重启会变),不是 5555;请在 Basic setting 的 ADB port 填入它。若配对码已过期,在手机上重新生成后再配对。"
 	end
 	local f = io.open("/tmp/adbrun_pair.log", "w")
 	if f then f:write(out or ""); f:close() end
@@ -219,7 +225,10 @@ function adbconnect.write(self, section)
 		luci.util.exec("echo 'no IP configured for this device' >/tmp/adbrun_pair.log 2>&1 &")
 		return
 	end
-	luci.util.exec(string.format("(HOME=/root adb connect %s:%s; echo connect_exit=$?) >/tmp/adbrun_pair.log 2>&1 &", ip, port))
+	local hint = "提示: 连不上通常是端口不对。Android 11+ 无线调试的连接端口是手机『无线调试』页中 IP address and Port 那行显示的随机端口(每次重开无线调试/重启会变),不是 5555;请在 Basic setting 的 ADB port 填入它。若配对码已过期,在手机上重新生成后再配对。"
+	-- Kick a stale (offline) transport for this serial first, otherwise adb
+	-- connect answers "already connected" and never redoes the handshake.
+	luci.util.exec(string.format("(HOME=/root adb disconnect %s:%s >/dev/null 2>&1; HOME=/root adb connect %s:%s >/tmp/adbrun_conn.log 2>&1; echo connect_exit=$? >>/tmp/adbrun_conn.log; grep -q 'unable to connect' /tmp/adbrun_conn.log && echo '%s' >>/tmp/adbrun_conn.log; cat /tmp/adbrun_conn.log) >/tmp/adbrun_pair.log 2>&1 &", ip, port, ip, port, hint))
 end
 
 adbplay = s:taboption("adb_action",Button, "adbplay", translate("Play")) 

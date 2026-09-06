@@ -7,10 +7,26 @@ SERVICE_WRITE_PID=1
 SERVICE_DAEMONIZE=1
 
 start() {
-        service_start /usr/bin/adb devices
+        # adb generates its RSA host key on first server start, using $HOME.
+        # Boot-time init scripts usually run without HOME set; in that case
+        # get_user_keyfilepath() bails out and the server starts keyless,
+        # which later breaks wireless pairing (adb pair cannot read
+        # /root/.android/adbkey). Always run the server with the canonical
+        # HOME=/root (the same key the LuCI pair/connect buttons use) and
+        # verify the key really exists before returning.
+        mkdir -p /root/.android
+        # Replace any server previously started with a different HOME (e.g.
+        # uhttpd's HOME=/) so all connections share /root/.android/adbkey.
+        HOME=/root /usr/bin/adb kill-server >/dev/null 2>&1
+        HOME=/root service_start /usr/bin/adb start-server
+        local i=0
+        while [ ! -s /root/.android/adbkey ]; do
+                i=$((i + 1))
+                [ "$i" -ge 5 ] && break
+                sleep 1
+        done
 }
 
 stop() {
         kill -9 $(busybox ps | grep adb | grep server | grep -v grep | awk '{print $1}') >/dev/null 2>&1
 }
-
