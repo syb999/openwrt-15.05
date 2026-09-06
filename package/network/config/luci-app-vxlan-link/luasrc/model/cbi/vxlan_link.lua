@@ -293,6 +293,20 @@ o.datatype = "ip4addr"
 o.rmempty = true
 o.default = "114.114.114.114"
 
+-- 1.3.30: carrier DNS (telecom 10.192.0.x / 15.192.x.x) blackholes PTR
+-- queries for private ranges; once in /etc/resolv.conf it freezes every
+-- LuCI page that reverse-resolves neighbors (Services -> BanMac shows
+-- "Bad Gateway" after the 60s CGI timeout). Default ON = keep carrier DNS
+-- out (peerdns=0 on iptv/voip); OFF = original behaviour (accept them).
+o = s:taboption("advanced", Flag, "no_carrier_dns", translate("Ignore Carrier-Provided DNS"),
+	translate("ON (default): iptv/voip DHCP ignores the carrier DNS servers so telecom resolvers "
+		.. "(10.192.0.x / 15.192.x.x) never enter /etc/resolv.conf. Carrier DNS blackholes PTR queries "
+		.. "for private ranges - LuCI pages that reverse-resolve neighbors (e.g. Services > BanMac) hang "
+		.. "~25s per address and die with 'Bad Gateway' after the 60s CGI timeout. "
+		.. "OFF: restore original behaviour and accept carrier DNS."))
+o.default = "1"
+o.rmempty = false
+
 o = s:taboption("advanced", Flag, "selfheal", translate("Tunnel Self-Heal"),
 	translate("Client waits for wifi after boot, verifies tunnel, auto-rebuilds on failure"))
 o.default = "1"

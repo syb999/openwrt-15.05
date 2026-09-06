@@ -33,6 +33,15 @@ say() { echo "$*"; log "$*"; }
 
 uget() { uci -q get "$CFG.settings.$1" 2>/dev/null; }
 
+# 1.3.30: no_carrier_dns 默认开启 -> iptv/voip 忽略运营商 DHCP 下发的 DNS。
+# 电信 DNS (10.192.0.x / 15.192.x.x) 对私网 PTR 反向查询黑洞不回应, 一旦进入
+# /etc/resolv.conf, LuCI 里反查邻居 MAC 的页面会每个地址卡 ~25s, 超 60s CGI
+# 超时 -> "Bad Gateway / The process did not produce any response"。
+# 取消勾选(=0)恢复原逻辑: peerdns=1 接收运营商 DNS (旧注释: voip 平面内可达)。
+carrier_dns_flag() {
+	[ "$(uget no_carrier_dns)" = "0" ] && echo 1 || echo 0
+}
+
 # ---------------- SoC / platform detection ----------------
 # Two supported platforms:
 #   mt76x8  (MT7628/MT7688): single-port ESW, per-port untag is a single bit
@@ -792,11 +801,10 @@ voip_configure() {
 	uci set network.voip.macaddr="$GMACV"
 	uci set network.voip.metric='300'
 	uci set network.voip.delegate='0'
-	# peerdns=1: the carrier's VoIP DNS (e.g. 15.192.252.188 / 15.192.251.188)
-	# lives INSIDE the VoIP plane and is only reachable there. peerdns=0
-	# would park it in netifd's "inactive" list and the phone/ATA would get
-	# no usable DNS. Verified by traceroute: it goes via 28.132.127.252.
-	uci set network.voip.peerdns='1'
+	# peerdns: 默认忽略运营商 DNS (no_carrier_dns=1 -> 0); 取消勾选恢复原逻辑
+	# (1.3.30 前写死 1: 运营商 VoIP DNS 15.192.x 在 voip 平面内可达, traceroute
+	#  经 28.132.127.252 验证 —— 但它对私网 PTR 黑洞, 进 resolv.conf 会卡死 LuCI)
+	uci set network.voip.peerdns="$(carrier_dns_flag)"
 	# The VoIP plane needs the carrier's walled-garden routes (DNS servers
 	# like 15.192.0.0/16, softswitch/SIP servers, etc). DHCP does NOT deliver
 	# them (no option 121 in the ACK - captured). They must be added
@@ -1005,7 +1013,7 @@ apply_server_telecom() {
 	fi
 	uci set network.iptv.metric='200'
 	uci set network.iptv.delegate='0'
-	uci set network.iptv.peerdns='1'
+	uci set network.iptv.peerdns="$(carrier_dns_flag)"
 
 	set_backhaul "$BH" "$(uget backhaul_mask)"
 	wifi_iface ap "$(uget ssid)" "$(uget key)"
@@ -1157,7 +1165,7 @@ apply_client_telecom() {
 	fi
 	uci set network.iptv.metric='200'
 	uci set network.iptv.delegate='0'
-	uci set network.iptv.peerdns='1'
+	uci set network.iptv.peerdns="$(carrier_dns_flag)"
 
 	# 🔴 修复: client/telecom 曾缺失 voip_configure (unicom 有, telecom 漏了)!
 	#    → client 端 br-voip/vxlan_voip 完全不配置, VoIP 不可用。
