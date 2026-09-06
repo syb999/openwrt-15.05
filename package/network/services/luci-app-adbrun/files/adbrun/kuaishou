@@ -7,6 +7,8 @@ dosedbasecy=
 
 sectionname=$(echo $0 | cut -d '/' -f 3 | cut -d '_' -f 1 | sed 's/^ADBRUN//')
 adbclient=$(uci get adbrun.$sectionname.adbiplist)
+adbport=$(uci get adbrun.$sectionname.adbport 2>/dev/null)
+[ -z "$adbport" ] && adbport=5555
 rm /tmp/adb_ADBRUN${sectionname}_.sh
 
 while true
@@ -14,7 +16,7 @@ do
 	rtime=$(expr $(date +%s | cut -c 10) + 1)
 	rx=$(expr $basex + $rtime)
 	ry=$(expr $basey + $rtime)
-	adb -s ${adbclient}:5555 shell input swipe ${rx} ${ry} $(expr ${rx} + 10) $(expr ${ry} - 390)
+	adb -s ${adbclient}:${adbport} shell input swipe ${rx} ${ry} $(expr ${rx} + 10) $(expr ${ry} - 390)
 	sleep $(expr $rtime + 12)
 done
 

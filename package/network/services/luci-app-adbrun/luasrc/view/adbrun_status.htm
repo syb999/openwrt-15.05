@@ -2,30 +2,33 @@
 	XHR.poll(5, '<%=luci.dispatcher.build_url("admin", "services", "adbrun", "status")%>', null,
 		function(x, st)
 		{
+			var devs = (st && st.devices) ? st.devices : [];
+			var pl = document.getElementById('adbrun_pairlog');
+			if (pl) { pl.innerHTML = (st && st.pairlog) ? '最近操作: ' + st.pairlog : '&nbsp;'; }
 			var tb = document.getElementById('adbrun_status_table');
 			if (st && tb)
 			{
 				while(tb.rows.length > 1)
 					tb.deleteRow(1);
-				for( var i = 0; i < st.length; i++ )
+				for( var i = 0; i < devs.length; i++ )
 				{
 					var tr = tb.insertRow(-1);
 					tr.className = 'cbi-section-table-row' ;
 
 					tr.insertCell(-1).innerHTML = (function(){ 
-									var num = st[i].num;
+									var num = devs[i].num;
 									if(num <= 9){
 										return "0" + num;
 									}else{
 										return num;
 									}})();
 					tr.insertCell(-1).innerHTML = (function() {
-									var devname = st[i].name;
+									var devname = devs[i].name;
 									return String.format('<font color="blueviolet">') + devname + String.format('</font>');
 									})();
-					tr.insertCell(-1).innerHTML = st[i].deviceid + ":" + st[i].port + "(" + st[i].screensize + ")";
+					tr.insertCell(-1).innerHTML = devs[i].deviceid + ":" + devs[i].port + "(" + devs[i].screensize + ")";
 					tr.insertCell(-1).innerHTML = (function(){
-									var apkid = st[i].apk;
+									var apkid = devs[i].apk;
 									if(apkid == "com.ss.android.article.lite"){
 										return String.format("今日头条极速版");
 									}else if(apkid == "com.ss.android.article.news"){
@@ -168,17 +171,17 @@
 										return String.format('<font color="red">') + apkid + String.format('</font>');
 									}})();
 					tr.insertCell(-1).innerHTML = (function(){
-									var kpid = st[i].pid;
+									var kpid = devs[i].pid;
 									if(kpid == ""){
 										return String.format('<font color="red">未计时</font>');
 									}else{
-										if(st[i].runtime == 0){
+										if(devs[i].runtime == 0){
 											return String.format('<font color="green">读取时间</font>');
 										}else{
-											return String.format('<font color="green">') + st[i].runhours + "时" + st[i].runmins + "分" + st[i].runsecs + "秒" + String.format('</font>');
+											return String.format('<font color="green">') + devs[i].runhours + "时" + devs[i].runmins + "分" + devs[i].runsecs + "秒" + String.format('</font>');
 									}}})();
 					tr.insertCell(-1).innerHTML = (function(){
-									var kpid = st[i].pid;
+									var kpid = devs[i].pid;
 									if(kpid == ""){
 										return String.format('<font color="red">未运行</font>');
 									}else{
@@ -186,10 +189,10 @@
 									}})();
 					var myDate = new Date();
 					tr.insertCell(-1).innerHTML = (function(){
-									var kvid = st[i].deviceid
+									var kvid = devs[i].deviceid
 									new XHR().post('<%=luci.dispatcher.build_url("admin", "services", "adbrun", "getscreen")%>', {sctime: myDate.getSeconds(),screenid : kvid},
 									function(x,data){});
-									return '<button type=\"button\" onclick=\"window.open(\'http:\/\/' + window.location.hostname + ":" + st[i].uhttpd + '/' + kvid + '\.screen.png \')\">预览</button>';
+									return '<button type=\"button\" onclick=\"window.open(\'http:\/\/' + window.location.hostname + ":" + devs[i].uhttpd + '/' + kvid + '\.screen.png \')\">预览</button>';
 									})();
 				}
 			}
@@ -198,6 +201,7 @@
 //]]></script>
 
 <fieldset class="cbi-section">
+<div id="adbrun_pairlog" style="margin:6px 0;padding:4px 8px;border:1px dashed #999;background:#f7f7f7;font-family:monospace;color:#006600;">&nbsp;</div>
 <div><%:激活的ADB设备列表%>
 	<table class="cbi-section-table" id="adbrun_status_table" border="2">
 		<tr class="cbi-section-table-titles">

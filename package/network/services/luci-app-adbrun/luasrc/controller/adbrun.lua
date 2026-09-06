@@ -87,56 +87,69 @@ function xact_status()
 	if adblist then
 		infolist = { }
 		local num = 0
-		local deviceid, port, name, lowername, runtime, runhours, runmins, runsecs, apk, pid
+		local deviceid, port, devstate, name, lowername, runtime, runhours, runmins, runsecs, apk, pid
 		while true do
 			local ln = adblist:read("*l")
 			if not ln then
 				break
-			elseif ln:match("(%S-):(%d+).device") then
-				deviceid, port = ln:match("(%S-):(%d+).device")
+			elseif ln:match("(%S-):(%d+)%s+(%S+)") then
+				deviceid, port, devstate = ln:match("(%S-):(%d+)%s+(%S+)")
 				if num and deviceid and port then
 					num = num + 1
-					uci:foreach("adbrun", "adbrun", function(e)
-						if e.adbiplist == deviceid then
-							name = string.upper(e[".name"])
-							lowername = string.lower(e[".name"])
-							runtime = get_starttime(lowername)
-							if runtime == nil then
-								runtime = 0
-							elseif tonumber(runtime) > 0 then
-								runtime = os.time() - tonumber(runtime)
-								if runtime >= 3600 then
-									runhours = (runtime - runtime%3600)/3600
-									local x = runtime%3600
-									if x  >= 60 then
-										runmins = (x - x%60)/60
-										runsecs = x%60
+					if devstate == "device" then
+						uci:foreach("adbrun", "adbrun", function(e)
+							if e.adbiplist == deviceid then
+								name = string.upper(e[".name"])
+								lowername = string.lower(e[".name"])
+								runtime = get_starttime(lowername)
+								if runtime == nil then
+									runtime = 0
+								elseif tonumber(runtime) > 0 then
+									runtime = os.time() - tonumber(runtime)
+									if runtime >= 3600 then
+										runhours = (runtime - runtime%3600)/3600
+										local x = runtime%3600
+										if x  >= 60 then
+											runmins = (x - x%60)/60
+											runsecs = x%60
+										else
+											runmins = 0
+											runsecs = x
+										end
+									elseif runtime >= 60 then
+										runhours = 0
+										runmins = (runtime - runtime%60)/60
+										runsecs = runtime%60
 									else
+										runhours = 0
 										runmins = 0
-										runsecs = x
+										runsecs = runtime
 									end
-								elseif runtime >= 60 then
-									runhours = 0
-									runmins = (runtime - runtime%60)/60
-									runsecs = runtime%60
 								else
+									runtime = 0
+								end
+								if runtime == 0 then
 									runhours = 0
 									runmins = 0
-									runsecs = runtime
+									runsecs = 0
 								end
-							else
-								runtime = 0
 							end
-							if runtime == 0 then
-								runhours = 0
-								runmins = 0
-								runsecs = 0
-							end
-						end
-					end)
-					screensize = get_screensize(deviceid,port)
-					apk = get_apk(deviceid,port)
-					pid = get_pid(deviceid)
+						end)
+						screensize = get_screensize(deviceid,port)
+						apk = get_apk(deviceid,port)
+						pid = get_pid(deviceid)
+					else
+						-- device present but not fully usable (unauthorized/offline)
+						name = devstate
+						lowername = nil
+						screensize = "unauthorized"
+						apk = devstate
+						pid = ""
+						runtime = ""
+						runhours = ""
+						runmins = ""
+						runsecs = ""
+					end
 				end
 			elseif ln:match("^(%w+).") then
 				deviceid = ln:match("^(%w+).-")
@@ -173,8 +186,21 @@ function xact_status()
 	end
 	adblist:close()
 
+	if not infolist then infolist = {} end
+
+	local pairlog = ""
+	local lf = io.open("/tmp/adbrun_pair.log", "r")
+	if lf then
+		local all = lf:read("*a")
+		lf:close()
+		if all and all ~= "" then
+			all = all:gsub("[\r\n]+", " | ")
+			pairlog = all
+		end
+	end
+
 	luci.http.prepare_content("application/json")	
-	luci.http.write_json(infolist);
+	luci.http.write_json({ devices = infolist, pairlog = pairlog });
 end
 
 function getscreen()
@@ -184,7 +210,13 @@ function getscreen()
 			if luci.http.formvalue('screenid') ~= "" then
 				local vid = luci.http.formvalue('screenid')
 				if not nixio.fs.access("/tmp/" .. vid .. ".screen.png") then
-					luci.sys.call("adb -s " .. vid .. ":5555 shell screencap -p /sdcard/screen.png && adb -s " .. vid .. ":5555 pull /sdcard/screen.png /tmp/" .. vid .. ".screen.png 2>/dev/null && ln -s /tmp/" .. vid .. ".screen.png /www 2>/dev/null")
+					local gport = "5555"
+					uci:foreach("adbrun", "adbrun", function(e)
+						if e.adbiplist == vid and e.adbport and e.adbport ~= "" then
+							gport = e.adbport
+						end
+					end)
+					luci.sys.call("adb -s " .. vid .. ":" .. gport .. " shell screencap -p /sdcard/screen.png && adb -s " .. vid .. ":" .. gport .. " pull /sdcard/screen.png /tmp/" .. vid .. ".screen.png 2>/dev/null && ln -s /tmp/" .. vid .. ".screen.png /www 2>/dev/null")
 				end
 			end
 		end

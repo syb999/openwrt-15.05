@@ -2,31 +2,33 @@
 starttime=
 sectionname=$(echo $0 | cut -d '/' -f 3 | cut -d '_' -f 1 | sed 's/^ADBRUN//')
 adbclient=$(uci get adbrun.$sectionname.adbiplist)
+adbport=$(uci get adbrun.$sectionname.adbport 2>/dev/null)
+[ -z "$adbport" ] && adbport=5555
 photopath=$(uci get adbrun.@adbinit[0].adbphotopath)
 rm /tmp/adb_ADBRUN${sectionname}_.sh
 
 function getphoto3() {
-	adb -s ${adbclient}:5555 shell am start -n com.android.camera/.Camera
+	adb -s ${adbclient}:${adbport} shell am start -n com.android.camera/.Camera
 	sleep 3
 	for i in $(seq 1 3) ;do
-		adb -s ${adbclient}:5555 shell input keyevent 27
+		adb -s ${adbclient}:${adbport} shell input keyevent 27
 		sleep 5
 	done
 }
 
-adb -s ${adbclient}:5555 shell mkdir /storage/self/primary/DCIM/backup
-adb -s ${adbclient}:5555 shell mv /storage/self/primary/DCIM/Camera/*.* /storage/self/primary/DCIM/backup
+adb -s ${adbclient}:${adbport} shell mkdir /storage/self/primary/DCIM/backup
+adb -s ${adbclient}:${adbport} shell mv /storage/self/primary/DCIM/Camera/*.* /storage/self/primary/DCIM/backup
 
 getphoto3
 
-adbphotolist=$(adb -s ${adbclient}:5555 shell ls /storage/self/primary/DCIM/Camera/ | sed -e 's/ /\n/g;' | sed -e '/^$/d' | grep .jpg)
+adbphotolist=$(adb -s ${adbclient}:${adbport} shell ls /storage/self/primary/DCIM/Camera/ | sed -e 's/ /\n/g;' | sed -e '/^$/d' | grep .jpg)
 
 for i in $adbphotolist;do
-	adb -s ${adbclient}:5555 pull /storage/self/primary/DCIM/Camera/$i $photopath
+	adb -s ${adbclient}:${adbport} pull /storage/self/primary/DCIM/Camera/$i $photopath
 	sleep 10
-	adb -s ${adbclient}:5555 shell rm /storage/self/primary/DCIM/Camera/$i
+	adb -s ${adbclient}:${adbport} shell rm /storage/self/primary/DCIM/Camera/$i
 done
 
-adb -s ${adbclient}:5555 shell input keyevent 4
+adb -s ${adbclient}:${adbport} shell input keyevent 4
 rm /tmp/adbcamera.photo.list
 

@@ -4,7 +4,7 @@ workcount=1
 function look30sec() {
 	sleep 6
 	for i in $(seq 1 5) ;do
-		adb -s ${adbclient}:5555 shell input swipe $xstart $ystart $xstart $(expr $ystart - 390) 2000
+		adb -s ${adbclient}:${adbport} shell input swipe $xstart $ystart $xstart $(expr $ystart - 390) 2000
 		sleep 7
 	done
 }
@@ -14,7 +14,7 @@ function botting() {
 	workline=$(cat /tmp/worklist${sectionname}.adbtmp)
 	for m in $workline;do
 		if [ "$m" == "skip" ];then
-			screensize=$(adb -s ${adbclient}:5555 shell wm size | cut -d ':' -f 2 | sed -e "s/ //g;s/\n//g;s/\r//g")
+			screensize=$(adb -s ${adbclient}:${adbport} shell wm size | cut -d ':' -f 2 | sed -e "s/ //g;s/\n//g;s/\r//g")
 			if [ ${screensize} == "1080x1920" -o ${screensize} == "1080x2400" ];then
 				basey=$(expr $basey + $(uci get adbrun.@adbinit[0].diantaoskip))
 			elif [ ${screensize} == "720x1280" ];then
@@ -32,12 +32,12 @@ function botting() {
 				ltimes=0
 				while [ $ltimes -lt $adbtimes ]
 				do
-					adb -s ${adbclient}:5555 shell input tap $basex $basey
+					adb -s ${adbclient}:${adbport} shell input tap $basex $basey
 					sleep 3
 					for i in $(seq 1 $adbswitchtimes) ;do
 						look30sec
 					done
-					adb -s ${adbclient}:5555 shell input keyevent 4
+					adb -s ${adbclient}:${adbport} shell input keyevent 4
 					sleep 6
 					ltimes=$(expr $ltimes + 1)
 				done
@@ -49,12 +49,12 @@ function botting() {
 				ltimes=0
 				while [ $ltimes -lt $adbtimes ]
 				do
-					adb -s ${adbclient}:5555 shell input tap $basex $basey
+					adb -s ${adbclient}:${adbport} shell input tap $basex $basey
 					sleep 3
 					for i in $(seq 1 $adbswitchtimes) ;do
 						look30sec
 					done
-					adb -s ${adbclient}:5555 shell input keyevent 4
+					adb -s ${adbclient}:${adbport} shell input keyevent 4
 					sleep 6
 					ltimes=$(expr $ltimes + 1)
 				done

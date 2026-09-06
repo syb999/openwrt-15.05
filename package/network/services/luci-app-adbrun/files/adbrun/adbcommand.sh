@@ -5,7 +5,10 @@ sectionname=$(echo $0 | cut -d '_' -f 2 | sed 's/^ADBRUN//')
 adbclient=$(uci get adbrun.$sectionname.adbiplist)
 adbcommand=$(uci get adbrun.$sectionname.adbcommandlist)
 
-screensize=$(adb -s ${adbclient}:5555 shell wm size | cut -d ':' -f 2 | sed -e "s/ //g;s/\n//g;s/\r//g")
+adbport=$(uci get adbrun.$sectionname.adbport 2>/dev/null)
+[ -z "$adbport" ] && adbport=5555
+
+screensize=$(adb -s ${adbclient}:${adbport} shell wm size | cut -d ':' -f 2 | sed -e "s/ //g;s/\n//g;s/\r//g")
 
 case $adbcommand in
 	get-input-event) adbcd="get input event"
@@ -135,6 +138,11 @@ if [ "$adbcd" == "scripts" ];then
 		fi
 		sed -i "s/starttime=.*/starttime=$(date +%s)/" /tmp/ADBRUN${sectionname}_.sh
 		chmod +x /tmp/ADBRUN${sectionname}_.sh
+		if grep -q "dosed" /tmp/ADBRUN${sectionname}_.sh; then
+			echo "unsupported screensize ${screensize} for ${adbsh}"
+			rm -f /tmp/ADBRUN${sectionname}_.sh
+			exit 1
+		fi
 		exec sh /tmp/ADBRUN${sectionname}_.sh
 	elif [ ${adbsh} == "kuaishou" ];then
 		echo kuaishou
@@ -157,6 +165,11 @@ if [ "$adbcd" == "scripts" ];then
 		fi
 		sed -i "s/starttime=.*/starttime=$(date +%s)/" /tmp/ADBRUN${sectionname}_.sh
 		chmod +x /tmp/ADBRUN${sectionname}_.sh
+		if grep -q "dosed" /tmp/ADBRUN${sectionname}_.sh; then
+			echo "unsupported screensize ${screensize} for ${adbsh}"
+			rm -f /tmp/ADBRUN${sectionname}_.sh
+			exit 1
+		fi
 		exec sh /tmp/ADBRUN${sectionname}_.sh
 	elif [ ${adbsh} == "diantaolive" ];then
 		echo diantaolive
@@ -179,6 +192,11 @@ if [ "$adbcd" == "scripts" ];then
 		fi
 		sed -i "s/starttime=.*/starttime=$(date +%s)/" /tmp/ADBRUN${sectionname}_.sh
 		chmod +x /tmp/ADBRUN${sectionname}_.sh
+		if grep -q "dosed" /tmp/ADBRUN${sectionname}_.sh; then
+			echo "unsupported screensize ${screensize} for ${adbsh}"
+			rm -f /tmp/ADBRUN${sectionname}_.sh
+			exit 1
+		fi
 		exec sh /tmp/ADBRUN${sectionname}_.sh
 	elif [ ${adbsh} == "diantao" ];then
 		echo diantao
@@ -201,6 +219,11 @@ if [ "$adbcd" == "scripts" ];then
 		fi
 		sed -i "s/starttime=.*/starttime=$(date +%s)/" /tmp/ADBRUN${sectionname}_.sh
 		chmod +x /tmp/ADBRUN${sectionname}_.sh
+		if grep -q "dosed" /tmp/ADBRUN${sectionname}_.sh; then
+			echo "unsupported screensize ${screensize} for ${adbsh}"
+			rm -f /tmp/ADBRUN${sectionname}_.sh
+			exit 1
+		fi
 		exec sh /tmp/ADBRUN${sectionname}_.sh
 	elif [ ${adbsh} == "jdlite" ];then
 		echo jdlite
@@ -223,91 +246,116 @@ if [ "$adbcd" == "scripts" ];then
 		fi
 		sed -i "s/starttime=.*/starttime=$(date +%s)/" /tmp/ADBRUN${sectionname}_.sh
 		chmod +x /tmp/ADBRUN${sectionname}_.sh
-		exec sh /tmp/ADBRUN${sectionname}_.sh
-	elif [ ${adbsh} == "tbbbfarm" ];then
-		echo tbbbfarm
-		if [ ${screensize} == "720x1280" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=300/;s/dosedystart=/ystart=1000/;s/dosedbasex=/basex=600/;s/dosedbasey=/basey=570/;s/dosedysetp1=/ysetp1=125/;s/dosedentbbx=/entbbx=500/;s/dosedentbby=/entbby=300/' > /tmp/ADBRUN${sectionname}_.sh
-		elif [ ${screensize} == "720x1560" ];then
-			echo "unsupport now"
-		elif [ ${screensize} == "768x1024" ];then
-			echo "unsupport now"
-		elif [ ${screensize} == "800x1280" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=333/;s/dosedystart=/ystart=1000/;s/dosedbasex=/basex=666/;s/dosedbasey=/basey=570/;s/dosedysetp1=/ysetp1=125/;s/dosedentbbx=/entbbx=555/;s/dosedentbby=/entbby=300/' > /tmp/ADBRUN${sectionname}_.sh
-		elif [ ${screensize} == "1080x2244" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=300/;s/dosedystart=/ystart=1200/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=680/;s/dosedysetp1=/ysetp1=185/;s/dosedentbbx=/entbbx=550/;s/dosedentbby=/entbby=460/' > /tmp/ADBRUN${sectionname}_.sh
-		elif [ ${screensize} == "1080x1920" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=300/;s/dosedystart=/ystart=1000/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=480/;s/dosedysetp1=/ysetp1=185/;s/dosedentbbx=/entbbx=550/;s/dosedentbby=/entbby=260/' > /tmp/ADBRUN${sectionname}_.sh
-		elif [ ${screensize} == "1080x2280" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=300/;s/dosedystart=/ystart=1200/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=680/;s/dosedysetp1=/ysetp1=185/;s/dosedentbbx=/entbbx=550/;s/dosedentbby=/entbby=460/' > /tmp/ADBRUN${sectionname}_.sh
-		elif [ ${screensize} == "1080x2340" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=300/;s/dosedystart=/ystart=1295/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=775/;s/dosedysetp1=/ysetp1=185/;s/dosedentbbx=/entbbx=550/;s/dosedentbby=/entbby=555/' > /tmp/ADBRUN${sectionname}_.sh
+		if grep -q "dosed" /tmp/ADBRUN${sectionname}_.sh; then
+			echo "unsupported screensize ${screensize} for ${adbsh}"
+			rm -f /tmp/ADBRUN${sectionname}_.sh
+			exit 1
 		fi
+		exec sh /tmp/ADBRUN${sectionname}_.sh
+		elif [ ${adbsh} == "tbbbfarm" ];then
+			echo tbbbfarm
+			if [ ${screensize} == "720x1280" ];then
+				cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=300/;s/dosedystart=/ystart=1000/;s/dosedbasex=/basex=600/;s/dosedbasey=/basey=570/;s/dosedysetp1=/ysetp1=125/;s/dosedentbbx=/entbbx=500/;s/dosedentbby=/entbby=300/' > /tmp/ADBRUN${sectionname}_.sh
+			elif [ ${screensize} == "720x1560" ];then
+				cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=300/;s/dosedystart=/ystart=1219/;s/dosedbasex=/basex=600/;s/dosedbasey=/basey=695/;s/dosedysetp1=/ysetp1=152/;s/dosedentbbx=/entbbx=500/;s/dosedentbby=/entbby=366/' > /tmp/ADBRUN${sectionname}_.sh
+			elif [ ${screensize} == "768x1024" ];then
+				echo "unsupport now"
+			elif [ ${screensize} == "800x1280" ];then
+				cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=333/;s/dosedystart=/ystart=1000/;s/dosedbasex=/basex=666/;s/dosedbasey=/basey=570/;s/dosedysetp1=/ysetp1=125/;s/dosedentbbx=/entbbx=555/;s/dosedentbby=/entbby=300/' > /tmp/ADBRUN${sectionname}_.sh
+			elif [ ${screensize} == "1080x2244" ];then
+				cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=300/;s/dosedystart=/ystart=1200/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=680/;s/dosedysetp1=/ysetp1=185/;s/dosedentbbx=/entbbx=550/;s/dosedentbby=/entbby=460/' > /tmp/ADBRUN${sectionname}_.sh
+			elif [ ${screensize} == "1080x1920" ];then
+				cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=300/;s/dosedystart=/ystart=1000/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=480/;s/dosedysetp1=/ysetp1=185/;s/dosedentbbx=/entbbx=550/;s/dosedentbby=/entbby=260/' > /tmp/ADBRUN${sectionname}_.sh
+			elif [ ${screensize} == "1080x2280" ];then
+				cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=300/;s/dosedystart=/ystart=1200/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=680/;s/dosedysetp1=/ysetp1=185/;s/dosedentbbx=/entbbx=550/;s/dosedentbby=/entbby=460/' > /tmp/ADBRUN${sectionname}_.sh
+			elif [ ${screensize} == "1080x2340" ];then
+				cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=300/;s/dosedystart=/ystart=1295/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=775/;s/dosedysetp1=/ysetp1=185/;s/dosedentbbx=/entbbx=550/;s/dosedentbby=/entbby=555/' > /tmp/ADBRUN${sectionname}_.sh
+			elif [ ${screensize} == "1080x2400" ];then
+				cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=300/;s/dosedystart=/ystart=1250/;s/dosedbasex=/basex=910/;s/dosedbasey=/basey=600/;s/dosedysetp1=/ysetp1=231/;s/dosedentbbx=/entbbx=550/;s/dosedentbby=/entbby=325/' > /tmp/ADBRUN${sectionname}_.sh
+			fi
 		sed -i "s/starttime=.*/starttime=$(date +%s)/" /tmp/ADBRUN${sectionname}_.sh
 		chmod +x /tmp/ADBRUN${sectionname}_.sh
-		exec sh /tmp/ADBRUN${sectionname}_.sh
-	elif [ ${adbsh} == "event1111" ];then
-		echo event1111
-		if [ ${screensize} == "720x1280" ];then
-			echo "unsupport now"
-		elif [ ${screensize} == "1080x2400" ];then
-			cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=530/;s/dosedystart=/ystart=1655/;s/dosedbasex=/basex=950/;s/dosedbasey=/basey=860/' > /tmp/ADBRUN${sectionname}_.sh
+		if grep -q "dosed" /tmp/ADBRUN${sectionname}_.sh; then
+			echo "unsupported screensize ${screensize} for ${adbsh}"
+			rm -f /tmp/ADBRUN${sectionname}_.sh
+			exit 1
 		fi
+		exec sh /tmp/ADBRUN${sectionname}_.sh
+		elif [ ${adbsh} == "event1111" ];then
+			echo event1111
+			if [ ${screensize} == "720x1280" ];then
+				echo "unsupport now"
+			elif [ ${screensize} == "1080x1920" ];then
+				cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=530/;s/dosedystart=/ystart=1324/;s/dosedbasex=/basex=950/;s/dosedbasey=/basey=688/' > /tmp/ADBRUN${sectionname}_.sh
+			elif [ ${screensize} == "1080x2244" ];then
+				cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=530/;s/dosedystart=/ystart=1547/;s/dosedbasex=/basex=950/;s/dosedbasey=/basey=804/' > /tmp/ADBRUN${sectionname}_.sh
+			elif [ ${screensize} == "1080x2280" ];then
+				cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=530/;s/dosedystart=/ystart=1572/;s/dosedbasex=/basex=950/;s/dosedbasey=/basey=817/' > /tmp/ADBRUN${sectionname}_.sh
+			elif [ ${screensize} == "1080x2340" ];then
+				cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=530/;s/dosedystart=/ystart=1614/;s/dosedbasex=/basex=950/;s/dosedbasey=/basey=838/' > /tmp/ADBRUN${sectionname}_.sh
+			elif [ ${screensize} == "1080x2400" ];then
+				cat ${spath}${adbsh} | sed 's/dosedxstart=/xstart=530/;s/dosedystart=/ystart=1655/;s/dosedbasex=/basex=950/;s/dosedbasey=/basey=860/' > /tmp/ADBRUN${sectionname}_.sh
+			fi
 		sed -i "s/starttime=.*/starttime=$(date +%s)/" /tmp/ADBRUN${sectionname}_.sh
 		chmod +x /tmp/ADBRUN${sectionname}_.sh
+		if grep -q "dosed" /tmp/ADBRUN${sectionname}_.sh; then
+			echo "unsupported screensize ${screensize} for ${adbsh}"
+			rm -f /tmp/ADBRUN${sectionname}_.sh
+			exit 1
+		fi
 		exec sh /tmp/ADBRUN${sectionname}_.sh
 	fi
 elif [ "$adbcd" == "get input event" ];then
-	adb -s ${adbclient}:5555 shell getevent -l | grep -v add | grep -v name | awk '{print$1}' | cut -d ':' -f1 > /tmp/${adbclient}.getevent &
+	adb -s ${adbclient}:${adbport} shell getevent -l | grep -v add | grep -v name | awk '{print$1}' | cut -d ':' -f1 > /tmp/${adbclient}.getevent &
 	while true;do
 		if [ ! -z "$(cat "/tmp/${adbclient}.getevent" | grep input)" ];then
-			kill -9 $(busybox ps | grep "${adbclient}:5555 shell getevent" | grep -v grep | awk '{print$1}')
+			kill -9 $(busybox ps | grep "${adbclient}:${adbport} shell getevent" | grep -v grep | awk '{print$1}')
 			break
 		fi
 	done
-	adb -s ${adbclient}:5555 shell touch "/sdcard/event$(cat /tmp/${adbclient}.getevent | tail -n1 | sed 's/.*[^0-9]//')"
+	adb -s ${adbclient}:${adbport} shell touch "/sdcard/event$(cat /tmp/${adbclient}.getevent | tail -n1 | sed 's/.*[^0-9]//')"
 elif [ "$adbcd" == "record tap" ];then
 	theevent=$(cat /tmp/${adbclient}.getevent | tail -n1)
 	sleep 2
-	adb -s ${adbclient}:5555 shell dd if=${theevent} of=/sdcard/recordtap &
+	adb -s ${adbclient}:${adbport} shell dd if=${theevent} of=/sdcard/recordtap &
 	sleep $(uci get adbrun.$sectionname.adb_recordtime)
 	kill -9 $(busybox ps | grep "if=${theevent}" | grep -v grep | awk '{print$1}')
 elif [ "$adbcd" == "crazy tap" ];then
 	cat /usr/adbrun/input/crazytap.sh | sed "s/\/event/\/event$(cat /tmp/${adbclient}.getevent | tail -n1 | sed 's/.*[^0-9]//')/" > /tmp/crazytap.sh
 	sed -i "s/_looptime=/_looptime=$(uci get adbrun.$sectionname.adb_looptime)/" /tmp/crazytap.sh
-	adb -s ${adbclient}:5555 push /tmp/crazytap.sh /sdcard/
-	if [ -z "$(adb -s ${adbclient}:5555 shell cat /sdcard/recordtap | grep -v "No such file")" ];then
-		adb -s ${adbclient}:5555 push /usr/adbrun/input/recordtap /sdcard/
+	adb -s ${adbclient}:${adbport} push /tmp/crazytap.sh /sdcard/
+	if [ -z "$(adb -s ${adbclient}:${adbport} shell cat /sdcard/recordtap | grep -v "No such file")" ];then
+		adb -s ${adbclient}:${adbport} push /usr/adbrun/input/recordtap /sdcard/
 	fi
-	adb -s ${adbclient}:5555 shell sh /sdcard/crazytap.sh
+	adb -s ${adbclient}:${adbport} shell sh /sdcard/crazytap.sh
 elif [ "$adbcd" == "update preview picture" ];then
 	rm /tmp/${adbclient}.png
 elif [ "$adbcd" == "push and install apk" ];then
-	adb -s ${adbclient}:5555 shell mkdir -p /data/local/tmp/
-	adb -s ${adbclient}:5555 push "$(uci get adbrun.$sectionname.adb_src_path)" /data/local/tmp/
+	adb -s ${adbclient}:${adbport} shell mkdir -p /data/local/tmp/
+	adb -s ${adbclient}:${adbport} push "$(uci get adbrun.$sectionname.adb_src_path)" /data/local/tmp/
 	sleep 5
-	adb -s ${adbclient}:5555 shell pm install "/data/local/tmp/$(basename $(uci get adbrun.$sectionname.adb_src_path))"
+	adb -s ${adbclient}:${adbport} shell pm install "/data/local/tmp/$(basename $(uci get adbrun.$sectionname.adb_src_path))"
 	sleep 5
-	adb -s ${adbclient}:5555 shell rm "/data/local/tmp/$(basename $(uci get adbrun.$sectionname.adb_src_path))"
+	adb -s ${adbclient}:${adbport} shell rm "/data/local/tmp/$(basename $(uci get adbrun.$sectionname.adb_src_path))"
 elif [ "$adbcd" == "input chinese" ];then                                                                    
         ch_text="$(uci get adbrun.$sectionname.adb_input_ch)"                                                 
-        adb -s ${adbclient}:5555 shell ime enable com.android.adbkeyboard/.AdbIME                             
-        adb -s ${adbclient}:5555 shell ime set com.android.adbkeyboard/.AdbIME                                
-        adb -s ${adbclient}:5555 shell am broadcast -a ADB_INPUT_TEXT --es msg "$ch_text"                     
-        adb -s ${adbclient}:5555 shell ime set "$(adb -s ${adbclient}:5555 shell ime list -a | grep mId | grep -v adbkeyboard | head -n1 | awk '{print$1}' | cut -d '=' -f2)"
+        adb -s ${adbclient}:${adbport} shell ime enable com.android.adbkeyboard/.AdbIME                             
+        adb -s ${adbclient}:${adbport} shell ime set com.android.adbkeyboard/.AdbIME                                
+        adb -s ${adbclient}:${adbport} shell am broadcast -a ADB_INPUT_TEXT --es msg "$ch_text"                     
+        adb -s ${adbclient}:${adbport} shell ime set "$(adb -s ${adbclient}:${adbport} shell ime list -a | grep mId | grep -v adbkeyboard | head -n1 | awk '{print$1}' | cut -d '=' -f2)"
 elif [ "$adbcd" == "auto-install ADBKeyboard" ];then 
 	wget https://raw.githubusercontent.com/syb999/android-apk/master/ADBKeyboard.apk -O /tmp/xxx.apk
 	sleep 5
-	adb -s ${adbclient}:5555 push /tmp/xxx.apk /sdcard/
+	adb -s ${adbclient}:${adbport} push /tmp/xxx.apk /sdcard/
 	sleep 5
-	adb -s ${adbclient}:5555 shell pm install /sdcard/xxx.apk
+	adb -s ${adbclient}:${adbport} shell pm install /sdcard/xxx.apk
 else
-	adb -s ${adbclient}:5555 ${adbcd} &
+	adb -s ${adbclient}:${adbport} ${adbcd} &
 	if [ -n "$(echo "$adbcd" | grep reboot)" ];then
-		while [ -n "$(adb devices | grep ${adbclient}:5555)" ];do
+		while [ -n "$(adb devices | grep ${adbclient}:${adbport})" ];do
 			sleep 1
 			adb disconnect ${adbclient}
-			kill -9 $(busybox ps |grep ${adbclient}:5555 | grep -v grep | awk '{print$1}') >/dev/null 2>&1
+			kill -9 $(busybox ps |grep ${adbclient}:${adbport} | grep -v grep | awk '{print$1}') >/dev/null 2>&1
 		done
 	fi
 fi

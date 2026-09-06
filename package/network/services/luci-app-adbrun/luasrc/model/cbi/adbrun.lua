@@ -71,8 +71,21 @@ adbiplist = s:taboption("adb_set",Value, "adbiplist", translate("IP address"))
 adbiplist.rmempty = true
 adbiplist.datatype = "ipaddr"
 luci.sys.net.ipv4_hints(function(ip, name)
-	adbiplist:value(ip, "%s (%s)" %{ ip, name })
+	adbiplist:value(ip, "%s (%s)"%{ ip, name })
 end)
+
+adbport = s:taboption("adb_set", Value, "adbport", translate("ADB port"), translate("Connection port of the device. Default 5555 (adb tcpip mode). For Android 11+ wireless debugging fill in the port shown on the device's wireless debugging page (\"IP address & Port\")."))
+adbport.rmempty = true
+adbport.datatype = "port"
+adbport.default = "5555"
+
+adbpairport = s:taboption("adb_set", Value, "adbpairport", translate("Pair port"), translate("Wireless debugging pairing port from the device screen (\"Pair device with pairing code\"). Leave empty if not using wireless pairing."))
+adbpairport.rmempty = true
+adbpairport.datatype = "port"
+
+adbpaircode = s:taboption("adb_set", Value, "adbpaircode", translate("Pair code"), translate("6-digit pairing code shown on the device."))
+adbpaircode.rmempty = true
+adbpaircode.datatype = "string"
 
 adbcommandlist = s:taboption("adb_set", ListValue, "adbcommandlist", translate("Command list"), translate("adbrun command list"))
 adbcommandlist.placeholder = "none"
@@ -150,6 +163,43 @@ adb_input_ch.description = translate("please install ADBKeyboard.apk first")
 
 s:tab("adb_action", translate("Action"))
 
+pairresult = s:taboption("adb_action", DummyValue, "_pairresult", translate("Last wireless pair result"))
+function pairresult.cfgvalue(self, section)
+	local f = io.open("/tmp/adbrun_pair.log", "r")
+	if not f then return translate("No pair operation yet.") end
+	local all = f:read("*a")
+	f:close()
+	if all and all ~= "" then
+		return all:gsub("[\r\n]+", " | ")
+	end
+	return translate("No pair operation yet.")
+end
+
+adbpairwifi = s:taboption("adb_action",Button,"adbpairwifi",translate("Wireless pair and connect"))
+adbpairwifi.rmempty = true
+adbpairwifi.inputstyle = "apply"
+adbpairwifi.description = translate("Requires 'adb' package with adb pair support. Pair port and code must be filled in Basic setting. The code expires after pairing or after some time - refresh it on the device and save again. Wait a few seconds after clicking, the result appears above.")
+function adbpairwifi.write(self, section)
+	local ip = luci.model.uci.cursor():get("adbrun", section, "adbiplist")
+	local port = luci.model.uci.cursor():get("adbrun", section, "adbport")
+	local pp = luci.model.uci.cursor():get("adbrun", section, "adbpairport")
+	local pc = luci.model.uci.cursor():get("adbrun", section, "adbpaircode")
+	if not port or port == "" then port = "5555" end
+	if not ip or ip == "" then
+		luci.util.exec("echo 'no IP configured for this device' >/tmp/adbrun_pair.log 2>&1")
+		return
+	end
+	local out
+	if pp and pc and pp ~= "" and pc ~= "" then
+		out = luci.util.exec(string.format("HOME=/root adb pair %s:%s %s 2>&1; echo pair_exit=$?", ip, pp, pc))
+		out = out .. luci.util.exec(string.format("\nHOME=/root adb connect %s:%s 2>&1", ip, port))
+	else
+		out = luci.util.exec(string.format("HOME=/root adb connect %s:%s 2>&1; echo connect_exit=$?", ip, port))
+	end
+	local f = io.open("/tmp/adbrun_pair.log", "w")
+	if f then f:write(out or ""); f:close() end
+end
+
 adbdisconnect = s:taboption("adb_action",Button,"adbdisconnect",translate("Disconnect the current client"))
 adbdisconnect.rmempty = true
 adbdisconnect.inputstyle = "apply"
@@ -160,8 +210,16 @@ end
 adbconnect = s:taboption("adb_action",Button,"adbconnect",translate("Connect the current client"))
 adbconnect.rmempty = true
 adbconnect.inputstyle = "apply"
+adbconnect.description = translate("Uses the ADB port from Basic setting.")
 function adbconnect.write(self, section)
-	luci.util.exec("adb connect $(uci get adbrun."..section..".adbiplist) >/dev/null 2>&1 &")
+	local ip = luci.model.uci.cursor():get("adbrun", section, "adbiplist")
+	local port = luci.model.uci.cursor():get("adbrun", section, "adbport")
+	if not port or port == "" then port = "5555" end
+	if not ip or ip == "" then
+		luci.util.exec("echo 'no IP configured for this device' >/tmp/adbrun_pair.log 2>&1 &")
+		return
+	end
+	luci.util.exec(string.format("(HOME=/root adb connect %s:%s; echo connect_exit=$?) >/tmp/adbrun_pair.log 2>&1 &", ip, port))
 end
 
 adbplay = s:taboption("adb_action",Button, "adbplay", translate("Play")) 
