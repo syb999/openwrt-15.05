@@ -1,0 +1,20 @@
+--- a/iwinfo_nl80211.c
++++ b/iwinfo_nl80211.c
+@@ -648,6 +648,8 @@
+ 		return 14;
+ 	else if (freq < 2484)
+ 		return (freq - 2407) / 5;
++	else if (freq <= 2732)
++		return (freq - 2407) / 5;
+ 	else if (freq >= 4910 && freq <= 4980)
+ 		return (freq - 4000) / 5;
+ 	else if(freq >= 56160 + 2160 * 1 && freq <= 56160 + 2160 * 6)
+@@ -664,6 +666,8 @@
+ 			return 2484;
+ 		else if (channel < 14)
+ 			return (channel * 5) + 2407;
++		else if (channel >= 16 && channel <= 65)
++			return (channel * 5) + 2407;
+ 	}
+ 	else if ( strcmp(band, "ad") == 0)
+ 	{
