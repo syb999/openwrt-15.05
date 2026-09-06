@@ -19,7 +19,7 @@ LUCI_DEPENDS:=+luci-base +kmod-vxlan +vxlan \
               +kmod-br-netfilter +kmod-8021q
 LUCI_PKGARCH:=all
 
-PKG_VERSION:=1.3.30
+PKG_VERSION:=1.3.31
 PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 

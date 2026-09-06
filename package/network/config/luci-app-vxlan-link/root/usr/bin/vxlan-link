@@ -394,7 +394,9 @@ cmd_vxlan_build() {
 	local ROLE PROV BH TUN N I P VNI1 VNI2 VV
 	ROLE=$(uget role); PROV=$(uget provider)
 	BH=$(uget backhaul_ip)
-	TUN=$(logical_dev backhaul)
+	# 1.3.31: 用 tunlink_dev() (真实网卡 + 回退 wlan0), 不再接受 logical_dev
+	# 在 netifd 未注册时返回的逻辑名 "backhaul" (会导致 3 设备各空等 90s)
+	TUN=$(tunlink_dev)
 	VNI1=$(uget vni_inet); VNI2=$(uget vni_iptv); VV=$(uget voip_vni)
 	[ -z "$VV" ] && VV=300
 
@@ -459,6 +461,12 @@ cmd_vxlan_build() {
 		I=$((I+1))
 	done
 	say "vxlan devices built: $(ip -br link 2>/dev/null | grep -c vxlan) total, peer list: $(peer_list)"
+	# 1.3.31: 让调用方 (selfheal) 能感知核心隧道没建成 → 失败计数触发慢机
+	# wifi reload 兜底。以 vxlan_inet 为准 (client/server 的 peer1 都有它)。
+	if ! ip link show vxlan_inet >/dev/null 2>&1; then
+		rm -rf "$LOCK" 2>/dev/null
+		return 1
+	fi
 	rm -rf /tmp/vxlan-build.lock 2>/dev/null
 }
 
@@ -1450,22 +1458,43 @@ cmd_selfheal() {
 	done
 	sleep 3
 	CYCLE=0
+	# 1.3.31: 慢机兜底计数。开机早期 netifd 无线接线/WPA attach 可能失败
+	# (实测 AR9341: WPA_SUPPLICANT_FAILED → backhaul 静态 IP 迟迟不来,
+	# 旧版只能等手动 apply)。连续多轮 backhaul 无 IP 或 vxlan rebuild 失败
+	# 时, client 角色自动 wifi reload 一次重走 netifd 无线流程; 成功后清零。
+	local FAILS=0
 	while [ -f "$SELFHEAL_PID" ]; do
 		CYCLE=$((CYCLE+1))
 		# underlay 没地址 → 无线可能断了, 等下一轮 (不做破坏性重建)
 		if ! ip -4 addr show dev "$BD2" 2>/dev/null | grep -q 'inet '; then
 			log "watch #$CYCLE: backhaul ($BD2) down, waiting"
+			FAILS=$((FAILS+1))
+			if [ "$ROLE" = "client" ] && [ $FAILS -ge 3 ]; then
+				log "watch #$CYCLE: backhaul no-IP ${FAILS}x, reloading wifi once"
+				wifi reload
+				FAILS=0
+			fi
 			sleep 15
 			continue
 		fi
 		# vxlan 设备缺失 → 重建 (这是 apply/启动时序失败后的兜底)
 		if ! ip link show vxlan_inet >/dev/null 2>&1; then
 			log "watch #$CYCLE: vxlan_inet missing, rebuilding"
-			cmd_vxlan_build
+			if cmd_vxlan_build; then
+				FAILS=0
+			else
+				FAILS=$((FAILS+1))
+				if [ "$ROLE" = "client" ] && [ $FAILS -ge 3 ]; then
+					log "watch #$CYCLE: rebuild failed ${FAILS}x, reloading wifi once"
+					wifi reload
+					FAILS=0
+				fi
+			fi
 			if [ "$(uget provider)" != "unicom" ]; then
 				/etc/init.d/msd_lite restart 2>/dev/null
 			fi
 		else
+			FAILS=0
 			# 🔴 1.3.27: network restart / ifup 会重建 bridge 并踢掉 vxlan
 			#    成员 (netifd 只按 UCI ifname 加 eth0.x)! 实测 apply 后
 			#    br-iptv 里 vxlan_iptv 丢失 → client 的 DHCP discover 进不了
@@ -1528,6 +1557,20 @@ logical_dev() {
 	[ -z "$D" ] && D=$(ubus call network.interface."$1" status 2>/dev/null | \
 		grep -o '"device": *"[^"]*"' | head -1 | cut -d'"' -f4)
 	[ -z "$D" ] && D="$1"
+	echo "$D"
+}
+
+# 1.3.31: tunlink 解析必须回退到真实网卡。logical_dev() 在 netifd 还没把
+# backhaul 逻辑接口注册好时 (开机早期/wifi reload 后慢机竞态) 会返回逻辑名
+# "backhaul" 本身 → `ip link show backhaul` 永远失败 → 每个 vxlan 设备空等
+# 满 90s tunlink 窗口 (实测 AR9341 开机 3 设备连挂 4.5 分钟, S95 到不了
+# selfheal, 只能手动 apply 整树 network restart 救活)。只接受真实存在的
+# netdev, 优先 wlan0。
+tunlink_dev() {
+	local D
+	D=$(logical_dev backhaul)
+	ip link show "$D" >/dev/null 2>&1 || D=wlan0
+	ip link show "$D" >/dev/null 2>&1 || D=""
 	echo "$D"
 }
 
