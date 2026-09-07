@@ -130,5 +130,11 @@
 		uart1@d00 {
 			status = "okay";
 		};
+
+		uart2@e00 {
+			status = "okay";
+			pinctrl-names = "default";
+			pinctrl-0 = <&uart2_pins>;
+		};
 	};
 };

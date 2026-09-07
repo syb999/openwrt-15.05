@@ -2,6 +2,20 @@
 # MT7621A Profiles
 #
 
+# All MT7621 rootfs images are squashfs based:
+#  - SPI/NOR boards: plain squashfs sysupgrade images
+#  - NAND boards: squashfs wrapped into a UBI volume (append-ubi, factory.bin)
+# Device/Init defaults FILESYSTEMS to $(TARGET_FILESYSTEMS), which includes
+# ubifs whenever CONFIG_TARGET_ROOTFS_UBIFS is enabled (it is, because this
+# subtarget now also carries the NAND boards).  With that default, SPI boards
+# would additionally try to build *-ubifs-sysupgrade.bin images, which need
+# $(KDIR)/root.ubifs - a file that is never produced for the Default profile
+# (mkfs.ubifs only runs when $(PROFILE)_UBIFS_OPTS/UBIFS_OPTS is non-empty),
+# so the build fails with:
+#   [ -f ...-kernel.bin -a -f .../root.ubifs ]  -> Error 1
+# Force squashfs as the root filesystem type for the whole subtarget instead.
+TARGET_FILESYSTEMS := squashfs
+
 define Device/mt7621
   DTS := MT7621
   IMAGE_SIZE := $(ralink_default_fw_size_4M)

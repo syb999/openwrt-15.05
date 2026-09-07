@@ -1,0 +1,69 @@
+--- a/drivers/mtd/nand/mtk_nand.c
++++ b/drivers/mtd/nand/mtk_nand.c
+@@ -1223,8 +1223,15 @@
+ 		DRV_WriteReg16(NFI_INTR_EN_REG16, INTR_RST_DONE_EN);
+ 		(void)mtk_nand_set_command(NAND_CMD_RESET);
+ 		DRV_WriteReg16(NFI_BASE+0x44, 0xF1);
+-		while(!(DRV_Reg16(NFI_INTR_REG16)&INTR_RST_DONE_EN))
+-			;
++		{
++			int timeout = 0xFFFFF;
++			while (!(DRV_Reg16(NFI_INTR_REG16) & INTR_RST_DONE_EN)) {
++				if (--timeout == 0) {
++					printk(KERN_WARNING "mtk_nand: reset wait timeout, no NAND chip?\n");
++					break;
++				}
++			}
++		}
+ 		break;
+ 
+ 	case NAND_CMD_READID:
+@@ -1239,8 +1246,15 @@
+ 		(void)mtk_nand_set_command(NAND_CMD_READID);
+ 		(void)mtk_nand_set_address(0, 0, 1, 0);
+ 		DRV_WriteReg16(NFI_CON_REG16, CON_NFI_SRD);
+-		while (DRV_Reg32(NFI_STA_REG32) & STA_DATAR_STATE)
+-			;
++		{
++			int timeout = 0xFFFFF;
++			while (DRV_Reg32(NFI_STA_REG32) & STA_DATAR_STATE) {
++				if (--timeout == 0) {
++					printk(KERN_WARNING "mtk_nand: read id wait timeout, no NAND chip?\n");
++					break;
++				}
++			}
++		}
+ 		break;
+ 
+ 	default:
+@@ -2133,6 +2147,15 @@
+ 	*/
+ 	nand_chip->cmdfunc(mtd, NAND_CMD_RESET, -1, -1);
+ 
++	/* If the reset never completed there is no chip attached (e.g. an
++	 * SPI-NOR only board that shares this kernel).  Bail out gracefully
++	 * instead of hanging the boot in the busy-wait above. */
++	if (!(DRV_Reg16(NFI_INTR_REG16) & INTR_RST_DONE_EN)) {
++		MSG(INIT, "No NAND chip detected (reset incomplete), skip probe.\n");
++		kfree(host);
++		return -ENODEV;
++	}
++
+ 	memset(&devinfo, 0 , sizeof(flashdev_info));
+ 
+ 	/* Send the command for reading device ID */
+@@ -2143,6 +2166,14 @@
+ 	manu_id = nand_chip->read_byte(mtd);
+ 	dev_id = nand_chip->read_byte(mtd);
+ 	id = dev_id | (manu_id << 8);
++
++	/* All-0xff/all-0x00 ID means the bus is empty: no chip attached.
++	 * Leave gracefully instead of pushing garbage into nand_scan(). */
++	if ((manu_id == 0xff && dev_id == 0xff) || (manu_id == 0x00 && dev_id == 0x00)) {
++		MSG(INIT, "No NAND chip detected (empty ID), skip probe.\n");
++		kfree(host);
++		return -ENODEV;
++	}
+ 	        ext_id1 = nand_chip->read_byte(mtd);
+ 		    ext_id2 = nand_chip->read_byte(mtd);
+ 		        ext_id3 = nand_chip->read_byte(mtd);
