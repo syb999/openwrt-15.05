@@ -1,5 +1,5 @@
---- a/drivers/mtd/nand/mtk_nand.c
-+++ b/drivers/mtd/nand/mtk_nand.c
+--- a/drivers/mtd/nand/mtk_nand.c	2026-09-08 20:00:24.267311627 +0800
++++ b/drivers/mtd/nand/mtk_nand.c	2026-09-08 20:00:30.687481316 +0800
 @@ -1223,8 +1223,15 @@
  		DRV_WriteReg16(NFI_INTR_EN_REG16, INTR_RST_DONE_EN);
  		(void)mtk_nand_set_command(NAND_CMD_RESET);
@@ -36,23 +36,7 @@
  		break;
  
  	default:
-@@ -2133,6 +2147,15 @@
- 	*/
- 	nand_chip->cmdfunc(mtd, NAND_CMD_RESET, -1, -1);
- 
-+	/* If the reset never completed there is no chip attached (e.g. an
-+	 * SPI-NOR only board that shares this kernel).  Bail out gracefully
-+	 * instead of hanging the boot in the busy-wait above. */
-+	if (!(DRV_Reg16(NFI_INTR_REG16) & INTR_RST_DONE_EN)) {
-+		MSG(INIT, "No NAND chip detected (reset incomplete), skip probe.\n");
-+		kfree(host);
-+		return -ENODEV;
-+	}
-+
- 	memset(&devinfo, 0 , sizeof(flashdev_info));
- 
- 	/* Send the command for reading device ID */
-@@ -2143,6 +2166,14 @@
+@@ -2143,6 +2157,14 @@
  	manu_id = nand_chip->read_byte(mtd);
  	dev_id = nand_chip->read_byte(mtd);
  	id = dev_id | (manu_id << 8);
