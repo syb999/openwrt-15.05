@@ -101,3 +101,10 @@
 	};
 
 };
+
+/* This board needs the SoC-level MCM/switch reset skipped: that reset
+ * takes the GPHYs' 1G analog frontend down and the follow-up init only
+ * partially restores it. Every other MT7621 board keeps the reset. */
+&gsw {
+	ralink,skip-mcm-reset;
+};

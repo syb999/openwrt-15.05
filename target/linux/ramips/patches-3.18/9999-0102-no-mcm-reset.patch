@@ -1,0 +1,21 @@
+--- a/drivers/net/ethernet/ralink/gsw_mt7621.c
++++ b/drivers/net/ethernet/ralink/gsw_mt7621.c
+@@ -71,8 +71,16 @@
+ 	u32 i;
+ 	u32 val;
+ 
+-	/* wardware reset the switch */
+-	fe_reset(RST_CTRL_MCM);
++	/* Do not touch the SoC-level MCM/switch reset (SYSC RSTCTRL bit2) on
++	 * boards that request it via "ralink,skip-mcm-reset" (an1201l /
++	 * newifi-d1): that reset takes the GPHYs' 1G analog frontend down and
++	 * the follow-up init only ~80% brings it back - once bad, no PHY-scope
++	 * reset recovers it. Mainline 6.6 never touches RSTCTRL and is 100%
++	 * reliable there. Every other MT7621 board keeps the reset: skipping
++	 * it globally breaks their cold boot. The switch logic itself is still
++	 * reset below via SYS_CTRL SW_RST|REG_RST. */
++	if (!of_property_read_bool(np, "ralink,skip-mcm-reset"))
++		fe_reset(RST_CTRL_MCM);
+ 	mdelay(10);
+ 
+ 	/* reduce RGMII2 PAD driving strength */

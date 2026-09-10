@@ -1,0 +1,86 @@
+--- a/drivers/mtd/nand/mtk_nand.c
++++ b/drivers/mtd/nand/mtk_nand.c
+@@ -239,7 +239,7 @@
+ 
+ find:
+ 	if (0 == pdevinfo->id) {
+-		printk(KERN_INFO "Device not found, ID: %x\n", id);
++		printk(KERN_INFO "Device not found, ID: %x, EXT_ID: %x\n", id, ext_id);
+ 		return false;
+ 	} else {
+ 		return true;
+@@ -1258,7 +1258,9 @@
+ 		break;
+ 
+ 	default:
+-		BUG();
++		/* Unhandled command from the generic layer: warn instead of
++		 * killing the kernel. */
++		printk(KERN_WARNING "mtk_nand: unsupported command 0x%x\n", command);
+ 		break;
+ 	}
+ }
+@@ -1270,9 +1272,19 @@
+ 		struct nand_chip *nand = mtd->priv;
+ 		struct mtk_nand_host *host = nand->priv;
+ 		struct mtk_nand_host_hw *hw = host->hw;
+-		u32 spare_per_sector = mtd->oobsize / (mtd->writesize / 512);
++		u32 spare_per_sector;
+ 		u32 ecc_bit = 4;
+ 		u32 spare_bit = PAGEFMT_SPARE_16;
++
++		/* nand_scan_ident() can leave these zero for an unknown chip and
++		 * the division below would trap. Skip the chip init instead. */
++		if (mtd->writesize == 0 || mtd->oobsize == 0) {
++			printk(KERN_WARNING "mtk_nand: no usable geometry from scan "
++			       "(writesize=%u oobsize=%u), skipping chip init\n",
++			       mtd->writesize, mtd->oobsize);
++			return;
++		}
++		spare_per_sector = mtd->oobsize / (mtd->writesize / 512);
+ 
+ 		if (spare_per_sector >= 28) {
+ 			spare_bit = PAGEFMT_SPARE_28;
+@@ -1291,8 +1303,14 @@
+ 			ecc_bit = 4;
+ 			spare_per_sector = 16;
+ 		} else {
+-			MSG(INIT, "[NAND]: NFI not support oobsize: %x\n", spare_per_sector);
+-			ASSERT(0);
++			/* Never BUG() here: a bogus or unidentified chip makes the scan
++			 * hand us an unsupported oobsize and this used to panic the
++			 * kernel at boot. Leave the geometry alone and bail out; the
++			 * probe then fails gracefully (-ENODEV). */
++			printk(KERN_WARNING "mtk_nand: NFI does not support oobsize %u "
++			       "(spare_per_sector %u), skipping chip init\n",
++			       mtd->oobsize, spare_per_sector);
++			return;
+ 		}
+ 		mtd->oobsize = spare_per_sector*(mtd->writesize/512);
+ 		MSG(INIT, "[NAND]select ecc bit:%d, sparesize :%d spare_per_sector=%d\n",ecc_bit,mtd->oobsize,spare_per_sector);
+@@ -2211,6 +2229,25 @@
+ 		devinfo.devciename[0] = 'U';
+ 		devinfo.advancedmode = 0;
+ 	}
++
++	/* Check the geometry before it is used. A missing / floating bus or an
++	 * unidentified part leaves devinfo unusable; continuing used to derail
++	 * nand_scan() and could deref a NULL ecc.layout or reach BUG()/ASSERT()
++	 * in mtk_nand_select_chip(), panicking the kernel during boot. Failing
++	 * the probe here is clean and keeps the rest of the system bootable. */
++	if (devinfo.pagesize == 0 || devinfo.sparesize == 0 ||
++	    devinfo.totalsize == 0 || devinfo.blocksize == 0 ||
++	    devinfo.addr_cycle == 0 ||
++	    devinfo.sparesize < 16 * (devinfo.pagesize / NAND_SECTOR_SIZE)) {
++		printk(KERN_WARNING "mtk_nand: unusable chip geometry "
++		       "(page=%u spare=%u size=%u block=%u addr_cycle=%u), "
++		       "skipping NAND probe\n",
++		       devinfo.pagesize, devinfo.sparesize, devinfo.totalsize,
++		       devinfo.blocksize, devinfo.addr_cycle);
++		kfree(host);
++		return -ENODEV;
++	}
++
+ 	mtd->writesize = devinfo.pagesize;
+ 	mtd->erasesize = (devinfo.blocksize<<10);
+ 	mtd->oobsize = devinfo.sparesize;

@@ -374,6 +374,12 @@
 
 	nand@1e003000 {
 		compatible = "mtk,mt7621-nand";
+		/* Boards that really have a NAND chip enable this node by
+		 * overriding status to "okay". Default it off: on SPI-NOR-only
+		 * boards the MTK NAND probe touches a non-existent chip (long
+		 * busy-waits / no-chip error paths) and is not needed at all.
+		 * Every NAND board in this tree already sets status = "okay". */
+		status = "disabled";
 		bank-width = <2>;
 		reg = <0x1e003000 0x800
 			0x1e003800 0x800>;
