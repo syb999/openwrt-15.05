@@ -1,0 +1,53 @@
+--- a/drivers/mtd/nand/mtk_nand.c	2026-09-11 10:07:53.724191303 +0800
++++ b/drivers/mtd/nand/mtk_nand.c	2026-09-11 15:15:12.439226111 +0800
+@@ -219,7 +219,16 @@
+ {
+ 	u32 index;
+ 	for (index = 0; gen_FlashTable[index].id != 0; index++) {
+-		if (id == gen_FlashTable[index].id && ext_id == gen_FlashTable[index].ext_id) {
++		/* A table entry with ext_id == 0 matches every extended id of
++		 * that 2-byte id.  Several ESMT parts report the same id and
++		 * only differ in the 3 extended id bytes, so such an entry is
++		 * the only way to describe the whole family.  Without this the
++		 * entry can never match, get_device_info() fails and the driver
++		 * falls back to guessing the geometry from the bootstrap strap,
++		 * which gives the wrong spare size for these chips. */
++		if (id == gen_FlashTable[index].id &&
++		    (gen_FlashTable[index].ext_id == 0 ||
++		     ext_id == gen_FlashTable[index].ext_id)) {
+ 			pdevinfo->id = gen_FlashTable[index].id;
+ 			pdevinfo->ext_id = gen_FlashTable[index].ext_id;
+ 			pdevinfo->blocksize = gen_FlashTable[index].blocksize;
+--- a/drivers/mtd/nand/nand_device_list.h	2026-09-11 10:07:53.700191038 +0800
++++ b/drivers/mtd/nand/nand_device_list.h	2026-09-11 15:15:12.439226111 +0800
+@@ -45,7 +45,9 @@
+     {0x92F1, 0x8095FF, 4, 8, 128, 128, 2048, 64, 0x30C77fff, "F59L1G81A", 0},
+     {0xC8DA, 0x909544, 5, 8, 256, 128, 2048, 64, 0x30C77fff, "F59L2G81A", 0},
+     {0xC8DC, 0x909554, 5, 8, 512, 128, 2048, 64, 0x30C77fff, "F59L4G81A", 0},
+-    {0xC8D1, 0x000000, 3, 8, 128, 128, 2048, 64, 0x30C77fff, "ESMT 128MiB", 0},
++    /* 3 addr cycles cannot address a 128MiB 2KiB-page part; every
++     * other 128MiB entry in this table uses 4. */
++    {0xC8D1, 0x000000, 4, 8, 128, 128, 2048, 64, 0x30C77fff, "ESMT 128MiB", 0},
+ 	{0xECD3, 0x519558, 5, 8, 1024, 128, 2048, 64, 0x44333, "K9K8G8000", 0},
+     {0xC2F1, 0x801DC2, 4, 8, 128, 128, 2048, 64, 0x30C77fff, "MX30LF1G08AA", 0},
+     {0xC2F1, 0x809103, 4, 8,  128, 128, 2048, 64, 0x30C77fff, "MX30LF1G28AD", 0},
+--- a/drivers/mtd/nand/nand_ids.c	2026-09-11 15:15:12.403220594 +0800
++++ b/drivers/mtd/nand/nand_ids.c	2026-09-11 16:20:27.326384989 +0800
+@@ -105,6 +105,17 @@
+ 	/* 1 Gigabit */
+ 	EXTENDED_ID_NAND("NAND 128MiB 1,8V 8-bit",  0xA1, 128, LP_OPTIONS),
+ 	EXTENDED_ID_NAND("NAND 128MiB 3,3V 8-bit",  0xF1, 128, LP_OPTIONS),
++	/* Full 6-byte-id entry: matched by the first 2 id bytes only
++	 * (id_len = 2) so every ESMT part in this family is covered.
++	 * Must stay ahead of the EXTENDED_ID_NAND(0xD1) entry below:
++	 * the scan loop stops at the first plain dev_id match, and a
++	 * plain match cannot supply pagesize/oobsize, which the chip
++	 * needs (its real spare area is 64 bytes per 2KiB page). */
++	{"ESMT F59L1G81 128MiB 3.3V 8-bit",
++		{ .id = {0xC8, 0xD1} },
++		  SZ_2K, SZ_128, SZ_128K, 0, 2, 64, NAND_ECC_INFO(8, SZ_512),
++		  0 },
++
+ 	EXTENDED_ID_NAND("NAND 128MiB 3,3V 8-bit",  0xD1, 128, LP_OPTIONS),
+ 	EXTENDED_ID_NAND("NAND 128MiB 1,8V 16-bit", 0xB1, 128, LP_OPTIONS16),
+ 	EXTENDED_ID_NAND("NAND 128MiB 3,3V 16-bit", 0xC1, 128, LP_OPTIONS16),

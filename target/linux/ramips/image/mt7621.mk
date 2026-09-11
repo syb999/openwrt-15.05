@@ -36,6 +36,8 @@ TARGET_DEVICES += raisecom-msg1501
 define Device/re6500
   DTS := RE6500
   IMAGE_SIZE := $(ralink_default_fw_size_8M)
+  DEVICE_TITLE := Linksys RE6500
+  DEVICE_PACKAGES := kmod-mt7603 kmod-mt76x2
 endef
 TARGET_DEVICES += re6500
 
@@ -78,35 +80,47 @@ endef
 define Device/pbr-m1
   DTS := PBR-M1
   IMAGE_SIZE := $(ralink_default_fw_size_16M)
+  DEVICE_TITLE := PBR-M1
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb3 kmod-usb-hid kmod-sdhci-mt7620 kmod-ledtrig-usbdev kmod-ata-core kmod-ata-ahci kmod-usb3-mt7621 kmod-rtc-pcf8563 kmod-mt7603 kmod-mt76x2
 endef
 TARGET_DEVICES += pbr-m1
 
 define Device/zbt-wg2626
   DTS := ZBT-WG2626
   IMAGE_SIZE := $(ralink_default_fw_size_16M)
+  DEVICE_TITLE := ZBT-WG2626
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb3 kmod-sdhci-mt7620 kmod-ledtrig-usbdev kmod-ata-core kmod-ata-ahci kmod-usb3-mt7621 kmod-mt7603 kmod-mt76x2
 endef
 
 define Device/mt7621-rtl8367s
   DTS := MT7621-RTL8367S
   IMAGE_SIZE := $(ralink_default_fw_size_16M)
+  DEVICE_TITLE := MT7621-RTL8367S
+  DEVICE_PACKAGES := -wpad-mini -iwinfo kmod-switch-rtl8367b
 endef
 TARGET_DEVICES += mt7621-rtl8367s
 
 define Device/bussiness-router
   DTS := BUSSINESS-ROUTER
   IMAGE_SIZE := $(ralink_default_fw_size_32M)
+  DEVICE_TITLE := Bussiness Router
+  DEVICE_PACKAGES := -wpad-mini -iwinfo
 endef
 TARGET_DEVICES += bussiness-router
 
 define Device/newifi-d1
   DTS := Newifi-D1
   IMAGE_SIZE := $(ralink_default_fw_size_32M)
+  DEVICE_TITLE := Newifi-D1
+  DEVICE_PACKAGES := kmod-mt7603 kmod-mt76x2 kmod-usb3 kmod-ledtrig-usbdev wpad-mini kmod-sdhci-mt7620
 endef
 TARGET_DEVICES += newifi-d1
 
 define Device/newifi-d2
   DTS := Newifi-D2
   IMAGE_SIZE := $(ralink_default_fw_size_32M)
+  DEVICE_TITLE := Newifi-D2
+  DEVICE_PACKAGES := kmod-mt7603 kmod-mt76x2 kmod-usb3 kmod-ledtrig-usbdev wpad-mini
 endef
 TARGET_DEVICES += newifi-d2
 
@@ -121,30 +135,40 @@ TARGET_DEVICES += treebear
 define Device/zbt-we1326
   DTS := ZBT-WE1326
   IMAGE_SIZE := $(ralink_default_fw_size_16M)
+  DEVICE_TITLE := ZBT-WE1326
+  DEVICE_PACKAGES := kmod-mt7603 kmod-mt76x2 kmod-usb3 kmod-sdhci-mt7620 wpad-mini
 endef
 TARGET_DEVICES += zbt-we1326
 
 define Device/jcg-y2
   DTS := JCG-Y2
   IMAGE_SIZE := $(ralink_default_fw_size_16M)
+  DEVICE_TITLE := JCG-Y2
+  DEVICE_PACKAGES := kmod-mt7615e kmod-usb3 kmod-ledtrig-usbdev wpad-mini mt7615-dbdc-setup
 endef
 TARGET_DEVICES += jcg-y2
 
 define Device/k2p
   DTS := K2P
   IMAGE_SIZE := $(ralink_default_fw_size_16M)
+  DEVICE_TITLE := K2P
+  DEVICE_PACKAGES := kmod-mt7615e wpad-mini mt7615-dbdc-setup
 endef
 TARGET_DEVICES += k2p
 
 define Device/ghl-r-001-e
   DTS := GHL-R-001-E
   IMAGE_SIZE := $(ralink_default_fw_size_32M)
+  DEVICE_TITLE := GHL-R-001-E
+  DEVICE_PACKAGES := kmod-mt7603 kmod-mt76x2 kmod-usb3 kmod-ledtrig-usbdev wpad-mini
 endef
 TARGET_DEVICES += ghl-r-001-e
 
 define Device/ghl-r-001-f
   DTS := GHL-R-001-F
   IMAGE_SIZE := $(ralink_default_fw_size_32M)
+  DEVICE_TITLE := GHL-R-001-F
+  DEVICE_PACKAGES := kmod-mt7603 kmod-mt76x2 kmod-usb3 kmod-ledtrig-usbdev wpad-mini
 endef
 TARGET_DEVICES += ghl-r-001-f
 
@@ -152,9 +176,7 @@ define Device/jdcloud-re-sp-01b
   DTS := JDCloud_RE-SP-01B
   IMAGE_SIZE := $(ralink_default_fw_size_32M)
   DEVICE_TITLE := JDCloud RE-SP-01B
-  DEVICE_PACKAGES := kmod-usb-core kmod-usb3 kmod-usb-hid kmod-sdhci-mt7620 \
-		     kmod-ledtrig-usbdev kmod-mt7603 \
-		     kmod-mt7615e wpad-mini fixwlanmac
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb3 kmod-usb-hid kmod-sdhci-mt7620 kmod-ledtrig-usbdev kmod-mt7603 kmod-mt7615e wpad-mini fixwlanmac
 endef
 TARGET_DEVICES += jdcloud-re-sp-01b
 
@@ -169,6 +191,8 @@ TARGET_DEVICES += todaair-in1251y
 define Device/xiaoyu-xy-c5
   DTS := XIAOYU-XY-C5
   IMAGE_SIZE := $(ralink_default_fw_size_32M)
+  DEVICE_TITLE := XiaoYu XY-C5
+  DEVICE_PACKAGES := kmod-ata-core kmod-ata-ahci kmod-usb3
 endef
 TARGET_DEVICES += xiaoyu-xy-c5
 
@@ -184,6 +208,8 @@ define Device/an1201l
   FILESYSTEMS := squashfs
   IMAGES := factory.bin
   IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
+  DEVICE_TITLE := AN1201L
+  DEVICE_PACKAGES := kmod-mt7603 kmod-mt7615e mt7663-firmware-ap mt7663-firmware-sta wpad-mini
 endef
 TARGET_DEVICES += an1201l
 
@@ -196,6 +222,8 @@ define Device/hc5962
   FILESYSTEMS := squashfs
   IMAGES := factory.bin
   IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
+  DEVICE_TITLE := HiWiFi HC5962
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb3 kmod-usb-hid kmod-ledtrig-netdev kmod-mt7603 kmod-mt76x2 wpad-mini
 endef
 TARGET_DEVICES += hc5962
 
@@ -208,6 +236,8 @@ define Device/nokia-a040wq
   FILESYSTEMS := squashfs
   IMAGES := factory.bin
   IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
+  DEVICE_TITLE := NOKIA-A040WQ
+  DEVICE_PACKAGES := kmod-mt7615e kmod-usb3 kmod-ledtrig-usbdev wpad-mini mt7615-dbdc-setup
 endef
 TARGET_DEVICES += nokia-a040wq
 
@@ -220,6 +250,8 @@ define Device/maipu-igw401-100-p
   FILESYSTEMS := squashfs
   IMAGES := factory.bin
   IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
+  DEVICE_TITLE := MAIPU IGW401-100-P
+  DEVICE_PACKAGES := -wpad-mini -iwinfo
 endef
 TARGET_DEVICES += maipu-igw401-100-p
 
@@ -236,6 +268,8 @@ define Device/mir3g
   IMAGE/kernel1.bin := append-kernel
   IMAGE/rootfs0.bin := append-ubi | check-size $$$$(IMAGE_SIZE)
   IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
+  DEVICE_TITLE := Xiaomi Mi Router 3G
+  DEVICE_PACKAGES := kmod-mt7603 kmod-mt76x2 kmod-usb3 kmod-ledtrig-usbdev wpad-mini uboot-envtools
 endef
 TARGET_DEVICES += mir3g
 
@@ -252,6 +286,8 @@ define Device/mi-router-ac2100
   IMAGE/kernel1.bin := append-kernel
   IMAGE/rootfs0.bin := append-ubi | check-size $$$$(IMAGE_SIZE)
   IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
+  DEVICE_TITLE := Xiaomi Mi Router AC2100
+  DEVICE_PACKAGES := kmod-mt7603 kmod-mt7615e uboot-envtools wpad-mini
 endef
 TARGET_DEVICES += mi-router-ac2100
 
@@ -268,6 +304,8 @@ define Device/redmi-router-ac2100
   IMAGE/kernel1.bin := append-kernel
   IMAGE/rootfs0.bin := append-ubi | check-size $$$$(IMAGE_SIZE)
   IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
+  DEVICE_TITLE := Xiaomi Redmi Router AC2100
+  DEVICE_PACKAGES := kmod-mt7603 kmod-mt7615e uboot-envtools wpad-mini
 endef
 TARGET_DEVICES += redmi-router-ac2100
 
@@ -280,5 +318,7 @@ define Device/zte-e8820s
   FILESYSTEMS := squashfs
   IMAGES := factory.bin
   IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
+  DEVICE_TITLE := ZTE E8820S
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb3 kmod-usb-hid kmod-ledtrig-netdev kmod-mt7603 kmod-mt76x2 wpad-mini
 endef
 TARGET_DEVICES += zte-e8820s

@@ -28,7 +28,7 @@ define Device/3g150b
   IMAGE_SIZE := $(ralink_default_fw_size_4M)
   UIMAGE_NAME:= Linux Kernel Image
   DEVICE_TITLE := Tenda 3G150B
-  DEVICE_PACKAGES := kmod-usb-core kmod-usb-dwc2 kmod-usb-ledtrig-usbport
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb-dwc2 kmod-ledtrig-usbdev
 endef
 TARGET_DEVICES += 3g150b
 
@@ -37,7 +37,7 @@ define Device/3g300m
   IMAGE_SIZE := $(ralink_default_fw_size_4M)
   UIMAGE_NAME := 3G150M_SPI Kernel Image
   DEVICE_TITLE := Tenda 3G300M
-  DEVICE_PACKAGES := kmod-usb-core kmod-usb-dwc2 kmod-usb-ledtrig-usbport
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb-dwc2 kmod-ledtrig-usbdev
 endef
 TARGET_DEVICES += 3g300m
 
@@ -67,9 +67,9 @@ define Device/a5-v11
   IMAGES += factory.bin
   IMAGE/factory.bin := \
 	$$(sysupgrade_bin) | check-size $$$$(IMAGE_SIZE) | poray-header -B A5-V11 -F 4M
+  DEFAULT := n
   DEVICE_TITLE := A5-V11
   DEVICE_PACKAGES := kmod-usb-core kmod-usb-ohci kmod-usb2
-  DEFAULT := n
 endef
 TARGET_DEVICES += a5-v11
 
@@ -100,8 +100,7 @@ define Device/all5002
   DTS := ALL5002
   IMAGE_SIZE := 32448k
   DEVICE_TITLE := Allnet ALL5002
-  DEVICE_PACKAGES := kmod-usb-core kmod-usb-ohci kmod-usb2 kmod-usb-ledtrig-usbport \
-          kmod-i2c-core kmod-i2c-gpio kmod-hwmon-lm92 kmod-gpio-pcf857x
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb-ohci kmod-usb2 kmod-ledtrig-usbdev kmod-i2c-core kmod-i2c-gpio kmod-hwmon-lm92 kmod-gpio-pcf857x
 endef
 TARGET_DEVICES += all5002
 
@@ -109,8 +108,7 @@ define Device/all5003
   DTS := ALL5003
   IMAGE_SIZE := 32448k
   DEVICE_TITLE := Allnet ALL5003
-  DEVICE_PACKAGES := kmod-usb-core kmod-usb-ohci kmod-usb2 kmod-usb-ledtrig-usbport \
-          kmod-i2c-core kmod-i2c-gpio kmod-hwmon-lm92 kmod-gpio-pcf857x
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb-ohci kmod-usb2 kmod-ledtrig-usbdev kmod-i2c-core kmod-i2c-gpio kmod-hwmon-lm92 kmod-gpio-pcf857x
 endef
 TARGET_DEVICES += all5003
 
@@ -118,8 +116,8 @@ define Device/asl26555-8M
   DTS := ASL26555-8M
   IMAGE_SIZE := 7744k
   SUPPORTED_DEVICES += asl26555
-  DEVICE_TITLE := Alpha ASL26555 
-  DEVICE_PACKAGES := kmod-usb-core kmod-usb-dwc2 kmod-usb-ledtrig-usbport
+  DEVICE_TITLE := Alpha ASL26555
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb-dwc2 kmod-ledtrig-usbdev
 endef
 TARGET_DEVICES += asl26555-8M
 
@@ -128,7 +126,7 @@ define Device/asl26555-16M
   IMAGE_SIZE := 15872k
   SUPPORTED_DEVICES += asl26555
   DEVICE_TITLE := Alpha ASL26555 16M
-  DEVICE_PACKAGES := kmod-usb-core kmod-usb-dwc2 kmod-usb-ledtrig-usbport
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb-dwc2 kmod-ledtrig-usbdev
 endef
 TARGET_DEVICES += asl26555-16M
 
@@ -143,16 +141,14 @@ define Device/awm002-evb-4M
   DTS := AWM002-EVB-4M
   IMAGE_SIZE := $(ralink_default_fw_size_4M)
   DEVICE_TITLE := AsiaRF AWM002-EVB (4M)
-  DEVICE_PACKAGES := kmod-usb-core kmod-usb-ohci kmod-usb2 \
-		kmod-i2c-core kmod-i2c-gpio
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb-ohci kmod-usb2 kmod-i2c-core kmod-i2c-gpio kmod-ledtrig-usbdev
 endef
 TARGET_DEVICES += awm002-evb-4M
 
 define Device/awm002-evb-8M
   DTS := AWM002-EVB-8M
   DEVICE_TITLE := AsiaRF AWM002-EVB (8M)/AsiaRF AWM003 EVB
-  DEVICE_PACKAGES := kmod-usb-core kmod-usb-ohci kmod-usb2 \
-		kmod-i2c-core kmod-i2c-gpio
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb-ohci kmod-usb2 kmod-i2c-core kmod-i2c-gpio kmod-ledtrig-usbdev
 endef
 TARGET_DEVICES += awm002-evb-8M
 
@@ -175,14 +171,14 @@ define Device/broadway
   IMAGE_SIZE := 7744k
   UIMAGE_NAME:= Broadway Kernel Image
   DEVICE_TITLE := Hauppauge Broadway
-  DEVICE_PACKAGES := kmod-usb-core kmod-usb-dwc2 kmod-usb-ledtrig-usbport
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb-dwc2 kmod-ledtrig-usbdev
 endef
 TARGET_DEVICES += broadway
 
 define Device/carambola
   DTS := CARAMBOLA
   DEVICE_TITLE := 8devices Carambola
-  DEVICE_PACKAGES :=
+  DEVICE_PACKAGES := endef
 endef
 TARGET_DEVICES += carambola
 
@@ -228,8 +224,8 @@ define Device/dir-300-b1
   IMAGES += factory.bin
   IMAGE/factory.bin := \
 	$$(sysupgrade_bin) | check-size $$$$(IMAGE_SIZE) | wrg-header wrgn23_dlwbr_dir300b
-  DEVICE_TITLE := D-Link DIR-300 B1
   DEFAULT := n
+  DEVICE_TITLE := D-Link DIR-300 B1
 endef
 TARGET_DEVICES += dir-300-b1
 
@@ -237,8 +233,8 @@ define Device/dir-300-b7
   DTS := DIR-300-B7
   BLOCKSIZE := 4k
   IMAGE_SIZE := $(ralink_default_fw_size_4M)
-  DEVICE_TITLE := D-Link DIR-300 B7
   DEFAULT := n
+  DEVICE_TITLE := D-Link DIR-300 B7
 endef
 TARGET_DEVICES += dir-300-b7
 
@@ -266,7 +262,7 @@ define Device/dir-610-a1
   SEAMA_SIGNATURE := wrgn59_dlob.hans_dir610
   KERNEL := $(KERNEL_DTB)
   IMAGE_SIZE := $(ralink_default_fw_size_4M)
-  DEVICE_TITLE := D-Link DIR-610 A1 
+  DEVICE_TITLE := D-Link DIR-610 A1
   DEVICE_PACKAGES := kmod-ledtrig-netdev kmod-ledtrig-timer
 endef
 TARGET_DEVICES += dir-610-a1
@@ -308,10 +304,6 @@ TARGET_DEVICES += dir-620-d1
 define Device/dwr-512-b
   DTS := DWR-512-B
   IMAGE_SIZE := 7800k
-  DEVICE_TITLE := D-Link DWR-512 B
-  DEVICE_PACKAGES := jboot-tools kmod-usb2 kmod-spi-dev kmod-usb-serial \
-			kmod-usb-serial-option kmod-usb-net kmod-usb-net-cdc-ether \
-			comgt-ncm
   DLINK_ROM_ID := DLK6E2412001
   DLINK_FAMILY_MEMBER := 0x6E24
   DLINK_FIRMWARE_SIZE := 0x7E0000
@@ -319,6 +311,8 @@ define Device/dwr-512-b
   IMAGES += factory.bin
   IMAGE/sysupgrade.bin := mkdlinkfw | pad-rootfs | append-metadata
   IMAGE/factory.bin := mkdlinkfw | pad-rootfs | mkdlinkfw-factory
+  DEVICE_TITLE := D-Link DWR-512 B
+  DEVICE_PACKAGES := jboot-tools kmod-usb2 kmod-spi-dev kmod-usb-serial kmod-usb-serial-option kmod-usb-net kmod-usb-net-cdc-ether comgt-ncm
 endef
 TARGET_DEVICES += dwr-512-b
 
@@ -334,7 +328,7 @@ define Device/f5d8235-v2
   DTS := F5D8235_V2
   IMAGE_SIZE := 7744k
   DEVICE_TITLE := Belkin F5D8235 v2
-  DEVICE_PACKAGES := kmod-switch-rtl8366rb
+  DEVICE_PACKAGES := kmod-switch-rtl8366rb kmod-swconfig swconfig kmod-usb-core kmod-usb-dwc2 kmod-ledtrig-usbdev
 endef
 TARGET_DEVICES += f5d8235-v2
 
@@ -342,7 +336,7 @@ define Device/f7c027
   DTS := F7C027
   IMAGE_SIZE := 7616k
   DEVICE_TITLE := Belkin F7C027
-  DEVICE_PACKAGES := -kmod-usb-core -kmod-usb-dwc2 -kmod-usb-ledtrig-usbport
+  DEVICE_PACKAGES := -kmod-usb-core -kmod-usb-dwc2 -kmod-ledtrig-usbdev
 endef
 TARGET_DEVICES += f7c027
 
@@ -352,7 +346,7 @@ define Device/fonera20n
   IMAGE/factory.bin := $$(sysupgrade_bin) | \
 	edimax-header -s RSDK -m NL1T -f 0x50000 -S 0xc0000
   DEVICE_TITLE := Fonera 2.0N
-  DEVICE_PACKAGES := kmod-usb-core kmod-usb-dwc2 kmod-usb-ledtrig-usbport
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb-dwc2 kmod-ledtrig-usbdev
 endef
 TARGET_DEVICES += fonera20n
 
@@ -391,20 +385,21 @@ TARGET_DEVICES += hlk-rm04
 define Device/ht-tm02
   DTS := HT-TM02
   DEVICE_TITLE := HooToo HT-TM02
-  DEVICE_PACKAGES := kmod-usb-core kmod-usb-ohci kmod-usb2 kmod-usb-ledtrig-usbport
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb-ohci kmod-usb2 kmod-ledtrig-usbdev
 endef
 TARGET_DEVICES += ht-tm02
 
 define Device/hw550-3g
   DTS := HW550-3G
   DEVICE_TITLE := Aztech HW550-3G
-  DEVICE_PACKAGES := kmod-usb-core kmod-usb-dwc2 kmod-usb-ledtrig-usbport
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb-dwc2 kmod-ledtrig-usbdev
 endef
 TARGET_DEVICES += hw550-3g
 
 define Device/ip2202
   DTS := IP2202
   DEVICE_TITLE := Poray IP2202
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-dwc2 kmod-ledtrig-netdev kmod-ledtrig-timer
 endef
 TARGET_DEVICES += ip2202
 
@@ -442,9 +437,7 @@ define Device/m2m
   DTS := M2M
   UIMAGE_NAME:= Linux Kernel Image
   DEVICE_TITLE := Intenso Memory 2 Move
-  DEVICE_PACKAGES := kmod-ledtrig-netdev kmod-ledtrig-timer \
-		kmod-usb-core kmod-usb2 kmod-usb-storage kmod-scsi-core \
-		kmod-fs-ext4 kmod-fs-vfat block-mount
+  DEVICE_PACKAGES := kmod-ledtrig-netdev kmod-ledtrig-timer kmod-usb-core kmod-usb2 kmod-usb-storage kmod-scsi-core kmod-fs-ext4 kmod-fs-vfat block-mount
 endef
 TARGET_DEVICES += m2m
 
@@ -455,8 +448,7 @@ define Device/m3
   IMAGE/factory.bin := \
 	$$(sysupgrade_bin) | check-size $$$$(IMAGE_SIZE) | poray-header -B M3 -F 4M
   DEVICE_TITLE := Poray M3
-  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-ledtrig-netdev \
-	kmod-ledtrig-timer
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-ledtrig-netdev kmod-ledtrig-timer
 endef
 TARGET_DEVICES += m3
 
@@ -467,8 +459,7 @@ define Device/m4-4M
   IMAGE/factory.bin := \
 	$$(sysupgrade_bin) | check-size $$$$(IMAGE_SIZE) | poray-header -B M4 -F 4M
   DEVICE_TITLE := Poray M4 (4MB)
-  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-ledtrig-netdev \
-	kmod-ledtrig-timer
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-ledtrig-netdev kmod-ledtrig-timer
 endef
 TARGET_DEVICES += m4-4M
 
@@ -520,8 +511,8 @@ TARGET_DEVICES += mpr-a2
 
 define Device/iu-01w
   DTS := IU-01W
-  DEVICE_TITLE := DELUX IU-01W
   IMAGE_SIZE := $(ralink_default_fw_size_8M)
+  DEVICE_TITLE := DELUX IU-01W
   DEVICE_PACKAGES := panel-ap-setup kmod-i2c-ralink kmod-i2c-gpio i2c-tool
 endef
 TARGET_DEVICES += iu-01w
@@ -530,6 +521,7 @@ TARGET_DEVICES += iu-01w
 define Device/mr-102n
   DTS := MR-102N
   DEVICE_TITLE := AXIMCom MR-102N
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb-dwc2 kmod-ledtrig-usbdev
 endef
 TARGET_DEVICES += mr-102n
 
@@ -576,8 +568,7 @@ TARGET_DEVICES += nbg-419n2
 define Device/ncs601w
   DTS := NCS601W
   DEVICE_TITLE := Wansview NCS601W
-  DEVICE_PACKAGES := kmod-video-core kmod-video-uvc \
-		kmod-usb-core kmod-usb-ohci
+  DEVICE_PACKAGES := kmod-video-core kmod-video-uvc kmod-usb-core kmod-usb-ohci
 endef
 TARGET_DEVICES += ncs601w
 
@@ -618,7 +609,7 @@ TARGET_DEVICES += psr-680w
 define Device/pwh2004
   DTS := PWH2004
   DEVICE_TITLE := Prolink PWH2004
-  DEVICE_PACKAGES :=
+  DEVICE_PACKAGES := endef
 endef
 TARGET_DEVICES += pwh2004
 
@@ -626,34 +617,28 @@ define Device/px-4885-4M
   DTS := PX-4885-4M
   IMAGE_SIZE := $(ralink_default_fw_size_4M)
   DEVICE_TITLE := 7Links PX-4885 (4M)
-  DEVICE_PACKAGES := kmod-usb-core kmod-usb-dwc2 kmod-usb2 kmod-usb-ohci \
-	kmod-usb-ledtrig-usbport kmod-leds-gpio
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb-dwc2 kmod-usb2 kmod-usb-ohci kmod-ledtrig-usbdev kmod-leds-gpio
 endef
 TARGET_DEVICES += px-4885-4M
 
 define Device/px-4885-8M
   DTS := PX-4885-8M
   DEVICE_TITLE := 7Links PX-4885 (8M)
-  DEVICE_PACKAGES := kmod-usb-core kmod-usb-dwc2 kmod-usb2 kmod-usb-ohci \
-	kmod-usb-ledtrig-usbport kmod-leds-gpio
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb-dwc2 kmod-usb2 kmod-usb-ohci kmod-ledtrig-usbdev kmod-leds-gpio
 endef
 TARGET_DEVICES += px-4885-8M
 
 define Device/rt5350f-olinuxino
   DTS := RT5350F-OLINUXINO
   DEVICE_TITLE := RT5350F-OLinuXino
-  DEVICE_PACKAGES := kmod-usb-core kmod-usb-ohci kmod-usb2 \
-		kmod-i2c-core kmod-i2c-ralink \
-		kmod-spi-dev
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb-ohci kmod-usb2 kmod-i2c-core kmod-i2c-ralink kmod-spi-dev
 endef
 TARGET_DEVICES += rt5350f-olinuxino
 
 define Device/rt5350f-olinuxino-evb
   DTS := RT5350F-OLINUXINO-EVB
   DEVICE_TITLE := RT5350F-OLinuXino-EVB
-  DEVICE_PACKAGES := kmod-usb-core kmod-usb-ohci kmod-usb2 \
-		kmod-i2c-core kmod-i2c-ralink \
-		kmod-spi-dev
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb-ohci kmod-usb2 kmod-i2c-core kmod-i2c-ralink kmod-spi-dev
 endef
 TARGET_DEVICES += rt5350f-olinuxino-evb
 
@@ -669,15 +654,16 @@ define Device/rt-n10-plus
   DTS := RT-N10-PLUS
   BLOCKSIZE := 64k
   IMAGE_SIZE := $(ralink_default_fw_size_4M)
-  DEVICE_TITLE := Asus RT-N10+
   DEFAULT := n
+  DEVICE_TITLE := Asus RT-N10+
+  DEVICE_PACKAGES := kmod-leds-gpio wpad-mini
 endef
 TARGET_DEVICES += rt-n10-plus
 
 define Device/rt-n13u
   DTS := RT-N13U
   DEVICE_TITLE := Asus RT-N13U
-  DEVICE_PACKAGES := kmod-leds-gpio kmod-rt2800-pci kmod-usb-dwc2
+  DEVICE_PACKAGES := kmod-leds-gpio kmod-rt2800-pci kmod-usb-dwc2 wpad-mini
 endef
 TARGET_DEVICES += rt-n13u
 
@@ -717,14 +703,14 @@ define Device/ur-326n4g
   BLOCKSIZE := 64k
   IMAGE_SIZE := $(ralink_default_fw_size_4M)
   DEVICE_TITLE := UPVEL UR-326N4G
-  DEVICE_PACKAGES := kmod-usb-core kmod-usb-dwc2 kmod-usb-ledtrig-usbport
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb-dwc2 kmod-ledtrig-usbdev
 endef
 TARGET_DEVICES += ur-326n4g
 
 define Device/ur-336un
   DTS := UR-336UN
   DEVICE_TITLE := UPVEL UR-336UN
-  DEVICE_PACKAGES := kmod-usb-core kmod-usb-dwc2 kmod-usb-ledtrig-usbport
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb-dwc2 kmod-ledtrig-usbdev
 endef
 TARGET_DEVICES += ur-336un
 
@@ -741,9 +727,7 @@ define Device/vocore-8M
   IMAGE_SIZE := 7872k
   SUPPORTED_DEVICES += vocore
   DEVICE_TITLE := VoCore (8M)
-  DEVICE_PACKAGES := kmod-usb-core kmod-usb-ohci kmod-usb2 \
-		kmod-i2c-core kmod-i2c-ralink \
-		kmod-spi-dev
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb-ohci kmod-usb2 kmod-i2c-core kmod-i2c-ralink kmod-spi-dev
 endef
 TARGET_DEVICES += vocore-8M
 
@@ -752,9 +736,7 @@ define Device/vocore-16M
   IMAGE_SIZE := 16064k
   SUPPORTED_DEVICES += vocore
   DEVICE_TITLE := VoCore (16M)
-  DEVICE_PACKAGES := kmod-usb-core kmod-usb-ohci kmod-usb2 \
-		kmod-i2c-core kmod-i2c-ralink \
-		kmod-spi-dev
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb-ohci kmod-usb2 kmod-i2c-core kmod-i2c-ralink kmod-spi-dev
 endef
 TARGET_DEVICES += vocore-16M
 
@@ -792,10 +774,10 @@ define Device/whr-g300n
   DTS := WHR-G300N
   BLOCKSIZE := 64k
   IMAGE_SIZE := 3801088
-  DEVICE_TITLE := Buffalo WHR-G300N
   IMAGES += tftp.bin
   IMAGE/tftp.bin := $$(sysupgrade_bin) | \
     check-size $$$$(IMAGE_SIZE) | buffalo-tftp-header
+  DEVICE_TITLE := Buffalo WHR-G300N
 endef
 TARGET_DEVICES += whr-g300n
 
@@ -803,6 +785,7 @@ define Device/wizard8800
   DTS := WIZARD8800
   UIMAGE_NAME:= Linux Kernel Image
   DEVICE_TITLE := EasyAcc WIZARD 8800
+  DEVICE_PACKAGES := kmod-ledtrig-netdev kmod-ledtrig-timer kmod-leds-gpio kmod-usb-core kmod-usb-ohci kmod-usb2 kmod-usb-net usbutils kmod-scsi-core kmod-scsi-generic kmod-fs-ext4 kmod-fs-msdos kmod-usb-storage kmod-usb-storage-extras block-mount
 endef
 TARGET_DEVICES += wizard8800
 
@@ -810,6 +793,7 @@ define Device/wizfi630a
   DTS := WIZFI630A
   IMAGE_SIZE := $(ralink_default_fw_size_16M)
   DEVICE_TITLE := WIZnet WizFi630A
+  DEVICE_PACKAGES := kmod-usb2
 endef
 TARGET_DEVICES += wizfi630a
 
@@ -826,7 +810,7 @@ define Device/wl-330n3g
   BLOCKSIZE := 4k
   IMAGE_SIZE := $(ralink_default_fw_size_4M)
   DEVICE_TITLE := Asus WL-330N3G
-  DEVICE_PACKAGES :=
+  DEVICE_PACKAGES := endef
 endef
 TARGET_DEVICES += wl-330n3g
 
@@ -834,9 +818,9 @@ define Device/wl-351
   DTS := WL-351
   BLOCKSIZE := 64k
   IMAGE_SIZE := $(ralink_default_fw_size_4M)
+  DEFAULT := n
   DEVICE_TITLE := Sitecom WL-351 v1
   DEVICE_PACKAGES := kmod-switch-rtl8366rb kmod-swconfig swconfig
-  DEFAULT := n
 endef
 TARGET_DEVICES += wl-351
 
@@ -855,8 +839,8 @@ TARGET_DEVICES += wnce2001
 define Device/wr512-3gn-4M
   DTS := WR512-3GN-4M
   IMAGE_SIZE := $(ralink_default_fw_size_4M)
-  DEVICE_TITLE := WR512-3GN (4M)
   DEFAULT := n
+  DEVICE_TITLE := WR512-3GN (4M)
 endef
 TARGET_DEVICES += wr512-3gn-4M
 
@@ -879,6 +863,7 @@ define Device/wt1520-4M
   IMAGE/factory.bin := \
 	$$(sysupgrade_bin) | check-size $$$$(IMAGE_SIZE) | poray-header -B WT1520 -F 4M
   DEVICE_TITLE := Nexx WT1520 (4MB)
+  DEVICE_PACKAGES := kmod-usb2
 endef
 TARGET_DEVICES += wt1520-4M
 
@@ -888,6 +873,7 @@ define Device/wt1520-8M
   IMAGE/factory.bin := \
 	$$(sysupgrade_bin) | check-size $$$$(IMAGE_SIZE) | poray-header -B WT1520 -F 8M
   DEVICE_TITLE := Nexx WT1520 (8MB)
+  DEVICE_PACKAGES := kmod-usb2
 endef
 TARGET_DEVICES += wt1520-8M
 
@@ -914,10 +900,9 @@ TARGET_DEVICES += x8
 
 define Device/x9
   DTS := HIKER
-  DEVICE_TITLE := Hiker X9
   IMAGE_SIZE := $(ralink_default_fw_size_8M)
-  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-uhci kmod-usb-ohci \
-	kmod-usb-wdm kmod-usb-net kmod-usb-net-rndis panel-ap-setup
+  DEVICE_TITLE := Hiker X9
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-uhci kmod-usb-ohci kmod-usb-wdm kmod-usb-net kmod-usb-net-rndis panel-ap-setup
 endef
 TARGET_DEVICES += x9
 
@@ -931,8 +916,8 @@ TARGET_DEVICES += xdxrn502j
 
 define Device/yb-801
   DTS := YB-801
-  DEVICE_TITLE := Yoobao YB-801
   IMAGE_SIZE := $(ralink_default_fw_size_8M)
+  DEVICE_TITLE := Yoobao YB-801
   DEVICE_PACKAGES := panel-ap-setup
 endef
 TARGET_DEVICES += yb-801
@@ -941,9 +926,9 @@ define Device/kn
   DTS := kn
   BLOCKSIZE := 64k
   IMAGE_SIZE := $(ralink_default_fw_size_4M)
-  DEVICE_TITLE := ZyXEL Keenetic
-  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-ehci kmod-usb-ledtrig-usbport
   DEFAULT := n
+  DEVICE_TITLE := ZyXEL Keenetic
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-ehci kmod-ledtrig-usbdev
 endef
 TARGET_DEVICES += kn
 
@@ -960,3 +945,19 @@ define Device/zorlik_zl5900v2
   DEVICE_PACKAGES := kmod-usb-core kmod-usb-ohci kmod-usb2 kmod-ledtrig-netdev
 endef
 TARGET_DEVICES += zorlik_zl5900v2
+
+define Device/olinuxino-rt5350f
+  DTS := OLINUXINO-RT5350F
+  IMAGE_SIZE := $(ralink_default_fw_size_8M)
+  DEVICE_TITLE := OLinuXino RT5350F
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb-ohci kmod-usb2 kmod-i2c-core kmod-i2c-ralink kmod-spi-dev
+endef
+TARGET_DEVICES += olinuxino-rt5350f
+
+define Device/olinuxino-rt5350f-evb
+  DTS := OLINUXINO-RT5350F-EVB
+  IMAGE_SIZE := $(ralink_default_fw_size_8M)
+  DEVICE_TITLE := OLinuXino RT5350F EVB
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb-ohci kmod-usb2 kmod-i2c-core kmod-i2c-ralink kmod-spi-dev
+endef
+TARGET_DEVICES += olinuxino-rt5350f-evb
