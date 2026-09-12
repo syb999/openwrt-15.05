@@ -936,6 +936,51 @@ static void save_known_devs(void)
     fclose(f);
 }
 
+/* 从原厂设备表恢复已登记的第三方设备。
+   刷机后原厂表可能还在, 但设备(门磁)要等下次状态变化才上报 ->
+   先把条目建起来显示为"无最新数据", 避免用户误以为配对失败/设备丢失。 */
+static void seed_devs_from_vendor(void)
+{
+    FILE *p;
+    char line[200];
+    p = popen("sqlite3 /etc/IoT/devicehub.db \"select deviceId,module_name from iot_bas_device;\" 2>/dev/null", "r");
+    if (!p) return;
+    while (fgets(line, sizeof(line), p) && g_devs_n < 16) {
+        char *bar = strchr(line, '|');
+        char addr[24];
+        unsigned int b[8];
+        int i, k, dup = 0;
+        if (!bar) continue;
+        *bar++ = 0;
+        { char *nl = strchr(bar, '\n'); if (nl) *nl = 0; nl = strchr(bar, '\r'); if (nl) *nl = 0; }
+        if (strlen(line) != 16) continue;
+        for (i = 0; i < 8; i++) {
+            char h[3];
+            h[0] = line[i * 2]; h[1] = line[i * 2 + 1]; h[2] = 0;
+            b[i] = (unsigned int)strtoul(h, NULL, 16);
+        }
+        snprintf(addr, sizeof(addr), "%02X%02X%02X%02X%02X%02X%02X%02X",
+                 b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7]);
+        for (k = 0; k < g_devs_n; k++)
+            if (!strcasecmp(g_devs[k].addr, addr)) { dup = 1; break; }
+        if (dup) continue;
+        {
+            dev_entry *d = &g_devs[g_devs_n++];
+            char *dot;
+            memset(d, 0, sizeof(*d));
+            for (i = 0; i < 8; i++) d->ieee[i] = (unsigned char)b[7 - i];  /* MSB-first */
+            snprintf(d->addr, sizeof(d->addr), "%s", addr);
+            d->state = -1;          /* -1 = 未知 -> 页面显示"无最新数据" (不猜状态) */
+            d->last_seen = 0;       /* 很旧 -> 走 stale 灰显 */
+            d->battery = -1;
+            d->model_tried = 1;
+            dot = strchr(bar, '-'); /* "1204-TS0203" -> "TS0203" */
+            snprintf(d->model, sizeof(d->model), "%s", dot ? dot + 1 : bar);
+        }
+    }
+    pclose(p);
+}
+
 static dev_entry *find_or_add_dev(const unsigned char *ieee_le)
 {
     for (int i = 0; i < g_devs_n; i++)
@@ -1984,6 +2029,7 @@ static int gateway_main(int serve_port, const char *mqtt_host, int mqtt_port)
            external host mode skips -> load it here too, otherwise the saved
            model/state is lost on every restart (and after a reflash) */
         load_known_devs();
+        seed_devs_from_vendor();   /* 用原厂表补回已登记设备 (刷机后设备不会凭空消失) */
         status_from_coorinfo();
         vendor_log_poll();
         write_devices_json("", 0);

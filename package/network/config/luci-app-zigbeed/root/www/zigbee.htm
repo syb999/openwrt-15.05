@@ -363,13 +363,15 @@ function render(d) {
     var open = (st === 'open');
     var stale = (dv.age != null && dv.age > 300);
     if (dv.online) online++;
-    var label = open ? '门已开' : (st === 'closed') ? '门已关' : '未知';
+    var label = open ? '门已开' : (st === 'closed') ? '门已关' : '暂无数据';
     var tamper = dv.tamper ? '<span class="tag bad">防拆：被拆下</span>'
                            : '<span class="tag good">防拆：已装好</span>';
     var bat = '<span class="tag' + ((typeof dv.battery === 'number' && dv.battery > 0 && dv.battery <= 10) ? ' bad' : (typeof dv.battery === 'number' && dv.battery > 0 ? ' good' : '')) + '">'
             + (typeof dv.battery === 'number' && dv.battery > 0 ? ('电量 ' + dv.battery + '%') : '电量 —') + '</span>';
+    var noData = (dv.age == null || dv.age > 86400 || st === 'unknown');
     var age = (dv.age == null) ? '' : (dv.age < 120 ? dv.age + ' 秒前' :
-              (dv.age < 7200 ? Math.round(dv.age / 60) + ' 分钟前' : Math.round(dv.age / 3600) + ' 小时前'));
+              (dv.age < 7200 ? Math.round(dv.age / 60) + ' 分钟前' :
+              (dv.age < 86400 ? Math.round(dv.age / 3600) + ' 小时前' : '无最新数据')));
     /* 门开着时先把起点定下来（门磁只在变化时上报，用 age 反推真实已开时长） */
     if (open && !openSince[dv.address]) {
       var ag = (typeof dv.age === 'number') ? Math.min(dv.age, 3600) : 0;

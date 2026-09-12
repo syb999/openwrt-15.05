@@ -107,13 +107,21 @@ if not raw:find('"model_name":"' .. want_name .. '"', 1, true) then
     end
 end
 
--- 3. device table (需要 sqlite3; 精简固件里可能没有这个命令 -> 优雅跳过)
+-- 3. device table: 默认【不写】原厂数据库
+--    实测证据: 上一版固件(未编入 sqlite3, 本脚本自动跳过此步) 配对一切正常;
+--    编入 sqlite3 后本步开始真正写库, 随即出现配对异常。原厂 DeviceHub 自己管理
+--    设备表(它才是数据库的宿主), 我们只做只读查询即可。
+--    确需登记时: 手动执行  zigbeed-autoreg.lua <addr> <type> <model> --db-write
+local db_write = false
+for _, a in ipairs(arg) do if a == "--db-write" then db_write = true end end
 local have_sqlite = (sh("which sqlite3 2>/dev/null") ~= "")
-if not have_sqlite then
-    say("no sqlite3 in this firmware -> skipped vendor device-table registration "
-        .. "(add package sqlite3-cli to enable it); model still saved for our own UI")
+if not db_write then
+    say("vendor device-table write DISABLED by default (vendor owns its DB); "
+        .. "pass --db-write to force")
+elseif not have_sqlite then
+    say("no sqlite3 in this firmware -> skipped vendor device-table registration")
 end
-if not db_exists and have_sqlite then
+if not db_exists and db_write and have_sqlite then
     for _, db in ipairs({ "/etc/IoT/devicebase.db", "/etc/IoT/devicehub.db" }) do
         if sh("test -f " .. db .. " && echo yes") == "yes\n" then
             sh(string.format("cp -f %s /tmp/%s.autoreg.bak", db, (db:gsub(".*/", ""))))

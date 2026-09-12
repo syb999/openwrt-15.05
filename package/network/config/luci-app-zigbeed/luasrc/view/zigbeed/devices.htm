@@ -1,4 +1,9 @@
 <%+header%>
+<div id="zg_empty_hint" class="cbi-section" style="margin-bottom:12px;padding:10px 14px;border-left:4px solid #f5a623;background:rgba(245,166,35,0.08)">
+  <b>设备列表是空的？</b>
+  <div style="margin-top:4px">已入网过的设备（如门磁）<b>只在状态变化时上报</b>：<b>开/关一次门</b>，它就会自动回到这个列表（无需重新配对）。<br>
+  若是全新设备，点下面的「打开配对窗口」，再把设备置于配对状态即可。</div>
+</div>
 <style>
 .zg-wrap { max-width: 960px; }
 .zg-card { background: #fff; border: 1px solid #e8c9a0; border-radius: 10px; padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(192,122,42,.15); }
@@ -112,7 +117,8 @@ function zg_devices() {
 					if (stale) { cls = 'zg-badge zg-badge-na'; sttxt = ZG_L.none; tp = ''; }
 					var agetxt = '';
 					if (dev.age != null) {
-						agetxt = (dev.age < 120) ? (dev.age + 's')
+						if (dev.age > 86400) { agetxt = '\u2014'; }
+					else agetxt = (dev.age < 120) ? (dev.age + 's')
 						       : (dev.age < 7200) ? (Math.round(dev.age / 60) + 'min')
 						       : (Math.round(dev.age / 3600) + 'h');
 					}
@@ -142,6 +148,8 @@ function zg_devices() {
 				html = '<tr><td colspan="4">' + 'no devices' + '</td></tr>';
 			}
 			tb.innerHTML = html;
+			var _h = document.getElementById('zg_empty_hint');
+			if (_h) _h.style.display = tot ? 'none' : '';
 		} catch(e) { tb.innerHTML = '<tr><td colspan="4">parse error</td></tr>'; }
 	});
 }
