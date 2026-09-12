@@ -11,27 +11,33 @@
 .zg-table th { background: #fdf3e6; color: #6b3d10; }
 .zg-badge { display: inline-block; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: bold; }
 .zg-badge-ok { background: #d2f0d2; color: #1a7a1a; border: 1px solid #4cbf63; }
+.zg-badge-warn { background: #ffe0e0; color: #b02020; border: 1px solid #e0555e; }
 .zg-badge-na { background: #e8e8e8; color: #666; border: 1px solid #aaa; }
+.zg-age { color: #999; font-size: 11px; margin-left: 6px; }
+.zg-mono { font-family: monospace; font-size: 12px; }
 .zg-name { border: 1px solid #e8c9a0; border-radius: 4px; padding: 3px 6px; width: 130px; font-size: 13px; }
 .zg-note { color: #888; font-size: 12px; margin-top: 6px; }
-.zg-msg { margin-top: 8px; color: #c07a2a; font-size: 12px; min-height: 16px; }
+.zg-msg { margin-top: 8px; color: #c07a2a; font-size: 12px; min-height: 16px; white-space: pre-wrap; }
 @media (prefers-color-scheme: dark) {
   .zg-card { background: #26282c; border-color: #4a3a20; }
   .zg-card h3 { color: #e89a3c; border-color: #4a3a20; }
   .zg-table th, .zg-table td { border-color: #4a3a20; }
   .zg-table th { background: #33291c; color: #e89a3c; }
   .zg-name { background: #1e2024; color: #ddd; border-color: #4a3a20; }
+  .zg-badge-warn { background: #4a2020; color: #ffb0b0; border-color: #8a3030; }
+  .zg-badge-ok { background: #204020; color: #a0e0a0; border-color: #3a7a3a; }
+  .zg-badge-na { background: #333; color: #bbb; border-color: #666; }
 }
 </style>
 <div class="zg-wrap">
 <div class="zg-card">
-<h3><%:Zigbee Devices%></h3>
+<h3><%:Zigbee Devices%> <span id="d_count" style="font-size:12px;font-weight:normal"></span></h3>
 <div class="zg-note"><%:Devices appear here after joining during a pairing window. You can name each device for easy identification.%></div>
 <table class="zg-table" style="margin-top:10px;">
 <thead><tr>
-<th><%:Slot%></th><th><%:Status%></th><th><%:Occupied%></th><th><%:Custom name%></th><th><%:Action%></th>
+<th><%:address%></th><th><%:Status%></th><th><%:Custom name%></th><th><%:Action%></th>
 </tr></thead>
-<tbody id="d_dev_rows"><tr><td colspan="5">...</td></tr></tbody>
+<tbody id="d_dev_rows"><tr><td colspan="4">...</td></tr></tbody>
 </table>
 <div class="zg-msg" id="d_msg"></div>
 <div style="margin-top:10px; display:flex; gap:8px;">
@@ -43,37 +49,100 @@
 <script type="text/javascript">
 var ZG_ACT = '<%=luci.dispatcher.build_url("admin/services/zigbeed/actions")%>';
 var ZG_DEVICES = null;
+/* labels come from the translation catalogue (po/zh-cn/zigbeed.po) */
+var ZG_L = {
+	closed:  '<%:Door closed%>',
+	open:    '<%:Door open%>',
+	pressed: '<%:Tamper pressed%>',
+	tamper:  '<%:Tamper removed%>',
+	none:    '<%:No recent data%>',
+	pairwin: '<%:Pairing window: %s s left - hold the sensor reset 5-8s now%>',
+	pairdone:'<%:Pairing finished - refreshing the device list%>',
+	battery: '<%:Battery level %s%>',
+	batlow:  '<%:Battery low%>'
+};
+/* device model -> type label */
+var ZG_TYPES = {
+	'TS0203': '<%:door/window sensor%>',
+	'TS0201': '<%:temperature/humidity sensor%>',
+	'TS0202': '<%:motion sensor%>',
+	'TS0041': '<%:wireless button%>',
+	'TS011F': '<%:smart plug%>',
+	'TS0001': '<%:switch%>'
+};
 
 function zg_setmsg(t) { document.getElementById('d_msg').textContent = t || ''; }
+
+function zg_esc(s) {
+	return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 
 function zg_devices() {
 	XHR.get(ZG_ACT + '/devices', null, function(xhr, d) {
 		var tb = document.getElementById('d_dev_rows');
-		if (!d || !d.data) { tb.innerHTML = '<tr><td colspan="5">error</td></tr>'; return; }
+		if (!d || !d.data) {
+			/* the service restarts during pairing/rebuild: explain instead of a bare error */
+			tb.innerHTML = '<tr><td colspan="4">gateway service busy (pairing / restarting) - retrying...</td></tr>';
+			return;
+		}
 		try {
 			var s = JSON.parse(d.data);
 			ZG_DEVICES = s.devices || [];
+			var onl = 0, tot = ZG_DEVICES.length;
+			for (var k = 0; k < tot; k++) if (ZG_DEVICES[k].online) onl++;
+			var cnt = document.getElementById('d_count');
+			if (cnt) cnt.textContent = '- online ' + onl + ' / total ' + tot;
 			var html = '';
-			if (ZG_DEVICES.length) {
-				for (var i = 0; i < ZG_DEVICES.length; i++) {
+			if (tot) {
+				for (var i = 0; i < tot; i++) {
 					var dev = ZG_DEVICES[i];
 					var key = 'slot' + dev.slot;
 					var name = dev.name || '';
-					var occ = dev.occupied ? '<span class="zg-badge zg-badge-ok">' + 'yes' + '</span>'
-					                        : '<span class="zg-badge zg-badge-na">' + 'no' + '</span>';
+					var st = dev.state_text || 'unknown';
+					/* a door sensor only reports on change, so a long silence means
+					   "nothing happened"; hide the value only after 30 minutes */
+					var stale = (dev.age != null && dev.age > 1800);
+					var type = ZG_TYPES[dev.model] ? (' (' + ZG_TYPES[dev.model] + ')') : '';
+					var cls = (st == 'open') ? 'zg-badge zg-badge-warn'
+					        : (st == 'closed') ? 'zg-badge zg-badge-ok' : 'zg-badge zg-badge-na';
+					var sttxt = (st == 'open') ? ZG_L.open : (st == 'closed') ? ZG_L.closed : st;
+					var tp = dev.tamper
+						? '<span class="zg-badge zg-badge-warn">' + ZG_L.tamper + '</span>'
+						: '<span class="zg-badge zg-badge-ok">' + ZG_L.pressed + '</span>';
+					if (stale) { cls = 'zg-badge zg-badge-na'; sttxt = ZG_L.none; tp = ''; }
+					var agetxt = '';
+					if (dev.age != null) {
+						agetxt = (dev.age < 120) ? (dev.age + 's')
+						       : (dev.age < 7200) ? (Math.round(dev.age / 60) + 'min')
+						       : (Math.round(dev.age / 3600) + 'h');
+					}
+					var age = (agetxt == '') ? '' : (' <span class="zg-age">' + agetxt + '</span>');
+					/* battery comes from the sensor's own report; 0/absent = not reported */
+					var bat = '';
+					/* 0 means "not measured / unsupported" on most of these sensors
+					   (the device is clearly alive), so it is shown as no data */
+					if (dev.battery_low) {
+						bat = ' <span class="zg-badge zg-badge-warn">' + ZG_L.batlow + '</span>';
+					} else if (typeof dev.battery === 'number' && dev.battery > 0) {
+						var bcls = (dev.battery <= 10) ? 'zg-badge-warn' : 'zg-badge-ok';
+						bat = ' <span class="zg-badge ' + bcls + '">'
+						    + ZG_L.battery.replace('%s', dev.battery + '%') + '</span>';
+					} else if (typeof dev.battery === 'number') {
+						bat = ' <span class="zg-badge zg-badge-na">' + ZG_L.battery.replace('%s', '—') + '</span>';
+					}
+					var id = (dev.model ? zg_esc(dev.model) + ' ' : '') + '<span class="zg-mono">' + zg_esc(dev.address || '') + '</span>' + zg_esc(type);
 					html += '<tr>' +
-						'<td>' + dev.slot + '</td>' +
-						'<td>0x' + (dev.slot_status ? dev.slot_status.toString(16) : '0') + '</td>' +
-						'<td>' + occ + '</td>' +
-						'<td><input class="zg-name" id="nm_' + key + '" value="' + name + '" placeholder="' + 'name' + '"></td>' +
+						'<td>' + id + '</td>' +
+						'<td><span class="' + cls + '">' + zg_esc(sttxt) + '</span> ' + tp + bat + age + '</td>' +
+						'<td><input class="zg-name" id="nm_' + key + '" value="' + zg_esc(name) + '" placeholder="' + 'name' + '"></td>' +
 						'<td><button class="zg-btn" onclick="zg_setname(\'' + key + '\')">' + 'Save' + '</button></td>' +
 						'</tr>';
 				}
 			} else {
-				html = '<tr><td colspan="5">' + 'no devices' + '</td></tr>';
+				html = '<tr><td colspan="4">' + 'no devices' + '</td></tr>';
 			}
 			tb.innerHTML = html;
-		} catch(e) { tb.innerHTML = '<tr><td colspan="5">parse error</td></tr>'; }
+		} catch(e) { tb.innerHTML = '<tr><td colspan="4">parse error</td></tr>'; }
 	});
 }
 
@@ -88,11 +157,36 @@ function zg_setname(key) {
 }
 
 function zg_pair() {
-	XHR.get(ZG_ACT + '/join/60', null, function(xhr, d) {
-		zg_setmsg((d && d.data) ? d.data : 'pairing window opened');
+	zg_setmsg('starting pairing window...');
+	XHR.get(ZG_ACT + '/pair/60', null, function(xhr, d) {
+		var r = (d && d.data) ? d.data : '(no response)';
+		zg_setmsg('pair request: ' + r + '\nwaiting for progress...');
+		zg_pair_poll(0);
+	});
+}
+
+/* show the pairing script progress (window opens ~35s after the click) */
+function zg_pair_poll(n) {
+	if (n > 120) { zg_setmsg('pairing watcher stopped'); return; }
+	XHR.get(ZG_ACT + '/pair_status', null, function(xhr, d) {
+		var t = (d && d.data) ? d.data : '';
+		var st = (t.match(/state=([a-z]+)/) || [])[1] || '';
+		var rem = (t.match(/remaining=(-?\d+)/) || [])[1];
+		if (st == 'window' && rem != null && Number(rem) >= 0) {
+			zg_setmsg(ZG_L.pairwin.replace('%s', rem) + '\n' + t);
+		} else if (st == 'done') {
+			zg_setmsg(ZG_L.pairdone + '\n' + t);
+			zg_devices();
+			return;
+		} else {
+			zg_setmsg(t);
+		}
+		setTimeout(function() { zg_pair_poll(n + 1); }, 5000);
 	});
 }
 
 zg_devices();
+setInterval(zg_devices, 3000);    /* live state refresh (vendor log poll is 2s) */
+zg_setmsg('page ui3 ready (DeviceHub pairing + live states)');
 </script>
 <%+footer%>

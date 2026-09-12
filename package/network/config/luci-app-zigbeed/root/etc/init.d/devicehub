@@ -1,0 +1,30 @@
+#!/bin/sh /etc/rc.common
+#
+# Start the vendor DeviceHub as the permanent radio owner.
+#
+# Why: only DeviceHub's host session is truly authorised by the coordinator, so
+# with it running the network stays intact and every device report arrives.
+# zigbeed then runs as the frontend: it detects DeviceHub (pidof) and takes the
+# device states from the vendor log stream instead of the serial port.
+#
+START=93
+STOP=94
+
+start() {
+	[ -x /usr/bin/DeviceHub ] || return 0
+	pidof DeviceHub >/dev/null 2>&1 && return 0
+	echo "starting DeviceHub (radio owner)..."
+	LD_LIBRARY_PATH=/usr/lib/devicehub /usr/bin/DeviceHub > /tmp/devicehub.log 2>&1 &
+	sleep 1
+}
+
+stop() {
+	echo "stopping DeviceHub..."
+	killall DeviceHub 2>/dev/null
+	sleep 1
+}
+
+restart() {
+	stop
+	start
+}

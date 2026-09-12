@@ -10,7 +10,7 @@ LUCI_TITLE:=Zigbee gateway management (zigbeed)
 LUCI_DEPENDS:=+zigbeed
 LUCI_PKGARCH:=all
 PKG_VERSION:=1.0
-PKG_RELEASE:=20
+PKG_RELEASE:=22
 
 include $(TOPDIR)/feeds/luci/luci.mk
 

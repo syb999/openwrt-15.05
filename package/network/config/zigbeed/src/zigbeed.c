@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <termios.h>
@@ -39,6 +40,8 @@
 #define RESP_MAX    8192
 
 static int tty_fd = -1;
+/* session read: stop as soon as a kA (network params) frame arrives */
+static int g_sess_wait_kA = 0;
 static volatile int running = 1;
 static const char *g_dev = TTY_DEV;
 static int g_baud = TTY_BAUD;
@@ -105,6 +108,23 @@ static FILE *g_slog = NULL;
    实测: rtoken/-cmd (短会话) 每次都能读到 kA, 守护进程 (长会话) 读不到。
    → 轮询用独立 fd 打开串口 (模拟短会话) 发命令, 读完关闭。
    flock 与 serve 子进程的 tty_fd 互斥, 安全。 */
+/* Diagnostic: keep the FULL raw response of every serial read in one file.
+   The serial log only stores the first 160 bytes, which hides device frames.
+   Capped at 256 KB (delete /tmp/zigbeed_rx_raw.bin to start over). */
+static void dump_raw_response(const char *cmd, const char *resp, int n)
+{
+    static long written = 0;
+    if (n <= 0) return;
+    if (written > 262144) return;
+    FILE *f = fopen("/tmp/zigbeed_rx_raw.bin", "ab");
+    if (!f) return;
+    fprintf(f, "\n=== %ld n=%d cmd=%.40s ===\n", (long)time(NULL), n, cmd);
+    fwrite(resp, 1, n, f);
+    fputc('\n', f);
+    fclose(f);
+    written += n + 64;
+}
+
 static int send_cmd_session(const char *cmd, char *resp, int rlen, int wait_s)
 {
     /* 🔴🔴 2026-09-01 修复: SESS 用阻塞 fd (和 rtoken 一致)!
@@ -145,7 +165,9 @@ static int send_cmd_session(const char *cmd, char *resp, int rlen, int wait_s)
     t.c_cc[VTIME] = 2;
     tcsetattr(pfd, TCSANOW, &t);
     /* 串口互斥锁: 与 serve 子进程的 tty_fd flock 互斥 */
-    flock(pfd, LOCK_EX);
+    /* never block: an external tool may hold the lock and a hung request is
+       worse than a skipped command (a blocking lock froze the daemon once) */
+    if (flock(pfd, LOCK_EX | LOCK_NB) != 0) return 0;
     tcflush(pfd, TCIOFLUSH);
     if (!g_slog) g_slog = fopen("/tmp/zigbeed_serial.log", "a");
     if (g_slog) {
@@ -155,14 +177,29 @@ static int send_cmd_session(const char *cmd, char *resp, int rlen, int wait_s)
     int n = write(pfd, cmd, strlen(cmd));
     if (n < 0) { perror("write"); close(pfd); return -1; }
     int total = 0;
+    int saw_kA = 0, idle_ms = 0;
     time_t start = time(NULL);
     while (total < rlen - 1 && time(NULL) - start < wait_s) {
         int r = read(pfd, resp + total, rlen - 1 - total);
-        if (r > 0) total += r;
+        if (r > 0) {
+            total += r;
+            resp[total] = 0;
+            /* The network block (*kA) can arrive ~10s into the session. Once it
+               is here, keep reading for a short idle window: device frames may
+               still follow it in the same reply. */
+            if (g_sess_wait_kA && (strstr(resp, "*kA") || strstr(resp, "kA[88]"))) {
+                saw_kA = 1;
+                idle_ms = 0;
+            }
+        }
         else if (r < 0 && errno != EAGAIN && errno != EWOULDBLOCK) break;
-        else msleep(10);
+        else {
+            msleep(100);
+            if (saw_kA) { idle_ms += 100; if (idle_ms >= 2000) break; }
+        }
     }
     resp[total] = 0;
+    dump_raw_response(cmd, resp, total);
     if (g_slog) {
         int show = total > 160 ? 160 : total;
         fprintf(g_slog, "[%ld] SESS-RX(%d): %.*s\n", (long)time(NULL), total, show, resp);
@@ -178,8 +215,13 @@ static int send_cmd_session(const char *cmd, char *resp, int rlen, int wait_s)
 /* 发送命令并读取响应 (最长 wait_s 秒), 返回字节数 */
 static int send_cmd(const char *cmd, char *resp, int rlen, int wait_s)
 {
-    /* 串口互斥锁: 多模式 (serve子进程/mqtt/daemon) 共享 ttyS1 */
-    flock(tty_fd, LOCK_EX);
+    /* 串口互斥锁: 多模式 (serve子进程/mqtt/daemon) 共享 ttyS1
+       🔴 必须非阻塞: 外部工具 (原厂 DeviceHub) 可能持锁, 阻塞式 flock 会把
+       整个守护进程挂死在 flock_lock_file_wait (实测踩过, 之后再也不更新) */
+    if (flock(tty_fd, LOCK_EX | LOCK_NB) != 0) {
+        if (resp && rlen > 0) resp[0] = 0;
+        return 0;
+    }
     /* 🔴🔴 修复 (异步 kA 帧被 tcflush 冲掉):
        协调器会异步推送 *kA 网络参数帧 (如会话建立后 ~10s), 原代码
        tcflush(TCIOFLUSH) 在发命令前清空接收缓冲 → kA 被冲掉 →
@@ -213,6 +255,7 @@ static int send_cmd(const char *cmd, char *resp, int rlen, int wait_s)
             else msleep(10);
         }
         resp[total] = 0;
+        dump_raw_response(cmd, resp, total);
         if (g_slog) {
             int show = total > 160 ? 160 : total;
             fprintf(g_slog, "[%ld] RX(%d): %.*s\n", (long)time(NULL), total, show, resp);
@@ -242,6 +285,7 @@ static int send_cmd(const char *cmd, char *resp, int rlen, int wait_s)
         else msleep(10);  /* 非阻塞无数据, 让出 CPU */
     }
     resp[total] = 0;
+    dump_raw_response(cmd, resp, total);
     if (g_slog) {
         int show = total > 160 ? 160 : total;
         fprintf(g_slog, "[%ld] RX(%d): %.*s\n", (long)time(NULL), total, show, resp);
@@ -489,6 +533,23 @@ static void dump_device_table(const char *resp, int n)
 
 /* ---------- 状态 JSON 输出 (供 LuCI/脚本读取) ---------- */
 /* 解码协调器响应中的 *xA 88 帧, 输出 /tmp/zigbeed_status.json */
+/* A real network block carries the 16-byte network key: 16 consecutive bytes
+   that are neither 0x00 nor 0xFF. An "empty" block (all 0xFF or all 0x00)
+   never matches, which is how the coordinator's empty variant is told apart
+   from a genuinely lost network (measured 2026-09-12). */
+static int resp_has_valid_net(const char *resp)
+{
+    const char *k = strstr(resp, "*kA");
+    if (!k) return 0;
+    int run = 0;
+    for (const char *q = k; *q && q < k + 200; q++) {
+        unsigned char c = (unsigned char)*q;
+        if (c != 0xFF && c != 0x00) { if (++run >= 16) return 1; }
+        else run = 0;
+    }
+    return 0;
+}
+
 static void write_status_json(const char *resp, int n)
 {
     FILE *f = fopen("/tmp/zigbeed_status.json", "w");
@@ -665,6 +726,577 @@ static const char *dev_type_name(int model)
     return NULL;
 }
 
+/* ---------- DeviceHub-compatible host handshake (2026-09-12) ----------
+   The coordinator firmware only grants device joins, JSON commands
+   ({"Duration":N}) and network persistence to an "authorized host" session.
+   DeviceHub establishes it at startup with the sequence below (captured with
+   libspy on 157). Without it zigbeed observed: joins rejected, Duration
+   answered with 0 bytes, and the network purged by the firmware every
+   10-30 min (even a factory-trusted network).
+   Frame layout is 38 bytes: 2A 22 41 88 + 24*00 + 20 00 00 00 + <4B payload>
+   + cksum + 23, with cksum = 0xE9 + sum(payload) (verified on every frame
+   captured from DeviceHub). */
+static void send_bytes(const unsigned char *b, int n)
+{
+    if (tty_fd < 0 || n <= 0) return;
+    write(tty_fd, b, n);
+    /* diagnostics: log the raw frame into the same trace file as TX/RX */
+    FILE *lg = fopen("/tmp/zigbeed_serial.log", "a");
+    if (lg) {
+        fprintf(lg, "[%ld] TXRAW(%d): ", (long)time(NULL), n);
+        for (int i = 0; i < n; i++) fprintf(lg, "%02X ", b[i]);
+        fprintf(lg, "\n");
+        fclose(lg);
+    }
+    msleep(60);
+}
+
+static void send_hdr_frame(unsigned char p0, unsigned char p1, unsigned char p2, unsigned char p3)
+{
+    unsigned char f[38];
+    memset(f, 0, sizeof(f));
+    f[0] = 0x2A; f[1] = 0x22; f[2] = 0x41; f[3] = 0x88;
+    f[28] = 0x20;
+    f[32] = p0; f[33] = p1; f[34] = p2; f[35] = p3;
+    f[36] = (unsigned char)(0xE9 + p0 + p1 + p2 + p3);
+    f[37] = 0x23;
+    send_bytes(f, sizeof(f));
+}
+
+static void devicehub_handshake(void)
+{
+    char resp[RESP_MAX];
+    const char *cfg[] = { "AT+DEPRESSZDO=00", "AT+ALICHECK=01", "AT+CHECKSUM=00",
+                          "AT+FORWARD=01", "AT+USEPREKEY=01", NULL };
+    printf("[handshake] DeviceHub-compatible startup sequence (authorized host)...\n");
+    fflush(stdout);
+    for (int i = 0; cfg[i]; i++) {
+        char c[64];
+        snprintf(c, sizeof(c), "%s\r\n", cfg[i]);
+        send_cmd(c, resp, sizeof(resp), 2);
+        msleep(120);
+    }
+    send_hdr_frame(0x40, 0x1F, 0x00, 0x00);
+    send_hdr_frame(0xF2, 0x03, 0x00, 0x00);
+    for (int s = 1; s <= 6; s++) send_hdr_frame(0xD0, 0x07, (unsigned char)s, 0x00);
+    send_hdr_frame(0x10, 0x00, 0x00, 0x00);
+    send_cmd("AT+VER\r\n", resp, sizeof(resp), 2);
+    send_hdr_frame(0xF2, 0x03, 0x00, 0x00);
+    for (int s = 1; s <= 6; s++) send_hdr_frame(0xD0, 0x07, (unsigned char)s, 0x00);
+    send_cmd("AT+CHECKAUTH=00\r\n", resp, sizeof(resp), 2);
+    /* the vendor host also writes this coordinator-parameter frame right
+       before AT+MONITRF (captured 2026-09-12, 71 bytes) */
+    {
+        static const unsigned char CA_FRAME[71] = {
+        0x2A, 0x43, 0x41, 0x88, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0x00, 0x00, 0x25, 0x00, 0x00, 0x00, 0xF2, 0x03, 0x0A, 0x00,
+        0x20, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xE5, 0x23
+        };
+        send_bytes(CA_FRAME, sizeof(CA_FRAME));
+    }
+    send_cmd("AT+MONITRF=01\r\n", resp, sizeof(resp), 2);
+    for (int s = 1; s <= 6; s++) send_hdr_frame(0xD0, 0x07, (unsigned char)s, 0x00);
+    fflush(stdout);
+}
+
+/* ---------- Device table: frames the coordinator reports back ----------
+   Measured 2026-09-12 with a Tuya TS0203 door sensor:
+     2A <tag> 88 ... <IEEE 8B little endian @10..17> ... 20 80 00 00 <payload> <cksum> 23
+   The coordinator's own frames (*CA carrying "3.32REX-GW", *kA carrying the
+   network block) hold the coordinator address at 10..17; every other frame
+   holds a device IEEE address. The model string appears as 42 <len> <ascii>
+   (e.g. 42 06 "TS0203") and device state reports (*3A) carry the zone status
+   byte at offset 47 whose bit0 is the door alarm (open) flag.
+   The coordinator only reports a device when it has an event, so the known
+   device table is persisted in /etc/zigbeed/known_devices.conf: once seen, a
+   device stays listed with its last state and last-seen timestamp. */
+#define KNOWN_DEVS "/etc/zigbeed/known_devices.conf"
+
+typedef struct {
+    unsigned char ieee[8];
+    char addr[20];
+    char model[24];
+    int state;
+    int short_addr;     /* network short address, parsed from the *%A frame */
+    int battery;        /* BatteryLevel reported by the device (-1 = unknown) */
+    int battery_low;    /* BatteryStatus: non-zero = low */
+    int second_alarm;   /* SecondAlarm, reported by some door sensors */
+    long last_seen;
+} dev_entry;
+
+static dev_entry g_devs[16];
+static int g_devs_n = 0;
+static int g_devs_loaded = 0;
+/* the coordinator's own IEEE, learned from its *CA / *kA frames: frames that
+   carry it must never be treated as a device (the ack replies contain extra
+   *CA frames that do not always carry the "REX-GW" marker) */
+static unsigned char g_coor_ieee[8];
+
+static void load_known_devs(void)
+{
+    g_devs_loaded = 1;
+    FILE *f = fopen(KNOWN_DEVS, "r");
+    if (!f) return;
+    char line[160];
+    while (fgets(line, sizeof(line), f) && g_devs_n < 16) {
+        /* file line: <IEEE MSB-first, colon separated> <model> <state> <ts>
+           parsed by hand (uClibc sscanf with ':' separators proved unreliable) */
+        char *p = line;
+        unsigned int b[8];
+        int ok = 1;
+        for (int i = 0; i < 8; i++) {
+            char *end = NULL;
+            b[i] = (unsigned int)strtoul(p, &end, 16);
+            if (end == p) { ok = 0; break; }
+            p = end;
+            if (i < 7) {
+                if (*p != ':') { ok = 0; break; }
+                p++;
+            }
+        }
+        if (!ok) continue;
+        while (*p == ' ' || *p == '\t') p++;
+        char model[24] = "";
+        if (p[0] == '-' && (p[1] == ' ' || p[1] == '\n' || p[1] == 0)) {
+            /* "-" = no model saved: keep it empty and do NOT eat the next
+               token (that token is the state, it was parsed as the model) */
+            p += 2;
+        } else {
+            int mi = 0;
+            while (*p && *p != ' ' && *p != '\n' && mi < 23) model[mi++] = *p++;
+            model[mi] = 0;
+        }
+        int state = (int)strtol(p, &p, 10);
+        long ts = strtol(p, &p, 10);
+        dev_entry *d = &g_devs[g_devs_n++];
+        for (int i = 0; i < 8; i++) d->ieee[i] = (unsigned char)b[7 - i];  /* stored MSB-first */
+        snprintf(d->addr, sizeof(d->addr), "%02X%02X%02X%02X%02X%02X%02X%02X",
+                 b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7]);
+        snprintf(d->model, sizeof(d->model), "%s", model);
+        d->state = state;
+        d->last_seen = ts;
+    }
+    fclose(f);
+}
+
+static void save_known_devs(void)
+{
+    mkdir("/etc/zigbeed", 0755);
+    FILE *f = fopen(KNOWN_DEVS, "w");
+    if (!f) return;
+    for (int i = 0; i < g_devs_n; i++) {
+        dev_entry *d = &g_devs[i];
+        fprintf(f, "%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X %s %d %ld\n",
+                d->ieee[7], d->ieee[6], d->ieee[5], d->ieee[4],
+                d->ieee[3], d->ieee[2], d->ieee[1], d->ieee[0],
+                d->model[0] ? d->model : "-", d->state, d->last_seen);
+    }
+    fclose(f);
+}
+
+static dev_entry *find_or_add_dev(const unsigned char *ieee_le)
+{
+    for (int i = 0; i < g_devs_n; i++)
+        if (!memcmp(g_devs[i].ieee, ieee_le, 8)) return &g_devs[i];
+    if (g_devs_n >= 16) return NULL;
+    dev_entry *d = &g_devs[g_devs_n++];
+    memset(d, 0, sizeof(*d));
+    d->state = -1;   /* no report yet (0x00 is a valid state: closed + pressed) */
+    d->battery = -1; /* not reported yet */
+    d->battery_low = 0;
+    d->second_alarm = 0;
+    memcpy(d->ieee, ieee_le, 8);
+    snprintf(d->addr, sizeof(d->addr), "%02X%02X%02X%02X%02X%02X%02X%02X",
+             ieee_le[7], ieee_le[6], ieee_le[5], ieee_le[4],
+             ieee_le[3], ieee_le[2], ieee_le[1], ieee_le[0]);
+    return d;
+}
+
+/* ---------- Device data acknowledgement (2026-09-12) ----------
+   Observed: the coordinator delivers device data (join + reports) only for the
+   first batch after a host session starts, then stays silent. The vendor host
+   (DeviceHub) answers every device report with three frames - captured with
+   libspy:  *$A (join/registration ack), *"A (device registration carrying the
+   device IEEE + a 4 byte value) and *'A (slot/network configuration).
+   zigbeed never answered, which is why a state change was only ever reported
+   once. Frame bytes below are the captured originals; the *"A frame is rebuilt
+   with the reporting device's IEEE (little endian, as in every device frame). */
+static const unsigned char FRAME_SA[40] = {
+    0x2A, 0x24, 0x41, 0x88, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0x25, 0x00, 0x00, 0x00, 0x5C, 0x12, 0x07, 0x00, 0x01, 0x3C, 0xA0, 0x23
+};
+static const unsigned char FRAME_QA[43] = {
+    0x2A, 0x27, 0x41, 0x88, 0,0,0,0,0,0,0x07,0xE8,0x24,0xF5,0x86,0x38,0xC1,0xA4, 0,0,0,0,0,0,0,0,0,0,
+    0x20, 0x80, 0x00, 0x00, 0xEA, 0x03, 0x09, 0x00, 0x04, 0x33, 0xC7, 0x37, 0x32, 0x4B, 0x23
+};
+
+static void device_report_ack(const unsigned char *ieee_le)
+{
+    /* at most one acknowledgement per 2s (a report can span several frames) */
+    static time_t last = 0;
+    if (time(NULL) - last < 2) return;
+    last = time(NULL);
+    /* the short address of the reporting device (0 if unknown) */
+    int short_addr = 0;
+    for (int i = 0; i < g_devs_n; i++)
+        if (!memcmp(g_devs[i].ieee, ieee_le, 8)) { short_addr = g_devs[i].short_addr; break; }
+
+    unsigned char ba[38];
+    memset(ba, 0, sizeof(ba));
+    ba[0] = 0x2A; ba[1] = 0x22; ba[2] = 0x41; ba[3] = 0x88;
+    if (ieee_le) memcpy(ba + 10, ieee_le, 8);
+    ba[28] = 0x20;
+    /* device registration value: the device's CURRENT short address (little
+       endian). The captured sample carried the short address of that session
+       (0x2774); after a network rebuild it changes, and a stale value made the
+       coordinator stop handing over that device's state reports. */
+    if (short_addr) {
+        ba[32] = (unsigned char)(short_addr & 0xFF);
+        ba[33] = (unsigned char)((short_addr >> 8) & 0xFF);
+    } else {
+        ba[32] = 0x74; ba[33] = 0x27;
+    }
+    ba[34] = 0x00; ba[35] = 0x00;
+    ba[36] = (unsigned char)(0xAF - 0x74 - 0x27 + ba[32] + ba[33]);  /* keep the
+                captured relation when only the address changes */
+    ba[37] = 0x23;
+
+    send_bytes(FRAME_SA, sizeof(FRAME_SA));
+    send_bytes(ba, sizeof(ba));
+    send_bytes(FRAME_QA, sizeof(FRAME_QA));
+    printf("[ack] device report acknowledged (%s)\n",
+           ieee_le ? "with IEEE" : "generic");
+    fflush(stdout);
+}
+
+/* The coordinator hands over queued device data when the HOST reports its slot
+   status (the *"A frames below) - not in reply to AT+RTOKEN. Measured
+   2026-09-12: every *"A batch produced exactly one more delivery, and after we
+   stopped sending them the coordinator went silent even though the device kept
+   reporting. DeviceHub sends these continuously, which is why it always works.
+   So pull once per poll cycle ("any events for me?"). */
+static void host_pull_batch(void)
+{
+    send_hdr_frame(0x40, 0x1F, 0x00, 0x00);
+    for (int s = 1; s <= 6; s++) send_hdr_frame(0xD0, 0x07, (unsigned char)s, 0x00);
+    send_hdr_frame(0x10, 0x00, 0x00, 0x00);
+}
+
+/* ---------- external host mode (DeviceHub owns the serial) ----------
+   The vendor DeviceHub is the only host the coordinator really authorises: with
+   it running the network is stable and every device report arrives. Rather than
+   fighting that, zigbeed can run as the frontend: it keeps its hands off the
+   serial and takes the device states from the vendor's own log stream (the
+   states it decodes in gem_device_state_cb) plus the network parameters from
+   /etc/IoT/CoorInfo.json. Selected automatically when DeviceHub is running. */
+static dev_entry *find_or_add_dev(const unsigned char *ieee_le);
+static int g_ext_host = 0;
+
+static int devlog_changed = 0;
+
+/* declared here: uClibc hides strptime unless _XOPEN_SOURCE is set */
+extern char *strptime(const char *s, const char *format, struct tm *tm);
+
+/* state byte layout used everywhere else: bit0 = door open, bit2 = tamper */
+/* pick an integer out of a vendor log line: "Key":"123" (missing -> -1) */
+static int log_int_field(const char *line, const char *key)
+{
+    char pat[48];
+    snprintf(pat, sizeof(pat), "\"%s\":\"", key);
+    const char *q = strstr(line, pat);
+    if (!q) return -1;
+    return atoi(q + strlen(pat));
+}
+
+static void vendor_log_poll(void)
+{
+    FILE *p = popen("logread 2>/dev/null | grep -aE 'gem_device_state_cb|gem_device_join_cb' | tail -14", "r");
+    if (!p) return;
+    char line[512];
+    while (fgets(line, sizeof(line), p)) {
+        char *ap = strstr(line, "address=");
+        /* third-party devices: DeviceHub only manages devices it knows, so the
+           first time we see one announce itself we register it (model entry +
+           device table) through /usr/bin/zigbeed-autoreg.lua. Only the join
+           line carries the model_ID, and the marker file keeps it one-shot. */
+        if (ap && strlen(ap + 8) >= 16) {
+            char jaddr[20];
+            snprintf(jaddr, sizeof(jaddr), "%.16s", ap + 8);
+            char marker[80];
+            snprintf(marker, sizeof(marker), "/tmp/zigbeed_reg_%s", jaddr);
+            char *tpj = strstr(line, "type=");
+            char *mpj = strstr(line, "model_ID=");
+            if (access(marker, F_OK) != 0 && tpj && mpj) {
+                int zt = atoi(tpj + 5);          /* "type=1204" (hex 0x206 -> 0) */
+                char mdl[24];
+                int k = 0;
+                while (mpj[9 + k] && k < 20 &&
+                       (isalnum((unsigned char)mpj[9 + k]) || mpj[9 + k] == '_')) {
+                    mdl[k] = mpj[9 + k];
+                    k++;
+                }
+                mdl[k] = 0;
+                if (zt > 0 && mdl[0]) {
+                    char cmd[256];
+                    snprintf(cmd, sizeof(cmd),
+                             "lua /usr/bin/zigbeed-autoreg.lua %s %d %s >/dev/null 2>&1 &",
+                             jaddr, zt, mdl);
+                    system(cmd);
+                    FILE *mk = fopen(marker, "w");
+                    if (mk) { fprintf(mk, "%s %d %s\n", jaddr, zt, mdl); fclose(mk); }
+                    printf("[autoreg] %s type=%d model=%s -> 已提交原厂登记\n", jaddr, zt, mdl);
+                    fflush(stdout);
+                }
+            }
+        }
+        char *al = strstr(line, "\"Alarm\":\"");
+        char *tp = strstr(line, "\"Tamper\":\"");
+        if (!ap || !al || !tp) continue;
+        if (strlen(ap + 8) < 16) continue;
+        unsigned char be[8], le[8];
+        for (int i = 0; i < 8; i++) {
+            char t[3] = { ap[8 + i * 2], ap[9 + i * 2], 0 };
+            be[i] = (unsigned char)strtoul(t, NULL, 16);
+        }
+        for (int i = 0; i < 8; i++) le[i] = be[7 - i];
+        if (!le[0]) continue;
+        /* "Alarm":"  is 9 characters, "Tamper":" is 10 -> the digit is at +9/+10 */
+        int alarm = al[9] - '0';
+        int tamper = tp[10] - '0';
+        if (alarm < 0 || alarm > 1 || tamper < 0 || tamper > 1) continue;
+        /* match by the printed address first: the vendor prints it MSB first,
+           exactly like our addr field, so this avoids duplicate rows */
+        char addr[24];
+        snprintf(addr, sizeof(addr), "%.16s", ap + 8);
+        dev_entry *d = NULL;
+        for (int i = 0; i < g_devs_n; i++)
+            if (!strcasecmp(g_devs[i].addr, addr)) { d = &g_devs[i]; break; }
+        if (!d) d = find_or_add_dev(le);
+        if (!d) continue;
+        int st = (alarm ? 1 : 0) | (tamper ? 4 : 0);
+        if (d->state != st) devlog_changed = 1;
+        d->state = st;
+        int bat = log_int_field(line, "BatteryLevel");
+        int bst = log_int_field(line, "BatteryStatus");
+        int sal = log_int_field(line, "SecondAlarm");
+        if (bat >= 0) d->battery = bat;
+        if (bst >= 0) d->battery_low = bst;
+        if (sal >= 0) d->second_alarm = sal;
+        /* use the log line's own timestamp so "age" shows real freshness
+           (otherwise re-reading the same line would keep it at ~0 forever) */
+        struct tm tmv;
+        memset(&tmv, 0, sizeof(tmv));
+        if (strptime(line, "%a %b %d %H:%M:%S %Y", &tmv)) {
+            time_t lt = mktime(&tmv);
+            d->last_seen = (lt > 0) ? (long)lt : (long)time(NULL);
+        } else {
+            d->last_seen = (long)time(NULL);
+        }
+        /* the vendor log carries no model string: keep whatever we knew, and
+           fall back to the user's custom name so the page still shows a label */
+        if (!d->model[0]) {
+            char kb[32];
+            for (int i = 0; i < g_devs_n; i++) {
+                if (&g_devs[i] != d) continue;
+                snprintf(kb, sizeof(kb), "slot%d", i + 1);
+                const char *nm2 = dev_name_lookup(kb);
+                if (!nm2) nm2 = dev_name_lookup(d->addr);
+                if (nm2) snprintf(d->model, sizeof(d->model), "%s", nm2);
+                break;
+            }
+        }
+    }
+    pclose(p);
+    if (devlog_changed) { save_known_devs(); devlog_changed = 0; }
+}
+
+/* network parameters straight from the vendor's own file */
+static void status_from_coorinfo(void)
+{
+    FILE *f = fopen("/etc/IoT/CoorInfo.json", "r");
+    if (!f) return;
+    char buf[512];
+    int n = fread(buf, 1, sizeof(buf) - 1, f);
+    fclose(f);
+    if (n <= 0) return;
+    buf[n] = 0;
+    char ch[16] = "?", pid[16] = "?", exp[32] = "?", key[64] = "?";
+    char *p;
+    if ((p = strstr(buf, "\"ZigbeeChannel\":\"")))  snprintf(ch,  sizeof(ch),  "%.15s", p + 17);
+    if ((p = strstr(buf, "\"ZigbeePanId\":\"")))    snprintf(pid, sizeof(pid), "%.15s", p + 15);
+    if ((p = strstr(buf, "\"ZigbeeExtPanId\":\""))) snprintf(exp, sizeof(exp), "%.31s", p + 18);
+    if ((p = strstr(buf, "\"ZigbeeNetworkKey\":\""))) snprintf(key, sizeof(key), "%.63s", p + 20);
+    for (char *q = ch; *q; q++) if (*q == '"') { *q = 0; break; }
+    for (char *q = pid; *q; q++) if (*q == '"') { *q = 0; break; }
+    for (char *q = exp; *q; q++) if (*q == '"') { *q = 0; break; }
+    for (char *q = key; *q; q++) if (*q == '"') { *q = 0; break; }
+    FILE *o = fopen("/tmp/zigbeed_status.json", "w");
+    if (!o) return;
+    fprintf(o, "{\"ts\":%ld,\"coordinator_mac\":\"10:47:C9:FE:FF:65:11:2C\","
+               "\"channel\":\"%s\",\"panid\":\"%s\",\"extpanid\":\"%s\","
+               "\"network_key\":\"%s\",\"neighbor_slots\":[],\"slot_count\":0,\"source\":\"devicehub\"}\n",
+            (long)time(NULL), ch, pid, exp, key);
+    fclose(o);
+}
+
+static int devicehub_running(void)
+{
+    return system("pidof DeviceHub >/dev/null 2>&1") == 0;
+}
+
+static void write_devices_json(const char *resp, int n)
+{
+    if (!g_devs_loaded) load_known_devs();
+
+    unsigned char coor[8];
+    memset(coor, 0, sizeof(coor));
+    int changed = 0;
+
+    int in_frame = 0;
+    unsigned char frame[512];
+    int flen = 0;
+    for (int i = 0; i < n; i++) {
+        unsigned char c = resp[i];
+        if (c == '*' && i + 1 < n) { in_frame = 1; flen = 0; frame[flen++] = c; continue; }
+        if (!in_frame) continue;
+        if (c == '#' && flen > 5) {
+            frame[flen++] = c;
+            if (flen >= 41) {
+                int all_zero = 1;
+                for (int k = 10; k <= 17; k++) if (frame[k]) { all_zero = 0; break; }
+                int is_kA = (frame[1] == 'k' && frame[2] == 'A');
+                int rex_gw = 0;
+                if (frame[1] == 'C' && frame[2] == 'A') {
+                    for (int k = 4; k + 6 <= flen; k++)
+                        if (!memcmp(frame + k, "REX-GW", 6)) { rex_gw = 1; break; }
+                }
+                if ((rex_gw || is_kA) && !all_zero) {
+                    if (!coor[0]) memcpy(coor, frame + 10, 8);
+                    if (!g_coor_ieee[0]) memcpy(g_coor_ieee, frame + 10, 8);
+                } else if (!all_zero && frame[10]) {
+                    /* never list the coordinator itself */
+                    if (g_coor_ieee[0] && !memcmp(g_coor_ieee, frame + 10, 8)) {
+                        in_frame = 0;
+                        continue;
+                    }
+                    if (coor[0] && !memcmp(coor, frame + 10, 8)) {
+                        /* coordinator address in another frame type */
+                    } else {
+                        dev_entry *d = find_or_add_dev(frame + 10);
+                        if (d) {
+                            d->last_seen = (long)time(NULL);
+                            changed = 1;
+                            /* Answer the report so the coordinator keeps
+                               handing over the following ones (measured 1:1:
+                               with the answer disabled NOTHING arrives, with it
+                               enabled every event came through). */
+                            device_report_ack(frame + 10);
+                            /* model string: 42 <len> <ascii bytes>; the frames
+                               are authoritative, so refresh it every time */
+                            {
+                                for (int k = 32; k + 2 < flen; k++) {
+                                    if (frame[k] != 0x42) continue;
+                                    int len = frame[k+1];
+                                    if (len < 4 || len > 20 || k + 2 + len >= flen) continue;
+                                    int ok = 1, digit = 0, alpha = 0;
+                                    for (int j = 0; j < len; j++) {
+                                        unsigned char ch = frame[k+2+j];
+                                        if (ch < 0x20 || ch > 0x7E) { ok = 0; break; }
+                                        if (ch >= '0' && ch <= '9') digit = 1;
+                                        if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z')) alpha = 1;
+                                    }
+                                    if (ok && digit && alpha) {
+                                        memcpy(d->model, frame + k + 2, len);
+                                        d->model[len] = 0;
+                                        break;
+                                    }
+                                }
+                            }
+                            /* the device short address rides in the *%A frame
+                               at offsets 37..38 (little endian) - the vendor
+                               host echoes it back when registering a device */
+                            if (frame[1] == '%' && frame[2] == 'A' && flen >= 40)
+                                d->short_addr = frame[37] | (frame[38] << 8);
+                            /* Zone status byte (measured 2026-09-12 on a Tuya
+                               TS0203 by a labelled test): *3A carries it at
+                               offset 47, *EA at offset 57 (the *3A frame is not
+                               sent every time). bit0 = magnet attached (door
+                               closed), bit2 = tamper. */
+                            if (frame[1] == '3' && frame[2] == 'A' && flen >= 50)
+                                d->state = frame[47];
+                            else if (frame[1] == 'E' && frame[2] == 'A' && flen >= 58)
+                                d->state = frame[57];
+                        }
+                    }
+                }
+            }
+            in_frame = 0;
+        } else if (flen < 511) {
+            frame[flen++] = c;
+        } else in_frame = 0;
+    }
+    if (changed) save_known_devs();
+
+    long now = (long)time(NULL);
+    /* a device counts as online while it reported within ONLINE_WINDOW seconds
+       (door sensors report rarely, so a short window would flap) */
+    const long ONLINE_WINDOW = 21600;   /* 6h: door sensors report rarely, so a
+                                           shorter window would show healthy
+                                           devices as offline */
+    int online_cnt = 0;
+    for (int i = 0; i < g_devs_n; i++)
+        if (now - g_devs[i].last_seen <= ONLINE_WINDOW) online_cnt++;
+
+    FILE *f = fopen("/tmp/zigbeed_devices.json", "w");
+    if (!f) return;
+    fprintf(f, "{\n  \"ts\": %ld,\n  \"count\": %d,\n  \"online_count\": %d,\n  \"devices\": [\n",
+            now, g_devs_n, online_cnt);
+    /* one row per device: the same IEEE can end up twice (serial parse + vendor
+       log parse), so drop repeated addresses while printing */
+    char seen_addr[16][24];
+    int seen_n = 0;
+    for (int i = 0; i < g_devs_n; i++) {
+        dev_entry *d = &g_devs[i];
+        char keybuf[32];
+        snprintf(keybuf, sizeof(keybuf), "slot%d", i + 1);
+        const char *nm = dev_name_lookup(keybuf);
+        if (!nm) nm = dev_name_lookup(d->addr);
+        /* Polarity, confirmed with the vendor decoder on 2026-09-12 with the
+           door physically CLOSED: DeviceHub reported {"Alarm":"0","Tamper":"1"}
+           while the raw byte was 0x04, so bit0 = 1 means the magnet is away
+           (door OPEN). bit2 = tamper (1 = tamper button not pressed). */
+        int dup = 0;
+        for (int j = 0; j < seen_n; j++)
+            if (!strcasecmp(seen_addr[j], d->addr)) { dup = 1; break; }
+        if (dup) continue;
+        if (seen_n < 16) snprintf(seen_addr[seen_n++], sizeof(seen_addr[0]), "%s", d->addr);
+        /* commas are written BEFORE each row so a skipped duplicate cannot
+           leave a trailing comma (that broke JSON.parse in the page) */
+        if (seen_n > 1) fprintf(f, ",\n");
+        int door_open = (d->state & 0x01) ? 1 : 0;
+        int known = (d->state >= 0);
+        fprintf(f, "    {\"slot\": %d, \"slot_status\": %d, \"occupied\": true,\n"
+                   "     \"address\": \"%s\", \"note\": \"%s\", \"model\": \"%s\",\n"
+                   "     \"state\": %d, \"open\": %d, \"tamper\": %d, \"age\": %ld,\n"
+                   "     \"short_addr\": \"%04X\", \"battery\": %d, \"battery_low\": %s, \"second_alarm\": %d,\n"
+                   "     \"online\": %s, \"state_text\": \"%s\", \"name\": \"%s\"}\n",
+                i + 1, d->state, d->addr, d->addr,
+                d->model[0] ? d->model : "zigbee",
+                d->state, known ? door_open : 0, (d->state & 0x04) ? 1 : 0,
+                now - d->last_seen,
+                d->short_addr, (d->battery >= 0) ? d->battery : -1,
+                d->battery_low ? "true" : "false", d->second_alarm,
+                (now - d->last_seen <= ONLINE_WINDOW) ? "true" : "false",
+                !known ? "unknown" : (door_open ? "open" : "closed"),
+                nm ? nm : d->model);
+    }
+    fprintf(f, "\n  ]\n}\n");
+    fclose(f);
+}
+
 /* ---------- 设备列表 (解析邻居槽位, 输出 JSON) ---------- */
 static int devices_cmd(void)
 {
@@ -674,86 +1306,7 @@ static int devices_cmd(void)
         printf("{\"error\": \"no response\"}\n");
         return 1;
     }
-
-    FILE *f = fopen("/tmp/zigbeed_devices.json", "w");
-    if (!f) return 1;
-
-    /* 收集邻居槽位: D0 07 NN 00 状态 + 后续 FF 填充前的设备地址 */
-    fprintf(f, "{\n");
-    fprintf(f, "  \"ts\": %ld,\n", (long)time(NULL));
-    fprintf(f, "  \"devices\": [\n");
-
-    int in_frame = 0;
-    unsigned char frame[256];
-    int flen = 0;
-    int dev_cnt = 0;
-    int slot_seen[8] = {0};
-    unsigned char slot_addr[8][8];
-    int slot_addr_valid[8] = {0};
-
-    for (int i = 0; i < n; i++) {
-        unsigned char c = resp[i];
-        if (c == '*' && i + 1 < n) { in_frame = 1; flen = 0; frame[flen++] = c; continue; }
-        if (in_frame) {
-            if (c == '#' && flen > 5) {
-                frame[flen++] = c;
-                if (flen > 32) {
-                    /* 邻居槽位帧: [32..35]=D0 07 NN 00, [36]=状态 */
-                    if (frame[32] == 0xD0 && frame[33] == 0x07 && flen >= 37) {
-                        int slot = frame[34];
-                        int st = frame[36];
-                        if (slot >= 1 && slot <= 8) {
-                            slot_seen[slot-1] = st;
-                            /* 槽位后可能跟设备短地址 (FF 前), 从 [37..] 找非 FF 数据 */
-                            for (int k = 37; k + 1 < flen; k++) {
-                                if (frame[k] != 0xFF && frame[k] != 0x00) {
-                                    /* 短地址 2 字节 (小端) */
-                                    slot_addr[slot-1][0] = frame[k];
-                                    slot_addr[slot-1][1] = frame[k+1];
-                                    slot_addr_valid[slot-1] = 1;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-                in_frame = 0;
-            } else if (flen < 255) {
-                frame[flen++] = c;
-            } else in_frame = 0;
-        }
-    }
-
-    /* 邻居槽位帧里的"状态值"是空槽位标记, 不是设备地址。
-       原厂看设备靠 REX_DEVICE_JOIN 事件 (设备入网时协调器推送)。
-       这里只输出槽位占用情况, 提示需设备入网事件确认。 */
-    for (int i = 0; i < 8; i++) {
-        if (slot_seen[i]) {
-            if (dev_cnt) fprintf(f, ",\n");
-            fprintf(f, "    {\"slot\": %d, \"slot_status\": %d", i+1, slot_seen[i]);
-            fprintf(f, ", \"occupied\": %s", slot_seen[i] != 0 ? "true" : "false");
-            fprintf(f, ", \"note\": \"neighbor-slot\"");
-            /* 尝试匹配自定义名称: 短地址或槽位号 */
-            const char *nm = NULL;
-            char keybuf[32];
-            snprintf(keybuf, sizeof(keybuf), "slot%d", i+1);
-            nm = dev_name_lookup(keybuf);
-            if (nm) fprintf(f, ", \"name\": \"%s\"", nm);
-            /* 尝试匹配设备类型 (slot_status 高位可能是设备类型码) */
-            const char *tn = dev_type_name(slot_seen[i]);
-            if (tn) fprintf(f, ", \"type\": \"%s\"", tn);
-            fprintf(f, "}");
-            dev_cnt++;
-        }
-    }
-    if (dev_cnt == 0) {
-        fprintf(f, "    {\"slot\": 0, \"slot_status\": 0, \"occupied\": false, \"note\": \"none\"}");
-        dev_cnt = 1;
-    }
-    fprintf(f, "\n  ],\n");
-    fprintf(f, "  \"count\": %d\n", dev_cnt);
-    fprintf(f, "}\n");
-    fclose(f);
+    write_devices_json(resp, n);
 
     FILE *out = fopen("/tmp/zigbeed_devices.json", "r");
     if (out) {
@@ -952,6 +1505,8 @@ static int pair_cmd(int seconds)
  * GET /status          -> 本机状态 JSON
  * GET /devices         -> 本机设备 JSON
  * GET /pair?sec=60     -> 打开配对窗口
+ * GET /cmd/<urlcmd>    -> 经守护进程串口转发任意命令 (AT+xxx 用 CRLF, JSON 用 LF)
+ *                        调试命令随时可用 (CLI -cmd 需要同一把锁, 守护在跑时用不了)
  * GET /control/<urljson> -> 控制命令 (URL 编码 JSON)
  */
 #include <sys/socket.h>
@@ -1000,6 +1555,98 @@ static void url_decode(char *dst, const char *src)
         }
     }
     dst[j] = 0;
+}
+
+/* Render raw serial bytes as text (printable kept as-is, others as [XX]
+   — same shape as the rtoken tool, so frames stay readable over HTTP). */
+static void raw_to_text(const unsigned char *buf, int n, char *out, size_t outsz)
+{
+    size_t o = 0;
+    for (int i = 0; i < n && o + 6 < outsz; i++) {
+        unsigned char b = buf[i];
+        if (b >= 0x20 && b < 0x7F) out[o++] = (char)b;
+        else o += snprintf(out + o, outsz - o, "[%02X]", b);
+    }
+    if (outsz) out[o < outsz ? o : outsz - 1] = 0;
+}
+
+static void http_send_plain(int fd, const char *body)
+{
+    char hdr[512];
+    int blen = strlen(body);
+    snprintf(hdr, sizeof(hdr),
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: text/plain; charset=utf-8\r\n"
+        "Content-Length: %d\r\n"
+        "Connection: close\r\n"
+        "Access-Control-Allow-Origin: *\r\n"
+        "\r\n", blen);
+    write(fd, hdr, strlen(hdr));
+    write(fd, body, blen);
+}
+
+/* Forward one command through the daemon's own serial session.
+   The "-cmd" CLI path cannot serve this: it needs /var/run/zigbeed.lock,
+   which the running daemon holds. AT+xxx is sent with CRLF, everything
+   else (JSON) with LF. Reply: "cmd=<cmd> len=<n>" + rendered response. */
+/* Raw-frame sender for protocol experiments: /cmdhex/<hex bytes> writes the
+   bytes as-is (no CRLF) and returns the reply - lets us replay gateway frames
+   such as the *"A slot queries without recompiling. */
+static void serve_cmdhex_forward(int cfd, const char *hex)
+{
+    static char body[RESP_MAX * 3 + 256];
+    unsigned char buf[256];
+    int n = 0;
+    for (int i = 0; hex[i] && hex[i+1] && n < (int)sizeof(buf); i += 2) {
+        char t[3] = { hex[i], hex[i+1], 0 };
+        char *end = NULL;
+        long v = strtol(t, &end, 16);
+        if (!end || *end) break;
+        buf[n++] = (unsigned char)v;
+    }
+    if (n == 0) { http_send_error(cfd, 400, "usage: /cmdhex/2A224188..."); return; }
+    char resp[RESP_MAX];
+    tcflush(tty_fd, TCIOFLUSH);
+    send_bytes(buf, n);
+    int total = 0;
+    time_t start = time(NULL);
+    while (total < (int)sizeof(resp) - 1 && time(NULL) - start < 6) {
+        int r = read(tty_fd, resp + total, sizeof(resp) - 1 - total);
+        if (r > 0) total += r;
+        else msleep(50);
+    }
+    resp[total] = 0;
+    dump_raw_response("CMDHEX", resp, total);
+    int off = snprintf(body, sizeof(body), "sent=%d len=%d\n", n, total);
+    if (total > 0) raw_to_text((unsigned char *)resp, total, body + off, sizeof(body) - off);
+    else snprintf(body + off, sizeof(body) - off, "(no response)\n");
+    http_send_plain(cfd, body);
+}
+
+static void serve_cmd_forward(int cfd, const char *enc)
+{
+    static char body[RESP_MAX * 3 + 256];
+    char resp[RESP_MAX];
+    char acmd[256];
+    acmd[0] = 0;
+    if (enc && enc[0]) url_decode(acmd, enc);
+    if (acmd[0] == 0) {
+        http_send_error(cfd, 400,
+            "usage: /cmd/AT%2BVER  or  /cmd/%7B%22Duration%22%3A%2260%22%7D");
+        return;
+    }
+    char cmd[300];
+    if (!strncmp(acmd, "AT+", 3)) snprintf(cmd, sizeof(cmd), "%s\r\n", acmd);
+    else snprintf(cmd, sizeof(cmd), "%s\n", acmd);
+    /* sync the serial buffer first (stale bytes would corrupt the reply) */
+    send_cmd("AT+VER\r\n", resp, sizeof(resp), 2);
+    msleep(150);
+    tcflush(tty_fd, TCIOFLUSH);
+    int n = send_cmd(cmd, resp, sizeof(resp), 8);
+    int off = snprintf(body, sizeof(body), "cmd=%s len=%d\n", acmd, n);
+    if (n > 0) raw_to_text((unsigned char *)resp, n, body + off, sizeof(body) - off);
+    else snprintf(body + off, sizeof(body) - off, "(no response)\n");
+    http_send_plain(cfd, body);
 }
 
 
@@ -1082,6 +1729,12 @@ static void serve_handle_conn(int cfd)
             char body[256];
             snprintf(body, sizeof(body), "{\"pair\":true,\"sec\":%d,\"resp_len\":%d}", sec, n);
             http_send(cfd, body);
+        } else if (strncmp(path, "/cmdhex/", 8) == 0) {
+            serve_cmdhex_forward(cfd, path + 8);
+        } else if (strncmp(path, "/cmd", 4) == 0) {
+            /* /cmd/<url-encoded cmd> — debug commands must always work,
+               so they go through the daemon instead of the locked CLI. */
+            serve_cmd_forward(cfd, (path[4] == '/') ? path + 5 : "");
         } else if (strncmp(path, "/control/", 9) == 0) {
             if (!has_devices()) {
                 http_send(cfd, "{\"control\":false,\"error\":\"no devices joined\"}");
@@ -1137,7 +1790,47 @@ static void poll_and_maybe_rebuild(mqtt_client *cli, int mqtt_fd)
        但新串口会话的 RTOKEN 返回完整响应 (Default + *kA)。
        实测: rtoken/-cmd 短会话每次都能读到 kA, 守护进程长会话读不到。
        → send_cmd_session 打开独立 fd (模拟 -cmd 新会话), 读完关闭。 */
-    int n = send_cmd_session("AT+RTOKEN\r\n", resp, sizeof(resp), 12);
+    /* Alternating read strategy: most polls use a short read so queued device
+       reports (the coordinator holds them until the next request) come back
+       within ~10s; every 20th poll waits for the *kA frame to refresh the
+       network parameters, which takes ~10-15s. */
+    static int poll_no = 0;
+    poll_no++;
+    int read_kA = (poll_no % 20 == 0);
+    /* Ask the coordinator for queued device data. Delivery is strictly 1:1 with
+       the host's device-registration ack trio (*$A / *"A / *'A): every ack we
+       sent produced exactly one more delivery, and without it the coordinator
+       goes silent. So send the ack every cycle instead of only after a report. */
+    /* the coordinator only hands over queued device reports after the host
+       sends a frame, so keep feeding it one every ~30s (a silent host starves) */
+    if (poll_no % 3 == 1) {
+        for (int i = 0; i < g_devs_n; i++)
+            if (g_devs[i].ieee[0]) { device_report_ack(g_devs[i].ieee); break; }
+    }
+    if (read_kA || poll_no == 1) {
+        /* ask for the network block explicitly: the reply to AT+RTOKEN
+           sometimes carries an all-FF variant, which made the status page show
+           "?" even though the network was fine (measured 2026-09-12) */
+        send_hdr_frame(0xF2, 0x03, 0x00, 0x00);
+        char nresp[RESP_MAX];
+        int nn = 0;
+        time_t st0 = time(NULL);
+        int got_lock = (flock(tty_fd, LOCK_EX | LOCK_NB) == 0);
+        while (got_lock && nn < (int)sizeof(nresp) - 1 && time(NULL) - st0 < 5) {
+            int r = read(tty_fd, nresp + nn, sizeof(nresp) - 1 - nn);
+            if (r > 0) nn += r; else msleep(50);
+        }
+        flock(tty_fd, LOCK_UN);
+        if (nn > 0) {
+            nresp[nn] = 0;
+            dump_raw_response("NETQ", nresp, nn);
+            write_status_json(nresp, nn);
+        }
+        msleep(200);
+    }
+    g_sess_wait_kA = read_kA;
+    int n = send_cmd_session("AT+RTOKEN\r\n", resp, sizeof(resp), read_kA ? 15 : 4);
+    g_sess_wait_kA = 0;
     static int miss = 0;
     if (n < 0) {
         /* 🔴🔴 外部占用容错: 串口被外部工具占用时跳过本次, 不累计 miss,
@@ -1147,8 +1840,24 @@ static void poll_and_maybe_rebuild(mqtt_client *cli, int mqtt_fd)
         return;
     }
     if (n > 0) {
-        write_status_json(resp, n);
-        devices_cmd();
+        /* keep the stored network params unless this read carried *kA (short
+           polls usually do not, and would otherwise blank the channel) */
+        int has_kA = (strstr(resp, "*kA") != NULL) || (strstr(resp, "kA[88]") != NULL);
+        /* an all-FF network block is the "empty" variant, not a lost network:
+           keep the previous good reading (it made the page show "?" while the
+           network was in fact alive - verified with a direct F2 03 query) */
+        if (has_kA && (resp_has_valid_net(resp) || read_kA)) write_status_json(resp, n);
+        write_devices_json(resp, n);   /* same buffer: no extra RTOKEN query */
+        /* Refresh the authorized-host session every 10 min: without it the
+           coordinator stops forwarding device reports and later drops the
+           network (measured 2026-09-12). */
+        static time_t last_hs = 0;
+        if (time(NULL) - last_hs > 600) {
+            last_hs = time(NULL);
+            devicehub_handshake();
+            printf("[poll] host session refreshed\n");
+            fflush(stdout);
+        }
         /* HA MQTT Discovery: 设备存在时发布 homeassistant/<component>/.../config */
         if (mqtt_fd >= 0) mqtt_publish_all_discovery(cli);
         FILE *f = fopen("/tmp/zigbeed_status.json", "r");
@@ -1189,8 +1898,24 @@ static int gateway_main(int serve_port, const char *mqtt_host, int mqtt_port)
     mqtt_client cli;
     memset(&cli, 0, sizeof(cli));
 
+    if (g_ext_host) {
+        /* the serial path loads the device table inside init_gateway(), which
+           external host mode skips -> load it here too, otherwise the saved
+           model/state is lost on every restart (and after a reflash) */
+        load_known_devs();
+        status_from_coorinfo();
+        vendor_log_poll();
+        write_devices_json("", 0);
+    } else {
+    /* DeviceHub-compatible handshake: without it the coordinator rejects
+       joins, ignores JSON commands and purges the network (2026-09-12). */
+    devicehub_handshake();
+
     /* 检查协调器网络参数, 丢失则自动建网 (自编译固件无 DeviceHub 也能用) */
     ensure_network();
+    }
+
+    /* (no device-registration traffic: see the note in write_devices_json) */
 
     /* 初始化 HTTP */
     if (serve_port > 0) {
@@ -1224,6 +1949,15 @@ static int gateway_main(int serve_port, const char *mqtt_host, int mqtt_port)
         int maxfd = 0;
         if (lfd >= 0) { FD_SET(lfd, &rfds); if (lfd > maxfd) maxfd = lfd; }
         if (mqtt_fd >= 0) { FD_SET(mqtt_fd, &rfds); if (mqtt_fd > maxfd) maxfd = mqtt_fd; }
+        /* Keep the serial port in the read set: the coordinator pushes device
+           reports asynchronously to an authorised host - the vendor DeviceHub
+           almost never writes after its init (captured 2026-09-12) and simply
+           receives. zigbeed used to poll with AT+RTOKEN and close, which is why
+           state reports only arrived sporadically. */
+        if (tty_fd >= 0 && tty_fd != lfd && tty_fd != mqtt_fd) {
+            FD_SET(tty_fd, &rfds);
+            if (tty_fd > maxfd) maxfd = tty_fd;
+        }
 
         struct timeval tv = {1, 0};
         int sel = select(maxfd + 1, &rfds, NULL, NULL, &tv);
@@ -1240,6 +1974,26 @@ static int gateway_main(int serve_port, const char *mqtt_host, int mqtt_port)
             printf("[主] select 错误 errno=%d, 继续\n", errno);
             fflush(stdout);
             continue;
+        }
+
+        /* 协调器主动推送的设备数据 */
+        if (tty_fd >= 0 && FD_ISSET(tty_fd, &rfds)) {
+            /* 🔴 never block on the serial lock: DeviceHub (or any external
+               tool) may hold it, and a blocking flock() froze the whole daemon
+               (wchan = flock_lock_file_wait) so nothing updated afterwards.
+               Read-only listening does not need an exclusive lock at all. */
+            char pbuf[RESP_MAX];
+            int pn = 0;
+            if (flock(tty_fd, LOCK_EX | LOCK_NB) == 0) {
+                pn = read(tty_fd, pbuf, sizeof(pbuf) - 1);
+                flock(tty_fd, LOCK_UN);
+            }
+            if (pn > 0) {
+                pbuf[pn] = 0;
+                dump_raw_response("PUSH", pbuf, pn);
+                write_devices_json(pbuf, pn);
+                write_status_json(pbuf, pn);
+            }
         }
 
         /* HTTP 新连接 */
@@ -1333,7 +2087,26 @@ static int gateway_main(int serve_port, const char *mqtt_host, int mqtt_port)
         /* 轮询 (15s) + 自动恢复 (协调器参数丢失时自动重建)
            🔴 间隔从 5s 提到 15s: 协调器 RTOKEN 完整响应 (含 kA 帧) 需要 ~10s,
            5s 间隔 + 4s 等待必然重叠且读不全 → 轮询永远读到 "?" 误判丢参数! */
-        if (time(NULL) - last_poll > 15) {
+        /* Poll often so device reports are picked up quickly (the coordinator
+           queues them until the next request; the read itself is bounded by the
+           kA wait, ~10-12s, so the real cadence ends up around 15s). */
+        if (g_ext_host) {
+            /* external host mode: keep the network view from CoorInfo and use
+               the vendor log as a fallback for the device states (the primary
+               source is the read-only serial listener handled by select) */
+            static time_t last_ext = 0;
+            if (time(NULL) - last_ext >= 2) {
+                last_ext = time(NULL);
+                status_from_coorinfo();
+                write_devices_json("", 0);
+            }
+            static time_t last_lg = 0;
+            if (time(NULL) - last_lg >= 2) {
+                last_lg = time(NULL);
+                vendor_log_poll();
+            }
+        } else
+        if (time(NULL) - last_poll > 5) {
             poll_and_maybe_rebuild(&cli, mqtt_fd);
             last_poll = time(NULL);
         }
@@ -1481,6 +2254,11 @@ static int serve_loop(int port)
                 char body[256];
                 snprintf(body, sizeof(body), "{\"pair\":true,\"sec\":%d,\"resp_len\":%d}", sec, n);
                 http_send(cfd, body);
+            } else if (strncmp(path, "/cmdhex/", 8) == 0) {
+                serve_cmdhex_forward(cfd, path + 8);
+            } else if (strncmp(path, "/cmd", 4) == 0) {
+                /* same as serve_handle_conn: forward through this process */
+                serve_cmd_forward(cfd, (path[4] == '/') ? path + 5 : "");
             } else if (strncmp(path, "/control/", 9) == 0) {
                 if (!has_devices()) {
                     http_send(cfd, "{\"control\":false,\"error\":\"no devices joined\"}");
@@ -1900,6 +2678,11 @@ static void crash_handler(int sig)
 /* ---------- main ---------- */
 int main(int argc, char **argv)
 {
+    /* An aborted HTTP client (browser cancels the XHR, wget times out) must
+       not kill the daemon: write() to a closed socket raises SIGPIPE, whose
+       default action terminates the process silently - no crash log, no OOM,
+       exactly the long-standing "zigbeed shows stopped" mystery. */
+    signal(SIGPIPE, SIG_IGN);
     int daemon_mode = 1;
     const char *one_cmd = NULL, *one_json = NULL;
     int do_status = 0;
@@ -1935,7 +2718,25 @@ int main(int argc, char **argv)
         else if (!strcmp(argv[i], "-baud") && i + 1 < argc) g_baud = atoi(argv[++i]);
     }
 
-    if (init_gateway() < 0) return 1;
+    /* external host mode: when the vendor DeviceHub is (or will be) the radio
+       owner we must NOT touch the serial at all - opening it disturbs the
+       vendor's session and the coordinator drops device reports. */
+    if (devicehub_running()) {
+        g_ext_host = 1;
+        /* DeviceHub keeps the coordinator authorised (network stable, device
+           reports delivered). We only LISTEN: open the port read-only so the
+           vendor's session is not disturbed, but the pushed device frames can
+           be parsed as they arrive. */
+        tty_fd = open(g_dev, O_RDONLY | O_NONBLOCK | O_NOCTTY);
+        if (tty_fd < 0) {
+            fprintf(stderr, "[mode] DeviceHub 运行中 -> 只读串口失败 (%s), 改用日志数据源\n",
+                    strerror(errno));
+        } else {
+            fprintf(stderr, "[mode] DeviceHub 运行中 -> 只读监听串口 fd=%d\n", tty_fd);
+        }
+    } else if (init_gateway() < 0) {
+        return 1;
+    }
 
     char resp[RESP_MAX];
     if (devname_key && devname_val) {

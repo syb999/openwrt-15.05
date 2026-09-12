@@ -1,21 +1,27 @@
 #!/bin/sh /etc/rc.common
-# zigbeed - independent Zigbee gateway daemon (EFR32MG1B coordinator)
-# 重要: 不用 USE_PROCD (rc.common procd 分支在这固件有问题, 且 procd respawn
-#       会在进程退出后自动拉起 → 串口断开 → 协调器固件恢复默认并清 NVRAM!)
-# 用旧风格 start()/stop() + 手动后台启动, 进程保持常驻
+# zigbeed - Zigbee gateway frontend (EFR32MG1B coordinator)
+#
+# Architecture (2026-09-12): the vendor DeviceHub is the permanent radio owner.
+# Only its host session is fully authorised by the coordinator, so with it
+# running the network stays intact and every device report arrives. zigbeed
+# detects DeviceHub (pidof) and then works as the frontend: it does not touch
+# the serial port and takes the device states from the vendor's log stream
+# (gem_device_state_cb) plus the network parameters from /etc/IoT/CoorInfo.json.
+# Without DeviceHub it falls back to owning the serial itself.
+#
+# START order: devicehub (93) -> zigbeed (96)
 
-START=95
+START=96
 STOP=10
 
 PROG=/usr/bin/zigbeed
 PIDFILE=/var/run/zigbeed.pid
 
 start() {
-	# stop vendor DeviceHub if present (it owns ttyS1)
-	if [ -x /etc/init.d/DeviceHub ]; then
-		/etc/init.d/DeviceHub stop 2>/dev/null
+	# make sure the radio owner is up first
+	if [ -x /etc/init.d/devicehub ]; then
+		pidof DeviceHub >/dev/null 2>&1 || /etc/init.d/devicehub start
 	fi
-	killall DeviceHub 2>/dev/null
 	sleep 1
 
 	config_load zigbeed
@@ -29,7 +35,7 @@ start() {
 	local ARGS="-d -serve 8888"
 	[ "$mqtt" -eq 1 ] && ARGS="$ARGS -mqtt $mqtt_host $mqtt_port"
 
-	# 已在运行则跳过 (绝不重复启动, 避免串口冲突)
+	# already running? never start twice (serial conflicts)
 	if [ -f "$PIDFILE" ] && kill -0 "$(cat $PIDFILE)" 2>/dev/null; then
 		return 0
 	fi

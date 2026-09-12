@@ -77,7 +77,8 @@ function zg_rebuild() {
 		var t = 0;
 		var iv = setInterval(function() {
 			t += 5;
-			if (t > 150) { clearInterval(iv); el.textContent = '<%:Timeout, check /tmp/zigbeed_rebuild.log%>'; return; }
+			if (t > 600) { clearInterval(iv); el.textContent = '<%:Timeout, check /tmp/zigbeed_rebuild.log%>' + ' (' + t + 's)'; return; }
+			el.textContent = '<%:Rebuild started, checking...%>' + ' ' + t + 's';
 			XHR.get(ZG_ACT + '/rebuild_status', null, function(xhr2, d2) {
 				try {
 					var o2 = JSON.parse(xhr2.responseText);

@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zigbee 设备状态</title>
+<style>
+  :root { --bg:#0f1115; --card:#1b1f27; --fg:#eef2f7; --dim:#9aa4b2; --ok:#2ecc71; --warn:#ff5252; --amber:#f5a623; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg);
+         font-family: "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif; padding:18px; }
+  header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
+  h1 { font-size:26px; margin:0; letter-spacing:1px; }
+  #meta { font-size:16px; color:var(--dim); }
+  .btns { display:flex; gap:10px; align-items:center; }
+  button { font-size:18px; padding:10px 18px; border-radius:10px; border:1px solid #38404d;
+           background:#232a34; color:var(--fg); cursor:pointer; }
+  button.on { background:#1e3a2a; border-color:var(--ok); color:#bff5d2; }
+  .level { font-size:16px; color:var(--dim); }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(340px, 1fr)); gap:16px; }
+  .card { background:var(--card); border-radius:16px; padding:20px 22px; border:2px solid #2a303a; transition:background .2s; }
+  .card.open { border-color:var(--warn); box-shadow:0 0 28px rgba(255,82,82,.35); }
+  .card.alarming { animation: blink 1s steps(2, start) infinite; }
+  @keyframes blink { 0%,100% { background:#2a1416; } 50% { background:#5a1f24; } }
+  .flash { animation: fl .45s ease-in-out 3; }
+  @keyframes fl { 0%,100%{background:var(--card)} 50%{background:#3a1f22} }
+  .name { font-size:22px; color:var(--dim); margin-bottom:6px; }
+  .state { font-size:64px; font-weight:800; line-height:1.15; letter-spacing:2px; }
+  .state.open { color:var(--warn); }
+  .state.closed { color:var(--ok); }
+  .timer { margin-top:10px; display:flex; align-items:baseline; gap:12px; }
+  .timer .lbl { font-size:20px; color:var(--dim); }
+  .timer .val { font-size:44px; font-weight:800; font-variant-numeric:tabular-nums;
+                letter-spacing:2px; color:var(--ok); }
+  .timer.running .val { color:var(--amber); }
+  .timer.over .val { color:var(--warn); }
+  .sub { display:flex; gap:18px; flex-wrap:wrap; margin-top:14px; font-size:22px; }
+  .tag { padding:4px 12px; border-radius:20px; font-size:20px; background:#232a34; border:1px solid #38404d; }
+  .tag.bad { background:#3a1f22; border-color:var(--warn); color:#ffc9c9; }
+  .tag.good { background:#1e3a2a; border-color:var(--ok); color:#bff5d2; }
+  .age { font-size:18px; color:var(--dim); margin-top:10px; }
+  .stale { color:var(--amber); font-weight:700; }
+  #err { display:none; margin-top:14px; padding:12px 16px; border-radius:10px;
+         background:#3a1f22; border:1px solid var(--warn); font-size:18px; }
+  #hint { font-size:15px; color:var(--dim); margin-top:8px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Zigbee 设备状态</h1>
+  <div class="btns">
+    <button id="snd" onclick="toggleSound()">🔔 开启声音提醒</button>
+    <button id="tst" onclick="testSound()">🔊 测试声音</button>
+    <span class="level" id="lvl">音量：--</span>
+    <span id="meta">连接中…</span>
+  </div>
+</header>
+<div id="err"></div>
+<div id="hint">提示：浏览器要求先点一次「开启声音提醒」才允许播放声音。门开着超过 1 分钟会每 30 秒用柔和音乐提醒一次，直到关门。</div>
+<div class="grid" id="grid"></div>
+
+<script>
+var API = 'http://' + location.hostname + ':8888/devices';
+var soundOn = false, actx = null, prev = {}, openSince = {}, lastAlarm = {}, firstRun = true;
+var REPEAT_AFTER = 60;    /* seconds open before repeating the alarm */
+var REPEAT_EVERY = 30;    /* seconds between gentle repeat reminders */
+
+/* ---------- audio: loud two-tone alarm ---------- */
+function initAudio() {
+  if (actx) return true;
+  try {
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+    var comp = actx.createDynamicsCompressor();
+    comp.threshold.value = -6; comp.ratio.value = 4;
+    master = actx.createGain(); master.gain.value = 0.9;
+    master.connect(comp); comp.connect(actx.destination);
+    unlockAudio();
+    return true;
+  } catch (e) { actx = null; return false; }
+}
+var master = null;
+
+/* iOS/Safari only really unlocks after a silent buffer is played inside a gesture */
+function unlockAudio() {
+  if (!actx) return;
+  try {
+    if (actx.state !== 'running') actx.resume();
+    var buf = actx.createBuffer(1, 1, 22050);
+    var src = actx.createBufferSource();
+    src.buffer = buf; src.connect(actx.destination); src.start(0);
+  } catch (e) {}
+}
+
+/* make sure the context is awake right before playing anything */
+function wake() {
+  if (!actx) return false;
+  if (actx.state !== 'running') { try { actx.resume(); } catch (e) {} }
+  return true;
+}
+
+/* 浏览器切后台会挂起音频；刷新页面也会丢"已开启"状态 -> 用 localStorage 记住，
+   并在任意一次点击/触摸时自动把它解锁回来（无需用户再点按钮） */
+document.addEventListener('visibilitychange', function () { if (!document.hidden) { ensureSound(); } });
+document.addEventListener('click', function () { ensureSound(); }, true);
+document.addEventListener('touchstart', function () { ensureSound(); }, true);
+
+function ensureSound() {                 /* 已开启则懒创建/解锁音频上下文 */
+  if (!soundOn) return;
+  if (!actx && !initAudio()) return;
+  unlockAudio();
+  var b = document.getElementById('snd');
+  if (b) { b.className = 'on'; b.textContent = '🔔 声音提醒已开启（点击可静音）'; }
+  var l = document.getElementById('lvl');
+  if (l) l.textContent = audioStateText();
+}
+
+function tone(freq, t0, dur, vol, type) {
+  var o = actx.createOscillator(), g = actx.createGain();
+  o.type = type || 'square';          /* square is much louder than sine */
+  o.frequency.value = freq;
+  o.connect(g); g.connect(master);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(vol, t0 + 0.01);
+  g.gain.setValueAtTime(vol, t0 + dur - 0.03);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.start(t0); o.stop(t0 + dur + 0.01);
+}
+
+/* ==================================================================
+   声音方案：离线合成 WAV -> 用 <audio> 元素播放
+   理由（踩坑记录）：WebAudio 的 WebAudio(sine/方波) 在手机上会被
+     ① 切后台/锁屏挂起  ② iOS 静音拨片静音  ③ 小喇叭对低频重放差
+   而 <audio> 走的是"媒体通道"：音量跟随媒体音量、不受静音拨片影响、
+   也不受 AudioContext 状态影响，所以最可靠。
+   音色仍是柔和的钟声（基频 + 两个泛音 + 指数衰减），只是频率取高一些
+   （1k~2kHz）——手机小喇叭在这个区间重放最好，听起来清楚又不刺耳。
+   ================================================================== */
+var wavCache = {};
+
+function synthWav(notes) {          /* notes: [[freq, startSec, durSec, gain], ...] */
+  var sr = 22050, total = 0;
+  notes.forEach(function (n) { total = Math.max(total, n[1] + n[2]); });
+  total += 0.15;
+  var len = Math.floor(total * sr);
+  var buf = new Float32Array(len);
+  notes.forEach(function (n) {
+    var f = n[0], t0 = n[1], dur = n[2], g0 = n[3] == null ? 0.5 : n[3];
+    var i0 = Math.floor(t0 * sr), i1 = Math.min(len, Math.floor((t0 + dur) * sr));
+    for (var i = i0; i < i1; i++) {
+      var t = (i - i0) / sr;
+      var env = 0.006 + (t < 0.012 ? (t / 0.012) : 0);          /* very short attack */
+      var dec = Math.exp(-t * (2.6 / dur));
+      var s = Math.sin(2 * Math.PI * f * t) * 1.00
+            + Math.sin(2 * Math.PI * f * 2 * t) * 0.30         /* bell overtone */
+            + Math.sin(2 * Math.PI * f * 3 * t) * 0.12;
+      buf[i] += s * dec * env * g0 * 0.55;
+    }
+  });
+  /* soft clip + 16bit PCM WAV */
+  var buf16 = new Int16Array(len);
+  for (var i = 0; i < len; i++) {
+    var v = Math.max(-1, Math.min(1, buf[i] * 1.15));
+    buf16[i] = v < 0 ? v * 0x8000 : v * 0x7FFF;
+  }
+  var bytes = new Uint8Array(44 + len * 2), dv = new DataView(bytes.buffer);
+  function ws(off, str) { for (var i = 0; i < str.length; i++) bytes[off + i] = str.charCodeAt(i); }
+  ws(0, 'RIFF'); dv.setUint32(4, 36 + len * 2, true); ws(8, 'WAVEfmt ');
+  dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true);
+  dv.setUint32(24, sr, true); dv.setUint32(28, sr * 2, true);
+  dv.setUint16(32, 2, true); dv.setUint16(34, 16, true);
+  ws(36, 'data'); dv.setUint32(40, len * 2, true);
+  for (var i = 0; i < len; i++) dv.setInt16(44 + i * 2, buf16[i], true);
+  return URL.createObjectURL(new Blob([bytes], { type: 'audio/wav' }));
+}
+
+function playSound(name, notes, volume) {
+  if (!soundOn) return false;
+  try {
+    if (!wavCache[name]) wavCache[name] = synthWav(notes);
+    var a = wavCache['el_' + name];
+    if (!a) {
+      a = new Audio(wavCache[name]);
+      a.preload = 'auto';
+      wavCache['el_' + name] = a;
+    }
+    a.volume = (volume == null) ? 0.95 : volume;
+    a.currentTime = 0;
+    var r = a.play();
+    if (r && r.catch) r.catch(function () { beepFallback(notes); });
+    return true;
+  } catch (e) { beepFallback(notes); return false; }
+}
+
+/* 万一 <audio> 被拦（少见的自动播放策略），退回 WebAudio */
+function beepFallback(notes) {
+  if (!actx || !wake()) return;
+  var t = actx.currentTime + 0.03;
+  notes.slice(0, 6).forEach(function (n) {
+    var o = actx.createOscillator(), g = actx.createGain();
+    o.type = 'sine'; o.frequency.value = n[0];
+    o.connect(g); g.connect(master);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(n[3] == null ? 0.5 : n[3], t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + n[2]);
+    o.start(t); o.stop(t + n[2] + 0.02);
+    t += 0.02;
+  });
+}
+
+/* 门开：上行琶音 G5-B5-D6-G6（784/988/1175/1568Hz）≈2.6s，钟声、清亮柔和 */
+function musicDoorOpen() { playSound('open', [[784, 0, 1.5, 0.85], [988, 0.42, 1.5, 0.85], [1175, 0.84, 1.6, 0.85], [1568, 1.26, 2.0, 0.9]], 0.95); }
+
+/* 门一直开着：每 30 秒一次柔和"叮—咚"（>5 分钟换高一组、加两音） */
+function musicStillOpen(seconds) {
+  if (seconds > 300) {
+    playSound('still2', [[1568, 0, 1.3, 0.85], [1175, 0.55, 1.7, 0.85], [1568, 1.35, 1.3, 0.8], [1175, 1.9, 1.7, 0.8]], 0.95);
+  } else {
+    playSound('still', [[1319, 0, 1.3, 0.85], [988, 0.6, 1.8, 0.85]], 0.95);
+  }
+}
+
+/* 关门：单声轻"叮" */
+function musicClosed() { playSound('close', [[1046, 0, 1.1, 0.7]], 0.75); }
+
+function initAudio() {
+  if (actx) return true;
+  try {
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+    var comp = actx.createDynamicsCompressor();
+    comp.threshold.value = -6; comp.ratio.value = 4;
+    master = actx.createGain(); master.gain.value = 0.9;
+    master.connect(comp); comp.connect(actx.destination);
+    unlockAudio();
+    return true;
+  } catch (e) { actx = null; return true; }   /* 仍可走 <audio> 方案 */
+}
+var master = null;
+
+function unlockAudio() {
+  if (!actx) return;
+  try {
+    if (actx.state !== 'running') actx.resume();
+    var buf = actx.createBuffer(1, 1, 22050);
+    var src = actx.createBufferSource();
+    src.buffer = buf; src.connect(actx.destination); src.start(0);
+  } catch (e) {}
+}
+
+function wake() {
+  if (!actx) return false;
+  if (actx.state !== 'running') { try { actx.resume(); } catch (e) {} }
+  return true;
+}
+
+/* 切后台回来 / 任意真实点击触摸 -> 保持音频可用（<audio> 方案其实不需要，但留着兜底） */
+document.addEventListener('visibilitychange', function () { if (!document.hidden) { ensureSound(); } });
+document.addEventListener('click', function () { ensureSound(); }, true);
+document.addEventListener('touchstart', function () { ensureSound(); }, true);
+
+function ensureSound() {
+  if (!soundOn) return;
+  if (!actx) initAudio();
+  unlockAudio();
+  var b = document.getElementById('snd');
+  if (b) { b.className = 'on'; b.textContent = '🔔 声音提醒已开启（点击可静音）'; }
+  var l = document.getElementById('lvl');
+  if (l) l.textContent = audioStateText();
+}
+
+/* 在用户点击的那一刻就把音频准备好（浏览器只允许在手势内解锁播放） */
+function primeAudio() {
+  var all = {
+    open:   [[784, 0, 1.5, 0.85], [988, 0.42, 1.5, 0.85], [1175, 0.84, 1.6, 0.85], [1568, 1.26, 2.0, 0.9]],
+    still:  [[1319, 0, 1.3, 0.85], [988, 0.6, 1.8, 0.85]],
+    still2: [[1568, 0, 1.3, 0.85], [1175, 0.55, 1.7, 0.85], [1568, 1.35, 1.3, 0.8], [1175, 1.9, 1.7, 0.8]],
+    close:  [[1046, 0, 1.1, 0.7]]
+  };
+  try {
+    Object.keys(all).forEach(function (k) {
+      if (!wavCache[k]) wavCache[k] = synthWav(all[k]);
+      if (!wavCache['el_' + k]) {
+        var a = new Audio(wavCache[k]);
+        a.preload = 'auto';
+        wavCache['el_' + k] = a;
+      }
+    });
+    /* 静音播一下 = 完成媒体通道解锁（之后就能程序化播放） */
+    var p = wavCache['el_close'];
+    p.volume = 0;
+    var r = p.play();
+    if (r && r.then) r.then(function () { p.pause(); p.currentTime = 0; p.volume = 0.75; })
+                       .catch(function () { p.volume = 0.75; });
+    else { p.pause(); p.volume = 0.75; }
+  } catch (e) {}
+}
+
+function audioStateText() {
+  if (!soundOn) return '音量：静音';
+  return (actx && actx.state === 'running') ? '音量：柔和 · 已解锁 ✓'
+         : '音量：柔和 · 点一下页面解锁';
+}
+
+/* 一键验证声音是否真的能响 */
+function testSound() {
+  if (!soundOn) { toggleSound(); }
+  if (!soundOn) return;
+  primeAudio();
+  unlockAudio();
+  musicDoorOpen();
+  document.getElementById('lvl').textContent = audioStateText();
+  setTimeout(function () { document.getElementById('lvl').textContent = audioStateText(); }, 400);
+}
+
+function toggleSound() {
+  if (!soundOn) {
+    if (!initAudio()) { document.getElementById('snd').textContent = '声音不可用'; return; }
+    soundOn = true;
+    try { localStorage.setItem('zg_sound', '1'); } catch (e) {}
+    document.getElementById('snd').className = 'on';
+    document.getElementById('snd').textContent = '🔔 声音提醒已开启（点击可静音）';
+    primeAudio();
+    document.getElementById('lvl').textContent = audioStateText();
+    musicClosed();
+  } else {
+    soundOn = false;
+    try { localStorage.setItem('zg_sound', '0'); } catch (e) {}
+    document.getElementById('snd').className = '';
+    document.getElementById('snd').textContent = '🔔 已静音（点击恢复）';
+    document.getElementById('lvl').textContent = audioStateText();
+  }
+}
+
+/* ---------- rendering ---------- */
+function esc(s) { return (s == null ? '' : String(s)).replace(/[&<>"]/g, function (c) {
+  return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
+
+function hms(sec) {
+  sec = Math.max(0, Math.floor(sec));
+  var h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), x = sec % 60;
+  var p = function (n) { return (n < 10 ? '0' : '') + n; };
+  return (h > 0 ? p(h) : '00') + ':' + p(m) + ':' + p(x);
+}
+/* 计时器每秒走一次（比轮询更顺滑） */
+setInterval(function () {
+  for (var k in openSince) {
+    var el = document.getElementById('tv_' + k);
+    if (el) el.textContent = hms(Date.now() / 1000 - openSince[k]);
+  }
+}, 1000);
+
+function render(d) {
+  var devs = d.devices || [], html = '', online = 0;
+  var now = Date.now() / 1000;
+  devs.forEach(function (dv) {
+    var st = dv.state_text || 'unknown';
+    var open = (st === 'open');
+    var stale = (dv.age != null && dv.age > 300);
+    if (dv.online) online++;
+    var label = open ? '门已开' : (st === 'closed') ? '门已关' : '未知';
+    var tamper = dv.tamper ? '<span class="tag bad">防拆：被拆下</span>'
+                           : '<span class="tag good">防拆：已装好</span>';
+    var bat = '<span class="tag' + ((typeof dv.battery === 'number' && dv.battery > 0 && dv.battery <= 10) ? ' bad' : (typeof dv.battery === 'number' && dv.battery > 0 ? ' good' : '')) + '">'
+            + (typeof dv.battery === 'number' && dv.battery > 0 ? ('电量 ' + dv.battery + '%') : '电量 —') + '</span>';
+    var age = (dv.age == null) ? '' : (dv.age < 120 ? dv.age + ' 秒前' :
+              (dv.age < 7200 ? Math.round(dv.age / 60) + ' 分钟前' : Math.round(dv.age / 3600) + ' 小时前'));
+    /* 门开着时先把起点定下来（门磁只在变化时上报，用 age 反推真实已开时长） */
+    if (open && !openSince[dv.address]) {
+      var ag = (typeof dv.age === 'number') ? Math.min(dv.age, 3600) : 0;
+      openSince[dv.address] = now - ag;
+      lastAlarm[dv.address] = now;
+    }
+    var secs = open ? Math.max(0, Math.floor(now - openSince[dv.address])) : 0;
+    var dur = '<div class="timer' + (open ? (secs > REPEAT_AFTER ? ' over' : ' running') : '') + '">'
+            +   '<span class="lbl">' + (open ? '已开时长' : '计时（关门归零）') + '</span>'
+            +   '<span class="val" id="tv_' + esc(dv.address) + '">' + hms(secs) + '</span>'
+            + '</div>';
+    var cls = 'card' + (open ? ' open' : '') + (open && openSince[dv.address] && (now - openSince[dv.address]) > REPEAT_AFTER ? ' alarming' : '');
+    html += '<div class="' + cls + '" id="c_' + esc(dv.address) + '">'
+         +  '<div class="name">' + esc((dv.name || dv.model || '') + ' ' + (dv.address || '')) + '</div>'
+         +  '<div class="state ' + (open ? 'open' : 'closed') + '">' + label + '</div>'
+         +  dur
+         +  '<div class="sub">' + tamper + bat + '</div>'
+         +  '<div class="age">最近上报：' + (stale ? '<span class="stale">' + age + '（可能不是最新）</span>' : age) + '</div>'
+         +  '</div>';
+  });
+  if (!html) html = '<div class="card"><div class="state">暂无设备</div></div>';
+  document.getElementById('grid').innerHTML = html;
+
+  /* ---------- alerts ---------- */
+  devs.forEach(function (dv) {
+    var k = dv.address, cur = dv.state_text, open = (cur === 'open');
+    if (open) {
+      var justOpened = (!firstRun && prev[k] && prev[k] !== 'open') || (firstRun && !prev[k]);
+      if (justOpened) { musicDoorOpen(); flash(k); }
+      var secs = now - (openSince[k] || now);
+      if (secs > REPEAT_AFTER && (now - (lastAlarm[k] || 0)) > REPEAT_EVERY) {
+        lastAlarm[k] = now;
+        musicStillOpen(secs);          /* 门开太久 -> 重复柔和提醒 */
+        flash(k);
+      }
+    } else {
+      if (!firstRun && prev[k] === 'open') musicClosed();
+      delete openSince[k]; delete lastAlarm[k];   /* 关门 -> 计时器清零 */
+    }
+    prev[k] = cur;
+  });
+  firstRun = false;
+  document.getElementById('meta').textContent = '在线 ' + online + ' / 共 ' + devs.length
+        + ' · 更新于 ' + new Date().toLocaleTimeString();
+  document.getElementById('err').style.display = 'none';
+}
+
+function flash(addr) {
+  var el = document.getElementById('c_' + addr);
+  if (!el) return;
+  el.className += ' flash';
+  setTimeout(function () { el.className = el.className.replace(' flash', ''); }, 1500);
+}
+
+setInterval(function () { if (soundOn) document.getElementById('lvl').textContent = audioStateText(); }, 3000);
+
+function poll() {
+  var x = new XMLHttpRequest();
+  x.onreadystatechange = function () {
+    if (x.readyState !== 4) return;
+    if (x.status === 200) { try { render(JSON.parse(x.responseText)); } catch (e) {} }
+    else { var e = document.getElementById('err'); e.style.display = 'block';
+           e.textContent = '读取失败（网关服务 8888 无响应）'; }
+  };
+  x.open('GET', API + '?_=' + Date.now(), true);
+  x.send(null);
+}
+/* 恢复上次的"声音提醒"开关（刷新/重开页面不再丢） */
+try { if (localStorage.getItem('zg_sound') === '1') { soundOn = true;
+      document.getElementById('snd').className = 'on';
+      document.getElementById('snd').textContent = '🔔 声音提醒已开启（点击可静音）';
+      document.getElementById('lvl').textContent = '音量：待解锁（点一下页面即可）'; } } catch (e) {}
+
+poll(); setInterval(poll, 2000);
+</script>
+</body>
+</html>

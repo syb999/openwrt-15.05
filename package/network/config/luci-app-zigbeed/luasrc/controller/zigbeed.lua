@@ -6,7 +6,6 @@ function index()
 	entry({"admin", "services", "zigbeed", "devices"}, template("zigbeed/devices"), _("Devices"), 20).leaf = true
 	entry({"admin", "services", "zigbeed", "control"}, template("zigbeed/control"), _("Control"), 30).leaf = true
 	entry({"admin", "services", "zigbeed", "settings"}, cbi("zigbeed"), _("Settings"), 40).leaf = true
-	entry({"admin", "services", "zigbeed", "debug"}, template("zigbeed/debug"), _("Debug"), 50).leaf = true
 	entry({"admin", "services", "zigbeed", "link"}, template("zigbeed/link"), _("Gateway Link"), 60).leaf = true
 
 	entry({"admin", "services", "zigbeed", "actions"}, call("act_dispatch"), nil).leaf = true
@@ -57,6 +56,10 @@ local ACTIONS = {
 	-- 状态 JSON
 	status = function()
 		return read_status()
+	end,
+	-- 设备列表 JSON (设备页 XHR 调 actions/devices; 缺这个动作页面只能显示 "error")
+	devices = function()
+		return read_devices()
 	end,
 	-- 服务状态 (进程 + 协调器 + 修复模式)
 	svcstatus = function()
@@ -112,15 +115,123 @@ local ACTIONS = {
 		if out == "" then out = '{"error":"zigbeed serve down (8888)"}' end
 		return out
 	end,
+	-- 配对窗口 (DeviceHub 版): 陌生设备入网需要原厂授权宿主会话, 窗口期间服务会重启
+	pair = function(arg)
+		local sec = tonumber(arg or "60")
+		if not sec or sec < 30 or sec > 900 then sec = 60 end
+		-- DeviceHub owns the radio permanently: a join window is just an ubus
+		-- call (instant, no service restart). It closes itself after ~75s.
+		if luci.sys.exec("pidof DeviceHub 2>/dev/null") ~= "" then
+			local out = luci.sys.exec("ubus call devicehub allowjoin '{\"sqno\":1,\"scanflag\":1,\"deviceSN\":\"\"}' 2>&1")
+			out = (out or ""):gsub("[\r\n]+", " ")
+			luci.sys.call("echo 'state=window remaining=" .. sec .. " updated='$(date +%s) > /tmp/zigbeed_pair_state")
+			return '{"pair":"started","sec":' .. sec .. ',"mode":"devicehub","resp":"' .. out .. '"}'
+		end
+		-- When the daemon already reports a valid channel, tell the script to
+		-- skip its own network check: that check stops/starts zigbeed (~50s of
+		-- pure waiting) and the script stops it again right afterwards.
+		local skip = "0"
+		local st = luci.sys.exec("cat /tmp/zigbeed_status.json 2>/dev/null")
+		local ch = tonumber(st:match('"channel":%s*"(%d+)"') or "")
+		if ch and ch >= 11 and ch <= 26 then skip = "1" end
+		luci.sys.call("sh /usr/bin/zigbeed-pair.sh " .. sec .. " " .. skip .. " > /tmp/zigbeed_pair_run.log 2>&1 &")
+		return '{"pair":"started","sec":' .. sec .. ',"skip_net":' .. skip .. ',"log":"/tmp/zigbeed_pair.log"}'
+	end,
+	-- 中止配对窗口: 杀掉配对脚本 + DeviceHub, 立刻把 zigbeed 起回来
+	pair_close = function()
+		if luci.sys.exec("pidof DeviceHub 2>/dev/null") ~= "" then
+			luci.sys.call("ubus call devicehub allowjoin '{\"sqno\":1,\"scanflag\":0,\"deviceSN\":\"\"}' >/dev/null 2>&1; echo 'state=done remaining=0 updated='$(date +%s) > /tmp/zigbeed_pair_state")
+			return 'pairing window closed'
+		end
+		luci.sys.call("killall zigbeed-pair.sh 2>/dev/null; sleep 1; killall DeviceHub 2>/dev/null; sleep 2; rm -f /tmp/zigbeed_pair.lock /var/run/zigbeed.lock /var/run/zigbeed.pid; /etc/init.d/zigbeed start 2>/dev/null")
+		return 'pairing window closed, zigbeed restarted'
+	end,
+	-- 配对进度 (日志尾部)
+	pair_status = function()
+		local st = luci.sys.exec("cat /tmp/zigbeed_pair_state 2>/dev/null")
+		-- the DeviceHub window closes itself after ~75s
+		local up = tonumber(st:match("updated=(%d+)") or "")
+		if up and (os.time() - up) > 80 then st = "state=done remaining=0" end
+		if luci.sys.exec("pidof DeviceHub 2>/dev/null") ~= "" then
+			local ev = luci.sys.exec("logread 2>/dev/null | grep -aE 'gem_device_join_cb|gem_device_state_cb' | tail -3 | sed 's/.*DeviceHub\\[[0-9]*\\]: *//'")
+			if ev == "" then ev = "waiting for the device to join..." end
+			return st .. "\n" .. ev
+		end
+		local out = luci.sys.exec("grep -aE '^\\[pair\\]|gem_device_join_cb|state written back' /tmp/zigbeed_pair.log 2>/dev/null | tail -5")
+		if st == "" and out == "" then out = "no pairing log yet" end
+		return st .. "\n" .. out
+	end,
 	-- 设备控制: control/<url-encoded json>, 经 zigbeed serve 8888
 	control = function(arg)
 		local j = arg or ""
 		if j == "" or j:find("[;&|]") then return '{"error":"bad json"}' end
+		-- DeviceHub owns the radio: control must go through its ubus API, because
+		-- zigbeed only listens on the serial in external host mode (it cannot
+		-- transmit AT/JSON commands any more).
+		if luci.sys.exec("pidof DeviceHub 2>/dev/null") ~= "" then
+			-- JSON module differs between LuCI versions (15.05 ships luci.jsonc)
+			local json = nil
+			do
+				local ok1, m1 = pcall(require, "luci.jsonc")
+				if ok1 and m1 and m1.parse then json = { decode = m1.parse } end
+				if not json then
+					local ok2, m2 = pcall(require, "luci.json")
+					if ok2 and m2 and m2.decode then json = m2 end
+				end
+			end
+			local cmd = (json and json.decode) and json.decode(j) or nil
+			if type(cmd) ~= "table" then return '{"error":"bad json"}' end
+			-- slot (our UI) -> device address
+			local addr = cmd.deviceId
+			if not addr and cmd.slot then
+				local f = io.open("/tmp/zigbeed_devices.json", "r")
+				if f then
+					local raw = f:read("*a"); f:close()
+					local dev = (json and json.decode) and json.decode(raw) or nil
+					for _, d in ipairs((dev and dev.devices) or {}) do
+						if tostring(d.slot) == tostring(cmd.slot) then addr = d.address break end
+					end
+				end
+			end
+			if not addr then return '{"error":"unknown slot"}' end
+			-- the vendor's mete id for this device type's on/off metric
+			local function sh(c) local p = io.popen(c .. " 2>&1"); if not p then return "" end
+				local o = p:read("*a") or ""; p:close(); return o end
+			local dtype = (sh("sqlite3 /etc/IoT/devicehub.db \"select device_type from iot_bas_device where deviceId='" .. addr .. "';\"") or "")
+				:gsub("%s", "")
+			if dtype == "" then return '{"error":"device not registered with the vendor"}' end
+			local meteId = nil
+			local mf = io.open("/etc/IoT/deviceMete.json", "r")
+			if mf then
+				local mraw = mf:read("*a"); mf:close()
+				local mj = (json and json.decode) and json.decode(mraw) or nil
+				for _, grp in ipairs((mj and mj.gem_metes) or {}) do
+					if tostring(grp.device_type) == dtype then
+						for _, m in ipairs(grp.metes or {}) do
+							-- mete_kind 4 = controllable, mete_type 6 = plain on/off
+							if m.mete_kind == 4 and (m.mete_type == 6 or (m.mete_name or ""):find("开关")) then
+								meteId = m.mete_Id
+								break
+							end
+						end
+					end
+					if meteId then break end
+				end
+			end
+			if not meteId then return '{"error":"this device type has no switch metric (sensor?)","device_type":' .. dtype .. '}' end
+			local value = 0
+			if cmd.State == "ON" or cmd.State == 1 or cmd.value == 1 then value = 1 end
+			local out = sh(string.format(
+				"ubus call devicehub dev_control '{\"sqno\":1,\"deviceId\":\"%s\",\"meteId\":\"%s\",\"value\":%d}'",
+				addr, meteId, value))
+			return '{"control":"devicehub","device":"' .. addr .. '","meteId":"' .. meteId .. '","value":' .. value .. ',"resp":"' ..
+				(out or ""):gsub("[\r\n]+", " ") .. '"}'
+		end
+		-- fallback: zigbeed owns the serial itself
 		local out = luci.sys.exec("wget -q -T 20 -O - 'http://127.0.0.1:8888/control/" .. urlencode(j) .. "' 2>&1")
 		if out == "" then out = '{"error":"zigbeed serve down (8888)"}' end
 		return out
 	end,
-	-- 重建协调器网络 (兜底: 临时起 DeviceHub 建网, 后台执行避免 LuCI 挂起)
 	rebuild = function(arg)
 		luci.sys.call("sh /usr/bin/zigbeed-rebuild.sh > /tmp/zigbeed_rebuild_run.log 2>&1 &")
 		return '{"rebuild":"started","log":"/tmp/zigbeed_rebuild.log"}'
@@ -234,7 +345,10 @@ local ACTIONS = {
 		   or cmd:match("SETMAC") or cmd:match("BOOTLOADER") then
 			return '{"error":"command blocked (dangerous)"}'
 		end
-		return luci.sys.exec("/usr/bin/zigbeed -cmd '" .. cmd .. "' 2>&1")
+		-- 经守护进程 8888 的 /cmd 转发 (CLI -cmd 需要同一把锁, 守护在跑时永远失败)
+		local out = luci.sys.exec("wget -q -T 20 -O - 'http://127.0.0.1:8888/cmd/" .. urlencode(cmd) .. "' 2>&1")
+		if out == "" then out = '{"error":"zigbeed serve down (8888)"}' end
+		return out
 	end,
 	-- 设置页: 保存
 	save = function(arg)
