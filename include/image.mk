@@ -229,6 +229,19 @@ define Image/gzip-ext4-padded-squashfs
 
 endef
 
+# mkfs.ubifs comes from tools/mtd-utils, which is still 1.5.2 in this tree and
+# predates --force-compr (added in mtd-utils 2.x). It selects the compressor
+# with -x/--compr instead, and it is built WITHOUT_LZO, so an explicit zlib
+# request has to survive the translation.
+MKUBIFS_FORCE_COMPR := $(shell $(STAGING_DIR_HOST)/bin/mkfs.ubifs --help 2>&1 | grep -q -- --force-compr && echo 1)
+UBIFS_COMPR_FLAGS := $(if $(MKUBIFS_FORCE_COMPR),\
+	$(if $(CONFIG_TARGET_UBIFS_COMPRESSION_NONE),--force-compr=none) \
+	$(if $(CONFIG_TARGET_UBIFS_COMPRESSION_LZO),--force-compr=lzo) \
+	$(if $(CONFIG_TARGET_UBIFS_COMPRESSION_ZLIB),--force-compr=zlib),\
+	$(if $(CONFIG_TARGET_UBIFS_COMPRESSION_NONE),-x none) \
+	$(if $(CONFIG_TARGET_UBIFS_COMPRESSION_LZO),-x lzo) \
+	$(if $(CONFIG_TARGET_UBIFS_COMPRESSION_ZLIB),-x zlib))
+
 ifneq ($(CONFIG_TARGET_ROOTFS_UBIFS),)
     define Image/mkfs/ubifs/generate
 	$(CP) ./ubinize$(1).cfg $(KDIR)
@@ -252,9 +265,7 @@ ifneq ($(CONFIG_TARGET_ROOTFS_UBIFS),)
 				$(shell echo $(UBIFS_OPTS)) \
 			) \
 			$(if $(CONFIG_TARGET_UBIFS_FREE_SPACE_FIXUP),--space-fixup) \
-			$(if $(CONFIG_TARGET_UBIFS_COMPRESSION_NONE),--force-compr=none) \
-			$(if $(CONFIG_TARGET_UBIFS_COMPRESSION_LZO),--force-compr=lzo) \
-			$(if $(CONFIG_TARGET_UBIFS_COMPRESSION_ZLIB),--force-compr=zlib) \
+			$(UBIFS_COMPR_FLAGS) \
 			$(if $(shell echo $(CONFIG_TARGET_UBIFS_JOURNAL_SIZE)),--jrn-size=$(CONFIG_TARGET_UBIFS_JOURNAL_SIZE)) \
 			--squash-uids \
 			-o $(KDIR)/root.ubifs \
