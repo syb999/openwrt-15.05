@@ -56,11 +56,11 @@
   </div>
 </header>
 <div id="err"></div>
-<div id="hint">提示：① 先点一次「开启声音提醒」；② <b>手机要保持本页面在前台</b>（息屏/切到别的 App 时，浏览器会暂停页面，届时不会响）；③ 手机静音开关（iPhone 侧边拨片）也会把声音静掉。</div>
-<div id="audio_warn" style="display:none;margin-top:10px;padding:12px 16px;border-radius:10px;background:#3a2a1f;border:1px solid var(--amber);font-size:18px;"></div>
+<div id="hint">提示：浏览器要求先点一次「开启声音提醒」才允许播放声音；手机请保持本页面在前台。门开着超过 1 分钟会用柔和音乐提醒，直到关门。</div></div>
 <div class="grid" id="grid"></div>
 
 <script>
+var AUDIO_V = 'v7';           /* 音效版本(仅 console 输出, 页面不显示) */
 var API = 'http://' + location.hostname + ':8888/devices';
 var soundOn = false, actx = null, prev = {}, openSince = {}, lastAlarm = {}, firstRun = true;
 var REPEAT_AFTER = 60;    /* seconds open before repeating the alarm */
@@ -139,7 +139,7 @@ function tone(freq, t0, dur, vol, type) {
 var wavCache = {};
 
 function synthWav(notes) {          /* notes: [[freq, startSec, durSec, gain], ...] */
-  var sr = 22050, total = 0;
+  var sr = 44100, total = 0;   /* 44.1kHz: 移动端兼容性最好 */
   notes.forEach(function (n) { total = Math.max(total, n[1] + n[2]); });
   total += 0.15;
   var len = Math.floor(total * sr);
@@ -149,18 +149,22 @@ function synthWav(notes) {          /* notes: [[freq, startSec, durSec, gain], .
     var i0 = Math.floor(t0 * sr), i1 = Math.min(len, Math.floor((t0 + dur) * sr));
     for (var i = i0; i < i1; i++) {
       var t = (i - i0) / sr;
-      var env = 0.006 + (t < 0.012 ? (t / 0.012) : 0);          /* very short attack */
+      var env = (t < 0.012) ? (t / 0.012) : 1.0;   /* 12ms 起音后保持 1.0, 再由衰减形成钟声 */
       var dec = Math.exp(-t * (2.6 / dur));
+      /* 小喇叭友好: 基频为主 + 少量二次泛音, 去掉容易刺耳的三次泛音 */
       var s = Math.sin(2 * Math.PI * f * t) * 1.00
-            + Math.sin(2 * Math.PI * f * 2 * t) * 0.30         /* bell overtone */
-            + Math.sin(2 * Math.PI * f * 3 * t) * 0.12;
+            + Math.sin(2 * Math.PI * f * 2 * t) * 0.18;
       buf[i] += s * dec * env * g0 * 0.55;
     }
   });
-  /* soft clip + 16bit PCM WAV */
+  /* ① 峰值归一化到 0.85 —— 手机端削波失真的根治办法
+     ② 再走一次 tanh 软限幅兜底, 绝不出现硬削波的爆音 */
+  var peak = 0;
+  for (var i = 0; i < len; i++) { var a = Math.abs(buf[i]); if (a > peak) peak = a; }
+  var scale = (peak > 0.0001) ? (0.85 / peak) : 1;
   var buf16 = new Int16Array(len);
   for (var i = 0; i < len; i++) {
-    var v = Math.max(-1, Math.min(1, buf[i] * 1.15));
+    var v = Math.tanh(buf[i] * scale * 1.02);      /* 平滑限幅, 无硬拐点 */
     buf16[i] = v < 0 ? v * 0x8000 : v * 0x7FFF;
   }
   var bytes = new Uint8Array(44 + len * 2), dv = new DataView(bytes.buffer);
@@ -175,57 +179,53 @@ function synthWav(notes) {          /* notes: [[freq, startSec, durSec, gain], .
 }
 
 var nowPlaying = null;
+var gAudio = null;                       /* 全局唯一播放器: 只需解锁一次 */
+function getAudio() {
+  if (!gAudio) { gAudio = new Audio(); gAudio.preload = 'auto'; }
+  return gAudio;
+}
+
 function playSound(name, notes, volume) {
   if (!soundOn) return false;
-  /* 上一声还没放完就不打断（避免手机上一连串报错/叠音） */
-  try { if (nowPlaying && !nowPlaying.paused && !nowPlaying.ended) return false; } catch (e) {}
+  if (!wavCache[name]) wavCache[name] = synthWav(notes);
+  var a = getAudio();
   try {
-    if (!wavCache[name]) wavCache[name] = synthWav(notes);
-    var a = wavCache['el_' + name];
-    if (!a) {
-      a = new Audio(wavCache[name]);
-      a.preload = 'auto';
-      wavCache['el_' + name] = a;
-    }
-    a.volume = (volume == null) ? 0.95 : volume;
+    if (a.src !== wavCache[name]) a.src = wavCache[name];
+    a.volume = (volume == null) ? 1.0 : volume;
     a.currentTime = 0;
     nowPlaying = a;
     var r = a.play();
-    if (r && r.catch) r.catch(function () {
-      /* 浏览器拦截了播放 -> 显示提示, 让用户知道要点一下页面 */
-      var el = document.getElementById('audio_warn');
-      if (el) { el.style.display = 'block'; el.textContent = '⚠️ 浏览器拦截了声音播放：请点一下本页面，然后再试'; }
-      beepFallback(notes);
-    });
+    if (r && r.catch) r.catch(function () { beepFallback(notes); });
     return true;
   } catch (e) { beepFallback(notes); return false; }
 }
 
-/* 万一 <audio> 被拦（少见的自动播放策略），退回 WebAudio */
+/* 兜底: 只在 <audio> 被拦截时用。⚠️ 必须按乐谱本身的时间点排布,
+   之前写成每条 t+=0.02 -> 4 个音挤在 80ms 内 -> 刺耳"嗡嗡"声 (踩过) */
 function beepFallback(notes) {
   if (!actx || !wake()) return;
-  var t = actx.currentTime + 0.03;
-  notes.slice(0, 6).forEach(function (n) {
+  var base = actx.currentTime + 0.03;
+  notes.forEach(function (n) {
+    var f = n[0], t0 = n[1], dur = n[2], g0 = (n[3] == null ? 0.5 : n[3]);
     var o = actx.createOscillator(), g = actx.createGain();
-    o.type = 'sine'; o.frequency.value = n[0];
+    o.type = 'sine'; o.frequency.value = f;
     o.connect(g); g.connect(master);
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.linearRampToValueAtTime(n[3] == null ? 0.5 : n[3], t + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + n[2]);
-    o.start(t); o.stop(t + n[2] + 0.02);
-    t += 0.02;
+    g.gain.setValueAtTime(0.0001, base + t0);
+    g.gain.linearRampToValueAtTime(g0 * 0.5, base + t0 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, base + t0 + dur);
+    o.start(base + t0); o.stop(base + t0 + dur + 0.02);
   });
 }
 
 /* 门开：上行琶音 G5-B5-D6-G6（784/988/1175/1568Hz）≈2.6s，钟声、清亮柔和 */
-function musicDoorOpen() { playSound('open', [[784, 0, 1.5, 0.85], [988, 0.42, 1.5, 0.85], [1175, 0.84, 1.6, 0.85], [1568, 1.26, 2.0, 0.9]], 0.95); }
+function musicDoorOpen() { playSound('open', [[784, 0, 1.1, 0.85], [988, 0.55, 1.1, 0.85], [1175, 1.10, 1.2, 0.85], [1568, 1.70, 1.5, 0.9]], 0.95); }
 
 /* 门一直开着：每 30 秒一次柔和"叮—咚"（>5 分钟换高一组、加两音） */
 function musicStillOpen(seconds) {
   if (seconds > 300) {
-    playSound('still2', [[1568, 0, 1.3, 0.85], [1175, 0.55, 1.7, 0.85], [1568, 1.35, 1.3, 0.8], [1175, 1.9, 1.7, 0.8]], 0.95);
+    playSound('still2', [[1568, 0, 1.0, 0.85], [1175, 0.60, 1.3, 0.85], [1568, 1.50, 1.0, 0.8], [1175, 2.10, 1.3, 0.8]], 1.0);
   } else {
-    playSound('still', [[1319, 0, 1.3, 0.85], [988, 0.6, 1.8, 0.85]], 0.95);
+    playSound('still', [[1319, 0, 1.0, 0.85], [988, 0.60, 1.4, 0.85]], 1.0);
   }
 }
 
@@ -280,27 +280,24 @@ function ensureSound() {
 /* 在用户点击的那一刻就把音频准备好（浏览器只允许在手势内解锁播放） */
 function primeAudio() {
   var all = {
-    open:   [[784, 0, 1.5, 0.85], [988, 0.42, 1.5, 0.85], [1175, 0.84, 1.6, 0.85], [1568, 1.26, 2.0, 0.9]],
-    still:  [[1319, 0, 1.3, 0.85], [988, 0.6, 1.8, 0.85]],
-    still2: [[1568, 0, 1.3, 0.85], [1175, 0.55, 1.7, 0.85], [1568, 1.35, 1.3, 0.8], [1175, 1.9, 1.7, 0.8]],
+    open:   [[784, 0, 1.1, 0.85], [988, 0.55, 1.1, 0.85], [1175, 1.10, 1.2, 0.85], [1568, 1.70, 1.5, 0.9]],
+    still:  [[1319, 0, 1.0, 0.85], [988, 0.60, 1.4, 0.85]],
+    still2: [[1568, 0, 1.0, 0.85], [1175, 0.60, 1.3, 0.85], [1568, 1.50, 1.0, 0.8], [1175, 2.10, 1.3, 0.8]],
     close:  [[1046, 0, 1.1, 0.7]]
   };
   try {
     Object.keys(all).forEach(function (k) {
       if (!wavCache[k]) wavCache[k] = synthWav(all[k]);
-      if (!wavCache['el_' + k]) {
-        var a = new Audio(wavCache[k]);
-        a.preload = 'auto';
-        wavCache['el_' + k] = a;
-      }
     });
-    /* 静音播一下 = 完成媒体通道解锁（之后就能程序化播放） */
-    var p = wavCache['el_close'];
-    p.volume = 0;
-    var r = p.play();
-    if (r && r.then) r.then(function () { p.pause(); p.currentTime = 0; p.volume = 0.75; })
-                       .catch(function () { p.volume = 0.75; });
-    else { p.pause(); p.volume = 0.75; }
+    /* 一次性解锁: 在用户点击手势内, 用唯一那个播放器播很短的一声
+       (iOS 会忽略 volume=0, 所以用极短时长代替静音) */
+    var a = getAudio();
+    a.src = wavCache.close;
+    a.volume = 0.02;
+    var r = a.play();
+    var done = function () { try { a.pause(); a.currentTime = 0; a.volume = 1.0; } catch (e) {} };
+    if (r && r.then) r.then(function () { setTimeout(done, 60); }).catch(function () { a.volume = 1.0; });
+    else setTimeout(done, 60);
   } catch (e) {}
 }
 
@@ -446,6 +443,7 @@ try { if (localStorage.getItem('zg_sound') === '1') { soundOn = true;
       document.getElementById('snd').textContent = '🔔 声音提醒已开启（点击可静音）';
       document.getElementById('lvl').textContent = '音量：待解锁（点一下页面即可）'; } } catch (e) {}
 
+try { console.log('zigbee.htm 音效版本 ' + AUDIO_V + ' (44.1kHz)'); } catch (e) {}
 poll(); setInterval(poll, 2000);
 </script>
 </body>
