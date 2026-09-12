@@ -821,6 +821,7 @@ typedef struct {
     char model[24];
     int state;
     int short_addr;     /* network short address, parsed from the *%A frame */
+    int model_tried;    /* already looked the model up in the vendor DB */
     int battery;        /* BatteryLevel reported by the device (-1 = unknown) */
     int battery_low;    /* BatteryStatus: non-zero = low */
     int second_alarm;   /* SecondAlarm, reported by some door sensors */
@@ -882,6 +883,37 @@ static void load_known_devs(void)
     fclose(f);
 }
 
+/* 读文件里某地址已有型号 (保存时用来保留, 避免用空型号覆盖) */
+static int file_model_for(const char *addr, char *out, int cap)
+{
+    FILE *f = fopen(KNOWN_DEVS, "r");
+    char line[200];
+    out[0] = 0;
+    if (!f) return 0;
+    while (fgets(line, sizeof(line), f)) {
+        char hex[24];
+        int i = 0, j;
+        for (j = 0; line[j] && line[j] != ' ' && line[j] != ':' && i < (int)sizeof(hex) - 1; j++) {
+            if (line[j] != ':') hex[i++] = line[j];
+        }
+        hex[i] = 0;
+        if (!strcasecmp(hex, addr)) {
+            char *sp = strchr(line, ' ');
+            if (sp) {
+                sp++;
+                while (*sp && *sp != ' ' && *sp != '\n' && *sp != '\r') {
+                    if (*sp != '-') { *out = *sp; out++; }
+                    sp++;
+                }
+                *out = 0;
+            }
+            break;
+        }
+    }
+    fclose(f);
+    return out[0] ? 1 : 0;
+}
+
 static void save_known_devs(void)
 {
     mkdir("/etc/zigbeed", 0755);
@@ -889,10 +921,17 @@ static void save_known_devs(void)
     if (!f) return;
     for (int i = 0; i < g_devs_n; i++) {
         dev_entry *d = &g_devs[i];
+        /* 内存里没型号时先沿用文件里已有的, 不要覆盖成 "-" (脚本/入网日志写进去的型号) */
+        if (!d->model[0]) {
+            char old_m[24];
+            if (file_model_for(d->addr, old_m, sizeof(old_m)))
+                snprintf(d->model, sizeof(d->model), "%s", old_m);
+        }
         fprintf(f, "%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X %s %d %ld\n",
                 d->ieee[7], d->ieee[6], d->ieee[5], d->ieee[4],
                 d->ieee[3], d->ieee[2], d->ieee[1], d->ieee[0],
-                d->model[0] ? d->model : "-", d->state, d->last_seen);
+                d->model[0] ? d->model : "-",
+                d->state, d->last_seen);
     }
     fclose(f);
 }
@@ -1001,6 +1040,29 @@ static int devlog_changed = 0;
 extern char *strptime(const char *s, const char *format, struct tm *tm);
 
 /* state byte layout used everywhere else: bit0 = door open, bit2 = tamper */
+/* 从原厂设备表取型号: module_name 形如 "1204-TS0203" -> "TS0203"
+   这是权威来源, 而且不依赖我们自己的文件 (刷机/重启都不会丢) */
+static int vendor_model(const char *addr, char *out, int cap)
+{
+    char cmd[256], line[160];
+    FILE *p;
+    out[0] = 0;
+    snprintf(cmd, sizeof(cmd),
+             "sqlite3 /etc/IoT/devicehub.db \"select module_name from iot_bas_device "
+             "where deviceId='%s';\" 2>/dev/null", addr);
+    p = popen(cmd, "r");
+    if (!p) return 0;
+    if (fgets(line, sizeof(line), p)) {
+        char *d = strchr(line, '-');          /* "1204-TS0203" -> "TS0203" */
+        char *q = d ? d + 1 : line;
+        int i = 0;
+        while (q[i] && q[i] != '\n' && q[i] != '\r' && i < cap - 1) { out[i] = q[i]; i++; }
+        out[i] = 0;
+    }
+    pclose(p);
+    return out[0] ? 1 : 0;
+}
+
 /* pick an integer out of a vendor log line: "Key":"123" (missing -> -1) */
 static int log_int_field(const char *line, const char *key)
 {
@@ -1095,18 +1157,37 @@ static void vendor_log_poll(void)
         } else {
             d->last_seen = (long)time(NULL);
         }
-        /* the vendor log carries no model string: keep whatever we knew, and
-           fall back to the user's custom name so the page still shows a label */
+        /* 型号来源优先级:
+             ① 入网日志里的 model_ID (设备自己广播的, 最可靠, 不依赖任何外部工具)
+             ② 原厂设备表 (需要 sqlite3, 固件里可能没有)
+             ③ 用户自定义名称 */
         if (!d->model[0]) {
-            char kb[32];
-            for (int i = 0; i < g_devs_n; i++) {
-                if (&g_devs[i] != d) continue;
-                snprintf(kb, sizeof(kb), "slot%d", i + 1);
-                const char *nm2 = dev_name_lookup(kb);
-                if (!nm2) nm2 = dev_name_lookup(d->addr);
-                if (nm2) snprintf(d->model, sizeof(d->model), "%s", nm2);
-                break;
+            char *mi = strstr(line, "model_ID=");
+            if (mi && mi[9]) {
+                int k = 0;
+                while (mi[9 + k] && mi[9 + k] != ',' && mi[9 + k] != ' ' &&
+                       mi[9 + k] != '\n' && k < (int)sizeof(d->model) - 1) {
+                    d->model[k] = mi[9 + k];
+                    k++;
+                }
+                d->model[k] = 0;
+                if (d->model[0]) { save_known_devs(); printf("[型号] %s -> %s\n", d->addr, d->model); fflush(stdout); }
             }
+        }
+        if (!d->model[0] && !d->model_tried) {
+            d->model_tried = 1;
+            if (!vendor_model(d->addr, d->model, sizeof(d->model))) {
+                char kb[32];
+                for (int i = 0; i < g_devs_n; i++) {
+                    if (&g_devs[i] != d) continue;
+                    snprintf(kb, sizeof(kb), "slot%d", i + 1);
+                    const char *nm2 = dev_name_lookup(kb);
+                    if (!nm2) nm2 = dev_name_lookup(d->addr);
+                    if (nm2) snprintf(d->model, sizeof(d->model), "%s", nm2);
+                    break;
+                }
+            }
+            if (d->model[0]) { save_known_devs(); }
         }
     }
     pclose(p);

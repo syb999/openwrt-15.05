@@ -56,7 +56,8 @@
   </div>
 </header>
 <div id="err"></div>
-<div id="hint">提示：浏览器要求先点一次「开启声音提醒」才允许播放声音。门开着超过 1 分钟会每 30 秒用柔和音乐提醒一次，直到关门。</div>
+<div id="hint">提示：① 先点一次「开启声音提醒」；② <b>手机要保持本页面在前台</b>（息屏/切到别的 App 时，浏览器会暂停页面，届时不会响）；③ 手机静音开关（iPhone 侧边拨片）也会把声音静掉。</div>
+<div id="audio_warn" style="display:none;margin-top:10px;padding:12px 16px;border-radius:10px;background:#3a2a1f;border:1px solid var(--amber);font-size:18px;"></div>
 <div class="grid" id="grid"></div>
 
 <script>
@@ -173,8 +174,11 @@ function synthWav(notes) {          /* notes: [[freq, startSec, durSec, gain], .
   return URL.createObjectURL(new Blob([bytes], { type: 'audio/wav' }));
 }
 
+var nowPlaying = null;
 function playSound(name, notes, volume) {
   if (!soundOn) return false;
+  /* 上一声还没放完就不打断（避免手机上一连串报错/叠音） */
+  try { if (nowPlaying && !nowPlaying.paused && !nowPlaying.ended) return false; } catch (e) {}
   try {
     if (!wavCache[name]) wavCache[name] = synthWav(notes);
     var a = wavCache['el_' + name];
@@ -185,8 +189,14 @@ function playSound(name, notes, volume) {
     }
     a.volume = (volume == null) ? 0.95 : volume;
     a.currentTime = 0;
+    nowPlaying = a;
     var r = a.play();
-    if (r && r.catch) r.catch(function () { beepFallback(notes); });
+    if (r && r.catch) r.catch(function () {
+      /* 浏览器拦截了播放 -> 显示提示, 让用户知道要点一下页面 */
+      var el = document.getElementById('audio_warn');
+      if (el) { el.style.display = 'block'; el.textContent = '⚠️ 浏览器拦截了声音播放：请点一下本页面，然后再试'; }
+      beepFallback(notes);
+    });
     return true;
   } catch (e) { beepFallback(notes); return false; }
 }

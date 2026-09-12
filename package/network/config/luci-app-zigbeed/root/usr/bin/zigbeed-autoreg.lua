@@ -107,8 +107,13 @@ if not raw:find('"model_name":"' .. want_name .. '"', 1, true) then
     end
 end
 
--- 3. device table (both DBs; the vendor reads one of them)
-if not db_exists then
+-- 3. device table (需要 sqlite3; 精简固件里可能没有这个命令 -> 优雅跳过)
+local have_sqlite = (sh("which sqlite3 2>/dev/null") ~= "")
+if not have_sqlite then
+    say("no sqlite3 in this firmware -> skipped vendor device-table registration "
+        .. "(add package sqlite3-cli to enable it); model still saved for our own UI")
+end
+if not db_exists and have_sqlite then
     for _, db in ipairs({ "/etc/IoT/devicebase.db", "/etc/IoT/devicehub.db" }) do
         if sh("test -f " .. db .. " && echo yes") == "yes\n" then
             sh(string.format("cp -f %s /tmp/%s.autoreg.bak", db, (db:gsub(".*/", ""))))
