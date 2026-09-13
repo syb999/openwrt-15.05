@@ -1,0 +1,37 @@
+--- a/drivers/mtd/nand/mtk_nand.c
++++ b/drivers/mtd/nand/mtk_nand.c
+@@ -1669,19 +1669,25 @@
+ 		if (!mtk_nand_mcu_write_data(mtd, buf + sector * spare_per_sector, write_len))
+ 			return -EIO;
+ 		(void)mtk_nand_check_RW_count(write_len);
+-		NFI_CLN_REG16(NFI_CON_REG16, CON_NFI_BWR);
+-		(void)mtk_nand_set_command(NAND_CMD_PAGEPROG);
+-		while (DRV_Reg32(NFI_STA_REG32) & STA_NAND_BUSY)
+-			;
+-		status = chip->waitfunc(mtd, chip);
+-		if (status & NAND_STATUS_FAIL) {
+-			printk(KERN_INFO "status: %d\n", status);
+-			return -EIO;
+-		}
+ 		len -= write_len;
+ 		sector++;
+ 	}
+ 
++	/* All sectors are now loaded in the NAND page register: issue one single
++	 * program command. Programming the page once per sector means programming
++	 * an already programmed page for sectors 1..n, which the chip reports as
++	 * failure; the caller then marks the whole block bad and block_remap()
++	 * shifts the mapping of the partition. */
++	NFI_CLN_REG16(NFI_CON_REG16, CON_NFI_BWR);
++	(void)mtk_nand_set_command(NAND_CMD_PAGEPROG);
++	while (DRV_Reg32(NFI_STA_REG32) & STA_NAND_BUSY)
++		;
++	status = chip->waitfunc(mtd, chip);
++	if (status & NAND_STATUS_FAIL) {
++		printk(KERN_INFO "status: %d\n", status);
++		return -EIO;
++	}
++
+ 	return 0;
+ }
+ 

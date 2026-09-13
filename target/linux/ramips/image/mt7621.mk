@@ -5,15 +5,6 @@
 # All MT7621 rootfs images are squashfs based:
 #  - SPI/NOR boards: plain squashfs sysupgrade images
 #  - NAND boards: squashfs wrapped into a UBI volume (append-ubi, factory.bin)
-# Device/Init defaults FILESYSTEMS to $(TARGET_FILESYSTEMS), which includes
-# ubifs whenever CONFIG_TARGET_ROOTFS_UBIFS is enabled (it is, because this
-# subtarget now also carries the NAND boards).  With that default, SPI boards
-# would additionally try to build *-ubifs-sysupgrade.bin images, which need
-# $(KDIR)/root.ubifs - a file that is never produced for the Default profile
-# (mkfs.ubifs only runs when $(PROFILE)_UBIFS_OPTS/UBIFS_OPTS is non-empty),
-# so the build fails with:
-#   [ -f ...-kernel.bin -a -f .../root.ubifs ]  -> Error 1
-# Force squashfs as the root filesystem type for the whole subtarget instead.
 TARGET_FILESYSTEMS := squashfs
 
 define Device/mt7621
@@ -91,6 +82,7 @@ define Device/zbt-wg2626
   DEVICE_TITLE := ZBT-WG2626
   DEVICE_PACKAGES := kmod-usb-core kmod-usb3 kmod-sdhci-mt7620 kmod-ledtrig-usbdev kmod-ata-core kmod-ata-ahci kmod-usb3-mt7621 kmod-mt7603 kmod-mt76x2
 endef
+TARGET_DEVICES += zbt-wg2626
 
 define Device/mt7621-rtl8367s
   DTS := MT7621-RTL8367S
@@ -204,8 +196,10 @@ define Device/an1201l
   BLOCKSIZE := 128KiB
   PAGESIZE := 2048
   KERNEL_SIZE := 2097152
-  IMAGE_SIZE := 127232k
+  IMAGE_SIZE := 123648k
   FILESYSTEMS := squashfs
+  # sysupgrade cannot work on this board: kernel 3.18 keeps the UBI volumes
+  # busy, so the image is written with the bootloader. Factory image only.
   IMAGES := factory.bin
   IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
   DEVICE_TITLE := AN1201L
@@ -218,8 +212,10 @@ define Device/hc5962
   BLOCKSIZE := 128KiB
   PAGESIZE := 2048
   KERNEL_SIZE := 2097152
-  IMAGE_SIZE := 127232k
+  IMAGE_SIZE := 123648k
   FILESYSTEMS := squashfs
+  # sysupgrade cannot work on this board: kernel 3.18 keeps the UBI volumes
+  # busy, so the image is written with the bootloader. Factory image only.
   IMAGES := factory.bin
   IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
   DEVICE_TITLE := HiWiFi HC5962
@@ -232,8 +228,10 @@ define Device/nokia-a040wq
   BLOCKSIZE := 128KiB
   PAGESIZE := 2048
   KERNEL_SIZE := 2048k
-  IMAGE_SIZE := 124928k
+  IMAGE_SIZE := 123648k
   FILESYSTEMS := squashfs
+  # sysupgrade cannot work on this board: kernel 3.18 keeps the UBI volumes
+  # busy, so the image is written with the bootloader. Factory image only.
   IMAGES := factory.bin
   IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
   DEVICE_TITLE := NOKIA-A040WQ
@@ -246,8 +244,10 @@ define Device/maipu-igw401-100-p
   BLOCKSIZE := 128KiB
   PAGESIZE := 2048
   KERNEL_SIZE := 2097152
-  IMAGE_SIZE := 127232k
+  IMAGE_SIZE := 123648k
   FILESYSTEMS := squashfs
+  # sysupgrade cannot work on this board: kernel 3.18 keeps the UBI volumes
+  # busy, so the image is written with the bootloader (Breed). Factory only.
   IMAGES := factory.bin
   IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
   DEVICE_TITLE := MAIPU IGW401-100-P
@@ -258,10 +258,12 @@ TARGET_DEVICES += maipu-igw401-100-p
 define Device/mir3g
   DTS := MIR3G
   BLOCKSIZE := 128KiB
+  # sysupgrade cannot work on this board: kernel 3.18 keeps the UBI volumes
+  # busy, so the image is written with the bootloader. Factory image only.
   IMAGES := factory.bin
   PAGESIZE := 2048
   KERNEL_SIZE := 4096k
-  IMAGE_SIZE := 120320k
+  IMAGE_SIZE := 116736k
   UBINIZE_OPTS := -E 5
   FILESYSTEMS := squashfs
   IMAGES += kernel1.bin rootfs0.bin
@@ -276,10 +278,12 @@ TARGET_DEVICES += mir3g
 define Device/mi-router-ac2100
   DTS := MI-ROUTER-AC2100
   BLOCKSIZE := 128KiB
+  # sysupgrade cannot work on this board: kernel 3.18 keeps the UBI volumes
+  # busy, so the image is written with the bootloader. Factory image only.
   IMAGES := factory.bin
   PAGESIZE := 2048
   KERNEL_SIZE := 4096k
-  IMAGE_SIZE := 120320k
+  IMAGE_SIZE := 116736k
   UBINIZE_OPTS := -E 5
   FILESYSTEMS := squashfs
   IMAGES += kernel1.bin rootfs0.bin
@@ -294,10 +298,12 @@ TARGET_DEVICES += mi-router-ac2100
 define Device/redmi-router-ac2100
   DTS := REDMI-ROUTER-AC2100
   BLOCKSIZE := 128KiB
+  # sysupgrade cannot work on this board: kernel 3.18 keeps the UBI volumes
+  # busy, so the image is written with the bootloader. Factory image only.
   IMAGES := factory.bin
   PAGESIZE := 2048
   KERNEL_SIZE := 4096k
-  IMAGE_SIZE := 120320k
+  IMAGE_SIZE := 116736k
   UBINIZE_OPTS := -E 5
   FILESYSTEMS := squashfs
   IMAGES += kernel1.bin rootfs0.bin
@@ -314,8 +320,10 @@ define Device/zte-e8820s
   BLOCKSIZE := 128KiB
   PAGESIZE := 2048
   KERNEL_SIZE := 2097152
-  IMAGE_SIZE := 127232k
+  IMAGE_SIZE := 123648k
   FILESYSTEMS := squashfs
+  # sysupgrade cannot work on this board: kernel 3.18 keeps the UBI volumes
+  # busy, so the image is written with the bootloader. Factory image only.
   IMAGES := factory.bin
   IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
   DEVICE_TITLE := ZTE E8820S

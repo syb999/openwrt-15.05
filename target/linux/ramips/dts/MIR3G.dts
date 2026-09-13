@@ -90,9 +90,12 @@
 		 * resulting 117,5MiB space for packages.
 		 */
 
+		/* Leave the last 4 MiB (32 blocks) unpartitioned: it is the
+		 * MediaTek factory bad block table (FACT_BBT) area, which must
+		 * not be overlapped by ubi. */
 		partition@a00000 {
 			label = "ubi";
-			reg = <0xa00000 0x7580000>;
+			reg = <0xa00000 0x7200000>;
 		};
 	};
 

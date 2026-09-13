@@ -1,0 +1,20 @@
+--- a/drivers/mtd/nand/mtk_nand.c
++++ b/drivers/mtd/nand/mtk_nand.c
+@@ -2042,7 +2042,7 @@
+ 		}
+ 		if (memcmp(&chip->oob_poi[FACT_BBT_OOB_SIGNATURE], oob_signature, FACT_BBT_SIGNATURE_LEN) != 0)
+ 		{
+-			printk("compare signature failed %x\n", page);
++			MSG(READ, "compare signature failed %x\n", page);
+ 			return -1;
+ 		}
+ 		if (mtk_nand_exec_read_page(mtd, page, mtd->writesize, chip->buffers->databuf, chip->oob_poi))
+@@ -2081,7 +2081,7 @@
+ 		}
+ 
+ 	}
+-	printk("load_fact_bbt failed\n");
++	printk(KERN_INFO "mtk_nand: no factory BBT found, using the scanned bad block table\n");
+ 	return -1;
+ }
+ 

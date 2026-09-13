@@ -51,9 +51,12 @@
 			reg = <0x140000 0x200000>;
 		};
 
+		/* Leave the last 4 MiB (32 blocks) unpartitioned: it is the
+		 * MediaTek factory bad block table (FACT_BBT) area, which must
+		 * not be overlapped by ubi. */
 		partition@340000 {
 			label = "ubi";
-			reg = <0x340000 0x7c40000>;
+			reg = <0x340000 0x78c0000>;
 		};
 	};
 
