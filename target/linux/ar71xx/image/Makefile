@@ -13,7 +13,10 @@ JFFS2_BLOCKSIZE = 64k 128k 256k
 
 KERNEL_LOADADDR = 0x80060000
 
-DEVICE_VARS += NETGEAR_KERNEL_MAGIC NETGEAR_BOARD NETGEAR_ID CMDLINE CONSOLE IMAGE_SIZE BOARDNAME LOADER_FLASH_OFFS
+DEVICE_VARS += NETGEAR_KERNEL_MAGIC NETGEAR_BOARD NETGEAR_ID CMDLINE CONSOLE IMAGE_SIZE BOARDNAME LOADER_FLASH_OFFS LOADER_TYPE
+
+# loader output variant, "gz" unless a device asks for the plain binary
+LOADER_TYPE ?= gz
 
 define Build/netgear-squashfs
 	rm -rf $@.fs $@.squashfs
@@ -79,8 +82,8 @@ define Build/loader-common
 		TARGET_DIR="$(dir $@)" LOADER_NAME="$(notdir $@)" \
 		KERNEL_CMDLINE="$(CMDLINE)" BOARD="$(BOARDNAME)" \
 		LZMA_TEXT_START=0x80a00000 LOADADDR=0x80060000 \
-		$(1) compile loader.gz
-	mv "$@.gz" "$@"
+		$(1) compile loader.$(LOADER_TYPE)
+	mv "$@.$(LOADER_TYPE)" "$@"
 	rm -rf $@.src
 endef
 
@@ -96,6 +99,24 @@ define Build/loader-okli
 	dd if=$(KDIR)/loader-$(1).gz bs=7680 conv=sync of="$@.new"
 	cat "$@" >> "$@.new"
 	mv "$@.new" "$@"
+endef
+
+# Factory image for the original PISEN bootloader: a 288 byte vendor header
+# (magic values, model string, "update" action and an XOR checksum) followed
+# by a gzip compressed tar archive with two members, "uImage" - the OKLI
+# loader - and "rootfs" - the OpenWrt image.  The vendor web interface
+# extracts that archive and flashes both members into the corresponding
+# vendor partitions, so the archive must keep those names.
+define Build/pisen-wmb001n-factory
+	mkdir -p "$@.tmp"
+	cp "$(KDIR)/loader-$(word 1,$(1)).uImage" "$@.tmp/uImage"
+	cp "$@" "$@.tmp/rootfs"
+	cp bin/pisen_wmb001n_factory-header.bin "$@.new"
+	$(TAR) -cp --numeric-owner --owner=0 --group=0 --mode=a-s --sort=name \
+		$(if $(SOURCE_DATE_EPOCH),--mtime="@$(SOURCE_DATE_EPOCH)") \
+		-C "$@.tmp" . | gzip -9n >> "$@.new"
+	mv "$@.new" "$@"
+	rm -rf "$@.tmp"
 endef
 
 define Build/copy-file
@@ -637,12 +658,41 @@ define Device/tl-wr720n-v4
 endef
 TARGET_DEVICES += tl-wr703n-v1 tl-wr710n-v1 tl-wr710n-v2 tl-wr720n-v3 tl-wr720n-v4
 
-define Device/pisen-wmb001n
+define Device/pisen-wmb001n-breed
     $(Device/tplink-16mlzma)
     BOARDNAME := PISEN_WMB001N
     DEVICE_PROFILE := PISEN-WMB001N
     TPLINK_HWID := 0x30100102
     CONSOLE := ttyATH0,115200
+endef
+TARGET_DEVICES += pisen-wmb001n-breed
+
+# PISEN WMB001N with the original (vendor) bootloader and flash layout, see
+# the comment in mach-pisen-wmb001n.c.  The vendor kernel partition (2MB at
+# 0xde0000) is too small for the kernel, so it holds an OKLI loader instead.
+# That loader is booted by the vendor bootloader and loads the kernel from
+# the OKLI uImage at 0x20000, which is the beginning of the vendor rootfs
+# partition and also the start of the OpenWrt "firmware" partition.
+#
+# factory.bin is in the vendor's own image format (288 byte header plus a
+# tar.gz holding "uImage" and "rootfs") so that it can be flashed through
+# the vendor web interface.  sysupgrade.bin is the plain OpenWrt image for
+# that "firmware" partition; the loader lives in its own read-only
+# partition and is only ever written by the factory image.
+define Device/pisen-wmb001n
+    BOARDNAME := PISEN_WMB001N
+    DEVICE_PROFILE := PISEN-WMB001N
+    IMAGE_SIZE := 14080k
+    CONSOLE := ttyATH0,115200
+    DEVICE_PACKAGES := kmod-i2c-core kmod-i2c-gpio kmod-usb2
+    LOADER_TYPE := bin
+    LOADER_FLASH_OFFS := 0x20000
+    COMPILE := loader-$(1).uImage
+    COMPILE/loader-$(1).uImage := loader-okli-compile | pad-to 64k | lzma | uImage lzma
+    KERNEL := kernel-bin | patch-cmdline | lzma | uImage lzma -M 0x4f4b4c49
+    IMAGES := sysupgrade.bin factory.bin
+    IMAGE/sysupgrade.bin := append-kernel $$$$(BLOCKSIZE) | append-rootfs | pad-rootfs | check-size $$$$(IMAGE_SIZE)
+    IMAGE/factory.bin := append-kernel $$$$(BLOCKSIZE) | append-rootfs | pad-rootfs | check-size $$$$(IMAGE_SIZE) | pisen-wmb001n-factory $(1)
 endef
 TARGET_DEVICES += pisen-wmb001n
 

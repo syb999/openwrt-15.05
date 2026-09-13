@@ -393,6 +393,27 @@ platform_check_image() {
 	urouter-plus | \
 	wap2600-211-pe | \
 	tl-wr2543n)
+		# pisen-wmb001n exists with two flash layouts (see the machine
+		# setup): the original vendor bootloader one, which stores an
+		# OKLI loader and therefore uses an OKLI image, and the breed
+		# one, which keeps the TP-LINK tag.  Reject images which do not
+		# match the layout of the running system.
+		if [ "$board" = "pisen-wmb001n" ]; then
+			if [ "$magic_long" = "4f4b4c49" ]; then
+				grep -q '"loader"' /proc/mtd || {
+					echo "Invalid image type, this image is for the original bootloader."
+					return 1
+				}
+
+				return 0
+			fi
+
+			grep -q '"loader"' /proc/mtd && {
+				echo "Invalid image type, this image is for breed."
+				return 1
+			}
+		fi
+
 		[ "$magic" != "0100" ] && {
 			echo "Invalid image type."
 			return 1

@@ -26,7 +26,8 @@
  */
 #define MAX_HEADER_LEN		84
 
-#define IH_MAGIC	0x27051956	/* Image Magic Number		*/
+#define IH_MAGIC		0x27051956	/* Image Magic Number		*/
+#define IH_MAGIC_OKLI		0x4f4b4c49	/* OpenWrt Kernel Loader Image	*/
 #define IH_NMLEN		32	/* Image Name Length		*/
 
 #define IH_OS_LINUX		5	/* Linux	*/
@@ -207,7 +208,8 @@ static ssize_t uimage_verify_default(u_char *buf, size_t len)
 	struct uimage_header *header = (struct uimage_header *)buf;
 
 	/* default sanity checks */
-	if (be32_to_cpu(header->ih_magic) != IH_MAGIC) {
+	if (be32_to_cpu(header->ih_magic) != IH_MAGIC &&
+	    be32_to_cpu(header->ih_magic) != IH_MAGIC_OKLI) {
 		pr_debug("invalid uImage magic: %08x\n",
 			 be32_to_cpu(header->ih_magic));
 		return -EINVAL;

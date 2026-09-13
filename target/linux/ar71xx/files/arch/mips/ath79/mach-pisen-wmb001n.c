@@ -10,8 +10,11 @@
 
 #include <linux/i2c.h>
 #include <linux/i2c-gpio.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/partitions.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>
+#include <linux/string.h>
 
 #include <linux/clk.h>
 
@@ -65,6 +68,97 @@ static struct flash_platform_data pisen_wmb001n_flash_data = {
 	.part_probes	= pisen_wmb001n_part_probes,
 };
 
+/*
+ * Flash layout used by the original (vendor) bootloader:
+ *
+ *   0x000000 - 0x00ffff  u-boot
+ *   0x010000 - 0x01ffff  u-boot-env
+ *   0x020000 - 0xddffff  firmware  (vendor rootfs partition, holds the
+ *                                   OpenWrt image: OKLI uImage + squashfs)
+ *   0xde0000 - 0xdeffff  loader    (first 64k of the vendor kernel
+ *                                   partition, holds the OKLI loader)
+ *   0xdf0000 - 0xfdffff  (rest of the vendor kernel partition, unused)
+ *   0xfe0000 - 0xfeffff  mib0
+ *   0xff0000 - 0xffffff  art
+ *
+ * The vendor bootloader jumps to the beginning of its 2MB kernel partition
+ * which is too small for the kernel, so only an OKLI loader is stored there.
+ * That loader reads the kernel from the OKLI uImage at 0x20000.  The loader
+ * is written by the vendor factory image only and must not be replaced on
+ * sysupgrade, therefore it gets a separate read-only partition here.
+ *
+ * The firmware partition is split into kernel/rootfs/rootfs_data by
+ * MTD_SPLIT_UIMAGE_FW, which is why the mtdsplit uImage parser has to know
+ * about the OKLI magic as well.
+ */
+static struct mtd_partition pisen_wmb001n_orig_partitions[] = {
+	{
+		.name		= "u-boot",
+		.offset		= 0x000000,
+		.size		= 0x010000,
+		.mask_flags	= MTD_WRITEABLE,
+	}, {
+		.name		= "u-boot-env",
+		.offset		= 0x010000,
+		.size		= 0x010000,
+		/* the vendor bootloader reads its bootargs from here but can
+		 * not write them (no savenv support), so keep them read-only */
+		.mask_flags	= MTD_WRITEABLE,
+	}, {
+		.name		= "firmware",
+		.offset		= 0x020000,
+		.size		= 0xdc0000,
+	}, {
+		.name		= "loader",
+		.offset		= 0xde0000,
+		.size		= 0x010000,
+		.mask_flags	= MTD_WRITEABLE,
+	}, {
+		.name		= "mib0",
+		.offset		= 0xfe0000,
+		.size		= 0x010000,
+		.mask_flags	= MTD_WRITEABLE,
+	}, {
+		.name		= "art",
+		.offset		= 0xff0000,
+		.size		= 0x010000,
+		.mask_flags	= MTD_WRITEABLE,
+	},
+};
+
+static struct flash_platform_data pisen_wmb001n_orig_flash_data = {
+	.parts		= pisen_wmb001n_orig_partitions,
+	.nr_parts	= ARRAY_SIZE(pisen_wmb001n_orig_partitions),
+};
+
+#define PISEN_WMB001N_FLASH_BASE	0x1f000000
+#define PISEN_WMB001N_ORIG_FW_OFFS	0x020000
+
+/*
+ * Both flash layouts store the kernel at 0x20000, but in different formats:
+ * the image for the original bootloader starts with an OKLI uImage there
+ * (the loader scans for that magic), while breed keeps the TP-LINK layout
+ * with its tag.  The machine type is the same for both variants, so pick
+ * the partition table from the layout which is actually present in the
+ * flash.  KSEG1 lets us look at the mapping before mtd is registered.
+ */
+static struct flash_platform_data *pisen_wmb001n_get_flash_data(void)
+{
+	static const u8 okli_magic[4] = { 0x4f, 0x4b, 0x4c, 0x49 };
+	const u8 *p;
+
+	p = (const u8 *) KSEG1ADDR(PISEN_WMB001N_FLASH_BASE +
+				   PISEN_WMB001N_ORIG_FW_OFFS);
+
+	if (!memcmp(p, okli_magic, sizeof(okli_magic))) {
+		printk(KERN_INFO "PISEN_WMB001N: original bootloader layout "
+		       "detected\n");
+		return &pisen_wmb001n_orig_flash_data;
+	}
+
+	return &pisen_wmb001n_flash_data;
+}
+
 static struct i2c_board_info pisen_wmb001n_i2c_devices[] __initdata = {
 	{
 		I2C_BOARD_INFO("wm8904", 0x1a),
@@ -74,9 +168,18 @@ static struct i2c_board_info pisen_wmb001n_i2c_devices[] __initdata = {
 static struct i2c_gpio_platform_data pisen_wmb001n_i2c_gpio_data = {
 	.sda_pin	= PISEN_WMB001N_GPIO_I2C_SDA,
 	.scl_pin	= PISEN_WMB001N_GPIO_I2C_SCL,
-	.sda_is_open_drain = 1,
+	/*
+	 * The board has no pull-up on SCL (measured: the line stays low when
+	 * nobody drives it), so SCL must always be driven - that is what
+	 * upstream's DTS does with i2c-gpio,scl-output-only.  SDA has a
+	 * pull-up but is a plain GPIO: it has to be released by switching
+	 * the pin to input (true open drain), otherwise the push-pull high
+	 * level fights the WM8918 which then fails to answer (its ID reads
+	 * back as 0 and the codec probe fails).
+	 */
+	.sda_is_open_drain = 0,
 	.scl_is_open_drain = 1,
-	.scl_is_output_only = 0,
+	.scl_is_output_only = 1,
 	.udelay = 5,
 	.timeout = 100,
 };
@@ -191,7 +294,7 @@ static void __init pisen_wmb001n_audio_setup(void)
 	printk(KERN_INFO "PISEN_WMB001N: I2S GPIO pins configured for WM8904\n");
 }
 
-static void __init tl_ap123_setup(void)
+static void __init tl_ap123_setup(struct flash_platform_data *flash_data)
 {
 	u8 *mac = (u8 *) KSEG1ADDR(0x1fff0000);
 	u8 *ee = (u8 *) KSEG1ADDR(0x1fff1000);
@@ -200,7 +303,7 @@ static void __init tl_ap123_setup(void)
 	ath79_gpio_function_setup(AR934X_GPIO_FUNC_JTAG_DISABLE,
 				 AR934X_GPIO_FUNC_CLK_OBS4_EN);
 
-	ath79_register_m25p80(&pisen_wmb001n_flash_data);
+	ath79_register_m25p80(flash_data);
 
 	ath79_setup_ar934x_eth_cfg(AR934X_ETH_CFG_SW_ONLY_MODE);
 
@@ -226,7 +329,7 @@ static void __init tl_ap123_setup(void)
 
 static void __init pisen_wmb001n_setup(void)
 {
-	tl_ap123_setup();
+	tl_ap123_setup(pisen_wmb001n_get_flash_data());
 
 	ath79_register_leds_gpio(-1, ARRAY_SIZE(pisen_wmb001n_leds_gpio),
 				 pisen_wmb001n_leds_gpio);

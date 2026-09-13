@@ -310,13 +310,19 @@ get_status_led() {
 	tl-wr841n-v8 | \
 	tl-wr841n-v11 | \
 	tl-mw300-r4 | \
-	pisen_wmb001n | \
 	zmwr2500 | \
 	tl-wa830re-v2 | \
 	tl-wr842n-v2 | \
 	tl-wr941nd | \
 	tl-wr941nd-v5)
 		status_led="tp-link:green:system"
+		;;
+	pisen-wmb001n)
+		# The board has only one LED besides the volume bar: the wifi
+		# one, which the vendor firmware (and the upstream ath79 DTS,
+		# led-boot/failsafe/running/upgrade = &wifi) uses as the system
+		# status indicator.
+		status_led="pisen:blue:wlan"
 		;;
 	mw153r)
 		status_led="mw153r:green:system"

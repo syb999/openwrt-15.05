@@ -1,0 +1,11 @@
+--- a/sound/soc/codecs/wm8904.c
++++ b/sound/soc/codecs/wm8904.c
+@@ -2159,7 +2159,7 @@
+ 		dev_err(&i2c->dev, "Failed to read ID register: %d\n", ret);
+ 		goto err_enable;
+ 	}
+-	if (val != 0x8904) {
++	if (val != 0x8904 && val != 0x8918) {
+ 		dev_err(&i2c->dev, "Device is not a WM8904, ID is %x\n", val);
+ 		ret = -EINVAL;
+ 		goto err_enable;
