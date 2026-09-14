@@ -400,9 +400,13 @@ pisen-wmb001n)
 	;;
 
 zmwr2500)
-	ucidef_set_led_netdev "lte" "LTE" "zmtel:green:lte" "eth2"
-	ucidef_set_led_netdev "tel" "TEL" "zmtel:green:tel" "eth0"
-	ucidef_set_led_wlan "wlan" "WLAN" "zmtel:green:wps" "phy0radio"
+	# The mach file (mach-cn6619.c) registers the LEDs with the
+	# "cn6619:" prefix, not "zmtel:" - the old names never matched, so
+	# none of these LEDs were configured.  There is no dedicated LTE
+	# LED either; rssimax is used for the 4G link.
+	ucidef_set_led_netdev "lte" "LTE" "cn6619:green:rssimax" "eth2"
+	ucidef_set_led_netdev "tel" "TEL" "cn6619:green:tel" "eth0"
+	ucidef_set_led_wlan "wlan" "WLAN" "cn6619:green:wps" "phy0radio"
 	;;
 
 pisen-wmm003n)

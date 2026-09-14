@@ -310,12 +310,17 @@ get_status_led() {
 	tl-wr841n-v8 | \
 	tl-wr841n-v11 | \
 	tl-mw300-r4 | \
-	zmwr2500 | \
 	tl-wa830re-v2 | \
 	tl-wr842n-v2 | \
 	tl-wr941nd | \
 	tl-wr941nd-v5)
 		status_led="tp-link:green:system"
+		;;
+	zmwr2500)
+		# This board has no "system" LED.  The mach file registers
+		# cn6619:green:{tel,rssimax,rssihigh,rssimedium,rssilow,lan,wps};
+		# the LAN one is not used by 01_leds, so use it for the status.
+		status_led="cn6619:green:lan"
 		;;
 	pisen-wmb001n)
 		# The board has only one LED besides the volume bar: the wifi

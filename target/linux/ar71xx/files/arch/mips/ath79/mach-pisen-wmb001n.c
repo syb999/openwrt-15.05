@@ -309,8 +309,14 @@ static void __init tl_ap123_setup(struct flash_platform_data *flash_data)
 
 	ath79_register_mdio(1, 0x0);
 
-	ath79_init_mac(ath79_eth0_data.mac_addr, mac, -1);
-	ath79_init_mac(ath79_eth1_data.mac_addr, mac, 0);
+	/*
+	 * The vendor firmware uses art+0 for the WAN (GMAC0 / switch PHY0
+	 * port) and the next address for the LAN.  Using art-1 for eth0
+	 * made the WAN MAC one lower than the vendor default, which is
+	 * visible in the ISP DHCP leases.
+	 */
+	ath79_init_mac(ath79_eth0_data.mac_addr, mac, 0);
+	ath79_init_mac(ath79_eth1_data.mac_addr, mac, -1);
 
 	/* GMAC0 is connected to the PHY0 of the internal switch */
 	ath79_switch_data.phy4_mii_en = 1;
