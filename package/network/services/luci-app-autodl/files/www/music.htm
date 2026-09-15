@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
+<title>酷狗音乐盒</title>
+<style>
+:root{--bg:#12131a;--fg:#e8e8ee;--dim:#8b8fa3;--acc:#37d67a;--card:#1c1e28;--line:#2a2d3a}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);
+  font:15px/1.5 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+body{padding:10px 10px 16px;max-width:760px;margin:0 auto}
+.hd{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.title{font-size:18px;font-weight:600;word-break:break-all}
+.sub{color:var(--dim);font-size:12px;margin-top:2px;word-break:break-all}
+.badge{color:var(--dim);font-size:11px;border:1px solid var(--line);border-radius:8px;padding:1px 6px;white-space:nowrap}
+#prog{height:4px;background:var(--line);border-radius:3px;margin:10px 0 4px;overflow:hidden}
+#bar{height:100%;width:0;background:var(--acc);transition:width .3s linear}
+.times{display:flex;justify-content:space-between;color:var(--dim);font-size:11px;margin-bottom:6px}
+#lyr{height:38vh;min-height:180px;overflow-y:auto;text-align:center;padding:12px 4px;
+  scroll-behavior:smooth;mask-image:linear-gradient(180deg,transparent,#000 18%,#000 82%,transparent)}
+#lyr div{color:var(--dim);padding:5px 2px;transition:color .2s,font-size .2s}
+#lyr div.cur{color:var(--acc);font-size:17px;font-weight:600}
+#ctr{display:flex;justify-content:center;align-items:center;gap:10px;margin:10px 0}
+#ctr2{display:flex;justify-content:center;align-items:center;gap:10px;margin:0 0 6px}
+#ctr2 button{font-size:13px;padding:7px 12px}
+#ctr2 button.on{color:var(--acc);border-color:var(--acc)}
+#plbar{display:flex;gap:8px;margin-bottom:6px}
+#plbar button{font-size:13px;padding:6px 12px}
+.row .act{flex:0 0 auto;font-size:14px;padding:2px 8px;border-radius:8px;
+  border:1px solid var(--line);color:var(--dim);background:transparent}
+.row .act.add:active{color:var(--acc)}
+button{background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:10px;
+  font-size:17px;padding:9px 14px;cursor:pointer}
+button:active{background:#2b2f3e}
+button.big{font-size:20px;padding:11px 22px}
+.vol{display:flex;align-items:center;gap:6px;color:var(--dim);font-size:12px}
+.tabs{display:flex;gap:8px;margin:10px 0 6px}
+.tabs button{flex:0 0 auto;font-size:13px;padding:6px 12px}
+.tabs button.on{color:var(--acc);border-color:var(--acc)}
+#srch{display:none;gap:6px;margin-bottom:6px}
+#srch input{flex:1;background:var(--card);border:1px solid var(--line);color:var(--fg);
+  border-radius:10px;padding:9px 10px;font-size:14px;min-width:0}
+#list{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;max-height:46vh;overflow-y:auto}
+.row{display:flex;gap:8px;align-items:center;padding:9px 10px;border-bottom:1px solid var(--line);cursor:pointer}
+.row:last-child{border-bottom:0}
+.row:active{background:#2b2f3e}
+.row.cur{background:#173b28}
+.num{color:var(--dim);font-size:12px;width:26px;text-align:right;flex:0 0 26px}
+.nm{flex:1;word-break:break-all;font-size:14px}
+.tag{font-size:10px;color:#e8b04b;border:1px solid #6b5324;border-radius:6px;padding:0 4px;flex:0 0 auto}
+.tm{color:var(--dim);font-size:11px;flex:0 0 auto}
+#msg{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#2b2f3e;color:var(--fg);
+  border:1px solid var(--line);border-radius:10px;padding:8px 14px;font-size:13px;opacity:0;
+  transition:opacity .2s;pointer-events:none;z-index:9;max-width:90vw}
+#msg.on{opacity:1}
+.hint{color:var(--dim);font-size:12px;text-align:center;padding:10px}
+</style>
+</head>
+<body>
+
+<div class="hd">
+  <div>
+    <div class="title" id="ttl">未播放</div>
+    <div class="sub"><span id="stat">读取中…</span> · <span id="chart">-</span> · <span class="badge">v2.6</span></div>
+  </div>
+</div>
+
+<div id="prog"><div id="bar"></div></div>
+<div class="times"><span id="tpos">0:00</span><span id="tdur">0:00</span></div>
+
+<div id="lyr"><div class="hint">暂无歌词</div></div>
+
+<div id="ctr">
+  <button id="bprev" title="上一首">⏮</button>
+  <button id="bplay" class="big" title="播放/暂停">▶</button>
+  <button id="bnext" title="下一首">⏭</button>
+</div>
+<div id="ctr2">
+  <button id="bstop" title="停止">⏹</button>
+  <button id="bdl" title="下载当前歌曲">⬇ 下载</button>
+  <button id="bloop" title="循环模式">🔁 顺序</button>
+  <span class="vol"><button id="bdown">🔉</button><span id="vol">-</span><button id="bup">🔊</button></span>
+</div>
+
+<div class="tabs">
+  <button id="tchart" class="on">榜单</button>
+  <button id="tsearch">搜索</button>
+  <button id="tpl">歌单</button>
+  <button id="bsrc" title="切换音源">音源：酷狗</button>
+  <button id="bsetchart" title="切换榜单">⚙ 换榜</button>
+  <button id="brefresh" style="margin-left:auto">↻</button>
+</div>
+<div id="srch"><input id="kw" placeholder="歌名或歌手，回车搜索"><button id="bgo">搜索</button></div>
+<div id="plbar" style="display:none">
+  <button id="bplplay">▶ 全部播放</button>
+  <button id="bplclear">清空歌单</button>
+</div>
+<div id="list"><div class="hint">读取中…</div></div>
+<div id="msg"></div>
+
+<script>
+var API='/cgi-bin/music';
+var st={},lrc=[],t0=0,basePos=0,wasPlaying=false,userStopped=false,
+    curKey='',curHash='',graceUntil=0,timer=null,lastDur=0,tabMode='chart';
+
+function $(id){return document.getElementById(id);}
+function toast(t){var m=$('msg');m.textContent=t;m.className='on';
+  clearTimeout(m._t);m._t=setTimeout(function(){m.className='';},2200);}
+function fmt(s){s=Math.max(0,Math.floor(s||0));return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2);}
+function fmtd(s){return (s&&s>0)?fmt(s):'--:--';}
+
+function url(params){
+  params._=Date.now();
+  return API+'?'+Object.keys(params).map(function(k){
+    return encodeURIComponent(k)+'='+encodeURIComponent(params[k]==null?'':params[k]);}).join('&');
+}
+function api(params){
+  return fetch(url(params),{cache:'no-store'}).then(function(r){
+    if(!r.ok) throw new Error('http '+r.status);
+    return r.json();
+  });
+}
+function apiText(params){
+  return fetch(url(params),{cache:'no-store'}).then(function(r){return r.text();});
+}
+
+/* ---------- lyrics ---------- */
+function parseLrc(text){
+  var out=[],lines=String(text).split(/\r?\n/);
+  for(var i=0;i<lines.length;i++){
+    var m=lines[i].match(/\[(\d{1,2}):(\d{1,2}(?:\.\d+)?)\]/g);
+    if(!m) continue;
+    var body=lines[i].replace(/\[[^\]]*\]/g,'').trim();
+    if(!body) continue;
+    for(var j=0;j<m.length;j++){
+      var p=m[j].match(/\[(\d{1,2}):(\d{1,2}(?:\.\d+)?)\]/);
+      out.push({t:parseInt(p[1],10)*60+parseFloat(p[2]),s:body});
+    }
+  }
+  out.sort(function(a,b){return a.t-b.t;});
+  return out;
+}
+function renderLrc(){
+  var box=$('lyr');box.textContent='';
+  if(!lrc.length){var d=document.createElement('div');d.className='hint';
+    d.textContent=st.name?'暂无歌词':'暂无歌词';box.appendChild(d);return;}
+  for(var i=0;i<lrc.length;i++){
+    var d=document.createElement('div');d.textContent=lrc[i].s;box.appendChild(d);
+  }
+  lastDur=lrc.length?lrc[lrc.length-1].t:0;
+}
+var curLine=-1;
+function centerLine(i){
+  var box=$('lyr'),kids=box.children;
+  if(!kids.length) return;
+  if(i<0){ box.scrollTop=0; return; }
+  /* measure against the box itself: offsetTop is relative to the offsetParent
+   * (body here), which pushed the current line out of view */
+  var b=box.getBoundingClientRect(),l=kids[i].getBoundingClientRect();
+  var delta=(l.top-b.top)-(box.clientHeight-l.height)/2;
+  if(Math.abs(delta)<2) return;
+  if(Math.abs(delta)>box.clientHeight){
+    box.style.scrollBehavior='auto';box.scrollTop+=delta;
+    setTimeout(function(){box.style.scrollBehavior='';},60);
+  }else{
+    box.scrollTop+=delta;
+  }
+}
+function scrollLrc(pos){
+  if(!lrc.length) return;
+  var i=-1;
+  for(var k=0;k<lrc.length;k++){ if(lrc[k].t<=pos+0.15) i=k; else break; }
+  var kids=$('lyr').children;
+  if(i!==curLine){
+    curLine=i;
+    for(var k=0;k<kids.length;k++) kids[k].className=(k===i)?'cur':'';
+  }
+  centerLine(i); /* called every tick so it also self corrects drift */
+}
+var lrcTries=0;
+function loadLyrics(name,force){
+  apiText({action:'lyrics',mode:force?'force':''}).then(function(txt){
+    lrc=parseLrc(txt);curLine=-1;renderLrc();
+    if(!lrc.length&&st.playing&&lrcTries<2&&(st.hash||'').substring(0,3)!=='kw:'){
+      lrcTries++;setTimeout(function(){loadLyrics(name,true);},7000);
+    }
+  }).catch(function(){lrc=[];renderLrc();});
+}
+
+/* ---------- status ---------- */
+var busy=false;
+function poll(){
+  if(busy) return;
+  busy=true;
+  api({action:'status'}).then(function(s){
+    st=s;t0=Date.now();basePos=s.pos||0;
+    if(!s.busy||s.name)$('ttl').textContent=s.name||'未播放';
+    $('stat').textContent=s.busy?'切换中…':(s.playing?'播放中':'已停止');
+    $('stat').style.color=(s.playing||s.busy)?'var(--acc)':'var(--dim)';
+    $('chart').textContent=(s.src==='kuwo'?'酷我':'酷狗')+' · '+(KWL[s.chart]||(s.chartn&&s.chartn!==''?s.chartn:(s.chart&&s.chart!=='none'?s.chart:'未选榜单')));
+    setSrcLabel();
+    $('vol').textContent=(s.vol==null?'-':s.vol+'%');
+    $('bplay').textContent=(s.playing?(s.paused?'▶':'⏸'):'▶');
+    curHash=s.hash||'';
+    if(listKind!=='charts')highlight();
+    setLoopButton(s.loop||'off');
+    if(s.name&&s.name!==curKey){curKey=s.name;lrcTries=0;loadLyrics(s.name);}
+
+    /* auto advance when a track ends on its own, following the loop mode */
+    if(wasPlaying&&!s.playing&&!s.busy&&!userStopped&&!st.paused&&Date.now()>graceUntil){
+      wasPlaying=false;
+      var lp=s.loop||'off';
+      if(lp==='one'&&curHash){play(curHash,s.name,s.idx);}
+      else if(lp==='off'&&s.total>0&&s.idx>=s.total){stop();toast('放完了，没有循环');}
+      else next();
+    }
+    else if(s.playing){wasPlaying=true;}
+  }).catch(function(){
+    $('stat').textContent='连接失败';
+  }).then(function(){busy=false;});
+}
+function tick(){
+  if(st.playing&&!st.paused){
+    var pos=basePos+(Date.now()-t0)/1000;
+    var dur=st.dur||lastDur;
+    $('tpos').textContent=fmt(pos);
+    $('tdur').textContent=fmt(dur);
+    $('bar').style.width=(dur>0?Math.min(100,pos/dur*100):0)+'%';
+    scrollLrc(pos);
+  }
+}
+
+/* ---------- playlist ---------- */
+/* kuwo does not report song lengths in its chart api: the real ones are pulled
+   in the background a few at a time and cached on the box for good */
+var durFillTimer=null;
+function fillDurs(){
+  api({action:'durs'}).then(function(r){
+    if(!r||!r.ok) return;
+    var d=r.durs||{};
+    document.querySelectorAll('#list .row').forEach(function(row){
+      var h=row.getAttribute('data-h')||'';
+      if(h.substring(0,3)!=='kw:') return;
+      var v=d[h.substring(3)];
+      if(v!==undefined&&v>0&&v<20){row.remove();return;}
+      if(v!==undefined&&v>0){var tm=row.querySelector('.tm');if(tm)tm.textContent=fmt(v);}
+    });
+    if((r.left||0)>0&&st.src==='kuwo'&&listKind!=='pl'){
+      durFillTimer=setTimeout(fillDurs,1200);
+    }
+  }).catch(function(){});
+}
+function startDurFill(){
+  if(durFillTimer)clearTimeout(durFillTimer);
+  if(st.src==='kuwo'&&listKind!=='pl') durFillTimer=setTimeout(fillDurs,700);
+}
+var lastHi='',listMd5='';
+function highlight(){
+  /* a transition is running: the status is mid flight, leave the marking alone */
+  if(st.busy)return;
+  var rows=$('list').querySelectorAll('.row'),hit=null,key='',i,el;
+  var cn=(st.name||'').trim();
+  /* 1) same hash */
+  for(i=0;i<rows.length&&!hit;i++){
+    var h=rows[i].getAttribute('data-h')||'';
+    if(h&&curHash&&h===curHash){hit=rows[i];key=h;}
+  }
+  /* 2) a member track may have been swapped for a playable version: match the name */
+  if(!hit&&cn)for(i=0;i<rows.length&&!hit;i++){
+    el=rows[i].querySelector('.nm');
+    if(el&&el.textContent===cn){hit=rows[i];key=cn;}
+  }
+  /* 3) still nothing: when the list shown is the one that is playing, lock on the
+        position it was started from (works for swapped versions and skipped tracks) */
+  if(!hit&&listMd5&&st.qmd5&&listMd5===st.qmd5&&st.idx>0&&rows.length>=st.idx){
+    hit=rows[st.idx-1];key='q'+st.idx;
+  }
+  for(i=0;i<rows.length;i++)rows[i].className='row'+(rows[i]===hit?' cur':'');
+  if(!key){lastHi='';return;}
+  if(hit&&key!==lastHi){lastHi=key;try{hit.scrollIntoView({block:'center'});}catch(e){}}
+}
+
+var listKind='chart';
+function renderList(r,kind){
+  listKind=kind||'chart';
+  listMd5=r.lmd5||'';
+  var box=$('list');box.textContent='';
+  if(!r.songs||!r.songs.length){
+    var d=document.createElement('div');d.className='hint';
+    d.textContent=(kind==='pl')?'歌单是空的：在榜单或搜索结果里点 ＋ 添加'
+      :(r.msg||(r.hidden>0?('找到的 '+r.hidden+' 首都是会员曲，已隐藏；换个歌名/歌手再试试'):'没有找到歌曲'));
+    box.appendChild(d);
+    if(kind==='pl'){$('tpl').textContent='歌单';}
+    return;
+  }
+  r.songs.forEach(function(s,i){
+    var row=document.createElement('div');row.className='row';row.setAttribute('data-h',s.h);
+    var n=document.createElement('span');n.className='num';n.textContent=(i+1);
+    var nm=document.createElement('span');nm.className='nm';nm.textContent=s.n;
+    row.appendChild(n);row.appendChild(nm);
+    if(s.p>=10){var g=document.createElement('span');g.className='tag';g.textContent='会员';row.appendChild(g);}
+    var t=document.createElement('span');t.className='tm';t.textContent=fmtd(s.d);
+    row.appendChild(t);
+    var act=document.createElement('button');
+    act.className='act';
+    if(kind==='pl'){
+      act.textContent='✕';act.title='从歌单移除';
+      act.onclick=function(e){e.stopPropagation();plDel(s.h);};
+    }else{
+      act.textContent='＋';act.className='act add';act.title='加入歌单';
+      act.onclick=function(e){e.stopPropagation();plAdd(s.h,s.n,s.d);};
+    }
+    row.appendChild(act);
+    row.onclick=function(){play(s.h,s.n,i+1);};
+    box.appendChild(row);
+  });
+  if(kind==='pl'){$('tpl').textContent='歌单('+r.songs.length+')';}
+  startDurFill();
+  if(r.hidden>0){var hh=document.createElement('div');hh.className='hint';
+    hh.textContent='已隐藏 '+r.hidden+' 首会员歌曲'+(r.sub>0?('，其中 '+r.sub+' 首已换成可播版本'):'');box.appendChild(hh);}
+  highlight();
+}
+function loadSongs(force){
+  $('list').textContent='读取中…';
+  $('plbar').style.display='none';
+  api({action:'songs',mode:force?'force':''}).then(function(r){renderList(r,'chart');})
+    .catch(function(){$('list').textContent='读取失败';});
+}
+function doSearch(){
+  var kw=$('kw').value.trim();
+  if(!kw) return;
+  $('list').textContent='搜索中…';
+  api({action:'search',kw:kw}).then(function(r){renderList(r,'search');})
+    .catch(function(){$('list').textContent='搜索失败';});
+}
+
+/* ---------- custom playlist ---------- */
+var KWL={'kuwo-soaring':'飙升榜','kuwo-hot':'热歌榜','kuwo-new':'新歌榜',
+  'kuwo-shortvideo':'短视频热歌榜','kuwo-monthly':'月度新歌榜','kuwo-cantonese':'粤语榜'};
+function setSrcLabel(){
+  $('bsrc').textContent='音源：'+((st.src==='kuwo')?'酷我':'酷狗');
+}
+$('bsrc').onclick=function(){
+  var next=(st.src==='kuwo')?'kugou':'kuwo';
+  toast('切换到'+(next==='kuwo'?'酷我':'酷狗')+'…');
+  api({action:'setsrc',mode:next}).then(function(){
+    curHash='';lastHi='';
+    api({action:'status'}).then(function(s){st=s;setSrcLabel();});
+    loadSongs(true);
+  }).catch(function(){toast('切换失败');});
+};
+function loadCharts(){
+  $('list').textContent='读取榜单列表…';
+  $('plbar').style.display='none';
+  api({action:'charts'}).then(function(r){
+    var box=$('list');box.textContent='';
+    if(!r.charts||!r.charts.length){
+      var d=document.createElement('div');d.className='hint';
+      d.textContent=r.msg||'没有取到榜单列表';box.appendChild(d);return;
+    }
+    r.charts.forEach(function(c){
+      var row=document.createElement('div');row.className='row';
+      var nm=document.createElement('span');nm.className='nm';nm.textContent=KWL[c.id]||c.n;
+      row.appendChild(nm);
+      var t=document.createElement('span');t.className='tm';
+      t.textContent=(String(c.id)===String(r.cur))?'当前':'';row.appendChild(t);
+      var act=document.createElement('button');act.className='act add';act.textContent='选用';
+      act.onclick=function(e){
+        if(e&&e.stopPropagation)e.stopPropagation();
+        act.textContent='…';
+        api({action:'setchart',id:c.id,name:c.n}).then(function(){
+          toast('已切换到 '+c.n);
+          setTimeout(function(){loadSongs(true);},300);
+        }).catch(function(){toast('切换失败');act.textContent='选用';});
+      };
+      row.appendChild(act);
+      row.onclick=function(){act.onclick(null);};
+      box.appendChild(row);
+    });
+  }).catch(function(){$('list').textContent='读取失败';});
+}
+function loadPl(){
+  $('list').textContent='读取中…';
+  api({action:'plist'}).then(function(r){renderList(r,'pl');})
+    .catch(function(){$('list').textContent='读取失败';});
+}
+function plAdd(h,n,d){
+  api({action:'pladd',hash:h,name:n,dur:String(d||0)}).then(function(r){
+    toast(r.msg==='already in playlist'?'已在歌单里':'已加入歌单（'+r.count+' 首）');
+    if(tabMode==='pl') loadPl();
+  }).catch(function(){toast('加入失败');});
+}
+function plDel(h){
+  api({action:'pldel',hash:h}).then(function(r){toast('已移除');loadPl();})
+    .catch(function(){toast('移除失败');});
+}
+function plClear(){
+  if(!confirm('清空整个歌单？')) return;
+  api({action:'plclear'}).then(function(){toast('歌单已清空');loadPl();});
+}
+function plPlayAll(){
+  api({action:'plist'}).then(function(r){
+    if(!r.songs||!r.songs.length){toast('歌单是空的');return;}
+    plPlay(1);
+  });
+}
+function plPlay(i){
+  api({action:'plstart',idx:String(i)}).then(function(r){setTimeout(poll,600);})
+    .catch(function(){});
+}
+
+/* ---------- loop mode ---------- */
+function loopText(m){return m==='one'?'单曲循环':(m==='list'?'列表循环':'顺序播放');}
+function setLoopButton(m){
+  var b=$('bloop');
+  if(m==='one'){b.textContent='🔂 单曲';b.className='on';}
+  else if(m==='list'){b.textContent='🔁 列表';b.className='on';}
+  else{b.textContent='🔁 顺序';b.className='';}
+}
+function doLoop(){
+  api({action:'loop'}).then(function(r){setLoopButton(r.loop);toast('循环：'+loopText(r.loop));});
+}
+
+/* ---------- download current track to this device ---------- */
+function doDownload(){
+  if(!st.playing&&!st.url){toast('没有在播放');return;}
+  var b=$('bdl');
+  b.textContent='⬇ 已开始';b.className='on';
+  setTimeout(function(){b.textContent='⬇ 下载';b.className='';},4000);
+  var a=document.createElement('a');
+  a.href='/cgi-bin/music?action=save&_='+Date.now();
+  a.download='';a.style.display='none';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){if(a.parentNode)a.parentNode.removeChild(a);},2000);
+  toast('开始下载到本机');
+}
+/* ---------- actions ---------- */
+function play(h,n,idx){
+  userStopped=false;graceUntil=Date.now()+7000;
+  toast('正在解析…');
+  api({action:'play',hash:h,name:n||'',idx:String(idx||0)}).then(function(r){
+    if(r.ok){
+      /* the server may have switched to a playable version of the same song:
+         say so instead of silently playing something else */
+      if(r.name&&n&&r.name!==n){toast('会员曲，已换用可播版本：'+r.name);}
+      else toast('开始播放');
+      curKey='';
+    }
+    else toast(r.msg||'这首放不了');
+    setTimeout(poll,600);
+  }).catch(function(){toast('播放请求失败');});
+}
+function next(){graceUntil=Date.now()+7000;api({action:'next'}).then(function(){setTimeout(poll,600);});}
+function prev(){graceUntil=Date.now()+7000;api({action:'prev'}).then(function(){setTimeout(poll,600);});}
+function stop(){userStopped=true;api({action:'stop'}).then(function(){setTimeout(poll,300);});}
+function volup(){api({action:'vol',mode:'up'}).then(function(r){$('vol').textContent=r.vol+'%';});}
+function voldown(){api({action:'vol',mode:'down'}).then(function(r){$('vol').textContent=r.vol+'%';});}
+
+/* ---------- wiring ---------- */
+$('bplay').onclick=function(){
+  if(st.paused){
+    api({action:'resume'}).then(function(){toast('继续播放');setTimeout(poll,400);});
+  }else if(st.playing){
+    api({action:'pause'}).then(function(){toast('已暂停');setTimeout(poll,200);});
+  }else{
+    api({action:'resume'}).then(function(r){
+      if(r.ok){toast('继续播放');}else{next();}
+      setTimeout(poll,500);
+    });
+  }
+};
+$('bstop').onclick=stop;
+$('bnext').onclick=next;
+$('bprev').onclick=prev;
+$('bup').onclick=volup;
+$('bdown').onclick=voldown;
+$('bdl').onclick=doDownload;
+$('bloop').onclick=doLoop;
+$('bplplay').onclick=plPlayAll;
+$('bplclear').onclick=plClear;
+$('brefresh').onclick=function(){
+  if(tabMode==='pl') loadPl();
+  else if(tabMode==='search') doSearch();
+  else loadSongs(true);
+};
+$('bgo').onclick=doSearch;
+$('kw').addEventListener('keydown',function(e){if(e.key==='Enter')doSearch();});
+function setTab(t){
+  tabMode=t;
+  $('tchart').className=(t==='chart')?'on':'';
+  $('tsearch').className=(t==='search')?'on':'';
+  $('tpl').className=(t==='pl')?'on':'';
+  $('srch').style.display=(t==='search')?'flex':'none';
+  $('plbar').style.display=(t==='pl')?'flex':'none';
+  if(t==='chart') loadSongs(false);
+  else if(t==='search') $('kw').focus();
+  else loadPl();
+}
+$('tchart').onclick=function(){setTab('chart');};
+$('tsearch').onclick=function(){setTab('search');};
+$('tpl').onclick=function(){setTab('pl');};
+$('bsetchart').onclick=loadCharts;
+
+setLoopButton('off');
+poll();
+loadSongs(false);
+setInterval(poll,3000);
+setInterval(tick,250);
+</script>
+</body>
+</html>

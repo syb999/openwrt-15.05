@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-autodl
-PKG_VERSION:=20250622
+PKG_VERSION:=2026-09
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -39,6 +39,9 @@ define Package/luci-app-autodl/install
 	$(INSTALL_BIN) ./files/ols/* $(1)/usr/autodl/ols
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/autodl.conf $(1)/etc/config/autodl
+	$(INSTALL_DIR) $(1)/www/cgi-bin
+	$(INSTALL_BIN) ./files/www/cgi-bin/music $(1)/www/cgi-bin/music
+	$(INSTALL_DATA) ./files/www/music.htm $(1)/www/music.htm
 endef
 
 $(eval $(call BuildPackage,luci-app-autodl))

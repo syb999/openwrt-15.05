@@ -268,8 +268,8 @@ end
 
 s:tab("webmusictab", translate("Network Music"))
 webmusicsrc = s:taboption("webmusictab", ListValue, "webmusicsrc", translate("Music list"))
-webmusicsrc.placeholder = "9ku"
-webmusicsrc:value("9ku", translate("9ku"))
+webmusicsrc.placeholder = "kugou"
+webmusicsrc:value("kuwo", translate("kuwo"))
 webmusicsrc:value("kugou", translate("kugou"))
 webmusicsrc.default = "kugou"
 webmusicsrc.rempty = true
@@ -278,31 +278,69 @@ web9kulist = s:taboption("webmusictab", ListValue, "web9kulist", translate("Musi
 web9kulist:depends("webmusicsrc", "9ku")
 web9kulist.placeholder = "none"
 web9kulist:value("none")
-web9kulist:value("9ku-top500", translate("9ku top 500"))
-web9kulist:value("9ku-wangluo", translate("9ku net music"))
-web9kulist:value("9ku-laoge", translate("9ku old music"))
-web9kulist:value("9ku-yingwen", translate("9ku english music"))
-web9kulist:value("9ku-chaqu", translate("9ku movie music"))
-web9kulist:value("9ku-ktv", translate("9ku ktv music"))
 web9kulist:value("all", translate("all"))
 web9kulist.default = "none"
 web9kulist.rempty = true
+
+webkuwolist = s:taboption("webmusictab", ListValue, "webkuwolist", translate("Music list"))
+webkuwolist:depends("webmusicsrc", "kuwo")
+webkuwolist.placeholder = "none"
+webkuwolist:value("none")
+-- kuwo chart ids, see kuwo_ids() in /usr/autodl/webmusicplay.sh
+webkuwolist:value("kuwo-soaring", translate("kuwo soaring chart"))
+webkuwolist:value("kuwo-hot", translate("kuwo hot song chart"))
+webkuwolist:value("kuwo-new", translate("kuwo new song chart"))
+webkuwolist:value("kuwo-shortvideo", translate("kuwo short video chart"))
+webkuwolist:value("kuwo-monthly", translate("kuwo monthly new chart"))
+webkuwolist:value("kuwo-cantonese", translate("kuwo cantonese chart"))
+webkuwolist:value("all", translate("all"))
+webkuwolist.default = "kuwo-soaring"
+webkuwolist.rempty = true
 
 webkugoulist = s:taboption("webmusictab", ListValue, "webkugoulist", translate("Music list"))
 webkugoulist:depends("webmusicsrc", "kugou")
 webkugoulist.placeholder = "none"
 webkugoulist:value("none")
-webkugoulist:value("hummingbird-pop-music-chart", translate("hummingbird pop music chart"))
-webkugoulist:value("tiktok-hot-song-chart", translate("tiktok hot song chart"))
-webkugoulist:value("kwai-hot-song-chart", translate("kwai hot song chart"))
-webkugoulist:value("western-golden-melody-chart", translate("western golden melody chart"))
-webkugoulist:value("kugou-top500", translate("kugou top500"))
-webkugoulist:value("acg-new-song-chart", translate("acg new song chart"))
-webkugoulist:value("mainland-song-chart", translate("mainland song chart"))
-webkugoulist:value("hongkong-song-chart", translate("hongkong song chart"))
-webkugoulist:value("japanese-song-chart", translate("japanese song chart"))
-webkugoulist:value("acg-new-song-chart", translate("acg new song chart"))
-webkugoulist:value("billboard-chart", translate("billboard chart"))
+-- kugou chart ids, refreshed from the kugou chart api (see /usr/autodl/kgweb.sh charts)
+	webkugoulist:value("8888", translate("kugou top500"))
+	webkugoulist:value("6666", translate("kugou soaring chart"))
+	webkugoulist:value("74534", translate("kugou new song chart"))
+	webkugoulist:value("82831", translate("kugou internet hot chart"))
+	webkugoulist:value("85897", translate("guochao music chart"))
+	webkugoulist:value("100530", translate("wechat video hot chart"))
+	webkugoulist:value("52144", translate("short video hot chart"))
+	webkugoulist:value("52767", translate("short video favourites chart"))
+	webkugoulist:value("85432", translate("million favourites chart"))
+	webkugoulist:value("24971", translate("dj hot chart"))
+	webkugoulist:value("33160", translate("electronic music chart"))
+	webkugoulist:value("59896", translate("rock chart"))
+	webkugoulist:value("59895", translate("r&b chart"))
+	webkugoulist:value("44412", translate("rap chart"))
+	webkugoulist:value("51340", translate("sad song chart"))
+	webkugoulist:value("51341", translate("folk chart"))
+	webkugoulist:value("59900", translate("instrumental chart"))
+	webkugoulist:value("80025", translate("chinese traditional chart"))
+	webkugoulist:value("33162", translate("acg new song chart"))
+	webkugoulist:value("33163", translate("movie hits chart"))
+	webkugoulist:value("33166", translate("western golden hits chart"))
+	webkugoulist:value("33165", translate("cantonese hits chart"))
+	webkugoulist:value("31310", translate("western chart"))
+	webkugoulist:value("31308", translate("mainland chart"))
+	webkugoulist:value("31313", translate("hongkong chart"))
+	webkugoulist:value("54848", translate("taiwan chart"))
+	webkugoulist:value("31311", translate("korea chart"))
+	webkugoulist:value("31312", translate("japan chart"))
+	webkugoulist:value("42807", translate("joox hongkong chart"))
+	webkugoulist:value("42808", translate("kkbox chart"))
+	webkugoulist:value("60170", translate("minnan chart"))
+	webkugoulist:value("65234", translate("children song chart"))
+	webkugoulist:value("49225", translate("80s generation chart"))
+	webkugoulist:value("49223", translate("90s generation chart"))
+	webkugoulist:value("49224", translate("00s generation chart"))
+	webkugoulist:value("59897", translate("jazz chart"))
+	webkugoulist:value("59898", translate("country music chart"))
+	webkugoulist:value("35811", translate("vip hot song chart"))
+	webkugoulist:value("87787", translate("shanghai chart"))
 webkugoulist:value("all", translate("all"))
 webkugoulist.default = "none"
 webkugoulist.rempty = true

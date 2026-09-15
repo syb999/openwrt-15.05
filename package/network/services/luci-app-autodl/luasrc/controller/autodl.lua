@@ -11,9 +11,24 @@ function index()
 end
 
 function autodl_status()
-	local mpg123 = luci.sys.exec("ps -w | grep mpg123 | grep -v grep | head -n1 | awk '{print$6}' ")
-	if not mpg123 or string.match(mpg123, "timeout") or string.match(mpg123, "-") then
-		mpg123 = luci.sys.exec("ps -w | grep curl | grep -v grep | head -n1 | awk '{print$7}' ")
+	local mpg123 = ""
+	local playing = luci.sys.exec("ps -w | grep -E 'mpg123|webmusicplay' | grep -v grep | head -n1") or ""
+
+	if string.match(playing, "%S") then
+		-- url of the track being streamed right now, kept up to date by
+		-- webmusicplay.sh. never parse it out of the ps command line: the
+		-- old awk '{$7}' trick returned curl's -s flag instead of the url.
+		local url = luci.sys.exec("head -n1 /tmp/webmusic.tmp.url 2>/dev/null") or ""
+		mpg123 = string.gsub(url, "%s+$", "")
+		if not string.match(mpg123, "^http") then
+			-- sources that do not publish the url in that file: take the
+			-- first http argument of the streaming curl process
+			url = luci.sys.exec("ps -w | grep curl | grep -v grep | head -n1 | tr ' ' '\\n' | grep '^http' | head -n1") or ""
+			mpg123 = string.gsub(url, "%s+$", "")
+			if not string.match(mpg123, "^http") then
+				mpg123 = ""
+			end
+		end
 	end
 
 	local e = {

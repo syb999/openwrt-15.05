@@ -1,0 +1,102 @@
+#!/bin/sh
+# /www/cgi-bin/music - unauthenticated json gateway for /www/music.htm
+#
+# it only forwards a fixed set of actions to /usr/autodl/kgweb.sh, everything
+# is validated there again before it reaches the player. run by uhttpd as a
+# plain cgi script (no luci session, no login).
+
+action=""
+hash=""
+name=""
+idx=""
+kw=""
+mode=""
+dur=""
+id=""
+
+oldifs="$IFS"
+IFS='&'
+for kv in $QUERY_STRING; do
+	k="${kv%%=*}"
+	# form encoding: '+' means a space (urldecode only knows %xx)
+	v="$(urldecode "$(printf '%s' "${kv#*=}" | tr '+' ' ')")"
+	case "$k" in
+		action) action="$v" ;;
+		hash) hash="$v" ;;
+		name) name="$v" ;;
+		idx) idx="$v" ;;
+		kw) kw="$v" ;;
+		mode) mode="$v" ;;
+		dur) dur="$v" ;;
+		id) id="$v" ;;
+	esac
+done
+IFS="$oldifs"
+
+# download of the current track to the client that runs this page: the stream is
+# relayed straight to the browser, nothing is written on this device
+if [ "$action" = "save" ]; then
+	url="$(/usr/autodl/kgweb.sh saveurl)"
+	name="$(/usr/autodl/kgweb.sh savename)"
+	case "$url" in
+		http://*|https://*) ;;
+		*) url="" ;;
+	esac
+	case "$url" in
+		*'"'*|*"'"*|*'$'*|*'`'*|*' '*|*'\'*) url="" ;;
+	esac
+	if [ -z "$url" ]; then
+		printf 'Content-Type: text/plain; charset=utf-8\r\n'
+		printf 'Cache-Control: no-store\r\n'
+		printf '\r\n'
+		printf 'nothing is playing\n'
+		exit 0
+	fi
+	# ascii fallback plus the real name as rfc5987 filename*
+	ascii="$(printf '%s' "${name%.mp3}" | tr -cd 'A-Za-z0-9._-')"
+	case "$ascii" in
+		*[A-Za-z0-9]*) ascii="$ascii.mp3" ;;
+		*) ascii="music_$(date +%Y%m%d-%H%M%S).mp3" ;;
+	esac
+	enc="$(printf '%s' "$name" | /usr/autodl/kgjson.lua urlenc)"
+	printf 'Content-Type: audio/mpeg\r\n'
+	printf 'Content-Disposition: attachment; filename="%s"; filename*=UTF-8'"''"'%s\r\n' "$ascii" "$enc"
+	printf 'Cache-Control: no-store\r\n'
+	printf '\r\n'
+	exec curl -k -s --connect-timeout 10 -m 300 "$url"
+fi
+
+ct="application/json"
+case "$action" in
+	status) out="$(/usr/autodl/kgweb.sh status)" ;;
+	songs) out="$(/usr/autodl/kgweb.sh songs "$mode")" ;;
+	search) out="$(/usr/autodl/kgweb.sh search "$kw")" ;;
+	play) out="$(/usr/autodl/kgweb.sh play "$hash" "$name" "$idx")" ;;
+	stop) out="$(/usr/autodl/kgweb.sh stop)" ;;
+	pause) out="$(/usr/autodl/kgweb.sh pause)" ;;
+	resume) out="$(/usr/autodl/kgweb.sh resume)" ;;
+	seek) out="$(/usr/autodl/kgweb.sh seek "$mode")" ;;
+	next) out="$(/usr/autodl/kgweb.sh next)" ;;
+	prev) out="$(/usr/autodl/kgweb.sh prev)" ;;
+	vol) out="$(/usr/autodl/kgweb.sh vol "$mode")" ;;
+	loop) out="$(/usr/autodl/kgweb.sh loop "$mode")" ;;
+	charts) out="$(/usr/autodl/kgweb.sh charts "$mode")" ;;
+	setchart) out="$(/usr/autodl/kgweb.sh setchart "$id" "$name")" ;;
+	setsrc) out="$(/usr/autodl/kgweb.sh setsrc "$mode")" ;;
+	durs) out="$(/usr/autodl/kgweb.sh durs)" ;;
+	plist) out="$(/usr/autodl/kgweb.sh plist)" ;;
+	plstart) out="$(/usr/autodl/kgweb.sh plstart "$idx")" ;;
+	pladd) out="$(/usr/autodl/kgweb.sh pladd "$hash" "$name" "$dur")" ;;
+	pldel) out="$(/usr/autodl/kgweb.sh pldel "$hash")" ;;
+	plclear) out="$(/usr/autodl/kgweb.sh plclear)" ;;
+	lyrics)
+		ct="text/plain; charset=utf-8"
+		out="$(/usr/autodl/kgweb.sh lyrics "" "$mode")"
+		;;
+	*) out='{"ok":0,"msg":"unknown action"}' ;;
+esac
+
+printf 'Content-Type: %s\r\n' "$ct"
+printf 'Cache-Control: no-store, no-cache, must-revalidate\r\n'
+printf '\r\n'
+printf '%s\n' "$out"
