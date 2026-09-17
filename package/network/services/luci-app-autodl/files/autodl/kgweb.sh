@@ -120,7 +120,13 @@ is_num() {
 }
 
 mixer_dev() {
-	amixer 2>/dev/null | awk -F"'" '/^Simple mixer control/ && tolower($2) ~ /headphone|speaker|pcm|master/ { print $2; exit }'
+	# Prefer the SoC digital volume ("Master"): it also controls the S/PDIF
+	# output, while the codec mixer only reaches the headphone output.
+	dev="$(amixer 2>/dev/null | awk -F"'" '/^Simple mixer control/ && tolower($2) == "master" { print $2; exit }')"
+	if [ -z "$dev" ]; then
+		dev="$(amixer 2>/dev/null | awk -F"'" '/^Simple mixer control/ && tolower($2) ~ /headphone|speaker|pcm/ { print $2; exit }')"
+	fi
+	echo "$dev"
 }
 
 mixer_vol() {

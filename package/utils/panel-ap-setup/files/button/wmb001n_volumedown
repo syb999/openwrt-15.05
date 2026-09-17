@@ -1,53 +1,45 @@
 #!/bin/sh
+# Volume down: step the SoC digital volume ("Master").  That register sits in
+# front of both the I2S and the S/PDIF serializer, so it is the one volume
+# that also works on the optical port.  The wm8904 codec controls only reach
+# the headphone output and are therefore kept at a fixed level.
+# PISEN WMB001N volume bar: pisen:blue:volum0..4 (GPIO0-4).
 
-normal_step=6
+STEP=1
+MIN=0
+CTL="Master"
 
-volume1=$(amixer get "Headphone" | tail -n1 | cut -d ' ' -f5)
+case "$ACTION" in
+released)
+	cur=$(amixer get "$CTL" 2>/dev/null | awk 'match($0, /Playback [0-9]+/) { v = substr($0, RSTART + 9, RLENGTH - 9) } END { if (v != "") print v }')
+	[ -n "$cur" ] || cur="$MIN"
+	new=$((cur - STEP))
+	[ "$new" -lt "$MIN" ] && new=$MIN
 
-new_volume=$(expr $volume1 - $normal_step)
+	amixer -q set "$CTL" "$new" >/dev/null 2>&1
 
-if [ "$ACTION" = "released" ];then
-        if [ $new_volume -gt 0 ];then
-                amixer set "Headphone" $new_volume
-                amixer set "Line Output" $new_volume
-        else
-                amixer set "Headphone" 0
-                amixer set "Line Output" 0
-                amixer set "Digital" 0
-        fi
+	# fixed codec level: the SoC volume is the master
+	amixer -q set "Digital" 86 >/dev/null 2>&1
+	amixer -q set "Headphone" 100% >/dev/null 2>&1
+	amixer -q set "Line Output" 100% >/dev/null 2>&1
 
-        if [ $(amixer get "Headphone" | tail -n1 | cut -d ' ' -f6 | cut -d '%' -f1 | cut -d '[' -f2) -eq 0 ];then
-                echo 0 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum0/brightness
-        elif [ $(amixer get "Headphone" | tail -n1 | cut -d ' ' -f6 | cut -d '%' -f1 | cut -d '[' -f2) -le 20 ];then
-                echo 0 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum4/brightness
-                echo 0 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum3/brightness
-                echo 0 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum2/brightness
-                echo 0 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum1/brightness
-                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum0/brightness
-        elif [ $(amixer get "Headphone" | tail -n1 | cut -d ' ' -f6 | cut -d '%' -f1 | cut -d '[' -f2) -le 40 ];then
-                echo 0 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum4/brightness
-                echo 0 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum3/brightness
-                echo 0 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum2/brightness
-                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum1/brightness
-                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum0/brightness
-        elif [ $(amixer get "Headphone" | tail -n1 | cut -d ' ' -f6 | cut -d '%' -f1 | cut -d '[' -f2) -le 60 ];then
-                echo 0 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum4/brightness
-                echo 0 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum3/brightness
-                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum2/brightness
-                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum1/brightness
-                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum0/brightness
-        elif [ $(amixer get "Headphone" | tail -n1 | cut -d ' ' -f6 | cut -d '%' -f1 | cut -d '[' -f2) -le 80 ];then
-                echo 0 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum4/brightness
-                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum3/brightness
-                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum2/brightness
-                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum1/brightness
-                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum0/brightness
-        else
-                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum4/brightness
-                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum3/brightness
-                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum2/brightness
-                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum1/brightness
-                echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum0/brightness
-        fi
-fi
+	pct=$(amixer get "$CTL" 2>/dev/null | awk 'match($0, /[0-9]+%/) { print substr($0, RSTART, RLENGTH - 1); exit }')
+	[ -n "$pct" ] || pct=0
 
+	level=5
+	[ "$pct" -le 80 ] && level=4
+	[ "$pct" -le 60 ] && level=3
+	[ "$pct" -le 40 ] && level=2
+	[ "$pct" -le 20 ] && level=1
+
+	i=0
+	while [ $i -le 4 ]; do
+		if [ $i -lt $level ]; then
+			echo 1 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum$i/brightness
+		else
+			echo 0 > /sys/devices/platform/leds-gpio/leds/pisen:blue:volum$i/brightness
+		fi
+		i=$((i + 1))
+	done
+	;;
+esac

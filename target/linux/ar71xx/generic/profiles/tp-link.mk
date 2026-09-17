@@ -398,8 +398,9 @@ $(eval $(call Profile,PISEN))
 
 define Profile/PISEN-WMB001N
 	NAME:=PISEN_WMB001N
-	PACKAGES:=kmod-usb-core kmod-usb2 kmod-gpio-button-hotplug \
-		kmod-sound-wm8904 alsa-utils panel-ap-setup
+	PACKAGES:=kmod-i2c-core kmod-i2c-gpio kmod-usb-core kmod-usb2 \
+		kmod-gpio-button-hotplug kmod-sound-wm8904 alsa-utils \
+		panel-ap-setup
 endef
 
 define Profile/PISEN-WMB001N/Description

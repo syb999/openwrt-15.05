@@ -39,6 +39,50 @@ struct ath79_i2s_priv {
 	unsigned int mclk;
 };
 
+/*
+ * SoC digital volume of the stereo block (STEREO_VOLUME).  The codec volume
+ * sits behind the I2S link, so it can not attenuate the optical output; this
+ * one is in front of both serializers (I2S and S/PDIF) and is therefore the
+ * only hardware volume that also works for S/PDIF.
+ *
+ * One step is 6 dB, sign+magnitude encoded: vol 15 = 0 dB, vol 0 = -90 dB
+ * (register value 0x1f), 0x10/0x00 = 0 dB, gains above +7 are not supported.
+ */
+#define ATH79_I2S_VOLUME_STEPS	15
+
+static struct {
+	u8 vol[2];
+	u8 mute[2];
+} ath79_i2s_volume = {
+	{ ATH79_I2S_VOLUME_STEPS, ATH79_I2S_VOLUME_STEPS },
+	{ 0, 0 }
+};
+
+static u8 ath79_i2s_volume_reg(u8 vol)
+{
+	return vol >= ATH79_I2S_VOLUME_STEPS ? (vol - ATH79_I2S_VOLUME_STEPS) :
+					      ((ATH79_I2S_VOLUME_STEPS - vol) | 0x10);
+}
+
+static void ath79_i2s_volume_apply(void)
+{
+	u32 t;
+	int ch;
+
+	spin_lock(&ath79_stereo_lock);
+	t = ath79_stereo_rr(AR934X_STEREO_REG_VOLUME);
+	for (ch = 0; ch < 2; ch++) {
+		unsigned int shift = ch ? AR934X_STEREO_VOLUME_CH1 :
+					 AR934X_STEREO_VOLUME_CH0;
+		u8 v = ath79_i2s_volume.mute[ch] ? 0 : ath79_i2s_volume.vol[ch];
+
+		t &= ~(AR934X_STEREO_VOLUME_MASK << shift);
+		t |= ath79_i2s_volume_reg(v) << shift;
+	}
+	ath79_stereo_wr(AR934X_STEREO_REG_VOLUME, t);
+	spin_unlock(&ath79_stereo_lock);
+}
+
 void ath79_stereo_reset(void)
 {
 	u32 t;
@@ -48,6 +92,9 @@ void ath79_stereo_reset(void)
 	t |= AR934X_STEREO_CONFIG_RESET;
 	ath79_stereo_wr(AR934X_STEREO_REG_CONFIG, t);
 	spin_unlock(&ath79_stereo_lock);
+
+	/* the block reset restores STEREO_VOLUME to 0 dB: re-apply our value */
+	ath79_i2s_volume_apply();
 }
 EXPORT_SYMBOL(ath79_stereo_reset);
 
@@ -88,7 +135,7 @@ static int ath79_i2s_set_sysclk(struct snd_soc_dai *dai,
 		return ret;
 	}
 
-	pr_info("ATH79 I2S MCLK set to %u Hz\n", freq);
+	pr_debug("ATH79 I2S MCLK set to %u Hz\n", freq);
 	return 0;
 }
 
@@ -174,6 +221,9 @@ static int ath79_i2s_hw_params(struct snd_pcm_substream *substream,
 	spin_unlock(&ath79_stereo_lock);
 
 	ath79_stereo_reset();
+
+	/* keep the SoC volume alive across the (re)start of a stream */
+	ath79_i2s_volume_apply();
 	return 0;
 }
 
@@ -205,8 +255,100 @@ static struct snd_soc_dai_ops ath79_i2s_dai_ops = {
 	.hw_params	= ath79_i2s_hw_params,
 };
 
+/*
+ * Mixer controls for the SoC digital volume.  These are the master volume of
+ * the card: the wm8904 controls only affect the headphone output, while these
+ * also change the level of the optical (S/PDIF) output.
+ */
+static int ath79_i2s_volume_info(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_info *uinfo)
+{
+	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
+	uinfo->count = 2;
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = ATH79_I2S_VOLUME_STEPS;
+	return 0;
+}
+
+static int ath79_i2s_volume_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = ath79_i2s_volume.vol[0];
+	ucontrol->value.integer.value[1] = ath79_i2s_volume.vol[1];
+	return 0;
+}
+
+static int ath79_i2s_volume_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	int ch, changed = 0;
+
+	for (ch = 0; ch < 2; ch++) {
+		unsigned int v = (unsigned int)ucontrol->value.integer.value[ch];
+
+		if (v > ATH79_I2S_VOLUME_STEPS)
+			v = ATH79_I2S_VOLUME_STEPS;
+		if (v != ath79_i2s_volume.vol[ch]) {
+			ath79_i2s_volume.vol[ch] = v;
+			changed = 1;
+		}
+	}
+
+	if (changed)
+		ath79_i2s_volume_apply();
+
+	return changed;
+}
+
+static int ath79_i2s_switch_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = ath79_i2s_volume.mute[0] ? 0 : 1;
+	ucontrol->value.integer.value[1] = ath79_i2s_volume.mute[1] ? 0 : 1;
+	return 0;
+}
+
+static int ath79_i2s_switch_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	int ch, changed = 0;
+
+	for (ch = 0; ch < 2; ch++) {
+		unsigned int mute = ucontrol->value.integer.value[ch] ? 0 : 1;
+
+		if (mute != ath79_i2s_volume.mute[ch]) {
+			ath79_i2s_volume.mute[ch] = mute;
+			changed = 1;
+		}
+	}
+
+	if (changed)
+		ath79_i2s_volume_apply();
+
+	return changed;
+}
+
+static const struct snd_kcontrol_new ath79_i2s_controls[] = {
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+		.name = "Master Playback Volume",
+		.info = ath79_i2s_volume_info,
+		.get = ath79_i2s_volume_get,
+		.put = ath79_i2s_volume_put,
+	},
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+		.name = "Master Playback Switch",
+		.info = snd_ctl_boolean_stereo_info,
+		.get = ath79_i2s_switch_get,
+		.put = ath79_i2s_switch_put,
+	},
+};
+
 const struct snd_soc_component_driver ath79_i2s_component = {
 	.name		= "ath79-i2s",
+	.controls	= ath79_i2s_controls,
+	.num_controls	= ARRAY_SIZE(ath79_i2s_controls),
 };
 
 static struct snd_soc_dai_driver ath79_i2s_dai = {

@@ -42,7 +42,7 @@
 #define PISEN_WMB001N_GPIO_I2S_WS		12
 #define PISEN_WMB001N_GPIO_I2S_CLK		13
 #define PISEN_WMB001N_GPIO_I2S_MCLK		14
-#define PISEN_WMB001N_GPIO_SPDIF_OUT	15
+#define PISEN_WMB001N_GPIO_SPDIF_OUT	21	/* optical port: GPIO21 out-mux 25 = SPDIF_OUT */
 
 #define PISEN_WMB001N_GPIO_LED_WLAN     22
 
@@ -284,6 +284,16 @@ static void __init pisen_wmb001n_audio_setup(void)
 	ath79_gpio_output_select(PISEN_WMB001N_GPIO_I2S_SD, AR934X_GPIO_OUT_MUX_I2S_SD);
 	gpio_direction_output(PISEN_WMB001N_GPIO_I2S_SD, 0);
 
+	/*
+	 * Configure S/PDIF out pin.  Without this mux the stereo block still
+	 * drives S/PDIF data internally (ath79_i2s_startup sets
+	 * AR934X_STEREO_CONFIG_SPDIF_ENABLE) but the signal never reaches the
+	 * optical transmitter, so the port stays dark and silent.
+	 */
+	gpio_request(PISEN_WMB001N_GPIO_SPDIF_OUT, "spdif_out");
+	ath79_gpio_output_select(PISEN_WMB001N_GPIO_SPDIF_OUT, AR934X_GPIO_OUT_MUX_SPDIF_OUT);
+	gpio_direction_output(PISEN_WMB001N_GPIO_SPDIF_OUT, 0);
+
 	/* Release reset of I2S controller */
 	ath79_reset_wr(AR71XX_RESET_REG_RESET_MODULE, t & ~AR934X_RESET_I2S);
 	udelay(10);
@@ -291,7 +301,7 @@ static void __init pisen_wmb001n_audio_setup(void)
 	/* Initialize stereo block registers */
 	ath79_audio_setup();
 	
-	printk(KERN_INFO "PISEN_WMB001N: I2S GPIO pins configured for WM8904\n");
+	printk(KERN_INFO "PISEN_WMB001N: I2S + S/PDIF GPIO pins configured for WM8904\n");
 }
 
 static void __init tl_ap123_setup(struct flash_platform_data *flash_data)

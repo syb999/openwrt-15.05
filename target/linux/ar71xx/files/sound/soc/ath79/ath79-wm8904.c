@@ -52,8 +52,8 @@ static int ath79_wm8904_hw_params(struct snd_pcm_substream *substream,
 		return ret;
 	}
 
-	dev_info(rtd->dev, "CPU MCLK set to %u Hz for sample rate %u\n",
-		 mclk_rate, params_rate(params));
+	dev_dbg(rtd->dev, "CPU MCLK set to %u Hz for sample rate %u\n",
+		mclk_rate, params_rate(params));
 	return 0;
 }
 
