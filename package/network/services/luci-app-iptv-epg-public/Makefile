@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-iptv-epg
 PKG_VERSION:=2.11.37
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 
@@ -16,7 +16,7 @@ define Package/luci-app-iptv-epg
 	# 配置文件: opkg 重装/升级时保留用户修改 (selected 段/频道配置)
 	CONFFILES:=/etc/config/iptv_epg
 	PKGARCH:=all
-	DEPENDS:=+luci-base +curl +tcpdump
+	DEPENDS:=+luci-base +curl +tcpdump +openssl-util
 endef
 
 define Package/luci-app-iptv-epg/description

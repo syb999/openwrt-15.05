@@ -72,7 +72,7 @@ echo "[$(date '+%F %T')] UID=$UID SN=$SN MAC=$MAC IP_BIND=$IP_BIND" >> "$LOG"
 #    (曾优先 ifname=eth0.85: 有历史认证源IP 静态残留 → 认证路由指死网关 → 4kLogAuth 失败!
 #     必须选 DHCP 动态接口 br-iptv, udhcpc 活跃且 30.171.x 可用)
 IPIF=""
-for I in $(uci get network.iptv.ifname 2>/dev/null) br-iptv; do
+for I in $(uci get network.iptv.ifname 2>/dev/null) $(uci get network.iptv.device 2>/dev/null) br-iptv; do
   [ -d "/sys/class/net/$I" ] || continue
   [ -f "/var/run/udhcpc-$I.pid" ] || continue
   IPIF="$I"; break
@@ -115,6 +115,21 @@ A1_IP=`uci get iptv_epg.main.auth_host 2>/dev/null | cut -d: -f1`
 [ -n "$A1_IP" ] || A1_IP=222.68.208.73
 if ! ip route get $A1_IP 2>/dev/null | grep -q "dev $IPIF"; then
   echo "[$(date '+%F %T')] 警告: $A1_IP 未走 $IPIF (ip route get 结果: $(ip route get $A1_IP 2>&1 | head -1))" >> "$LOG"
+  # 🔴 2.11.37-2 自愈: 出口错/缺失时修正为专网口 (旧代码只警告不修 → daemon 每 300s
+  #    直登都 HTTP 000, 永不恢复)。仅当 IPIF 确为专网口 (名字/专网段 IP) 且有 IP。
+  IPTV_PLANE=0
+  case "$IPIF" in iptv|br-iptv|vxlan_iptv|vxlan_inet) IPTV_PLANE=1 ;; esac
+  [ "$IPTV_PLANE" = "0" ] && case "$IPIF_MAIN" in 30.170.*|30.171.*) IPTV_PLANE=1 ;; esac
+  if [ "$IPTV_PLANE" = "1" ] && [ -n "$IPIF_MAIN" ]; then
+    FGW=`ip route show 2>/dev/null | grep "dev $IPIF" | grep -E "default|via" | head -1 | awk '{print $3}'`
+    [ -n "$FGW" ] || FGW=`uci get iptv_epg.main.iptv_gateway 2>/dev/null`
+    [ -n "$FGW" ] || FGW=30.170.0.1
+    for FT in $A1_IP `uci get iptv_epg.main.auth_host2 2>/dev/null | cut -d: -f1` `uci get iptv_epg.main.route_target 2>/dev/null` `uci get iptv_epg.main.route_extra 2>/dev/null`; do
+      ip route replace $FT/32 via $FGW dev $IPIF src $IPIF_MAIN onlink 2>/dev/null \
+        && echo "[$(date '+%F %T')] 已自愈专网路由: $FT via $FGW dev $IPIF src $IPIF_MAIN" >> "$LOG" \
+        || echo "[$(date '+%F %T')] 警告: 自愈路由失败: $FT" >> "$LOG"
+    done
+  fi
 fi
 echo "[$(date '+%F %T')] 网络准备完成 (接口=$IPIF)" >> "$LOG"
 

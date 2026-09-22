@@ -5,7 +5,7 @@
 # 启用条件: /etc/config/iptv_epg 存在且 main.prefetch_enabled='1'
 # ============================================================
 
-START=96
+START=90
 STOP=10
 
 # 扩展命令: status (rc.common 需要 EXTRA_COMMANDS 声明才会把 status 当命令分发)
@@ -49,8 +49,10 @@ start() {
 		if [ "$OLD_P" != "$CUR_P" ]; then
 			# 🔴 切换隔离: 只清 EPG 缓存 (ID 体系不同防错乱), 不碰另一模式的运行时数据
 			#    (电信 cookie /tmp/stb_cookie.txt、联通会话 /etc/epg_unicom_sess.txt 都保留!)
-			rm -f /tmp/epg_cache_*.json 2>/dev/null
-			rm -rf /tmp/epg_by_name 2>/dev/null
+			# 🔴 2.11.38-3: 真实缓存目录是 /tmp/epg_cache (+ epg_by_name 子目录),
+			#    旧路径 /tmp/epg_cache_*.json 清了个空 → provider 切换后旧 ID 体系缓存残留
+			rm -f /tmp/epg_cache/epg_cache_*.json /tmp/epg_cache_*.json 2>/dev/null
+			rm -rf /tmp/epg_cache/epg_by_name /tmp/epg_by_name 2>/dev/null
 			# 🔴 切联通: 删除电信专网路由 (防残留误走错误出口)
 			#    切电信: ensure_route 在下方自动重新添加 (route replace)
 			if [ "$CUR_P" = "unicom" ]; then
@@ -277,7 +279,7 @@ status() {
 		echo "cookie 文件: 不存在"
 	fi
 	# 缓存
-	local NCACHE=$(ls /tmp/epg_cache_*.json 2>/dev/null | wc -l)
+	local NCACHE=$(ls /tmp/epg_cache/epg_cache_*.json /tmp/epg_cache_*.json 2>/dev/null | wc -l)
 	echo "EPG 缓存: $NCACHE 个文件"
 	# 路由
 	if ip route get "$ROUTE_TARGET" 2>/dev/null | grep -q 'via'; then
@@ -331,6 +333,30 @@ restore_cookie() {
 	fi
 }
 
+# 专网/IPTV 侧接口判定 (专网路由出口只允许这类接口)
+#   ① 名称是专网平面 ② uci network.iptv 成员 ③ 接口上有专网段 IP
+#   🔴 2026-09-22 H28K 实测: 启动早期专网 DHCP (eth1.85) 未就绪, ensure_route 兜底
+#      选中上网口 eth1 → 5 条目标全加成 metric 0 的 "via <WAN> onlink" →
+#      专网服务器不可达 (HTTP 000, 秒拒) → 账号直登 4kLogAuth 失败 → 无 cookie。
+is_iptv_iface() {
+	local F="$1"
+	[ -n "$F" ] || return 1
+	[ -d "/sys/class/net/$F" ] || return 1
+	case "$F" in
+		iptv|br-iptv|vxlan_iptv|vxlan_inet) return 0 ;;
+	esac
+	local FI=$(uci get network.iptv.device 2>/dev/null)
+	[ -n "$FI" ] && [ "$F" = "$FI" ] && return 0
+	local FI2=$(uci get network.iptv.ifname 2>/dev/null)
+	local f
+	for f in $FI2; do [ "$F" = "$f" ] && return 0; done
+	local FIP=$(ip addr show "$F" 2>/dev/null | grep 'inet ' | grep -v 127 | awk '{print $2}' | cut -d/ -f1 | head -1)
+	case "$FIP" in
+		30.170.*|30.171.*) return 0 ;;
+	esac
+	return 1
+}
+
 # 路由确保 (自动适配接口, 兼容 iptv/br-iptv/br-lan 等不同命名)
 ensure_route() {
 	# 多路由目标: route_target + route_extra (uci 可配置, 电信公共基础设施) — 全部走专网!
@@ -342,7 +368,7 @@ ensure_route() {
 		local HAS_IPTV_IP=""
 		local WAIT_IFS=$(uci get network.iptv.ifname 2>/dev/null)
 		local wi
-		for wi in $WAIT_IFS br-iptv eth0.85; do
+		for wi in $WAIT_IFS $(uci get network.iptv.device 2>/dev/null) br-iptv eth0.85; do
 			[ -d "/sys/class/net/$wi" ] || continue
 			if ip addr show "$wi" 2>/dev/null | grep -q 'inet '; then HAS_IPTV_IP=1; break; fi
 		done
@@ -363,7 +389,7 @@ ensure_route() {
 	local IPTV_IFS=$(uci get network.iptv.ifname 2>/dev/null)
 	local ii
 	# ① ifname 成员 + br-iptv 里 DHCP 活跃且有 IP 的
-	for ii in $IPTV_IFS br-iptv; do
+	for ii in $IPTV_IFS $(uci get network.iptv.device 2>/dev/null) br-iptv; do
 		[ -d "/sys/class/net/$ii" ] || continue
 		[ -f "/var/run/udhcpc-$ii.pid" ] || continue
 		local II_IP=$(ip addr show "$ii" 2>/dev/null | grep 'inet ' | head -1)
@@ -426,9 +452,25 @@ ensure_route() {
 	local T
 	for T in $TARGETS; do
 		local TP="${T}/32"
-		# 检查是否已有 (同网段同接口则跳过)
-		if ip route show 2>/dev/null | grep -q "^$T "; then
-			echo "  路由已存在: $T"
+		# 🔴 2.11.37-2: 已存在也要校验出口接口 (旧代码只判"路由存在"就 continue):
+		#    启动竞态时专网 DHCP 未就绪 → RIF 兜底选中上网口 → 留下 metric 0 的错路由;
+		#    之后每次启动都被"路由已存在"跳过 → 永久残留, 账号直登 HTTP 000
+		#    (2026-09-22 H28K 实测, 手动 replace 后立即恢复)。
+		#    仅当本次选中的 RIF 确为专网口才改写 (防把正确路由改成兜底上网口)。
+		local CURDEV=$(ip route show 2>/dev/null | grep "^$T " | awk '{for(i=1;i<=NF;i++) if($i=="dev") print $(i+1)}' | head -1)
+		if [ -n "$CURDEV" ]; then
+			if [ "$CURDEV" = "$RIF" ]; then
+				echo "  路由已存在: $T"
+				continue
+			fi
+			if ! is_iptv_iface "$RIF"; then
+				echo "  路由已存在: $T (出口 $CURDEV 保留; 本次选中 $RIF 非专网口, 不覆盖)"
+				continue
+			fi
+			echo "  路由出口错误, 修正: $T ($CURDEV → $RIF)"
+		elif ! is_iptv_iface "$RIF"; then
+			# 专网口未就绪时不再用上网口兜底 (旧行为正是错路由的来源)
+			echo "  跳过 $T: 专网接口未就绪 (选中 $RIF 非专网口, 待下次启动/直登自愈)"
 			continue
 		fi
 		# 🔴 用 replace + onlink: ① DHCP 换 IP 后旧路由(src 旧IP)残留会冲突 ② 网关 30.170.0.1
