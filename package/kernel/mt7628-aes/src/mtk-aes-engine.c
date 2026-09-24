@@ -267,7 +267,21 @@ int mtk_aes_xmit(struct ablkcipher_request *req)
 	if (rctx->mode & CRYPTO_MODE_CBC)
 		aes_txd_info4 |= TX4_DMA_CBC | TX4_DMA_IVR;
 
-	count = mtk_combine_scatter(mtk, req->src, req->dst, req->nbytes);
+	if (rctx->bounce) {
+		/*
+		 * One descriptor covering the whole request out of the
+		 * contiguous bounce buffers.
+		 */
+		u32 idx = (mtk->rec_rear_idx + 1) % MTK_RING_SIZE;
+
+		mtk->rec[idx].src = (unsigned int)mtk->bounce_in;
+		mtk->rec[idx].dst = (unsigned int)mtk->bounce_out;
+		mtk->rec[idx].len = req->nbytes;
+		count = 1;
+	} else {
+		count = mtk_combine_scatter(mtk, req->src, req->dst,
+					    req->nbytes);
+	}
 
 	for (i = 0; i < count; i++) {
 		ctr = (mtk->rec_rear_idx + i + 1) % MTK_RING_SIZE;
@@ -380,6 +394,7 @@ static void mtk_tasklet_req_done(unsigned long data)
 {
 	struct mtk_dev *mtk = (struct mtk_dev *)data;
 	struct ablkcipher_request *req;
+	struct mtk_aes_reqctx *rctx;
 	struct aes_txdesc *txdesc;
 	struct aes_rxdesc *rxdesc;
 	struct mtk_dma_rec *rec;
@@ -439,7 +454,33 @@ get_next:
 
 	mtk->rec_front_idx = (ctr + 1) % MTK_RING_SIZE;
 	req = (struct ablkcipher_request *)rec->req;
+	rctx = ablkcipher_request_ctx(req);
 	writel(ctr, mtk->base + AES_RX_CALC_IDX0);
+
+	/*
+	 * Give the updated IV back to the caller.  cryptodev asks for it
+	 * (COP_FLAG_WRITE_IV) so that the next part of a longer operation can
+	 * continue the CBC chain; without it every part restarts from the
+	 * original session IV.  For encryption the new IV is the last block of
+	 * the result, for decryption the last block of the input (the last
+	 * ciphertext block that was processed).
+	 */
+	if ((rctx->mode & CRYPTO_MODE_CBC) && req->info) {
+		const u8 *iv = (rctx->mode & CRYPTO_MODE_ENC) ?
+			       ((u8 *)rec->dst + rec->len - 16) :
+			       ((u8 *)rec->src + rec->len - 16);
+
+		memcpy(req->info, iv, 16);
+	}
+
+	if (rctx->bounce) {
+		/* copy the result of a bounced request back to the caller */
+		sg_copy_from_buffer(req->dst, sg_nents(req->dst),
+				    mtk->bounce_out, rec->len);
+		rctx->bounce = 0;
+		mtk->bounce_busy = 0;
+	}
+
 	req->base.complete(&req->base, 0);
 
 	if (mtk->count > 0) {
@@ -494,9 +535,47 @@ static int mtk_aes_crypt(struct ablkcipher_request *req, unsigned int mode)
 	struct mtk_aes_ctx *ctx = crypto_ablkcipher_ctx(tfm);
 	struct mtk_aes_reqctx *rctx = ablkcipher_request_ctx(req);
 	struct mtk_dev *mtk;
+	bool sw = false;
 	int ret;
 
-	if (req->nbytes < NUM_AES_BYPASS) {
+	rctx->bounce = 0;
+	rctx->mode = mode;
+
+	mtk = mtk_aes_find_dev(ctx);
+
+	/*
+	 * The engine starts a fresh CBC for every descriptor of a request and
+	 * a descriptor length field is only 14 bits wide, so a request may
+	 * consist of exactly one descriptor.  cryptodev splits user buffers at
+	 * page boundaries, so a request bigger than a page would need several:
+	 * those are copied into a contiguous bounce buffer first and then run as
+	 * a single descriptor.  Whatever cannot be done that way is handed to
+	 * the software fallback.
+	 */
+	if (!mtk || req->nbytes < NUM_AES_BYPASS ||
+	    req->nbytes > MTK_AES_SINGLE_DMA_MAX) {
+		sw = true;
+	} else if (sg_nents_for_len(req->src, req->nbytes) != 1 ||
+		   sg_nents_for_len(req->dst, req->nbytes) != 1) {
+		if (mtk->bounce_busy ||
+		    sg_copy_to_buffer(req->src, sg_nents(req->src),
+				      mtk->bounce_in,
+				      req->nbytes) != req->nbytes) {
+			sw = true;
+		} else {
+			static bool bounce_msg;
+
+			if (!bounce_msg) {
+				bounce_msg = true;
+				dev_info(mtk->dev,
+					 "using the bounce buffer for multi-descriptor requests\n");
+			}
+			mtk->bounce_busy = 1;
+			rctx->bounce = 1;
+		}
+	}
+
+	if (sw) {
 		SKCIPHER_REQUEST_ON_STACK(subreq, ctx->fallback);
 
 		skcipher_request_set_tfm(subreq, ctx->fallback);
@@ -513,13 +592,6 @@ static int mtk_aes_crypt(struct ablkcipher_request *req, unsigned int mode)
 		skcipher_request_zero(subreq);
 		return ret;
 	}
-
-	mtk = mtk_aes_find_dev(ctx);
-
-	if (!mtk)
-		return -ENODEV;
-
-	rctx->mode = mode;
 
 	return mtk_handle_queue(mtk, req);
 }
@@ -747,6 +819,14 @@ static int mtk_aes_probe(struct platform_device *pdev)
 	/* Allocate descriptor rings */
 
 	ret = aes_engine_desc_init(mtk);
+
+	/* Contiguous bounce buffers for requests that need several descriptors */
+	mtk->bounce_in = devm_kzalloc(dev, MTK_AES_SINGLE_DMA_MAX, GFP_KERNEL);
+	mtk->bounce_out = devm_kzalloc(dev, MTK_AES_SINGLE_DMA_MAX, GFP_KERNEL);
+	if (!mtk->bounce_in || !mtk->bounce_out) {
+		dev_err(dev, "Cannot allocate bounce buffers\n");
+		return -ENOMEM;
+	}
 
 	/* Register Ciphers */
 

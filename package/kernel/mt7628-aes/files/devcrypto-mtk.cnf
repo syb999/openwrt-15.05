@@ -1,0 +1,21 @@
+# Tuning for OpenSSL's /dev/crypto (devcrypto) engine on MT7628/MT7688,
+# used together with kmod-crypto-hw-mtk-aes (/dev/crypto backed by the
+# kernel Crypto API "cbc(aes)" driver registered by that module).
+#
+# USE_SOFTDRIVERS = 1 is required, not optional:
+#   The engine defaults to 2 ("use if acceleration can't be determined") and
+#   asks cryptodev for driver info.  cryptodev-linux only sets
+#   SIOP_FLAG_KERNEL_DRIVER_ONLY when the kernel provides
+#   CRYPTO_ALG_KERN_DRIVER_ONLY (4.6+) or when the driver name is in its
+#   built-in list (talitos, mv-, atmel-, geode, hifn, -ixp4xx, -omap,
+#   -picoxcell, -s5p, -ppc4xx, -caam, -n2).  On kernel 3.18 neither is true
+#   for "cbc-aes-mt7628", so the cipher is reported as software and would be
+#   rejected, i.e. no hardware acceleration at all.
+#
+# CIPHERS/DIGESTS are limited to what the MTK engine really accelerates, so
+# every other algorithm keeps using OpenSSL's own (faster) implementations.
+[devcrypto]
+default_algorithms = ALL
+USE_SOFTDRIVERS = 1
+CIPHERS = AES-128-CBC,AES-192-CBC,AES-256-CBC
+DIGESTS = NONE

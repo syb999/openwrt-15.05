@@ -5,6 +5,8 @@
 
 #define MTK_RING_SIZE		128
 #define NUM_AES_BYPASS		100
+/* A hardware descriptor carries its length in a 14 bit field. */
+#define MTK_AES_SINGLE_DMA_MAX	0x3fff
 #define MTK_QUEUE_LENGTH	20
 
 #define RALINK_SYSCTL_BASE	0xB0000000
@@ -153,6 +155,14 @@ struct mtk_dev {
 	struct mtk_dma_rec		*rec;
 	spinlock_t			lock;
 	unsigned int			count;
+
+	/*
+	 * Contiguous buffers used for requests that would otherwise need more
+	 * than one hardware descriptor (see mtk_aes_crypt).
+	 */
+	void				*bounce_in;
+	void				*bounce_out;
+	unsigned int			bounce_busy;
 };
 /**
  * struct mtk_dma_rec - holds the records associated with the ringbuffer
@@ -178,6 +188,7 @@ struct mtk_aes_ctx {
 
 struct mtk_aes_reqctx {
 	unsigned long		mode;
+	unsigned int		bounce;		/* request goes through the bounce buffer */
 };
 
 struct mtk_aes_drv {
