@@ -1,0 +1,325 @@
+diff --git a/Makefile b/Makefile
+index 2d314a7..20b44d3 100644
+--- a/Makefile
++++ b/Makefile
+@@ -309,6 +309,9 @@
+ yuncore_cpe870:
+ 	@$(call build,64,1,ETH_CONFIG=_s27)
+ 
++zmtel_zm-wr2500:
++	@$(call build,128,1,ETH_CONFIG=_s27)
++
+ # =============
+ # CLEAN TARGETS
+ # =============
+diff --git a/u-boot/Makefile b/u-boot/Makefile
+index 1c02897..30c5212 100644
+--- a/u-boot/Makefile
++++ b/u-boot/Makefile
+@@ -481,6 +481,15 @@ engenius_ens202ext: ar934x_common
+ 	@$(call define_add,CFG_AG7240_NMACS,2)
+ 	@$(MKCONFIG) -a db12x mips mips db12x ar7240 ar7240
+ 
++zmwr2500: ar934x_common lsdk_kernel
++	@$(call config_init,ZMTEL ZM-WR2500,zmwr2500,16,21,1,QCA_AR9341_SOC)
++	@$(call define_add,CONFIG_FOR_ZMWR2500,1)
++	@$(call define_add,CFG_ATHRS27_PHY,1)
++	@$(call define_add,CFG_AG7240_NMACS,2)
++	@$(call define_add,CONFIG_BTN_RECOVERY_SCRIPT,1)
++	@$(call define_add,CONFIG_BOOTDELAY,3)
++	@$(MKCONFIG) -a db12x mips mips db12x ar7240 ar7240
++
+ gainstrong_oolite_v1_dev: ar933x_common
+ 	@$(call config_init,GainStrong Oolite v1-Dev,oolite-v1-dev,16,11,,QCA_AR9331_SOC)
+ 	@$(call define_add,CONFIG_FOR_GAINSTRONG_OOLITE_V1_DEV,1)
+diff --git a/u-boot/common/main.c b/u-boot/common/main.c
+index 95cafdf..940738f 100644
+--- a/u-boot/common/main.c
++++ b/u-boot/common/main.c
+@@ -196,6 +196,20 @@ void main_loop(void)
+ /* Recovery mode before normal boot */
+ #if defined(CONFIG_BTN_RECOVERY_SCRIPT) &&\
+     defined(CONFIG_GPIO_RESET_BTN)
++	/* 🔴 Watch the button for a few seconds instead of sampling it once.
++	 * Holding reset asserts the SoC hardware reset, so when U-Boot finally
++	 * starts running the operator may have just released the key - the
++	 * single-shot test then saw "not pressed" and skipped recovery entirely
++	 * (observed on ZM-WR2500: "hold reset + power on" only ever dropped to
++	 * the u-boot> prompt).  Poll for up to ~5 s and take the button as
++	 * pressed if it is down at any point in that window. */
++	{
++		int btn_wait = 0;
++		while (btn_wait < 50 && !reset_button_status()) {
++			udelay(100000);	/* 100 ms */
++			btn_wait++;
++		}
++	}
+ 	if (reset_button_status()) {
+ 		#if defined(CONFIG_SILENT_CONSOLE)
+ 		if (gd->flags & GD_FLG_SILENT) {
+diff --git a/u-boot/httpd/vendors/general/art.html b/u-boot/httpd/vendors/general/art.html
+index 5de3ae0..7b00d8c 100644
+--- a/u-boot/httpd/vendors/general/art.html
++++ b/u-boot/httpd/vendors/general/art.html
+@@ -8,6 +8,7 @@
+ 	<body>
+ 		<div id="m">
+ 			<h1>ART UPDATE</h1>
++			<p><a href="index.html">&laquo; back to menu</a></p>
+ 			<p>You are going to update <strong>ART (Atheros Radio Test)</strong> on the device.<br>Please, choose file from your local hard drive and click <strong>Update ART</strong> button.</p>
+ 			<form method="post" enctype="multipart/form-data"><input type="file" name="art"><input type="submit" value="Update ART"></form>
+ 			<div class="i w">
+diff --git a/u-boot/httpd/vendors/general/firmware.html b/u-boot/httpd/vendors/general/firmware.html
+new file mode 100644
+index 0000000..6cd9a2b
+--- /dev/null
++++ b/u-boot/httpd/vendors/general/firmware.html
+@@ -0,0 +1,24 @@
++<!DOCTYPE HTML>
++<html>
++	<head>
++		<meta charset="utf-8">
++		<title>Firmware update</title>
++		<link rel="stylesheet" href="style.css">
++	</head>
++	<body>
++		<div id="m">
++			<h1>FIRMWARE UPDATE</h1>
++			<p>You are going to update <strong>firmware</strong> on the device.<br>Please, choose file from your local hard drive and click <strong>Update firmware</strong> button.</p>
++			<form method="post" enctype="multipart/form-data"><input type="file" name="firmware"><input type="submit" value="Update firmware"></form>
++			<div class="i w">
++				<strong>WARNINGS</strong>
++				<ul>
++					<li>do not power off the device during update</li>
++					<li>if everything goes well, the device will restart</li>
++					<li>you can upload whatever you want, so be sure that you choose proper firmware image for your device</li>
++				</ul>
++			</div>
++		</div>
++		<div id="f">You can find more information about this project on <a href="https://github.com/pepe2k/u-boot_mod" target="_blank">GitHub</a></div>
++	</body>
++</html>
+\ No newline at end of file
+diff --git a/u-boot/httpd/vendors/general/index.html b/u-boot/httpd/vendors/general/index.html
+index 6cd9a2b..2775439 100644
+--- a/u-boot/httpd/vendors/general/index.html
++++ b/u-boot/httpd/vendors/general/index.html
+@@ -2,23 +2,29 @@
+ <html>
+ 	<head>
+ 		<meta charset="utf-8">
+-		<title>Firmware update</title>
++		<title>ZM-WR2500 recovery</title>
+ 		<link rel="stylesheet" href="style.css">
+ 	</head>
+ 	<body>
+ 		<div id="m">
+-			<h1>FIRMWARE UPDATE</h1>
+-			<p>You are going to update <strong>firmware</strong> on the device.<br>Please, choose file from your local hard drive and click <strong>Update firmware</strong> button.</p>
+-			<form method="post" enctype="multipart/form-data"><input type="file" name="firmware"><input type="submit" value="Update firmware"></form>
++			<h1>ZM-WR2500 RECOVERY</h1>
++			<p>Choose what you want to update on the device:</p>
++			<div class="i">
++				<ul>
++					<li><a href="firmware.html"><strong>Update firmware</strong></a> &mdash; the OpenWrt system image (sysupgrade)</li>
++					<li><a href="uboot.html"><strong>Update U-Boot</strong></a> &mdash; the bootloader (dangerous!)</li>
++					<li><a href="art.html"><strong>Update ART</strong></a> &mdash; wireless calibration data</li>
++				</ul>
++			</div>
+ 			<div class="i w">
+ 				<strong>WARNINGS</strong>
+ 				<ul>
+ 					<li>do not power off the device during update</li>
+ 					<li>if everything goes well, the device will restart</li>
+-					<li>you can upload whatever you want, so be sure that you choose proper firmware image for your device</li>
++					<li>be sure to choose the proper image for this device</li>
+ 				</ul>
+ 			</div>
+ 		</div>
+-		<div id="f">You can find more information about this project on <a href="https://github.com/pepe2k/u-boot_mod" target="_blank">GitHub</a></div>
++		<div id="f">ZMTEL ZM-WR2500 (CN6619) &mdash; recovery web server</div>
+ 	</body>
+-</html>
+\ No newline at end of file
++</html>
+diff --git a/u-boot/httpd/vendors/general/uboot.html b/u-boot/httpd/vendors/general/uboot.html
+index c690b8a..e3a0dfe 100644
+--- a/u-boot/httpd/vendors/general/uboot.html
++++ b/u-boot/httpd/vendors/general/uboot.html
+@@ -8,6 +8,7 @@
+ 	<body>
+ 		<div id="m">
+ 			<h1>U-BOOT UPDATE</h1>
++			<p><a href="index.html">&laquo; back to menu</a></p>
+ 			<p>You are going to update <strong>U-Boot bootloader</strong> on the device.<br>Please, choose file from your local hard drive and click <strong>Update U-Boot</strong> button.</p>
+ 			<form method="post" enctype="multipart/form-data"><input type="file" name="uboot"><input type="submit" value="Update U-Boot"></form>
+ 			<div class="i w">
+diff --git a/u-boot/include/configs/db12x.h b/u-boot/include/configs/db12x.h
+index 7f11b04..d0f4e0f 100644
+--- a/u-boot/include/configs/db12x.h
++++ b/u-boot/include/configs/db12x.h
+@@ -79,6 +79,18 @@
+ 						GPIO20 | GPIO21
+ 	#define CONFIG_QCA_GPIO_MASK_IN		GPIO16
+ 
++#elif defined(CONFIG_FOR_ZMWR2500)
++
++	/* ZMTEL ZM-WR2500 (CN6619): AR9341 AP123, 16MB flash, 64MB RAM.
++	 * single LAN/WAN ethernet port (built-in switch).
++	 * LEDs (active low): ss2=0, tel=13, ss1=14, lte=15, ss4=17, wps=18
++	 * LED ss3 (gpio22) is active HIGH (leave unconfigured, default).
++	 * Buttons (input, active low): wps=19, reset=21 */
++	#define CONFIG_QCA_GPIO_MASK_LED_ACT_L	GPIO0  | GPIO13 | GPIO14 |\
++						GPIO15 | GPIO17 | GPIO18
++	/* Buttons (input, active low): wps=19, reset=21 */
++	#define CONFIG_QCA_GPIO_MASK_IN		GPIO19 | GPIO21
++
+ #elif defined(CONFIG_FOR_YUNCORE_CPE870)
+ 
+ 	#define CONFIG_QCA_GPIO_MASK_LED_ACT_L	GPIO0 | GPIO1  | GPIO2  |\
+@@ -104,6 +116,16 @@
+ 				"rootfstype=squashfs init=/etc/preinit "\
+ 				"mtdparts=spi0.0:256k(u-boot)ro,64k(u-boot-env),320k(custom),1536k(kernel),12096k(rootfs),2048k(failsafe),64k(art)ro"
+ 
++#elif defined(CONFIG_FOR_ZMWR2500)
++
++	/* 16MB standard OpenWrt layout (matches mach-zmwr2500.c):
++	 * 128k(u-boot) 64k(u-boot-env) 16128k(firmware) 64k(art).
++	 * No root= - kernel mtdsplit finds rootfs in firmware partition.
++	 * No noinitrd - keep initramfs usable. */
++	#define CONFIG_BOOTARGS	"console=ttyS0,115200 " \
++				"rootfstype=squashfs,jffs2 " \
++				"mtdparts=spi0.0:128k(u-boot)ro,64k(u-boot-env),16128k(firmware),64k(art)ro"
++
+ #elif defined(CONFIG_FOR_GLINET_GL_AR300)
+ 
+ 	#define CONFIG_BOOTARGS	"console=ttyATH0,115200 root=31:02 "\
+@@ -146,6 +168,11 @@
+ 
+ 	#define CFG_LOAD_ADDR		0x9F0A0000
+ 
++#elif defined(CONFIG_FOR_ZMWR2500)
++
++	/* firmware partition starts at 0x30000; uImage kernel there */
++	#define CFG_LOAD_ADDR		0x9F030000
++
+ #elif defined(CONFIG_FOR_GLINET_GL_AR300)
+ 
+ 	#define CFG_LOAD_ADDR		0x9F050000
+@@ -225,6 +252,14 @@
+ 	#define OFFSET_MAC_DATA_BLOCK_LENGTH	0x010000
+ 	#define OFFSET_MAC_ADDRESS		0x000000
+ 
++#elif defined(CONFIG_FOR_ZMWR2500)
++
++	/* MAC stored at art+0x1000 (art @0xFF0000, 64k). eth MAC first 6 bytes,
++	 * wlan MAC next 6 bytes (same as original config partition layout). */
++	#define OFFSET_MAC_DATA_BLOCK		0xFF0000
++	#define OFFSET_MAC_DATA_BLOCK_LENGTH	0x010000
++	#define OFFSET_MAC_ADDRESS		0x001000
++
+ #else
+ 
+ 	#define OFFSET_MAC_DATA_BLOCK		0x010000
+diff --git a/u-boot/include/configs/qca9k_common.h b/u-boot/include/configs/qca9k_common.h
+index 80838d8..570c071 100644
+--- a/u-boot/include/configs/qca9k_common.h
++++ b/u-boot/include/configs/qca9k_common.h
+@@ -17,7 +17,7 @@
+ 
+ /* Wait only 1 second by default */
+ #if !defined(CONFIG_BOOTDELAY)
+-	#define CONFIG_BOOTDELAY	1
++	#define CONFIG_BOOTDELAY	8
+ #endif
+ 
+ /* Allow to disable console output, don't display console info */
+diff --git a/u-boot/net/httpd.c b/u-boot/net/httpd.c
+index 7bcc79a..7f7cea6 100644
+--- a/u-boot/net/httpd.c
++++ b/u-boot/net/httpd.c
+@@ -76,13 +76,21 @@ int do_http_upgrade(const ulong size, const int upgrade_type){
+ 		}
+ 
+ 		printf("\n\n****************************\n*     U-BOOT UPGRADING     *\n* DO NOT POWER OFF DEVICE! *\n****************************\n\n");
++		/* 🔴 cp.b length must be the ACTUAL uploaded size, not the
++		 * sector-rounded backup_size: the bytes between "size" and
++		 * "backup_size" in RAM are uninitialised (0xFF from the memset
++		 * only covers the buffer, not the whole rounded region), so
++		 * copying backup_size wrote garbage over the FLASH right after
++		 * the U-Boot image - which lands in the firmware partition area
++		 * and produced "unsupported image header" + a boot loop.
++		 * The tail is already preserved by the backup/restore above. */
+ 		sprintf(buf,
+ 				"erase 0x%lX +0x%lX; cp.b 0x%lX 0x%lX 0x%lX",
+ 				CFG_FLASH_BASE,
+-				backup_size,
++				0x20000,	/* u-boot partition (128K) erase range - do NOT round up to the sector size or it eats into the firmware */
+ 				CONFIG_LOADADDR,
+ 				CFG_FLASH_BASE,
+-				backup_size);
++				size);
+ 
+ 	} else if(upgrade_type == WEBFAILSAFE_UPGRADE_TYPE_FIRMWARE){
+ 
+
+--- a/u-boot/Makefile
++++ b/u-boot/Makefile
+@@ -466,6 +466,15 @@
+ yuncore_cpe870:
+ 	@$(call build,64,1,ETH_CONFIG=_s27)
+ 
++zmtel_zm-wr2500: ar934x_common
++	@$(call config_init,ZMTEL ZM-WR2500 (CN6619),zm-wr2500,16,21,1,QCA_AR9341_SOC)
++	@$(call define_add,CONFIG_FOR_ZMTEL_ZM_WR2500,1)
++	@$(call define_add,CFG_ATHRS27_PHY,1)
++	@$(call define_add,CFG_AG7240_NMACS,2)
++	@$(call define_add,CONFIG_BTN_RECOVERY_SCRIPT,1)
++	@$(call define_add,CONFIG_BOOTDELAY,3)
++	@$(MKCONFIG) -a db12x mips mips db12x ar7240 ar7240
++
+ engenius_ens202ext: ar934x_common
+ 	@$(call config_init,EnGenius ENS202EXT,ens202ext,16,1,1,QCA_AR9341_SOC)
+ 	@$(call define_add,CONFIG_FOR_ENGENIUS_ENS202EXT,1)
+--- a/u-boot/cpu/mips/ar7240/qca95xx_pll_init.S
++++ b/u-boot/cpu/mips/ar7240/qca95xx_pll_init.S
+@@ -471,6 +471,39 @@
+ 	li   t8, 0x00C00000
+ 	subu ra, ra, t8
+ 
++	/*
++	 * CN6619 / ZM-WR2500 (ZMTEL) board additions.
++	 *
++	 * The following registers are WRITE-LOCKED once the system is running
++	 * (writing them later resets the SoC), so they must be programmed here,
++	 * during low-level init -- exactly like the vendor U-Boot does.
++	 *
++	 *   0x18050004  AUDIO PLL control   (vendor U-Boot writes 0x40818xxx)
++	 *   0x18050028  audio clock divider
++	 *   0x180a0000  TDM interface config
++	 *   0x180a0004  TDM interface enable (bit12+bit16 needed!)
++	 *   0x180a0050  MBOX DMA control
++	 *
++	 * Without 0x180a0004's enable bits the MBOX DMA engine has no clock,
++	 * stops right after start and the SLIC PCM data never reaches memory
++	 * (handset completely silent).
++	 */
++	li	t7, 0xb8050004
++	li	t8, 0x40818000
++	sw	t8, 0(t7)
++	li	t7, 0xb8050028
++	li	t8, 0x00098000
++	sw	t8, 0(t7)
++	li	t7, 0xb80a0000
++	li	t8, 0x00010016
++	sw	t8, 0(t7)
++	li	t7, 0xb80a0004
++	li	t8, 0x000110ff
++	sw	t8, 0(t7)
++	li	t7, 0xb80a0050
++	li	t8, 0x00000050
++	sw	t8, 0(t7)
++
+ end:
+ 	jr ra
+ 	nop
