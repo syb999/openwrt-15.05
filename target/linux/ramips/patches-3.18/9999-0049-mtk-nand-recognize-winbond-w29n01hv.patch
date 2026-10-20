@@ -1,0 +1,27 @@
+--- a/drivers/mtd/nand/nand_ids.c
++++ b/drivers/mtd/nand/nand_ids.c
+@@ -114,6 +114,14 @@
+ 		{ .id = {0x98, 0xF1} },
+ 		  SZ_2K, SZ_128, SZ_128K, 0, 2, 64, NAND_ECC_INFO(4, SZ_512),
+ 		  0 },
++	/* Winbond W29N01HV: 1Gbit SLC, 2KiB page + 64B OOB.  Matched by
++	 * the first two id bytes (EF = Winbond, F1 = 1Gbit) so it must stay
++	 * ahead of the generic EXTENDED_ID_NAND(0xF1) entry, whose
++	 * pagesize/oobsize are zero and left to nand_decode_ext_id(). */
++	{"Winbond W29N01HV 128MiB 3.3V 8-bit",
++		{ .id = {0xEF, 0xF1} },
++		  SZ_2K, SZ_128, SZ_128K, 0, 2, 64, NAND_ECC_INFO(4, SZ_512),
++		  0 },
+ 	EXTENDED_ID_NAND("NAND 128MiB 3,3V 8-bit",  0xF1, 128, LP_OPTIONS),
+ 	/* Full 6-byte-id entry: matched by the first 2 id bytes only
+ 	 * (id_len = 2) so every ESMT part in this family is covered.
+--- a/drivers/mtd/nand/nand_device_list.h
++++ b/drivers/mtd/nand/nand_device_list.h
+@@ -49,6 +49,7 @@
+      * other 128MiB entry in this table uses 4. */
+     {0xC8D1, 0x000000, 4, 8, 128, 128, 2048, 64, 0x30C77fff, "ESMT 128MiB", 0},
+     {0x98F1, 0x000000, 4, 8, 128, 128, 2048, 64, 0x30C77fff, "Toshiba 128MiB", 0},
++    {0xEFF1, 0x000000, 4, 8, 128, 128, 2048, 64, 0x30C77fff, "Winbond 128MiB", 0},
+ 	{0xECD3, 0x519558, 5, 8, 1024, 128, 2048, 64, 0x44333, "K9K8G8000", 0},
+     {0xC2F1, 0x801DC2, 4, 8, 128, 128, 2048, 64, 0x30C77fff, "MX30LF1G08AA", 0},
+     {0xC2F1, 0x809103, 4, 8,  128, 128, 2048, 112, 0x00444332, "MX30LF1G28AD", 0},

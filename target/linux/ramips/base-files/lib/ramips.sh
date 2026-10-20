@@ -580,6 +580,9 @@ ramips_board_detect() {
 	*"JCG-Y2")
 		name="jcg-y2"
 		;;
+	*"JCG Q20")
+		name="jcg-q20"
+		;;
 	*"ZBT-WE1326")
 		name="zbt-we1326"
 		;;

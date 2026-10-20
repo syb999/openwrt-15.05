@@ -1,0 +1,29 @@
+--- a/drivers/mtd/nand/nand_ids.c
++++ b/drivers/mtd/nand/nand_ids.c
+@@ -104,6 +104,16 @@
+ 
+ 	/* 1 Gigabit */
+ 	EXTENDED_ID_NAND("NAND 128MiB 1,8V 8-bit",  0xA1, 128, LP_OPTIONS),
++	/* Full 6-byte-id entry: matched by the first 2 id bytes only
++	 * (id_len = 2) so every Toshiba 128MiB part in this family is
++	 * covered.  Must stay ahead of the EXTENDED_ID_NAND(0xF1)
++	 * entry below: the scan loop stops at the first plain dev_id
++	 * match, and that path cannot supply pagesize/oobsize.  The
++	 * chip needs 2048 + 64 (JCG Q20, MT7915 + Toshiba NAND). */
++	{"Toshiba TC58NVG 128MiB 3.3V 8-bit",
++		{ .id = {0x98, 0xF1} },
++		  SZ_2K, SZ_128, SZ_128K, 0, 2, 64, NAND_ECC_INFO(4, SZ_512),
++		  0 },
+ 	EXTENDED_ID_NAND("NAND 128MiB 3,3V 8-bit",  0xF1, 128, LP_OPTIONS),
+ 	/* Full 6-byte-id entry: matched by the first 2 id bytes only
+ 	 * (id_len = 2) so every ESMT part in this family is covered.
+--- a/drivers/mtd/nand/nand_device_list.h
++++ b/drivers/mtd/nand/nand_device_list.h
+@@ -48,6 +48,7 @@
+     /* 3 addr cycles cannot address a 128MiB 2KiB-page part; every
+      * other 128MiB entry in this table uses 4. */
+     {0xC8D1, 0x000000, 4, 8, 128, 128, 2048, 64, 0x30C77fff, "ESMT 128MiB", 0},
++    {0x98F1, 0x000000, 4, 8, 128, 128, 2048, 64, 0x30C77fff, "Toshiba 128MiB", 0},
+ 	{0xECD3, 0x519558, 5, 8, 1024, 128, 2048, 64, 0x44333, "K9K8G8000", 0},
+     {0xC2F1, 0x801DC2, 4, 8, 128, 128, 2048, 64, 0x30C77fff, "MX30LF1G08AA", 0},
+     {0xC2F1, 0x809103, 4, 8,  128, 128, 2048, 112, 0x00444332, "MX30LF1G28AD", 0},

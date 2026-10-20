@@ -339,6 +339,9 @@ case $board in
 	dsbox-dsr1)
 		ucidef_set_led_netdev "wan" "WAN" "dsr1:green:status" "eth0.2" "tx rx"
 		;;
+	jcg-q20)
+		ucidef_set_led_default "status" "status" "jcg:blue:status" "1"
+		;;
 	jcg-y2)
 		ucidef_set_led_netdev "internet" "internet" "jcg:blue:internet" "eth0.2"
 		;;

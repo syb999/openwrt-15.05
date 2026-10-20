@@ -191,6 +191,20 @@ TARGET_DEVICES += xiaoyu-xy-c5
 #
 # MT7621 NAND flash based boards
 #
+define Device/jcg-q20
+  DTS := JCG-Q20
+  BLOCKSIZE := 128KiB
+  PAGESIZE := 2048
+  KERNEL_SIZE := 4096k
+  IMAGE_SIZE := 124416k
+  FILESYSTEMS := squashfs
+  IMAGES := factory.bin
+  IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
+  DEVICE_TITLE := JCG Q20
+  DEVICE_PACKAGES := kmod-mt7915e
+endef
+TARGET_DEVICES += jcg-q20
+
 define Device/an1201l
   DTS := AN1201L
   BLOCKSIZE := 128KiB

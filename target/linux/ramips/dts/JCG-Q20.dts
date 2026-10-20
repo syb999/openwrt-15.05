@@ -1,0 +1,137 @@
+/dts-v1/;
+
+/include/ "mt7621.dtsi"
+
+/ {
+	compatible = "jcg,q20", "mediatek,mt7621-soc";
+	model = "JCG Q20";
+
+	memory@0 {
+		device_type = "memory";
+		reg = <0x0 0x10000000>;
+	};
+
+	chosen {
+		bootargs = "console=ttyS0,115200";
+	};
+
+	palmbus@1E000000 {
+		spi@b00 {
+			status = "disabled";
+		};
+	};
+
+	nand@1e003000 {
+		status = "okay";
+
+		/* Drop the generic SPI/NOR partition table inherited from
+		 * mt7621.dtsi (uboot / uboot_env / factory / rootfs@140000):
+		 * partition@0, @80000 and @100000 are overridden below, but
+		 * the dtsi's rootfs@140000 would otherwise survive and
+		 * overlap the real Factory partition. */
+		/delete-node/ partition@140000;
+
+		partition@0 {
+			label = "Bootloader";
+			reg = <0x0 0x80000>;
+			read-only;
+		};
+
+		partition@80000 {
+			label = "Config";
+			reg = <0x80000 0x80000>;
+		};
+
+		factory: partition@100000 {
+			label = "Factory";
+			reg = <0x100000 0x80000>;
+			read-only;
+		};
+
+		partition@180000 {
+			label = "crash";
+			reg = <0x180000 0x40000>;
+		};
+
+		partition@1c0000 {
+			label = "crash_log";
+			reg = <0x1c0000 0x40000>;
+		};
+
+		partition@200000 {
+			label = "kernel";
+			reg = <0x200000 0x400000>;
+		};
+
+		/* Leave the last 512 KiB unpartitioned: it holds the MediaTek
+		 * factory bad block table and must not be overlapped by ubi. */
+		partition@600000 {
+			label = "ubi";
+			reg = <0x600000 0x7980000>;
+		};
+	};
+
+	pcie@1e140000 {
+		status = "okay";
+
+		pcie1 {
+			mt76@0,0 {
+				reg = <0x0000 0 0 0 0>;
+				device_type = "pci";
+				mediatek,mtd-eeprom = <&factory 0x0000>;
+			};
+		};
+	};
+
+	ethernet@1e100000 {
+		mtd-mac-address = <&factory 0x3fff4>;
+	};
+
+	gpio-keys-polled {
+		compatible = "gpio-keys-polled";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		poll-interval = <20>;
+
+		reset {
+			label = "reset";
+			gpios = <&gpio0 18 1>;
+			linux,code = <0x198>;
+		};
+
+		wps {
+			label = "wps";
+			gpios = <&gpio0 16 1>;
+			linux,code = <0x211>;
+		};
+	};
+
+	gpio-leds {
+		compatible = "gpio-leds";
+
+		status_red {
+			label = "jcg:red:status";
+			gpios = <&gpio0 14 0>;
+		};
+
+		status_blue {
+			label = "jcg:blue:status";
+			gpios = <&gpio0 15 1>;
+		};
+	};
+
+	pinctrl {
+		state_default: pinctrl0 {
+			gpio {
+				ralink,group = "jtag", "wdt";
+				ralink,function = "gpio";
+			};
+		};
+	};
+
+	/* LAN uses switch ports 1 and 4; the WAN port is wired to gmac1
+	 * on this board (upstream DTS: &gmac1 with phy-handle = phy0), so
+	 * it cannot be reached through the mt7530 VLANs.  The 3.18 ralink
+	 * ethernet driver registers a single MAC only - see the board
+	 * notes in the commit message. */
+};

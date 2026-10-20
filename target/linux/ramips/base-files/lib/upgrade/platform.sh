@@ -7,6 +7,7 @@
 PART_NAME=firmware
 RAMFS_COPY_DATA=/lib/ramips.sh
 
+
 platform_check_image() {
 	local board=$(ramips_board_name)
 	local magic="$(get_magic_long "$1")"
@@ -253,6 +254,7 @@ platform_do_upgrade() {
 	hc5962)
 		nand_do_upgrade "$ARGV"
 		;;
+
 	*)
 		default_do_upgrade "$ARGV"
 		;;
