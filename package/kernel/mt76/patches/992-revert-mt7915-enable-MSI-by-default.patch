@@ -1,0 +1,43 @@
+--- a/mt7915/pci.c
++++ b/mt7915/pci.c
+@@ -266,13 +266,9 @@ static int mt7915_pci_probe(struct pci_d
+ 
+ 	dev = container_of(mdev, struct mt7915_dev, mt76);
+ 
+-	ret = pci_alloc_irq_vectors(pdev, 1, 1, PCI_IRQ_ALL_TYPES);
+-	if (ret < 0)
+-		goto free;
+-
+ 	ret = mt7915_mmio_init(mdev, pcim_iomap_table(pdev)[0], pdev->irq);
+ 	if (ret)
+-		goto error;
++		goto free;
+ 
+ 	tasklet_setup(&dev->irq_tasklet, mt7915_irq_tasklet);
+ 
+@@ -284,22 +280,18 @@ static int mt7915_pci_probe(struct pci_d
+ 	ret = devm_request_irq(mdev->dev, pdev->irq, mt7915_irq_handler,
+ 			       IRQF_SHARED, KBUILD_MODNAME, dev);
+ 	if (ret)
+-		goto error;
++		goto free;
+ 
+ 	mt7915_pci_init_hif2(dev);
+ 
+ 	ret = mt7915_register_device(dev);
+ 	if (ret)
+-		goto free_irq;
++		goto free;
+ 
+ 	return 0;
+-free_irq:
+-	devm_free_irq(mdev->dev, pdev->irq, dev);
+-error:
+-	pci_free_irq_vectors(pdev);
++
+ free:
+ 	mt76_free_device(&dev->mt76);
+-
+ 	return ret;
+ }
+ 

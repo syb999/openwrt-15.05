@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mt76
-PKG_RELEASE:=18
+PKG_RELEASE:=19
 
 PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILES:=
@@ -217,7 +217,10 @@ endef
 define KernelPackage/mt7915e
   $(KernelPackage/mt76-default)
   TITLE:=MediaTek MT7915e wireless driver
-  DEPENDS+=@PCI_SUPPORT +kmod-mt7615-common +kmod-hwmon-core +@DRIVER_11AX_SUPPORT
+  # kmod-thermal pulls in CONFIG_THERMAL, which the thermal cooling-device
+  # registration in mt7915/init.c needs (without it the symbols are missing
+  # and mt7915e.ko fails to load on kernels where CONFIG_THERMAL is unset).
+  DEPENDS+=@PCI_SUPPORT +kmod-mt7615-common +kmod-hwmon-core +kmod-thermal
   FILES:= $(PKG_BUILD_DIR)/mt7915/mt7915e.ko
   AUTOLOAD:=$(call AutoProbe,mt7915e)
 endef
@@ -446,7 +449,7 @@ $(eval $(call BuildPackage,mt7663-firmware-sta))
 #$(eval $(call KernelPackage,mt7663-usb-sdio))
 #$(eval $(call KernelPackage,mt7663u))
 #$(eval $(call KernelPackage,mt7663s))
-#$(eval $(call KernelPackage,mt7915e))
+$(eval $(call KernelPackage,mt7915e))
 #$(eval $(call KernelPackage,mt7921e))
 $(eval $(call KernelPackage,mt76))
 $(eval $(call BuildPackage,mt76-test))
