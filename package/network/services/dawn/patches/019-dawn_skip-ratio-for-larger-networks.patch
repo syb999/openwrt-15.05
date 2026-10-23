@@ -1,0 +1,17 @@
+diff --git a/src/storage/datastorage.c b/src/storage/datastorage.c
+index e5285bb..264de6d 100644
+--- a/src/storage/datastorage.c
++++ b/src/storage/datastorage.c
+@@ -36,7 +36,11 @@ const int max_band_freq[__DAWN_BAND_MAX] = {
+ };
+ 
+ // FIXME: Using ratio of 4 to exercise skip handling in small network.  Set to 32, 64 or 128 for real use on larger network.
+-struct probe_head_s probe_set = { 0, 0, 4, NULL, NULL };
++/* skip_ratio controls how sparse the accelerator list is. The upstream note
++ * said 4 was chosen to exercise the skip handling in small networks and that
++ * 32/64/128 should be used for real deployments; with a few hundred
++ * (client x AP) entries 32 keeps the skip walk cheap without wasting nodes. */
++struct probe_head_s probe_set = { 0, 0, 32, NULL, NULL };
+ pthread_mutex_t probe_array_mutex;
+ 
+ struct ap_s *ap_set = NULL;

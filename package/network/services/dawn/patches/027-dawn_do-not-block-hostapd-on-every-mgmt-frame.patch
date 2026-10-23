@@ -1,0 +1,19 @@
+--- a/src/utils/ubus.c
++++ b/src/utils/ubus.c
+@@ -1731,7 +1731,15 @@
+     hostapd_entry->vht_support = (uint8_t) support_vht(hostapd_entry->iface_name);
+     hostapd_entry->band = -1;
+ 
+-    respond_to_notify(hostapd_entry->id);
++    /* hostapd blocks for up to 100 ms waiting for our reply on every probe,
++     * auth and assoc event once notify_response is enabled (hostapd ubus.c:
++     * ubus_complete_request(..., 100)). We cannot answer anything but "allow"
++     * unless one of the eval_* switches is on, so do not make hostapd wait:
++     * the events are still delivered asynchronously and are used for the
++     * probe database / hearing map. */
++    if (dawn_metric.eval_probe_req || dawn_metric.eval_auth_req ||
++        dawn_metric.eval_assoc_req)
++        respond_to_notify(hostapd_entry->id);
+ 
+     /* bss_mgmt_enable() flips the RM / BSS Transition capability bits in the
+      * beacons (hostapd ubus.c: __hostapd_bss_mgmt_enable() -> bss_transition,

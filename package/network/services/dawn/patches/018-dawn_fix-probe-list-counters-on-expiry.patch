@@ -1,0 +1,17 @@
+diff --git a/src/storage/datastorage.c b/src/storage/datastorage.c
+index e5285bb..39b89dd 100644
+--- a/src/storage/datastorage.c
++++ b/src/storage/datastorage.c
+@@ -1187,10 +1197,12 @@ void remove_old_probe_entries(time_t current_time, long long int threshold) {
+             probe_entry* victim = *i;
+ 
+             *i = victim->next_probe;
++            probe_set.node_count--;
+ 
+             if (*s == victim)
+             {
+                 *s = victim->next_probe_skip;
++                probe_set.skip_count--;
+             }
+ 
+             dawn_free(victim);

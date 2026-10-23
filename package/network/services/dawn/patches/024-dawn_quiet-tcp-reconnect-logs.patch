@@ -1,0 +1,56 @@
+diff --git a/src/network/tcpsocket.c b/src/network/tcpsocket.c
+index 7a86e89..0c454ef 100644
+--- a/src/network/tcpsocket.c
++++ b/src/network/tcpsocket.c
+@@ -51,7 +51,7 @@ static void client_close(struct ustream *s) {
+ 
+     struct client *cl = container_of(s, struct client, s.stream);
+ 
+-    dawnlog_warning("Connection closed\n");
++    dawnlog_info("Client connection closed\n");
+     ustream_free(s);
+     dawn_unregmem(s);
+     close(cl->s.fd.fd);
+@@ -69,11 +69,12 @@ static void client_notify_write(struct ustream *s, int bytes) {
+ static void client_notify_state(struct ustream *s) {
+     dawnlog_debug_func("Entering...");
+ 
+-    struct client *cl = container_of(s, struct client, s.stream);
+     if (!s->write_error && !s->eof)
+         return;
+ 
+-    dawnlog_error("Closing client-connection, pending: %d, total: %d\n", s->w.data_bytes, cl->ctr);
++    /* cl->ctr was never initialised nor incremented - printing it only ever
++     * produced garbage. Reconnects are normal, so this is not an error. */
++    dawnlog_info("Closing client-connection, pending: %d\n", s->w.data_bytes);
+     client_close(s);
+ }
+ 
+@@ -82,7 +83,7 @@ static void client_to_server_close(struct ustream *s) {
+ 
+     dawnlog_debug_func("Entering...");
+ 
+-    dawnlog_warning("Connection to server closed\n");
++    dawnlog_info("Connection to server closed\n");
+     ustream_free(s);
+     dawn_unregmem(s);
+ 
+@@ -93,14 +94,15 @@ static void client_to_server_close(struct ustream *s) {
+ }
+ 
+ static void client_to_server_state(struct ustream *s) {
+-    struct client *cl = container_of(s, struct client, s.stream);
+-
++    /* Note: the stream belongs to a network_con_s, not to a struct client.
++     * The old code used container_of() with the wrong type and then printed
++     * the resulting garbage as "total". */
+     dawnlog_debug_func("Entering...");
+ 
+     if (!s->write_error && !s->eof)
+         return;
+ 
+-    dawnlog_error("Closing connection, pending: %d, total: %d\n", s->w.data_bytes, cl->ctr);
++    dawnlog_info("Closing connection to server, pending: %d\n", s->w.data_bytes);
+     client_to_server_close(s);
+ }
+ 

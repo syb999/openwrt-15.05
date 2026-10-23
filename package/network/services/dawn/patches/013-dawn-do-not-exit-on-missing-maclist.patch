@@ -1,0 +1,15 @@
+diff --git a/src/storage/datastorage.c b/src/storage/datastorage.c
+index 7e6da46..2856a40 100644
+--- a/src/storage/datastorage.c
++++ b/src/storage/datastorage.c
+@@ -1292,8 +1292,8 @@ void insert_macs_from_file() {
+     fp = fopen("/tmp/dawn_mac_list", "r");
+     if (fp == NULL)
+     {
+-        dawnlog_error("Failed opening MAC list file - quitting!\n");
+-        exit(EXIT_FAILURE);
++        dawnlog_debug("No MAC list file /tmp/dawn_mac_list, continuing with empty list\n");
++        return;
+     }
+ 
+     dawn_regmem(fp);

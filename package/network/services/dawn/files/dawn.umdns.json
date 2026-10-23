@@ -1,0 +1,6 @@
+{
+	"_dawn._tcp": {
+		"service": "_dawn._tcp.local",
+		"port": 1026
+	}
+}

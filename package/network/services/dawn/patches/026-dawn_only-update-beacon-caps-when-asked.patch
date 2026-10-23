@@ -1,0 +1,23 @@
+diff --git a/src/utils/ubus.c b/src/utils/ubus.c
+index e974f2f..7667a42 100644
+--- a/src/utils/ubus.c
++++ b/src/utils/ubus.c
+@@ -1728,7 +1732,17 @@ bool subscribe(struct ubus_context *ctx_local, struct hostapd_sock_entry *hostap
+     hostapd_entry->band = -1;
+ 
+     respond_to_notify(hostapd_entry->id);
+-    enable_rrm(hostapd_entry->id);
++
++    /* bss_mgmt_enable() flips the RM / BSS Transition capability bits in the
++     * beacons (hostapd ubus.c: __hostapd_bss_mgmt_enable() -> bss_transition,
++     * radio_measurements[]). Doing that unconditionally changes how clients
++     * roam even when the user enabled neither 11k nor 11v, and it made
++     * clients pick weaker APs. Only touch the beacons when the user asked
++     * for neighbour reports (set_hostapd_nr) or in any case leaves hostapd
++     * alone, so DAWN cannot silently change client behaviour. */
++    if (dawn_metric.set_hostapd_nr)
++        enable_rrm(hostapd_entry->id);
++
+     ubus_get_rrm();
+ 
+     dawnlog_debug("Subscribed to: %s\n", hostapd_entry->iface_name);

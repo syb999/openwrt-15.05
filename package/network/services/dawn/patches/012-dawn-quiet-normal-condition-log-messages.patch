@@ -1,0 +1,148 @@
+diff --git a/src/storage/datastorage.c b/src/storage/datastorage.c
+index 7e6da46..2856a40 100644
+--- a/src/storage/datastorage.c
++++ b/src/storage/datastorage.c
+@@ -181,7 +181,7 @@ void send_beacon_requests(ap* target_ap, ap* host_ap, int sub_id) {
+         {
+             int ubus_status = ubus_send_beacon_request(i, target_ap, dawn_metric.duration, sub_id);
+             if (ubus_status)
+-                dawnlog_warning("Client / BSSID = " MACSTR " / " MACSTR ": BEACON REQUEST failed",
++                dawnlog_debug("Client / BSSID = " MACSTR " / " MACSTR ": BEACON REQUEST failed\n",
+                     MAC2STR(i->client_addr.u8), MAC2STR(target_ap->bssid_addr.u8));
+         }
+ 
+diff --git a/src/utils/dawn_iwinfo.c b/src/utils/dawn_iwinfo.c
+index 7844c1d..e1c5e97 100644
+--- a/src/utils/dawn_iwinfo.c
++++ b/src/utils/dawn_iwinfo.c
+@@ -76,7 +76,8 @@ int compare_essid_iwinfo(struct dawn_mac bssid_addr, struct dawn_mac bssid_addr_
+     }
+     closedir(dirp);
+ 
+-    dawnlog_debug("Comparing: %s with %s\n", essid, essid_to_compare);
++    dawnlog_debug("Comparing: %s with %s\n", essid ? essid : "(none)",
++                  essid_to_compare ? essid_to_compare : "(none)");
+ 
+     if (essid == NULL || essid_to_compare == NULL) {
+         return -1;
+@@ -156,7 +157,7 @@ int get_rssi_iwinfo(struct dawn_mac client_addr) {
+     struct dirent *entry;
+     dirp = opendir(hostapd_dir_glob);  // error handling?
+     if (!dirp) {
+-        dawnlog_error("[RSSI INFO] No hostapd sockets!\n");
++        dawnlog_debug("[RSSI INFO] No hostapd sockets!\n");
+         return INT_MIN;
+     }
+ 
+@@ -336,13 +337,13 @@ int get_channel_utilization(const char *ifname, uint64_t *last_channel_time, uin
+ 
+     if (iw->survey(ifname, buf, &len))
+     {
+-        dawnlog_warning("Survey not possible!\n");
++        dawnlog_trace("Survey not possible!\n");
+         iwinfo_finish();
+         return 0;
+     }
+     else if (len <= 0)
+     {
+-        dawnlog_warning("No survey results\n");
++        dawnlog_trace("No survey results\n");
+         iwinfo_finish();
+         return 0;
+     }
+@@ -406,7 +407,7 @@ int support_vht(const char *ifname) {
+ 
+     if (iw->htmodelist(ifname, &htmodes))
+     {
+-        dawnlog_error("No VHT mode information available\n");
++        dawnlog_debug("No VHT mode information available\n");
+         iwinfo_finish();
+         return 0;
+     }
+diff --git a/src/utils/ubus.c b/src/utils/ubus.c
+index edb606b..e974f2f 100644
+--- a/src/utils/ubus.c
++++ b/src/utils/ubus.c
+@@ -345,7 +345,7 @@ static probe_entry* parse_to_beacon_rep(struct blob_attr *msg) {
+         hwaddr_aton(blobmsg_data(tb[BEACON_REP_BSSID]), msg_bssid.u8) ||
+         hwaddr_aton(blobmsg_data(tb[BEACON_REP_ADDR]), msg_client.u8))
+     {
+-        dawnlog_warning("Parse of BEACON failed!\n");
++        dawnlog_debug("Parse of BEACON failed!\n");
+     }
+     else
+     {
+@@ -377,7 +377,7 @@ int handle_auth_req(struct blob_attr* msg) {
+     client_req_entry *auth_req = dawn_malloc(sizeof(struct client_req_entry_s));
+     if (auth_req == NULL)
+     {
+-        dawnlog_error("Memory allocation of auth req failed!");
++        dawnlog_error("Memory allocation of auth req failed!\n");
+     }
+     else
+     {
+@@ -458,7 +458,7 @@ static int handle_assoc_req(struct blob_attr *msg) {
+     client_req_entry* assoc_req = dawn_malloc(sizeof(struct client_req_entry_s));
+     if (assoc_req == NULL)
+     {
+-        dawnlog_error("Memory allocation of assoc req failed!");
++        dawnlog_error("Memory allocation of assoc req failed!\n");
+     }
+     else
+     {
+@@ -538,7 +538,7 @@ static int handle_probe_req(struct blob_attr* msg) {
+ 
+     if (probe_req_new == NULL)
+     {
+-        dawnlog_error("Parse of probe req failed!");
++        dawnlog_error("Parse of probe req failed!\n");
+     }
+     else
+     {
+@@ -1706,13 +1706,13 @@ bool subscribe(struct ubus_context *ctx_local, struct hostapd_sock_entry *hostap
+     sprintf(subscribe_name, "hostapd.%s", hostapd_entry->iface_name);
+ 
+     if (ubus_lookup_id(ctx_local, subscribe_name, &hostapd_entry->id)) {
+-        dawnlog_warning("Failed to lookup ID!");
++        dawnlog_debug("Failed to lookup ID!\n");
+         subscription_wait(&hostapd_entry->wait_handler);
+         return false;
+     }
+ 
+     if (ubus_subscribe(ctx_local, &hostapd_entry->subscriber, hostapd_entry->id)) {
+-        dawnlog_warning("Failed to register subscriber!");
++        dawnlog_debug("Failed to register subscriber!\n");
+         subscription_wait(&hostapd_entry->wait_handler);
+         return false;
+     }
+@@ -1788,7 +1788,7 @@ bool subscriber_to_interface(const char *ifname) {
+     hostapd_entry->subscribed = false;
+ 
+     if (ubus_register_subscriber(ctx, &hostapd_entry->subscriber)) {
+-        dawnlog_error("Failed to register subscriber!");
++        dawnlog_error("Failed to register subscriber!\n");
+         return false;
+     }
+ 
+@@ -1810,7 +1810,7 @@ void subscribe_to_new_interfaces(const char *hostapd_sock_path) {
+ 
+     dirp = opendir(hostapd_sock_path);  // error handling?
+     if (!dirp) {
+-        dawnlog_error("[SUBSCRIBING] No hostapd sockets!\n");
++        dawnlog_debug("[SUBSCRIBING] No hostapd sockets!\n");
+         return;
+     }
+ 
+diff --git a/src/utils/utils.c b/src/utils/utils.c
+index 3681868..9cae379 100644
+--- a/src/utils/utils.c
++++ b/src/utils/utils.c
+@@ -143,7 +143,7 @@ void _dawn_mutex_require(pthread_mutex_t* m, char* f, int l)
+         if (0 == pthread_mutex_trylock(m))
+         {
+             pthread_mutex_unlock(m);
+-            dawnlog_warning("MUTEX require = %" PRIXPTR "@%s:%d[%ul] - appears to be UNLOCKED!", m, dawnlog_basename(f), l, moi);
++            dawnlog_trace("MUTEX require = %" PRIXPTR "@%s:%d[%lu] - appears to be UNLOCKED!\n", m, dawnlog_basename(f), l, (unsigned long)moi);
+         }
+         else
+             dawnlog_debug("MUTEX require = %" PRIXPTR "@%s:%d[%ul]", m, dawnlog_basename(f), l, moi);

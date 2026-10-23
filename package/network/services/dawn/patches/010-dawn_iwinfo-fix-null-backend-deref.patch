@@ -1,0 +1,114 @@
+diff --git a/src/utils/dawn_iwinfo.c b/src/utils/dawn_iwinfo.c
+index e1fe1bd..7844c1d 100644
+--- a/src/utils/dawn_iwinfo.c
++++ b/src/utils/dawn_iwinfo.c
+@@ -42,6 +42,10 @@ int compare_essid_iwinfo(struct dawn_mac bssid_addr, struct dawn_mac bssid_addr_
+                 continue;
+ 
+             iw = iwinfo_backend(entry->d_name);
++            if (!iw) {
++                dawnlog_trace("No iwinfo backend for %s\n", entry->d_name);
++                continue;
++            }
+ 
+             // FIXME: Try to reduce string conversion and comparison here by using byte array compares
+             // TODO: Magic number
+@@ -117,6 +121,10 @@ int get_bandwidth(const char *ifname, struct dawn_mac client_addr, float *rx_rat
+     if (strcmp(ifname, "global") != 0)
+     {
+         const struct iwinfo_ops* iw = iwinfo_backend(ifname);
++        if (!iw) {
++            dawnlog_trace("No iwinfo backend for %s\n", ifname);
++            return 0;
++        }
+ 
+         char buf[IWINFO_BUFSIZE];
+         int len;
+@@ -174,9 +182,13 @@ int get_rssi(const char *ifname, struct dawn_mac client_addr) {
+     if (strcmp(ifname, "global") == 0)
+         return INT_MIN;
+     iw = iwinfo_backend(ifname);
++    if (!iw) {
++        dawnlog_trace("No iwinfo backend for %s\n", ifname);
++        return INT_MIN;
++    }
+ 
+     if (iw->assoclist(ifname, buf, &len)) {
+-        dawnlog_warning("No information available\n");
++        dawnlog_trace("No information available\n");
+         iwinfo_finish();
+         return INT_MIN;
+     } else if (len <= 0) {
+@@ -230,9 +242,13 @@ int get_expected_throughput(const char *ifname, struct dawn_mac client_addr) {
+     if (strcmp(ifname, "global") == 0)
+         return INT_MIN;
+     iw = iwinfo_backend(ifname);
++    if (!iw) {
++        dawnlog_trace("No iwinfo backend for %s\n", ifname);
++        return INT_MIN;
++    }
+ 
+     if (iw->assoclist(ifname, buf, &len)) {
+-        dawnlog_warning("No information available\n");
++        dawnlog_trace("No information available\n");
+         iwinfo_finish();
+         return INT_MIN;
+     } else if (len <= 0) {
+@@ -259,6 +275,11 @@ int get_bssid(const char *ifname, uint8_t bssid_addr[]) {
+     if (strcmp(ifname, "global") == 0)
+         return 0;
+     iw = iwinfo_backend(ifname);
++    if (!iw) {
++        dawnlog_trace("No iwinfo backend for %s\n", ifname);
++        memset(bssid_addr, 0, ETH_ALEN);
++        return -1;
++    }
+ 
+     static char buf[18] = { 0 };
+ 
+@@ -277,6 +298,12 @@ int get_ssid(const char *ifname, char* ssid, size_t ssidmax) {
+     if (strcmp(ifname, "global") == 0)
+         return 0;
+     iw = iwinfo_backend(ifname);
++    if (!iw) {
++        dawnlog_trace("No iwinfo backend for %s\n", ifname);
++        if (ssidmax)
++            ssid[0] = '\0';
++        return -1;
++    }
+     if (iw->ssid(ifname, buf))
+         memset(buf, 0, sizeof(buf));
+ 
+@@ -295,6 +322,10 @@ int get_channel_utilization(const char *ifname, uint64_t *last_channel_time, uin
+     if (strcmp(ifname, "global") == 0)
+         return 0;
+     iw = iwinfo_backend(ifname);
++    if (!iw) {
++        dawnlog_trace("No iwinfo backend for %s\n", ifname);
++        return 0;
++    }
+ 
+     int freq;
+     if (iw->frequency(ifname, &freq))
+@@ -343,6 +374,10 @@ int support_ht(const char *ifname) {
+     if (strcmp(ifname, "global") == 0)
+         return 0;
+     iw = iwinfo_backend(ifname);
++    if (!iw) {
++        dawnlog_trace("No iwinfo backend for %s\n", ifname);
++        return 0;
++    }
+     int htmodes = 0;
+ 
+     if (iw->htmodelist(ifname, &htmodes))
+@@ -363,6 +398,10 @@ int support_vht(const char *ifname) {
+     if (strcmp(ifname, "global") == 0)
+         return 0;
+     iw = iwinfo_backend(ifname);
++    if (!iw) {
++        dawnlog_trace("No iwinfo backend for %s\n", ifname);
++        return 0;
++    }
+     int htmodes = 0;
+ 
+     if (iw->htmodelist(ifname, &htmodes))

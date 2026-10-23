@@ -1,0 +1,31 @@
+diff --git a/src/utils/ubus.c b/src/utils/ubus.c
+index 7bf06af..edb606b 100644
+--- a/src/utils/ubus.c
++++ b/src/utils/ubus.c
+@@ -953,6 +953,11 @@ static void ubus_get_rrm_cb(struct ubus_request *req, int type, struct blob_attr
+         }
+     }
+ 
++    if (!entry) {
++        dawnlog_trace("RRM reply for unknown ubus peer, dropped\n");
++        return;
++    }
++
+     blobmsg_parse(rrm_array_policy, __RRM_MAX, tb, blob_data(msg), blob_len(msg));
+ 
+     if (!tb[RRM_ARRAY]) {
+@@ -968,8 +973,12 @@ static void ubus_get_rrm_cb(struct ubus_request *req, int type, struct blob_attr
+          if(i==2)
+          {
+             char* neighborreport = blobmsg_get_string(attr);
+-            strcpy(entry->neighbor_report,neighborreport);
+-            dawnlog_debug("Copied Neighborreport: %s,\n", entry->neighbor_report);
++            if (neighborreport)
++            {
++                strncpy(entry->neighbor_report, neighborreport, sizeof(entry->neighbor_report) - 1);
++                entry->neighbor_report[sizeof(entry->neighbor_report) - 1] = '\0';
++                dawnlog_debug("Copied Neighborreport: %s,\n", entry->neighbor_report);
++            }
+          }
+          i++;
+      }

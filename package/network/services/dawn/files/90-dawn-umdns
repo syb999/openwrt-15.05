@@ -1,0 +1,25 @@
+#!/bin/sh
+# DAWN needs umdns to announce itself on the bridge that carries the wireless
+# clients. The shipped umdns config only lists "lan", which silently breaks
+# inter-AP discovery on access points whose clients live in br-wan.
+[ -x /usr/sbin/umdns ] || exit 0
+uci -q get umdns.@umdns[0] >/dev/null 2>&1 || exit 0
+
+cur=" $(uci -q get umdns.@umdns[-1].network 2>/dev/null) "
+
+for net in wan lan; do
+	uci -q get network.$net >/dev/null 2>&1 || continue
+	case "$cur" in
+		*" $net "*) ;;
+		*)
+			uci add_list umdns.@umdns[-1].network="$net" >/dev/null 2>&1
+			cur="$cur$net "
+			;;
+	esac
+done
+
+uci -q commit umdns
+
+[ -x /etc/init.d/umdns ] && /etc/init.d/umdns reload >/dev/null 2>&1
+
+exit 0

@@ -1,0 +1,57 @@
+diff --git a/src/storage/datastorage.c b/src/storage/datastorage.c
+index e5285bb..1a1d74f 100644
+--- a/src/storage/datastorage.c
++++ b/src/storage/datastorage.c
+@@ -529,15 +533,46 @@ int kick_clients(struct dawn_mac bssid_mac, uint32_t id) {
+                     dawnlog_info("Client " MACSTR ": Low asolute RSSI - proposing other APs\n", MAC2STR(j->client_addr.u8));
+                     dawn_mutex_require(&ap_array_mutex);
+ 
+-                    // FIXME: Using all AP is OK for a small network, but should ideally use the local-to-current-AP set
+-                    for (ap* candidate_ap = ap_set; candidate_ap != NULL; candidate_ap = candidate_ap->next_ap) {
+-                        // Check is same SSID< but is not the current AP
+-                        if (candidate_ap != kicking_ap && strcmp((char*)kicking_ap->ssid, (char*)candidate_ap->ssid) == 0) {
+-                            insert_kicking_nr_by_bssid(&kick_nr_list, candidate_ap);
++                    /* Only propose APs that actually hear this client, best score
++                     * first. The old code pushed every AP sharing the SSID in
++                     * arbitrary order, including ones the client cannot reach,
++                     * so clients happily roamed onto weaker APs. */
++                    int own_score_low = eval_probe_metric(own_probe, kicking_ap);
++                    int candidates = 0;
++
++                    probe_entry *nr_probe = probe_array_find_first_entry(own_probe->client_addr, dawn_mac_null, false);
++
++                    while (nr_probe != NULL &&
++                           mac_is_equal_bb(nr_probe->client_addr, own_probe->client_addr)) {
++
++                        if (nr_probe != own_probe) {
++                            ap *candidate_ap = ap_array_get_ap(nr_probe->bssid_addr);
++
++                            if (candidate_ap && candidate_ap != kicking_ap &&
++                                strcmp((char*)kicking_ap->ssid, (char*)candidate_ap->ssid) == 0) {
++
++                                int candidate_score = eval_probe_metric(nr_probe, candidate_ap);
++
++                                /* never suggest an AP that scores worse */
++                                if (candidate_score > own_score_low) {
++                                    insert_kicking_nr_by_score(&kick_nr_list, candidate_ap, candidate_score);
++                                    candidates++;
++                                }
++                            }
+                         }
++
++                        nr_probe = nr_probe->next_probe;
+                     }
+ 
+-                    kick_type = 2;
++                    if (candidates > 0) {
++                        dawnlog_info("Client " MACSTR ": %d better AP(s) proposed\n",
++                                     MAC2STR(j->client_addr.u8), candidates);
++                        kick_type = 2;
++                    }
++                    else {
++                        dawnlog_info("Client " MACSTR ": no better AP hears this client, not kicking\n",
++                                     MAC2STR(j->client_addr.u8));
++                    }
+                 }
+             }
+         }

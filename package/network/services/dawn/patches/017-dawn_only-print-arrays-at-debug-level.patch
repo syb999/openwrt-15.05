@@ -1,0 +1,40 @@
+diff --git a/src/storage/datastorage.c b/src/storage/datastorage.c
+index e5285bb..88f26f1 100644
+--- a/src/storage/datastorage.c
++++ b/src/storage/datastorage.c
+@@ -1072,7 +1081,8 @@ ap *insert_to_ap_array(ap* entry, time_t expiry) {
+     if (old_entry)
+         dawn_free(old_entry);
+ 
+-    print_ap_array();
++    if (dawnlog_showing(DAWNLOG_DEBUG))
++        print_ap_array();
+ 
+     dawn_mutex_unlock(&ap_array_mutex);
+ 
+diff --git a/src/utils/ubus.c b/src/utils/ubus.c
+index e974f2f..d85a341 100644
+--- a/src/utils/ubus.c
++++ b/src/utils/ubus.c
+@@ -899,13 +901,15 @@ static void ubus_get_clients_cb(struct ubus_request *req, int type, struct blob_
+ 
+     parse_to_clients(b.head);
+ 
+-    dawn_mutex_lock(&client_array_mutex);
+-    print_client_array();
+-    dawn_mutex_unlock(&client_array_mutex);
++    if (dawnlog_showing(DAWNLOG_DEBUG)) {
++        dawn_mutex_lock(&client_array_mutex);
++        print_client_array();
++        dawn_mutex_unlock(&client_array_mutex);
+ 
+-    dawn_mutex_lock(&ap_array_mutex);
+-    print_ap_array();
+-    dawn_mutex_unlock(&ap_array_mutex);
++        dawn_mutex_lock(&ap_array_mutex);
++        print_ap_array();
++        dawn_mutex_unlock(&ap_array_mutex);
++    }
+ 
+     blob_buf_free(&b);
+     dawn_unregmem(&b);

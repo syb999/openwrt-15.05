@@ -1,0 +1,24 @@
+diff --git a/src/utils/ubus.c b/src/utils/ubus.c
+index e974f2f..d85a341 100644
+--- a/src/utils/ubus.c
++++ b/src/utils/ubus.c
+@@ -867,12 +867,14 @@ static void ubus_get_clients_cb(struct ubus_request *req, int type, struct blob_
+     blob_buf_init(&b, 0);
+     dawn_regmem(&b);
+ 
+-    char* data_str = blobmsg_format_json(msg, 1);
+-    dawn_regmem(data_str);
++    /* Copy the hostapd reply verbatim instead of formatting it to JSON and
++     * parsing it back into a blob - that round trip walks and re-allocates
++     * the whole station table on every update interval. */
++    struct blob_attr *attr;
++    int rem;
+ 
+-    blobmsg_add_json_from_string(&b, data_str);
+-    dawn_free(data_str);
+-    data_str = NULL;
++    blobmsg_for_each_attr(attr, msg, rem)
++        blobmsg_add_blob(&b, attr);
+ 
+     blobmsg_add_u32(&b, "collision_domain", network_config.collision_domain);
+     blobmsg_add_u32(&b, "bandwidth", network_config.bandwidth);

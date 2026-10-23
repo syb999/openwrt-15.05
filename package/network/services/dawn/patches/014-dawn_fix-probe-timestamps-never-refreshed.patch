@@ -1,0 +1,22 @@
+diff --git a/src/storage/datastorage.c b/src/storage/datastorage.c
+index 2856a40..e5285bb 100644
+--- a/src/storage/datastorage.c
++++ b/src/storage/datastorage.c
+@@ -938,7 +938,7 @@ probe_entry* insert_to_probe_array(probe_entry* entry, int inc_probe_count, int
+             if (inc_probe_count)
+                 (*node_ref)->counter++;
+ 
+-            entry->rssi_timestamp = expiry;
++            (*node_ref)->rssi_timestamp = expiry;
+ 
+             // BEACON reports don't have these fields, so only update them from PROBE
+             (*node_ref)->signal = entry->signal;
+@@ -955,7 +955,7 @@ probe_entry* insert_to_probe_array(probe_entry* entry, int inc_probe_count, int
+             // FIXME: Equivalent to inserting BEACON based entry
+             (*node_ref)->counter = dawn_metric.min_probe_count;
+ 
+-            entry->rcpi_timestamp = expiry;
++            (*node_ref)->rcpi_timestamp = expiry;
+ 
+             // PROBE reports don't have these fields, so only update them from BEACOM
+             if (entry->rcpi != -1)

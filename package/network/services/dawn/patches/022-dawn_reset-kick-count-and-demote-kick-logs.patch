@@ -1,0 +1,26 @@
+--- a/src/storage/datastorage.c
++++ b/src/storage/datastorage.c
+@@ -617,9 +617,9 @@
+                     else
+                     {
+                         if (have_bandwidth_iwinfo && dawn_metric.bandwidth_threshold != 0)
+-                            dawnlog_always("Client " MACSTR ": Kicking due to low active data transfer: RX rate %f is at or below the %d limit\n", MAC2STR(j->client_addr.u8), rx_rate, dawn_metric.bandwidth_threshold);
++                            dawnlog_info("Client " MACSTR ": Kicking due to low active data transfer: RX rate %f is at or below the %d limit\n", MAC2STR(j->client_addr.u8), rx_rate, dawn_metric.bandwidth_threshold);
+                         else
+-                            dawnlog_always("Client " MACSTR ": Kicking as no active transmission data for client, and / or limit of %d is OK.\n",
++                            dawnlog_info("Client " MACSTR ": Kicking as no active transmission data for client, and / or limit of %d is OK.\n",
+                                 MAC2STR(j->client_addr.u8), dawn_metric.bandwidth_threshold);
+ 
+                         print_client_entry(DAWNLOG_TRACE, j);
+@@ -656,6 +656,11 @@
+                             bss_transition_request(id, j->client_addr, kick_nr_list, dawn_metric.duration);
+                         }
+ 
++                        /* Restart the debounce: without this the counter stays
++                         * above min_number_to_kick and the same client is
++                         * kicked again on every update cycle. */
++                        j->kick_count = 0;
++
+                         kicked_clients++;
+                     }
+                 }

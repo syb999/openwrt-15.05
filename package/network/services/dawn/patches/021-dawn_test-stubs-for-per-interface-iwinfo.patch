@@ -1,0 +1,32 @@
+diff --git a/src/test/test_storage.c b/src/test/test_storage.c
+index cdf7e16..daf94a5 100644
+--- a/src/test/test_storage.c
++++ b/src/test/test_storage.c
+@@ -128,6 +128,27 @@ int get_bandwidth_iwinfo(struct dawn_mac client_addr, float* rx_rate, float* tx_
+     return 0;
+ }
+ 
++int get_rssi(const char *ifname, struct dawn_mac client_addr)
++{
++    printf("get_rssi(%s) was called...\n", ifname);
++    return 0;
++}
++
++int get_expected_throughput(const char *ifname, struct dawn_mac client_addr)
++{
++    printf("get_expected_throughput(%s) was called...\n", ifname);
++    return 0;
++}
++
++int get_bandwidth(const char *ifname, struct dawn_mac client_addr, float* rx_rate, float* tx_rate)
++{
++    *rx_rate = 0.0;
++    *tx_rate = 0.0;
++
++    printf("get_bandwidth(%s) was called.  Returning rx=%1f, tx=%1f...\n", ifname, (double)*rx_rate, (double)*tx_rate);
++    return 0;
++}
++
+ int send_add_mac(struct dawn_mac client_addr)
+ {
+     printf("send_add_mac() was called...\n");

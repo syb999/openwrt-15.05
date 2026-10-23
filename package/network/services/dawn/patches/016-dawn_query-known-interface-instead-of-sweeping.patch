@@ -1,0 +1,56 @@
+diff --git a/src/include/dawn_iwinfo.h b/src/include/dawn_iwinfo.h
+index 2fc6a60..183a18e 100644
+--- a/src/include/dawn_iwinfo.h
++++ b/src/include/dawn_iwinfo.h
+@@ -39,6 +39,16 @@ int get_expected_throughput_iwinfo(struct dawn_mac client_addr);
+  */
+ int get_bandwidth_iwinfo(struct dawn_mac client_addr, float *rx_rate, float *tx_rate);
+ 
++/**
++ * Same as the *_iwinfo() variants above, but query a single known interface
++ * instead of sweeping every hostapd socket. Prefer these when the interface
++ * is already known: the sweep costs one iwinfo backend probe plus one
++ * assoclist dump per socket for every client.
++ */
++int get_rssi(const char *ifname, struct dawn_mac client_addr);
++int get_expected_throughput(const char *ifname, struct dawn_mac client_addr);
++int get_bandwidth(const char *ifname, struct dawn_mac client_addr, float *rx_rate, float *tx_rate);
++
+ /**
+  * Function checks if two bssid adresses have the same essid.
+  * Function uses libiwinfo and searches through all interfaces that are existing.
+diff --git a/src/storage/datastorage.c b/src/storage/datastorage.c
+index e5285bb..88f26f1 100644
+--- a/src/storage/datastorage.c
++++ b/src/storage/datastorage.c
+@@ -556,7 +556,9 @@ int kick_clients(struct dawn_mac bssid_mac, uint32_t id) {
+             }
+             else {
+                 float rx_rate, tx_rate;
+-                bool have_bandwidth_iwinfo = get_bandwidth_iwinfo(j->client_addr, &rx_rate, &tx_rate);
++                bool have_bandwidth_iwinfo = kicking_ap->iface[0]
++                    ? get_bandwidth(kicking_ap->iface, j->client_addr, &rx_rate, &tx_rate)
++                    : get_bandwidth_iwinfo(j->client_addr, &rx_rate, &tx_rate);
+                 if (!have_bandwidth_iwinfo && dawn_metric.bandwidth_threshold > 0) {
+                     dawnlog_info("Client " MACSTR ": No active transmission data for client. Don't kick!\n", MAC2STR(j->client_addr.u8));
+                 }
+@@ -666,9 +668,16 @@ void update_iw_info(struct dawn_mac bssid_mac) {
+     for (client* j = *client_find_first_bc_entry(bssid_mac, dawn_mac_null, false);
+             j != NULL && mac_is_equal_bb(j->bssid_addr, bssid_mac); j = j->next_entry_bc) {
+         // update rssi
+-        int rssi = get_rssi_iwinfo(j->client_addr);
+-        dawnlog_trace("Expected throughput %f Mbit/sec\n",
+-                iee80211_calculate_expected_throughput_mbit(get_expected_throughput_iwinfo(j->client_addr)));
++        bool local_iface = this_ap && this_ap->iface[0];
++        int rssi = local_iface ? get_rssi(this_ap->iface, j->client_addr)
++                               : get_rssi_iwinfo(j->client_addr);
++
++        if (dawnlog_showing(DAWNLOG_TRACE)) {
++            int expected = local_iface ? get_expected_throughput(this_ap->iface, j->client_addr)
++                                       : get_expected_throughput_iwinfo(j->client_addr);
++            dawnlog_trace("Expected throughput %f Mbit/sec\n",
++                    iee80211_calculate_expected_throughput_mbit(expected));
++        }
+ 
+         if (rssi != INT_MIN) {
+             if (probe_array_update_rssi(j->client_addr, this_ap, rssi, true) == NULL) {
