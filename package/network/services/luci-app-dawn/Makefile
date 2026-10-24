@@ -1,5 +1,7 @@
 include $(TOPDIR)/rules.mk
 
+PKG_RELEASE:=8
+
 LUCI_TITLE:=LuCI support for DAWN
 LUCI_DEPENDS:=+dawn +luci-lib-json
 LUCI_PKGARCH:=all

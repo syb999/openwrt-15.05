@@ -1,0 +1,647 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: luci-app-dawn\n"
+"PO-Revision-Date: 2026-10-23 00:00+0800\n"
+"Last-Translator: OpenWrt\n"
+"Language-Team: Chinese (Simplified)\n"
+"Language: zh-cn\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "0 - UDP broadcast"
+msgstr "0 - UDP 广播"
+
+msgid "0 - do not kick (score only)"
+msgstr "0 - 不踢（只统计分数）"
+
+msgid "0 - do not set"
+msgstr "0 - 不设置"
+
+msgid "0 - errors and warnings (default)"
+msgstr "0 - 错误与警告（默认）"
+
+msgid "0 prints errors and warnings only (default, recommended). Raise it to 1 or 2 while debugging; 3 logs every internal step and should not be left enabled."
+msgstr "0 只输出错误和警告（默认，日常使用）。排查问题时临时调到 1 或 2；3 会记录每一个内部步骤，不要长期开启。"
+
+msgid "1 - UDP multicast"
+msgstr "1 - UDP 组播"
+
+msgid "1 - force disconnect (deauth/disassoc)"
+msgstr "1 - 强制断开（deauth/disassoc）"
+
+msgid "1 - informational"
+msgstr "1 - 常规信息"
+
+msgid "1 - static: all APs in this network"
+msgstr "1 - 静态：本网络所有 AP"
+
+msgid "1. Inter-AP communication (identical on every AP)"
+msgstr "1. 节点间通信（所有 AP 必须一致）"
+
+msgid "1. Inter-AP communication - ports and encryption"
+msgstr "1. 节点间通信 - 端口与加密"
+
+msgid "11k/v off"
+msgstr "11k/11v 未开"
+
+msgid "2 (TCP with uMDNS discovery) is the right choice for several APs. 0/1 use UDP broadcast/multicast, 3 needs a manually configured peer."
+msgstr "多台 AP 用 2（TCP + uMDNS 自动发现）最合适。0/1 是 UDP 广播/组播，3 需要手工指定对端。"
+
+msgid "2 - 802.11v BTM request"
+msgstr "2 - 802.11v BTM 引导"
+
+msgid "2 - TCP with uMDNS discovery (default)"
+msgstr "2 - TCP + uMDNS 自动发现（默认）"
+
+msgid "2 - dynamic: the nearest APs seen by the client"
+msgstr "2 - 动态：客户端看到的最近 AP"
+
+msgid "2 - trace"
+msgstr "2 - 跟踪"
+
+msgid "2. Roaming behaviour (identical on every AP)"
+msgstr "2. 漫游行为（所有 AP 必须一致）"
+
+msgid "2. hostapd interface (may differ per AP)"
+msgstr "2. hostapd 接口（每台 AP 可以不同）"
+
+msgid "3 - BTM and disconnect (default)"
+msgstr "3 - BTM + 断开（默认）"
+
+msgid "3 - TCP with manually configured peer"
+msgstr "3 - TCP，手工指定对端"
+
+msgid "3 - full debug (very verbose)"
+msgstr "3 - 全量调试（输出极多）"
+
+msgid "3. 2.4 GHz preference"
+msgstr "3. 2.4GHz 倾向"
+
+msgid "3. Timers"
+msgstr "3. 定时器"
+
+msgid "4. 5 GHz preference"
+msgstr "4. 5GHz 倾向"
+
+msgid "4. Global scoring and kicking policy - details"
+msgstr "4. 全局打分与踢人策略 - 细节"
+
+msgid "5. 2.4 GHz scoring - details"
+msgstr "5. 2.4GHz 打分 - 细节"
+
+msgid "5. Refresh interval"
+msgstr "5. 刷新间隔"
+
+msgid "6. 5 GHz scoring - details"
+msgstr "6. 5GHz 打分 - 细节"
+
+msgid "6. Local options (may differ per AP)"
+msgstr "6. 本机选项（每台 AP 可以不同）"
+
+msgid "8-63 characters. Leave empty to keep the current key."
+msgstr "8-63 个字符。留空表示保持当前密码不变。"
+
+msgid "802.11 reason code, default 17."
+msgstr "802.11 原因码，默认 17。"
+
+msgid "802.11 status code, default 1. Only used when authentication requests are evaluated."
+msgstr "802.11 状态码，默认 1。仅在评估认证请求时使用。"
+
+msgid "802.11a/n/ac band. The initial score is set on the basic page."
+msgstr "802.11a/n/ac 频段。初始分在基本设置页里。"
+
+msgid "802.11g/n band. The initial score is set on the basic page."
+msgstr "802.11g/n 频段。初始分在基本设置页里。"
+
+msgid "802.11k"
+msgstr "802.11k"
+
+msgid "802.11v"
+msgstr "802.11v"
+
+msgid "A WPA2 key must be between 8 and 63 characters long."
+msgstr "WPA2 密码长度必须在 8~63 个字符之间。"
+
+msgid "A client must be heard at least this many times before it takes part in the evaluation. Default 3."
+msgstr "客户端至少被听到这么多次才会参与评估。默认 3。"
+
+msgid "A client whose current rate is above this value counts as actively transferring and is not asked to move. Do not set it to the 802.11 basic rate (6): every idle 2.4 GHz client sits exactly there and would look kickable. Default 3; 0 disables the check entirely."
+msgstr "当前速率高于这个值的客户端算作“正在传输”，不会要求它换 AP。不要设成 802.11 的基本速率 6：所有空闲的 2.4GHz 客户端正好停在 6，会被当成“可以踢”。默认 3；填 0 表示完全不做这个检查。"
+
+msgid "AP"
+msgstr "AP"
+
+msgid "AP weight"
+msgstr "AP 权重"
+
+msgid "APs known to DAWN:"
+msgstr "DAWN 已知的 AP："
+
+msgid "APs:"
+msgstr "AP："
+
+msgid "Active transfer threshold (Mbps)"
+msgstr "活跃传输判定阈值（Mbps）"
+
+msgid "Additional score bonus or penalty. Usually left at 0."
+msgstr "额外的加分或减分，通常保留 0。"
+
+msgid "Apply now"
+msgstr "立即应用"
+
+msgid "Apply to all AP interfaces"
+msgstr "应用到所有 AP 接口"
+
+msgid "BSSID"
+msgstr "BSSID"
+
+msgid "Bad signal threshold (dBm)"
+msgstr "信号差门限 (dBm)"
+
+msgid "Band"
+msgstr "频段"
+
+msgid "Band / channel"
+msgstr "频段 / 信道"
+
+msgid "Bonus for HT (802.11n) support"
+msgstr "支持 HT (802.11n) 的加分"
+
+msgid "Bonus for VHT (802.11ac) support"
+msgstr "支持 VHT (802.11ac) 的加分"
+
+msgid "Bonus for a good signal"
+msgstr "信号好时的加分"
+
+msgid "Bonus for an idle channel"
+msgstr "信道空闲时的加分"
+
+msgid "Broadcast/multicast address"
+msgstr "广播/组播地址"
+
+msgid "Capabilities"
+msgstr "能力"
+
+msgid "Channel"
+msgstr "信道"
+
+msgid "Channel utilization"
+msgstr "信道利用率"
+
+msgid "Channel utilization averaging period"
+msgstr "信道利用率平均周期"
+
+msgid "Channel utilization sampling interval"
+msgstr "信道利用率采样间隔"
+
+msgid "Client"
+msgstr "客户端"
+
+msgid "Client Scores"
+msgstr "客户端评分表"
+
+msgid "Client information refresh interval"
+msgstr "客户端信息刷新间隔"
+
+msgid "Clients"
+msgstr "客户端数"
+
+msgid "Clients / utilization"
+msgstr "客户端数 / 利用率"
+
+msgid "Congested channel utilization threshold"
+msgstr "信道利用率拥塞门限"
+
+msgid "Connection timeout"
+msgstr "连接超时判定"
+
+msgid "Consecutive evaluations before kicking"
+msgstr "连续满足几次才踢人"
+
+msgid "DAWN - decentralized WiFi roaming controller"
+msgstr "DAWN - 去中心化 WiFi 漫游控制器"
+
+msgid "DAWN Advanced"
+msgstr "DAWN 高级设置"
+
+msgid "DAWN Settings"
+msgstr "DAWN 设置"
+
+msgid "DAWN has not discovered any other AP in this band yet."
+msgstr "DAWN 还没在这个频段发现其它 AP。"
+
+msgid "DAWN has not learned any AP yet. If this stays empty, dawn is not receiving hostapd data or the APs cannot reach each other."
+msgstr "DAWN 还没有学到任何 AP。如果一直为空，说明 dawn 没收到 hostapd 数据，或者各 AP 之间互相不通。"
+
+msgid "DAWN instances use these settings to discover each other and to exchange client information. If any of them differs between APs, the packets still arrive but cannot be decoded - the APs appear to see each other while nothing works."
+msgstr "DAWN 实例之间靠这些设置互相发现并交换客户端信息。只要其中任何一项在 AP 之间不一致，数据包虽然能收到却无法解析——表现为 AP 之间似乎看得见对方，但功能完全不生效。"
+
+msgid "DAWN scores every client/AP pair and asks a client to move when the score difference exceeds the threshold. 802.11v BTM only is the least disruptive way to steer; forced disconnects should stay off on a healthy network."
+msgstr "DAWN 给每个『客户端 × AP』打分，只有分差超过阈值时才要求客户端换 AP。只发 802.11v BTM 是最温和的引导方式；网络健康时不要打开强制断开。"
+
+msgid "Deadline for the client to move (seconds)"
+msgstr "引导客户端切换的期限（秒）"
+
+msgid "Debounce counter: the client must look like it should move this many evaluation cycles in a row. Default 6."
+msgstr "防抖计数：客户端必须连续这么多个评估周期都被判定为“该换 AP”才会动作。默认 6。"
+
+msgid "Default /var/run/hostapd. Normally there is no reason to change it."
+msgstr "默认 /var/run/hostapd。一般不需要修改。"
+
+msgid "Default 10."
+msgstr "默认 10。"
+
+msgid "Default 1025. Must be the same on every AP."
+msgstr "默认 1025，所有 AP 必须相同。"
+
+msgid "Default 1026. Must be the same on every AP."
+msgstr "默认 1026，所有 AP 必须相同。"
+
+msgid "Default 15 seconds for a network of a few APs."
+msgstr "几台 AP 的网络默认 15 秒。"
+
+msgid "Default 15."
+msgstr "默认 15。"
+
+msgid "Default 20. Only meaningful for clients that support 11k and when beacon reports are enabled. 0 disables the requests."
+msgstr "默认 20。只有客户端支持 11k 且启用了信标报告时才有意义；0 表示不请求。"
+
+msgid "Default 3."
+msgstr "默认 3。"
+
+msgid "Default 30."
+msgstr "默认 30。"
+
+msgid "Default 460."
+msgstr "默认 460。"
+
+msgid "Default 5."
+msgstr "默认 5。"
+
+msgid "Default 60."
+msgstr "默认 60。"
+
+msgid "Enable 802.11k on every AP interface"
+msgstr "在每个 AP 接口上启用 802.11k"
+
+msgid "Enable 802.11v (BSS transition) on every AP interface"
+msgstr "在每个 AP 接口上启用 802.11v（BSS 切换）"
+
+msgid "Encrypt inter-AP traffic"
+msgstr "加密节点间通信"
+
+msgid "Encryption"
+msgstr "加密方式"
+
+msgid "Every AP that this DAWN instance currently knows about, including the ones running on other nodes. If only the local APs show up here, the inter-AP transport or the shared key is wrong."
+msgstr "本 DAWN 实例当前认识的所有 AP，包括运行在其他节点上的。如果这里只出现本机 AP，说明节点间通信方式或共享密钥不对。"
+
+msgid "Everything that the basic page leaves out: ports, timers, 802.11k/802.11v details and the scoring weights. The defaults are tuned for a network of a few APs; change them only when you know what they do. All APs must use the same values."
+msgstr "基本设置页没放的东西都在这里：端口、定时器、802.11k/802.11v 细节和打分权重。默认值已按几台 AP 的网络调好；不清楚作用就不要改。所有 AP 必须一致。"
+
+msgid "Expire AP entries after"
+msgstr "过期 AP 记录移除时间"
+
+msgid "Expire client entries after"
+msgstr "过期客户端记录移除时间"
+
+msgid "Expire probe entries after"
+msgstr "过期探测记录移除时间"
+
+msgid "Fill in 802.11k neighbor reports for hostapd"
+msgstr "为 hostapd 填写 802.11k 邻居报告"
+
+msgid "Good channel utilization threshold"
+msgstr "信道利用率好门限"
+
+msgid "Good signal threshold (dBm)"
+msgstr "信号好门限 (dBm)"
+
+msgid "How DAWN scores each client against every AP that can hear it. One row per AP; the client address on the left spans all APs that heard it. The best AP per SSID is marked."
+msgstr "DAWN 给每个客户端在每一台能听到它的 AP 上打分。每个 AP 一行，左侧客户端地址横跨所有听到它的 AP 行；同一 SSID 下的最佳 AP 用 * 标记。"
+
+msgid "How many candidate APs are included in a BTM/disassoc neighbor report. 6 is the documented iOS-friendly value; longer lists cost airtime and are usually ignored by clients."
+msgstr "BTM/disassoc 邻居报告里放多少个候选 AP。6 是 iOS 官方文档给出的合适值；列表越长越占空口，客户端通常也不会看全。"
+
+msgid "How often DAWN re-reads the client lists. Shorter reacts faster, longer costs less CPU."
+msgstr "DAWN 重新读取客户端列表的间隔。越短反应越快，越长越省 CPU。"
+
+msgid "Include the station count in the score"
+msgstr "把客户端数计入打分"
+
+msgid "Initial score"
+msgstr "初始分"
+
+msgid "Initialization vector (IV)"
+msgstr "初始向量 (IV)"
+
+msgid "Interface"
+msgstr "接口"
+
+msgid "Key set"
+msgstr "已设密码"
+
+msgid "Kicking method"
+msgstr "踢人方式"
+
+msgid "Kicking score threshold"
+msgstr "踢人分数差阈值"
+
+msgid "Linear RSSI scoring center (dBm)"
+msgstr "线性 RSSI 打分中点 (dBm)"
+
+msgid "Linear RSSI scoring weight"
+msgstr "线性 RSSI 打分权重"
+
+msgid "Log level"
+msgstr "日志级别"
+
+msgid "Maximum station count difference"
+msgstr "允许的客户端数差"
+
+msgid "Minimum probe count"
+msgstr "最少探测次数"
+
+msgid "Must be enabled or disabled on all APs alike."
+msgstr "所有 AP 必须同时启用或同时关闭。"
+
+msgid "Must be exactly the same on every AP."
+msgstr "所有 AP 必须完全相同。"
+
+msgid "Must be exactly the same on every AP. A mismatch means packets are received but cannot be decrypted."
+msgstr "所有 AP 必须完全相同。不一致时数据包能收到但无法解密。"
+
+msgid "Must be identical on every AP."
+msgstr "所有 AP 必须相同。"
+
+msgid "Negative value, for example -15. Added to the score once the signal drops below the bad signal threshold."
+msgstr "负数，例如 -15。信号低于信号差门限时加到分数上。"
+
+msgid "Negative value, for example -60. Anything above it counts as good."
+msgstr "负数，例如 -60。高于此值算信号好。"
+
+msgid "Negative value, for example -80. Anything below it counts as bad."
+msgstr "负数，例如 -80。低于此值算信号差。"
+
+msgid "Negative value. Added to the score once utilization exceeds the congestion threshold."
+msgstr "负数。利用率超过拥塞门限时加到分数上。"
+
+msgid "Neighbor report"
+msgstr "邻区报告"
+
+msgid "Neighbor report entries per 802.11v request"
+msgstr "每个 802.11v 请求里带多少个候选 AP"
+
+msgid "Network Overview"
+msgstr "网络总览"
+
+msgid "No AP interface found in /etc/config/wireless - nothing was changed."
+msgstr "/etc/config/wireless 里没有找到 AP 接口，未做任何修改。"
+
+msgid "No AP interface found in /etc/config/wireless."
+msgstr "/etc/config/wireless 里没有找到 AP 接口。"
+
+msgid "No APs known yet. Check that dawn is running and that the inter-AP transport settings match on every AP."
+msgstr "还没有已知的 AP。请检查 dawn 是否正在运行、各 AP 的节点间通信设置是否一致。"
+
+msgid "No scoring data yet. DAWN first has to hear a client on at least one AP."
+msgstr "还没有打分数据。DAWN 需要先在至少一个 AP 上听到客户端。"
+
+msgid "Node"
+msgstr "节点"
+
+msgid "Only affect the local dawn process."
+msgstr "只影响本机的 dawn 进程。"
+
+msgid "Only the settings that actually matter for roaming between several APs are shown here. Ports, timers, scoring weights and the rest live under DAWN Advanced. The shipped defaults are already tuned for a handful of APs."
+msgstr "这里只放多台 AP 漫游真正需要调的参数。端口、定时器、打分权重等都在『DAWN 高级设置』里。出厂默认值已按几台 AP 的网络调好。"
+
+msgid "Only used by transport mode 3: the IP address of another AP."
+msgstr "仅通信方式 3 使用：另一台 AP 的 IP 地址。"
+
+msgid "Only used by transport modes 0 and 1, and it must be the broadcast address of your LAN (for example 192.168.2.255). Ignored by modes 2 and 3."
+msgstr "仅通信方式 0/1 使用，且必须填本网段的广播地址（例如 192.168.2.255）。方式 2/3 会忽略此项。"
+
+msgid "Order string built from P (passive), A (active) and T (table), for example PAT. Only meaningful with 11k enabled."
+msgstr "由 P（被动）、A（主动）、T（表）组成的顺序串，例如 PAT。仅在启用 11k 时有意义。"
+
+msgid "Peer APs"
+msgstr "组网 AP"
+
+msgid "Penalty for a bad signal"
+msgstr "信号差时的减分"
+
+msgid "Penalty for a congested channel"
+msgstr "信道拥塞时的减分"
+
+msgid "Preferred 802.11k beacon report modes"
+msgstr "802.11k 信标报告的优先方式"
+
+msgid "RCPI / RSNI"
+msgstr "RCPI / RSNI"
+
+msgid "Radio"
+msgstr "射频"
+
+msgid "Reason code when denying association"
+msgstr "拒绝关联时的原因码"
+
+msgid "Refresh inter-AP connections every"
+msgstr "刷新节点间连接间隔"
+
+msgid "Reload wireless immediately (clients disconnect briefly)"
+msgstr "立即重载无线（客户端会短暂断开）"
+
+msgid "Request 802.11k beacon reports every"
+msgstr "请求 802.11k 信标报告间隔"
+
+msgid "Rescan hostapd sockets every"
+msgstr "重新扫描 hostapd socket 间隔"
+
+msgid "Roaming helpers"
+msgstr "漫游辅助"
+
+msgid "Run 'wifi reload' (or reboot) for it to take effect."
+msgstr "执行 wifi reload（或重启）后生效。"
+
+msgid "SSID"
+msgstr "SSID"
+
+msgid "SSIDs:"
+msgstr "SSID："
+
+msgid "Scale of 0-255 where 255 means 100 percent."
+msgstr "0-255 刻度，255 表示 100%。"
+
+msgid "Score"
+msgstr "得分"
+
+msgid "Score added or subtracted per dB away from the center. 0 disables linear scoring (default)."
+msgstr "相对中点每偏离 1dB 的加/减分。0 表示关闭线性打分（默认）。"
+
+msgid "Score added while channel utilization is below the good utilization threshold."
+msgstr "信道利用率低于好门限时加的分数。"
+
+msgid "Score added while the signal is above the good signal threshold."
+msgstr "信号高于信号好门限时加的分数。"
+
+msgid "Section"
+msgstr "配置段"
+
+msgid "Sets the same SSID, encryption and key on every AP interface and enables 802.11k/802.11v there, so a node that was configured by hand cannot break roaming for the whole network. Existing values are shown first; only AP interfaces are touched."
+msgstr "把每台 AP 接口的 SSID、加密方式和密码设成同一套，并顺带打开 802.11k/802.11v，避免某个手工配过的节点破坏整网漫游。上面先列出当前值；只改 AP 接口。"
+
+msgid "Shared key"
+msgstr "共享密钥"
+
+msgid "Signal"
+msgstr "信号"
+
+msgid "Starting score for the 2.4 GHz band. A lower value keeps clients on 5 GHz for as long as possible."
+msgstr "2.4GHz 频段的起评分。给低一点可以让客户端尽可能留在 5GHz。"
+
+msgid "Starting score for the 5 GHz band. 5 GHz carries the load, so it starts higher."
+msgstr "5GHz 频段的起评分。5GHz 承担主要流量，所以起点更高。"
+
+msgid "State"
+msgstr "状态"
+
+msgid "Status code when denying authentication"
+msgstr "拒绝认证时的状态码"
+
+msgid "TCP peer address"
+msgstr "TCP 对端地址"
+
+msgid "TCP port"
+msgstr "TCP 端口"
+
+msgid "The SSID must not be empty and at most 32 bytes long."
+msgstr "SSID 不能为空，且最长 32 字节。"
+
+msgid "The target AP may have at most this many more clients than the current one, which keeps all clients from piling up on a single AP. Default 1."
+msgstr "目标 AP 的客户端数最多比当前 AP 多这么多，避免客户端全堆在一台 AP 上。默认 1。"
+
+msgid "The target AP must score this much higher before a client is moved. 35 keeps clients in place inside the coverage area and only moves them when the current AP is clearly worse."
+msgstr "目标 AP 的分数必须高出这么多才会让客户端切换。35 表示在覆盖范围内不动，只有当前 AP 明显更差时才引导。"
+
+msgid "This is a bit mask, not a plain switch: 1 = force disconnect, 2 = send an 802.11v BTM request, 3 = both. The default only asks."
+msgstr "这是位掩码而不是普通开关：1 = 强制断开，2 = 发送 802.11v BTM 请求，3 = 两者都用。默认只发请求。"
+
+msgid "This overwrites the SSID, encryption and key on every AP interface of this device. Make sure all other APs get the same values, otherwise DAWN clients will not roam between them."
+msgstr "这会覆盖本机每个 AP 接口的 SSID、加密方式和密码。其它 AP 必须设成同样的值，否则客户端不会在它们之间漫游。"
+
+msgid "Thresholds and 802.11k/802.11v details. All APs must use the same values."
+msgstr "阈值以及 802.11k/802.11v 细节。所有 AP 必须一致。"
+
+msgid "Transport"
+msgstr "通信方式"
+
+msgid "Turn both on so clients and DAWN have neighbour data."
+msgstr "两个都打开，客户端和 DAWN 才有邻居数据。"
+
+msgid "UDP port"
+msgstr "UDP 端口"
+
+msgid "Updated %d AP interface(s) in /etc/config/wireless."
+msgstr "已更新 /etc/config/wireless 里的 %d 个 AP 接口。"
+
+msgid "Use association requests in the evaluation"
+msgstr "用关联请求参与评估"
+
+msgid "Use authentication requests in the evaluation"
+msgstr "用认证请求参与评估"
+
+msgid "Use probe requests in the evaluation"
+msgstr "用探测请求参与评估"
+
+msgid "Used both as the 802.11k beacon report measurement duration and as the 802.11v BSS transition timer. Must not be 0: some clients refuse a zero-length measurement and some treat a zero validity period as expired and leave the AP without a valid target."
+msgstr "同时用作 802.11k beacon report 的测量时长和 802.11v BSS 切换的定时器。不要设为 0：有些客户端会拒绝零长度测量，还有些客户端会把 validity=0 当成已过期而直接离开该 AP，却找不到可用目标。"
+
+msgid "Used together with the linear RSSI weight; has no effect while the weight is 0."
+msgstr "与线性 RSSI 权重配合使用；权重为 0 时本项无效。"
+
+msgid "Values are in seconds. Keep them identical across all APs, otherwise one AP reacts faster than another and the decisions contradict each other."
+msgstr "单位为秒。建议所有 AP 保持一致，否则一台反应快一台反应慢，判决会互相冲突。"
+
+msgid "WPA2-PSK (AES/CCMP) - recommended"
+msgstr "WPA2-PSK（AES/CCMP，推荐）"
+
+msgid "WPA2-PSK (TKIP+CCMP, legacy clients)"
+msgstr "WPA2-PSK（TKIP+CCMP，兼容老设备）"
+
+msgid "What DAWN sees on every radio: the APs taking part in the network and the clients attached to each of them. Signal values are dBm, closer to 0 is better."
+msgstr "DAWN 在每个射频上看到的情况：参与组网的 AP 以及挂在各自下面的客户端。信号单位 dBm，越接近 0 越好。"
+
+msgid "Wireless Baseline"
+msgstr "无线兜底设置"
+
+msgid "Wireless is reloading now, clients will disconnect briefly."
+msgstr "无线正在重载，客户端会短暂断开。"
+
+msgid "Wireless key"
+msgstr "无线密码"
+
+msgid "With 11k enabled, 0 leaves the client with a neighbor report that only lists its current AP. 1 lets DAWN fill in every AP of the network, which is what makes 11k roaming useful."
+msgstr "开着 11k 时，选 0 会让客户端拿到的邻居报告里只有它当前连的 AP。选 1 让 DAWN 填入全网所有 AP，11k 漫游才真正有用。"
+
+msgid "Write configuration"
+msgstr "写入配置"
+
+msgid "best AP per SSID is marked with *"
+msgstr "同一 SSID 下的最佳 AP 用 * 标记"
+
+msgid "clients:"
+msgstr "客户端："
+
+msgid "consistent with peers"
+msgstr "与对端一致"
+
+msgid "dawn talks to hostapd through the control sockets in this directory."
+msgstr "dawn 通过该目录中的控制 socket 与 hostapd 通信。"
+
+msgid "differs from peers"
+msgstr "与对端不一致"
+
+msgid "disabled"
+msgstr "已禁用"
+
+msgid "hostapd socket directory"
+msgstr "hostapd socket 目录"
+
+msgid "local"
+msgstr "本机"
+
+msgid "local:"
+msgstr "本机："
+
+msgid "no"
+msgstr "否"
+
+msgid "no SSID"
+msgstr "SSID 为空"
+
+msgid "no clients"
+msgstr "无客户端"
+
+msgid "no key"
+msgstr "未设密码"
+
+msgid "no peer AP seen"
+msgstr "未发现对端 AP"
+
+msgid "none"
+msgstr "无"
+
+msgid "off"
+msgstr "关"
+
+msgid "on"
+msgstr "开"
+
+msgid "remote:"
+msgstr "对端："
+
+msgid "yes"
+msgstr "是"
+
