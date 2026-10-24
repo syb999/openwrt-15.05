@@ -1,0 +1,28 @@
+--- a/src/include/ndpi_define.h.in	2026-10-24 09:06:28.000000000 +0800
++++ b/src/include/ndpi_define.h.in	2026-10-24 09:11:58.717499241 +0800
+@@ -334,8 +334,14 @@
+ #define get_l32(X,O)  get_u_int32_t(X,O)
+ #elif defined(__BIG_ENDIAN__) || defined(__BIG_ENDIAN)
+ /* convert the bytes from big to little endian */
++#ifdef __KERNEL__
++/* no <byteswap.h> in kernel space: use the kernel swab helpers */
++# define get_l16(X,O) swab16(get_u_int16_t(X,O))
++# define get_l32(X,O) swab32(get_u_int32_t(X,O))
++#else
+ # define get_l16(X,O) bswap_16(get_u_int16_t(X,O))
+ # define get_l32(X,O) bswap_32(get_u_int32_t(X,O))
++#endif
+ #else
+ #error "__BYTE_ORDER MUST BE DEFINED !"
+ #endif							/* __BYTE_ORDER */
+
+--- a/src/include/ndpi_includes.h	2026-10-24 09:06:28.000000000 +0800
++++ b/src/include/ndpi_includes.h	2026-10-24 09:11:58.717499241 +0800
+@@ -71,6 +71,7 @@
+ #else /* KERNEL */
+ 
+ #include <asm/byteorder.h>
++#include <linux/swab.h>
+ #include <linux/types.h>
+ #include <linux/spinlock.h>
+ #include <linux/in.h>

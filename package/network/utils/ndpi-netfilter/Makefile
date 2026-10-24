@@ -10,7 +10,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=ndpi-netfilter
 PKG_VERSION:=flow_info-c8ee735-2.8
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_REV:=c8ee735
 
 PKG_SOURCE_PROTO:=git
@@ -29,7 +29,7 @@ define Package/iptables-mod-ndpi
   CATEGORY:=Network
   TITLE:=ndpi successor of OpenDPI
   URL:=http://www.ntop.org/products/ndpi/
-  DEPENDS:=+iptables +iptables-mod-conntrack-extra +kmod-ipt-ndpi @!TARGET_ar71xx
+  DEPENDS:=+iptables +iptables-mod-conntrack-extra +kmod-ipt-ndpi
   MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 endef
 
