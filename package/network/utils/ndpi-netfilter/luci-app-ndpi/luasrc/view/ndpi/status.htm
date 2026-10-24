@@ -1,0 +1,159 @@
+<%+header%>
+
+<div class="cbi-map">
+	<h2 name="content"><%:Identification%></h2>
+	<div class="cbi-map-descr">
+		<%:Hit counters come from the iptables rule counters. They only count packets that reach netfilter before fast-classifier (SFE) takes over a flow, so hits still grow with SFE enabled. A counter of 0 means the rule exists but no matching traffic was seen since the last reload.%>
+	</div>
+
+	<div class="cbi-section">
+		<h3><%:Self-check%></h3>
+		<table class="cbi-section-table" id="ndpi_diag">
+			<tr><td width="30%" id="d_mod_l">—</td><td id="d_mod">—</td></tr>
+			<tr><td id="d_proc_l">—</td><td id="d_proc">—</td></tr>
+			<tr><td id="d_rules_l">—</td><td id="d_rules">—</td></tr>
+			<tr><td id="d_log_l">—</td><td><pre id="d_log" style="margin:0;white-space:pre-wrap"></pre></td></tr>
+		</table>
+	</div>
+
+	<div class="cbi-section">
+		<table class="cbi-section-table" id="ndpi_hits">
+			<tr class="cbi-section-table-titles">
+				<th class="cbi-section-table-cell"><%:Preset%></th>
+				<th class="cbi-section-table-cell"><%:Domain / application%></th>
+				<th class="cbi-section-table-cell"><%:Hook%></th>
+				<th class="cbi-section-table-cell"><%:Action%></th>
+				<th class="cbi-section-table-cell"><%:Packet count%></th>
+			</tr>
+		</table>
+	</div>
+</div>
+
+<div class="cbi-map">
+	<h2 name="content"><%:Connection details (optional)%></h2>
+	<div class="cbi-map-descr">
+		<%:Requires flow-info to be enabled on the Settings page. /proc is a dump interface, so reading it clears the returned records; values below cover only the time since the last refresh.%>
+	</div>
+
+	<div class="cbi-section">
+		<div id="ndpi_sum" style="padding:6px 0">—</div>
+		<table class="cbi-section-table" id="ndpi_tbl">
+			<tr class="cbi-section-table-titles">
+				<th class="cbi-section-table-cell"><%:Application%></th>
+				<th class="cbi-section-table-cell"><%:Flow%></th>
+				<th class="cbi-section-table-cell"><%:Packet count%></th>
+			</tr>
+		</table>
+	</div>
+</div>
+
+<script type="text/javascript">//<![CDATA[
+var url_groups = '<%=luci.dispatcher.build_url("admin", "network", "ndpi", "groups")%>';
+var url_flows  = '<%=luci.dispatcher.build_url("admin", "network", "ndpi", "flows")%>';
+
+var txt = {
+	module:   '<%:xt_ndpi module%>',
+	proc:     '<%:proc interface%>',
+	rules:    '<%:Rules installed%>',
+	log:      '<%:Last log%>',
+	loaded:   '<%:loaded%>',
+	missing:  '<%:missing%>',
+	nothing:  '<%:Nothing yet%>',
+	norules:  '<%:No rules installed%>'
+};
+
+function ndpi_get(u, cb) {
+	var r = new XMLHttpRequest();
+	r.onreadystatechange = function() {
+		if (r.readyState == 4 && r.status == 200) {
+			try { cb(JSON.parse(r.responseText)); } catch (e) { }
+		}
+	};
+	r.open('GET', u, true);
+	r.send(null);
+}
+
+function ndpi_clearrows(tbl) {
+	var i;
+	for (i = tbl.rows.length - 1; i > 0; i--)
+		tbl.deleteRow(i);
+}
+
+function ndpi_empty(tbl, cols, text) {
+	var e = tbl.insertRow(-1);
+	var c = e.insertCell(-1);
+	c.colSpan = cols;
+	c.innerHTML = '<em>' + text + '</em>';
+}
+
+function ndpi_diag(d) {
+	document.getElementById('d_mod_l').innerHTML = txt.module;
+	document.getElementById('d_mod').innerHTML = d.module == 1 ? txt.loaded : txt.missing;
+
+	document.getElementById('d_proc_l').innerHTML = txt.proc;
+	document.getElementById('d_proc').innerHTML = d.proc == 1 ? txt.loaded : txt.missing;
+
+	document.getElementById('d_rules_l').innerHTML = txt.rules;
+	document.getElementById('d_rules').innerHTML = d.rules > 0 ? d.rules : txt.norules;
+
+	document.getElementById('d_log_l').innerHTML = txt.log;
+	document.getElementById('d_log').textContent = (d.log || '').replace(/\s+$/, '') || '—';
+}
+
+function ndpi_hits(d) {
+	var rows = d.rows || [];
+	var tbl = document.getElementById('ndpi_hits');
+	ndpi_clearrows(tbl);
+
+	var i;
+	for (i = 0; i < rows.length; i++) {
+		var r = tbl.insertRow(-1);
+		r.className = (i % 2) ? 'cbi-rowstyle-1' : 'cbi-rowstyle-2';
+		r.insertCell(-1).innerHTML = rows[i].group || '—';
+		r.insertCell(-1).innerHTML = rows[i].match;
+		r.insertCell(-1).innerHTML = rows[i].chain.replace('NDPI_', '');
+		r.insertCell(-1).innerHTML = rows[i].action;
+		r.insertCell(-1).innerHTML = rows[i].pkts;
+	}
+
+	if (!rows.length)
+		ndpi_empty(tbl, 5, txt.norules);
+}
+
+function ndpi_groups(d) {
+	ndpi_diag(d.diag || {});
+	ndpi_hits(d);
+}
+
+function ndpi_flows(d) {
+	var rows = d.flows || [];
+	var tbl = document.getElementById('ndpi_tbl');
+
+	document.getElementById('ndpi_sum').innerHTML =
+		'flow-info: ' + (d.flow_enable == '1' ? 'on' : 'off') + ' / ' + d.total;
+
+	ndpi_clearrows(tbl);
+
+	var i;
+	for (i = 0; i < rows.length; i++) {
+		var r = tbl.insertRow(-1);
+		r.className = (i % 2) ? 'cbi-rowstyle-1' : 'cbi-rowstyle-2';
+		r.insertCell(-1).innerHTML = rows[i].proto;
+		r.insertCell(-1).innerHTML = rows[i].flows;
+		r.insertCell(-1).innerHTML = rows[i].pk;
+	}
+
+	if (!rows.length)
+		ndpi_empty(tbl, 3, txt.nothing);
+}
+
+function ndpi_refresh() {
+	ndpi_get(url_groups, ndpi_groups);
+	ndpi_get(url_flows, ndpi_flows);
+}
+
+ndpi_refresh();
+setInterval(ndpi_refresh, 5000);
+//]]></script>
+
+<%+footer%>

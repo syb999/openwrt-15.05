@@ -1,0 +1,211 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: zh_CN\n"
+"Project-Id-Version: luci-app-ndpi\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "Identification"
+msgstr "识别状态"
+
+msgid "Rules"
+msgstr "规则"
+
+msgid "Presets"
+msgstr "预设"
+
+msgid "Settings"
+msgstr "设置"
+
+msgid "Enable"
+msgstr "启用"
+
+msgid "Disabling removes the iptables chains created by this app"
+msgstr "关闭时会清除本插件建立的 iptables 链"
+
+msgid "flow-info connection details"
+msgstr "flow-info 连接明细"
+
+msgid "Optional per-connection details on the identification page. Not needed for preset or application rules"
+msgstr "识别状态页用的可选连接明细，按预设/应用做规则时不需要"
+
+msgid "nDPI application identification"
+msgstr "nDPI 应用识别"
+
+msgid "In-kernel application identification provided by kmod-ipt-ndpi. Rules are translated into iptables mangle rules by /etc/init.d/ndpi."
+msgstr "由 kmod-ipt-ndpi 提供的内核态应用识别，规则由 /etc/init.d/ndpi 翻译成 iptables mangle 规则。"
+
+msgid "A preset rule expands into one iptables rule per domain or protocol. --host is a substring match, so bilivideo.com also matches upos-sz-mirrorcos.bilivideo.com"
+msgstr "一条预设规则会按域名/协议展开成多条 iptables 规则；--host 是子串匹配，bilivideo.com 也能命中 upos-sz-mirrorcos.bilivideo.com"
+
+msgid "Match type"
+msgstr "匹配方式"
+
+msgid "Preset"
+msgstr "预设"
+
+msgid "Application"
+msgstr "应用"
+
+msgid "Custom domain"
+msgstr "自定义域名"
+
+msgid "e.g. BitTorrent"
+msgstr "例如 BitTorrent"
+
+msgid "Domain"
+msgstr "域名"
+
+msgid "e.g. bilivideo.com"
+msgstr "例如 bilivideo.com"
+
+msgid "Hook"
+msgstr "挂载点"
+
+msgid "PREROUTING (forwarded traffic)"
+msgstr "PREROUTING（转发流量）"
+
+msgid "OUTPUT (local traffic)"
+msgstr "OUTPUT（本机发出）"
+
+msgid "POSTROUTING"
+msgstr "POSTROUTING"
+
+msgid "Action"
+msgstr "动作"
+
+msgid "Set mark"
+msgstr "打 mark"
+
+msgid "Drop"
+msgstr "丢弃"
+
+msgid "Mark value"
+msgstr "mark 值"
+
+msgid "A preset bundles domains and/or nDPI protocols. Rules point at a preset, so one preset change updates every rule using it. Domains are matched as substrings: write bilivideo.com, no scheme and no wildcards"
+msgstr "预设 = 一组域名和/或 nDPI 协议。规则指向预设，改预设即对所有使用它的规则生效。域名按子串匹配：写 bilivideo.com 就行，不要写协议头和通配符"
+
+msgid "Protocol"
+msgstr "协议"
+
+msgid "e.g. SIP"
+msgstr "例如 SIP"
+
+msgid "Hit counters come from the iptables rule counters. They only count packets that reach netfilter before fast-classifier (SFE) takes over a flow, so hits still grow with SFE enabled. A counter of 0 means the rule exists but no matching traffic was seen since the last reload."
+msgstr "命中计数来自 iptables 规则计数器，只统计快路径（fast-classifier / SFE）接管之前的包，所以开着 SFE 也会增长。计数为 0 表示规则存在，但上次 reload 之后没匹配到流量。"
+
+msgid "Self-check"
+msgstr "自检"
+
+msgid "Domain / application"
+msgstr "域名 / 应用"
+
+msgid "Packet count"
+msgstr "包数"
+
+msgid "Connection details (optional)"
+msgstr "连接明细（可选）"
+
+msgid "Requires flow-info to be enabled on the Settings page. /proc is a dump interface, so reading it clears the returned records; values below cover only the time since the last refresh."
+msgstr "需要先在「设置」页打开 flow-info。/proc 是 dump 型接口，读一次内核就清一次，下面只是「自上次刷新以来」的数据。"
+
+msgid "Flow"
+msgstr "连接"
+
+msgid "xt_ndpi module"
+msgstr "xt_ndpi 模块"
+
+msgid "proc interface"
+msgstr "/proc 接口"
+
+msgid "Rules installed"
+msgstr "已安装规则"
+
+msgid "Last log"
+msgstr "最近日志"
+
+msgid "loaded"
+msgstr "已加载"
+
+msgid "missing"
+msgstr "缺失"
+
+msgid "Nothing yet"
+msgstr "暂无"
+
+msgid "No rules installed"
+msgstr "未安装任何规则"
+
+msgid "Bilibili"
+msgstr "哔哩哔哩"
+
+msgid "Douyin"
+msgstr "抖音"
+
+msgid "Taobao"
+msgstr "淘宝"
+
+msgid "WeChat"
+msgstr "微信"
+
+msgid "QQ"
+msgstr "QQ"
+
+msgid "Baidu"
+msgstr "百度"
+
+msgid "JD"
+msgstr "京东"
+
+msgid "iQiyi"
+msgstr "爱奇艺"
+
+msgid "Youku"
+msgstr "优酷"
+
+msgid "Kuaishou"
+msgstr "快手"
+
+msgid "Xiaohongshu"
+msgstr "小红书"
+
+msgid "Weibo"
+msgstr "微博"
+
+msgid "Zhihu"
+msgstr "知乎"
+
+msgid "NetEase Music"
+msgstr "网易云音乐"
+
+msgid "Pinduoduo"
+msgstr "拼多多"
+
+msgid "Meituan"
+msgstr "美团"
+
+msgid "Ximalaya"
+msgstr "喜马拉雅"
+
+msgid "Doubao"
+msgstr "豆包"
+
+msgid "DeepSeek"
+msgstr "DeepSeek"
+
+msgid "Kimi"
+msgstr "Kimi"
+
+msgid "Zhipu AI"
+msgstr "智谱清言"
+
+msgid "Steam"
+msgstr "Steam"
+
+msgid "Epic Games"
+msgstr "Epic 游戏"
+
+msgid "miHoYo"
+msgstr "米哈游"

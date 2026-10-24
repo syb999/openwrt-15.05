@@ -1,0 +1,15 @@
+#!/bin/sh
+# migrate the pre-1.0.0-2 config: section type and rule option "site" -> "group"
+[ -z "$IPKG_INSTROOT" ] || exit 0
+
+CFG=/etc/config/ndpi
+[ -f "$CFG" ] || exit 0
+
+grep -q '^config site ' "$CFG" || exit 0
+
+sed -i -e 's/^config site /config group /' \
+       -e 's/^\([[:space:]]*\)option site /\1option group /' "$CFG"
+
+/etc/init.d/ndpi reload >/dev/null 2>&1
+
+exit 0

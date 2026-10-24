@@ -1,0 +1,164 @@
+#!/bin/sh /etc/rc.common
+# uci /etc/config/ndpi -> iptables mangle rules using xt_ndpi
+
+START=99
+STOP=01
+
+IPT=/usr/sbin/iptables
+CHAINS="PREROUTING OUTPUT POSTROUTING"
+
+RULE_CHAIN=""
+RULE_TARGET=""
+RULE_CNT=0
+
+clear_all() {
+	local c
+	for c in $CHAINS; do
+		while $IPT -t mangle -D $c -j NDPI_$c 2>/dev/null; do :; done
+		$IPT -t mangle -F NDPI_$c 2>/dev/null
+		$IPT -t mangle -X NDPI_$c 2>/dev/null
+	done
+}
+
+ensure_chain() {
+	$IPT -t mangle -N NDPI_$1 2>/dev/null
+	$IPT -t mangle -F NDPI_$1 2>/dev/null
+	$IPT -t mangle -C $1 -j NDPI_$1 2>/dev/null || \
+		$IPT -t mangle -I $1 -j NDPI_$1
+}
+
+load_mod() {
+	local want="$1" cur
+
+	cur=$(cat /sys/module/xt_ndpi/parameters/ndpi_enable_flow 2>/dev/null)
+	if [ -n "$cur" ]; then
+		[ "$cur" = "$want" ] && return 0
+		rmmod xt_ndpi 2>/dev/null || {
+			logger -t ndpi "xt_ndpi already loaded with flow=$cur, cannot switch to $want"
+			return 1
+		}
+	fi
+
+	if [ "$want" = 1 ]; then
+		modprobe xt_ndpi ndpi_enable_flow=1
+	else
+		modprobe xt_ndpi
+	fi
+}
+
+target_args() {
+	case "$1" in
+		mark) echo "-j NDPI --set-mark --value $2" ;;
+		drop) echo "-j DROP" ;;
+	esac
+}
+
+add_one() {
+	local m="$1" what="$2"
+
+	[ -n "$what" ] || return 0
+
+	if $IPT -t mangle -A NDPI_$RULE_CHAIN -m ndpi $m $RULE_TARGET; then
+		RULE_CNT=$((RULE_CNT + 1))
+	else
+		logger -t ndpi "$what: add failed"
+	fi
+}
+
+add_host() {
+	[ -n "$1" ] || return 0
+	add_one "--host $1" "domain $1"
+}
+
+add_proto() {
+	case "$1" in
+		all|any|ALL|ANY) add_one "--all" "proto all" ;;
+		"") return 0 ;;
+		*) add_one "--proto $1" "proto $1" ;;
+	esac
+}
+
+add_rule() {
+	local cfg="$1" en match proto chain action value group
+
+	config_get_bool en "$cfg" enabled 1
+	[ "$en" = 1 ] || return 0
+
+	config_get match  "$cfg" match proto
+	config_get chain  "$cfg" chain prerouting
+	config_get action "$cfg" action mark
+	config_get value  "$cfg" value 0x10
+	config_get proto  "$cfg" proto
+	config_get group  "$cfg" group
+	[ -n "$group" ] || config_get group "$cfg" site
+
+	case "$chain" in
+		prerouting|PREROUTING)   chain=PREROUTING ;;
+		output|OUTPUT)           chain=OUTPUT ;;
+		postrouting|POSTROUTING) chain=POSTROUTING ;;
+		*) logger -t ndpi "rule $cfg: unknown hook $chain"; return 0 ;;
+	esac
+
+	case "$action" in
+		mark|drop) ;;
+		*) logger -t ndpi "rule $cfg: unknown action $action"; return 0 ;;
+	esac
+
+	RULE_CHAIN=$chain
+	RULE_TARGET=$(target_args "$action" "$value")
+
+	case "$match" in
+		proto)
+			[ -n "$proto" ] || { logger -t ndpi "rule $cfg: no application selected"; return 0; }
+			add_proto "$proto"
+			;;
+		host)
+			config_list_foreach "$cfg" host add_host
+			;;
+		group)
+			[ -n "$group" ] || { logger -t ndpi "rule $cfg: no group selected"; return 0; }
+			config_list_foreach "$group" domain add_host
+			config_list_foreach "$group" proto add_proto
+			;;
+		*)
+			logger -t ndpi "rule $cfg: unknown match type $match"
+			;;
+	esac
+}
+
+start() {
+	local enabled flow_info c
+
+	config_load ndpi
+	config_get_bool enabled config enabled 0
+	clear_all
+	[ "$enabled" = 1 ] || return 0
+
+	config_get_bool flow_info config flow_info 0
+	[ "$flow_info" = 1 ] || flow_info=0
+	load_mod "$flow_info" || return 1
+
+	for c in $CHAINS; do ensure_chain $c; done
+
+	if [ "$flow_info" = 1 ]; then
+		$IPT -t mangle -A NDPI_PREROUTING  -m ndpi ! --error -j NDPI --flow-info
+		$IPT -t mangle -A NDPI_POSTROUTING -m ndpi ! --error -j NDPI --flow-info
+	fi
+
+	RULE_CNT=0
+	config_foreach add_rule rule
+	logger -t ndpi "loaded: flow_info=$flow_info, $RULE_CNT rules"
+}
+
+stop() {
+	clear_all
+}
+
+reload() {
+	stop
+	start
+}
+
+boot() {
+	start
+}
