@@ -41,7 +41,7 @@ define Device/243p
   DTS := 243P
   IMAGE_SIZE := $(ralink_default_fw_size_16M)
   DEVICE_TITLE := 243P
-  DEVICE_PACKAGES := kmod-mt7603 kmod-mt7615e mt7663-firmware-ap
+  DEVICE_PACKAGES := kmod-mt7603 kmod-mt7615e mt7663-firmware-ap mt7663-firmware-sta
 endef
 TARGET_DEVICES += 243p
 
@@ -176,7 +176,7 @@ define Device/todaair-in1251y
   DTS := TodaAir-IN1251Y
   IMAGE_SIZE := $(ralink_default_fw_size_16M)
   DEVICE_TITLE := TodaAir IN1251Y
-  DEVICE_PACKAGES := kmod-mt7603 kmod-mt7615e mt7663-firmware-ap
+  DEVICE_PACKAGES := kmod-mt7603 kmod-mt7615e mt7663-firmware-ap mt7663-firmware-sta
 endef
 TARGET_DEVICES += todaair-in1251y
 
@@ -217,7 +217,7 @@ define Device/an1201l
   IMAGES := factory.bin
   IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | check-size $$$$(IMAGE_SIZE)
   DEVICE_TITLE := AN1201L
-  DEVICE_PACKAGES := kmod-mt7603 kmod-mt7615e mt7663-firmware-ap wpad-mini
+  DEVICE_PACKAGES := kmod-mt7603 kmod-mt7615e mt7663-firmware-ap mt7663-firmware-sta
 endef
 TARGET_DEVICES += an1201l
 
