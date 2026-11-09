@@ -1,0 +1,14 @@
+--- a/src/utils/ubus.c
++++ b/src/utils/ubus.c
+@@ -342,6 +342,11 @@
+ 
+     if (!tb[BEACON_REP_BSSID] ||
+         !tb[BEACON_REP_ADDR] ||
++        /* Refused/incapable measurements may have no measurement body.
++         * Validate every field below before using blobmsg_get_u16(). */
++        !tb[BEACON_REP_RCPI] ||
++        !tb[BEACON_REP_RSNI] ||
++        !tb[BEACON_REP_CHANNEL] ||
+         hwaddr_aton(blobmsg_data(tb[BEACON_REP_BSSID]), msg_bssid.u8) ||
+         hwaddr_aton(blobmsg_data(tb[BEACON_REP_ADDR]), msg_client.u8))
+     {

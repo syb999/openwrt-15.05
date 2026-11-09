@@ -1,0 +1,11 @@
+--- a/src/utils/ubus.c
++++ b/src/utils/ubus.c
+@@ -1347,7 +1347,7 @@
+     if (!msg)
+         return;
+ 
+-    blobmsg_parse(dawn_umdns_table_policy, __DAWN_UMDNS_MAX, tb, blob_data(msg), blob_len(msg));
++    blobmsg_parse(dawn_umdns_table_policy, __DAWN_UMDNS_TABLE_MAX, tb, blob_data(msg), blob_len(msg));
+ 
+     if (!tb[DAWN_UMDNS_TABLE]) {
+         return;
