@@ -98,9 +98,9 @@ o.datatype = "uinteger"
 o.default = "1"
 
 o = s:option(Value, "bandwidth_threshold", translate("Active transfer threshold (Mbps)"),
-	translate("A client whose current rate is above this value counts as actively transferring and is not asked to move. Do not set it to the 802.11 basic rate (6): every idle 2.4 GHz client sits exactly there and would look kickable. Default 3; 0 disables the check entirely."))
+	translate("A client whose current rate is above this value counts as actively transferring and is not asked to move. 2.4 GHz idle clients sit at the 802.11 basic rate (6 Mbps), so this must stay above 6 or idle clients are never steered. Default 10; 0 disables the check entirely."))
 o.datatype = "uinteger"
-o.default = "3"
+o.default = "10"
 
 o = s:option(Value, "chan_util_avg_period", translate("Channel utilization averaging period"),
 	translate("Default 3."))
@@ -203,8 +203,9 @@ local function band_section(section_name, title, description)
 	bo.datatype = "integer"
 
 	bo = bs:option(Value, "rssi_weight", translate("Linear RSSI scoring weight"),
-		translate("Score added or subtracted per dB away from the center. 0 disables linear scoring (default)."))
+		translate("Score added or subtracted per dB away from the center. 0 disables linear scoring, which leaves the AP scores identical for every signal level in the -80..-60 dBm range and stops any score based steering. Keep it at 1. Default 1."))
 	bo.datatype = "integer"
+	bo.default = "1"
 
 	return bs
 end
