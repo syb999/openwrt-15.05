@@ -126,8 +126,8 @@ msgstr "WPA2 密码长度必须在 8~63 个字符之间。"
 msgid "A client must be heard at least this many times before it takes part in the evaluation. Default 3."
 msgstr "客户端至少被听到这么多次才会参与评估。默认 3。"
 
-msgid "A client whose current rate is above this value counts as actively transferring and is not asked to move. 2.4 GHz idle clients sit at the 802.11 basic rate (6 Mbps), so this must stay above 6 or idle clients are never steered. Default 10; 0 disables the check entirely."
-msgstr "当前速率高于这个值的客户端算作“正在传输”，不会要求它换 AP。2.4GHz 空闲客户端的速率正好停在 802.11 基本速率 6Mbps，所以这个值必须高于 6，否则空闲客户端永远不会被引导。默认 10；填 0 表示完全不做这个检查。"
+msgid "A client whose current rate is above this value counts as actively transferring and is not asked to move. Idle 2.4 GHz clients sit at the 802.11 basic rate (6 Mbps), so the limit must stay below 6 or every idle client looks kickable. Default 3; 0 disables the check entirely."
+msgstr "当前速率高于这个值的客户端算作“正在传输”，不会要求它换 AP。2.4GHz 空闲客户端的速率正好停在 802.11 基本速率 6Mbps，所以这个门限必须低于 6，否则所有空闲客户端都会被当成“可以踢”。默认 3；填 0 表示完全不做这个检查。"
 
 msgid "AP"
 msgstr "AP"
@@ -243,8 +243,8 @@ msgstr "DAWN 给每个『客户端 × AP』打分，只有分差超过阈值时�
 msgid "Deadline for the client to move (seconds)"
 msgstr "引导客户端切换的期限（秒）"
 
-msgid "Debounce counter: the client must look like it should move this many evaluation cycles in a row, one cycle being 15 seconds. Default 3."
-msgstr "防抖计数：客户端必须连续这么多个评估周期都被判定为“该换 AP”才会动作，一个周期 15 秒。默认 3。"
+msgid "Debounce counter: the client must look like it should move this many evaluation cycles in a row, one cycle being 15 seconds. Default 6."
+msgstr "防抖计数：客户端必须连续这么多个评估周期都被判定为“该换 AP”才会动作，一个周期 15 秒。默认 6。"
 
 msgid "Default /var/run/hostapd. Normally there is no reason to change it."
 msgstr "默认 /var/run/hostapd。一般不需要修改。"
@@ -477,8 +477,8 @@ msgstr "0-255 刻度，255 表示 100%。"
 msgid "Score"
 msgstr "得分"
 
-msgid "Score added or subtracted per dB away from the center. 0 disables linear scoring, which leaves the AP scores identical for every signal level in the -80..-60 dBm range and stops any score based steering. Keep it at 1. Default 1."
-msgstr "相对中点每偏离 1dB 的加/减分。0 表示关闭线性打分，此时 -80~-60dBm 之间所有信号强度的 AP 打分完全相同，基于分数的引导全部失效。保持 1。默认 1。"
+msgid "Score added or subtracted per dB away from the center. 0 disables linear scoring. The BTM candidate check has no hysteresis, so a non-zero weight lets a 1 dB difference trigger a move; keep it at 0. Default 0."
+msgstr "相对中点每偏离 1dB 的加/减分。0 表示关闭线性打分。BTM 候选判定没有回滞，非 0 权重会让 1dB 的差异就触发换 AP，所以保持 0。默认 0。"
 
 msgid "Score added while channel utilization is below the good utilization threshold."
 msgstr "信道利用率低于好门限时加的分数。"

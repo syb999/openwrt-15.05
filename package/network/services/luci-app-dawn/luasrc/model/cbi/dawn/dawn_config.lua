@@ -61,9 +61,9 @@ o.datatype = "uinteger"
 o.default = "35"
 
 o = s:option(Value, "min_number_to_kick", translate("Consecutive evaluations before kicking"),
-	translate("Debounce counter: the client must look like it should move this many evaluation cycles in a row, one cycle being 15 seconds. Default 3."))
+	translate("Debounce counter: the client must look like it should move this many evaluation cycles in a row, one cycle being 15 seconds. Default 6."))
 o.datatype = "uinteger"
-o.default = "3"
+o.default = "6"
 
 -- ---------------------------------------------------------------------------
 -- 3. Band preference
